@@ -14,16 +14,329 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      claims: {
+        Row: {
+          code: string
+          contact_id: string
+          created_at: string
+          customer_id: string
+          expire_at: string
+          id: string
+          redeemed_at: string | null
+        }
+        Insert: {
+          code: string
+          contact_id: string
+          created_at?: string
+          customer_id: string
+          expire_at: string
+          id?: string
+          redeemed_at?: string | null
+        }
+        Update: {
+          code?: string
+          contact_id?: string
+          created_at?: string
+          customer_id?: string
+          expire_at?: string
+          id?: string
+          redeemed_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "claims_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "claims_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contact_deletions: {
+        Row: {
+          customer_id: string
+          deleted_at: string
+          deletion_method: string
+          id: string
+        }
+        Insert: {
+          customer_id: string
+          deleted_at?: string
+          deletion_method: string
+          id?: string
+        }
+        Update: {
+          customer_id?: string
+          deleted_at?: string
+          deletion_method?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contact_deletions_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contacts: {
+        Row: {
+          created_at: string
+          customer_id: string
+          deleted_at: string | null
+          email: string | null
+          id: string
+          opt_in: boolean
+          phone: string | null
+          unsubscribe_token: string
+        }
+        Insert: {
+          created_at?: string
+          customer_id: string
+          deleted_at?: string | null
+          email?: string | null
+          id?: string
+          opt_in?: boolean
+          phone?: string | null
+          unsubscribe_token?: string
+        }
+        Update: {
+          created_at?: string
+          customer_id?: string
+          deleted_at?: string | null
+          email?: string | null
+          id?: string
+          opt_in?: boolean
+          phone?: string | null
+          unsubscribe_token?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contacts_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      customers: {
+        Row: {
+          active: boolean
+          created_at: string
+          google_review_url: string
+          id: string
+          logo_url: string | null
+          name: string
+          offer_text: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          google_review_url: string
+          id?: string
+          logo_url?: string | null
+          name: string
+          offer_text: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          google_review_url?: string
+          id?: string
+          logo_url?: string | null
+          name?: string
+          offer_text?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      merchant_assignments: {
+        Row: {
+          created_at: string
+          customer_id: string
+          id: string
+          merchant_user_id: string
+        }
+        Insert: {
+          created_at?: string
+          customer_id: string
+          id?: string
+          merchant_user_id: string
+        }
+        Update: {
+          created_at?: string
+          customer_id?: string
+          id?: string
+          merchant_user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "merchant_assignments_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      orders: {
+        Row: {
+          created_at: string
+          customer_id: string
+          id: string
+          merchant_user_id: string | null
+          notes: string | null
+          order_type: string
+          quantity: number | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          customer_id: string
+          id?: string
+          merchant_user_id?: string | null
+          notes?: string | null
+          order_type: string
+          quantity?: number | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          customer_id?: string
+          id?: string
+          merchant_user_id?: string | null
+          notes?: string | null
+          order_type?: string
+          quantity?: number | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "orders_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          full_name: string | null
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          full_name?: string | null
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          full_name?: string | null
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      scans: {
+        Row: {
+          contact_id: string | null
+          created_at: string
+          customer_id: string
+          id: string
+          ip_hash: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          contact_id?: string | null
+          created_at?: string
+          customer_id: string
+          id?: string
+          ip_hash?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          contact_id?: string | null
+          created_at?: string
+          customer_id?: string
+          id?: string
+          ip_hash?: string | null
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scans_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "scans_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "partner" | "merchant"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +463,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "partner", "merchant"],
+    },
   },
 } as const
