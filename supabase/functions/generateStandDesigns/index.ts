@@ -90,8 +90,9 @@ Style: Modern, clean, professional, eye-catching. High quality print-ready desig
       });
 
       if (!aiResponse.ok) {
-        console.error('AI API error:', await aiResponse.text());
-        continue;
+        const errorText = await aiResponse.text();
+        console.error('AI API error:', errorText);
+        throw new Error(`AI API error: ${errorText}`);
       }
 
       const aiData = await aiResponse.json();

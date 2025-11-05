@@ -165,10 +165,8 @@ serve(async (req) => {
       }),
     }).catch(err => console.error('Email sending failed (non-blocking):', err));
 
-    // Start email sending but don't wait for it
-    if (typeof EdgeRuntime !== 'undefined' && EdgeRuntime.waitUntil) {
-      EdgeRuntime.waitUntil(emailPromise);
-    }
+    // Start email sending but don't wait for it (fire and forget)
+    emailPromise.catch(err => console.error('Email promise error:', err));
 
     return new Response(
       JSON.stringify({
