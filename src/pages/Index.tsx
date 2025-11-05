@@ -101,10 +101,10 @@ const Index = () => {
         className="text-center mt-16"
       >
         <GradientButton onClick={() => navigate('/auth')} icon={Sparkles}>
-          Jetzt einloggen
+          Admin/Merchant Login
         </GradientButton>
         <p className="text-sm text-muted-foreground mt-4">
-          Lovable Cloud: Auth, Datenbank, Storage & Functions
+          DSGVO-konforme Review-Verwaltung powered by Lovable Cloud
         </p>
       </motion.div>
     </div>

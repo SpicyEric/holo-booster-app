@@ -90,7 +90,7 @@ const Auth = () => {
         toast.error("Registrierung fehlgeschlagen: " + error.message);
       }
     } else {
-      toast.success("Konto erstellt! Bitte bestätige deine E-Mail.");
+      toast.success("Konto erstellt! Du kannst dich jetzt anmelden.");
     }
   };
 
@@ -217,7 +217,7 @@ const Auth = () => {
         </GlassCard>
 
         <p className="text-center text-sm text-muted-foreground mt-6">
-          Nach der Registrierung muss ein Admin dir eine Rolle zuweisen
+          Admin-Zugang: Registriere dich und kontaktiere den Support für Rollenzuweisung
         </p>
       </motion.div>
     </div>
