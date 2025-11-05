@@ -41,33 +41,35 @@ serve(async (req) => {
     }
 
     const designUrls: string[] = [];
-    const colorSchemes = [
-      { name: 'purple', primary: '#8B5CF6', secondary: '#EC4899' },
-      { name: 'blue', primary: '#3B82F6', secondary: '#06B6D4' },
-      { name: 'green', primary: '#10B981', secondary: '#F59E0B' },
-    ];
+    const colorScheme = { 
+      name: 'purple-pink', 
+      primary: '#8B5CF6', 
+      secondary: '#EC4899',
+      gradient: 'linear-gradient(135deg, #8B5CF6, #EC4899)'
+    };
 
-    // Generate 3 designs with different color schemes
-    for (const scheme of colorSchemes) {
-      const prompt = `Create a modern DIN A5 (148mm x 210mm) vertical poster design for a loyalty QR code stand with the following elements:
-      
-1. Company name "${customer.company_name || customer.name}" prominently displayed at the top in elegant typography
-2. A clean, modern layout with ${scheme.primary} and ${scheme.secondary} gradient color scheme
-3. Three numbered steps in the middle:
-   - Step 1: "Scanne den Code" (Scan the code) with QR code icon
-   - Step 2: "Beantworte 3 Fragen" (Answer 3 questions) with form icon
-   - Step 3: "Erhalte dein Geschenk" (Receive your gift) with gift icon
-4. A placeholder square in the center for QR code (150mm x 150mm)
-5. The offer text "${customer.offer_text}" displayed attractively below the steps
-6. Modern, professional design suitable for retail/gastronomy
-7. Clean white or light background with gradient accents
-8. Icons should be simple and modern
-9. Use sans-serif fonts
-10. High quality, print-ready design
+    // Generate design with purple-pink gradient
+    const prompt = `Create a modern DIN A3 (297mm x 420mm) horizontal poster design for a loyalty QR code stand with the following EXACT layout:
 
-The design should be eye-catching, professional, and encourage customers to scan the QR code.`;
+CRITICAL DESIGN REQUIREMENTS:
+1. Top: Purple-pink diagonal gradient stripes in corners (like reference image)
+2. Center Top: Company name "${customer.company_name || customer.name}" in large bold font with purple gradient text
+3. Layout: HORIZONTAL bullet-style from LEFT to RIGHT:
+   - Far LEFT: Medium-sized QR code placeholder (not too large)
+   - CENTER-LEFT: Step 1 icon (QR scan icon) + "Scanne den Code."
+   - CENTER: Step 2 icon (review/star icon) + "Bewerte ehrlich."
+   - CENTER-RIGHT: Step 3 icon (gift icon) + "Erhalte dein Geschenk."
+4. Bottom: Large text "${customer.offer_text}" in bold, centered
+5. Color scheme: Purple (#8B5CF6) to Pink (#EC4899) gradient
+6. Background: Clean white/light gray
+7. Icons: Simple, modern line icons in purple
+8. Typography: Bold sans-serif fonts
+9. Numbers 1, 2, 3 in large purple gradient text
+10. Decorative diagonal gradient stripes in top-left and bottom-right corners
 
-      console.log('Generating design with color scheme:', scheme.name);
+Style: Modern, clean, professional, eye-catching. High quality print-ready design.`;
+
+      console.log('Generating A3 design with purple-pink gradient');
 
       const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
         method: 'POST',
@@ -96,15 +98,15 @@ The design should be eye-catching, professional, and encourage customers to scan
       const imageBase64 = aiData.choices?.[0]?.message?.images?.[0]?.image_url?.url;
 
       if (!imageBase64) {
-        console.error('No image generated for scheme:', scheme.name);
-        continue;
+        console.error('No image generated');
+        throw new Error('Failed to generate design image');
       }
 
       // Upload to Supabase Storage
       const base64Data = imageBase64.split(',')[1];
       const buffer = Uint8Array.from(atob(base64Data), c => c.charCodeAt(0));
 
-      const fileName = `${customerId}/design-${scheme.name}-${Date.now()}.png`;
+      const fileName = `${customerId}/design-a3-${Date.now()}.png`;
       const { data: uploadData, error: uploadError } = await supabaseClient
         .storage
         .from('customer-assets')
@@ -115,7 +117,7 @@ The design should be eye-catching, professional, and encourage customers to scan
 
       if (uploadError) {
         console.error('Upload error:', uploadError);
-        continue;
+        throw new Error('Failed to upload design to storage');
       }
 
       const { data: { publicUrl } } = supabaseClient
@@ -124,7 +126,6 @@ The design should be eye-catching, professional, and encourage customers to scan
         .getPublicUrl(fileName);
 
       designUrls.push(publicUrl);
-    }
 
     // Update customer with design URLs
     const { error: updateError } = await supabaseClient
