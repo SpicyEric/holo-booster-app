@@ -11,6 +11,16 @@ import { z } from "zod";
 import { Sparkles, Star } from "lucide-react";
 import { motion } from "framer-motion";
 import { CircularProgress } from "@/components/CircularProgress";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 const contactSchema = z.object({
   email: z.string().email("Ungültige E-Mail").optional().or(z.literal('')),
@@ -28,6 +38,7 @@ const Scan = () => {
   const [optIn, setOptIn] = useState(false);
   const [showVoucher, setShowVoucher] = useState(false);
   const [showReviewPrompt, setShowReviewPrompt] = useState(false);
+  const [showRedeemDialog, setShowRedeemDialog] = useState(false);
   const [countdown, setCountdown] = useState(900); // 15 min in seconds
   const [voucherCode, setVoucherCode] = useState("");
 
@@ -154,7 +165,7 @@ const Scan = () => {
     );
   }
 
-  const handleRedeem = async () => {
+  const handleRedeemConfirm = async () => {
     try {
       const { error } = await supabase
         .from('claims')
@@ -166,7 +177,10 @@ const Scan = () => {
         return;
       }
       
-      toast.success('Gutschein erfolgreich eingelöst! 🎉');
+      toast.success('Vielen Dank für deine Unterstützung. Wir hoffen, wir konnten dir hiermit auch eine Freude machen! 🎉', {
+        duration: 5000,
+      });
+      setShowRedeemDialog(false);
       setShowVoucher(false);
     } catch (err) {
       toast.error('Fehler beim Einlösen');
@@ -208,20 +222,10 @@ const Scan = () => {
                 }, 3000);
               }}
               icon={Star}
-              className="w-full mb-4"
+              className="w-full"
             >
               Jetzt bei Google bewerten
             </GradientButton>
-
-            <button
-              onClick={() => {
-                setShowReviewPrompt(false);
-                setShowVoucher(true);
-              }}
-              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-            >
-              Bewertung überspringen →
-            </button>
           </GlassCard>
         </motion.div>
       </div>
@@ -271,10 +275,10 @@ const Scan = () => {
                     Zeige diesen Code an der Kasse
                   </p>
                   <GradientButton
-                    onClick={handleRedeem}
+                    onClick={() => setShowRedeemDialog(true)}
                     className="w-full"
                   >
-                    Jetzt einlösen
+                    Gutschein einlösen
                   </GradientButton>
                 </>
               ) : (
@@ -285,6 +289,24 @@ const Scan = () => {
             </motion.div>
           </GlassCard>
         </motion.div>
+
+        <AlertDialog open={showRedeemDialog} onOpenChange={setShowRedeemDialog}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Gutschein einlösen?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Hast du den Gutschein bei einem Mitarbeiter eingelöst? 
+                Diese Aktion kann nicht rückgängig gemacht werden.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Nein, noch nicht</AlertDialogCancel>
+              <AlertDialogAction onClick={handleRedeemConfirm}>
+                Ja, eingelöst
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     );
   }
