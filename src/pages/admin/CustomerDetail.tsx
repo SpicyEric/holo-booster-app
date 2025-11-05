@@ -28,6 +28,7 @@ const CustomerDetail = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [generatingDesigns, setGeneratingDesigns] = useState(false);
   const [showRegenerateDialog, setShowRegenerateDialog] = useState(false);
   const [confirmText, setConfirmText] = useState("");
   
@@ -220,6 +221,35 @@ const CustomerDetail = () => {
     a.href = url;
     a.download = `${formData.name}-QR-Code.png`;
     a.click();
+  };
+
+  const generateStandDesigns = async () => {
+    if (!formData.qr_code_url) {
+      toast.error('Bitte generiere zuerst einen QR-Code');
+      return;
+    }
+
+    setGeneratingDesigns(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('generateStandDesigns', {
+        body: { customerId: id },
+      });
+
+      if (error) throw error;
+
+      if (data.designUrls && data.designUrls.length > 0) {
+        setFormData({ ...formData, design_urls: data.designUrls });
+        await loadCustomer(); // Reload to get updated design URLs
+        toast.success(`${data.designUrls.length} Designs erfolgreich erstellt! 🎨`);
+      } else {
+        toast.error('Keine Designs konnten erstellt werden');
+      }
+    } catch (error: any) {
+      toast.error('Fehler beim Generieren der Designs');
+      console.error(error);
+    } finally {
+      setGeneratingDesigns(false);
+    }
   };
 
   if (loading) {
@@ -464,6 +494,50 @@ const CustomerDetail = () => {
               <p className="text-xs text-muted-foreground mb-1">Volle URL:</p>
               <p className="text-xs font-mono break-all">{qrCodeUrl}</p>
             </div>
+          </GlassCard>
+
+          {/* Aufsteller-Designs */}
+          <GlassCard>
+            <h2 className="text-xl font-bold mb-4">Aufsteller-Designs</h2>
+            <p className="text-sm text-muted-foreground mb-4">
+              Generiere automatisch 3 professionelle Designs in DIN A5 für deine Aufsteller
+            </p>
+
+            {formData.design_urls && formData.design_urls.length > 0 && (
+              <div className="grid grid-cols-1 gap-4 mb-4">
+                {formData.design_urls.map((url, index) => (
+                  <div key={index} className="relative group">
+                    <img
+                      src={url}
+                      alt={`Design ${index + 1}`}
+                      className="w-full rounded-lg border border-border"
+                    />
+                    <a
+                      href={url}
+                      download={`${formData.company_name || formData.name}-Design-${index + 1}.png`}
+                      className="absolute top-2 right-2 p-2 bg-background/90 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity"
+                    >
+                      <Download className="w-4 h-4" />
+                    </a>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <GradientButton
+              onClick={generateStandDesigns}
+              disabled={generatingDesigns || !formData.qr_code_url}
+              className="w-full"
+            >
+              {generatingDesigns ? "Generiere Designs..." : 
+               formData.design_urls && formData.design_urls.length > 0 ? "Neue Designs generieren" : "Designs erstellen"}
+            </GradientButton>
+
+            {!formData.qr_code_url && (
+              <p className="text-sm text-muted-foreground mt-2">
+                ⚠️ QR-Code muss zuerst generiert werden
+              </p>
+            )}
           </GlassCard>
         </div>
       </div>

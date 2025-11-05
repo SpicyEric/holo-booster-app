@@ -147,6 +147,29 @@ serve(async (req) => {
 
     console.log('Claim created:', claim.id, 'Code:', voucherCode);
 
+    // Send confirmation email asynchronously (non-blocking)
+    const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
+    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY') ?? '';
+    
+    const emailPromise = fetch(`${supabaseUrl}/functions/v1/sendConfirmationEmail`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${supabaseAnonKey}`,
+      },
+      body: JSON.stringify({
+        email: email || phone || '',
+        customerName: customer.name,
+        offerText: customer.offer_text,
+        unsubscribeToken: contact.unsubscribe_token,
+      }),
+    }).catch(err => console.error('Email sending failed (non-blocking):', err));
+
+    // Start email sending but don't wait for it
+    if (typeof EdgeRuntime !== 'undefined' && EdgeRuntime.waitUntil) {
+      EdgeRuntime.waitUntil(emailPromise);
+    }
+
     return new Response(
       JSON.stringify({
         voucherCode,
