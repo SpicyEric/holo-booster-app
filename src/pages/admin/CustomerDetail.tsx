@@ -3,13 +3,23 @@ import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { GlassCard } from "@/components/GlassCard";
 import { GradientButton } from "@/components/GradientButton";
-import { ArrowLeft, Save, QrCode, Upload, Download } from "lucide-react";
+import { ArrowLeft, Save, QrCode, Upload, Download, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { QRCodeSVG } from "qrcode.react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 const CustomerDetail = () => {
   const { id } = useParams();
@@ -18,6 +28,8 @@ const CustomerDetail = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [showRegenerateDialog, setShowRegenerateDialog] = useState(false);
+  const [confirmText, setConfirmText] = useState("");
   
   const [formData, setFormData] = useState({
     name: "",
@@ -120,38 +132,71 @@ const CustomerDetail = () => {
     }
   };
 
-  const generateQRCode = async () => {
+  const generateQRCode = async (isRegeneration = false) => {
     try {
-      const canvas = qrRef.current?.querySelector("canvas");
-      if (!canvas) return;
+      // Erstelle einen temporären Container für die QR-Code-Generierung
+      const tempContainer = document.createElement('div');
+      tempContainer.style.position = 'absolute';
+      tempContainer.style.left = '-9999px';
+      document.body.appendChild(tempContainer);
 
-      canvas.toBlob(async (blob) => {
-        if (!blob) return;
-
-        const fileName = `${id}-qr-${Date.now()}.png`;
-        const filePath = `qrcodes/${fileName}`;
-
-        const { error: uploadError } = await supabase.storage
-          .from("customer-assets")
-          .upload(filePath, blob);
-
-        if (uploadError) throw uploadError;
-
-        const { data: { publicUrl } } = supabase.storage
-          .from("customer-assets")
-          .getPublicUrl(filePath);
-
-        await supabase
-          .from("customers")
-          .update({ qr_code_url: publicUrl })
-          .eq("id", id);
-
-        setFormData({ ...formData, qr_code_url: publicUrl });
-        toast.success("QR-Code generiert und gespeichert");
+      // Importiere QRCode dynamisch für Canvas-Rendering
+      const QRCode = (await import('qrcode')).default;
+      const qrCodeDataUrl = await QRCode.toDataURL(qrCodeUrl, {
+        width: 512,
+        margin: 2,
+        errorCorrectionLevel: 'H'
       });
+
+      // Konvertiere Base64 zu Blob
+      const response = await fetch(qrCodeDataUrl);
+      const blob = await response.blob();
+
+      const fileName = `${id}-qr-${Date.now()}.png`;
+      const filePath = `qrcodes/${fileName}`;
+
+      // Wenn es eine Regenerierung ist, lösche alten QR-Code
+      if (isRegeneration && formData.qr_code_url) {
+        const oldPath = formData.qr_code_url.split('/').pop();
+        if (oldPath) {
+          await supabase.storage
+            .from("customer-assets")
+            .remove([`qrcodes/${oldPath}`]);
+        }
+      }
+
+      const { error: uploadError } = await supabase.storage
+        .from("customer-assets")
+        .upload(filePath, blob);
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from("customer-assets")
+        .getPublicUrl(filePath);
+
+      await supabase
+        .from("customers")
+        .update({ qr_code_url: publicUrl })
+        .eq("id", id);
+
+      setFormData({ ...formData, qr_code_url: publicUrl });
+      document.body.removeChild(tempContainer);
+      
+      toast.success(isRegeneration ? "Neuer QR-Code generiert" : "QR-Code generiert und gespeichert");
     } catch (error: any) {
       toast.error("Fehler beim Generieren des QR-Codes");
       console.error(error);
+    }
+  };
+
+  const handleRegenerateConfirm = () => {
+    if (confirmText.toLowerCase() === "sicher") {
+      generateQRCode(true);
+      setShowRegenerateDialog(false);
+      setConfirmText("");
+    } else {
+      toast.error('Bitte gib "Sicher" ein, um fortzufahren');
     }
   };
 
@@ -322,7 +367,7 @@ const CustomerDetail = () => {
 
             <div className="space-y-2">
               {!formData.qr_code_url ? (
-                <GradientButton onClick={generateQRCode} icon={QrCode} className="w-full">
+                <GradientButton onClick={() => generateQRCode(false)} icon={QrCode} className="w-full">
                   QR-Code generieren & speichern
                 </GradientButton>
               ) : (
@@ -334,19 +379,77 @@ const CustomerDetail = () => {
                     <Download className="w-4 h-4" />
                     QR-Code herunterladen
                   </button>
-                  <GradientButton onClick={generateQRCode} icon={QrCode} className="w-full">
-                    QR-Code neu generieren
-                  </GradientButton>
+                  
+                  <a
+                    href={qrCodeUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full px-4 py-2 bg-primary/10 hover:bg-primary/20 border border-primary/30 rounded-lg transition-colors flex items-center justify-center gap-2 text-primary"
+                  >
+                    Test-Link öffnen
+                  </a>
+
+                  <button
+                    onClick={() => setShowRegenerateDialog(true)}
+                    className="w-full px-4 py-2 bg-destructive/10 hover:bg-destructive/20 border border-destructive/30 rounded-lg transition-colors flex items-center justify-center gap-2 text-destructive"
+                  >
+                    <AlertTriangle className="w-4 h-4" />
+                    Neuen QR-Code generieren
+                  </button>
                 </>
               )}
             </div>
 
-            <p className="text-xs text-muted-foreground mt-4">
-              Führt zu: /s/{id}
-            </p>
+            <div className="mt-4 p-3 bg-muted/50 rounded-lg">
+              <p className="text-xs text-muted-foreground mb-1">Volle URL:</p>
+              <p className="text-xs font-mono break-all">{qrCodeUrl}</p>
+            </div>
           </GlassCard>
         </div>
       </div>
+
+      <AlertDialog open={showRegenerateDialog} onOpenChange={setShowRegenerateDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2 text-destructive">
+              <AlertTriangle className="w-5 h-5" />
+              QR-Code wirklich neu generieren?
+            </AlertDialogTitle>
+            <AlertDialogDescription className="space-y-3">
+              <p className="font-semibold">
+                ⚠️ ACHTUNG: Der alte QR-Code wird dadurch ungültig!
+              </p>
+              <p>
+                Falls der Kunde bereits gedruckte Aufsteller mit dem alten QR-Code hat,
+                funktionieren diese nicht mehr.
+              </p>
+              <div className="pt-2">
+                <Label htmlFor="confirm-text">
+                  Tippe <span className="font-bold">"Sicher"</span> ein, um fortzufahren:
+                </Label>
+                <Input
+                  id="confirm-text"
+                  value={confirmText}
+                  onChange={(e) => setConfirmText(e.target.value)}
+                  placeholder="Sicher"
+                  className="mt-2"
+                />
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setConfirmText("")}>
+              Abbrechen
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleRegenerateConfirm}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Code ändern
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
