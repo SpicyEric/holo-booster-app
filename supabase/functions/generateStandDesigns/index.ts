@@ -68,7 +68,7 @@ serve(async (req) => {
 
     console.log('Template URL:', templateUrl);
 
-    // Use Cloudinary to compose the image
+    // Use Cloudinary Upload API instead of transformation
     const cloudName = Deno.env.get('CLOUDINARY_CLOUD_NAME');
     const apiKey = Deno.env.get('CLOUDINARY_API_KEY');
     const apiSecret = Deno.env.get('CLOUDINARY_API_SECRET');
@@ -77,35 +77,87 @@ serve(async (req) => {
       throw new Error('Cloudinary credentials not configured');
     }
 
-    // Encode URLs for Cloudinary fetch
-    const qrUrlEncoded = btoa(customer.qr_code_url).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-    const logoUrlEncoded = customer.logo_url ? btoa(customer.logo_url).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '') : null;
-    const templateUrlEncoded = btoa(templateUrl).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-
-    // Clean offer text for display
-    const offerText = (customer.offer_text || 'Geschenk sichern!').replace(/[^a-zA-Z0-9äöüÄÖÜß\s]/g, '');
-
-    // Build transformation layers
-    const layers = [];
-    
-    // Layer 1: QR Code at position x=130, y=1100 (from top), size=400x400
-    layers.push(`l_fetch:${qrUrlEncoded}/w_400,h_400,c_fill/x_130,y_1100,g_north_west/fl_layer_apply`);
-    
-    // Layer 2: Logo at position x=100, y=100 (from top), size=200x200 (if exists)
-    if (logoUrlEncoded) {
-      layers.push(`l_fetch:${logoUrlEncoded}/w_200,h_200,c_fit/x_100,y_100,g_north_west/fl_layer_apply`);
+    // First, upload the template to Cloudinary using signed upload
+    const templateResponse = await fetch(templateUrl);
+    if (!templateResponse.ok) {
+      throw new Error('Failed to fetch template from storage');
     }
-    
-    // Layer 3: Text centered at x=874, y=380
-    layers.push(`l_text:Arial_56_bold:${encodeURIComponent(offerText)}/co_rgb:000000/x_874,y_380,g_north_west/fl_layer_apply`);
+    const templateBuffer = await templateResponse.arrayBuffer();
+    const templateBase64 = btoa(String.fromCharCode(...new Uint8Array(templateBuffer)));
 
-    // Build final Cloudinary URL
-    const cloudinaryUrl = `https://res.cloudinary.com/${cloudName}/image/upload/${layers.join('/')}/f_png/l_fetch:${templateUrlEncoded}/fl_layer_apply`;
+    // Create signature for Cloudinary upload
+    const timestamp = Math.round(Date.now() / 1000);
+    const publicId = `templates/base-template-${timestamp}`;
+    
+    // Create form data for upload
+    const formData = new FormData();
+    formData.append('file', `data:image/png;base64,${templateBase64}`);
+    formData.append('api_key', apiKey);
+    formData.append('timestamp', timestamp.toString());
+    formData.append('public_id', publicId);
+    
+    // Generate signature using Web Crypto API
+    const stringToSign = `public_id=${publicId}&timestamp=${timestamp}${apiSecret}`;
+    const encoder = new TextEncoder();
+    const data = encoder.encode(stringToSign);
+    const hashBuffer = await crypto.subtle.digest('SHA-1', data);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    const signature = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    
+    formData.append('signature', signature);
+
+    const uploadResponse = await fetch(
+      `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
+      {
+        method: 'POST',
+        body: formData,
+      }
+    );
+
+    if (!uploadResponse.ok) {
+      const errorDetail = await uploadResponse.text();
+      console.error('Cloudinary upload failed:', errorDetail);
+      throw new Error(`Template upload to Cloudinary failed: ${errorDetail}`);
+    }
+
+    const uploadData = await uploadResponse.json();
+    const cloudinaryTemplateId = uploadData.public_id;
+
+    console.log('Template uploaded to Cloudinary:', cloudinaryTemplateId);
+
+    // Clean offer text
+    const offerText = (customer.offer_text || 'Geschenk sichern!').replace(/[^a-zA-Z0-9äöüÄÖÜß\s]/g, ' ');
+
+    // Build transformation URL using uploaded template
+    const transformations = [
+      // Overlay QR Code
+      `l_fetch:${encodeURIComponent(btoa(customer.qr_code_url))}`,
+      'w_400,h_400,c_fill',
+      'fl_layer_apply,x_130,y_1100,g_north_west',
+    ];
+
+    // Add logo if exists
+    if (customer.logo_url) {
+      transformations.push(
+        `l_fetch:${encodeURIComponent(btoa(customer.logo_url))}`,
+        'w_200,h_200,c_fit',
+        'fl_layer_apply,x_100,y_100,g_north_west'
+      );
+    }
+
+    // Add text overlay
+    transformations.push(
+      `l_text:Arial_56_bold:${encodeURIComponent(offerText)}`,
+      'co_rgb:000000',
+      'fl_layer_apply,x_874,y_380,g_north_west'
+    );
+
+    const cloudinaryUrl = `https://res.cloudinary.com/${cloudName}/image/upload/${transformations.join('/')}/${cloudinaryTemplateId}.png`;
 
     console.log('Generating design via Cloudinary...');
     console.log('URL:', cloudinaryUrl);
 
-    // Fetch composed image from Cloudinary
+    // Fetch composed image
     const imageResponse = await fetch(cloudinaryUrl);
     
     if (!imageResponse.ok) {
