@@ -137,7 +137,10 @@ export type Database = {
           id: string
           logo_url: string | null
           name: string
+          offer_details: string | null
           offer_text: string
+          offer_title: string | null
+          qr_code_url: string | null
           updated_at: string
         }
         Insert: {
@@ -147,7 +150,10 @@ export type Database = {
           id?: string
           logo_url?: string | null
           name: string
+          offer_details?: string | null
           offer_text: string
+          offer_title?: string | null
+          qr_code_url?: string | null
           updated_at?: string
         }
         Update: {
@@ -157,7 +163,10 @@ export type Database = {
           id?: string
           logo_url?: string | null
           name?: string
+          offer_details?: string | null
           offer_text?: string
+          offer_title?: string | null
+          qr_code_url?: string | null
           updated_at?: string
         }
         Relationships: []
