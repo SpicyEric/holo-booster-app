@@ -16,7 +16,7 @@ export const GlassCard = ({ children, className, hover = true }: GlassCardProps)
       whileHover={hover ? { scale: 1.02 } : {}}
       className={cn(
         "relative backdrop-blur-glass rounded-3xl p-6",
-        "bg-card/60 border border-white/10",
+        "bg-card/60",
         "shadow-card",
         "transition-all duration-300",
         className

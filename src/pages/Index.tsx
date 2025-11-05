@@ -1,10 +1,12 @@
 import { GlassCard } from "@/components/GlassCard";
 import { GradientButton } from "@/components/GradientButton";
 import { CircularProgress } from "@/components/CircularProgress";
+import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Sparkles, QrCode, LineChart, Shield } from "lucide-react";
 
 const Index = () => {
+  const navigate = useNavigate();
   return (
     <div className="min-h-screen bg-background p-8">
       {/* Hero Section */}
@@ -98,11 +100,11 @@ const Index = () => {
         transition={{ delay: 0.5 }}
         className="text-center mt-16"
       >
-        <GradientButton icon={Sparkles}>
-          Lovable Cloud aktivieren
+        <GradientButton onClick={() => navigate('/auth')} icon={Sparkles}>
+          Jetzt einloggen
         </GradientButton>
         <p className="text-sm text-muted-foreground mt-4">
-          Backend-Features für Auth, Datenbank, Storage & Functions
+          Lovable Cloud: Auth, Datenbank, Storage & Functions
         </p>
       </motion.div>
     </div>
