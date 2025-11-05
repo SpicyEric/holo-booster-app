@@ -44,7 +44,14 @@ const Scan = () => {
   }, [showVoucher, countdown]);
 
   const loadCustomer = async () => {
-    if (!cid) return;
+    if (!cid) {
+      console.error('No customer ID provided');
+      setLoading(false);
+      return;
+    }
+    
+    console.log('Loading customer with ID:', cid);
+    setLoading(true);
     
     try {
       const { data, error } = await (supabase as any)
@@ -54,15 +61,25 @@ const Scan = () => {
         .eq('active', true)
         .maybeSingle();
 
-      if (error || !data) {
+      if (error) {
+        console.error('Error loading customer:', error);
+        toast.error("Fehler beim Laden des Kunden");
+        setLoading(false);
+        return;
+      }
+
+      if (!data) {
+        console.error('Customer not found for ID:', cid);
         toast.error("Kunde nicht gefunden");
         setLoading(false);
         return;
       }
 
+      console.log('Customer loaded successfully:', data);
       setCustomer(data);
       setLoading(false);
-    } catch {
+    } catch (err) {
+      console.error('Exception loading customer:', err);
       toast.error("Fehler beim Laden");
       setLoading(false);
     }
