@@ -77,15 +77,39 @@ const Scan = () => {
       return;
     }
 
+    if (!optIn) {
+      toast.error("Bitte stimme der Datenverarbeitung zu");
+      return;
+    }
+
     if (!customer) return;
 
-    // Generate voucher code (simple version)
-    const code = `${customer.name.slice(0, 3).toUpperCase()}-${Math.random().toString(36).substr(2, 4).toUpperCase()}`;
-    
-    // Simulate backend call (later replace with edge function)
-    setVoucherCode(code);
-    setShowVoucher(true);
-    toast.success("Gutschein erstellt!");
+    try {
+      // Call edge function to capture contact and generate voucher
+      const { data, error } = await supabase.functions.invoke('publicCaptureContact', {
+        body: {
+          customerId: cid,
+          email: email || null,
+          phone: phone || null,
+          optIn: true,
+        },
+      });
+
+      if (error) {
+        console.error('Error capturing contact:', error);
+        toast.error('Fehler beim Erstellen des Gutscheins');
+        return;
+      }
+
+      console.log('Voucher response:', data);
+      setVoucherCode(data.voucherCode);
+      setShowVoucher(true);
+      setCountdown(300); // Reset countdown to 5 minutes
+      toast.success('Gutschein erfolgreich erstellt!');
+    } catch (error) {
+      console.error('Error:', error);
+      toast.error('Fehler beim Erstellen des Gutscheins');
+    }
   };
 
   const formatTime = (seconds: number) => {
@@ -228,12 +252,13 @@ const Scan = () => {
               />
               <label
                 htmlFor="optin"
-                className="text-sm text-muted-foreground leading-relaxed"
+                className="text-sm text-muted-foreground leading-relaxed cursor-pointer"
               >
-                Ich willige ein, von {customer.name} per E-Mail/SMS über Angebote informiert zu werden.{' '}
-                <button type="button" className="text-primary underline">
-                  Details & Widerruf
-                </button>
+                Ich willige ein, von {customer.name} per E-Mail/SMS über Angebote informiert zu werden.
+                Ich kann diese Einwilligung jederzeit widerrufen.{' '}
+                <a href="#" className="text-primary hover:underline">
+                  Datenschutz
+                </a>
               </label>
             </div>
 
@@ -248,7 +273,7 @@ const Scan = () => {
           </form>
 
           <p className="text-xs text-center text-muted-foreground mt-4">
-            Deine Daten werden DSGVO-konform verarbeitet
+            Deine Daten werden DSGVO-konform gespeichert. Du erhältst einen Widerrufslink per E-Mail.
           </p>
         </GlassCard>
       </motion.div>
