@@ -10,6 +10,7 @@ import Overview from "./pages/admin/Overview";
 import Customers from "./pages/admin/Customers";
 import CustomerDetail from "./pages/admin/CustomerDetail";
 import CustomerNew from "./pages/admin/CustomerNew";
+import Settings from "./pages/admin/Settings";
 import MerchantDashboard from "./pages/merchant/Dashboard";
 import PartnerDashboard from "./pages/partner/Dashboard";
 import Scan from "./pages/Scan";
@@ -31,6 +32,7 @@ const App = () => (
             <Route path="customers" element={<Customers />} />
             <Route path="customers/new" element={<CustomerNew />} />
             <Route path="customers/:id" element={<CustomerDetail />} />
+            <Route path="settings" element={<Settings />} />
           </Route>
           <Route path="/merchant" element={<MerchantDashboard />} />
           <Route path="/partner" element={<PartnerDashboard />} />

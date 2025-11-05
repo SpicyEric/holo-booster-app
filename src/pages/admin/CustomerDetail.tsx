@@ -28,7 +28,6 @@ const CustomerDetail = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
-  const [uploadingTemplate, setUploadingTemplate] = useState(false);
   const [generatingDesigns, setGeneratingDesigns] = useState(false);
   const [showRegenerateDialog, setShowRegenerateDialog] = useState(false);
   const [confirmText, setConfirmText] = useState("");
@@ -239,14 +238,14 @@ const CustomerDetail = () => {
       if (error) throw error;
 
       if (data.needsTemplate) {
-        toast.error('Template fehlt! Bitte lade zuerst das Base-Template hoch.');
+        toast.error('Template fehlt! Bitte lade in den Einstellungen ein Base-Template hoch.');
         return;
       }
 
       if (data.designUrls && data.designUrls.length > 0) {
         setFormData({ ...formData, design_urls: data.designUrls });
-        await loadCustomer(); // Reload to get updated design URLs
-        toast.success(`${data.designUrls.length} Designs erfolgreich erstellt! 🎨`);
+        await loadCustomer();
+        toast.success('Design erfolgreich erstellt! 🎨');
       } else {
         toast.error('Keine Designs konnten erstellt werden');
       }
@@ -255,36 +254,6 @@ const CustomerDetail = () => {
       console.error(error);
     } finally {
       setGeneratingDesigns(false);
-    }
-  };
-
-  const uploadBaseTemplate = async () => {
-    setUploadingTemplate(true);
-    try {
-      // Fetch the template from public folder
-      const response = await fetch('/base-template.png');
-      if (!response.ok) {
-        throw new Error('Template nicht gefunden im public/ Ordner');
-      }
-
-      const blob = await response.blob();
-
-      // Upload to Supabase Storage
-      const { error: uploadError } = await supabase.storage
-        .from("customer-assets")
-        .upload('base-template.png', blob, {
-          contentType: 'image/png',
-          upsert: true,
-        });
-
-      if (uploadError) throw uploadError;
-
-      toast.success('Base-Template erfolgreich hochgeladen! 🎉');
-    } catch (error: any) {
-      toast.error('Fehler beim Hochladen des Templates');
-      console.error(error);
-    } finally {
-      setUploadingTemplate(false);
     }
   };
 
@@ -535,20 +504,6 @@ const CustomerDetail = () => {
           {/* Aufsteller-Designs */}
           <GlassCard>
             <h2 className="text-xl font-bold mb-4">Aufsteller-Designs</h2>
-            <p className="text-sm text-muted-foreground mb-4">
-              Template-basierte DIN A5 Flyer-Generierung mit Cloudinary
-            </p>
-
-            <div className="mb-4 space-y-2">
-              <button
-                onClick={uploadBaseTemplate}
-                disabled={uploadingTemplate}
-                className="w-full px-4 py-2 bg-secondary/50 hover:bg-secondary border border-border rounded-lg transition-colors flex items-center justify-center gap-2"
-              >
-                <Upload className="w-4 h-4" />
-                {uploadingTemplate ? "Lädt Template hoch..." : "Base-Template hochladen (einmalig)"}
-              </button>
-            </div>
 
             {formData.design_urls && formData.design_urls.length > 0 && (
               <div className="grid grid-cols-1 gap-4 mb-4">
@@ -576,8 +531,7 @@ const CustomerDetail = () => {
               disabled={generatingDesigns || !formData.qr_code_url}
               className="w-full"
             >
-              {generatingDesigns ? "Generiere Designs..." : 
-               formData.design_urls && formData.design_urls.length > 0 ? "Neue Designs generieren" : "Designs erstellen"}
+              {generatingDesigns ? "Generiere Design..." : "Aufsteller Design erstellen"}
             </GradientButton>
 
             {!formData.qr_code_url && (
