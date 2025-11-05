@@ -34,14 +34,18 @@ export const signOut = async () => {
 };
 
 export const getUserRole = async (userId: string): Promise<UserRole | null> => {
-  const { data, error } = await supabase
-    .from('user_roles' as any)
-    .select('role')
-    .eq('user_id', userId)
-    .single();
-  
-  if (error || !data) return null;
-  return data.role as UserRole;
+  try {
+    const { data, error } = await (supabase as any)
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', userId)
+      .single();
+    
+    if (error || !data) return null;
+    return data.role as UserRole;
+  } catch {
+    return null;
+  }
 };
 
 export const checkAdminRole = async (userId: string): Promise<boolean> => {

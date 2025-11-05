@@ -46,21 +46,26 @@ const Scan = () => {
   const loadCustomer = async () => {
     if (!cid) return;
     
-    const { data, error } = await supabase
-      .from('customers' as any)
-      .select('*')
-      .eq('id', cid)
-      .eq('active', true)
-      .single();
+    try {
+      const { data, error } = await (supabase as any)
+        .from('customers')
+        .select('*')
+        .eq('id', cid)
+        .eq('active', true)
+        .maybeSingle();
 
-    if (error || !data) {
-      toast.error("Kunde nicht gefunden");
+      if (error || !data) {
+        toast.error("Kunde nicht gefunden");
+        setLoading(false);
+        return;
+      }
+
+      setCustomer(data);
       setLoading(false);
-      return;
+    } catch {
+      toast.error("Fehler beim Laden");
+      setLoading(false);
     }
-
-    setCustomer(data);
-    setLoading(false);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
