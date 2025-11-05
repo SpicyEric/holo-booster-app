@@ -40,93 +40,104 @@ serve(async (req) => {
       );
     }
 
-    const designUrls: string[] = [];
-    const colorScheme = { 
-      name: 'purple-pink', 
-      primary: '#8B5CF6', 
-      secondary: '#EC4899',
-      gradient: 'linear-gradient(135deg, #8B5CF6, #EC4899)'
-    };
+    console.log('Starting template-based design generation...');
 
-    // Generate design with purple-pink gradient
-    const prompt = `Create a modern DIN A3 (297mm x 420mm) horizontal poster design for a loyalty QR code stand with the following EXACT layout:
-
-CRITICAL DESIGN REQUIREMENTS:
-1. Top: Purple-pink diagonal gradient stripes in corners (like reference image)
-2. Center Top: Company name "${customer.company_name || customer.name}" in large bold font with purple gradient text
-3. Layout: HORIZONTAL bullet-style from LEFT to RIGHT:
-   - Far LEFT: Medium-sized QR code placeholder (not too large)
-   - CENTER-LEFT: Step 1 icon (QR scan icon) + "Scanne den Code."
-   - CENTER: Step 2 icon (review/star icon) + "Bewerte ehrlich."
-   - CENTER-RIGHT: Step 3 icon (gift icon) + "Erhalte dein Geschenk."
-4. Bottom: Large text "${customer.offer_text}" in bold, centered
-5. Color scheme: Purple (#8B5CF6) to Pink (#EC4899) gradient
-6. Background: Clean white/light gray
-7. Icons: Simple, modern line icons in purple
-8. Typography: Bold sans-serif fonts
-9. Numbers 1, 2, 3 in large purple gradient text
-10. Decorative diagonal gradient stripes in top-left and bottom-right corners
-
-Style: Modern, clean, professional, eye-catching. High quality print-ready design.`;
-
-      console.log('Generating A3 design with purple-pink gradient');
-
-      const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${Deno.env.get('LOVABLE_API_KEY')}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          model: 'google/gemini-2.5-flash-image-preview',
-          messages: [
-            {
-              role: 'user',
-              content: prompt,
-            },
-          ],
-          modalities: ['image', 'text'],
-        }),
+    // Check if template exists in Supabase Storage
+    const { data: templateExists } = await supabaseClient
+      .storage
+      .from('customer-assets')
+      .list('', {
+        search: 'base-template.png'
       });
 
-      if (!aiResponse.ok) {
-        const errorText = await aiResponse.text();
-        console.error('AI API error:', errorText);
-        throw new Error(`AI API error: ${errorText}`);
-      }
+    if (!templateExists || templateExists.length === 0) {
+      return new Response(
+        JSON.stringify({ 
+          error: 'Base template not found. Please upload the template first.',
+          needsTemplate: true 
+        }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
 
-      const aiData = await aiResponse.json();
-      const imageBase64 = aiData.choices?.[0]?.message?.images?.[0]?.image_url?.url;
+    // Get template URL
+    const { data: { publicUrl: templateUrl } } = supabaseClient
+      .storage
+      .from('customer-assets')
+      .getPublicUrl('base-template.png');
 
-      if (!imageBase64) {
-        console.error('No image generated');
-        throw new Error('Failed to generate design image');
-      }
+    console.log('Template URL:', templateUrl);
 
-      // Upload to Supabase Storage
-      const base64Data = imageBase64.split(',')[1];
-      const buffer = Uint8Array.from(atob(base64Data), c => c.charCodeAt(0));
+    // Use Cloudinary to compose the image
+    const cloudName = Deno.env.get('CLOUDINARY_CLOUD_NAME');
+    const apiKey = Deno.env.get('CLOUDINARY_API_KEY');
+    const apiSecret = Deno.env.get('CLOUDINARY_API_SECRET');
 
-      const fileName = `${customerId}/design-a3-${Date.now()}.png`;
-      const { data: uploadData, error: uploadError } = await supabaseClient
-        .storage
-        .from('customer-assets')
-        .upload(fileName, buffer, {
-          contentType: 'image/png',
-          upsert: true,
-        });
+    if (!cloudName || !apiKey || !apiSecret) {
+      throw new Error('Cloudinary credentials not configured');
+    }
 
-      if (uploadError) {
-        console.error('Upload error:', uploadError);
-        throw new Error('Failed to upload design to storage');
-      }
+    // Encode URLs for Cloudinary fetch
+    const qrUrlEncoded = btoa(customer.qr_code_url).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    const logoUrlEncoded = customer.logo_url ? btoa(customer.logo_url).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '') : null;
+    const templateUrlEncoded = btoa(templateUrl).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 
-      const { data: { publicUrl } } = supabaseClient
-        .storage
-        .from('customer-assets')
-        .getPublicUrl(fileName);
+    // Clean offer text for display
+    const offerText = (customer.offer_text || 'Geschenk sichern!').replace(/[^a-zA-Z0-9äöüÄÖÜß\s]/g, '');
 
-      designUrls.push(publicUrl);
+    // Build transformation layers
+    const layers = [];
+    
+    // Layer 1: QR Code at position x=130, y=1100 (from top), size=400x400
+    layers.push(`l_fetch:${qrUrlEncoded}/w_400,h_400,c_fill/x_130,y_1100,g_north_west/fl_layer_apply`);
+    
+    // Layer 2: Logo at position x=100, y=100 (from top), size=200x200 (if exists)
+    if (logoUrlEncoded) {
+      layers.push(`l_fetch:${logoUrlEncoded}/w_200,h_200,c_fit/x_100,y_100,g_north_west/fl_layer_apply`);
+    }
+    
+    // Layer 3: Text centered at x=874, y=380
+    layers.push(`l_text:Arial_56_bold:${encodeURIComponent(offerText)}/co_rgb:000000/x_874,y_380,g_north_west/fl_layer_apply`);
+
+    // Build final Cloudinary URL
+    const cloudinaryUrl = `https://res.cloudinary.com/${cloudName}/image/upload/${layers.join('/')}/f_png/l_fetch:${templateUrlEncoded}/fl_layer_apply`;
+
+    console.log('Generating design via Cloudinary...');
+    console.log('URL:', cloudinaryUrl);
+
+    // Fetch composed image from Cloudinary
+    const imageResponse = await fetch(cloudinaryUrl);
+    
+    if (!imageResponse.ok) {
+      const errorText = await imageResponse.text();
+      console.error('Cloudinary error:', errorText);
+      throw new Error(`Cloudinary composition failed: ${imageResponse.statusText}`);
+    }
+
+    const imageBuffer = await imageResponse.arrayBuffer();
+    const uint8Array = new Uint8Array(imageBuffer);
+
+    // Upload final design to Supabase Storage
+    const fileName = `${customerId}/design-a5-${Date.now()}.png`;
+    const { error: uploadError } = await supabaseClient
+      .storage
+      .from('customer-assets')
+      .upload(fileName, uint8Array, {
+        contentType: 'image/png',
+        upsert: true,
+      });
+
+    if (uploadError) {
+      console.error('Upload error:', uploadError);
+      throw new Error('Failed to upload design to storage');
+    }
+
+    const { data: { publicUrl } } = supabaseClient
+      .storage
+      .from('customer-assets')
+      .getPublicUrl(fileName);
+
+    const designUrls = [publicUrl];
 
     // Update customer with design URLs
     const { error: updateError } = await supabaseClient
