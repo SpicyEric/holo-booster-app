@@ -132,40 +132,58 @@ export type Database = {
       customers: {
         Row: {
           active: boolean
+          company_name: string | null
+          contact_person: string | null
           created_at: string
+          design_urls: string[] | null
+          email: string | null
           google_review_url: string
           id: string
+          industry: string | null
           logo_url: string | null
           name: string
           offer_details: string | null
           offer_text: string
           offer_title: string | null
+          phone: string | null
           qr_code_url: string | null
           updated_at: string
         }
         Insert: {
           active?: boolean
+          company_name?: string | null
+          contact_person?: string | null
           created_at?: string
+          design_urls?: string[] | null
+          email?: string | null
           google_review_url: string
           id?: string
+          industry?: string | null
           logo_url?: string | null
           name: string
           offer_details?: string | null
           offer_text: string
           offer_title?: string | null
+          phone?: string | null
           qr_code_url?: string | null
           updated_at?: string
         }
         Update: {
           active?: boolean
+          company_name?: string | null
+          contact_person?: string | null
           created_at?: string
+          design_urls?: string[] | null
+          email?: string | null
           google_review_url?: string
           id?: string
+          industry?: string | null
           logo_url?: string | null
           name?: string
           offer_details?: string | null
           offer_text?: string
           offer_title?: string | null
+          phone?: string | null
           qr_code_url?: string | null
           updated_at?: string
         }

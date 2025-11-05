@@ -14,15 +14,20 @@ const CustomerNew = () => {
   const [creating, setCreating] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
+    company_name: "",
+    industry: "",
+    contact_person: "",
+    phone: "",
+    email: "",
     google_review_url: "",
-    offer_text: "",
-    offer_title: "Nur noch ein Schritt zu deinem Geschenk",
-    offer_details: "",
+    offer_text: "Erhalte 10% Rabatt auf dein nächstes Getränk",
+    offer_title: "Nur noch ein Schritt bis zu deinem Geschenk",
+    offer_details: "Zeige diesen Gutschein einfach an der Kasse vor und erhalte deinen Rabatt. Gültig für 15 Minuten nach Erhalt.",
   });
 
   const handleCreate = async () => {
-    if (!formData.name || !formData.google_review_url) {
-      toast.error("Name und Google Review URL sind Pflichtfelder");
+    if (!formData.company_name || !formData.google_review_url || !formData.offer_text) {
+      toast.error("Firmenname, Google Review URL und Gutscheintext sind Pflichtfelder");
       return;
     }
 
@@ -31,7 +36,12 @@ const CustomerNew = () => {
       const { data, error } = await supabase
         .from("customers")
         .insert({
-          name: formData.name,
+          name: formData.company_name,
+          company_name: formData.company_name,
+          industry: formData.industry,
+          contact_person: formData.contact_person,
+          phone: formData.phone,
+          email: formData.email,
           google_review_url: formData.google_review_url,
           offer_text: formData.offer_text,
           offer_title: formData.offer_title,
@@ -76,14 +86,63 @@ const CustomerNew = () => {
           <h2 className="text-xl font-bold mb-4">Grunddaten</h2>
           <div className="space-y-4">
             <div>
-              <Label htmlFor="name">Kundenname *</Label>
+              <Label htmlFor="company_name">Firmenname *</Label>
               <Input
-                id="name"
-                value={formData.name}
+                id="company_name"
+                value={formData.company_name}
                 onChange={(e) =>
-                  setFormData({ ...formData, name: e.target.value })
+                  setFormData({ ...formData, company_name: e.target.value })
                 }
                 placeholder="z.B. Bäckerei Müller"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="industry">Branche</Label>
+              <Input
+                id="industry"
+                value={formData.industry}
+                onChange={(e) =>
+                  setFormData({ ...formData, industry: e.target.value })
+                }
+                placeholder="z.B. Gastronomie, Einzelhandel, Dienstleistung"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="contact_person">Ansprechpartner</Label>
+              <Input
+                id="contact_person"
+                value={formData.contact_person}
+                onChange={(e) =>
+                  setFormData({ ...formData, contact_person: e.target.value })
+                }
+                placeholder="Max Mustermann"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="phone">Telefonnummer</Label>
+              <Input
+                id="phone"
+                value={formData.phone}
+                onChange={(e) =>
+                  setFormData({ ...formData, phone: e.target.value })
+                }
+                placeholder="+49 123 456789"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="email">E-Mail-Adresse</Label>
+              <Input
+                id="email"
+                type="email"
+                value={formData.email}
+                onChange={(e) =>
+                  setFormData({ ...formData, email: e.target.value })
+                }
+                placeholder="info@firma.de"
               />
             </div>
 
@@ -110,19 +169,19 @@ const CustomerNew = () => {
                 onChange={(e) =>
                   setFormData({ ...formData, offer_title: e.target.value })
                 }
-                placeholder="Nur noch ein Schritt zu deinem Geschenk"
+                placeholder="Nur noch ein Schritt bis zu deinem Geschenk"
               />
             </div>
 
             <div>
-              <Label htmlFor="offer_text">Gutschein-Text (kurz)</Label>
+              <Label htmlFor="offer_text">Gutschein-Text (kurz) *</Label>
               <Input
                 id="offer_text"
                 value={formData.offer_text}
                 onChange={(e) =>
                   setFormData({ ...formData, offer_text: e.target.value })
                 }
-                placeholder="1x Gratis-Kaffee"
+                placeholder="Erhalte 10% Rabatt auf dein nächstes Getränk"
               />
             </div>
 
@@ -134,7 +193,7 @@ const CustomerNew = () => {
                 onChange={(e) =>
                   setFormData({ ...formData, offer_details: e.target.value })
                 }
-                placeholder="Nach deiner Registrierung erhältst du einen Gutschein für..."
+                placeholder="Zeige diesen Gutschein einfach an der Kasse vor und erhalte deinen Rabatt. Gültig für 15 Minuten nach Erhalt."
                 rows={4}
               />
             </div>
