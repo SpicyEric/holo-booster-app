@@ -212,15 +212,28 @@ const CustomerDetail = () => {
     }
   };
 
-  const downloadQRCode = () => {
-    const canvas = qrRef.current?.querySelector("canvas");
-    if (!canvas) return;
+  const downloadQRCode = async () => {
+    if (!formData.qr_code_url) {
+      toast.error("Kein QR-Code verfügbar");
+      return;
+    }
 
-    const url = canvas.toDataURL("image/png");
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `${formData.name}-QR-Code.png`;
-    a.click();
+    try {
+      const response = await fetch(formData.qr_code_url);
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${formData.company_name}-QR-Code.png`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+      toast.success("QR-Code heruntergeladen");
+    } catch (error) {
+      toast.error("Fehler beim Download");
+      console.error(error);
+    }
   };
 
   const generateStandDesigns = async () => {
