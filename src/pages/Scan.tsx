@@ -27,7 +27,8 @@ const Scan = () => {
   const [phone, setPhone] = useState("");
   const [optIn, setOptIn] = useState(false);
   const [showVoucher, setShowVoucher] = useState(false);
-  const [countdown, setCountdown] = useState(300); // 5 min in seconds
+  const [showReviewPrompt, setShowReviewPrompt] = useState(false);
+  const [countdown, setCountdown] = useState(900); // 15 min in seconds
   const [voucherCode, setVoucherCode] = useState("");
 
   useEffect(() => {
@@ -120,9 +121,9 @@ const Scan = () => {
 
       console.log('Voucher response:', data);
       setVoucherCode(data.voucherCode);
-      setShowVoucher(true);
-      setCountdown(300); // Reset countdown to 5 minutes
-      toast.success('Gutschein erfolgreich erstellt!');
+      setShowReviewPrompt(true);
+      setCountdown(900); // Reset countdown to 15 minutes
+      toast.success('Bitte bewerte uns jetzt bei Google!');
     } catch (error) {
       console.error('Error:', error);
       toast.error('Fehler beim Erstellen des Gutscheins');
@@ -153,8 +154,82 @@ const Scan = () => {
     );
   }
 
+  const handleRedeem = async () => {
+    try {
+      const { error } = await supabase
+        .from('claims')
+        .update({ redeemed_at: new Date().toISOString() })
+        .eq('code', voucherCode);
+      
+      if (error) {
+        toast.error('Fehler beim Einlösen');
+        return;
+      }
+      
+      toast.success('Gutschein erfolgreich eingelöst! 🎉');
+      setShowVoucher(false);
+    } catch (err) {
+      toast.error('Fehler beim Einlösen');
+    }
+  };
+
+  if (showReviewPrompt) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <motion.div
+          initial={{ scale: 0.8, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          className="w-full max-w-md"
+        >
+          <GlassCard className="text-center">
+            <motion.div
+              animate={{ 
+                scale: [1, 1.05, 1],
+              }}
+              transition={{ duration: 2, repeat: Infinity }}
+              className="text-6xl mb-6"
+            >
+              🎉
+            </motion.div>
+            
+            <h2 className="text-3xl font-bold mb-4">Fast geschafft!</h2>
+            <p className="text-lg text-muted-foreground mb-8">
+              Bitte hinterlasse uns jetzt eine ehrliche Bewertung bei Google, 
+              um deinen Gutschein zu erhalten
+            </p>
+
+            <GradientButton
+              onClick={() => {
+                window.open(customer.google_review_url, '_blank');
+                // Show voucher after 3 seconds
+                setTimeout(() => {
+                  setShowReviewPrompt(false);
+                  setShowVoucher(true);
+                }, 3000);
+              }}
+              icon={Star}
+              className="w-full mb-4"
+            >
+              Jetzt bei Google bewerten
+            </GradientButton>
+
+            <button
+              onClick={() => {
+                setShowReviewPrompt(false);
+                setShowVoucher(true);
+              }}
+              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+            >
+              Bewertung überspringen →
+            </button>
+          </GlassCard>
+        </motion.div>
+      </div>
+    );
+  }
+
   if (showVoucher) {
-    const progress = (countdown / 300) * 100;
+    const progress = (countdown / 900) * 100;
 
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
@@ -191,25 +266,23 @@ const Scan = () => {
               </div>
 
               {countdown > 0 ? (
-                <p className="text-sm text-muted-foreground mb-4">
-                  Zeige diesen Code an der Kasse
-                </p>
+                <>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Zeige diesen Code an der Kasse
+                  </p>
+                  <GradientButton
+                    onClick={handleRedeem}
+                    className="w-full"
+                  >
+                    Jetzt einlösen
+                  </GradientButton>
+                </>
               ) : (
                 <p className="text-destructive font-semibold">
                   Gutschein abgelaufen
                 </p>
               )}
             </motion.div>
-
-            {customer.google_review_url && (
-              <GradientButton
-                onClick={() => window.open(customer.google_review_url, '_blank')}
-                icon={Star}
-                className="mt-6"
-              >
-                Jetzt bei Google bewerten
-              </GradientButton>
-            )}
           </GlassCard>
         </motion.div>
       </div>

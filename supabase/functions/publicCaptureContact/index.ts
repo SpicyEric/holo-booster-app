@@ -59,6 +59,33 @@ serve(async (req) => {
 
     const userAgent = req.headers.get('user-agent') || '';
 
+    // Check for existing contact and active claims (duplicate prevention)
+    const { data: existingContact } = await supabaseClient
+      .from('contacts')
+      .select('id')
+      .eq('customer_id', customerId)
+      .or(`email.eq.${email},phone.eq.${phone}`)
+      .maybeSingle();
+
+    if (existingContact) {
+      // Check if active claim exists
+      const { data: activeClaim } = await supabaseClient
+        .from('claims')
+        .select('id, expire_at')
+        .eq('contact_id', existingContact.id)
+        .is('redeemed_at', null)
+        .gt('expire_at', new Date().toISOString())
+        .maybeSingle();
+      
+      if (activeClaim) {
+        console.log('Active claim exists for contact:', existingContact.id);
+        return new Response(
+          JSON.stringify({ error: 'Du hast bereits einen aktiven Gutschein! Bitte löse diesen zuerst ein.' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+    }
+
     // Create contact with opt-in
     const { data: contact, error: contactError } = await supabaseClient
       .from('contacts')
@@ -95,9 +122,9 @@ serve(async (req) => {
       console.error('Error creating scan:', scanError);
     }
 
-    // Generate voucher code (5-minute expiry)
+    // Generate voucher code (15-minute expiry)
     const voucherCode = `${customer.name.substring(0, 3).toUpperCase()}-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
-    const expireAt = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes
+    const expireAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
 
     const { data: claim, error: claimError } = await supabaseClient
       .from('claims')
