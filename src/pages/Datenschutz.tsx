@@ -1,8 +1,9 @@
-import GooeyNav from '@/components/GooeyNav';
+import ClassicNav from '@/components/ClassicNav';
 import Particles from '@/components/Particles';
-import { GradientButton } from '@/components/GradientButton';
+import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
-import { Shield } from 'lucide-react';
+import { Shield, ArrowRight } from 'lucide-react';
+import qraitLogo from '@/assets/qrait-logo-full.png';
 
 const Datenschutz = () => {
   const navigate = useNavigate();
@@ -18,29 +19,22 @@ const Datenschutz = () => {
   return (
     <div className="min-h-screen bg-background">
       <Particles 
-        particleColors={['#ffffff', '#ffffff', '#ffffff']}
-        particleCount={200}
-        particleSpread={12}
-        speed={0.08}
-        particleBaseSize={150}
-        sizeRandomness={2}
+        particleColors={['#8B5CF6', '#3B82F6', '#8B5CF6']}
+        particleCount={100}
+        particleSpread={8}
+        speed={0.05}
+        particleBaseSize={100}
+        sizeRandomness={1.5}
         moveParticlesOnHover={true}
-        alphaParticles={false}
+        alphaParticles={true}
         disableRotation={false}
-        cameraDistance={18}
+        cameraDistance={20}
       />
-      <div className="fixed top-0 left-0 right-0 flex justify-center z-50 pt-8">
-        <GooeyNav
-          items={navItems}
-          particleCount={15}
-          particleDistances={[90, 10]}
-          particleR={100}
-          initialActiveIndex={2}
-          animationTime={600}
-          timeVariance={300}
-          colors={[1, 2, 3, 1, 2, 3, 1, 4]}
-        />
-      </div>
+      
+      <ClassicNav 
+        items={navItems}
+        logo={<img src={qraitLogo} alt="QRait Logo" className="h-10 w-auto" />}
+      />
 
       <div className="pt-32 pb-20 px-4 sm:px-6 lg:px-8">
         <div className="max-w-4xl mx-auto">
@@ -61,12 +55,13 @@ const Datenschutz = () => {
                   </p>
                 </div>
               </div>
-              <GradientButton 
+              <Button 
                 onClick={() => navigate('/delete')}
                 className="bg-white text-primary hover:bg-white/90"
               >
                 Daten jetzt löschen
-              </GradientButton>
+                <ArrowRight className="ml-2 w-4 h-4" />
+              </Button>
             </div>
           </div>
 

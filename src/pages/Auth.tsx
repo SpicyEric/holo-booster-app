@@ -1,7 +1,9 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { GlassCard } from "@/components/GlassCard";
-import { GradientButton } from "@/components/GradientButton";
+import ClassicNav from "@/components/ClassicNav";
+import Particles from "@/components/Particles";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -11,6 +13,7 @@ import { toast } from "sonner";
 import { z } from "zod";
 import { LogIn, UserPlus } from "lucide-react";
 import { motion } from "framer-motion";
+import qraitLogo from '@/assets/qrait-logo-full.png';
 
 const loginSchema = z.object({
   email: z.string().email("Ungültige E-Mail-Adresse"),
@@ -31,6 +34,14 @@ const Auth = () => {
   const [signupPassword, setSignupPassword] = useState("");
   const [signupName, setSignupName] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+
+  const navItems = [
+    { label: 'Home', href: '/' },
+    { label: 'Kontakt', href: '/kontakt' },
+    { label: 'Datenschutz', href: '/datenschutz' },
+    { label: 'Impressum', href: '/impressum' },
+    { label: 'Login', href: '/auth' }
+  ];
 
   // Redirect if already logged in
   useEffect(() => {
@@ -97,26 +108,46 @@ const Auth = () => {
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="w-16 h-16 rounded-full bg-gradient-primary animate-pulse-glow" />
+        <div className="w-16 h-16 rounded-full bg-gradient-primary animate-pulse" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4 relative">
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="w-full max-w-md"
-      >
-        <div className="text-center mb-8">
-          <div className="w-16 h-16 rounded-full bg-gradient-primary animate-pulse-glow mx-auto mb-4" />
-          <h1 className="text-3xl font-bold bg-gradient-primary bg-clip-text text-transparent">
-            Review Manager
-          </h1>
-        </div>
+    <div className="min-h-screen bg-background">
+      <Particles 
+        particleColors={['#8B5CF6', '#3B82F6', '#8B5CF6']}
+        particleCount={100}
+        particleSpread={8}
+        speed={0.05}
+        particleBaseSize={100}
+        sizeRandomness={1.5}
+        moveParticlesOnHover={true}
+        alphaParticles={true}
+        disableRotation={false}
+        cameraDistance={20}
+      />
+      
+      <ClassicNav 
+        items={navItems}
+        logo={<img src={qraitLogo} alt="QRait Logo" className="h-10 w-auto" />}
+      />
 
-        <GlassCard>
+      <div className="pt-32 pb-20 px-4 flex items-center justify-center min-h-screen">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="w-full max-w-md"
+        >
+          <div className="text-center mb-8">
+            <img src={qraitLogo} alt="QRait Logo" className="h-16 w-auto mx-auto mb-4" />
+            <h1 className="text-3xl font-bold">
+              Anmelden
+            </h1>
+            <p className="text-muted-foreground mt-2">Zugang zu Ihrem Dashboard</p>
+          </div>
+
+          <Card className="p-6 border-border">
           <Tabs defaultValue="login" className="w-full">
             <TabsList className="grid w-full grid-cols-2 mb-6">
               <TabsTrigger value="login">Login</TabsTrigger>
@@ -151,14 +182,14 @@ const Auth = () => {
                   />
                 </div>
 
-                <GradientButton
+                <Button
                   type="submit"
-                  className="w-full"
-                  icon={LogIn}
+                  className="w-full bg-foreground text-background hover:bg-foreground/90"
                   disabled={isLoading}
                 >
+                  <LogIn className="mr-2 w-4 h-4" />
                   {isLoading ? 'Anmeldung...' : 'Anmelden'}
-                </GradientButton>
+                </Button>
               </form>
             </TabsContent>
 
@@ -203,23 +234,24 @@ const Auth = () => {
                   />
                 </div>
 
-                <GradientButton
+                <Button
                   type="submit"
-                  className="w-full"
-                  icon={UserPlus}
+                  className="w-full bg-foreground text-background hover:bg-foreground/90"
                   disabled={isLoading}
                 >
+                  <UserPlus className="mr-2 w-4 h-4" />
                   {isLoading ? 'Registrierung...' : 'Konto erstellen'}
-                </GradientButton>
+                </Button>
               </form>
             </TabsContent>
           </Tabs>
-        </GlassCard>
+        </Card>
 
         <p className="text-center text-sm text-muted-foreground mt-6">
-          Admin-Zugang: Registriere dich und kontaktiere den Support für Rollenzuweisung
+          Kein Konto? Registrieren Sie sich im Tab "Registrieren"
         </p>
-      </motion.div>
+        </motion.div>
+      </div>
     </div>
   );
 };

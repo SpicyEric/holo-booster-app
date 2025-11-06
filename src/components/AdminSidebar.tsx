@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/sidebar";
 import { signOut } from "@/lib/auth";
 import { toast } from "sonner";
+import qraitLogo from '@/assets/qrait-logo-full.png';
 
 const menuItems = [
   { title: "Dashboard", url: "/admin", icon: Home },
@@ -39,16 +40,18 @@ export function AdminSidebar() {
 
   const getNavCls = ({ isActive }: { isActive: boolean }) =>
     isActive
-      ? "bg-accent text-primary font-medium"
-      : "hover:bg-accent/50";
+      ? "bg-muted text-foreground font-medium"
+      : "hover:bg-muted/50";
 
   return (
     <Sidebar className={collapsed ? "w-14" : "w-60"} collapsible="icon">
       <div className="p-4 border-b border-border flex items-center justify-between">
-        {!collapsed && (
-          <h2 className="text-lg font-bold bg-gradient-primary bg-clip-text text-transparent">
-            Admin
-          </h2>
+        {!collapsed ? (
+          <img src={qraitLogo} alt="QRait Logo" className="h-8 w-auto" />
+        ) : (
+          <div className="w-8 h-8 rounded bg-gradient-primary flex items-center justify-center">
+            <span className="text-white font-bold text-xs">Q</span>
+          </div>
         )}
         <SidebarTrigger />
       </div>
