@@ -1,13 +1,21 @@
 import GooeyNav from '@/components/GooeyNav';
 import Particles from '@/components/Particles';
 import { GradientButton } from '@/components/GradientButton';
-import { motion } from 'framer-motion';
+import { motion, useScroll, useTransform } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { Eye, Star, TrendingUp, Gift, BarChart3, Scan, MessageSquare, Award } from 'lucide-react';
-import Stepper, { Step } from '@/components/Stepper';
+import { Scan, MessageSquare, Award } from 'lucide-react';
+import { useRef } from 'react';
 
 const Landing = () => {
   const navigate = useNavigate();
+  const containerRef = useRef(null);
+  const { scrollYProgress } = useScroll({
+    target: containerRef,
+    offset: ["start start", "end end"]
+  });
+
+  const heroY = useTransform(scrollYProgress, [0, 0.3], [0, -100]);
+  const heroOpacity = useTransform(scrollYProgress, [0, 0.2], [1, 0]);
 
   const navItems = [
     { label: 'Home', href: '/' },
@@ -17,42 +25,29 @@ const Landing = () => {
     { label: 'Login', href: '/auth' }
   ];
 
-  const features = [
-    {
-      icon: Eye,
-      title: 'Mehr Sichtbarkeit',
-      description: 'QR-Codes auf jedem Kassenbon - Ihre Kunden werden zu Botschaftern Ihrer Marke.'
+  const steps = [
+    { 
+      icon: Scan, 
+      title: 'Scannen', 
+      description: 'Kunde scannt QR-Code auf dem Kassenbon',
+      details: 'Ein simpler Scan verwandelt jeden Kassenbon in eine direkte Verbindung zu Ihrer Marke.'
     },
-    {
-      icon: Star,
-      title: 'Echte Bewertungen',
-      description: 'Motivieren Sie zufriedene Kunden, authentische Google-Bewertungen zu hinterlassen.'
+    { 
+      icon: MessageSquare, 
+      title: 'Bewerten', 
+      description: 'Hinterlässt eine Google-Bewertung',
+      details: 'Zufriedene Kunden werden ermutigt, ihre positiven Erfahrungen öffentlich zu teilen.'
     },
-    {
-      icon: TrendingUp,
-      title: 'Nachhaltiges Wachstum',
-      description: 'Steigern Sie Ihre Online-Reputation und gewinnen Sie mehr Neukunden durch Vertrauen.'
-    },
-    {
-      icon: Gift,
-      title: 'Kundenbindung',
-      description: 'Belohnen Sie Ihre Kunden mit attraktiven Geschenken für ihre Bewertungen.'
-    },
-    {
-      icon: BarChart3,
-      title: 'Analytics',
-      description: 'Verfolgen Sie Ihre Performance in Echtzeit mit detaillierten Statistiken.'
+    { 
+      icon: Award, 
+      title: 'Geschenk', 
+      description: 'Erhält sofort sein persönliches Dankeschön',
+      details: 'Belohnen Sie Loyalität mit individuellen Incentives und stärken Sie die Kundenbindung.'
     }
   ];
 
-  const steps = [
-    { icon: Scan, title: 'Scannen', description: 'Kunde scannt QR-Code auf dem Kassenbon' },
-    { icon: MessageSquare, title: 'Bewerten', description: 'Hinterlässt eine Google-Bewertung' },
-    { icon: Award, title: 'Geschenk', description: 'Erhält sofort sein persönliches Dankeschön' }
-  ];
-
   return (
-    <div className="min-h-screen bg-background text-foreground relative">
+    <div ref={containerRef} className="bg-background text-foreground relative scroll-smooth">
       <Particles 
         particleColors={['#ffffff', '#ffffff', '#ffffff']}
         particleCount={200}
@@ -65,6 +60,7 @@ const Landing = () => {
         disableRotation={false}
         cameraDistance={18}
       />
+      
       <div className="fixed top-8 left-0 right-0 flex justify-center z-50">
         <GooeyNav
           items={navItems}
@@ -78,14 +74,17 @@ const Landing = () => {
         />
       </div>
 
-      {/* Hero Section */}
-      <section className="relative z-10 pt-32 pb-20 px-4 sm:px-6 lg:px-8 overflow-hidden">
-        <div className="max-w-7xl mx-auto text-center">
+      {/* Hero Section with Parallax */}
+      <section className="relative z-10 min-h-screen flex items-center justify-center px-4 snap-start">
+        <motion.div 
+          style={{ y: heroY, opacity: heroOpacity }}
+          className="max-w-5xl mx-auto text-center"
+        >
           <motion.h1
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            className="text-5xl sm:text-6xl lg:text-7xl font-bold mb-6"
+            transition={{ duration: 0.8, delay: 0.2 }}
+            className="text-6xl sm:text-7xl lg:text-8xl font-bold mb-8"
           >
             Verwandeln Sie Kunden in{' '}
             <span className="bg-gradient-primary bg-clip-text text-transparent">
@@ -94,96 +93,129 @@ const Landing = () => {
           </motion.h1>
           
           <motion.p
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-            className="text-xl sm:text-2xl text-muted-foreground mb-8 max-w-3xl mx-auto"
+            transition={{ duration: 0.8, delay: 0.4 }}
+            className="text-xl sm:text-2xl text-muted-foreground mb-12 max-w-3xl mx-auto"
           >
             Die innovative Lösung für mehr Google-Bewertungen und nachhaltiges Wachstum Ihres Unternehmens.
           </motion.p>
 
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.4 }}
+            transition={{ duration: 0.8, delay: 0.6 }}
           >
             <GradientButton onClick={() => navigate('/kontakt')} className="text-lg px-8 py-6">
               Jetzt Kontakt aufnehmen
             </GradientButton>
           </motion.div>
-        </div>
+        </motion.div>
       </section>
 
-      {/* How It Works */}
-      <section className="relative z-10 py-20 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto">
-          <h2 className="text-4xl font-bold text-center mb-16">
-            So funktioniert's
-          </h2>
-          
-          <Stepper
-            initialStep={1}
-            onStepChange={(step) => {
-              console.log(step);
-            }}
-            backButtonText="Zurück"
-            nextButtonText="Weiter"
+      {/* Sticky Intro */}
+      <section className="relative z-10 min-h-screen flex items-center justify-center px-4 snap-start">
+        <div className="max-w-4xl mx-auto text-center">
+          <motion.h2
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            transition={{ duration: 0.6 }}
+            viewport={{ once: true }}
+            className="text-4xl sm:text-5xl font-bold mb-6"
           >
-            {steps.map((step, index) => (
-              <Step key={index}>
-                <div className="flex flex-col items-center text-center py-8">
-                  <div className="w-20 h-20 rounded-2xl bg-gradient-primary flex items-center justify-center mb-6">
-                    <step.icon className="w-10 h-10 text-white" />
-                  </div>
-                  <h2 className="text-2xl font-bold mb-4">{step.title}</h2>
-                  <p className="text-muted-foreground max-w-md">{step.description}</p>
-                </div>
-              </Step>
-            ))}
-          </Stepper>
+            So funktioniert's
+          </motion.h2>
+          <motion.p
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            viewport={{ once: true }}
+            className="text-xl text-muted-foreground"
+          >
+            In drei einfachen Schritten zu mehr Bewertungen und höherer Kundenbindung
+          </motion.p>
         </div>
       </section>
 
-      {/* Features Section */}
-      <section className="relative z-10 py-20 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto">
-          <h2 className="text-4xl font-bold text-center mb-16">
-            Ihre Vorteile
-          </h2>
-          
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {features.map((feature, index) => (
+      {/* Sticky Panels - 3 Steps */}
+      {steps.map((step, index) => (
+        <section 
+          key={index}
+          className="relative z-10 min-h-screen flex items-center justify-center px-4 sm:px-6 lg:px-8 snap-start"
+        >
+          <div className="max-w-7xl mx-auto w-full">
+            <div className="grid lg:grid-cols-2 gap-12 items-center">
+              {/* Text Content */}
               <motion.div
-                key={index}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.6, delay: index * 0.1 }}
+                initial={{ opacity: 0, x: -50 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.8 }}
+                viewport={{ once: true, margin: "-100px" }}
+                className="space-y-6"
               >
-                <div className="bg-card border border-border rounded-2xl p-8 h-full hover:shadow-glow transition-shadow duration-300">
-                  <div className="w-14 h-14 rounded-xl bg-gradient-primary flex items-center justify-center mb-6">
-                    <feature.icon className="w-7 h-7 text-white" />
+                <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-primary mb-4">
+                  <step.icon className="w-8 h-8 text-white" />
+                </div>
+                
+                <div className="flex items-center gap-4">
+                  <span className="text-6xl font-bold text-muted-foreground/20">
+                    {String(index + 1).padStart(2, '0')}
+                  </span>
+                  <h3 className="text-4xl sm:text-5xl font-bold">{step.title}</h3>
+                </div>
+                
+                <p className="text-xl text-muted-foreground leading-relaxed">
+                  {step.description}
+                </p>
+                
+                <p className="text-lg text-muted-foreground/80 leading-relaxed">
+                  {step.details}
+                </p>
+              </motion.div>
+
+              {/* Phone Mock */}
+              <motion.div
+                initial={{ opacity: 0, x: 50 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.8, delay: 0.2 }}
+                viewport={{ once: true, margin: "-100px" }}
+                className="flex justify-center lg:justify-end"
+              >
+                <div className="relative w-72 h-[600px]">
+                  {/* Phone Frame */}
+                  <div className="absolute inset-0 rounded-[3rem] bg-gradient-to-br from-primary/20 to-primary/5 backdrop-blur-sm border border-primary/20 shadow-2xl shadow-primary/20 p-3">
+                    <div className="w-full h-full rounded-[2.5rem] bg-background/50 backdrop-blur-md border border-border/50 overflow-hidden">
+                      {/* Phone Content */}
+                      <div className="h-full flex flex-col items-center justify-center p-8 text-center">
+                        <div className="w-20 h-20 rounded-2xl bg-gradient-primary flex items-center justify-center mb-6">
+                          <step.icon className="w-10 h-10 text-white" />
+                        </div>
+                        <h4 className="text-2xl font-bold mb-3">{step.title}</h4>
+                        <p className="text-sm text-muted-foreground">{step.description}</p>
+                      </div>
+                    </div>
                   </div>
-                  <h3 className="text-xl font-bold mb-3">{feature.title}</h3>
-                  <p className="text-muted-foreground">{feature.description}</p>
+                  
+                  {/* Glow Effect */}
+                  <div className="absolute -inset-4 bg-gradient-primary opacity-20 blur-3xl -z-10" />
                 </div>
               </motion.div>
-            ))}
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      ))}
 
       {/* CTA Section */}
-      <section className="relative z-10 py-20 px-4 sm:px-6 lg:px-8">
+      <section className="relative z-10 min-h-screen flex items-center justify-center px-4 sm:px-6 lg:px-8 snap-start">
         <div className="max-w-4xl mx-auto text-center">
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             whileInView={{ opacity: 1, scale: 1 }}
             viewport={{ once: true }}
             transition={{ duration: 0.6 }}
-            className="bg-gradient-primary rounded-3xl p-12"
+            className="bg-gradient-primary rounded-3xl p-12 shadow-glow"
           >
-            <h2 className="text-4xl font-bold text-white mb-6">
+            <h2 className="text-4xl sm:text-5xl font-bold text-white mb-6">
               Bereit für mehr Bewertungen?
             </h2>
             <p className="text-xl text-white/90 mb-8">
