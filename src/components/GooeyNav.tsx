@@ -21,7 +21,7 @@ interface GooeyNavProps {
 const GooeyNav = ({
   items,
   animationTime = 600,
-  particleCount = 8,
+  particleCount = 15,
   particleDistances = [90, 10],
   particleR = 100,
   timeVariance = 300,
