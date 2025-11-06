@@ -8,15 +8,15 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    /* Clean light theme with dark accents */
-    --background: 0 0% 98%;          /* #fafafa - white background */
-    --foreground: 0 0% 4%;           /* #0a0a0a - dark text */
+    /* Dark theme with light accents */
+    --background: 0 0% 0%;           /* #000000 - black background */
+    --foreground: 0 0% 98%;          /* #fafafa - light text */
 
-    --card: 0 0% 100%;               /* #ffffff white cards */
-    --card-foreground: 0 0% 4%;
+    --card: 0 0% 5%;                 /* #0d0d0d dark cards */
+    --card-foreground: 0 0% 98%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 4%;
+    --popover: 0 0% 5%;
+    --popover-foreground: 0 0% 98%;
 
     /* Purple-to-Blue gradient colors */
     --primary: 262 83% 58%;          /* #8B5CF6 vibrant purple */
@@ -25,8 +25,8 @@ All colors MUST be HSL.
     --secondary: 217 91% 60%;        /* #3B82F6 electric blue */
     --secondary-foreground: 0 0% 100%;
 
-    --muted: 0 0% 96%;               /* #f5f5f5 */
-    --muted-foreground: 0 0% 40%;    /* #666666 */
+    --muted: 0 0% 15%;               /* #262626 */
+    --muted-foreground: 0 0% 65%;    /* #a6a6a6 */
 
     --accent: 280 100% 70%;          /* Bright magenta accent */
     --accent-foreground: 0 0% 100%;
@@ -34,8 +34,8 @@ All colors MUST be HSL.
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 0 0% 90%;              /* #e5e5e5 subtle borders */
-    --input: 0 0% 96%;               /* #f5f5f5 */
+    --border: 0 0% 20%;              /* #333333 subtle borders */
+    --input: 0 0% 15%;               /* #262626 */
     --ring: 262 83% 58%;             /* Primary purple */
 
     --radius: 1.5rem;                /* Large rounded corners */

@@ -1,10 +1,9 @@
-import PillNav from '@/components/PillNav';
+import GooeyNav from '@/components/GooeyNav';
 import Particles from '@/components/Particles';
 import { GradientButton } from '@/components/GradientButton';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { Eye, Star, TrendingUp, Gift, BarChart3, Scan, MessageSquare, Award } from 'lucide-react';
-import logo from '@/assets/qrait-logo.svg';
 
 const Landing = () => {
   const navigate = useNavigate();
@@ -14,7 +13,7 @@ const Landing = () => {
     { label: 'Kontakt', href: '/kontakt' },
     { label: 'Datenschutz', href: '/datenschutz' },
     { label: 'Impressum', href: '/impressum' },
-    { label: 'Login', href: '/auth' },
+    { label: 'Login', href: '/auth' }
   ];
 
   const features = [
@@ -54,7 +53,7 @@ const Landing = () => {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <Particles 
-        particleColors={['#000000', '#1a1a1a']}
+        particleColors={['#ffffff', '#ffffff']}
         particleCount={150}
         particleSpread={10}
         speed={0.05}
@@ -63,15 +62,16 @@ const Landing = () => {
         alphaParticles={false}
         disableRotation={false}
       />
-      <div className="fixed top-0 left-0 right-0 flex justify-center z-50">
-        <PillNav
-          logo={logo}
-          logoAlt="QRAIT Logo"
+      <div className="fixed top-8 left-0 right-0 flex justify-center z-50">
+        <GooeyNav
           items={navItems}
-          baseColor="#000000"
-          pillColor="#ffffff"
-          hoveredPillTextColor="#ffffff"
-          pillTextColor="#000000"
+          particleCount={15}
+          particleDistances={[90, 10]}
+          particleR={100}
+          initialActiveIndex={0}
+          animationTime={600}
+          timeVariance={300}
+          colors={[1, 2, 3, 1, 2, 3, 1, 4]}
         />
       </div>
 
