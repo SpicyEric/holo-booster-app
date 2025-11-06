@@ -112,25 +112,25 @@ const GooeyNav = ({
 
   const handleClick = (e: React.MouseEvent<HTMLLIElement>, index: number) => {
     const liEl = e.currentTarget;
-    if (activeIndex === index) return;
-
-    setActiveIndex(index);
+    
+    // Always trigger animation
     updateEffectPosition(liEl);
 
     if (filterRef.current) {
       const particles = filterRef.current.querySelectorAll('.particle');
       particles.forEach(p => filterRef.current!.removeChild(p));
+      makeParticles(filterRef.current);
     }
 
     if (textRef.current) {
       textRef.current.classList.remove('active');
-
       void textRef.current.offsetWidth;
       textRef.current.classList.add('active');
     }
 
-    if (filterRef.current) {
-      makeParticles(filterRef.current);
+    // Only update state if different
+    if (activeIndex !== index) {
+      setActiveIndex(index);
     }
   };
 

@@ -73,16 +73,18 @@ const Delete = () => {
   if (deleted) {
     return (
       <div className="min-h-screen bg-background">
-        <Particles 
-          particleColors={['#ffffff', '#ffffff']}
-          particleCount={150}
-          particleSpread={10}
-          speed={0.05}
-          particleBaseSize={80}
-          moveParticlesOnHover={true}
-          alphaParticles={false}
-          disableRotation={false}
-        />
+      <Particles 
+        particleColors={['#ffffff', '#ffffff', '#ffffff']}
+        particleCount={200}
+        particleSpread={12}
+        speed={0.08}
+        particleBaseSize={150}
+        sizeRandomness={2}
+        moveParticlesOnHover={true}
+        alphaParticles={false}
+        disableRotation={false}
+        cameraDistance={18}
+      />
         <div className="fixed top-0 left-0 right-0 flex justify-center z-50 pt-8">
           <GooeyNav
             items={navItems}
@@ -119,14 +121,16 @@ const Delete = () => {
   return (
     <div className="min-h-screen bg-background">
       <Particles 
-        particleColors={['#ffffff', '#ffffff']}
-        particleCount={150}
-        particleSpread={10}
-        speed={0.05}
-        particleBaseSize={80}
+        particleColors={['#ffffff', '#ffffff', '#ffffff']}
+        particleCount={200}
+        particleSpread={12}
+        speed={0.08}
+        particleBaseSize={150}
+        sizeRandomness={2}
         moveParticlesOnHover={true}
         alphaParticles={false}
         disableRotation={false}
+        cameraDistance={18}
       />
       <div className="fixed top-0 left-0 right-0 flex justify-center z-50 pt-8">
         <GooeyNav

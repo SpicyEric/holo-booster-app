@@ -119,12 +119,28 @@ const Particles = ({
 
   useEffect(() => {
     const container = containerRef.current;
-    if (!container) return;
+    if (!container) {
+      console.warn('Particles: Container ref not found');
+      return;
+    }
 
-    const renderer = new Renderer({ depth: false, alpha: true });
-    const gl = renderer.gl;
-    container.appendChild(gl.canvas);
-    gl.clearColor(0, 0, 0, 0);
+    try {
+      const renderer = new Renderer({ depth: false, alpha: true });
+      const gl = renderer.gl;
+      
+      if (!gl) {
+        console.error('Particles: WebGL context not available');
+        return;
+      }
+      
+      console.log('Particles: WebGL initialized successfully');
+      container.appendChild(gl.canvas);
+      gl.clearColor(0, 0, 0, 0);
+      
+      // Explicitly set canvas styles
+      gl.canvas.style.width = '100%';
+      gl.canvas.style.height = '100%';
+      gl.canvas.style.display = 'block';
 
     const camera = new Camera(gl, { fov: 15 });
     camera.position.set(0, 0, cameraDistance);
@@ -223,29 +239,21 @@ const Particles = ({
 
     animationFrameId = requestAnimationFrame(update);
 
-    return () => {
-      window.removeEventListener('resize', resize);
-      if (moveParticlesOnHover) {
-        container.removeEventListener('mousemove', handleMouseMove);
-      }
-      cancelAnimationFrame(animationFrameId);
-      if (container.contains(gl.canvas)) {
-        container.removeChild(gl.canvas);
-      }
-    };
-  }, [
-    particleCount,
-    particleSpread,
-    speed,
-    moveParticlesOnHover,
-    particleHoverFactor,
-    alphaParticles,
-    particleBaseSize,
-    sizeRandomness,
-    cameraDistance,
-    disableRotation,
-    particleColors
-  ]);
+      return () => {
+        window.removeEventListener('resize', resize);
+        if (moveParticlesOnHover) {
+          container.removeEventListener('mousemove', handleMouseMove);
+        }
+        cancelAnimationFrame(animationFrameId);
+        if (container.contains(gl.canvas)) {
+          container.removeChild(gl.canvas);
+        }
+      };
+    } catch (error) {
+      console.error('Particles: Initialization error', error);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return <div ref={containerRef} className={`particles-container ${className}`} />;
 };
