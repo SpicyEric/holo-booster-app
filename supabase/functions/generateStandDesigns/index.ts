@@ -85,12 +85,20 @@ serve(async (req) => {
     // QR Code position: x=224px (0.1584), y=759px (0.3795)
     // QR Code size: 285x285px (0.2016 x 0.1425)
     
+    // Helper function to base64 encode URLs for Cloudinary fetch
+    const base64EncodeUrl = (url: string): string => {
+      const encoder = new TextEncoder();
+      const data = encoder.encode(url);
+      return btoa(String.fromCharCode(...data));
+    };
+    
     // Base transformations
     const baseTransforms = 'f_auto,q_auto';
     
-    // QR Code overlay - all parameters BEFORE fl_layer_apply
+    // QR Code overlay - using base64 encoded URL
+    const qrBase64 = base64EncodeUrl(customer.qr_code_url);
     const qrOverlay = [
-      `l_fetch:${encodeURIComponent(customer.qr_code_url).replace(/%/g, '%25')}`,
+      `l_fetch:${qrBase64}`,
       'w_285',
       'h_285',
       'c_fill',
@@ -103,8 +111,9 @@ serve(async (req) => {
     // Logo overlay (if exists)
     let logoOverlay = '';
     if (customer.logo_url) {
+      const logoBase64 = base64EncodeUrl(customer.logo_url);
       logoOverlay = '/' + [
-        `l_fetch:${encodeURIComponent(customer.logo_url).replace(/%/g, '%25')}`,
+        `l_fetch:${logoBase64}`,
         'w_200',
         'h_200',
         'c_fit',
@@ -127,6 +136,8 @@ serve(async (req) => {
 
     // Build final URL with slash-separated transformation groups
     const cloudinaryUrl = `https://res.cloudinary.com/${cloudName}/image/fetch/${baseTransforms}/${qrOverlay}${logoOverlay}/${textOverlay}/${encodeURIComponent(templateUrl)}`;
+    
+    console.log('Generated Cloudinary URL (first 300 chars):', cloudinaryUrl.substring(0, 300));
 
     console.log('Generating design via Cloudinary fetch...');
     console.log('URL length:', cloudinaryUrl.length);
