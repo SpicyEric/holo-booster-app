@@ -59,10 +59,10 @@ const Landing = () => {
           logo={logo}
           logoAlt="QRAIT Logo"
           items={navItems}
-          baseColor="hsl(262 83% 58%)"
+          baseColor="#000000"
           pillColor="#ffffff"
-          hoveredPillTextColor="hsl(262 83% 58%)"
-          pillTextColor="hsl(262 83% 58%)"
+          hoveredPillTextColor="#ffffff"
+          pillTextColor="#000000"
         />
       </div>
 
