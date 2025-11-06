@@ -82,8 +82,8 @@ serve(async (req) => {
     // Build Cloudinary transformation URL with proper syntax
     // Using auto-upload with remote fetch
     // Design dimensions: 1414x2000px
-    // QR Code position: x=224px (0.1584), y=759px (0.3795)
-    // QR Code size: 285x285px (0.2016 x 0.1425)
+    // Using RELATIVE coordinates for precise positioning (0.0 to 1.0)
+    // QR Code: x=15.84%, y=37.95%, w=20.16%, h=14.25%
     
     // Helper function to base64 encode URLs for Cloudinary fetch
     const base64EncodeUrl = (url: string): string => {
@@ -95,42 +95,43 @@ serve(async (req) => {
     // Base transformations
     const baseTransforms = 'f_auto,q_auto';
     
-    // QR Code overlay - using base64 encoded URL
+    // QR Code overlay - using RELATIVE coordinates for precision
     const qrBase64 = base64EncodeUrl(customer.qr_code_url);
     const qrOverlay = [
       `l_fetch:${qrBase64}`,
-      'w_285',
-      'h_285',
+      'w_0.2016',  // 20.16% of template width
+      'h_0.1425',  // 14.25% of template height
       'c_fill',
       'g_north_west',
-      'x_224',
-      'y_759',
+      'x_0.1584',  // 15.84% from left
+      'y_0.3795',  // 37.95% from top
       'fl_layer_apply'
     ].join(',');
 
-    // Logo overlay (if exists)
+    // Logo overlay (if exists) - using RELATIVE coordinates
     let logoOverlay = '';
     if (customer.logo_url) {
       const logoBase64 = base64EncodeUrl(customer.logo_url);
       logoOverlay = '/' + [
         `l_fetch:${logoBase64}`,
-        'w_200',
-        'h_200',
+        'w_0.141',   // 14.1% of template width
+        'h_0.10',    // 10% of template height
         'c_fit',
         'g_north_west',
-        'x_100',
-        'y_100',
+        'x_0.071',   // 7.1% from left
+        'y_0.05',    // 5% from top
         'fl_layer_apply'
       ].join(',');
     }
 
-    // Text overlay
+    // Text overlay - using RELATIVE coordinates with text wrapping
     const textOverlay = [
       `l_text:Arial_56_bold:${encodeURIComponent(offerText)}`,
       'co_rgb:000000',
       'g_north_west',
-      'x_874',
-      'y_380',
+      'x_0.618',   // 61.8% from left
+      'y_0.19',    // 19% from top
+      'w_0.35',    // Max 35% width for text wrapping
       'fl_layer_apply'
     ].join(',');
 
