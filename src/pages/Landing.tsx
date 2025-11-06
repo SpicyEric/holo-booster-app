@@ -1,5 +1,5 @@
 import PillNav from '@/components/PillNav';
-import { DotGrid } from '@/components/DotGrid';
+import Particles from '@/components/Particles';
 import { GradientButton } from '@/components/GradientButton';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
@@ -53,7 +53,16 @@ const Landing = () => {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <DotGrid />
+      <Particles 
+        particleColors={['#000000', '#1a1a1a']}
+        particleCount={150}
+        particleSpread={10}
+        speed={0.05}
+        particleBaseSize={80}
+        moveParticlesOnHover={true}
+        alphaParticles={false}
+        disableRotation={false}
+      />
       <div className="fixed top-0 left-0 right-0 flex justify-center z-50">
         <PillNav
           logo={logo}
