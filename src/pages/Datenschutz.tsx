@@ -1,9 +1,8 @@
-import PillNav from '@/components/PillNav';
-import { DotGrid } from '@/components/DotGrid';
+import GooeyNav from '@/components/GooeyNav';
+import Particles from '@/components/Particles';
 import { GradientButton } from '@/components/GradientButton';
 import { useNavigate } from 'react-router-dom';
 import { Shield } from 'lucide-react';
-import logo from '@/assets/qrait-logo.svg';
 
 const Datenschutz = () => {
   const navigate = useNavigate();
@@ -18,16 +17,26 @@ const Datenschutz = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <DotGrid />
-      <div className="fixed top-0 left-0 right-0 flex justify-center z-50">
-        <PillNav
-          logo={logo}
-          logoAlt="QRAIT Logo"
+      <Particles 
+        particleColors={['#ffffff', '#ffffff']}
+        particleCount={150}
+        particleSpread={10}
+        speed={0.05}
+        particleBaseSize={80}
+        moveParticlesOnHover={true}
+        alphaParticles={false}
+        disableRotation={false}
+      />
+      <div className="fixed top-0 left-0 right-0 flex justify-center z-50 pt-8">
+        <GooeyNav
           items={navItems}
-          baseColor="#000000"
-          pillColor="#ffffff"
-          hoveredPillTextColor="#ffffff"
-          pillTextColor="#000000"
+          particleCount={15}
+          particleDistances={[90, 10]}
+          particleR={100}
+          initialActiveIndex={2}
+          animationTime={600}
+          timeVariance={300}
+          colors={[1, 2, 3, 1, 2, 3, 1, 4]}
         />
       </div>
 

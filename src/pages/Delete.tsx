@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import PillNav from '@/components/PillNav';
-import { DotGrid } from '@/components/DotGrid';
+import GooeyNav from '@/components/GooeyNav';
+import Particles from '@/components/Particles';
 import { GradientButton } from '@/components/GradientButton';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -8,7 +8,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Trash2, Shield, CheckCircle2 } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
-import logo from '@/assets/qrait-logo.svg';
 
 const Delete = () => {
   const [searchParams] = useSearchParams();
@@ -74,16 +73,26 @@ const Delete = () => {
   if (deleted) {
     return (
       <div className="min-h-screen bg-background">
-        <DotGrid />
-        <div className="fixed top-0 left-0 right-0 flex justify-center z-50">
-          <PillNav
-            logo={logo}
-            logoAlt="QRAIT Logo"
+        <Particles 
+          particleColors={['#ffffff', '#ffffff']}
+          particleCount={150}
+          particleSpread={10}
+          speed={0.05}
+          particleBaseSize={80}
+          moveParticlesOnHover={true}
+          alphaParticles={false}
+          disableRotation={false}
+        />
+        <div className="fixed top-0 left-0 right-0 flex justify-center z-50 pt-8">
+          <GooeyNav
             items={navItems}
-            baseColor="#000000"
-            pillColor="#ffffff"
-            hoveredPillTextColor="#ffffff"
-            pillTextColor="#000000"
+            particleCount={15}
+            particleDistances={[90, 10]}
+            particleR={100}
+            initialActiveIndex={0}
+            animationTime={600}
+            timeVariance={300}
+            colors={[1, 2, 3, 1, 2, 3, 1, 4]}
           />
         </div>
 
@@ -109,16 +118,26 @@ const Delete = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <DotGrid />
-      <div className="fixed top-0 left-0 right-0 flex justify-center z-50">
-        <PillNav
-          logo={logo}
-          logoAlt="QRAIT Logo"
+      <Particles 
+        particleColors={['#ffffff', '#ffffff']}
+        particleCount={150}
+        particleSpread={10}
+        speed={0.05}
+        particleBaseSize={80}
+        moveParticlesOnHover={true}
+        alphaParticles={false}
+        disableRotation={false}
+      />
+      <div className="fixed top-0 left-0 right-0 flex justify-center z-50 pt-8">
+        <GooeyNav
           items={navItems}
-          baseColor="#000000"
-          pillColor="#ffffff"
-          hoveredPillTextColor="#ffffff"
-          pillTextColor="#000000"
+          particleCount={15}
+          particleDistances={[90, 10]}
+          particleR={100}
+          initialActiveIndex={0}
+          animationTime={600}
+          timeVariance={300}
+          colors={[1, 2, 3, 1, 2, 3, 1, 4]}
         />
       </div>
 

@@ -25,6 +25,12 @@
     1.001 85%,
     1
   );
+  
+  /* Particle colors for GooeyNav animation */
+  --color-1: #ffffff;
+  --color-2: #e0e0e0;
+  --color-3: #c0c0c0;
+  --color-4: #ffffff;
 }
 
 .gooey-nav-container {
