@@ -5,6 +5,7 @@ import { motion, useScroll, useTransform } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { Scan, MessageSquare, Award } from 'lucide-react';
 import { useRef } from 'react';
+import qraitLogo from '@/assets/qrait-logo-full.png';
 
 const Landing = () => {
   const navigate = useNavigate();
@@ -80,14 +81,18 @@ const Landing = () => {
           style={{ y: heroY, opacity: heroOpacity }}
           className="max-w-5xl mx-auto text-center"
         >
-          <motion.h1
+          <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.2 }}
-            className="text-6xl sm:text-7xl lg:text-8xl font-bold mb-8"
+            className="mb-8 flex justify-center"
           >
-            Quick Response AI Tool
-          </motion.h1>
+            <img 
+              src={qraitLogo} 
+              alt="QRait Logo" 
+              className="h-32 sm:h-40 lg:h-48 w-auto"
+            />
+          </motion.div>
           
           <motion.p
             initial={{ opacity: 0, y: 30 }}
