@@ -3,20 +3,38 @@ import Particles from '@/components/Particles';
 import { GradientButton } from '@/components/GradientButton';
 import { motion, useScroll, useTransform } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { Scan, MessageSquare, Award } from 'lucide-react';
-import { useRef } from 'react';
+import { Scan, MessageSquare, Award, ChevronDown, Star, TrendingUp, Users, Zap, Heart, Shield } from 'lucide-react';
+import { useRef, useState, useEffect } from 'react';
 import qraitLogo from '@/assets/qrait-logo-full.png';
 
 const Landing = () => {
   const navigate = useNavigate();
   const containerRef = useRef(null);
+  const [scrolled, setScrolled] = useState(false);
+  
   const { scrollYProgress } = useScroll({
     target: containerRef,
     offset: ["start start", "end end"]
   });
 
-  const heroY = useTransform(scrollYProgress, [0, 0.3], [0, -100]);
-  const heroOpacity = useTransform(scrollYProgress, [0, 0.2], [1, 0]);
+  useEffect(() => {
+    const handleScroll = () => {
+      if (containerRef.current) {
+        const scrollTop = containerRef.current.scrollTop;
+        setScrolled(scrollTop > 100);
+      }
+    };
+
+    const container = containerRef.current;
+    if (container) {
+      container.addEventListener('scroll', handleScroll);
+      return () => container.removeEventListener('scroll', handleScroll);
+    }
+  }, []);
+
+  const logoX = useTransform(scrollYProgress, [0, 0.15], [0, -600]);
+  const logoY = useTransform(scrollYProgress, [0, 0.15], [0, -350]);
+  const logoScale = useTransform(scrollYProgress, [0, 0.15], [1, 0.3]);
 
   const navItems = [
     { label: 'Home', href: '/' },
@@ -30,13 +48,13 @@ const Landing = () => {
     { 
       icon: Scan, 
       title: 'Scannen', 
-      description: 'Kunde scannt QR-Code auf dem Kassenbon',
-      details: 'Ein simpler Scan verwandelt jeden Kassenbon in eine direkte Verbindung zu Ihrer Marke.'
+      description: 'Kunde scannt QR-Code',
+      details: ''
     },
     { 
       icon: MessageSquare, 
       title: 'Bewerten', 
-      description: 'Hinterlässt eine Google-Bewertung',
+      description: 'Hinterlässt eine ehrliche Google-Bewertung',
       details: 'Zufriedene Kunden werden ermutigt, ihre positiven Erfahrungen öffentlich zu teilen.'
     },
     { 
@@ -44,6 +62,39 @@ const Landing = () => {
       title: 'Geschenk', 
       description: 'Erhält sofort sein persönliches Dankeschön',
       details: 'Belohnen Sie Loyalität mit individuellen Incentives und stärken Sie die Kundenbindung.'
+    }
+  ];
+
+  const benefits = [
+    {
+      icon: Star,
+      title: 'Mehr Sichtbarkeit',
+      description: 'Steigern Sie Ihre Online-Präsenz durch authentische Kundenbewertungen'
+    },
+    {
+      icon: TrendingUp,
+      title: 'Höhere Conversion',
+      description: 'Mehr positive Bewertungen führen zu mehr Vertrauen und höheren Umsätzen'
+    },
+    {
+      icon: Users,
+      title: 'Stärkere Kundenbindung',
+      description: 'Belohnen Sie Ihre Kunden und schaffen Sie langfristige Beziehungen'
+    },
+    {
+      icon: Zap,
+      title: 'Einfache Integration',
+      description: 'Schnelle Einrichtung ohne technisches Know-how erforderlich'
+    },
+    {
+      icon: Heart,
+      title: 'Authentisches Feedback',
+      description: 'Erhalten Sie ehrliche Bewertungen von echten Kunden'
+    },
+    {
+      icon: Shield,
+      title: 'Datenschutzkonform',
+      description: 'DSGVO-konforme Lösung für den deutschen Markt'
     }
   ];
 
@@ -63,80 +114,62 @@ const Landing = () => {
       />
       
       <div className="fixed top-8 left-0 right-0 flex justify-center z-50">
-        <GooeyNav
-          items={navItems}
-          particleCount={15}
-          particleDistances={[90, 10]}
-          particleR={100}
-          initialActiveIndex={0}
-          animationTime={600}
-          timeVariance={300}
-          colors={[1, 2, 3, 1, 2, 3, 1, 4]}
-        />
+        <div className="flex items-center gap-8">
+          <motion.img
+            src={qraitLogo}
+            alt="QRait Logo"
+            className="h-12 w-auto"
+            initial={{ opacity: 0 }}
+            animate={{ 
+              opacity: scrolled ? 1 : 0,
+              scale: scrolled ? 1 : 0.8
+            }}
+            transition={{ duration: 0.3 }}
+          />
+          <GooeyNav
+            items={navItems}
+            particleCount={15}
+            particleDistances={[90, 10]}
+            particleR={100}
+            initialActiveIndex={0}
+            animationTime={600}
+            timeVariance={300}
+            colors={[1, 2, 3, 1, 2, 3, 1, 4]}
+          />
+        </div>
       </div>
 
-      {/* Hero Section with Parallax */}
-      <section className="relative z-10 min-h-screen flex items-center justify-center px-4 snap-start">
-        <motion.div 
-          style={{ y: heroY, opacity: heroOpacity }}
-          className="max-w-5xl mx-auto text-center"
+      {/* Hero Section - Logo Only */}
+      <section className="relative z-10 min-h-screen flex flex-col items-center justify-center px-4 snap-start">
+        <motion.div
+          style={{ x: logoX, y: logoY, scale: logoScale }}
+          className="flex flex-col items-center"
         >
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
+          <motion.img
+            src={qraitLogo}
+            alt="QRait Logo"
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.8, delay: 0.2 }}
-            className="mb-8 flex justify-center"
-          >
-            <img 
-              src={qraitLogo} 
-              alt="QRait Logo" 
-              className="h-32 sm:h-40 lg:h-48 w-auto"
-            />
-          </motion.div>
+            className="h-32 sm:h-40 lg:h-48 w-auto mb-12"
+          />
           
-          <motion.p
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.4 }}
-            className="text-xl sm:text-2xl text-muted-foreground mb-12 max-w-3xl mx-auto"
-          >
-            Die innovative Lösung für mehr Google-Bewertungen und nachhaltiges Wachstum Ihres Unternehmens.
-          </motion.p>
-
           <motion.div
-            initial={{ opacity: 0, y: 30 }}
+            initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.6 }}
+            transition={{ 
+              duration: 0.8, 
+              delay: 0.6,
+              repeat: Infinity,
+              repeatType: "reverse",
+              repeatDelay: 0.5
+            }}
+            className="flex flex-col items-center gap-2"
           >
-            <GradientButton onClick={() => navigate('/kontakt')} className="text-lg px-8 py-6">
-              Jetzt Kontakt aufnehmen
-            </GradientButton>
+            <ChevronDown className="w-8 h-8 text-primary" />
+            <ChevronDown className="w-8 h-8 text-primary -mt-6 opacity-60" />
           </motion.div>
         </motion.div>
-      </section>
-
-      {/* Sticky Intro */}
-      <section className="relative z-10 min-h-screen flex items-center justify-center px-4 snap-start">
-        <div className="max-w-4xl mx-auto text-center">
-          <motion.h2
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            transition={{ duration: 0.6 }}
-            viewport={{ once: true }}
-            className="text-4xl sm:text-5xl font-bold mb-6"
-          >
-            So funktioniert's
-          </motion.h2>
-          <motion.p
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-            viewport={{ once: true }}
-            className="text-xl text-muted-foreground"
-          >
-            In drei einfachen Schritten zu mehr Bewertungen und höherer Kundenbindung
-          </motion.p>
-        </div>
       </section>
 
       {/* Sticky Panels - 3 Steps */}
@@ -170,9 +203,11 @@ const Landing = () => {
                   {step.description}
                 </p>
                 
-                <p className="text-lg text-muted-foreground/80 leading-relaxed">
-                  {step.details}
-                </p>
+                {step.details && (
+                  <p className="text-lg text-muted-foreground/80 leading-relaxed">
+                    {step.details}
+                  </p>
+                )}
               </motion.div>
 
               {/* Phone Mock */}
@@ -204,6 +239,34 @@ const Landing = () => {
               </motion.div>
             </div>
           </div>
+        </section>
+      ))}
+
+      {/* Benefits Section */}
+      {benefits.map((benefit, index) => (
+        <section 
+          key={index}
+          className="relative z-10 min-h-screen flex items-center justify-center px-4 sm:px-6 lg:px-8 snap-start"
+        >
+          <motion.div
+            initial={{ opacity: 0, y: 50 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8 }}
+            viewport={{ once: true, margin: "-100px" }}
+            className="max-w-2xl mx-auto"
+          >
+            <div className="bg-gradient-to-br from-primary/10 to-primary/5 backdrop-blur-sm border border-primary/20 rounded-3xl p-8 sm:p-12 shadow-glow">
+              <div className="flex items-center gap-6 mb-6">
+                <div className="w-16 h-16 rounded-2xl bg-gradient-primary flex items-center justify-center flex-shrink-0">
+                  <benefit.icon className="w-8 h-8 text-white" />
+                </div>
+                <h3 className="text-3xl sm:text-4xl font-bold">{benefit.title}</h3>
+              </div>
+              <p className="text-lg text-muted-foreground leading-relaxed">
+                {benefit.description}
+              </p>
+            </div>
+          </motion.div>
         </section>
       ))}
 

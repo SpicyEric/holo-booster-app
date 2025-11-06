@@ -123,7 +123,7 @@
 }
 
 .gooey-nav-container .effect.filter {
-  filter: blur(7px) contrast(100) blur(0);
+  filter: blur(0px) contrast(100);
   mix-blend-mode: lighten;
 }
 
