@@ -4,9 +4,10 @@ import { GradientButton } from '@/components/GradientButton';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { useEffect, useRef, useState } from 'react';
-import { Scan, MessageSquare, Award } from 'lucide-react';
+import { Eye, Star, TrendingUp, Gift, BarChart3, Scan, MessageSquare, Award } from 'lucide-react';
 import Stepper, { Step } from '@/components/Stepper';
 import TextType from '@/components/TextType';
+import ScrollStack, { ScrollStackItem } from '@/components/ScrollStack';
 import { gsap } from 'gsap';
 import qraitLogo from '@/assets/qrait-logo.svg';
 
@@ -30,6 +31,34 @@ const Landing = () => {
     { icon: Scan, title: 'Scannen', description: 'Kunde scannt QR-Code auf dem Kassenbon' },
     { icon: MessageSquare, title: 'Bewerten', description: 'Hinterlässt eine Google-Bewertung' },
     { icon: Award, title: 'Geschenk', description: 'Erhält sofort sein persönliches Dankeschön' }
+  ];
+
+  const features = [
+    {
+      icon: Eye,
+      title: 'Mehr Sichtbarkeit',
+      description: 'QR-Codes auf jedem Kassenbon - Ihre Kunden werden zu Botschaftern Ihrer Marke.'
+    },
+    {
+      icon: Star,
+      title: 'Echte Bewertungen',
+      description: 'Motivieren Sie zufriedene Kunden, authentische Google-Bewertungen zu hinterlassen.'
+    },
+    {
+      icon: TrendingUp,
+      title: 'Nachhaltiges Wachstum',
+      description: 'Steigern Sie Ihre Online-Reputation und gewinnen Sie mehr Neukunden durch Vertrauen.'
+    },
+    {
+      icon: Gift,
+      title: 'Kundenbindung',
+      description: 'Belohnen Sie Ihre Kunden mit attraktiven Geschenken für ihre Bewertungen.'
+    },
+    {
+      icon: BarChart3,
+      title: 'Analytics',
+      description: 'Verfolgen Sie Ihre Performance in Echtzeit mit detaillierten Statistiken.'
+    }
   ];
 
   const handleTextTypeComplete = () => {
@@ -193,8 +222,35 @@ const Landing = () => {
         </section>
       )}
 
+      {/* Features Section with ScrollStack */}
+      {showStepper && (
+        <section className="relative z-10 h-screen">
+          <ScrollStack
+            itemDistance={100}
+            itemScale={0.05}
+            itemStackDistance={40}
+            stackPosition="30%"
+            scaleEndPosition="15%"
+            baseScale={0.9}
+            useWindowScroll={false}
+          >
+            {features.map((feature, index) => (
+              <ScrollStackItem key={index}>
+                <div className="bg-card border border-border rounded-2xl p-8 h-full flex flex-col">
+                  <div className="w-14 h-14 rounded-xl bg-gradient-primary flex items-center justify-center mb-6">
+                    <feature.icon className="w-7 h-7 text-white" />
+                  </div>
+                  <h3 className="text-xl font-bold mb-3">{feature.title}</h3>
+                  <p className="text-muted-foreground">{feature.description}</p>
+                </div>
+              </ScrollStackItem>
+            ))}
+          </ScrollStack>
+        </section>
+      )}
+
       {/* Footer */}
-      <footer className="relative z-10 border-t border-border py-12 px-4 sm:px-6 lg:px-8">
+      <footer className="relative z-10 border-t border-border py-12 px-4 sm:px-6 lg:px-8 mt-20">
         <div className="max-w-7xl mx-auto">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <div className="text-center md:text-left">
