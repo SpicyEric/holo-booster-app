@@ -81,15 +81,18 @@ serve(async (req) => {
 
     // Build Cloudinary transformation URL with proper syntax
     // Using auto-upload with remote fetch
+    // Design dimensions: 1414x2000px
+    // QR Code position: x=224px (0.1584), y=759px (0.3795)
+    // QR Code size: 285x285px (0.2016 x 0.1425)
     const transformations = [
       // Base layer: template
       'f_auto',
       'q_auto',
       // QR Code overlay
       `l_fetch:${encodeURIComponent(customer.qr_code_url).replace(/%/g, '%25')}`,
-      'w_400,h_400,c_fill',
+      'w_285,h_285,c_fill',
       'fl_layer_apply',
-      'x_130,y_1100,g_north_west',
+      'x_224,y_759,g_north_west',
       // Logo overlay (if exists)
     ];
 
