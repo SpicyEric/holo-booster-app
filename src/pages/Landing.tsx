@@ -27,12 +27,6 @@ const Landing = () => {
     { label: 'Login', href: '/auth' }
   ];
 
-  const steps = [
-    { icon: Scan, title: 'Scannen', description: 'Kunde scannt QR-Code auf dem Kassenbon' },
-    { icon: MessageSquare, title: 'Bewerten', description: 'Hinterlässt eine Google-Bewertung' },
-    { icon: Award, title: 'Geschenk', description: 'Erhält sofort sein persönliches Dankeschön' }
-  ];
-
   const features = [
     {
       icon: Eye,
@@ -59,6 +53,12 @@ const Landing = () => {
       title: 'Analytics',
       description: 'Verfolgen Sie Ihre Performance in Echtzeit mit detaillierten Statistiken.'
     }
+  ];
+
+  const steps = [
+    { icon: Scan, title: 'Scannen', description: 'Kunde scannt QR-Code auf dem Kassenbon' },
+    { icon: MessageSquare, title: 'Bewerten', description: 'Hinterlässt eine Google-Bewertung' },
+    { icon: Award, title: 'Geschenk', description: 'Erhält sofort sein persönliches Dankeschön' }
   ];
 
   const handleTextTypeComplete = () => {
@@ -145,7 +145,7 @@ const Landing = () => {
       </div>
 
       {/* Hero Section with Animation */}
-      <section className="relative z-10 pt-32 pb-12 px-4 sm:px-6 lg:px-8 overflow-hidden">
+      <section className="relative z-10 pt-32 pb-20 px-4 sm:px-6 lg:px-8 overflow-hidden min-h-screen flex items-center">
         <div className="max-w-7xl mx-auto text-center w-full">
           <div className="flex flex-col items-center justify-center min-h-[400px]">
             {!typingComplete && (
@@ -180,26 +180,23 @@ const Landing = () => {
             )}
           </div>
 
-          {showLogo && (
-            <motion.p
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.6, delay: 0.5 }}
-              className="text-xl sm:text-2xl text-muted-foreground max-w-3xl mx-auto"
-            >
-              Die innovative Lösung für mehr Google-Bewertungen und nachhaltiges Wachstum Ihres Unternehmens.
-            </motion.p>
-          )}
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.6, delay: 3 }}
+            className="text-xl sm:text-2xl text-muted-foreground max-w-3xl mx-auto"
+          >
+            Die innovative Lösung für mehr Google-Bewertungen und nachhaltiges Wachstum Ihres Unternehmens.
+          </motion.p>
         </div>
       </section>
 
       {/* Stepper Section */}
       {showStepper && (
-        <section className="relative z-10 py-10 px-4 sm:px-6 lg:px-8">
+        <section className="relative z-10 py-20 px-4 sm:px-6 lg:px-8">
           <div className="max-w-7xl mx-auto">
             <Stepper
               initialStep={1}
-              scrollBased={true}
               onStepChange={(step) => {
                 console.log(step);
               }}
@@ -249,8 +246,34 @@ const Landing = () => {
         </section>
       )}
 
+      {/* CTA Section */}
+      <section className="relative z-10 py-20 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-4xl mx-auto text-center">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            whileInView={{ opacity: 1, scale: 1 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+            className="bg-gradient-primary rounded-3xl p-12"
+          >
+            <h2 className="text-4xl font-bold text-white mb-6">
+              Bereit für mehr Bewertungen?
+            </h2>
+            <p className="text-xl text-white/90 mb-8">
+              Starten Sie jetzt und steigern Sie Ihre Online-Reputation nachhaltig.
+            </p>
+            <GradientButton 
+              onClick={() => navigate('/kontakt')}
+              className="bg-white text-primary hover:bg-white/90"
+            >
+              Kontakt aufnehmen
+            </GradientButton>
+          </motion.div>
+        </div>
+      </section>
+
       {/* Footer */}
-      <footer className="relative z-10 border-t border-border py-12 px-4 sm:px-6 lg:px-8 mt-20">
+      <footer className="relative z-10 border-t border-border py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <div className="text-center md:text-left">

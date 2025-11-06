@@ -8,27 +8,15 @@
   padding: 1rem;
 }
 
-.outer-container.scroll-based {
-  min-height: 300vh;
-}
-
 @media (min-width: 640px) {
   .outer-container {
     aspect-ratio: 4 / 3;
-  }
-  
-  .outer-container.scroll-based {
-    aspect-ratio: unset;
   }
 }
 
 @media (min-width: 768px) {
   .outer-container {
     aspect-ratio: 2 / 1;
-  }
-  
-  .outer-container.scroll-based {
-    aspect-ratio: unset;
   }
 }
 
@@ -44,42 +32,11 @@
     0 10px 10px -5px rgba(0, 0, 0, 0.04);
 }
 
-.scroll-based .step-circle-container {
-  max-width: 100%;
-  background: transparent;
-  box-shadow: none;
-}
-
-.scroll-steps-container {
-  display: flex;
-  flex-direction: column;
-  gap: 100vh;
-  padding: 50vh 0;
-  width: 100%;
-}
-
-.scroll-step {
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
 .step-indicator-row {
   display: flex;
   width: 100%;
   align-items: center;
   padding: 2rem;
-}
-
-.scroll-based .step-indicator-row {
-  position: sticky;
-  top: 100px;
-  z-index: 10;
-  background: hsl(var(--card));
-  border-radius: 2rem;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-  margin-bottom: 2rem;
 }
 
 .step-content-default {
