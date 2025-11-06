@@ -8,15 +8,15 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    /* Dark theme with light accents */
-    --background: 0 0% 0%;           /* #000000 - black background */
-    --foreground: 0 0% 98%;          /* #fafafa - light text */
+    /* Light professional theme */
+    --background: 0 0% 100%;         /* #FFFFFF - white background */
+    --foreground: 0 0% 10%;          /* #1a1a1a - dark text */
 
-    --card: 0 0% 5%;                 /* #0d0d0d dark cards */
-    --card-foreground: 0 0% 98%;
+    --card: 0 0% 98%;                /* #fafafa light cards */
+    --card-foreground: 0 0% 10%;
 
-    --popover: 0 0% 5%;
-    --popover-foreground: 0 0% 98%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 10%;
 
     /* Purple-to-Blue gradient colors */
     --primary: 262 83% 58%;          /* #8B5CF6 vibrant purple */
@@ -25,32 +25,28 @@ All colors MUST be HSL.
     --secondary: 217 91% 60%;        /* #3B82F6 electric blue */
     --secondary-foreground: 0 0% 100%;
 
-    --muted: 0 0% 15%;               /* #262626 */
-    --muted-foreground: 0 0% 65%;    /* #a6a6a6 */
+    --muted: 0 0% 96%;               /* #f5f5f5 */
+    --muted-foreground: 0 0% 40%;    /* #666666 */
 
     --accent: 280 100% 70%;          /* Bright magenta accent */
-    --accent-foreground: 0 0% 100%;
+    --accent-foreground: 0 0% 10%;
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 0 0% 20%;              /* #333333 subtle borders */
-    --input: 0 0% 15%;               /* #262626 */
+    --border: 0 0% 90%;              /* #e6e6e6 subtle borders */
+    --input: 0 0% 98%;               /* #fafafa */
     --ring: 262 83% 58%;             /* Primary purple */
 
-    --radius: 1.5rem;                /* Large rounded corners */
+    --radius: 0.5rem;                /* Professional rounded corners */
 
     /* Gradient definitions */
     --gradient-primary: linear-gradient(135deg, hsl(262 83% 58%), hsl(217 91% 60%));
-    --gradient-glow: linear-gradient(135deg, hsl(262 83% 58% / 0.3), hsl(217 91% 60% / 0.3));
+    --gradient-glow: linear-gradient(135deg, hsl(262 83% 58% / 0.1), hsl(217 91% 60% / 0.1));
     
-    /* Glass effect */
-    --glass-bg: hsl(0 0% 8% / 0.6);
-    --glass-border: hsl(0 0% 100% / 0.1);
-    
-    /* Shadows with gradient glow */
-    --shadow-glow: 0 8px 32px hsl(262 83% 58% / 0.25);
-    --shadow-card: 0 4px 24px hsl(0 0% 0% / 0.5);
+    /* Professional shadows */
+    --shadow-glow: 0 4px 20px hsl(262 83% 58% / 0.15);
+    --shadow-card: 0 2px 8px hsl(0 0% 0% / 0.1);
   }
 }
 
