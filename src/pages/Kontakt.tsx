@@ -214,7 +214,7 @@ const Kontakt = () => {
 
               <div className="bg-card border border-border rounded-2xl p-8">
                 <h3 className="text-xl font-bold mb-4">Ansprechpartner</h3>
-                <p className="text-muted-foreground mb-6">Klaus-Eric Twardych</p>
+                <p className="text-muted-foreground mb-6">Klaus Eric Pfadisch</p>
                 
                 <h3 className="text-xl font-bold mb-4">Geschäftszeiten</h3>
                 <div className="space-y-2 text-muted-foreground mb-6">

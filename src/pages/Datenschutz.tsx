@@ -79,7 +79,7 @@ const Datenschutz = () => {
                 <strong>Hinweis zur verantwortlichen Stelle</strong> Die verantwortliche Stelle für die Datenverarbeitung auf dieser Website ist:
               </p>
               <p className="text-muted-foreground mb-4">
-                Klaus-Eric Twardych<br />
+                Klaus Eric Pfadisch<br />
                 Fuggerstr. 2<br />
                 86836 Untermeitingen<br />
                 <br />

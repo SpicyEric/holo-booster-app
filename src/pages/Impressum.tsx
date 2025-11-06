@@ -39,7 +39,7 @@ const Impressum = () => {
             <section>
               <h2 className="text-2xl font-bold mb-4">Angaben gemäß § 5 TMG</h2>
               <p className="text-muted-foreground">
-                Klaus-Eric Twardych<br />
+                Klaus Eric Pfadisch<br />
                 Fuggerstr. 2<br />
                 86836 Untermeitingen
               </p>
@@ -52,7 +52,7 @@ const Impressum = () => {
             <section>
               <h2 className="text-2xl font-bold mb-4">Vertreten durch</h2>
               <p className="text-muted-foreground">
-                Geschäftsführer: Klaus-Eric Twardych
+                Geschäftsführer: Klaus Eric Pfadisch
               </p>
             </section>
 
@@ -82,7 +82,7 @@ const Impressum = () => {
             <section>
               <h2 className="text-2xl font-bold mb-4">Verantwortlich für den Inhalt nach § 55 Abs. 2 RStV</h2>
               <p className="text-muted-foreground">
-                Klaus-Eric Twardych<br />
+                Klaus Eric Pfadisch<br />
                 Fuggerstr. 2<br />
                 86836 Untermeitingen
               </p>
