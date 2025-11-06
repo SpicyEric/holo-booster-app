@@ -4,6 +4,7 @@ import { GradientButton } from '@/components/GradientButton';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { Eye, Star, TrendingUp, Gift, BarChart3, Scan, MessageSquare, Award } from 'lucide-react';
+import Stepper, { Step } from '@/components/Stepper';
 
 const Landing = () => {
   const navigate = useNavigate();
@@ -120,29 +121,26 @@ const Landing = () => {
             So funktioniert's
           </h2>
           
-          <div className="grid md:grid-cols-3 gap-8">
+          <Stepper
+            initialStep={1}
+            onStepChange={(step) => {
+              console.log(step);
+            }}
+            backButtonText="Zurück"
+            nextButtonText="Weiter"
+          >
             {steps.map((step, index) => (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.6, delay: index * 0.2 }}
-                className="relative"
-              >
-                <div className="bg-card border border-border rounded-2xl p-8 h-full">
-                  <div className="w-16 h-16 rounded-2xl bg-gradient-primary flex items-center justify-center mb-6">
-                    <step.icon className="w-8 h-8 text-white" />
+              <Step key={index}>
+                <div className="flex flex-col items-center text-center py-8">
+                  <div className="w-20 h-20 rounded-2xl bg-gradient-primary flex items-center justify-center mb-6">
+                    <step.icon className="w-10 h-10 text-white" />
                   </div>
-                  <div className="absolute top-8 -right-4 w-8 h-8 bg-gradient-primary rounded-full flex items-center justify-center text-white font-bold text-lg">
-                    {index + 1}
-                  </div>
-                  <h3 className="text-2xl font-bold mb-4">{step.title}</h3>
-                  <p className="text-muted-foreground">{step.description}</p>
+                  <h2 className="text-2xl font-bold mb-4">{step.title}</h2>
+                  <p className="text-muted-foreground max-w-md">{step.description}</p>
                 </div>
-              </motion.div>
+              </Step>
             ))}
-          </div>
+          </Stepper>
         </div>
       </section>
 
