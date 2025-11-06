@@ -1,13 +1,14 @@
 import { useState, useEffect } from 'react';
-import GooeyNav from '@/components/GooeyNav';
+import ClassicNav from '@/components/ClassicNav';
 import Particles from '@/components/Particles';
-import { GradientButton } from '@/components/GradientButton';
+import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Trash2, Shield, CheckCircle2 } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
+import qraitLogo from '@/assets/qrait-logo-full.png';
 
 const Delete = () => {
   const [searchParams] = useSearchParams();
@@ -73,30 +74,23 @@ const Delete = () => {
   if (deleted) {
     return (
       <div className="min-h-screen bg-background">
-      <Particles 
-        particleColors={['#ffffff', '#ffffff', '#ffffff']}
-        particleCount={200}
-        particleSpread={12}
-        speed={0.08}
-        particleBaseSize={150}
-        sizeRandomness={2}
-        moveParticlesOnHover={true}
-        alphaParticles={false}
-        disableRotation={false}
-        cameraDistance={18}
-      />
-        <div className="fixed top-0 left-0 right-0 flex justify-center z-50 pt-8">
-          <GooeyNav
-            items={navItems}
-            particleCount={15}
-            particleDistances={[90, 10]}
-            particleR={100}
-            initialActiveIndex={0}
-            animationTime={600}
-            timeVariance={300}
-            colors={[1, 2, 3, 1, 2, 3, 1, 4]}
-          />
-        </div>
+        <Particles 
+          particleColors={['#8B5CF6', '#3B82F6', '#8B5CF6']}
+          particleCount={100}
+          particleSpread={8}
+          speed={0.05}
+          particleBaseSize={100}
+          sizeRandomness={1.5}
+          moveParticlesOnHover={true}
+          alphaParticles={true}
+          disableRotation={false}
+          cameraDistance={20}
+        />
+        
+        <ClassicNav 
+          items={navItems}
+          logo={<img src={qraitLogo} alt="QRait Logo" className="h-10 w-auto" />}
+        />
 
         <div className="pt-32 pb-20 px-4 sm:px-6 lg:px-8">
           <div className="max-w-2xl mx-auto">
@@ -108,9 +102,9 @@ const Delete = () => {
               <p className="text-muted-foreground mb-8">
                 Ihre personenbezogenen Daten wurden vollständig aus unserem System entfernt.
               </p>
-              <GradientButton onClick={() => window.location.href = '/'}>
+              <Button onClick={() => window.location.href = '/'} className="bg-foreground text-background hover:bg-foreground/90">
                 Zur Startseite
-              </GradientButton>
+              </Button>
             </div>
           </div>
         </div>
@@ -121,29 +115,22 @@ const Delete = () => {
   return (
     <div className="min-h-screen bg-background">
       <Particles 
-        particleColors={['#ffffff', '#ffffff', '#ffffff']}
-        particleCount={200}
-        particleSpread={12}
-        speed={0.08}
-        particleBaseSize={150}
-        sizeRandomness={2}
+        particleColors={['#8B5CF6', '#3B82F6', '#8B5CF6']}
+        particleCount={100}
+        particleSpread={8}
+        speed={0.05}
+        particleBaseSize={100}
+        sizeRandomness={1.5}
         moveParticlesOnHover={true}
-        alphaParticles={false}
+        alphaParticles={true}
         disableRotation={false}
-        cameraDistance={18}
+        cameraDistance={20}
       />
-      <div className="fixed top-0 left-0 right-0 flex justify-center z-50 pt-8">
-        <GooeyNav
-          items={navItems}
-          particleCount={15}
-          particleDistances={[90, 10]}
-          particleR={100}
-          initialActiveIndex={0}
-          animationTime={600}
-          timeVariance={300}
-          colors={[1, 2, 3, 1, 2, 3, 1, 4]}
-        />
-      </div>
+      
+      <ClassicNav 
+        items={navItems}
+        logo={<img src={qraitLogo} alt="QRait Logo" className="h-10 w-auto" />}
+      />
 
       <div className="pt-32 pb-20 px-4 sm:px-6 lg:px-8">
         <div className="max-w-2xl mx-auto">
@@ -169,7 +156,7 @@ const Delete = () => {
                   Ihre Löschanfrage wird bearbeitet...
                 </p>
                 {loading && (
-                  <div className="w-16 h-16 rounded-full bg-gradient-primary animate-pulse-glow mx-auto" />
+                  <div className="w-16 h-16 rounded-full bg-gradient-primary animate-pulse mx-auto" />
                 )}
               </div>
             ) : (
@@ -195,9 +182,9 @@ const Delete = () => {
                     </p>
                   </div>
 
-                  <GradientButton type="submit" disabled={loading} className="w-full">
+                  <Button type="submit" disabled={loading} className="w-full bg-foreground text-background hover:bg-foreground/90">
                     {loading ? 'Wird verarbeitet...' : 'Löschung beantragen'}
-                  </GradientButton>
+                  </Button>
                 </form>
               </div>
             )}

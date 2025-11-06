@@ -1,6 +1,5 @@
 import ClassicNav from '@/components/ClassicNav';
 import Particles from '@/components/Particles';
-import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 import { Shield, ArrowRight } from 'lucide-react';
 import qraitLogo from '@/assets/qrait-logo-full.png';
@@ -40,31 +39,6 @@ const Datenschutz = () => {
         <div className="max-w-4xl mx-auto">
           <h1 className="text-5xl font-bold mb-8">Datenschutzerklärung</h1>
           
-          <div className="bg-gradient-primary rounded-2xl p-8 mb-8">
-            <div className="flex items-center justify-between flex-wrap gap-4">
-              <div className="flex items-center space-x-4">
-                <div className="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center">
-                  <Shield className="w-6 h-6 text-white" />
-                </div>
-                <div>
-                  <h2 className="text-xl font-bold text-white mb-1">
-                    Ihre Daten, Ihre Kontrolle
-                  </h2>
-                  <p className="text-white/90 text-sm">
-                    Löschen Sie Ihre Daten jederzeit selbst
-                  </p>
-                </div>
-              </div>
-              <Button 
-                onClick={() => navigate('/delete')}
-                className="bg-white text-primary hover:bg-white/90"
-              >
-                Daten jetzt löschen
-                <ArrowRight className="ml-2 w-4 h-4" />
-              </Button>
-            </div>
-          </div>
-
           <div className="bg-card border border-border rounded-2xl p-8 space-y-8">
             <section>
               <h2 className="text-2xl font-bold mb-4">1. Datenschutz auf einen Blick</h2>
@@ -101,17 +75,16 @@ const Datenschutz = () => {
                 sowie dieser Datenschutzerklärung.
               </p>
 
-              <h3 className="text-xl font-semibold mb-3">Hinweis zur verantwortlichen Stelle</h3>
               <p className="text-muted-foreground mb-4">
-                Die verantwortliche Stelle für die Datenverarbeitung auf dieser Website ist:
+                <strong>Hinweis zur verantwortlichen Stelle</strong> Die verantwortliche Stelle für die Datenverarbeitung auf dieser Website ist:
               </p>
               <p className="text-muted-foreground mb-4">
-                QRAIT GmbH<br />
-                Musterstraße 123<br />
-                12345 Musterstadt<br />
+                Klaus-Eric Twardych<br />
+                Fuggerstr. 2<br />
+                86836 Untermeitingen<br />
                 <br />
-                Telefon: +49 123 456 7890<br />
-                E-Mail: info@qrait.de
+                Telefon: +49 151 62665596<br />
+                E-Mail: kontakt@qrait.de
               </p>
             </section>
 

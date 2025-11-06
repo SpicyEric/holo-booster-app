@@ -39,50 +39,52 @@ const Impressum = () => {
             <section>
               <h2 className="text-2xl font-bold mb-4">Angaben gemäß § 5 TMG</h2>
               <p className="text-muted-foreground">
-                QRAIT GmbH<br />
-                Musterstraße 123<br />
-                12345 Musterstadt
+                Klaus-Eric Twardych<br />
+                Fuggerstr. 2<br />
+                86836 Untermeitingen
+              </p>
+              <p className="text-muted-foreground mt-4">
+                <strong>Hinweis:</strong> Es handelt sich um ein Einzelunternehmen. 
+                "QRait" ist ein Fantasiename und keine Rechtsform.
               </p>
             </section>
 
             <section>
               <h2 className="text-2xl font-bold mb-4">Vertreten durch</h2>
               <p className="text-muted-foreground">
-                Geschäftsführer: Max Mustermann
+                Geschäftsführer: Klaus-Eric Twardych
               </p>
             </section>
 
             <section>
               <h2 className="text-2xl font-bold mb-4">Kontakt</h2>
               <p className="text-muted-foreground">
-                Telefon: +49 123 456 7890<br />
-                E-Mail: info@qrait.de
+                Telefon: +49 151 62665596<br />
+                E-Mail: kontakt@qrait.de
               </p>
             </section>
 
             <section>
               <h2 className="text-2xl font-bold mb-4">Registereintrag</h2>
               <p className="text-muted-foreground">
-                Eintragung im Handelsregister.<br />
-                Registergericht: Amtsgericht Musterstadt<br />
-                Registernummer: HRB 12345
+                Es liegt kein Registereintrag vor, da es sich um ein Einzelunternehmen handelt.
               </p>
             </section>
 
             <section>
               <h2 className="text-2xl font-bold mb-4">Umsatzsteuer-ID</h2>
               <p className="text-muted-foreground">
-                Umsatzsteuer-Identifikationsnummer gemäß § 27 a Umsatzsteuergesetz:<br />
-                DE123456789
+                Es liegt keine Umsatzsteuer-Identifikationsnummer vor, 
+                da noch kein Gewerbe angemeldet wurde.
               </p>
             </section>
 
             <section>
               <h2 className="text-2xl font-bold mb-4">Verantwortlich für den Inhalt nach § 55 Abs. 2 RStV</h2>
               <p className="text-muted-foreground">
-                Max Mustermann<br />
-                Musterstraße 123<br />
-                12345 Musterstadt
+                Klaus-Eric Twardych<br />
+                Fuggerstr. 2<br />
+                86836 Untermeitingen
               </p>
             </section>
 

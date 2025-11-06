@@ -249,6 +249,14 @@ const Landing = () => {
               <a href="/kontakt" className="text-muted-foreground hover:text-foreground transition-colors">
                 Kontakt
               </a>
+              <a 
+                href="https://instagram.com/qrait.de" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-muted-foreground hover:text-foreground transition-colors"
+              >
+                Instagram
+              </a>
             </div>
           </div>
         </div>
