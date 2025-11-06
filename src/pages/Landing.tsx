@@ -47,7 +47,7 @@ const Landing = () => {
   ];
 
   return (
-    <div ref={containerRef} className="bg-background text-foreground relative scroll-smooth">
+    <div ref={containerRef} className="bg-background text-foreground relative snap-y snap-mandatory overflow-y-scroll h-screen">
       <Particles 
         particleColors={['#ffffff', '#ffffff', '#ffffff']}
         particleCount={200}
@@ -86,10 +86,7 @@ const Landing = () => {
             transition={{ duration: 0.8, delay: 0.2 }}
             className="text-6xl sm:text-7xl lg:text-8xl font-bold mb-8"
           >
-            Verwandeln Sie Kunden in{' '}
-            <span className="bg-gradient-primary bg-clip-text text-transparent">
-              Markenbotschafter
-            </span>
+            Quick Response AI Tool
           </motion.h1>
           
           <motion.p
