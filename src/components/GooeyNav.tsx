@@ -1,5 +1,5 @@
 import { useRef, useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import './GooeyNav.css';
 
 interface GooeyNavItem {
@@ -33,6 +33,8 @@ const GooeyNav = ({
   const filterRef = useRef<HTMLSpanElement>(null);
   const textRef = useRef<HTMLSpanElement>(null);
   const [activeIndex, setActiveIndex] = useState(initialActiveIndex);
+  const navigate = useNavigate();
+  const navigateDelay = Math.min(450, Math.max(250, Math.floor(animationTime * 0.6)));
 
   const noise = (n = 1) => n / 2 - Math.random() * n;
 
@@ -134,13 +136,24 @@ const GooeyNav = ({
     }
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLAnchorElement>, index: number) => {
+  const handleLinkClick = (e: React.MouseEvent<HTMLAnchorElement>, index: number, href: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const liEl = e.currentTarget.parentElement as HTMLLIElement;
+    if (liEl) {
+      handleClick({ currentTarget: liEl } as React.MouseEvent<HTMLLIElement>, index);
+    }
+    setTimeout(() => navigate(href), navigateDelay);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLAnchorElement>, index: number, href: string) => {
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();
-      const liEl = e.currentTarget.parentElement;
+      const liEl = e.currentTarget.parentElement as HTMLLIElement;
       if (liEl) {
         handleClick({ currentTarget: liEl } as React.MouseEvent<HTMLLIElement>, index);
       }
+      setTimeout(() => navigate(href), navigateDelay);
     }
   };
 
@@ -169,7 +182,7 @@ const GooeyNav = ({
         <ul ref={navRef}>
           {items.map((item, index) => (
             <li key={index} className={activeIndex === index ? 'active' : ''} onClick={(e) => handleClick(e, index)}>
-              <Link to={item.href} onKeyDown={e => handleKeyDown(e, index)}>
+              <Link to={item.href} onClick={(e) => handleLinkClick(e, index, item.href)} onKeyDown={(e) => handleKeyDown(e, index, item.href)}>
                 {item.label}
               </Link>
             </li>
