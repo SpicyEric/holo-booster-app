@@ -28,8 +28,8 @@
   
   /* Particle colors for GooeyNav animation */
   --color-1: #ffffff;
-  --color-2: #8B5CF6;  /* Purple */
-  --color-3: #3B82F6;  /* Blue */
+  --color-2: #e0e0e0;
+  --color-3: #c0c0c0;
   --color-4: #ffffff;
 }
 
@@ -123,7 +123,7 @@
 }
 
 .gooey-nav-container .effect.filter {
-  filter: blur(3px) contrast(20);
+  filter: blur(7px) contrast(100) blur(0);
   mix-blend-mode: lighten;
 }
 
@@ -161,8 +161,8 @@
 .point {
   display: block;
   opacity: 0;
-  width: 24px;
-  height: 24px;
+  width: 20px;
+  height: 20px;
   border-radius: 100%;
   transform-origin: center;
 }
