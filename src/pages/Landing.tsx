@@ -4,10 +4,9 @@ import { GradientButton } from '@/components/GradientButton';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { useEffect, useRef, useState } from 'react';
-import { Eye, Star, TrendingUp, Gift, BarChart3, Scan, MessageSquare, Award } from 'lucide-react';
+import { Scan, MessageSquare, Award } from 'lucide-react';
 import Stepper, { Step } from '@/components/Stepper';
 import TextType from '@/components/TextType';
-import ScrollStack, { ScrollStackItem } from '@/components/ScrollStack';
 import { gsap } from 'gsap';
 import qraitLogo from '@/assets/qrait-logo.svg';
 
@@ -25,34 +24,6 @@ const Landing = () => {
     { label: 'Datenschutz', href: '/datenschutz' },
     { label: 'Impressum', href: '/impressum' },
     { label: 'Login', href: '/auth' }
-  ];
-
-  const features = [
-    {
-      icon: Eye,
-      title: 'Mehr Sichtbarkeit',
-      description: 'QR-Codes auf jedem Kassenbon - Ihre Kunden werden zu Botschaftern Ihrer Marke.'
-    },
-    {
-      icon: Star,
-      title: 'Echte Bewertungen',
-      description: 'Motivieren Sie zufriedene Kunden, authentische Google-Bewertungen zu hinterlassen.'
-    },
-    {
-      icon: TrendingUp,
-      title: 'Nachhaltiges Wachstum',
-      description: 'Steigern Sie Ihre Online-Reputation und gewinnen Sie mehr Neukunden durch Vertrauen.'
-    },
-    {
-      icon: Gift,
-      title: 'Kundenbindung',
-      description: 'Belohnen Sie Ihre Kunden mit attraktiven Geschenken für ihre Bewertungen.'
-    },
-    {
-      icon: BarChart3,
-      title: 'Analytics',
-      description: 'Verfolgen Sie Ihre Performance in Echtzeit mit detaillierten Statistiken.'
-    }
   ];
 
   const steps = [
@@ -145,7 +116,7 @@ const Landing = () => {
       </div>
 
       {/* Hero Section with Animation */}
-      <section className="relative z-10 pt-32 pb-20 px-4 sm:px-6 lg:px-8 overflow-hidden min-h-screen flex items-center">
+      <section className="relative z-10 pt-32 pb-12 px-4 sm:px-6 lg:px-8 overflow-hidden">
         <div className="max-w-7xl mx-auto text-center w-full">
           <div className="flex flex-col items-center justify-center min-h-[400px]">
             {!typingComplete && (
@@ -180,23 +151,26 @@ const Landing = () => {
             )}
           </div>
 
-          <motion.p
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.6, delay: 3 }}
-            className="text-xl sm:text-2xl text-muted-foreground max-w-3xl mx-auto"
-          >
-            Die innovative Lösung für mehr Google-Bewertungen und nachhaltiges Wachstum Ihres Unternehmens.
-          </motion.p>
+          {showLogo && (
+            <motion.p
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.6, delay: 0.5 }}
+              className="text-xl sm:text-2xl text-muted-foreground max-w-3xl mx-auto"
+            >
+              Die innovative Lösung für mehr Google-Bewertungen und nachhaltiges Wachstum Ihres Unternehmens.
+            </motion.p>
+          )}
         </div>
       </section>
 
       {/* Stepper Section */}
       {showStepper && (
-        <section className="relative z-10 py-20 px-4 sm:px-6 lg:px-8">
+        <section className="relative z-10 py-10 px-4 sm:px-6 lg:px-8">
           <div className="max-w-7xl mx-auto">
             <Stepper
               initialStep={1}
+              scrollBased={true}
               onStepChange={(step) => {
                 console.log(step);
               }}
@@ -218,59 +192,6 @@ const Landing = () => {
           </div>
         </section>
       )}
-
-      {/* Features Section with ScrollStack */}
-      {showStepper && (
-        <section className="relative z-10 h-screen">
-          <ScrollStack
-            itemDistance={100}
-            itemScale={0.05}
-            itemStackDistance={40}
-            stackPosition="30%"
-            scaleEndPosition="15%"
-            baseScale={0.9}
-            useWindowScroll={false}
-          >
-            {features.map((feature, index) => (
-              <ScrollStackItem key={index}>
-                <div className="bg-card border border-border rounded-2xl p-8 h-full flex flex-col">
-                  <div className="w-14 h-14 rounded-xl bg-gradient-primary flex items-center justify-center mb-6">
-                    <feature.icon className="w-7 h-7 text-white" />
-                  </div>
-                  <h3 className="text-xl font-bold mb-3">{feature.title}</h3>
-                  <p className="text-muted-foreground">{feature.description}</p>
-                </div>
-              </ScrollStackItem>
-            ))}
-          </ScrollStack>
-        </section>
-      )}
-
-      {/* CTA Section */}
-      <section className="relative z-10 py-20 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-4xl mx-auto text-center">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            whileInView={{ opacity: 1, scale: 1 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
-            className="bg-gradient-primary rounded-3xl p-12"
-          >
-            <h2 className="text-4xl font-bold text-white mb-6">
-              Bereit für mehr Bewertungen?
-            </h2>
-            <p className="text-xl text-white/90 mb-8">
-              Starten Sie jetzt und steigern Sie Ihre Online-Reputation nachhaltig.
-            </p>
-            <GradientButton 
-              onClick={() => navigate('/kontakt')}
-              className="bg-white text-primary hover:bg-white/90"
-            >
-              Kontakt aufnehmen
-            </GradientButton>
-          </motion.div>
-        </div>
-      </section>
 
       {/* Footer */}
       <footer className="relative z-10 border-t border-border py-12 px-4 sm:px-6 lg:px-8">

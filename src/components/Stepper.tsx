@@ -1,4 +1,4 @@
-import React, { useState, Children, useRef, useLayoutEffect, ReactNode } from 'react';
+import React, { useState, Children, useRef, useLayoutEffect, useEffect, ReactNode } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 import './Stepper.css';
@@ -17,6 +17,7 @@ interface StepperProps {
   backButtonText?: string;
   nextButtonText?: string;
   disableStepIndicators?: boolean;
+  scrollBased?: boolean;
   renderStepIndicator?: (props: {
     step: number;
     currentStep: number;
@@ -38,6 +39,7 @@ export default function Stepper({
   backButtonText = 'Zurück',
   nextButtonText = 'Weiter',
   disableStepIndicators = false,
+  scrollBased = false,
   renderStepIndicator,
   ...rest
 }: StepperProps) {
@@ -47,6 +49,8 @@ export default function Stepper({
   const totalSteps = stepsArray.length;
   const isCompleted = currentStep > totalSteps;
   const isLastStep = currentStep === totalSteps;
+  const stepRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   const updateStep = (newStep: number) => {
     setCurrentStep(newStep);
@@ -76,8 +80,45 @@ export default function Stepper({
     updateStep(totalSteps + 1);
   };
 
+  // Scroll-based navigation
+  useEffect(() => {
+    if (!scrollBased || !containerRef.current) return;
+
+    const observers: IntersectionObserver[] = [];
+    
+    stepRefs.current.forEach((stepEl, index) => {
+      if (!stepEl) return;
+      
+      const observer = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting && entry.intersectionRatio > 0.5) {
+              const newStep = index + 1;
+              if (newStep !== currentStep) {
+                setDirection(newStep > currentStep ? 1 : -1);
+                updateStep(newStep);
+              }
+            }
+          });
+        },
+        {
+          root: null,
+          threshold: 0.5,
+          rootMargin: '-20% 0px -20% 0px'
+        }
+      );
+      
+      observer.observe(stepEl);
+      observers.push(observer);
+    });
+
+    return () => {
+      observers.forEach(observer => observer.disconnect());
+    };
+  }, [scrollBased, currentStep, totalSteps, updateStep]);
+
   return (
-    <div className="outer-container" {...rest}>
+    <div ref={containerRef} className={`outer-container ${scrollBased ? 'scroll-based' : ''}`} {...rest}>
       <div className={`step-circle-container ${stepCircleContainerClassName}`} style={{ border: '1px solid hsl(var(--border))' }}>
         <div className={`step-indicator-row ${stepContainerClassName}`}>
           {stepsArray.map((_, index) => {
@@ -111,16 +152,32 @@ export default function Stepper({
           })}
         </div>
 
-        <StepContentWrapper
-          isCompleted={isCompleted}
-          currentStep={currentStep}
-          direction={direction}
-          className={`step-content-default ${contentClassName}`}
-        >
-          {stepsArray[currentStep - 1]}
-        </StepContentWrapper>
+        {scrollBased ? (
+          <div className="scroll-steps-container">
+            {stepsArray.map((step, index) => (
+              <div
+                key={index}
+                ref={(el) => (stepRefs.current[index] = el)}
+                className="scroll-step"
+              >
+                {step}
+              </div>
+            ))}
+          </div>
+        ) : (
+          <>
+            <StepContentWrapper
+              isCompleted={isCompleted}
+              currentStep={currentStep}
+              direction={direction}
+              className={`step-content-default ${contentClassName}`}
+            >
+              {stepsArray[currentStep - 1]}
+            </StepContentWrapper>
+          </>
+        )}
 
-        {!isCompleted && (
+        {!isCompleted && !scrollBased && (
           <div className={`footer-container ${footerClassName}`}>
             <div className={`footer-nav ${currentStep !== 1 ? 'spread' : 'end'}`}>
               {currentStep !== 1 && (
