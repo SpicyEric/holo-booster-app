@@ -84,37 +84,49 @@ serve(async (req) => {
     // Design dimensions: 1414x2000px
     // QR Code position: x=224px (0.1584), y=759px (0.3795)
     // QR Code size: 285x285px (0.2016 x 0.1425)
-    const transformations = [
-      // Base layer: template
-      'f_auto',
-      'q_auto',
-      // QR Code overlay
+    
+    // Base transformations
+    const baseTransforms = 'f_auto,q_auto';
+    
+    // QR Code overlay - all parameters BEFORE fl_layer_apply
+    const qrOverlay = [
       `l_fetch:${encodeURIComponent(customer.qr_code_url).replace(/%/g, '%25')}`,
-      'w_285,h_285,c_fill',
-      'fl_layer_apply',
-      'x_224,y_759,g_north_west',
-      // Logo overlay (if exists)
-    ];
+      'w_285',
+      'h_285',
+      'c_fill',
+      'g_north_west',
+      'x_224',
+      'y_759',
+      'fl_layer_apply'
+    ].join(',');
 
+    // Logo overlay (if exists)
+    let logoOverlay = '';
     if (customer.logo_url) {
-      transformations.push(
+      logoOverlay = '/' + [
         `l_fetch:${encodeURIComponent(customer.logo_url).replace(/%/g, '%25')}`,
-        'w_200,h_200,c_fit',
-        'fl_layer_apply',
-        'x_100,y_100,g_north_west'
-      );
+        'w_200',
+        'h_200',
+        'c_fit',
+        'g_north_west',
+        'x_100',
+        'y_100',
+        'fl_layer_apply'
+      ].join(',');
     }
 
     // Text overlay
-    transformations.push(
+    const textOverlay = [
       `l_text:Arial_56_bold:${encodeURIComponent(offerText)}`,
       'co_rgb:000000',
-      'fl_layer_apply',
-      'x_874,y_380,g_north_west'
-    );
+      'g_north_west',
+      'x_874',
+      'y_380',
+      'fl_layer_apply'
+    ].join(',');
 
-    // Use fetch with the template URL as base
-    const cloudinaryUrl = `https://res.cloudinary.com/${cloudName}/image/fetch/${transformations.join(',')}/${encodeURIComponent(templateUrl)}`;
+    // Build final URL with slash-separated transformation groups
+    const cloudinaryUrl = `https://res.cloudinary.com/${cloudName}/image/fetch/${baseTransforms}/${qrOverlay}${logoOverlay}/${textOverlay}/${encodeURIComponent(templateUrl)}`;
 
     console.log('Generating design via Cloudinary fetch...');
     console.log('URL length:', cloudinaryUrl.length);
