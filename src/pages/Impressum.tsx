@@ -19,10 +19,10 @@ const Impressum = () => {
           logo={logo}
           logoAlt="QRAIT Logo"
           items={navItems}
-          baseColor="#0a0a0a"
+          baseColor="hsl(262 83% 58%)"
           pillColor="#ffffff"
-          hoveredPillTextColor="#ffffff"
-          pillTextColor="#0a0a0a"
+          hoveredPillTextColor="hsl(262 83% 58%)"
+          pillTextColor="hsl(262 83% 58%)"
         />
       </div>
 
