@@ -1,12 +1,21 @@
-import { PublicNav } from '@/components/PublicNav';
+import PillNav from '@/components/PillNav';
 import { DotGrid } from '@/components/DotGrid';
 import { GradientButton } from '@/components/GradientButton';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { Eye, Star, TrendingUp, Gift, BarChart3, Scan, MessageSquare, Award } from 'lucide-react';
+import logo from '@/assets/qrait-logo.svg';
 
 const Landing = () => {
   const navigate = useNavigate();
+
+  const navItems = [
+    { label: 'Home', href: '/' },
+    { label: 'Kontakt', href: '/kontakt' },
+    { label: 'Datenschutz', href: '/datenschutz' },
+    { label: 'Impressum', href: '/impressum' },
+    { label: 'Login', href: '/auth' },
+  ];
 
   const features = [
     {
@@ -45,7 +54,17 @@ const Landing = () => {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <DotGrid />
-      <PublicNav />
+      <div className="fixed top-0 left-0 right-0 flex justify-center z-50">
+        <PillNav
+          logo={logo}
+          logoAlt="QRAIT Logo"
+          items={navItems}
+          baseColor="#0a0a0a"
+          pillColor="#ffffff"
+          hoveredPillTextColor="#ffffff"
+          pillTextColor="#0a0a0a"
+        />
+      </div>
 
       {/* Hero Section */}
       <section className="relative pt-32 pb-20 px-4 sm:px-6 lg:px-8 overflow-hidden">

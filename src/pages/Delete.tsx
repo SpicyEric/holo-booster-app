@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { PublicNav } from '@/components/PublicNav';
+import { useState, useEffect } from 'react';
+import PillNav from '@/components/PillNav';
 import { DotGrid } from '@/components/DotGrid';
 import { GradientButton } from '@/components/GradientButton';
 import { Input } from '@/components/ui/input';
@@ -8,7 +8,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Trash2, Shield, CheckCircle2 } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
-import { useEffect } from 'react';
+import logo from '@/assets/qrait-logo.svg';
 
 const Delete = () => {
   const [searchParams] = useSearchParams();
@@ -16,6 +16,14 @@ const Delete = () => {
   const [phone, setPhone] = useState('');
   const [deleted, setDeleted] = useState(false);
   const token = searchParams.get('t');
+
+  const navItems = [
+    { label: 'Home', href: '/' },
+    { label: 'Kontakt', href: '/kontakt' },
+    { label: 'Datenschutz', href: '/datenschutz' },
+    { label: 'Impressum', href: '/impressum' },
+    { label: 'Login', href: '/auth' },
+  ];
 
   useEffect(() => {
     // Auto-delete if token is present
@@ -67,7 +75,17 @@ const Delete = () => {
     return (
       <div className="min-h-screen bg-background">
         <DotGrid />
-        <PublicNav />
+        <div className="fixed top-0 left-0 right-0 flex justify-center z-50">
+          <PillNav
+            logo={logo}
+            logoAlt="QRAIT Logo"
+            items={navItems}
+            baseColor="#0a0a0a"
+            pillColor="#ffffff"
+            hoveredPillTextColor="#ffffff"
+            pillTextColor="#0a0a0a"
+          />
+        </div>
 
         <div className="pt-32 pb-20 px-4 sm:px-6 lg:px-8">
           <div className="max-w-2xl mx-auto">
@@ -92,7 +110,17 @@ const Delete = () => {
   return (
     <div className="min-h-screen bg-background">
       <DotGrid />
-      <PublicNav />
+      <div className="fixed top-0 left-0 right-0 flex justify-center z-50">
+        <PillNav
+          logo={logo}
+          logoAlt="QRAIT Logo"
+          items={navItems}
+          baseColor="#0a0a0a"
+          pillColor="#ffffff"
+          hoveredPillTextColor="#ffffff"
+          pillTextColor="#0a0a0a"
+        />
+      </div>
 
       <div className="pt-32 pb-20 px-4 sm:px-6 lg:px-8">
         <div className="max-w-2xl mx-auto">
