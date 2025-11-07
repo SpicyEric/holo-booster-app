@@ -14,6 +14,8 @@ import Overview from "./pages/admin/Overview";
 import Customers from "./pages/admin/Customers";
 import CustomerDetail from "./pages/admin/CustomerDetail";
 import CustomerNew from "./pages/admin/CustomerNew";
+import Accounts from "./pages/admin/Accounts";
+import Stats from "./pages/admin/Stats";
 import Settings from "./pages/admin/Settings";
 import MerchantDashboard from "./pages/merchant/Dashboard";
 import PartnerDashboard from "./pages/partner/Dashboard";
@@ -40,6 +42,8 @@ const App = () => (
             <Route path="customers" element={<Customers />} />
             <Route path="customers/new" element={<CustomerNew />} />
             <Route path="customers/:id" element={<CustomerDetail />} />
+            <Route path="accounts" element={<Accounts />} />
+            <Route path="stats" element={<Stats />} />
             <Route path="settings" element={<Settings />} />
           </Route>
           <Route path="/merchant" element={<MerchantDashboard />} />

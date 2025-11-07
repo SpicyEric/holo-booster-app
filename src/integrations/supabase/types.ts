@@ -129,6 +129,57 @@ export type Database = {
           },
         ]
       }
+      customer_subscriptions: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          customer_id: string
+          end_date: string | null
+          id: string
+          package_id: string
+          start_date: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          customer_id: string
+          end_date?: string | null
+          id?: string
+          package_id: string
+          start_date?: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          customer_id?: string
+          end_date?: string | null
+          id?: string
+          package_id?: string
+          start_date?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_subscriptions_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_subscriptions_package_id_fkey"
+            columns: ["package_id"]
+            isOneToOne: false
+            referencedRelation: "packages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       customers: {
         Row: {
           active: boolean
@@ -140,13 +191,18 @@ export type Database = {
           google_review_url: string
           id: string
           industry: string | null
+          last_contact_date: string | null
+          lead_source: string | null
           logo_url: string | null
           name: string
+          next_followup_date: string | null
           offer_details: string | null
           offer_text: string
           offer_title: string | null
           phone: string | null
+          priority: string | null
           qr_code_url: string | null
+          sales_notes: string | null
           updated_at: string
         }
         Insert: {
@@ -159,13 +215,18 @@ export type Database = {
           google_review_url: string
           id?: string
           industry?: string | null
+          last_contact_date?: string | null
+          lead_source?: string | null
           logo_url?: string | null
           name: string
+          next_followup_date?: string | null
           offer_details?: string | null
           offer_text: string
           offer_title?: string | null
           phone?: string | null
+          priority?: string | null
           qr_code_url?: string | null
+          sales_notes?: string | null
           updated_at?: string
         }
         Update: {
@@ -178,13 +239,18 @@ export type Database = {
           google_review_url?: string
           id?: string
           industry?: string | null
+          last_contact_date?: string | null
+          lead_source?: string | null
           logo_url?: string | null
           name?: string
+          next_followup_date?: string | null
           offer_details?: string | null
           offer_text?: string
           offer_title?: string | null
           phone?: string | null
+          priority?: string | null
           qr_code_url?: string | null
+          sales_notes?: string | null
           updated_at?: string
         }
         Relationships: []
@@ -255,6 +321,86 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "orders_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      packages: {
+        Row: {
+          billing_interval: string
+          created_at: string
+          description: string | null
+          features: Json | null
+          id: string
+          is_active: boolean
+          name: string
+          price: number
+          updated_at: string
+        }
+        Insert: {
+          billing_interval?: string
+          created_at?: string
+          description?: string | null
+          features?: Json | null
+          id?: string
+          is_active?: boolean
+          name: string
+          price: number
+          updated_at?: string
+        }
+        Update: {
+          billing_interval?: string
+          created_at?: string
+          description?: string | null
+          features?: Json | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          price?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      payments: {
+        Row: {
+          amount: number
+          created_at: string
+          customer_id: string
+          id: string
+          invoice_number: string | null
+          notes: string | null
+          payment_date: string
+          payment_method: string | null
+          status: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          customer_id: string
+          id?: string
+          invoice_number?: string | null
+          notes?: string | null
+          payment_date?: string
+          payment_method?: string | null
+          status?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          customer_id?: string
+          id?: string
+          invoice_number?: string | null
+          notes?: string | null
+          payment_date?: string
+          payment_method?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payments_customer_id_fkey"
             columns: ["customer_id"]
             isOneToOne: false
             referencedRelation: "customers"

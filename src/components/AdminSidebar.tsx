@@ -19,6 +19,7 @@ import qraitLogo from '@/assets/qrait-logo-full.png';
 const menuItems = [
   { title: "Dashboard", url: "/admin", icon: Home },
   { title: "Kunden", url: "/admin/customers", icon: Users },
+  { title: "Accounts", url: "/admin/accounts", icon: Users },
   { title: "Statistiken", url: "/admin/stats", icon: BarChart3 },
   { title: "Einstellungen", url: "/admin/settings", icon: Settings },
 ];

@@ -33,9 +33,10 @@ const CustomerNew = () => {
 
     setCreating(true);
     try {
-      const { data, error } = await supabase
-        .from("customers")
-        .insert({
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      const { data, error } = await supabase.functions.invoke("createCustomerWithAccount", {
+        body: {
           name: formData.company_name,
           company_name: formData.company_name,
           industry: formData.industry,
@@ -46,14 +47,18 @@ const CustomerNew = () => {
           offer_text: formData.offer_text,
           offer_title: formData.offer_title,
           offer_details: formData.offer_details,
-        })
-        .select()
-        .single();
+        },
+        headers: {
+          Authorization: `Bearer ${session?.access_token}`,
+        },
+      });
 
       if (error) throw error;
 
-      toast.success("Kunde erfolgreich angelegt");
-      navigate(`/admin/customers/${data.id}`);
+      toast.success(formData.email 
+        ? "Kunde angelegt und Login-Daten per E-Mail versendet!" 
+        : "Kunde erfolgreich angelegt");
+      navigate(`/admin/customers/${data.customer.id}`);
     } catch (error: any) {
       toast.error("Fehler beim Anlegen des Kunden");
       console.error(error);
