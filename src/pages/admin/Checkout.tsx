@@ -32,13 +32,14 @@ export default function Checkout() {
 
   // Promo Code
   const [promoCode, setPromoCode] = useState("");
-  const [promoCodeValidation, setPromoCodeValidation] = useState<{
+  const [promoCodeValidations, setPromoCodeValidations] = useState<Array<{
+    code: string;
     valid: boolean;
     discountType?: 'percentage' | 'fixed';
     discountValue?: number;
     appliesTo?: 'one_time' | 'recurring' | 'both';
     error?: string;
-  } | null>(null);
+  }>>([]);
   const [validatingPromoCode, setValidatingPromoCode] = useState(false);
   
   // Legal
@@ -51,14 +52,20 @@ export default function Checkout() {
   const CUSTOM_DESIGN = 30.00;
 
   const calculateDiscount = (baseAmount: number, appliesTo: string) => {
-    if (!promoCodeValidation?.valid) return 0;
-    if (promoCodeValidation.appliesTo !== appliesTo && promoCodeValidation.appliesTo !== 'both') return 0;
+    let totalDiscount = 0;
     
-    if (promoCodeValidation.discountType === 'percentage') {
-      return baseAmount * (promoCodeValidation.discountValue! / 100);
-    } else {
-      return promoCodeValidation.discountValue!;
+    for (const validation of promoCodeValidations) {
+      if (!validation.valid) continue;
+      if (validation.appliesTo !== appliesTo && validation.appliesTo !== 'both') continue;
+      
+      if (validation.discountType === 'percentage') {
+        totalDiscount += baseAmount * (validation.discountValue! / 100);
+      } else {
+        totalDiscount += validation.discountValue!;
+      }
     }
+    
+    return totalDiscount;
   };
 
   const baseOneTimeCosts = SETUP_FEE + (extraDisplays * EXTRA_DISPLAY) + (customDesign ? CUSTOM_DESIGN : 0);
@@ -72,27 +79,44 @@ export default function Checkout() {
 
   const validatePromoCode = async () => {
     if (!promoCode.trim()) {
-      setPromoCodeValidation(null);
+      setPromoCodeValidations([]);
       return;
     }
     
     setValidatingPromoCode(true);
+    const codes = promoCode.split(',').map(c => c.trim().toUpperCase()).filter(c => c.length > 0);
+    const validations: typeof promoCodeValidations = [];
+    
     try {
-      const { data, error } = await supabase.functions.invoke('validate-promo-code', {
-        body: { code: promoCode }
-      });
-      
-      if (error) throw error;
-      setPromoCodeValidation(data);
-      
-      if (data.valid) {
-        toast.success(`Rabattcode "${promoCode}" erfolgreich angewendet!`);
-      } else {
-        toast.error(data.error || 'Ungültiger Rabattcode');
+      for (const code of codes) {
+        try {
+          const { data, error } = await supabase.functions.invoke('validate-promo-code', {
+            body: { code }
+          });
+          
+          if (error) throw error;
+          
+          validations.push({
+            code,
+            ...data
+          });
+          
+          if (data.valid) {
+            toast.success(`Rabattcode "${code}" gültig`);
+          } else {
+            toast.error(`"${code}": ${data.error || 'Ungültig'}`);
+          }
+        } catch (error: any) {
+          validations.push({
+            code,
+            valid: false,
+            error: error.message
+          });
+          toast.error(`"${code}": Fehler bei Validierung`);
+        }
       }
-    } catch (error: any) {
-      toast.error('Fehler bei der Validierung');
-      setPromoCodeValidation({ valid: false, error: error.message });
+      
+      setPromoCodeValidations(validations);
     } finally {
       setValidatingPromoCode(false);
     }
@@ -114,6 +138,10 @@ export default function Checkout() {
     try {
       setLoading(true);
 
+      const validCodes = promoCodeValidations
+        .filter(v => v.valid)
+        .map(v => v.code);
+
       const { data, error } = await supabase.functions.invoke("create-checkout-session", {
         body: {
           customerName,
@@ -122,7 +150,7 @@ export default function Checkout() {
           address,
           extraDisplays,
           customDesign,
-          promoCode: promoCode || undefined,
+          promoCodes: validCodes.length > 0 ? validCodes : undefined,
         },
       });
 
@@ -297,9 +325,9 @@ export default function Checkout() {
                             value={promoCode}
                             onChange={(e) => {
                               setPromoCode(e.target.value.toUpperCase());
-                              setPromoCodeValidation(null);
+                              setPromoCodeValidations([]);
                             }}
-                            placeholder="z.B. SOMMER2024"
+                            placeholder="CODE1, CODE2 (max. 2)"
                           />
                           <Button
                             type="button"
@@ -317,21 +345,25 @@ export default function Checkout() {
                         </div>
                       </div>
 
-                      {promoCodeValidation && (
-                        <div className={`text-sm flex items-center gap-2 ${
-                          promoCodeValidation.valid ? 'text-green-600' : 'text-red-600'
-                        }`}>
-                          {promoCodeValidation.valid ? (
-                            <>
-                              <CheckCircle2 className="h-4 w-4" />
-                              Rabattcode gültig
-                            </>
-                          ) : (
-                            <>
-                              <XCircle className="h-4 w-4" />
-                              {promoCodeValidation.error}
-                            </>
-                          )}
+                      {promoCodeValidations.length > 0 && (
+                        <div className="space-y-2">
+                          {promoCodeValidations.map((validation, index) => (
+                            <div key={index} className={`text-sm flex items-center gap-2 ${
+                              validation.valid ? 'text-green-600' : 'text-red-600'
+                            }`}>
+                              {validation.valid ? (
+                                <>
+                                  <CheckCircle2 className="h-4 w-4" />
+                                  {validation.code}: Gültig
+                                </>
+                              ) : (
+                                <>
+                                  <XCircle className="h-4 w-4" />
+                                  {validation.code}: {validation.error}
+                                </>
+                              )}
+                            </div>
+                          ))}
                         </div>
                       )}
                     </div>
@@ -379,7 +411,7 @@ export default function Checkout() {
                               <span className="font-medium">{baseOneTimeCosts.toFixed(2)} €</span>
                             </div>
                             <div className="flex justify-between text-green-600">
-                              <span>Rabatt ({promoCode})</span>
+                              <span>Rabatt ({promoCodeValidations.filter(v => v.valid).map(v => v.code).join(', ')})</span>
                               <span>-{oneTimeDiscount.toFixed(2)} €</span>
                             </div>
                           </>
@@ -414,7 +446,7 @@ export default function Checkout() {
                               <span className="font-medium">{baseMonthlyCosts.toFixed(2)} €</span>
                             </div>
                             <div className="flex justify-between text-green-600">
-                              <span>Rabatt ({promoCode})</span>
+                              <span>Rabatt ({promoCodeValidations.filter(v => v.valid).map(v => v.code).join(', ')})</span>
                               <span>-{monthlyDiscount.toFixed(2)} €</span>
                             </div>
                           </>

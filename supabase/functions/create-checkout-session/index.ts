@@ -14,7 +14,7 @@ interface CheckoutRequest {
   };
   extraDisplays?: number;
   customDesign?: boolean;
-  promoCode?: string;
+  promoCodes?: string[];
 }
 
 const corsHeaders = {
@@ -68,7 +68,7 @@ serve(async (req) => {
       address,
       extraDisplays = 0,
       customDesign = false,
-      promoCode,
+      promoCodes,
     }: CheckoutRequest = await req.json();
 
     console.log("[CREATE-CHECKOUT] Request data received");
@@ -144,20 +144,28 @@ serve(async (req) => {
       metadata,
     };
 
-    // Apply promo code if provided
-    if (promoCode) {
-      try {
-        const promoCodes = await stripe.promotionCodes.list({
-          code: promoCode,
-          active: true,
-          limit: 1,
-        });
-        if (promoCodes.data.length > 0) {
-          sessionParams.discounts = [{ promotion_code: promoCodes.data[0].id }];
-          console.log("[CREATE-CHECKOUT] Promo code applied:", promoCode);
+    // Apply promo codes if provided
+    if (promoCodes && promoCodes.length > 0) {
+      const discounts: Array<{ promotion_code: string }> = [];
+      
+      for (const code of promoCodes) {
+        try {
+          const promoCodesList = await stripe.promotionCodes.list({
+            code: code,
+            active: true,
+            limit: 1,
+          });
+          if (promoCodesList.data.length > 0) {
+            discounts.push({ promotion_code: promoCodesList.data[0].id });
+            console.log("[CREATE-CHECKOUT] Promo code applied:", code);
+          }
+        } catch (error) {
+          console.log("[CREATE-CHECKOUT] Invalid promo code:", code);
         }
-      } catch (error) {
-        console.log("[CREATE-CHECKOUT] Invalid promo code, proceeding without discount");
+      }
+      
+      if (discounts.length > 0) {
+        sessionParams.discounts = discounts;
       }
     }
 
