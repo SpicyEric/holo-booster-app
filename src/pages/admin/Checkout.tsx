@@ -222,7 +222,7 @@ export default function Checkout() {
                     variant={setupMode === "price" ? "default" : "outline"}
                     onClick={() => setSetupMode("price")}
                   >
-                    Vordefinierte Variante
+                    Standard Setup (149,00 €)
                   </Button>
                   <Button
                     type="button"
@@ -234,18 +234,12 @@ export default function Checkout() {
                 </div>
 
                 {setupMode === "price" ? (
-                  <div>
-                    <Label htmlFor="setupVariant">Setup-Variante</Label>
-                    <Select value={setupVariant} onValueChange={setSetupVariant}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="qrate_setup_s">Small (50 €)</SelectItem>
-                        <SelectItem value="qrate_setup_m">Medium (100 €)</SelectItem>
-                        <SelectItem value="qrate_setup_l">Large (200 €)</SelectItem>
-                      </SelectContent>
-                    </Select>
+                  <div className="flex items-center justify-between p-4 border rounded-lg bg-muted/50">
+                    <div>
+                      <p className="font-semibold">QRate Setup</p>
+                      <p className="text-sm text-muted-foreground">Einmalige Einrichtung</p>
+                    </div>
+                    <p className="text-xl font-bold">149,00 €</p>
                   </div>
                 ) : (
                   <div>

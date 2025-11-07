@@ -47,6 +47,9 @@ const CustomerDetail = () => {
     qr_code_url: "",
     design_urls: [] as string[],
     active: true,
+    stripe_customer_id: "",
+    stripe_subscription_id: "",
+    status: "",
   });
 
   useEffect(() => {
@@ -300,6 +303,37 @@ const CustomerDetail = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Hauptdaten */}
         <div className="lg:col-span-2 space-y-6">
+          {/* Zahlungsinformationen */}
+          <GlassCard>
+            <h2 className="text-xl font-bold mb-4">Zahlungsinformationen</h2>
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="p-4 border rounded-lg">
+                  <p className="text-sm text-muted-foreground mb-1">Stripe Customer ID</p>
+                  <p className="font-mono text-sm">
+                    {formData.stripe_customer_id || "Nicht angelegt"}
+                  </p>
+                </div>
+                <div className="p-4 border rounded-lg">
+                  <p className="text-sm text-muted-foreground mb-1">Subscription ID</p>
+                  <p className="font-mono text-sm">
+                    {formData.stripe_subscription_id || "Kein Abo"}
+                  </p>
+                </div>
+              </div>
+              <div className="p-4 border rounded-lg">
+                <p className="text-sm text-muted-foreground mb-1">Zahlungsstatus</p>
+                <p className="font-semibold">
+                  {formData.status === "active" && "✅ Aktiv"}
+                  {formData.status === "pending" && "⏳ Ausstehend"}
+                  {formData.status === "past_due" && "⚠️ Überfällig"}
+                  {formData.status === "canceled" && "❌ Gekündigt"}
+                  {!formData.status && "— Nicht definiert"}
+                </p>
+              </div>
+            </div>
+          </GlassCard>
+
           <GlassCard>
             <h2 className="text-xl font-bold mb-4">Grunddaten</h2>
             <div className="space-y-4">

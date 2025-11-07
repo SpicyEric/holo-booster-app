@@ -98,35 +98,19 @@ serve(async (req) => {
     // Build line items
     const lineItems: Stripe.Checkout.SessionCreateParams.LineItem[] = [];
 
-    // 1. Base subscription (required)
+    // 1. Base subscription (required) - using direct price ID
     lineItems.push({
-      price_data: {
-        currency: "eur",
-        product_data: {
-          name: "QRait Basis-Abo",
-          description: "Monatliches Basis-Abonnement",
-        },
-        recurring: {
-          interval: "month",
-        },
-        unit_amount: 3945, // 39.45 EUR
-      },
+      price: "price_1SQl6nPcpEwK4jkCCV6TxaFw", // QRate Basis-Abo: 39.45 EUR/month
       quantity: 1,
     });
 
     // 2. Setup fee (required)
-    if (requestData.setup.mode === "price" && requestData.setup.priceLookup) {
-      // Use price lookup key
-      const prices = await stripe.prices.list({
-        lookup_keys: [requestData.setup.priceLookup],
-        limit: 1,
+    if (requestData.setup.mode === "price") {
+      // Use fixed setup price
+      lineItems.push({
+        price: "price_1SQlRTPcpEwK4jkCxh4g6rMH", // QRate Setup: 149.00 EUR one-time
+        quantity: 1,
       });
-      if (prices.data.length > 0) {
-        lineItems.push({
-          price: prices.data[0].id,
-          quantity: 1,
-        });
-      }
     } else if (requestData.setup.mode === "dynamic" && requestData.setup.amountCents) {
       // Dynamic setup amount
       lineItems.push({
@@ -144,29 +128,17 @@ serve(async (req) => {
 
     // 3. Add-ons (optional)
     if (requestData.addons.displayCount > 0) {
-      const displayPrices = await stripe.prices.list({
-        lookup_keys: ["qrate_addon_display"],
-        limit: 1,
+      lineItems.push({
+        price: "price_1SQlRcPcpEwK4jkCs3VYnto6", // Extra-Aufsteller: 6.00 EUR one-time
+        quantity: requestData.addons.displayCount,
       });
-      if (displayPrices.data.length > 0) {
-        lineItems.push({
-          price: displayPrices.data[0].id,
-          quantity: requestData.addons.displayCount,
-        });
-      }
     }
 
     if (requestData.addons.design) {
-      const designPrices = await stripe.prices.list({
-        lookup_keys: ["qrate_addon_design"],
-        limit: 1,
+      lineItems.push({
+        price: "price_1SQlRdPcpEwK4jkCUQXzDPtj", // Individuelles Design: 30.00 EUR one-time
+        quantity: 1,
       });
-      if (designPrices.data.length > 0) {
-        lineItems.push({
-          price: designPrices.data[0].id,
-          quantity: 1,
-        });
-      }
     }
 
     console.log("[CREATE-CHECKOUT] Line items built:", lineItems.length);
@@ -218,8 +190,9 @@ serve(async (req) => {
     );
   } catch (error) {
     console.error("[CREATE-CHECKOUT] Error:", error);
+    const errorMessage = error instanceof Error ? error.message : String(error);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: errorMessage }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 500,
