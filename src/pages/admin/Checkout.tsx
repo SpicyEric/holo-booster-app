@@ -173,7 +173,7 @@ export default function Checkout() {
     <div className="flex h-screen overflow-hidden bg-background">
       <AdminSidebar />
       <main className="flex-1 overflow-y-auto">
-        <div className="container mx-auto p-4 md:p-6">
+        <div className="w-full max-w-7xl mx-auto p-4 md:p-6 lg:p-8">
           <div className="mb-6">
             <h1 className="text-2xl md:text-3xl font-bold">Kunde abschließen</h1>
             <p className="text-muted-foreground">
@@ -182,9 +182,9 @@ export default function Checkout() {
           </div>
 
           <form onSubmit={handleSubmit}>
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {/* Left Column - Form */}
-              <div className="lg:col-span-2 space-y-6">
+              <div className="md:col-span-1 lg:col-span-2 space-y-6">
                 {/* Customer Data */}
                 <Card>
                   <CardHeader>
@@ -372,7 +372,7 @@ export default function Checkout() {
               </div>
 
               {/* Right Column - Price Summary */}
-              <div className="lg:col-span-1">
+              <div className="md:col-span-1 lg:col-span-1">
                 <Card className="sticky top-6">
                   <CardHeader>
                     <CardTitle>Preisübersicht</CardTitle>
