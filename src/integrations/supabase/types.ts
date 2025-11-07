@@ -59,6 +59,53 @@ export type Database = {
           },
         ]
       }
+      commissions: {
+        Row: {
+          amount_cents: number
+          commission_type: string | null
+          created_at: string | null
+          currency: string | null
+          customer_id: string | null
+          id: string
+          metadata: Json | null
+          promoter_id: string | null
+          status: string | null
+          stripe_event_id: string | null
+        }
+        Insert: {
+          amount_cents: number
+          commission_type?: string | null
+          created_at?: string | null
+          currency?: string | null
+          customer_id?: string | null
+          id?: string
+          metadata?: Json | null
+          promoter_id?: string | null
+          status?: string | null
+          stripe_event_id?: string | null
+        }
+        Update: {
+          amount_cents?: number
+          commission_type?: string | null
+          created_at?: string | null
+          currency?: string | null
+          customer_id?: string | null
+          id?: string
+          metadata?: Json | null
+          promoter_id?: string | null
+          status?: string | null
+          stripe_event_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "commissions_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contact_deletions: {
         Row: {
           customer_id: string
@@ -183,9 +230,11 @@ export type Database = {
       customers: {
         Row: {
           active: boolean
+          billing_address: Json | null
           company_name: string | null
           contact_person: string | null
           created_at: string
+          customer_number: number | null
           design_urls: string[] | null
           email: string | null
           google_review_url: string
@@ -201,15 +250,21 @@ export type Database = {
           offer_title: string | null
           phone: string | null
           priority: string | null
+          promoter_id: string | null
           qr_code_url: string | null
           sales_notes: string | null
+          status: string | null
+          stripe_customer_id: string | null
+          stripe_subscription_id: string | null
           updated_at: string
         }
         Insert: {
           active?: boolean
+          billing_address?: Json | null
           company_name?: string | null
           contact_person?: string | null
           created_at?: string
+          customer_number?: number | null
           design_urls?: string[] | null
           email?: string | null
           google_review_url: string
@@ -225,15 +280,21 @@ export type Database = {
           offer_title?: string | null
           phone?: string | null
           priority?: string | null
+          promoter_id?: string | null
           qr_code_url?: string | null
           sales_notes?: string | null
+          status?: string | null
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
           updated_at?: string
         }
         Update: {
           active?: boolean
+          billing_address?: Json | null
           company_name?: string | null
           contact_person?: string | null
           created_at?: string
+          customer_number?: number | null
           design_urls?: string[] | null
           email?: string | null
           google_review_url?: string
@@ -249,11 +310,59 @@ export type Database = {
           offer_title?: string | null
           phone?: string | null
           priority?: string | null
+          promoter_id?: string | null
           qr_code_url?: string | null
           sales_notes?: string | null
+          status?: string | null
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
           updated_at?: string
         }
         Relationships: []
+      }
+      invoices: {
+        Row: {
+          created_at: string | null
+          currency: string | null
+          customer_id: string | null
+          id: string
+          issued_at: string | null
+          pdf_url: string | null
+          status: string | null
+          stripe_invoice_id: string | null
+          total_amount_cents: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          currency?: string | null
+          customer_id?: string | null
+          id?: string
+          issued_at?: string | null
+          pdf_url?: string | null
+          status?: string | null
+          stripe_invoice_id?: string | null
+          total_amount_cents?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          currency?: string | null
+          customer_id?: string | null
+          id?: string
+          issued_at?: string | null
+          pdf_url?: string | null
+          status?: string | null
+          stripe_invoice_id?: string | null
+          total_amount_cents?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoices_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       merchant_assignments: {
         Row: {

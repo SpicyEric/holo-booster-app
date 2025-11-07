@@ -16,6 +16,8 @@ import CustomerDetail from "./pages/admin/CustomerDetail";
 import CustomerNew from "./pages/admin/CustomerNew";
 import Accounts from "./pages/admin/Accounts";
 import Stats from "./pages/admin/Stats";
+import Checkout from "./pages/admin/Checkout";
+import Billing from "./pages/account/Billing";
 import Settings from "./pages/admin/Settings";
 import MerchantDashboard from "./pages/merchant/Dashboard";
 import PartnerDashboard from "./pages/partner/Dashboard";
@@ -44,8 +46,10 @@ const App = () => (
             <Route path="customers/:id" element={<CustomerDetail />} />
             <Route path="accounts" element={<Accounts />} />
             <Route path="stats" element={<Stats />} />
+            <Route path="checkout" element={<Checkout />} />
             <Route path="settings" element={<Settings />} />
           </Route>
+          <Route path="/account/billing" element={<Billing />} />
           <Route path="/merchant" element={<MerchantDashboard />} />
           <Route path="/partner" element={<PartnerDashboard />} />
           <Route path="/s/:cid" element={<Scan />} />

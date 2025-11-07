@@ -21,6 +21,7 @@ const menuItems = [
   { title: "Kunden", url: "/admin/customers", icon: Users },
   { title: "Accounts", url: "/admin/accounts", icon: Users },
   { title: "Statistiken", url: "/admin/stats", icon: BarChart3 },
+  { title: "Kunde abschließen", url: "/admin/checkout", icon: Users },
   { title: "Einstellungen", url: "/admin/settings", icon: Settings },
 ];
 
