@@ -6,16 +6,6 @@ import { GradientButton } from "@/components/GradientButton";
 import { Edit, QrCode, Search, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import {
   Table,
   TableBody,
   TableCell,
@@ -26,6 +16,17 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
 
 interface Customer {
   id: string;
@@ -56,27 +57,6 @@ const Customers = () => {
   const [priorityFilter, setPriorityFilter] = useState<string>("all");
   const [deleteCustomerId, setDeleteCustomerId] = useState<string | null>(null);
 
-  const handleDelete = async () => {
-    if (!deleteCustomerId) return;
-    
-    try {
-      const { error } = await supabase
-        .from("customers")
-        .delete()
-        .eq("id", deleteCustomerId);
-
-      if (error) throw error;
-      
-      toast.success("Kunde erfolgreich gelöscht");
-      loadCustomers();
-    } catch (error: any) {
-      toast.error("Fehler beim Löschen des Kunden");
-      console.error(error);
-    } finally {
-      setDeleteCustomerId(null);
-    }
-  };
-
   useEffect(() => {
     loadCustomers();
   }, []);
@@ -98,6 +78,27 @@ const Customers = () => {
       console.error(error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!deleteCustomerId) return;
+    
+    try {
+      const { error } = await supabase
+        .from("customers")
+        .delete()
+        .eq("id", deleteCustomerId);
+
+      if (error) throw error;
+      
+      toast.success("Kunde erfolgreich gelöscht");
+      loadCustomers();
+    } catch (error: any) {
+      toast.error("Fehler beim Löschen des Kunden");
+      console.error(error);
+    } finally {
+      setDeleteCustomerId(null);
     }
   };
 
@@ -268,10 +269,9 @@ const Customers = () => {
             </p>
             {customers.length === 0 && (
               <GradientButton
-                onClick={() => navigate("/admin/customers/new")}
-                icon={Plus}
+                onClick={() => navigate("/admin/checkout")}
               >
-                Ersten Kunden anlegen
+                Ersten Kunden abschließen
               </GradientButton>
             )}
           </div>
@@ -283,56 +283,59 @@ const Customers = () => {
                 <TableHead>Status</TableHead>
                 <TableHead>Priorität</TableHead>
                 <TableHead>QR-Code</TableHead>
-                <TableHead>Erstellt</TableHead>
+                <TableHead>Angelegt</TableHead>
                 <TableHead className="text-right">Aktionen</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filteredCustomers.map((customer) => (
                 <TableRow key={customer.id}>
-                  <TableCell className="font-medium">
-                    <div className="flex items-center gap-3">
-                      {customer.logo_url && (
-                        <img
-                          src={customer.logo_url}
-                          alt={customer.name}
-                          className="w-10 h-10 rounded-lg object-cover"
-                        />
+                  <TableCell>
+                    <div>
+                      <p className="font-medium">{customer.name}</p>
+                      {customer.company_name && (
+                        <p className="text-sm text-muted-foreground">{customer.company_name}</p>
                       )}
-                      <div>
-                        <div className="font-semibold">{customer.name}</div>
-                        {customer.email && (
-                          <div className="text-sm text-muted-foreground">
-                            {customer.email}
-                          </div>
-                        )}
-                      </div>
+                      {customer.email && (
+                        <p className="text-xs text-muted-foreground">{customer.email}</p>
+                      )}
                     </div>
                   </TableCell>
                   <TableCell>{getStatusBadge(customer)}</TableCell>
                   <TableCell>{getPriorityBadge(customer.priority)}</TableCell>
                   <TableCell>
                     {customer.qr_code_url ? (
-                      <QrCode className="w-5 h-5 text-primary" />
+                      <Badge variant="default" className="gap-1">
+                        <QrCode className="w-3 h-3" />
+                        Vorhanden
+                      </Badge>
                     ) : (
-                      <span className="text-muted-foreground text-sm">
-                        Nicht generiert
-                      </span>
+                      <Badge variant="outline">Fehlt</Badge>
                     )}
                   </TableCell>
                   <TableCell>
                     {new Date(customer.created_at).toLocaleDateString("de-DE")}
                   </TableCell>
-                  <TableCell className="text-right">
-                    <button
-                      onClick={() =>
-                        navigate(`/admin/customers/${customer.id}`)
-                      }
-                      className="inline-flex items-center gap-2 px-3 py-1.5 text-sm bg-background/50 hover:bg-background border border-border rounded-lg transition-colors"
-                    >
-                      <Edit className="w-4 h-4" />
-                      Bearbeiten
-                    </button>
+                  <TableCell>
+                    <div className="flex items-center justify-end gap-2">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => navigate(`/admin/customers/${customer.id}`)}
+                        title="Bearbeiten"
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => setDeleteCustomerId(customer.id)}
+                        title="Löschen"
+                        className="text-destructive hover:text-destructive"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}
@@ -340,6 +343,24 @@ const Customers = () => {
           </Table>
         )}
       </GlassCard>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={!!deleteCustomerId} onOpenChange={(open) => !open && setDeleteCustomerId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Kunde löschen?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Diese Aktion kann nicht rückgängig gemacht werden. Der Kunde und alle zugehörigen Daten werden dauerhaft gelöscht.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Löschen
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
