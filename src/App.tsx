@@ -21,6 +21,7 @@ import Billing from "./pages/account/Billing";
 import Settings from "./pages/admin/Settings";
 import MerchantDashboard from "./pages/merchant/Dashboard";
 import PartnerDashboard from "./pages/partner/Dashboard";
+import CustomerDashboard from "./pages/customer/Dashboard";
 import Scan from "./pages/Scan";
 import NotFound from "./pages/NotFound";
 
@@ -50,6 +51,7 @@ const App = () => (
             <Route path="settings" element={<Settings />} />
           </Route>
           <Route path="/account/billing" element={<Billing />} />
+          <Route path="/customer" element={<CustomerDashboard />} />
           <Route path="/merchant" element={<MerchantDashboard />} />
           <Route path="/partner" element={<PartnerDashboard />} />
           <Route path="/s/:cid" element={<Scan />} />

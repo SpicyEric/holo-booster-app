@@ -2,36 +2,33 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.79.0";
 
+interface CheckoutRequest {
+  customerName: string;
+  customerEmail: string;
+  companyName?: string;
+  address?: {
+    street: string;
+    city: string;
+    postalCode: string;
+    country: string;
+  };
+  extraDisplays?: number;
+  customDesign?: boolean;
+  promoCode?: string;
+}
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-interface CheckoutRequest {
-  customer: {
-    name: string;
-    email: string;
-    company?: string;
-    address: {
-      line1: string;
-      line2?: string;
-      postal_code: string;
-      city: string;
-      country: string;
-    };
-  };
-  promoterId?: string;
-  setup: {
-    mode: 'price' | 'dynamic';
-    priceLookup?: string;
-    amountCents?: number;
-  };
-  addons: {
-    displayCount: number;
-    design: boolean;
-  };
-  promoCode?: string;
-}
+// Direct Price IDs
+const PRICE_IDS = {
+  BASE_SUBSCRIPTION: "price_1SQl6nPcpEwK4jkCCV6TxaFw", // 39.45 EUR/month
+  SETUP_FEE: "price_1SQlRTPcpEwK4jkCxh4g6rMH", // 149.00 EUR
+  EXTRA_DISPLAY: "price_1SQlRcPcpEwK4jkCs3VYnto6", // 6.00 EUR
+  CUSTOM_DESIGN: "price_1SQlRdPcpEwK4jkCUQXzDPtj", // 30.00 EUR
+};
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -41,14 +38,13 @@ serve(async (req) => {
   try {
     console.log("[CREATE-CHECKOUT] Function started");
 
-    // Auth Check
-    const authHeader = req.headers.get("Authorization");
-    if (!authHeader) throw new Error("No authorization header");
-
     const supabaseClient = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_ANON_KEY") ?? ""
     );
+
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader) throw new Error("No authorization header");
 
     const token = authHeader.replace("Bearer ", "");
     const { data: userData, error: userError } = await supabaseClient.auth.getUser(token);
@@ -65,7 +61,16 @@ serve(async (req) => {
 
     if (roleData?.role !== "admin") throw new Error("Only admins can create checkout sessions");
 
-    const requestData: CheckoutRequest = await req.json();
+    const {
+      customerName,
+      customerEmail,
+      companyName,
+      address,
+      extraDisplays = 0,
+      customDesign = false,
+      promoCode,
+    }: CheckoutRequest = await req.json();
+
     console.log("[CREATE-CHECKOUT] Request data received");
 
     const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
@@ -74,7 +79,7 @@ serve(async (req) => {
 
     // Create or retrieve Stripe customer
     const existingCustomers = await stripe.customers.list({
-      email: requestData.customer.email,
+      email: customerEmail,
       limit: 1,
     });
 
@@ -84,93 +89,72 @@ serve(async (req) => {
       console.log("[CREATE-CHECKOUT] Existing customer:", customerId);
     } else {
       const customer = await stripe.customers.create({
-        email: requestData.customer.email,
-        name: requestData.customer.name,
-        address: requestData.customer.address,
-        metadata: {
-          promoterId: requestData.promoterId || "",
-        },
+        email: customerEmail,
+        name: customerName,
       });
       customerId = customer.id;
       console.log("[CREATE-CHECKOUT] Created new customer:", customerId);
     }
 
     // Build line items
-    const lineItems: Stripe.Checkout.SessionCreateParams.LineItem[] = [];
-
-    // 1. Base subscription (required) - using direct price ID
-    lineItems.push({
-      price: "price_1SQl6nPcpEwK4jkCCV6TxaFw", // QRate Basis-Abo: 39.45 EUR/month
-      quantity: 1,
-    });
-
-    // 2. Setup fee (required)
-    if (requestData.setup.mode === "price") {
-      // Use fixed setup price
-      lineItems.push({
-        price: "price_1SQlRTPcpEwK4jkCxh4g6rMH", // QRate Setup: 149.00 EUR one-time
+    const lineItems: any[] = [
+      {
+        price: PRICE_IDS.BASE_SUBSCRIPTION,
         quantity: 1,
-      });
-    } else if (requestData.setup.mode === "dynamic" && requestData.setup.amountCents) {
-      // Dynamic setup amount
-      lineItems.push({
-        price_data: {
-          currency: "eur",
-          product_data: {
-            name: "Setup-Gebühr",
-            metadata: { item: "setup_fee" },
-          },
-          unit_amount: requestData.setup.amountCents,
-        },
+      },
+      {
+        price: PRICE_IDS.SETUP_FEE,
         quantity: 1,
+      },
+    ];
+
+    if (extraDisplays > 0) {
+      lineItems.push({
+        price: PRICE_IDS.EXTRA_DISPLAY,
+        quantity: extraDisplays,
       });
     }
 
-    // 3. Add-ons (optional)
-    if (requestData.addons.displayCount > 0) {
+    if (customDesign) {
       lineItems.push({
-        price: "price_1SQlRcPcpEwK4jkCs3VYnto6", // Extra-Aufsteller: 6.00 EUR one-time
-        quantity: requestData.addons.displayCount,
-      });
-    }
-
-    if (requestData.addons.design) {
-      lineItems.push({
-        price: "price_1SQlRdPcpEwK4jkCUQXzDPtj", // Individuelles Design: 30.00 EUR one-time
+        price: PRICE_IDS.CUSTOM_DESIGN,
         quantity: 1,
       });
     }
 
     console.log("[CREATE-CHECKOUT] Line items built:", lineItems.length);
 
+    // Create metadata
+    const metadata: any = {
+      customerName,
+      customerEmail,
+      companyName: companyName || "",
+      address: JSON.stringify(address || {}),
+    };
+
     // Create checkout session
-    const sessionParams: Stripe.Checkout.SessionCreateParams = {
+    const sessionParams: any = {
       customer: customerId,
       mode: "subscription",
       line_items: lineItems,
       payment_method_types: ["sepa_debit", "card"],
       allow_promotion_codes: true,
-      billing_address_collection: "required",
-      success_url: `${Deno.env.get("APP_URL")}/admin/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${Deno.env.get("APP_URL")}/admin/checkout/cancel`,
-      metadata: {
-        promoterId: requestData.promoterId || "",
-        customerEmail: requestData.customer.email,
-        customerName: requestData.customer.name,
-      },
+      success_url: `${req.headers.get("origin")}/admin/customers?checkout=success`,
+      cancel_url: `${req.headers.get("origin")}/admin/checkout`,
+      metadata,
     };
 
     // Apply promo code if provided
-    if (requestData.promoCode) {
+    if (promoCode) {
       try {
         const promoCodes = await stripe.promotionCodes.list({
-          code: requestData.promoCode,
+          code: promoCode,
           active: true,
           limit: 1,
         });
         if (promoCodes.data.length > 0) {
           sessionParams.discounts = [{ promotion_code: promoCodes.data[0].id }];
-          console.log("[CREATE-CHECKOUT] Promo code applied:", requestData.promoCode);
+          console.log("[CREATE-CHECKOUT] Promo code applied:", promoCode);
         }
       } catch (error) {
         console.log("[CREATE-CHECKOUT] Invalid promo code, proceeding without discount");

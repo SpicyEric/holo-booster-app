@@ -69,12 +69,19 @@ serve(async (req) => {
             .insert({
               name: metadata.customerName || "Unknown",
               email: metadata.customerEmail || (customer as any).email,
+              company_name: metadata.companyName || null,
               stripe_customer_id: customerId,
               stripe_subscription_id: subscriptionId,
               promoter_id: metadata.promoterId || null,
               status: "active",
-              google_review_url: "https://example.com/review",
+              google_review_url: "https://google.com/review",
               offer_text: "Willkommen bei QRait!",
+              billing_address: metadata.address ? {
+                street: metadata.address.street,
+                city: metadata.address.city,
+                postalCode: metadata.address.postalCode,
+                country: metadata.address.country,
+              } : null,
             })
             .select()
             .single();
@@ -83,6 +90,49 @@ serve(async (req) => {
             console.error("[WEBHOOK] Error creating customer:", error);
           } else {
             console.log("[WEBHOOK] Created new customer:", newCustomer.id);
+            
+            // Create customer account and send welcome email
+            try {
+              const accountResponse = await fetch(
+                `${Deno.env.get("SUPABASE_URL")}/functions/v1/createCustomerAccount`,
+                {
+                  method: "POST",
+                  headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
+                  },
+                  body: JSON.stringify({
+                    customerEmail: newCustomer.email,
+                    customerId: newCustomer.id,
+                    customerName: newCustomer.name,
+                  }),
+                }
+              );
+
+              const accountData = await accountResponse.json();
+              
+              if (accountData.resetLink) {
+                // Send welcome email
+                await fetch(
+                  `${Deno.env.get("SUPABASE_URL")}/functions/v1/sendWelcomeEmail`,
+                  {
+                    method: "POST",
+                    headers: {
+                      "Content-Type": "application/json",
+                      "Authorization": `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
+                    },
+                    body: JSON.stringify({
+                      customerEmail: newCustomer.email,
+                      customerName: newCustomer.name,
+                      resetLink: accountData.resetLink,
+                    }),
+                  }
+                );
+                console.log("[WEBHOOK] Customer account created and welcome email sent");
+              }
+            } catch (accountError) {
+              console.error("[WEBHOOK] Error creating customer account:", accountError);
+            }
           }
         }
         break;

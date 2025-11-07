@@ -4,12 +4,12 @@ import { AdminSidebar } from "@/components/AdminSidebar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
-import { toast } from "sonner";
+import { Separator } from "@/components/ui/separator";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2 } from "lucide-react";
+import { toast } from "sonner";
+import { Loader2, Plus, Minus, Info } from "lucide-react";
 
 export default function Checkout() {
   const navigate = useNavigate();
@@ -18,59 +18,57 @@ export default function Checkout() {
   // Customer Data
   const [customerName, setCustomerName] = useState("");
   const [customerEmail, setCustomerEmail] = useState("");
-  const [company, setCompany] = useState("");
-  const [addressLine1, setAddressLine1] = useState("");
-  const [addressLine2, setAddressLine2] = useState("");
-  const [postalCode, setPostalCode] = useState("");
-  const [city, setCity] = useState("");
-  const [country, setCountry] = useState("DE");
-
-  // Setup
-  const [setupMode, setSetupMode] = useState<"price" | "dynamic">("price");
-  const [setupVariant, setSetupVariant] = useState("qrate_setup_m");
-  const [setupAmount, setSetupAmount] = useState("0");
+  const [companyName, setCompanyName] = useState("");
+  const [address, setAddress] = useState({
+    street: "",
+    city: "",
+    postalCode: "",
+    country: "Deutschland",
+  });
 
   // Add-ons
-  const [displayCount, setDisplayCount] = useState(0);
-  const [includeDesign, setIncludeDesign] = useState(false);
+  const [extraDisplays, setExtraDisplays] = useState(0);
+  const [customDesign, setCustomDesign] = useState(false);
 
-  // Promo
+  // Promo Code
   const [promoCode, setPromoCode] = useState("");
+  
+  // Legal
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
+
+  // Price calculation
+  const MONTHLY_BASE = 39.45;
+  const SETUP_FEE = 149.00;
+  const EXTRA_DISPLAY = 6.00;
+  const CUSTOM_DESIGN = 30.00;
+
+  const oneTimeCosts = SETUP_FEE + (extraDisplays * EXTRA_DISPLAY) + (customDesign ? CUSTOM_DESIGN : 0);
+  const monthlyCosts = MONTHLY_BASE;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!customerName || !customerEmail || !addressLine1 || !postalCode || !city) {
-      toast.error("Bitte alle Pflichtfelder ausfüllen");
+
+    if (!customerName || !customerEmail) {
+      toast.error("Bitte Name und E-Mail eingeben");
       return;
     }
 
-    setLoading(true);
+    if (!acceptedTerms) {
+      toast.error("Bitte AGB akzeptieren");
+      return;
+    }
 
     try {
+      setLoading(true);
+
       const { data, error } = await supabase.functions.invoke("create-checkout-session", {
         body: {
-          customer: {
-            name: customerName,
-            email: customerEmail,
-            company: company || undefined,
-            address: {
-              line1: addressLine1,
-              line2: addressLine2 || undefined,
-              postal_code: postalCode,
-              city,
-              country,
-            },
-          },
-          setup: {
-            mode: setupMode,
-            priceLookup: setupMode === "price" ? setupVariant : undefined,
-            amountCents: setupMode === "dynamic" ? Math.round(parseFloat(setupAmount) * 100) : undefined,
-          },
-          addons: {
-            displayCount,
-            design: includeDesign,
-          },
+          customerName,
+          customerEmail,
+          companyName,
+          address,
+          extraDisplays,
+          customDesign,
           promoCode: promoCode || undefined,
         },
       });
@@ -79,10 +77,11 @@ export default function Checkout() {
 
       if (data?.url) {
         window.open(data.url, "_blank");
-        toast.success("Checkout-Session erstellt - Bitte im neuen Tab abschließen");
+        toast.success("Checkout-Session erstellt - Kunde wird nach Zahlung automatisch angelegt");
+        navigate("/admin/customers");
       }
     } catch (error: any) {
-      console.error("Checkout error:", error);
+      console.error("Error creating checkout session:", error);
       toast.error(error.message || "Fehler beim Erstellen der Checkout-Session");
     } finally {
       setLoading(false);
@@ -90,248 +89,281 @@ export default function Checkout() {
   };
 
   return (
-    <div className="flex min-h-screen bg-background">
+    <div className="flex h-screen overflow-hidden bg-background">
       <AdminSidebar />
-      
-      <div className="flex-1 p-8 ml-64">
-        <div className="max-w-4xl mx-auto">
-          <div className="mb-8">
-            <h1 className="text-4xl font-bold mb-2">Kunde abschließen</h1>
+      <main className="flex-1 overflow-y-auto">
+        <div className="container mx-auto p-4 md:p-6">
+          <div className="mb-6">
+            <h1 className="text-2xl md:text-3xl font-bold">Kunde abschließen</h1>
             <p className="text-muted-foreground">
-              Neuen Kunden mit Abo, Setup-Gebühr und Add-ons anlegen
+              Kundendaten erfassen und Stripe Checkout initiieren
             </p>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Kundendaten */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Kundendaten</CardTitle>
-                <CardDescription>Kontaktinformationen des Kunden</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="name">Name *</Label>
-                    <Input
-                      id="name"
-                      value={customerName}
-                      onChange={(e) => setCustomerName(e.target.value)}
-                      required
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="email">E-Mail *</Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      value={customerEmail}
-                      onChange={(e) => setCustomerEmail(e.target.value)}
-                      required
-                    />
-                  </div>
-                </div>
-                <div>
-                  <Label htmlFor="company">Firma (optional)</Label>
-                  <Input
-                    id="company"
-                    value={company}
-                    onChange={(e) => setCompany(e.target.value)}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="address1">Straße & Hausnummer *</Label>
-                  <Input
-                    id="address1"
-                    value={addressLine1}
-                    onChange={(e) => setAddressLine1(e.target.value)}
-                    required
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="address2">Adresszusatz (optional)</Label>
-                  <Input
-                    id="address2"
-                    value={addressLine2}
-                    onChange={(e) => setAddressLine2(e.target.value)}
-                  />
-                </div>
-                <div className="grid grid-cols-3 gap-4">
-                  <div>
-                    <Label htmlFor="postalCode">PLZ *</Label>
-                    <Input
-                      id="postalCode"
-                      value={postalCode}
-                      onChange={(e) => setPostalCode(e.target.value)}
-                      required
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="city">Ort *</Label>
-                    <Input
-                      id="city"
-                      value={city}
-                      onChange={(e) => setCity(e.target.value)}
-                      required
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="country">Land *</Label>
-                    <Select value={country} onValueChange={setCountry}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="DE">Deutschland</SelectItem>
-                        <SelectItem value="AT">Österreich</SelectItem>
-                        <SelectItem value="CH">Schweiz</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Abo */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Abonnement</CardTitle>
-                <CardDescription>Monatliches Basis-Abo (immer inklusive)</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="flex items-center justify-between p-4 border rounded-lg bg-muted/50">
-                  <div>
-                    <p className="font-semibold">QRait Basis-Abo</p>
-                    <p className="text-sm text-muted-foreground">Monatlich kündbar</p>
-                  </div>
-                  <p className="text-xl font-bold">39,45 €</p>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Setup */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Setup-Gebühr (verpflichtend)</CardTitle>
-                <CardDescription>Einmalige Einrichtungsgebühr</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex gap-4">
-                  <Button
-                    type="button"
-                    variant={setupMode === "price" ? "default" : "outline"}
-                    onClick={() => setSetupMode("price")}
-                  >
-                    Standard Setup (149,00 €)
-                  </Button>
-                  <Button
-                    type="button"
-                    variant={setupMode === "dynamic" ? "default" : "outline"}
-                    onClick={() => setSetupMode("dynamic")}
-                  >
-                    Individueller Betrag
-                  </Button>
-                </div>
-
-                {setupMode === "price" ? (
-                  <div className="flex items-center justify-between p-4 border rounded-lg bg-muted/50">
-                    <div>
-                      <p className="font-semibold">QRate Setup</p>
-                      <p className="text-sm text-muted-foreground">Einmalige Einrichtung</p>
+          <form onSubmit={handleSubmit}>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* Left Column - Form */}
+              <div className="lg:col-span-2 space-y-6">
+                {/* Customer Data */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Kundendaten</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="customerName">Name *</Label>
+                        <Input
+                          id="customerName"
+                          value={customerName}
+                          onChange={(e) => setCustomerName(e.target.value)}
+                          required
+                          placeholder="Max Mustermann"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="customerEmail">E-Mail *</Label>
+                        <Input
+                          id="customerEmail"
+                          type="email"
+                          value={customerEmail}
+                          onChange={(e) => setCustomerEmail(e.target.value)}
+                          required
+                          placeholder="max@beispiel.de"
+                        />
+                      </div>
                     </div>
-                    <p className="text-xl font-bold">149,00 €</p>
-                  </div>
-                ) : (
-                  <div>
-                    <Label htmlFor="setupAmount">Setup-Betrag (€)</Label>
-                    <Input
-                      id="setupAmount"
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      value={setupAmount}
-                      onChange={(e) => setSetupAmount(e.target.value)}
-                      required
-                    />
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+                    <div className="space-y-2">
+                      <Label htmlFor="companyName">Firmenname (optional)</Label>
+                      <Input
+                        id="companyName"
+                        value={companyName}
+                        onChange={(e) => setCompanyName(e.target.value)}
+                        placeholder="Beispiel GmbH"
+                      />
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="street">Straße</Label>
+                        <Input
+                          id="street"
+                          value={address.street}
+                          onChange={(e) => setAddress({ ...address, street: e.target.value })}
+                          placeholder="Musterstraße 123"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="city">Stadt</Label>
+                        <Input
+                          id="city"
+                          value={address.city}
+                          onChange={(e) => setAddress({ ...address, city: e.target.value })}
+                          placeholder="Berlin"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="postalCode">PLZ</Label>
+                        <Input
+                          id="postalCode"
+                          value={address.postalCode}
+                          onChange={(e) => setAddress({ ...address, postalCode: e.target.value })}
+                          placeholder="10115"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="country">Land</Label>
+                        <Input
+                          id="country"
+                          value={address.country}
+                          onChange={(e) => setAddress({ ...address, country: e.target.value })}
+                        />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
 
-            {/* Add-ons */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Add-ons (optional)</CardTitle>
-                <CardDescription>Zusätzliche einmalige Leistungen</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <Label htmlFor="displayCount">Extra-Aufsteller (je 6,00 €)</Label>
-                  <Input
-                    id="displayCount"
-                    type="number"
-                    min="0"
-                    value={displayCount}
-                    onChange={(e) => setDisplayCount(parseInt(e.target.value) || 0)}
-                  />
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="design"
-                    checked={includeDesign}
-                    onCheckedChange={(checked) => setIncludeDesign(checked as boolean)}
-                  />
-                  <Label htmlFor="design" className="cursor-pointer">
-                    Individuelles Design (30,00 €)
-                  </Label>
-                </div>
-              </CardContent>
-            </Card>
+                {/* Add-ons */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Add-ons</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <div className="flex items-center justify-between p-4 border rounded-lg bg-card hover:bg-accent/5 transition-colors">
+                      <div className="flex-1">
+                        <p className="font-medium">Extra Aufsteller</p>
+                        <p className="text-sm text-muted-foreground">6,00 € pro Stück (einmalig)</p>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="icon"
+                          className="h-8 w-8"
+                          onClick={() => setExtraDisplays(Math.max(0, extraDisplays - 1))}
+                        >
+                          <Minus className="h-4 w-4" />
+                        </Button>
+                        <span className="w-8 text-center font-semibold">{extraDisplays}</span>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="icon"
+                          className="h-8 w-8"
+                          onClick={() => setExtraDisplays(extraDisplays + 1)}
+                        >
+                          <Plus className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
 
-            {/* Promo Code */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Rabattcode (optional)</CardTitle>
-                <CardDescription>Gilt nur für Setup-Gebühr und Add-ons</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Input
-                  placeholder="Promotion-Code eingeben"
-                  value={promoCode}
-                  onChange={(e) => setPromoCode(e.target.value)}
-                />
-              </CardContent>
-            </Card>
+                    <div className="flex items-center justify-between p-4 border rounded-lg bg-card hover:bg-accent/5 transition-colors">
+                      <div className="flex-1">
+                        <p className="font-medium">Individuelles Design</p>
+                        <p className="text-sm text-muted-foreground">30,00 € (einmalig)</p>
+                      </div>
+                      <Checkbox
+                        checked={customDesign}
+                        onCheckedChange={(checked) => setCustomDesign(checked as boolean)}
+                      />
+                    </div>
+                  </CardContent>
+                </Card>
 
-            {/* Submit */}
-            <div className="flex gap-4">
-              <Button
-                type="submit"
-                size="lg"
-                disabled={loading}
-                className="flex-1"
-              >
-                {loading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Erstelle Checkout...
-                  </>
-                ) : (
-                  "Zahlung & Abo starten"
-                )}
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                size="lg"
-                onClick={() => navigate("/admin/customers")}
-              >
-                Abbrechen
-              </Button>
+                {/* Promo Code */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Rabattcode</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-2">
+                      <Label htmlFor="promoCode">Code (optional)</Label>
+                      <Input
+                        id="promoCode"
+                        value={promoCode}
+                        onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
+                        placeholder="z.B. SOMMER2024"
+                      />
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Right Column - Price Summary */}
+              <div className="lg:col-span-1">
+                <Card className="sticky top-6">
+                  <CardHeader>
+                    <CardTitle>Preisübersicht</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {/* One-time costs */}
+                    <div>
+                      <h3 className="font-semibold mb-3">Einmalige Kosten</h3>
+                      <div className="space-y-2 text-sm">
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Setup-Gebühr</span>
+                          <span className="font-medium">{SETUP_FEE.toFixed(2)} €</span>
+                        </div>
+                        {extraDisplays > 0 && (
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">
+                              Extra Aufsteller ({extraDisplays}x)
+                            </span>
+                            <span className="font-medium">
+                              {(extraDisplays * EXTRA_DISPLAY).toFixed(2)} €
+                            </span>
+                          </div>
+                        )}
+                        {customDesign && (
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">Individuelles Design</span>
+                            <span className="font-medium">{CUSTOM_DESIGN.toFixed(2)} €</span>
+                          </div>
+                        )}
+                        <Separator />
+                        <div className="flex justify-between font-bold text-base">
+                          <span>Gesamt einmalig</span>
+                          <span>{oneTimeCosts.toFixed(2)} €</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <Separator />
+
+                    {/* Monthly costs */}
+                    <div>
+                      <h3 className="font-semibold mb-3">Monatliche Kosten</h3>
+                      <div className="space-y-2 text-sm">
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">QRait Basis-Abo</span>
+                          <span className="font-medium">{MONTHLY_BASE.toFixed(2)} €</span>
+                        </div>
+                        <Separator />
+                        <div className="flex justify-between font-bold text-base">
+                          <span>Monatlich fällig</span>
+                          <span>{monthlyCosts.toFixed(2)} €</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <Separator />
+
+                    {/* Legal info */}
+                    <div className="space-y-3 pt-2">
+                      <div className="flex items-start gap-2 p-3 bg-muted/50 rounded-lg">
+                        <Info className="h-4 w-4 mt-0.5 text-muted-foreground flex-shrink-0" />
+                        <div className="text-xs text-muted-foreground space-y-1">
+                          <p>• 14 Tage Widerrufsrecht</p>
+                          <p>• Monatlich kündbar</p>
+                          <p>• Zahlungsdaten werden sicher bei Stripe erfasst</p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-start gap-2">
+                        <Checkbox
+                          id="terms"
+                          checked={acceptedTerms}
+                          onCheckedChange={(checked) => setAcceptedTerms(checked as boolean)}
+                          className="mt-1"
+                        />
+                        <Label htmlFor="terms" className="text-xs leading-relaxed cursor-pointer">
+                          Ich akzeptiere die AGB und Datenschutzbestimmungen. Der Kunde wird nach erfolgreicher Zahlung automatisch angelegt und erhält eine Welcome-E-Mail mit Dashboard-Zugang.
+                        </Label>
+                      </div>
+                    </div>
+
+                    {/* Action Buttons */}
+                    <div className="space-y-2 pt-2">
+                      <Button
+                        type="submit"
+                        disabled={loading || !acceptedTerms}
+                        className="w-full"
+                        size="lg"
+                      >
+                        {loading ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Erstelle Session...
+                          </>
+                        ) : (
+                          "Zahlung starten"
+                        )}
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => navigate("/admin/customers")}
+                        className="w-full"
+                      >
+                        Abbrechen
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
             </div>
           </form>
         </div>
-      </div>
+      </main>
     </div>
   );
 }

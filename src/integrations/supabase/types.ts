@@ -227,6 +227,35 @@ export type Database = {
           },
         ]
       }
+      customer_users: {
+        Row: {
+          created_at: string
+          customer_id: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          customer_id: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          customer_id?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_users_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       customers: {
         Row: {
           active: boolean
@@ -618,7 +647,7 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "admin" | "partner" | "merchant"
+      app_role: "admin" | "partner" | "merchant" | "customer"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -746,7 +775,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "partner", "merchant"],
+      app_role: ["admin", "partner", "merchant", "customer"],
     },
   },
 } as const

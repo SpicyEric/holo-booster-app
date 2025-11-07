@@ -3,8 +3,18 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { GlassCard } from "@/components/GlassCard";
 import { GradientButton } from "@/components/GradientButton";
-import { Plus, Edit, QrCode, Search, Filter } from "lucide-react";
+import { Edit, QrCode, Search, Trash2 } from "lucide-react";
 import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import {
   Table,
   TableBody,
@@ -44,6 +54,28 @@ const Customers = () => {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [sortBy, setSortBy] = useState<string>("created_desc");
   const [priorityFilter, setPriorityFilter] = useState<string>("all");
+  const [deleteCustomerId, setDeleteCustomerId] = useState<string | null>(null);
+
+  const handleDelete = async () => {
+    if (!deleteCustomerId) return;
+    
+    try {
+      const { error } = await supabase
+        .from("customers")
+        .delete()
+        .eq("id", deleteCustomerId);
+
+      if (error) throw error;
+      
+      toast.success("Kunde erfolgreich gelöscht");
+      loadCustomers();
+    } catch (error: any) {
+      toast.error("Fehler beim Löschen des Kunden");
+      console.error(error);
+    } finally {
+      setDeleteCustomerId(null);
+    }
+  };
 
   useEffect(() => {
     loadCustomers();
@@ -163,10 +195,9 @@ const Customers = () => {
           </p>
         </div>
         <GradientButton
-          onClick={() => navigate("/admin/customers/new")}
-          icon={Plus}
+          onClick={() => navigate("/admin/checkout")}
         >
-          Neuer Kunde
+          Kunde abschließen
         </GradientButton>
       </div>
 
