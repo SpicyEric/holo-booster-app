@@ -9,7 +9,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Loader2, Plus, Minus, Info } from "lucide-react";
+import { Loader2, Plus, Minus, Info, Check, CheckCircle2, XCircle } from "lucide-react";
 
 export default function Checkout() {
   const navigate = useNavigate();
@@ -32,6 +32,14 @@ export default function Checkout() {
 
   // Promo Code
   const [promoCode, setPromoCode] = useState("");
+  const [promoCodeValidation, setPromoCodeValidation] = useState<{
+    valid: boolean;
+    discountType?: 'percentage' | 'fixed';
+    discountValue?: number;
+    appliesTo?: 'one_time' | 'recurring' | 'both';
+    error?: string;
+  } | null>(null);
+  const [validatingPromoCode, setValidatingPromoCode] = useState(false);
   
   // Legal
   const [acceptedTerms, setAcceptedTerms] = useState(false);
@@ -42,8 +50,53 @@ export default function Checkout() {
   const EXTRA_DISPLAY = 6.00;
   const CUSTOM_DESIGN = 30.00;
 
-  const oneTimeCosts = SETUP_FEE + (extraDisplays * EXTRA_DISPLAY) + (customDesign ? CUSTOM_DESIGN : 0);
-  const monthlyCosts = MONTHLY_BASE;
+  const calculateDiscount = (baseAmount: number, appliesTo: string) => {
+    if (!promoCodeValidation?.valid) return 0;
+    if (promoCodeValidation.appliesTo !== appliesTo && promoCodeValidation.appliesTo !== 'both') return 0;
+    
+    if (promoCodeValidation.discountType === 'percentage') {
+      return baseAmount * (promoCodeValidation.discountValue! / 100);
+    } else {
+      return promoCodeValidation.discountValue!;
+    }
+  };
+
+  const baseOneTimeCosts = SETUP_FEE + (extraDisplays * EXTRA_DISPLAY) + (customDesign ? CUSTOM_DESIGN : 0);
+  const baseMonthlyCosts = MONTHLY_BASE;
+  
+  const oneTimeDiscount = calculateDiscount(baseOneTimeCosts, 'one_time');
+  const monthlyDiscount = calculateDiscount(baseMonthlyCosts, 'recurring');
+  
+  const oneTimeCosts = baseOneTimeCosts - oneTimeDiscount;
+  const monthlyCosts = baseMonthlyCosts - monthlyDiscount;
+
+  const validatePromoCode = async () => {
+    if (!promoCode.trim()) {
+      setPromoCodeValidation(null);
+      return;
+    }
+    
+    setValidatingPromoCode(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('validate-promo-code', {
+        body: { code: promoCode }
+      });
+      
+      if (error) throw error;
+      setPromoCodeValidation(data);
+      
+      if (data.valid) {
+        toast.success(`Rabattcode "${promoCode}" erfolgreich angewendet!`);
+      } else {
+        toast.error(data.error || 'Ungültiger Rabattcode');
+      }
+    } catch (error: any) {
+      toast.error('Fehler bei der Validierung');
+      setPromoCodeValidation({ valid: false, error: error.message });
+    } finally {
+      setValidatingPromoCode(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -235,14 +288,52 @@ export default function Checkout() {
                     <CardTitle>Rabattcode</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="space-y-2">
-                      <Label htmlFor="promoCode">Code (optional)</Label>
-                      <Input
-                        id="promoCode"
-                        value={promoCode}
-                        onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
-                        placeholder="z.B. SOMMER2024"
-                      />
+                    <div className="space-y-3">
+                      <div className="space-y-2">
+                        <Label htmlFor="promoCode">Code (optional)</Label>
+                        <div className="flex gap-2">
+                          <Input
+                            id="promoCode"
+                            value={promoCode}
+                            onChange={(e) => {
+                              setPromoCode(e.target.value.toUpperCase());
+                              setPromoCodeValidation(null);
+                            }}
+                            placeholder="z.B. SOMMER2024"
+                          />
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={validatePromoCode}
+                            disabled={validatingPromoCode || !promoCode.trim()}
+                            className="px-3"
+                          >
+                            {validatingPromoCode ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <Check className="h-4 w-4" />
+                            )}
+                          </Button>
+                        </div>
+                      </div>
+
+                      {promoCodeValidation && (
+                        <div className={`text-sm flex items-center gap-2 ${
+                          promoCodeValidation.valid ? 'text-green-600' : 'text-red-600'
+                        }`}>
+                          {promoCodeValidation.valid ? (
+                            <>
+                              <CheckCircle2 className="h-4 w-4" />
+                              Rabattcode gültig
+                            </>
+                          ) : (
+                            <>
+                              <XCircle className="h-4 w-4" />
+                              {promoCodeValidation.error}
+                            </>
+                          )}
+                        </div>
+                      )}
                     </div>
                   </CardContent>
                 </Card>
@@ -279,10 +370,27 @@ export default function Checkout() {
                             <span className="font-medium">{CUSTOM_DESIGN.toFixed(2)} €</span>
                           </div>
                         )}
+                        
+                        {oneTimeDiscount > 0 && (
+                          <>
+                            <Separator />
+                            <div className="flex justify-between">
+                              <span className="text-muted-foreground">Zwischensumme</span>
+                              <span className="font-medium">{baseOneTimeCosts.toFixed(2)} €</span>
+                            </div>
+                            <div className="flex justify-between text-green-600">
+                              <span>Rabatt ({promoCode})</span>
+                              <span>-{oneTimeDiscount.toFixed(2)} €</span>
+                            </div>
+                          </>
+                        )}
+                        
                         <Separator />
                         <div className="flex justify-between font-bold text-base">
                           <span>Gesamt einmalig</span>
-                          <span>{oneTimeCosts.toFixed(2)} €</span>
+                          <span className={oneTimeDiscount > 0 ? "text-green-600" : ""}>
+                            {oneTimeCosts.toFixed(2)} €
+                          </span>
                         </div>
                       </div>
                     </div>
@@ -297,10 +405,27 @@ export default function Checkout() {
                           <span className="text-muted-foreground">QRait Basis-Abo</span>
                           <span className="font-medium">{MONTHLY_BASE.toFixed(2)} €</span>
                         </div>
+                        
+                        {monthlyDiscount > 0 && (
+                          <>
+                            <Separator />
+                            <div className="flex justify-between">
+                              <span className="text-muted-foreground">Zwischensumme</span>
+                              <span className="font-medium">{baseMonthlyCosts.toFixed(2)} €</span>
+                            </div>
+                            <div className="flex justify-between text-green-600">
+                              <span>Rabatt ({promoCode})</span>
+                              <span>-{monthlyDiscount.toFixed(2)} €</span>
+                            </div>
+                          </>
+                        )}
+                        
                         <Separator />
                         <div className="flex justify-between font-bold text-base">
                           <span>Monatlich fällig</span>
-                          <span>{monthlyCosts.toFixed(2)} €</span>
+                          <span className={monthlyDiscount > 0 ? "text-green-600" : ""}>
+                            {monthlyCosts.toFixed(2)} €
+                          </span>
                         </div>
                       </div>
                     </div>
