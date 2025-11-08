@@ -6,10 +6,10 @@ import { Outlet } from "react-router-dom";
 const AdminDashboard = () => {
   return (
     <ProtectedRoute allowedRoles={['admin']}>
-      <SidebarProvider>
-        <div className="min-h-screen flex w-full">
+      <SidebarProvider defaultOpen={false}>
+        <div className="min-h-screen w-full relative">
           <AdminSidebar />
-          <main className="flex-1 p-8 bg-background">
+          <main className="w-full p-8 bg-background">
             <div className="max-w-7xl mx-auto">
               <Outlet />
             </div>
