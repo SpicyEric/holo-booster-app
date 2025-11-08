@@ -142,7 +142,7 @@ serve(async (req) => {
       customer: customerId,
       mode: "subscription",
       line_items: lineItems,
-      payment_method_types: ["card", "sepa_debit"],
+      payment_method_types: ["card"], // SEPA can be added after activating in Stripe Dashboard
       success_url: `${req.headers.get("origin")}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${req.headers.get("origin")}/checkout/cancel`,
       metadata,
