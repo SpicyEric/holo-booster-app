@@ -8,3 +8,6 @@ verify_jwt = false
 
 [functions.deleteContactByToken]
 verify_jwt = false
+
+[functions.stripe-webhook]
+verify_jwt = false
