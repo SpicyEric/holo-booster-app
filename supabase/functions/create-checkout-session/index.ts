@@ -38,9 +38,10 @@ serve(async (req) => {
   try {
     console.log("[CREATE-CHECKOUT] Function started");
 
+    // Use service role key to bypass RLS for admin role check
     const supabaseClient = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_ANON_KEY") ?? ""
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
     );
 
     const authHeader = req.headers.get("Authorization");
