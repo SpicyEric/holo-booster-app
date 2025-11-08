@@ -1,9 +1,9 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { GlassCard } from "@/components/GlassCard";
 import { GradientButton } from "@/components/GradientButton";
-import { Edit, QrCode, Search, Trash2 } from "lucide-react";
+import { Edit, QrCode, Search, Trash2, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import {
   Table,
@@ -56,14 +56,7 @@ const Customers = () => {
   const [sortBy, setSortBy] = useState<string>("created_desc");
   const [priorityFilter, setPriorityFilter] = useState<string>("all");
   const [deleteCustomerId, setDeleteCustomerId] = useState<string | null>(null);
-
-  useEffect(() => {
-    loadCustomers();
-  }, []);
-
-  useEffect(() => {
-    applyFilters();
-  }, [customers, searchTerm, statusFilter, sortBy, priorityFilter]);
+  const [syncing, setSyncing] = useState(false);
 
   const loadCustomers = async () => {
     try {
@@ -80,6 +73,47 @@ const Customers = () => {
       setLoading(false);
     }
   };
+
+  const syncStripeStatus = useCallback(async () => {
+    setSyncing(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("syncStripeStatus");
+      
+      if (error) throw error;
+
+      if (data.updated > 0) {
+        toast.success(`${data.updated} Kunden-Status aktualisiert`);
+        await loadCustomers();
+      } else {
+        toast.info("Alle Status sind bereits aktuell");
+      }
+    } catch (error: any) {
+      console.error("Stripe sync error:", error);
+      toast.error("Fehler bei der Stripe-Synchronisation");
+    } finally {
+      setSyncing(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadCustomers();
+    
+    // Check if redirected from successful checkout
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('checkout') === 'success') {
+      // Auto-sync after successful checkout
+      setTimeout(() => {
+        syncStripeStatus();
+      }, 2000);
+      
+      // Clean URL
+      window.history.replaceState({}, '', '/admin/customers');
+    }
+  }, [syncStripeStatus]);
+
+  useEffect(() => {
+    applyFilters();
+  }, [customers, searchTerm, statusFilter, sortBy, priorityFilter]);
 
   const handleDelete = async () => {
     if (!deleteCustomerId) return;
@@ -195,11 +229,22 @@ const Customers = () => {
               : ""}
           </p>
         </div>
-        <GradientButton
-          onClick={() => navigate("/admin/checkout")}
-        >
-          Kunde abschließen
-        </GradientButton>
+        <div className="flex gap-2">
+          <Button
+            onClick={syncStripeStatus}
+            disabled={syncing}
+            variant="outline"
+            className="gap-2"
+          >
+            <RefreshCw className={`w-4 h-4 ${syncing ? "animate-spin" : ""}`} />
+            {syncing ? "Synchronisiere..." : "Status aktualisieren"}
+          </Button>
+          <GradientButton
+            onClick={() => navigate("/admin/checkout")}
+          >
+            Kunde abschließen
+          </GradientButton>
+        </div>
       </div>
 
       {/* Filters */}
