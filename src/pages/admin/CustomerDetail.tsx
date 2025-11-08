@@ -3,13 +3,14 @@ import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { GlassCard } from "@/components/GlassCard";
 import { GradientButton } from "@/components/GradientButton";
-import { ArrowLeft, Save, QrCode, Upload, Download, AlertTriangle } from "lucide-react";
+import { ArrowLeft, Save, QrCode, Upload, Download, AlertTriangle, XCircle, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { QRCodeSVG } from "qrcode.react";
+import { Button } from "@/components/ui/button";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -30,6 +31,10 @@ const CustomerDetail = () => {
   const [uploading, setUploading] = useState(false);
   const [generatingDesigns, setGeneratingDesigns] = useState(false);
   const [showRegenerateDialog, setShowRegenerateDialog] = useState(false);
+  const [showCancelDialog, setShowCancelDialog] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [cancelling, setCancelling] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [confirmText, setConfirmText] = useState("");
   
   const [formData, setFormData] = useState({
@@ -273,6 +278,46 @@ const CustomerDetail = () => {
     }
   };
 
+  const handleCancelSubscription = async () => {
+    setCancelling(true);
+    try {
+      const { error } = await supabase.functions.invoke('admin-cancel-subscription', {
+        body: { customerId: id },
+      });
+
+      if (error) throw error;
+
+      toast.success("Abo erfolgreich gekündigt");
+      await loadCustomer();
+    } catch (error: any) {
+      toast.error(error.message || "Fehler beim Kündigen des Abos");
+      console.error(error);
+    } finally {
+      setCancelling(false);
+      setShowCancelDialog(false);
+    }
+  };
+
+  const handleDeleteCustomer = async () => {
+    setDeleting(true);
+    try {
+      const { error } = await supabase.functions.invoke('admin-delete-customer', {
+        body: { customerId: id },
+      });
+
+      if (error) throw error;
+
+      toast.success("Kunde und alle Stripe-Daten erfolgreich gelöscht");
+      navigate("/admin/customers");
+    } catch (error: any) {
+      toast.error(error.message || "Fehler beim Löschen des Kunden");
+      console.error(error);
+    } finally {
+      setDeleting(false);
+      setShowDeleteDialog(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[50vh]">
@@ -331,6 +376,43 @@ const CustomerDetail = () => {
                   {!formData.status && "— Nicht definiert"}
                 </p>
               </div>
+
+              {/* Admin Actions */}
+              {formData.stripe_subscription_id && formData.status !== "canceled" && (
+                <div className="pt-4 border-t">
+                  <div className="flex gap-2">
+                    <Button
+                      onClick={() => setShowCancelDialog(true)}
+                      variant="destructive"
+                      className="gap-2"
+                      disabled={cancelling}
+                    >
+                      <XCircle className="w-4 h-4" />
+                      {cancelling ? "Kündige..." : "Abo kündigen"}
+                    </Button>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    Kündigt das Abo sofort in Stripe und in der Datenbank
+                  </p>
+                </div>
+              )}
+
+              {formData.stripe_customer_id && (
+                <div className="pt-4 border-t">
+                  <Button
+                    onClick={() => setShowDeleteDialog(true)}
+                    variant="destructive"
+                    className="gap-2"
+                    disabled={deleting}
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    {deleting ? "Lösche..." : "Kunde komplett löschen"}
+                  </Button>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    ⚠️ Löscht Kunde aus Stripe UND Datenbank (inkl. Abo)
+                  </p>
+                </div>
+              )}
             </div>
           </GlassCard>
 
@@ -628,6 +710,57 @@ const CustomerDetail = () => {
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               Code ändern
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Cancel Subscription Dialog */}
+      <AlertDialog open={showCancelDialog} onOpenChange={setShowCancelDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Abo wirklich kündigen?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Das Abo wird sofort in Stripe gekündigt und der Status wird auf "canceled" gesetzt.
+              Der Kunde kann die Dienste nicht mehr nutzen.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleCancelSubscription}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Abo kündigen
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Delete Customer Dialog */}
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>⚠️ Kunde komplett löschen?</AlertDialogTitle>
+            <AlertDialogDescription className="space-y-2">
+              <p className="font-semibold text-destructive">
+                ACHTUNG: Diese Aktion kann nicht rückgängig gemacht werden!
+              </p>
+              <p>Folgendes wird gelöscht:</p>
+              <ul className="list-disc pl-5 space-y-1">
+                <li>Kunde in Stripe (inkl. aller Zahlungsdaten)</li>
+                <li>Subscription in Stripe (falls vorhanden)</li>
+                <li>Kundendaten in der Datenbank</li>
+              </ul>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteCustomer}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Endgültig löschen
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

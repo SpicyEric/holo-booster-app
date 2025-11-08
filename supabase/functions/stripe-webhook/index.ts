@@ -571,6 +571,40 @@ Stand: ${new Date().toLocaleDateString("de-DE")}`;
         break;
       }
 
+      case "customer.subscription.updated": {
+        const subscription = event.data.object as Stripe.Subscription;
+        console.log("[WEBHOOK] Subscription updated:", subscription.id, "Status:", subscription.status);
+
+        await supabase
+          .from("customers")
+          .update({ status: subscription.status })
+          .eq("stripe_subscription_id", subscription.id);
+
+        console.log("[WEBHOOK] Customer status synced to:", subscription.status);
+        break;
+      }
+
+      case "customer.deleted": {
+        const customer = event.data.object as Stripe.Customer;
+        console.log("[WEBHOOK] Customer deleted in Stripe:", customer.id);
+
+        const { data: deletedCustomer } = await supabase
+          .from("customers")
+          .select("id, name, company_name, email")
+          .eq("stripe_customer_id", customer.id)
+          .single();
+
+        if (deletedCustomer) {
+          await supabase
+            .from("customers")
+            .update({ status: "deleted", active: false })
+            .eq("stripe_customer_id", customer.id);
+
+          console.log("[WEBHOOK] Customer marked as deleted in database");
+        }
+        break;
+      }
+
       default:
         console.log("[WEBHOOK] Unhandled event type:", event.type);
     }
