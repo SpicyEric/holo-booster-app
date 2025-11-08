@@ -52,16 +52,16 @@ serve(async (req) => {
 
     console.log("[CREATE-CHECKOUT] User authenticated:", userData.user.id);
 
-    // Check if user is admin
-    const { data: roleData, error: roleError } = await supabaseClient
+    // Check if user is admin (support multiple roles)
+    const { data: roles, error: rolesError } = await supabaseClient
       .from("user_roles")
       .select("role")
-      .eq("user_id", userData.user.id)
-      .maybeSingle();
+      .eq("user_id", userData.user.id);
 
-    console.log("[CREATE-CHECKOUT] Role check:", { roleData, roleError });
+    console.log("[CREATE-CHECKOUT] Role check:", { roles, rolesError });
 
-    if (!roleData || roleData.role !== "admin") {
+    const isAdmin = Array.isArray(roles) && roles.some((r: { role: string }) => r.role === "admin");
+    if (!isAdmin) {
       throw new Error("Only admins can create checkout sessions");
     }
 
