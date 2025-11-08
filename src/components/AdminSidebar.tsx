@@ -26,7 +26,7 @@ const menuItems = [
 ];
 
 export function AdminSidebar() {
-  const { state, open, setOpen } = useSidebar();
+  const { state } = useSidebar();
   const navigate = useNavigate();
   const collapsed = state === "collapsed";
 
@@ -46,12 +46,7 @@ export function AdminSidebar() {
       : "hover:bg-muted/50";
 
   return (
-    <Sidebar 
-      className={collapsed ? "w-14" : "w-60"} 
-      collapsible="offcanvas"
-      onMouseEnter={() => setOpen(true)}
-      onMouseLeave={() => setOpen(false)}
-    >
+    <Sidebar className={collapsed ? "w-14" : "w-60"} collapsible="icon">
       <div className="p-4 border-b border-border flex items-center justify-between">
         {!collapsed ? (
           <img src={qraitLogo} alt="QRait Logo" className="h-8 w-auto" />
