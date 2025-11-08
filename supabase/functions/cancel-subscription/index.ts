@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.79.0";
+import { Resend } from "https://esm.sh/resend@2.0.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -42,7 +43,7 @@ serve(async (req) => {
     // Get customer record with subscription ID
     const { data: customerUser } = await supabaseClient
       .from("customer_users")
-      .select("customer_id, customers(stripe_subscription_id)")
+      .select("customer_id, customers(stripe_subscription_id, name, company_name, email)")
       .eq("user_id", user.id)
       .single();
 
@@ -50,7 +51,8 @@ serve(async (req) => {
       throw new Error("No customer record found for this user");
     }
 
-    const subscriptionId = (customerUser.customers as any)?.stripe_subscription_id;
+    const customerData = customerUser.customers as any;
+    const subscriptionId = customerData?.stripe_subscription_id;
     if (!subscriptionId) {
       throw new Error("No active subscription found");
     }
@@ -68,6 +70,30 @@ serve(async (req) => {
       subscriptionId,
       cancelAt: subscription.cancel_at ? new Date(subscription.cancel_at * 1000).toISOString() : null
     });
+
+    // Send admin notification about manual cancellation
+    const adminEmail = Deno.env.get('ADMIN_EMAIL');
+    if (adminEmail && customerData) {
+      try {
+        const resend = new Resend(Deno.env.get('RESEND_API_KEY'));
+        await resend.emails.send({
+          from: 'QRAIT <onboarding@resend.dev>',
+          to: [adminEmail],
+          subject: '⚠️ Kunde hat manuell gekündigt',
+          html: `
+            <h2>Manuelle Kündigung durch Kunde</h2>
+            <p><strong>Kunde:</strong> ${customerData.name || customerData.company_name || 'Unbekannt'}</p>
+            <p><strong>E-Mail:</strong> ${customerData.email}</p>
+            <p><strong>Subscription ID:</strong> ${subscriptionId}</p>
+            <p><strong>Kündigungsdatum:</strong> ${subscription.cancel_at ? new Date(subscription.cancel_at * 1000).toLocaleString('de-DE') : 'Sofort'}</p>
+            <p><em>Der Kunde hat die Kündigung selbst über das Kundendashboard durchgeführt.</em></p>
+          `,
+        });
+        logStep("Admin notification sent");
+      } catch (emailError) {
+        logStep("Failed to send admin notification", { error: emailError instanceof Error ? emailError.message : String(emailError) });
+      }
+    }
 
     return new Response(JSON.stringify({ 
       success: true,

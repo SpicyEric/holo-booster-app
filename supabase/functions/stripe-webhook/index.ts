@@ -95,6 +95,30 @@ serve(async (req) => {
           } else {
             console.log("[WEBHOOK] Created new customer:", newCustomer.id);
             
+            // Send admin notification for new customer
+            const adminEmail = Deno.env.get('ADMIN_EMAIL');
+            if (adminEmail) {
+              try {
+                await resend.emails.send({
+                  from: 'QRAIT <noreply@qrait.de>',
+                  to: [adminEmail],
+                  subject: '🎉 Neuer Kunde registriert',
+                  html: `
+                    <h2>Neuer Kunde hat sich registriert</h2>
+                    <p><strong>Kunde:</strong> ${newCustomer.name}</p>
+                    <p><strong>Firma:</strong> ${newCustomer.company_name || 'Nicht angegeben'}</p>
+                    <p><strong>E-Mail:</strong> ${newCustomer.email}</p>
+                    <p><strong>Stripe Customer ID:</strong> ${customerId}</p>
+                    <p><strong>Subscription ID:</strong> ${subscriptionId}</p>
+                    ${metadata.promoterId ? `<p><strong>Promoter ID:</strong> ${metadata.promoterId}</p>` : ''}
+                  `,
+                });
+                console.log("[WEBHOOK] Admin notification sent for new customer");
+              } catch (emailError) {
+                console.error("[WEBHOOK] Failed to send admin notification:", emailError);
+              }
+            }
+            
             // Create customer account and send welcome email
             try {
               const accountResponse = await fetch(
@@ -352,12 +376,42 @@ Stand: ${new Date().toLocaleDateString("de-DE")}`;
         const invoice = event.data.object as Stripe.Invoice;
         console.log("[WEBHOOK] Invoice payment failed:", invoice.id);
 
+        const { data: failedCustomer } = await supabase
+          .from("customers")
+          .select("id, name, company_name, email")
+          .eq("stripe_customer_id", invoice.customer as string)
+          .single();
+
         await supabase
           .from("customers")
           .update({ status: "past_due" })
           .eq("stripe_customer_id", invoice.customer as string);
 
         console.log("[WEBHOOK] Customer status updated to past_due");
+
+        // Send admin notification about payment failure
+        const adminEmailFailed = Deno.env.get('ADMIN_EMAIL');
+        if (adminEmailFailed && failedCustomer) {
+          try {
+            await resend.emails.send({
+              from: 'QRAIT <noreply@qrait.de>',
+              to: [adminEmailFailed],
+              subject: '⚠️ Zahlungsproblem bei Kunde',
+              html: `
+                <h2>Zahlungsproblem</h2>
+                <p><strong>Kunde:</strong> ${failedCustomer.name}</p>
+                <p><strong>Firma:</strong> ${failedCustomer.company_name || 'Nicht angegeben'}</p>
+                <p><strong>E-Mail:</strong> ${failedCustomer.email}</p>
+                <p><strong>Rechnung:</strong> ${invoice.number || invoice.id}</p>
+                <p><strong>Betrag:</strong> ${invoice.amount_due ? (invoice.amount_due / 100).toFixed(2) : '0.00'} ${invoice.currency?.toUpperCase()}</p>
+                ${invoice.last_payment_error?.message ? `<p><strong>Grund:</strong> ${invoice.last_payment_error.message}</p>` : ''}
+              `,
+            });
+            console.log("[WEBHOOK] Admin notification sent for payment failure");
+          } catch (emailError) {
+            console.error("[WEBHOOK] Failed to send payment failed admin notification:", emailError);
+          }
+        }
         break;
       }
 
@@ -365,12 +419,42 @@ Stand: ${new Date().toLocaleDateString("de-DE")}`;
         const subscription = event.data.object as Stripe.Subscription;
         console.log("[WEBHOOK] Subscription deleted:", subscription.id);
 
+        const { data: canceledCustomer } = await supabase
+          .from("customers")
+          .select("id, name, company_name, email")
+          .eq("stripe_subscription_id", subscription.id)
+          .single();
+
         await supabase
           .from("customers")
           .update({ status: "canceled" })
           .eq("stripe_subscription_id", subscription.id);
 
         console.log("[WEBHOOK] Customer status updated to canceled");
+
+        // Send admin notification about cancellation
+        const adminEmailCanceled = Deno.env.get('ADMIN_EMAIL');
+        if (adminEmailCanceled && canceledCustomer) {
+          try {
+            await resend.emails.send({
+              from: 'QRAIT <noreply@qrait.de>',
+              to: [adminEmailCanceled],
+              subject: '❌ Kunde hat gekündigt',
+              html: `
+                <h2>Kündigung durch Stripe</h2>
+                <p><strong>Kunde:</strong> ${canceledCustomer.name}</p>
+                <p><strong>Firma:</strong> ${canceledCustomer.company_name || 'Nicht angegeben'}</p>
+                <p><strong>E-Mail:</strong> ${canceledCustomer.email}</p>
+                <p><strong>Subscription ID:</strong> ${subscription.id}</p>
+                ${subscription.cancellation_details?.reason ? `<p><strong>Kündigungsgrund:</strong> ${subscription.cancellation_details.reason}</p>` : ''}
+                ${subscription.cancellation_details?.comment ? `<p><strong>Kommentar:</strong> ${subscription.cancellation_details.comment}</p>` : ''}
+              `,
+            });
+            console.log("[WEBHOOK] Admin notification sent for cancellation");
+          } catch (emailError) {
+            console.error("[WEBHOOK] Failed to send cancellation admin notification:", emailError);
+          }
+        }
         break;
       }
 
