@@ -30,7 +30,7 @@ serve(async (req) => {
     if (!signature) throw new Error("No stripe signature");
 
     const body = await req.text();
-    const event = stripe.webhooks.constructEvent(
+const event = await stripe.webhooks.constructEventAsync(
       body,
       signature,
       Deno.env.get("STRIPE_WEBHOOK_SECRET") || ""
@@ -161,11 +161,22 @@ serve(async (req) => {
                 }
               );
 
-              const accountData = await accountResponse.json();
+const accountDataText = await accountResponse.text();
+let accountData: any = {};
+try {
+  accountData = JSON.parse(accountDataText);
+} catch {
+  console.error("[WEBHOOK] createCustomerAccount returned non-JSON response");
+}
+if (!accountResponse.ok) {
+  console.error("[WEBHOOK] createCustomerAccount failed:", accountResponse.status, accountDataText);
+} else {
+  console.log("[WEBHOOK] createCustomerAccount OK");
+}
               
               if (accountData.resetLink) {
                 // Send welcome email
-                await fetch(
+const emailResponse = await fetch(
                   `${Deno.env.get("SUPABASE_URL")}/functions/v1/sendWelcomeEmail`,
                   {
                     method: "POST",
@@ -180,7 +191,12 @@ serve(async (req) => {
                     }),
                   }
                 );
-                console.log("[WEBHOOK] Customer account created and welcome email sent");
+                const emailText = await emailResponse.text();
+                if (!emailResponse.ok) {
+                  console.error("[WEBHOOK] sendWelcomeEmail failed:", emailResponse.status, emailText);
+                } else {
+                  console.log("[WEBHOOK] Customer account created and welcome email sent");
+                }
               }
               } catch (accountError) {
                 console.error("[WEBHOOK] Error creating customer account:", accountError);
@@ -236,10 +252,22 @@ serve(async (req) => {
               }
             );
 
-            const accountData = await accountResponse.json();
+const accountDataText = await accountResponse.text();
+let accountData: any = {};
+try {
+  accountData = JSON.parse(accountDataText);
+} catch {
+  console.error("[WEBHOOK] createCustomerAccount returned non-JSON response");
+}
+if (!accountResponse.ok) {
+  console.error("[WEBHOOK] createCustomerAccount failed:", accountResponse.status, accountDataText);
+} else {
+  console.log("[WEBHOOK] createCustomerAccount OK");
+}
             
             if (accountData.resetLink) {
-              await fetch(
+await (async () => {
+              const emailResponse = await fetch(
                 `${Deno.env.get("SUPABASE_URL")}/functions/v1/sendWelcomeEmail`,
                 {
                   method: "POST",
@@ -254,7 +282,13 @@ serve(async (req) => {
                   }),
                 }
               );
-              console.log("[WEBHOOK] SEPA customer activated and welcome email sent");
+              const emailText = await emailResponse.text();
+              if (!emailResponse.ok) {
+                console.error("[WEBHOOK] sendWelcomeEmail failed:", emailResponse.status, emailText);
+              } else {
+                console.log("[WEBHOOK] SEPA customer activated and welcome email sent");
+              }
+            })();
             }
           } catch (accountError) {
             console.error("[WEBHOOK] Error creating SEPA customer account:", accountError);

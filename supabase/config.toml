@@ -11,3 +11,9 @@ verify_jwt = false
 
 [functions.stripe-webhook]
 verify_jwt = false
+
+[functions.createCustomerAccount]
+verify_jwt = false
+
+[functions.sendWelcomeEmail]
+verify_jwt = false
