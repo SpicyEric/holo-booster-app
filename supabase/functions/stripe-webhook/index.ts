@@ -1,6 +1,8 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.79.0";
+import { Resend } from "https://esm.sh/resend@2.0.0";
+import { encode as base64Encode } from "https://deno.land/std@0.190.0/encoding/base64.ts";
 
 const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
   apiVersion: "2025-08-27.basil",
@@ -10,6 +12,8 @@ const supabase = createClient(
   Deno.env.get("SUPABASE_URL") ?? "",
   Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
 );
+
+const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -170,23 +174,148 @@ serve(async (req) => {
         // Send invoice email with legal documents
         if (invoice.invoice_pdf && customer.email) {
           try {
-            await fetch(
-              `${Deno.env.get("SUPABASE_URL")}/functions/v1/sendInvoiceEmail`,
-              {
-                method: "POST",
-                headers: {
-                  "Content-Type": "application/json",
-                  "Authorization": `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
+            console.log("[WEBHOOK] Preparing invoice email for:", customer.email);
+            
+            // Download PDF from Stripe
+            const pdfResponse = await fetch(invoice.invoice_pdf);
+            if (!pdfResponse.ok) {
+              throw new Error(`Failed to fetch PDF: ${pdfResponse.statusText}`);
+            }
+            const pdfBuffer = await pdfResponse.arrayBuffer();
+            const pdfBase64 = base64Encode(pdfBuffer);
+
+            // Prepare legal documents
+            const agbContent = `Allgemeine Geschäftsbedingungen (AGB) - QRait
+
+1. Geltungsbereich
+Diese AGB gelten für alle Verträge zwischen QRait und dem Kunden.
+
+2. Vertragsschluss
+Der Vertrag kommt durch Bestätigung der Bestellung zustande.
+
+3. Leistungen
+QRait erbringt die vereinbarten Dienstleistungen gemäß Leistungsbeschreibung.
+
+4. Zahlung
+Die Zahlung erfolgt per SEPA-Lastschrift oder Kreditkarte gemäß vereinbarter Zahlungsbedingungen.
+
+5. Laufzeit und Kündigung
+Der Vertrag hat eine Mindestlaufzeit von 12 Monaten und verlängert sich automatisch um weitere 12 Monate, sofern nicht mit einer Frist von 3 Monaten zum Ende der Laufzeit gekündigt wird.
+
+6. Haftung
+Die Haftung richtet sich nach den gesetzlichen Bestimmungen.
+
+7. Datenschutz
+Wir verarbeiten personenbezogene Daten gemäß DSGVO.
+
+Stand: ${new Date().toLocaleDateString("de-DE")}`;
+
+            const datenschutzContent = `Datenschutzerklärung - QRait
+
+1. Verantwortlicher
+QRait ist verantwortlich für die Verarbeitung Ihrer personenbezogenen Daten.
+
+2. Erhobene Daten
+Wir erheben folgende Daten: Name, E-Mail, Firmenname, Adresse, Zahlungsinformationen.
+
+3. Zweck der Verarbeitung
+Die Datenverarbeitung erfolgt zur Vertragserfüllung und Kundenbetreuung.
+
+4. Rechtsgrundlage
+Die Verarbeitung erfolgt auf Basis von Art. 6 Abs. 1 lit. b DSGVO.
+
+5. Speicherdauer
+Daten werden für die Dauer der Geschäftsbeziehung und gesetzliche Aufbewahrungsfristen gespeichert.
+
+6. Ihre Rechte
+Sie haben das Recht auf Auskunft, Berichtigung, Löschung, Einschränkung, Datenübertragbarkeit und Widerspruch.
+
+7. Kontakt
+Datenschutzanfragen: datenschutz@qrait.de
+
+Stand: ${new Date().toLocaleDateString("de-DE")}`;
+
+            const widerrufsbelehrungContent = `Widerrufsbelehrung - QRait
+
+Widerrufsrecht
+
+Sie haben das Recht, binnen vierzehn Tagen ohne Angabe von Gründen diesen Vertrag zu widerrufen.
+
+Die Widerrufsfrist beträgt vierzehn Tage ab dem Tag des Vertragsabschlusses.
+
+Um Ihr Widerrufsrecht auszuüben, müssen Sie uns
+QRait
+E-Mail: info@qrait.de
+
+mittels einer eindeutigen Erklärung (z. B. ein mit der Post versandter Brief oder E-Mail) über Ihren Entschluss, diesen Vertrag zu widerrufen, informieren.
+
+Zur Wahrung der Widerrufsfrist reicht es aus, dass Sie die Mitteilung über die Ausübung des Widerrufsrechts vor Ablauf der Widerrufsfrist absenden.
+
+Folgen des Widerrufs
+
+Wenn Sie diesen Vertrag widerrufen, haben wir Ihnen alle Zahlungen, die wir von Ihnen erhalten haben, unverzüglich und spätestens binnen vierzehn Tagen ab dem Tag zurückzuzahlen, an dem die Mitteilung über Ihren Widerruf dieses Vertrags bei uns eingegangen ist.
+
+Für diese Rückzahlung verwenden wir dasselbe Zahlungsmittel, das Sie bei der ursprünglichen Transaktion eingesetzt haben, es sei denn, mit Ihnen wurde ausdrücklich etwas anderes vereinbart; in keinem Fall werden Ihnen wegen dieser Rückzahlung Entgelte berechnet.
+
+Stand: ${new Date().toLocaleDateString("de-DE")}`;
+
+            // Send email with all attachments
+            await resend.emails.send({
+              from: "QRait <noreply@qrait.de>",
+              to: [customer.email],
+              subject: "Ihre Rechnung von QRait",
+              html: `
+                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                  <h1 style="color: #333;">Vielen Dank für Ihre Zahlung!</h1>
+                  
+                  <p>Hallo ${customer.name}${customer.company_name ? ` (${customer.company_name})` : ""},</p>
+                  
+                  <p>vielen Dank für Ihre Zahlung. Im Anhang finden Sie Ihre Rechnung sowie unsere rechtlichen Dokumente:</p>
+                  
+                  <ul>
+                    <li>Rechnung (PDF)</li>
+                    <li>Allgemeine Geschäftsbedingungen (AGB)</li>
+                    <li>Datenschutzerklärung</li>
+                    <li>Widerrufsbelehrung</li>
+                  </ul>
+                  
+                  <p>Bei Fragen stehen wir Ihnen gerne zur Verfügung.</p>
+                  
+                  <p style="margin-top: 30px;">
+                    Mit freundlichen Grüßen<br>
+                    <strong>Ihr QRait Team</strong>
+                  </p>
+                  
+                  <hr style="margin: 30px 0; border: none; border-top: 1px solid #eee;">
+                  
+                  <p style="font-size: 12px; color: #666;">
+                    QRait<br>
+                    E-Mail: info@qrait.de<br>
+                    Web: www.qrait.de
+                  </p>
+                </div>
+              `,
+              attachments: [
+                {
+                  filename: "Rechnung.pdf",
+                  content: pdfBase64,
                 },
-                body: JSON.stringify({
-                  customerEmail: customer.email,
-                  customerName: customer.name,
-                  companyName: customer.company_name,
-                  invoicePdfUrl: invoice.invoice_pdf,
-                }),
-              }
-            );
-            console.log("[WEBHOOK] Invoice email sent to:", customer.email);
+                {
+                  filename: "AGB.txt",
+                  content: base64Encode(new TextEncoder().encode(agbContent).buffer),
+                },
+                {
+                  filename: "Datenschutzerklaerung.txt",
+                  content: base64Encode(new TextEncoder().encode(datenschutzContent).buffer),
+                },
+                {
+                  filename: "Widerrufsbelehrung.txt",
+                  content: base64Encode(new TextEncoder().encode(widerrufsbelehrungContent).buffer),
+                },
+              ],
+            });
+            
+            console.log("[WEBHOOK] Invoice email sent successfully to:", customer.email);
           } catch (emailError) {
             console.error("[WEBHOOK] Error sending invoice email:", emailError);
           }
