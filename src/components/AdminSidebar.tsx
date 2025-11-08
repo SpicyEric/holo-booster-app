@@ -46,13 +46,16 @@ export function AdminSidebar() {
       : "hover:bg-muted/50";
 
   return (
-    <Sidebar 
-      variant="sidebar"
-      collapsible="offcanvas"
-      className="fixed left-0 top-0 z-50 h-screen border-r bg-background"
-    >
-      <div className="p-4 border-b border-border flex items-center gap-3">
-        <img src={qraitLogo} alt="QRait Logo" className="h-8 w-auto" />
+    <Sidebar className={collapsed ? "w-14" : "w-60"} collapsible="icon">
+      <div className="p-4 border-b border-border flex items-center justify-between">
+        {!collapsed ? (
+          <img src={qraitLogo} alt="QRait Logo" className="h-8 w-auto" />
+        ) : (
+          <div className="w-8 h-8 rounded bg-gradient-primary flex items-center justify-center">
+            <span className="text-white font-bold text-xs">Q</span>
+          </div>
+        )}
+        <SidebarTrigger />
       </div>
 
       <SidebarContent>
@@ -65,7 +68,7 @@ export function AdminSidebar() {
                   <SidebarMenuButton asChild>
                     <NavLink to={item.url} end className={getNavCls}>
                       <item.icon className="h-4 w-4" />
-                      <span>{item.title}</span>
+                      {!collapsed && <span>{item.title}</span>}
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -80,7 +83,7 @@ export function AdminSidebar() {
               <SidebarMenuItem>
                 <SidebarMenuButton onClick={handleLogout}>
                   <LogOut className="h-4 w-4" />
-                  <span>Logout</span>
+                  {!collapsed && <span>Logout</span>}
                 </SidebarMenuButton>
               </SidebarMenuItem>
             </SidebarMenu>
