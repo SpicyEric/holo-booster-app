@@ -142,9 +142,9 @@ serve(async (req) => {
       customer: customerId,
       mode: "subscription",
       line_items: lineItems,
-      payment_method_types: ["card"], // SEPA can be activated in Stripe Dashboard if needed
-      success_url: `${req.headers.get("origin")}/admin/customers?checkout=success`,
-      cancel_url: `${req.headers.get("origin")}/admin/checkout`,
+      payment_method_types: ["card", "sepa_debit"],
+      success_url: `${req.headers.get("origin")}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${req.headers.get("origin")}/checkout/cancel`,
       metadata,
     };
     console.log("[CREATE-CHECKOUT] PM types:", sessionParams.payment_method_types);

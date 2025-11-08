@@ -349,6 +349,21 @@ export type Database = {
         }
         Relationships: []
       }
+      events_processed: {
+        Row: {
+          processed_at: string | null
+          stripe_event_id: string
+        }
+        Insert: {
+          processed_at?: string | null
+          stripe_event_id: string
+        }
+        Update: {
+          processed_at?: string | null
+          stripe_event_id?: string
+        }
+        Relationships: []
+      }
       invoices: {
         Row: {
           created_at: string | null
@@ -638,6 +653,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      generate_customer_number: { Args: never; Returns: string }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]

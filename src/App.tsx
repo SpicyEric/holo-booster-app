@@ -24,6 +24,8 @@ import PartnerDashboard from "./pages/partner/Dashboard";
 import CustomerDashboard from "./pages/customer/Dashboard";
 import Scan from "./pages/Scan";
 import NotFound from "./pages/NotFound";
+import CheckoutSuccess from "./pages/CheckoutSuccess";
+import CheckoutCancel from "./pages/CheckoutCancel";
 
 const queryClient = new QueryClient();
 
@@ -55,6 +57,8 @@ const App = () => (
           <Route path="/merchant" element={<MerchantDashboard />} />
           <Route path="/partner" element={<PartnerDashboard />} />
           <Route path="/s/:cid" element={<Scan />} />
+          <Route path="/checkout/success" element={<CheckoutSuccess />} />
+          <Route path="/checkout/cancel" element={<CheckoutCancel />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

@@ -38,6 +38,24 @@ serve(async (req) => {
 
     console.log("[STRIPE-WEBHOOK] Event received:", event.type);
 
+    // Idempotency check
+    const { data: existingEvent } = await supabase
+      .from("events_processed")
+      .select("stripe_event_id")
+      .eq("stripe_event_id", event.id)
+      .single();
+
+    if (existingEvent) {
+      console.log("[WEBHOOK] Event already processed:", event.id);
+      return new Response(
+        JSON.stringify({ received: true, note: "already_processed" }),
+        {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 200,
+        }
+      );
+    }
+
     switch (event.type) {
       case "checkout.session.completed": {
         const session = event.data.object as Stripe.Checkout.Session;
@@ -49,6 +67,11 @@ serve(async (req) => {
         
         const customer = await stripe.customers.retrieve(customerId);
         const metadata = session.metadata || {};
+
+        // Check payment method type for SEPA handling
+        const paymentMethodTypes = session.payment_method_types || [];
+        const isSEPA = paymentMethodTypes.includes('sepa_debit');
+        console.log("[WEBHOOK] Payment method types:", paymentMethodTypes, "isSEPA:", isSEPA);
 
         // Update or create customer in database
         const { data: existingCustomer } = await supabase
@@ -62,7 +85,7 @@ serve(async (req) => {
             .from("customers")
             .update({
               stripe_subscription_id: subscriptionId,
-              status: "active",
+              status: isSEPA ? "pending_payment" : "active",
             })
             .eq("id", existingCustomer.id);
           console.log("[WEBHOOK] Updated existing customer:", existingCustomer.id);
@@ -77,7 +100,7 @@ serve(async (req) => {
               stripe_customer_id: customerId,
               stripe_subscription_id: subscriptionId,
               promoter_id: metadata.promoterId || null,
-              status: "active",
+              status: isSEPA ? "pending_payment" : "active",
               google_review_url: "https://google.com/review",
               offer_text: "Willkommen bei QRait!",
               billing_address: metadata.address ? {
@@ -119,8 +142,9 @@ serve(async (req) => {
               }
             }
             
-            // Create customer account and send welcome email
-            try {
+            // Create customer account and send welcome email (ONLY for non-SEPA)
+            if (!isSEPA) {
+              try {
               const accountResponse = await fetch(
                 `${Deno.env.get("SUPABASE_URL")}/functions/v1/createCustomerAccount`,
                 {
@@ -158,8 +182,11 @@ serve(async (req) => {
                 );
                 console.log("[WEBHOOK] Customer account created and welcome email sent");
               }
-            } catch (accountError) {
-              console.error("[WEBHOOK] Error creating customer account:", accountError);
+              } catch (accountError) {
+                console.error("[WEBHOOK] Error creating customer account:", accountError);
+              }
+            } else {
+              console.log("[WEBHOOK] SEPA payment detected - welcome email will be sent after payment confirmation");
             }
           }
         }
@@ -173,13 +200,65 @@ serve(async (req) => {
         // Find customer
         const { data: customer } = await supabase
           .from("customers")
-          .select("id, promoter_id, email, name, company_name")
+          .select("id, promoter_id, email, name, company_name, status")
           .eq("stripe_customer_id", invoice.customer as string)
           .single();
 
         if (!customer) {
           console.log("[WEBHOOK] Customer not found for invoice");
           break;
+        }
+
+        // If customer was pending_payment (SEPA), activate and send welcome email
+        if (customer.status === "pending_payment") {
+          console.log("[WEBHOOK] Activating SEPA customer after payment confirmation");
+          
+          await supabase
+            .from("customers")
+            .update({ status: "active" })
+            .eq("id", customer.id);
+
+          // Now create account and send welcome email
+          try {
+            const accountResponse = await fetch(
+              `${Deno.env.get("SUPABASE_URL")}/functions/v1/createCustomerAccount`,
+              {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  "Authorization": `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
+                },
+                body: JSON.stringify({
+                  customerEmail: customer.email,
+                  customerId: customer.id,
+                  customerName: customer.name,
+                }),
+              }
+            );
+
+            const accountData = await accountResponse.json();
+            
+            if (accountData.resetLink) {
+              await fetch(
+                `${Deno.env.get("SUPABASE_URL")}/functions/v1/sendWelcomeEmail`,
+                {
+                  method: "POST",
+                  headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
+                  },
+                  body: JSON.stringify({
+                    customerEmail: customer.email,
+                    customerName: customer.name,
+                    resetLink: accountData.resetLink,
+                  }),
+                }
+              );
+              console.log("[WEBHOOK] SEPA customer activated and welcome email sent");
+            }
+          } catch (accountError) {
+            console.error("[WEBHOOK] Error creating SEPA customer account:", accountError);
+          }
         }
 
         // Save invoice
@@ -461,6 +540,12 @@ Stand: ${new Date().toLocaleDateString("de-DE")}`;
       default:
         console.log("[WEBHOOK] Unhandled event type:", event.type);
     }
+
+    // Mark event as processed
+    await supabase.from("events_processed").insert({
+      stripe_event_id: event.id,
+    });
+    console.log("[WEBHOOK] Event marked as processed:", event.id);
 
     return new Response(
       JSON.stringify({ received: true }),
