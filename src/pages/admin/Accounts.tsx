@@ -216,7 +216,11 @@ const Accounts = () => {
                   <TableCell>{account.email || "—"}</TableCell>
                   <TableCell>
                     <Badge variant={account.role === 'admin' ? 'default' : 'secondary'}>
-                      {account.role === 'admin' ? 'Administrator' : 'Vertriebspartner'}
+                      {account.role === 'admin' ? 'Administrator' : 
+                       account.role === 'customer' ? 'Kunde' :
+                       account.role === 'merchant' ? 'Vertriebspartner' :
+                       account.role === 'partner' ? 'Partner' : 
+                       account.role}
                     </Badge>
                   </TableCell>
                   <TableCell>

@@ -19,7 +19,7 @@ serve(async (req) => {
     console.log("[SEND-WELCOME-EMAIL] Sending welcome email to:", customerEmail);
 
     const emailResponse = await resend.emails.send({
-      from: "QRait <noreply@qrait.de>",
+      from: "QRait <onboarding@resend.dev>",
       to: [customerEmail],
       subject: "Willkommen bei QRait - Ihr Dashboard-Zugang",
       html: `
