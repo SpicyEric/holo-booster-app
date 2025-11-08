@@ -147,7 +147,7 @@ serve(async (req) => {
       cancel_url: `${req.headers.get("origin")}/admin/checkout`,
       metadata,
     };
-
+    console.log("[CREATE-CHECKOUT] PM types:", sessionParams.payment_method_types);
     // Apply promo codes if provided, otherwise allow manual promo code entry
     if (promoCodes && promoCodes.length > 0) {
       const discounts: Array<{ promotion_code: string }> = [];
