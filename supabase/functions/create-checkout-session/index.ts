@@ -137,19 +137,18 @@ serve(async (req) => {
       address: JSON.stringify(address || {}),
     };
 
-    // Create checkout session
+    // Build session params
     const sessionParams: any = {
       customer: customerId,
       mode: "subscription",
       line_items: lineItems,
       payment_method_types: ["sepa_debit", "card"],
-      allow_promotion_codes: true,
       success_url: `${req.headers.get("origin")}/admin/customers?checkout=success`,
       cancel_url: `${req.headers.get("origin")}/admin/checkout`,
       metadata,
     };
 
-    // Apply promo codes if provided
+    // Apply promo codes if provided, otherwise allow manual promo code entry
     if (promoCodes && promoCodes.length > 0) {
       const discounts: Array<{ promotion_code: string }> = [];
       
@@ -172,6 +171,9 @@ serve(async (req) => {
       if (discounts.length > 0) {
         sessionParams.discounts = discounts;
       }
+    } else {
+      // Allow users to enter promo codes manually in Stripe Checkout
+      sessionParams.allow_promotion_codes = true;
     }
 
     const session = await stripe.checkout.sessions.create(sessionParams);
