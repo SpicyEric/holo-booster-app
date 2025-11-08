@@ -9,7 +9,7 @@ const corsHeaders = {
 
 const logStep = (step: string, details?: any) => {
   const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';
-  console.log(`[CUSTOMER-PORTAL] ${step}${detailsStr}`);
+  console.log(`[CANCEL-SUBSCRIPTION] ${step}${detailsStr}`);
 };
 
 serve(async (req) => {
@@ -22,7 +22,6 @@ serve(async (req) => {
 
     const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
     if (!stripeKey) throw new Error("STRIPE_SECRET_KEY is not set");
-    logStep("Stripe key verified");
 
     const supabaseClient = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
@@ -40,10 +39,10 @@ serve(async (req) => {
     if (!user) throw new Error("User not authenticated");
     logStep("User authenticated", { userId: user.id });
 
-    // Get customer record
+    // Get customer record with subscription ID
     const { data: customerUser } = await supabaseClient
       .from("customer_users")
-      .select("customer_id, customers(stripe_customer_id)")
+      .select("customer_id, customers(stripe_subscription_id)")
       .eq("user_id", user.id)
       .single();
 
@@ -51,30 +50,35 @@ serve(async (req) => {
       throw new Error("No customer record found for this user");
     }
 
-    const stripeCustomerId = (customerUser.customers as any)?.stripe_customer_id;
-    if (!stripeCustomerId) {
-      throw new Error("No Stripe customer ID found");
+    const subscriptionId = (customerUser.customers as any)?.stripe_subscription_id;
+    if (!subscriptionId) {
+      throw new Error("No active subscription found");
     }
 
-    logStep("Customer found", { stripeCustomerId });
+    logStep("Subscription found", { subscriptionId });
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
 
-    const origin = req.headers.get("origin") || "http://localhost:3000";
-    const portalSession = await stripe.billingPortal.sessions.create({
-      customer: stripeCustomerId,
-      return_url: `${origin}/customer/dashboard`,
+    // Cancel the subscription at period end
+    const subscription = await stripe.subscriptions.update(subscriptionId, {
+      cancel_at_period_end: true,
     });
     
-    logStep("Customer portal session created", { sessionId: portalSession.id });
+    logStep("Subscription cancelled", { 
+      subscriptionId,
+      cancelAt: subscription.cancel_at ? new Date(subscription.cancel_at * 1000).toISOString() : null
+    });
 
-    return new Response(JSON.stringify({ url: portalSession.url }), {
+    return new Response(JSON.stringify({ 
+      success: true,
+      cancelAt: subscription.cancel_at ? new Date(subscription.cancel_at * 1000).toISOString() : null
+    }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,
     });
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
-    logStep("ERROR in create-customer-portal", { message: errorMessage });
+    logStep("ERROR in cancel-subscription", { message: errorMessage });
     return new Response(JSON.stringify({ error: errorMessage }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 500,
