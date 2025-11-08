@@ -145,7 +145,7 @@ serve(async (req) => {
         // Find customer
         const { data: customer } = await supabase
           .from("customers")
-          .select("id, promoter_id")
+          .select("id, promoter_id, email, name, company_name")
           .eq("stripe_customer_id", invoice.customer as string)
           .single();
 
@@ -166,6 +166,31 @@ serve(async (req) => {
         });
 
         console.log("[WEBHOOK] Invoice saved");
+
+        // Send invoice email with legal documents
+        if (invoice.invoice_pdf && customer.email) {
+          try {
+            await fetch(
+              `${Deno.env.get("SUPABASE_URL")}/functions/v1/sendInvoiceEmail`,
+              {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  "Authorization": `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
+                },
+                body: JSON.stringify({
+                  customerEmail: customer.email,
+                  customerName: customer.name,
+                  companyName: customer.company_name,
+                  invoicePdfUrl: invoice.invoice_pdf,
+                }),
+              }
+            );
+            console.log("[WEBHOOK] Invoice email sent to:", customer.email);
+          } catch (emailError) {
+            console.error("[WEBHOOK] Error sending invoice email:", emailError);
+          }
+        }
 
         // Calculate and save commissions (10% of net amount)
         if (customer.promoter_id && invoice.lines.data.length > 0) {

@@ -125,8 +125,8 @@ export default function Checkout() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!customerName || !customerEmail) {
-      toast.error("Bitte Name und E-Mail eingeben");
+    if (!customerName || !customerEmail || !companyName) {
+      toast.error("Bitte Name, E-Mail und Firmenname eingeben");
       return;
     }
 
@@ -215,12 +215,13 @@ export default function Checkout() {
                       </div>
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="companyName">Firmenname (optional)</Label>
+                      <Label htmlFor="companyName">Firmenname *</Label>
                       <Input
                         id="companyName"
                         value={companyName}
                         onChange={(e) => setCompanyName(e.target.value)}
                         placeholder="Beispiel GmbH"
+                        required
                       />
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
