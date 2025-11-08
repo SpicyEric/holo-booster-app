@@ -115,13 +115,19 @@ serve(async (req) => {
     }
 
     // Check if this phone number exists (for this customer)
-    const { data: existingContact } = await supabaseClient
+    const { data: existingContact, error: existingContactError } = await supabaseClient
       .from('contacts')
       .select('id')
       .eq('customer_id', customerId)
       .eq('phone', normalizedPhone)
       .is('deleted_at', null)
       .maybeSingle();
+
+    if (existingContactError) {
+      console.error('Error checking existing contact:', existingContactError);
+    }
+
+    console.log('Existing contact check:', existingContact ? `Found: ${existingContact.id}` : 'Not found');
 
     const isReturningCustomer = !!existingContact;
 
