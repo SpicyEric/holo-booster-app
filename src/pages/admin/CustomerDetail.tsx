@@ -55,6 +55,8 @@ const CustomerDetail = () => {
     stripe_customer_id: "",
     stripe_subscription_id: "",
     status: "",
+    stamps_required: 5,
+    stamp_reward_text: "Gratis Kaffee",
   });
 
   useEffect(() => {
@@ -102,6 +104,8 @@ const CustomerDetail = () => {
           offer_details: formData.offer_details,
           logo_url: formData.logo_url,
           active: formData.active,
+          stamps_required: formData.stamps_required,
+          stamp_reward_text: formData.stamp_reward_text,
         })
         .eq("id", id);
 
@@ -546,6 +550,44 @@ const CustomerDetail = () => {
                   placeholder="Zeige diesen Gutschein einfach an der Kasse vor und erhalte deinen Rabatt. Gültig für 15 Minuten nach Erhalt."
                   rows={4}
                 />
+              </div>
+            </div>
+          </GlassCard>
+
+          <GlassCard>
+            <h2 className="text-xl font-bold mb-4">Stempelkarten-System</h2>
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="stamps_required">Anzahl Stempel bis zur Belohnung</Label>
+                <Input
+                  id="stamps_required"
+                  type="number"
+                  min="1"
+                  max="20"
+                  value={formData.stamps_required}
+                  onChange={(e) =>
+                    setFormData({ ...formData, stamps_required: parseInt(e.target.value) || 5 })
+                  }
+                  placeholder="5"
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Wie viele Besuche braucht ein Kunde, um eine Belohnung zu erhalten?
+                </p>
+              </div>
+
+              <div>
+                <Label htmlFor="stamp_reward_text">Belohnungs-Text</Label>
+                <Input
+                  id="stamp_reward_text"
+                  value={formData.stamp_reward_text}
+                  onChange={(e) =>
+                    setFormData({ ...formData, stamp_reward_text: e.target.value })
+                  }
+                  placeholder="Gratis Kaffee"
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Was bekommt der Kunde, wenn die Stempelkarte voll ist?
+                </p>
               </div>
             </div>
           </GlassCard>

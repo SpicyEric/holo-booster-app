@@ -23,24 +23,23 @@ import {
 } from "@/components/ui/alert-dialog";
 
 const contactSchema = z.object({
-  email: z.string().email("Ungültige E-Mail").optional().or(z.literal('')),
-  phone: z.string().optional(),
-}).refine(data => data.email || data.phone, {
-  message: "Bitte gib mindestens E-Mail oder Telefon an",
+  phone: z.string().min(1, "Telefonnummer ist erforderlich"),
 });
 
 const Scan = () => {
   const { cid } = useParams<{ cid: string }>();
   const [customer, setCustomer] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [optIn, setOptIn] = useState(false);
   const [showVoucher, setShowVoucher] = useState(false);
   const [showReviewPrompt, setShowReviewPrompt] = useState(false);
   const [showRedeemDialog, setShowRedeemDialog] = useState(false);
+  const [showStampCard, setShowStampCard] = useState(false);
   const [countdown, setCountdown] = useState(900); // 15 min in seconds
   const [voucherCode, setVoucherCode] = useState("");
+  const [isReturningCustomer, setIsReturningCustomer] = useState(false);
+  const [stampCount, setStampCount] = useState(0);
 
   useEffect(() => {
     loadCustomer();
@@ -100,7 +99,7 @@ const Scan = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    const validation = contactSchema.safeParse({ email, phone });
+    const validation = contactSchema.safeParse({ phone });
     if (!validation.success) {
       toast.error(validation.error.errors[0].message);
       return;
@@ -114,30 +113,48 @@ const Scan = () => {
     if (!customer) return;
 
     try {
-      // Call edge function to capture contact and generate voucher
+      // Call edge function to capture contact and generate voucher/stamp
       const { data, error } = await supabase.functions.invoke('publicCaptureContact', {
         body: {
           customerId: cid,
-          email: email || null,
-          phone: phone || null,
+          phone: phone,
           optIn: true,
         },
       });
 
       if (error) {
         console.error('Error capturing contact:', error);
-        toast.error('Fehler beim Erstellen des Gutscheins');
+        toast.error('Fehler beim Verarbeiten');
         return;
       }
 
-      console.log('Voucher response:', data);
-      setVoucherCode(data.voucherCode);
-      setShowReviewPrompt(true);
-      setCountdown(900); // Reset countdown to 15 minutes
-      toast.success('Bitte bewerte uns jetzt bei Google!');
+      console.log('Response:', data);
+      
+      // Check if returning customer (stamp card user)
+      if (data.isReturningCustomer) {
+        setIsReturningCustomer(true);
+        setStampCount(data.stampCount);
+        
+        // Check if stamp card is complete
+        if (data.stampCardComplete) {
+          setVoucherCode(data.voucherCode);
+          setShowVoucher(true);
+          setCountdown(900);
+          toast.success('Glückwunsch! Deine Stempelkarte ist voll! 🎉');
+        } else {
+          setShowStampCard(true);
+          toast.success(`Stempel erhalten! ${data.stampCount}/${customer.stamps_required}`);
+        }
+      } else {
+        // First time visitor - show review prompt
+        setVoucherCode(data.voucherCode);
+        setShowReviewPrompt(true);
+        setCountdown(900);
+        toast.success('Bitte bewerte uns jetzt bei Google!');
+      }
     } catch (error) {
       console.error('Error:', error);
-      toast.error('Fehler beim Erstellen des Gutscheins');
+      toast.error('Fehler beim Verarbeiten');
     }
   };
 
@@ -311,6 +328,69 @@ const Scan = () => {
     );
   }
 
+  if (showStampCard) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <motion.div
+          initial={{ scale: 0.8, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          className="w-full max-w-md"
+        >
+          <GlassCard className="text-center">
+            {customer.logo_url && (
+              <div className="mb-6">
+                <img 
+                  src={customer.logo_url} 
+                  alt={customer.name}
+                  className="w-24 h-24 object-contain mx-auto rounded-lg"
+                />
+              </div>
+            )}
+            
+            <h2 className="text-3xl font-bold mb-2">Deine Stempelkarte</h2>
+            <p className="text-muted-foreground mb-6">{customer.name}</p>
+
+            <div className="grid grid-cols-5 gap-3 mb-6">
+              {Array.from({ length: customer.stamps_required || 5 }).map((_, i) => (
+                <motion.div
+                  key={i}
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ delay: i * 0.1 }}
+                  className={`aspect-square rounded-xl flex items-center justify-center text-3xl
+                    ${i < stampCount 
+                      ? 'bg-gradient-primary shadow-elegant' 
+                      : 'bg-card/40 border-2 border-border'
+                    }`}
+                >
+                  {i < stampCount ? '✓' : ''}
+                </motion.div>
+              ))}
+            </div>
+
+            <div className="bg-card/40 rounded-2xl p-4 mb-6">
+              <p className="text-sm text-muted-foreground mb-1">Stempel gesammelt</p>
+              <p className="text-4xl font-bold bg-gradient-primary bg-clip-text text-transparent">
+                {stampCount} / {customer.stamps_required || 5}
+              </p>
+            </div>
+
+            <p className="text-sm text-muted-foreground mb-4">
+              {customer.stamps_required - stampCount === 1 
+                ? 'Noch 1 Stempel bis zur Belohnung!' 
+                : `Noch ${customer.stamps_required - stampCount} Stempel bis zur Belohnung!`}
+            </p>
+
+            <div className="bg-accent/20 rounded-xl p-4">
+              <p className="text-sm font-medium">Deine Belohnung:</p>
+              <p className="text-lg font-bold text-primary">{customer.stamp_reward_text || 'Gratis Kaffee'}</p>
+            </div>
+          </GlassCard>
+        </motion.div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <motion.div
@@ -319,33 +399,31 @@ const Scan = () => {
         className="w-full max-w-md"
       >
         <div className="text-center mb-8">
-          <motion.div
-            animate={{ rotate: [0, 5, -5, 0] }}
-            transition={{ duration: 3, repeat: Infinity, repeatDelay: 1 }}
-            className="w-16 h-16 rounded-full bg-gradient-primary animate-pulse-glow mx-auto mb-4"
-          />
+          {customer.logo_url ? (
+            <motion.img
+              src={customer.logo_url}
+              alt={customer.name}
+              animate={{ rotate: [0, 5, -5, 0] }}
+              transition={{ duration: 3, repeat: Infinity, repeatDelay: 1 }}
+              className="w-24 h-24 object-contain mx-auto mb-4 rounded-lg"
+            />
+          ) : (
+            <motion.div
+              animate={{ rotate: [0, 5, -5, 0] }}
+              transition={{ duration: 3, repeat: Infinity, repeatDelay: 1 }}
+              className="w-16 h-16 rounded-full bg-gradient-primary animate-pulse-glow mx-auto mb-4"
+            />
+          )}
           <h1 className="text-3xl font-bold mb-2">{customer.name}</h1>
           <p className="text-muted-foreground">
-            Nur noch 1 Schritt zu deinem Vorteil
+            {customer.offer_title || 'Nur noch 1 Schritt zu deinem Vorteil'}
           </p>
         </div>
 
         <GlassCard>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <Label htmlFor="email">E-Mail (optional)</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="deine@email.de"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="mt-2"
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="phone">Telefon (optional)</Label>
+              <Label htmlFor="phone">Handynummer *</Label>
               <Input
                 id="phone"
                 type="tel"
@@ -353,6 +431,7 @@ const Scan = () => {
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
                 className="mt-2"
+                required
               />
             </div>
 
@@ -366,9 +445,9 @@ const Scan = () => {
                 htmlFor="optin"
                 className="text-sm text-muted-foreground leading-relaxed cursor-pointer"
               >
-                Ich willige ein, von {customer.name} per E-Mail/SMS über Angebote informiert zu werden.
+                Ich willige ein, von {customer.name} per SMS über Angebote informiert zu werden.
                 Ich kann diese Einwilligung jederzeit widerrufen.{' '}
-                <a href="#" className="text-primary hover:underline">
+                <a href="/datenschutz" className="text-primary hover:underline">
                   Datenschutz
                 </a>
               </label>
@@ -378,14 +457,14 @@ const Scan = () => {
               type="submit"
               className="w-full"
               icon={Sparkles}
-              disabled={!email && !phone}
+              disabled={!phone || !optIn}
             >
-              Gutschein holen
+              Weiter
             </GradientButton>
           </form>
 
           <p className="text-xs text-center text-muted-foreground mt-4">
-            Deine Daten werden DSGVO-konform gespeichert. Du erhältst einen Widerrufslink per E-Mail.
+            Deine Daten werden DSGVO-konform gespeichert.
           </p>
         </GlassCard>
       </motion.div>

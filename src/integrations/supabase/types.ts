@@ -282,6 +282,8 @@ export type Database = {
           promoter_id: string | null
           qr_code_url: string | null
           sales_notes: string | null
+          stamp_reward_text: string | null
+          stamps_required: number | null
           status: string | null
           stripe_customer_id: string | null
           stripe_subscription_id: string | null
@@ -312,6 +314,8 @@ export type Database = {
           promoter_id?: string | null
           qr_code_url?: string | null
           sales_notes?: string | null
+          stamp_reward_text?: string | null
+          stamps_required?: number | null
           status?: string | null
           stripe_customer_id?: string | null
           stripe_subscription_id?: string | null
@@ -342,6 +346,8 @@ export type Database = {
           promoter_id?: string | null
           qr_code_url?: string | null
           sales_notes?: string | null
+          stamp_reward_text?: string | null
+          stamps_required?: number | null
           status?: string | null
           stripe_customer_id?: string | null
           stripe_subscription_id?: string | null
@@ -620,6 +626,38 @@ export type Database = {
           },
           {
             foreignKeyName: "scans_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      stamps: {
+        Row: {
+          created_at: string
+          customer_id: string
+          id: string
+          phone: string
+          stamp_date: string
+        }
+        Insert: {
+          created_at?: string
+          customer_id: string
+          id?: string
+          phone: string
+          stamp_date?: string
+        }
+        Update: {
+          created_at?: string
+          customer_id?: string
+          id?: string
+          phone?: string
+          stamp_date?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stamps_customer_id_fkey"
             columns: ["customer_id"]
             isOneToOne: false
             referencedRelation: "customers"

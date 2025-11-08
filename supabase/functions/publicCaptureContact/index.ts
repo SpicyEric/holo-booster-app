@@ -17,9 +17,9 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    const { customerId, email, phone, optIn } = await req.json();
+    const { customerId, phone, optIn } = await req.json();
 
-    console.log('Capturing contact:', { customerId, email: email ? 'provided' : 'none', phone: phone ? 'provided' : 'none', optIn });
+    console.log('Capturing contact:', { customerId, phone: phone ? 'provided' : 'none', optIn });
 
     // GDPR: Require explicit opt-in
     if (!optIn) {
@@ -30,10 +30,17 @@ serve(async (req) => {
       );
     }
 
+    if (!phone) {
+      return new Response(
+        JSON.stringify({ error: 'Telefonnummer erforderlich' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     // Validate customer exists and is active
     const { data: customer, error: customerError } = await supabaseClient
       .from('customers')
-      .select('id, name, offer_text')
+      .select('id, name, offer_text, stamps_required, stamp_reward_text')
       .eq('id', customerId)
       .eq('active', true)
       .maybeSingle();
@@ -46,7 +53,7 @@ serve(async (req) => {
       );
     }
 
-    // Hash IP for GDPR compliance (use IP hash instead of full IP)
+    // Hash IP for GDPR compliance
     const clientIp = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'unknown';
     const ipHash = await crypto.subtle.digest(
       'SHA-256',
@@ -59,41 +66,138 @@ serve(async (req) => {
 
     const userAgent = req.headers.get('user-agent') || '';
 
-    // Check for existing contact and active claims (duplicate prevention)
+    // Check if this phone number has been here before
     const { data: existingContact } = await supabaseClient
       .from('contacts')
       .select('id')
       .eq('customer_id', customerId)
-      .or(`email.eq.${email},phone.eq.${phone}`)
+      .eq('phone', phone)
       .maybeSingle();
 
-    if (existingContact) {
-      // Check if active claim exists
-      const { data: activeClaim } = await supabaseClient
-        .from('claims')
-        .select('id, expire_at')
-        .eq('contact_id', existingContact.id)
-        .is('redeemed_at', null)
-        .gt('expire_at', new Date().toISOString())
-        .maybeSingle();
+    const isReturningCustomer = !!existingContact;
+
+    if (isReturningCustomer) {
+      console.log('Returning customer detected:', existingContact.id);
       
-      if (activeClaim) {
-        console.log('Active claim exists for contact:', existingContact.id);
+      // Check if stamp already added today
+      const today = new Date().toISOString().split('T')[0];
+      const { data: todayStamp } = await supabaseClient
+        .from('stamps')
+        .select('id')
+        .eq('customer_id', customerId)
+        .eq('phone', phone)
+        .eq('stamp_date', today)
+        .maybeSingle();
+
+      if (todayStamp) {
         return new Response(
-          JSON.stringify({ error: 'Du hast bereits einen aktiven Gutschein! Bitte löse diesen zuerst ein.' }),
+          JSON.stringify({ error: 'Du hast heute bereits einen Stempel erhalten! Komm morgen wieder.' }),
           { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
+
+      // Add new stamp
+      const { error: stampError } = await supabaseClient
+        .from('stamps')
+        .insert({
+          customer_id: customerId,
+          phone: phone,
+          stamp_date: today,
+        });
+
+      if (stampError) {
+        console.error('Error creating stamp:', stampError);
+        return new Response(
+          JSON.stringify({ error: 'Fehler beim Erstellen des Stempels' }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // Count total stamps
+      const { data: stamps, error: stampCountError } = await supabaseClient
+        .from('stamps')
+        .select('id')
+        .eq('customer_id', customerId)
+        .eq('phone', phone);
+
+      if (stampCountError) {
+        console.error('Error counting stamps:', stampCountError);
+      }
+
+      const stampCount = stamps?.length || 0;
+      const stampsRequired = customer.stamps_required || 5;
+      const stampCardComplete = stampCount >= stampsRequired;
+
+      console.log(`Stamp added. Count: ${stampCount}/${stampsRequired}, Complete: ${stampCardComplete}`);
+
+      // Create scan record
+      await supabaseClient
+        .from('scans')
+        .insert({
+          customer_id: customerId,
+          contact_id: existingContact.id,
+          ip_hash: ipHash,
+          user_agent: userAgent,
+        });
+
+      // If stamp card complete, generate voucher
+      if (stampCardComplete) {
+        // Reset stamps for this customer
+        await supabaseClient
+          .from('stamps')
+          .delete()
+          .eq('customer_id', customerId)
+          .eq('phone', phone);
+
+        // Generate voucher code
+        const voucherCode = `${customer.name.substring(0, 3).toUpperCase()}-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
+        const expireAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
+
+        const { error: claimError } = await supabaseClient
+          .from('claims')
+          .insert({
+            customer_id: customerId,
+            contact_id: existingContact.id,
+            code: voucherCode,
+            expire_at: expireAt.toISOString(),
+          });
+
+        if (claimError) {
+          console.error('Error creating claim:', claimError);
+        }
+
+        return new Response(
+          JSON.stringify({
+            isReturningCustomer: true,
+            stampCardComplete: true,
+            stampCount: 0, // Reset
+            voucherCode,
+            expiresAt: expireAt.toISOString(),
+            offerText: customer.stamp_reward_text || customer.offer_text,
+          }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // Just show stamp card
+      return new Response(
+        JSON.stringify({
+          isReturningCustomer: true,
+          stampCardComplete: false,
+          stampCount,
+          stampsRequired,
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
-    // Create contact with opt-in
+    // First time visitor - create contact
     const { data: contact, error: contactError } = await supabaseClient
       .from('contacts')
       .insert({
         customer_id: customerId,
-        email: email || null,
-        phone: phone || null,
-        opt_in: true, // Explicit opt-in confirmed
+        phone: phone,
+        opt_in: true,
       })
       .select()
       .single();
@@ -106,10 +210,10 @@ serve(async (req) => {
       );
     }
 
-    console.log('Contact created:', contact.id);
+    console.log('New contact created:', contact.id);
 
     // Create scan record
-    const { error: scanError } = await supabaseClient
+    await supabaseClient
       .from('scans')
       .insert({
         customer_id: customerId,
@@ -118,24 +222,18 @@ serve(async (req) => {
         user_agent: userAgent,
       });
 
-    if (scanError) {
-      console.error('Error creating scan:', scanError);
-    }
-
-    // Generate voucher code (15-minute expiry)
+    // Generate voucher for first time (after Google review)
     const voucherCode = `${customer.name.substring(0, 3).toUpperCase()}-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
     const expireAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
 
-    const { data: claim, error: claimError } = await supabaseClient
+    const { error: claimError } = await supabaseClient
       .from('claims')
       .insert({
         customer_id: customerId,
         contact_id: contact.id,
         code: voucherCode,
         expire_at: expireAt.toISOString(),
-      })
-      .select()
-      .single();
+      });
 
     if (claimError) {
       console.error('Error creating claim:', claimError);
@@ -145,31 +243,11 @@ serve(async (req) => {
       );
     }
 
-    console.log('Claim created:', claim.id, 'Code:', voucherCode);
-
-    // Send confirmation email asynchronously (non-blocking)
-    const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
-    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY') ?? '';
-    
-    const emailPromise = fetch(`${supabaseUrl}/functions/v1/sendConfirmationEmail`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${supabaseAnonKey}`,
-      },
-      body: JSON.stringify({
-        email: email || phone || '',
-        customerName: customer.name,
-        offerText: customer.offer_text,
-        unsubscribeToken: contact.unsubscribe_token,
-      }),
-    }).catch(err => console.error('Email sending failed (non-blocking):', err));
-
-    // Start email sending but don't wait for it (fire and forget)
-    emailPromise.catch(err => console.error('Email promise error:', err));
+    console.log('Claim created for new visitor:', voucherCode);
 
     return new Response(
       JSON.stringify({
+        isReturningCustomer: false,
         voucherCode,
         expiresAt: expireAt.toISOString(),
         offerText: customer.offer_text,
