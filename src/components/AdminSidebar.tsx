@@ -47,9 +47,9 @@ export function AdminSidebar() {
 
   return (
     <Sidebar 
-      variant="floating"
+      variant="sidebar"
       collapsible="offcanvas"
-      className="border-r"
+      className="fixed left-0 top-0 z-50 h-screen border-r bg-background"
     >
       <div className="p-4 border-b border-border flex items-center gap-3">
         <img src={qraitLogo} alt="QRait Logo" className="h-8 w-auto" />
