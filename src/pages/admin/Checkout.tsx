@@ -45,11 +45,11 @@ export default function Checkout() {
   // Legal
   const [acceptedTerms, setAcceptedTerms] = useState(false);
 
-  // Price calculation
+  // Price calculation (matching Stripe prices)
   const MONTHLY_BASE = 39.45;
   const SETUP_FEE = 149.00;
-  const EXTRA_DISPLAY = 6.00;
-  const CUSTOM_DESIGN = 30.00;
+  const EXTRA_DISPLAY = 6.49;
+  const CUSTOM_DESIGN = 34.95;
 
   const calculateDiscount = (baseAmount: number, appliesTo: string) => {
     let totalDiscount = 0;
@@ -273,7 +273,7 @@ export default function Checkout() {
                     <div className="flex items-center justify-between p-4 border rounded-lg bg-card hover:bg-accent/5 transition-colors">
                       <div className="flex-1">
                         <p className="font-medium">Extra Aufsteller</p>
-                        <p className="text-sm text-muted-foreground">6,00 € pro Stück (einmalig)</p>
+                        <p className="text-sm text-muted-foreground">6,49 € pro Stück (einmalig)</p>
                       </div>
                       <div className="flex items-center gap-3">
                         <Button
@@ -301,7 +301,7 @@ export default function Checkout() {
                     <div className="flex items-center justify-between p-4 border rounded-lg bg-card hover:bg-accent/5 transition-colors">
                       <div className="flex-1">
                         <p className="font-medium">Individuelles Design</p>
-                        <p className="text-sm text-muted-foreground">30,00 € (einmalig)</p>
+                        <p className="text-sm text-muted-foreground">34,95 € (einmalig)</p>
                       </div>
                       <Checkbox
                         checked={customDesign}

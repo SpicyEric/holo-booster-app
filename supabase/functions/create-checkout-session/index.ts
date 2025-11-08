@@ -22,12 +22,12 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Direct Price IDs
+// Direct Price IDs (from your Stripe account)
 const PRICE_IDS = {
-  BASE_SUBSCRIPTION: "price_1SQl6nPcpEwK4jkCCV6TxaFw", // 39.45 EUR/month
-  SETUP_FEE: "price_1SQlRTPcpEwK4jkCxh4g6rMH", // 149.00 EUR
-  EXTRA_DISPLAY: "price_1SQlRcPcpEwK4jkCs3VYnto6", // 6.00 EUR
-  CUSTOM_DESIGN: "price_1SQlRdPcpEwK4jkCUQXzDPtj", // 30.00 EUR
+  BASE_SUBSCRIPTION: "price_1SR7ZBBhiBjCX9PmnruDxpBT", // 39.45 EUR/month
+  SETUP_FEE: "price_1SR7iVBhiBjCX9PmOHZOKmFO", // 149.00 EUR
+  EXTRA_DISPLAY: "price_1SR7mMBhiBjCX9PmoUFgpXJW", // 6.49 EUR
+  CUSTOM_DESIGN: "price_1SR7qMBhiBjCX9PmzUVR0wTC", // 34.95 EUR
 };
 
 serve(async (req) => {
