@@ -11,6 +11,7 @@ import { z } from "zod";
 import { Sparkles, Star } from "lucide-react";
 import { motion } from "framer-motion";
 import { CircularProgress } from "@/components/CircularProgress";
+import confetti from "canvas-confetti";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -40,6 +41,7 @@ const Scan = () => {
   const [voucherCode, setVoucherCode] = useState("");
   const [isReturningCustomer, setIsReturningCustomer] = useState(false);
   const [stampCount, setStampCount] = useState(0);
+  const [newStampIndex, setNewStampIndex] = useState<number | null>(null);
 
   useEffect(() => {
     loadCustomer();
@@ -96,6 +98,25 @@ const Scan = () => {
     }
   };
 
+  const playStampSound = () => {
+    try {
+      const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBTGH0fPTgjMGHWi+8OKbTw0PVK3q8K5aFgpEpt/wumojBi+B0/PSfzEGH2e98OGYTg0NUq7r8axaFgpKouHyvW0hBSqBzvPTgjMGIGO88N+STw8OUK/p8atZGApKn+HyvGsfBSl+0PPTgTQGHWW88OCOTQwNUazp77BaGApGnt/xtmwfBSB+yvLUgzUGHGW58N+OTQwKUazp8KxYFwpFm+ButGMeBR1+yfLTgjQGGmS58N+OTQ0KUKrl8KtXFwpDmuLwtWIeCB1+yPHSgzUGGWK48N+OTQ0JUKrl8KpXFwpDmuLwtGIeCBx+x/HSgzUFGGK38N+OTQ0IUKrl8KpXFwpCmOLwtGIeCBx+x/HSgzUFGGG28N+OTQ0IUKnl8KlXFwpBluLwtGIeCBt+x/HRgzUFGGC28N+OTQ0IUKjl8KlWFwpBluHwtGIeCBt+x/HRgzUFGGC18N+OTQ0IUKjl8KlWFwpBleHwtGIeCBt+x/HRgzUFGGC18N+OTQ0IUKjl8KlWFwpBleHwtGIeCBt+x/HRgzUFGGC18N+OTQ0IUKjl8KlWFwpBleHwtGIeCBt+x/HRgzUFGGC18N+OTQ0IUKjl8KlWFwpBleHwtGIeCBt+x/HRgzUFGGC18N+OTQ0IUKjl8KlWFwpBleHwtGIeCBt+x/HRgzUFGGC18N+OTQ0IUKjl8KlWFwpBleHwtGIeCBt+x/HRgzUFGGC18N+OTQ0IUKjl8KlWFwpBleHwtGIeCBt+x/HRgzUFGGC18N+OTQ0IUKjl8KlWFwpBleHwtGIeCBt+x/HRgzUFGGC18N+OTQ0IUKjl8KlWFwo=');
+      audio.volume = 0.3;
+      audio.play().catch(() => {});
+    } catch (err) {
+      console.log('Could not play sound:', err);
+    }
+  };
+
+  const triggerConfetti = () => {
+    confetti({
+      particleCount: 100,
+      spread: 70,
+      origin: { y: 0.6 },
+      colors: ['#FFD700', '#FFA500', '#FF6347']
+    });
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -113,7 +134,6 @@ const Scan = () => {
     if (!customer) return;
 
     try {
-      // Call edge function to capture contact and generate voucher/stamp
       const { data, error } = await supabase.functions.invoke('publicCaptureContact', {
         body: {
           customerId: cid,
@@ -124,7 +144,7 @@ const Scan = () => {
 
       if (error) {
         console.error('Error capturing contact:', error);
-        toast.error('Fehler beim Verarbeiten');
+        toast.error(error.message || 'Fehler beim Verarbeiten');
         return;
       }
 
@@ -135,15 +155,30 @@ const Scan = () => {
         setIsReturningCustomer(true);
         setStampCount(data.stampCount);
         
+        // Already scanned today
+        if (data.alreadyScannedToday) {
+          setShowStampCard(true);
+          toast.info('Du hast heute schon gescannt! 😊', {
+            description: 'Komm morgen wieder für einen weiteren Stempel.',
+          });
+          return;
+        }
+        
         // Check if stamp card is complete
         if (data.stampCardComplete) {
+          triggerConfetti();
           setVoucherCode(data.voucherCode);
           setShowVoucher(true);
           setCountdown(900);
           toast.success('Glückwunsch! Deine Stempelkarte ist voll! 🎉');
         } else {
+          // New stamp added
+          playStampSound();
+          setNewStampIndex(data.stampCount - 1);
           setShowStampCard(true);
-          toast.success(`Stempel erhalten! ${data.stampCount}/${customer.stamps_required}`);
+          toast.success(`Stempel erhalten! ${data.stampCount}/${customer.stamps_required}`, {
+            description: `Noch ${customer.stamps_required - data.stampCount} bis zur Belohnung!`,
+          });
         }
       } else {
         // First time visitor - show review prompt
@@ -194,11 +229,25 @@ const Scan = () => {
         return;
       }
       
-      toast.success('Vielen Dank für deine Unterstützung. Wir hoffen, wir konnten dir hiermit auch eine Freude machen! 🎉', {
+      toast.success('Vielen Dank! 🎉', {
+        description: isReturningCustomer 
+          ? 'Du kannst jetzt weiter Stempel sammeln!' 
+          : 'Ab jetzt kannst du Stempel sammeln für weitere Belohnungen!',
         duration: 5000,
       });
+      
       setShowRedeemDialog(false);
-      setShowVoucher(false);
+      
+      // Show stamp card after redeeming if first-time customer
+      if (!isReturningCustomer) {
+        setTimeout(() => {
+          setShowVoucher(false);
+          setShowStampCard(true);
+          setStampCount(0);
+        }, 2000);
+      } else {
+        setShowVoucher(false);
+      }
     } catch (err) {
       toast.error('Fehler beim Einlösen');
     }
@@ -232,7 +281,6 @@ const Scan = () => {
             <GradientButton
               onClick={() => {
                 window.open(customer.google_review_url, '_blank');
-                // Show voucher after 3 seconds
                 setTimeout(() => {
                   setShowReviewPrompt(false);
                   setShowVoucher(true);
@@ -351,21 +399,40 @@ const Scan = () => {
             <p className="text-muted-foreground mb-6">{customer.name}</p>
 
             <div className="grid grid-cols-5 gap-3 mb-6">
-              {Array.from({ length: customer.stamps_required || 5 }).map((_, i) => (
-                <motion.div
-                  key={i}
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  transition={{ delay: i * 0.1 }}
-                  className={`aspect-square rounded-xl flex items-center justify-center text-3xl
-                    ${i < stampCount 
-                      ? 'bg-gradient-primary shadow-elegant' 
-                      : 'bg-card/40 border-2 border-border'
-                    }`}
-                >
-                  {i < stampCount ? '✓' : ''}
-                </motion.div>
-              ))}
+              {Array.from({ length: customer.stamps_required || 5 }).map((_, i) => {
+                const isNewStamp = i === newStampIndex;
+                const isFilled = i < stampCount;
+                
+                return (
+                  <motion.div
+                    key={i}
+                    initial={{ scale: 0 }}
+                    animate={{ 
+                      scale: isNewStamp ? [0, 1.3, 1] : 1,
+                      rotate: isNewStamp ? [0, 10, -10, 0] : 0
+                    }}
+                    transition={{ 
+                      delay: i * 0.1,
+                      duration: isNewStamp ? 0.8 : 0.3,
+                    }}
+                    className={`aspect-square rounded-xl flex items-center justify-center text-3xl
+                      ${isFilled
+                        ? 'bg-gradient-primary shadow-elegant' 
+                        : 'bg-card/40 border-2 border-border'
+                      }`}
+                  >
+                    {isFilled && (
+                      <motion.span
+                        initial={isNewStamp ? { scale: 0, rotate: -45 } : false}
+                        animate={isNewStamp ? { scale: 1, rotate: 0 } : false}
+                        transition={{ delay: 0.2 }}
+                      >
+                        ✓
+                      </motion.span>
+                    )}
+                  </motion.div>
+                );
+              })}
             </div>
 
             <div className="bg-card/40 rounded-2xl p-4 mb-6">

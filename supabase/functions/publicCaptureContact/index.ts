@@ -6,6 +6,25 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Normalize phone numbers to consistent +49 format
+function normalizePhoneNumber(phone: string): string {
+  let normalized = phone.replace(/[\s\-()]/g, '');
+  
+  if (normalized.startsWith('0049')) {
+    normalized = '+49' + normalized.substring(4);
+  } else if (normalized.startsWith('049')) {
+    normalized = '+49' + normalized.substring(3);
+  } else if (normalized.startsWith('49') && !normalized.startsWith('+')) {
+    normalized = '+49' + normalized.substring(2);
+  } else if (normalized.startsWith('0')) {
+    normalized = '+49' + normalized.substring(1);
+  } else if (!normalized.startsWith('+')) {
+    normalized = '+49' + normalized;
+  }
+  
+  return normalized;
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -37,6 +56,10 @@ serve(async (req) => {
       );
     }
 
+    // Normalize phone number
+    const normalizedPhone = normalizePhoneNumber(phone);
+    console.log('Phone normalization:', phone, '->', normalizedPhone);
+
     // Validate customer exists and is active
     const { data: customer, error: customerError } = await supabaseClient
       .from('customers')
@@ -65,13 +88,39 @@ serve(async (req) => {
     );
 
     const userAgent = req.headers.get('user-agent') || '';
+    const today = new Date().toISOString().split('T')[0];
 
-    // Check if this phone number has been here before
+    // Check for device scan today (same IP hash, ANY phone number)
+    const { data: todayDeviceScan } = await supabaseClient
+      .from('scans')
+      .select('id, contact_id, contacts!inner(phone)')
+      .eq('customer_id', customerId)
+      .eq('ip_hash', ipHash)
+      .gte('created_at', `${today}T00:00:00`)
+      .lte('created_at', `${today}T23:59:59`)
+      .maybeSingle();
+
+    // CRITICAL LOGIC: Same device, different phone = BLOCKED
+    if (todayDeviceScan) {
+      const scannedPhone = (todayDeviceScan as any).contacts?.phone;
+      if (scannedPhone && scannedPhone !== normalizedPhone) {
+        console.warn('BLOCKED: Same device, different phone number detected');
+        return new Response(
+          JSON.stringify({ 
+            error: 'Von diesem Gerät wurde heute bereits mit einer anderen Nummer gescannt. Bitte verwende dieselbe Nummer oder komm morgen wieder.' 
+          }),
+          { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+    }
+
+    // Check if this phone number exists (for this customer)
     const { data: existingContact } = await supabaseClient
       .from('contacts')
       .select('id')
       .eq('customer_id', customerId)
-      .eq('phone', phone)
+      .eq('phone', normalizedPhone)
+      .is('deleted_at', null)
       .maybeSingle();
 
     const isReturningCustomer = !!existingContact;
@@ -79,20 +128,37 @@ serve(async (req) => {
     if (isReturningCustomer) {
       console.log('Returning customer detected:', existingContact.id);
       
-      // Check if stamp already added today
-      const today = new Date().toISOString().split('T')[0];
+      // Check if stamp already added today for this phone
       const { data: todayStamp } = await supabaseClient
         .from('stamps')
         .select('id')
         .eq('customer_id', customerId)
-        .eq('phone', phone)
+        .eq('phone', normalizedPhone)
         .eq('stamp_date', today)
         .maybeSingle();
 
       if (todayStamp) {
+        // Already scanned today - don't block, show stamp card
+        const { data: stamps } = await supabaseClient
+          .from('stamps')
+          .select('id')
+          .eq('customer_id', customerId)
+          .eq('phone', normalizedPhone);
+        
+        const stampCount = stamps?.length || 0;
+        const stampsRequired = customer.stamps_required || 5;
+
+        console.log('Already scanned today, showing stamp card');
+        
         return new Response(
-          JSON.stringify({ error: 'Du hast heute bereits einen Stempel erhalten! Komm morgen wieder.' }),
-          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          JSON.stringify({
+            isReturningCustomer: true,
+            alreadyScannedToday: true,
+            stampCount,
+            stampsRequired,
+            message: 'Du hast heute bereits einen Stempel erhalten! Komm morgen wieder für den nächsten.',
+          }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
 
@@ -101,7 +167,7 @@ serve(async (req) => {
         .from('stamps')
         .insert({
           customer_id: customerId,
-          phone: phone,
+          phone: normalizedPhone,
           stamp_date: today,
         });
 
@@ -118,7 +184,7 @@ serve(async (req) => {
         .from('stamps')
         .select('id')
         .eq('customer_id', customerId)
-        .eq('phone', phone);
+        .eq('phone', normalizedPhone);
 
       if (stampCountError) {
         console.error('Error counting stamps:', stampCountError);
@@ -147,7 +213,7 @@ serve(async (req) => {
           .from('stamps')
           .delete()
           .eq('customer_id', customerId)
-          .eq('phone', phone);
+          .eq('phone', normalizedPhone);
 
         // Generate voucher code
         const voucherCode = `${customer.name.substring(0, 3).toUpperCase()}-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
@@ -179,13 +245,14 @@ serve(async (req) => {
         );
       }
 
-      // Just show stamp card
+      // Just show stamp card with new stamp
       return new Response(
         JSON.stringify({
           isReturningCustomer: true,
           stampCardComplete: false,
           stampCount,
           stampsRequired,
+          newStampAdded: true,
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
@@ -196,7 +263,7 @@ serve(async (req) => {
       .from('contacts')
       .insert({
         customer_id: customerId,
-        phone: phone,
+        phone: normalizedPhone,
         opt_in: true,
       })
       .select()

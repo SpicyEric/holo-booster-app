@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { GlassCard } from "@/components/GlassCard";
 import { GradientButton } from "@/components/GradientButton";
-import { ArrowLeft, Save, QrCode, Upload, Download, AlertTriangle, XCircle, Trash2 } from "lucide-react";
+import { ArrowLeft, Save, QrCode, Upload, Download, AlertTriangle, XCircle, Trash2, Users } from "lucide-react";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -21,6 +21,13 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import CustomerContacts from "./CustomerContacts";
 
 const CustomerDetail = () => {
   const { id } = useParams();
@@ -33,9 +40,15 @@ const CustomerDetail = () => {
   const [showRegenerateDialog, setShowRegenerateDialog] = useState(false);
   const [showCancelDialog, setShowCancelDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [showContactsDialog, setShowContactsDialog] = useState(false);
   const [cancelling, setCancelling] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [confirmText, setConfirmText] = useState("");
+  const [stats, setStats] = useState({
+    totalContacts: 0,
+    totalScans: 0,
+    totalStamps: 0,
+  });
   
   const [formData, setFormData] = useState({
     name: "",
@@ -60,7 +73,10 @@ const CustomerDetail = () => {
   });
 
   useEffect(() => {
-    if (id) loadCustomer();
+    if (id) {
+      loadCustomer();
+      loadStats();
+    }
   }, [id]);
 
   const loadCustomer = async () => {
@@ -78,6 +94,34 @@ const CustomerDetail = () => {
       navigate("/admin/customers");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadStats = async () => {
+    try {
+      const { count: contactCount } = await supabase
+        .from('contacts')
+        .select('*', { count: 'exact', head: true })
+        .eq('customer_id', id)
+        .is('deleted_at', null);
+
+      const { count: scanCount } = await supabase
+        .from('scans')
+        .select('*', { count: 'exact', head: true })
+        .eq('customer_id', id);
+
+      const { count: stampCount } = await supabase
+        .from('stamps')
+        .select('*', { count: 'exact', head: true })
+        .eq('customer_id', id);
+
+      setStats({
+        totalContacts: contactCount || 0,
+        totalScans: scanCount || 0,
+        totalStamps: stampCount || 0,
+      });
+    } catch (error: any) {
+      console.error('Error loading stats:', error);
     }
   };
 
@@ -418,6 +462,39 @@ const CustomerDetail = () => {
                 </div>
               )}
             </div>
+          </GlassCard>
+
+          {/* Kontakte & Scans */}
+          <GlassCard>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-bold">Kontakte & Scans</h2>
+              <div className="text-3xl font-bold bg-gradient-primary bg-clip-text text-transparent">
+                {stats.totalContacts}
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-3 gap-4 mb-6">
+              <div className="p-4 border rounded-lg text-center">
+                <p className="text-sm text-muted-foreground mb-1">Gesamt Kontakte</p>
+                <p className="text-2xl font-bold">{stats.totalContacts}</p>
+              </div>
+              <div className="p-4 border rounded-lg text-center">
+                <p className="text-sm text-muted-foreground mb-1">Gesamt Scans</p>
+                <p className="text-2xl font-bold">{stats.totalScans}</p>
+              </div>
+              <div className="p-4 border rounded-lg text-center">
+                <p className="text-sm text-muted-foreground mb-1">Gesamt Stempel</p>
+                <p className="text-2xl font-bold">{stats.totalStamps}</p>
+              </div>
+            </div>
+            
+            <Button 
+              onClick={() => setShowContactsDialog(true)}
+              className="w-full gap-2"
+            >
+              <Users className="w-4 h-4" />
+              Alle Kontakte anzeigen
+            </Button>
           </GlassCard>
 
           <GlassCard>
@@ -807,6 +884,16 @@ const CustomerDetail = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Contacts Dialog */}
+      <Dialog open={showContactsDialog} onOpenChange={setShowContactsDialog}>
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Kontakte für {formData.name}</DialogTitle>
+          </DialogHeader>
+          <CustomerContacts customerId={id!} />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
