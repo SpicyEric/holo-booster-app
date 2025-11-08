@@ -1,4 +1,4 @@
-import { Home, Users, BarChart3, Settings, LogOut } from "lucide-react";
+import { Home, Users, BarChart3, Settings, LogOut, UserCog, ShoppingCart } from "lucide-react";
 import { NavLink, useNavigate } from "react-router-dom";
 import {
   Sidebar,
@@ -19,9 +19,9 @@ import qraitLogo from '@/assets/qrait-logo-full.png';
 const menuItems = [
   { title: "Dashboard", url: "/admin", icon: Home },
   { title: "Kunden", url: "/admin/customers", icon: Users },
-  { title: "Accounts", url: "/admin/accounts", icon: Users },
+  { title: "Accounts", url: "/admin/accounts", icon: UserCog },
   { title: "Statistiken", url: "/admin/stats", icon: BarChart3 },
-  { title: "Kunde abschließen", url: "/admin/checkout", icon: Users },
+  { title: "Kunde abschließen", url: "/admin/checkout", icon: ShoppingCart },
   { title: "Einstellungen", url: "/admin/settings", icon: Settings },
 ];
 
