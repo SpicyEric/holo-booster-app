@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { GlassCard } from "@/components/GlassCard";
 import { GradientButton } from "@/components/GradientButton";
-import { ArrowLeft, Save, QrCode, Upload, Download, AlertTriangle, XCircle, Trash2, Users } from "lucide-react";
+import { ArrowLeft, Save, QrCode, Upload, Download, AlertTriangle, XCircle, Trash2, Users, FileText, History } from "lucide-react";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -27,7 +27,11 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import CustomerContacts from "./CustomerContacts";
+import { ConfirmActionDialog } from "@/components/ConfirmActionDialog";
+import { CustomerFileUpload } from "@/components/CustomerFileUpload";
+import { useQuery } from "@tanstack/react-query";
 
 const CustomerDetail = () => {
   const { id } = useParams();
@@ -41,9 +45,12 @@ const CustomerDetail = () => {
   const [showCancelDialog, setShowCancelDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showContactsDialog, setShowContactsDialog] = useState(false);
+  const [showStatusHistory, setShowStatusHistory] = useState(false);
+  const [showInvoices, setShowInvoices] = useState(false);
   const [cancelling, setCancelling] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [confirmText, setConfirmText] = useState("");
+  const [customerNumber, setCustomerNumber] = useState<number | null>(null);
   const [stats, setStats] = useState({
     totalContacts: 0,
     totalScans: 0,
@@ -89,6 +96,7 @@ const CustomerDetail = () => {
 
       if (error) throw error;
       setFormData(data);
+      setCustomerNumber(data.customer_number);
     } catch (error: any) {
       toast.error("Kunde nicht gefunden");
       navigate("/admin/customers");
@@ -99,31 +107,53 @@ const CustomerDetail = () => {
 
   const loadStats = async () => {
     try {
-      const { count: contactCount } = await supabase
-        .from('contacts')
-        .select('*', { count: 'exact', head: true })
-        .eq('customer_id', id)
-        .is('deleted_at', null);
-
-      const { count: scanCount } = await supabase
-        .from('scans')
-        .select('*', { count: 'exact', head: true })
-        .eq('customer_id', id);
-
-      const { count: stampCount } = await supabase
-        .from('stamps')
-        .select('*', { count: 'exact', head: true })
-        .eq('customer_id', id);
+      const [contactsRes, scansRes, stampsRes] = await Promise.all([
+        supabase.from("contacts").select("id", { count: "exact", head: true }).eq("customer_id", id),
+        supabase.from("scans").select("id", { count: "exact", head: true }).eq("customer_id", id),
+        supabase.from("stamps").select("id", { count: "exact", head: true }).eq("customer_id", id),
+      ]);
 
       setStats({
-        totalContacts: contactCount || 0,
-        totalScans: scanCount || 0,
-        totalStamps: stampCount || 0,
+        totalContacts: contactsRes.count || 0,
+        totalScans: scansRes.count || 0,
+        totalStamps: stampsRes.count || 0,
       });
-    } catch (error: any) {
-      console.error('Error loading stats:', error);
+    } catch (error) {
+      console.error("Error loading stats:", error);
     }
   };
+
+  // Query for status history
+  const { data: statusHistory } = useQuery({
+    queryKey: ['customer-status-history', id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('customer_status_history')
+        .select('*')
+        .eq('customer_id', id)
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!id,
+  });
+
+  // Query for invoices
+  const { data: invoices } = useQuery({
+    queryKey: ['customer-invoices', id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('invoices')
+        .select('*')
+        .eq('customer_id', id)
+        .order('issued_at', { ascending: false });
+      
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!id,
+  });
 
   const handleSave = async () => {
     if (!formData.company_name || !formData.google_review_url) {
@@ -402,65 +432,157 @@ const CustomerDetail = () => {
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="p-4 border rounded-lg">
+                  <p className="text-sm text-muted-foreground mb-1">Kundennummer</p>
+                  <p className="font-mono text-lg font-bold text-primary">
+                    {customerNumber ? `CUR-${customerNumber}` : "Wird erstellt..."}
+                  </p>
+                </div>
+                <div className="p-4 border rounded-lg">
+                  <p className="text-sm text-muted-foreground mb-1">Zahlungsstatus</p>
+                  <p className="font-semibold">
+                    {formData.status === "active" && "✅ Aktiv"}
+                    {formData.status === "pending" && "⏳ Ausstehend"}
+                    {formData.status === "past_due" && "⚠️ Überfällig"}
+                    {formData.status === "canceled" && "❌ Gekündigt"}
+                    {!formData.status && "— Nicht definiert"}
+                  </p>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="p-4 border rounded-lg">
                   <p className="text-sm text-muted-foreground mb-1">Stripe Customer ID</p>
-                  <p className="font-mono text-sm">
+                  <p className="font-mono text-xs break-all">
                     {formData.stripe_customer_id || "Nicht angelegt"}
                   </p>
                 </div>
                 <div className="p-4 border rounded-lg">
                   <p className="text-sm text-muted-foreground mb-1">Subscription ID</p>
-                  <p className="font-mono text-sm">
+                  <p className="font-mono text-xs break-all">
                     {formData.stripe_subscription_id || "Kein Abo"}
                   </p>
                 </div>
               </div>
-              <div className="p-4 border rounded-lg">
-                <p className="text-sm text-muted-foreground mb-1">Zahlungsstatus</p>
-                <p className="font-semibold">
-                  {formData.status === "active" && "✅ Aktiv"}
-                  {formData.status === "pending" && "⏳ Ausstehend"}
-                  {formData.status === "past_due" && "⚠️ Überfällig"}
-                  {formData.status === "canceled" && "❌ Gekündigt"}
-                  {!formData.status && "— Nicht definiert"}
-                </p>
-              </div>
 
-              {/* Admin Actions */}
-              {formData.stripe_subscription_id && formData.status !== "canceled" && (
-                <div className="pt-4 border-t">
-                  <div className="flex gap-2">
-                    <Button
-                      onClick={() => setShowCancelDialog(true)}
-                      variant="destructive"
-                      className="gap-2"
-                      disabled={cancelling}
-                    >
-                      <XCircle className="w-4 h-4" />
-                      {cancelling ? "Kündige..." : "Abo kündigen"}
-                    </Button>
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-2">
-                    Kündigt das Abo sofort in Stripe und in der Datenbank
-                  </p>
-                </div>
-              )}
+              {/* Tabs for Status History and Invoices */}
+              <Tabs defaultValue="info" className="w-full">
+                <TabsList className="grid w-full grid-cols-3">
+                  <TabsTrigger value="info">Info</TabsTrigger>
+                  <TabsTrigger value="history">
+                    <History className="w-4 h-4 mr-2" />
+                    Status-Verlauf
+                  </TabsTrigger>
+                  <TabsTrigger value="invoices">
+                    <FileText className="w-4 h-4 mr-2" />
+                    Rechnungen
+                  </TabsTrigger>
+                </TabsList>
+                
+                <TabsContent value="info" className="space-y-4 mt-4">
+                  {/* Admin Actions */}
+                  {formData.stripe_subscription_id && formData.status !== "canceled" && (
+                    <div className="pt-4 border-t">
+                      <div className="flex gap-2">
+                        <Button
+                          onClick={() => setShowCancelDialog(true)}
+                          variant="destructive"
+                          className="gap-2"
+                          disabled={cancelling}
+                        >
+                          <XCircle className="w-4 h-4" />
+                          {cancelling ? "Kündige..." : "Abo kündigen"}
+                        </Button>
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-2">
+                        Kündigt das Abo sofort in Stripe und in der Datenbank
+                      </p>
+                    </div>
+                  )}
 
-              {formData.stripe_customer_id && (
-                <div className="pt-4 border-t">
-                  <Button
-                    onClick={() => setShowDeleteDialog(true)}
-                    variant="destructive"
-                    className="gap-2"
-                    disabled={deleting}
-                  >
-                    <Trash2 className="w-4 h-4" />
-                    {deleting ? "Lösche..." : "Kunde komplett löschen"}
-                  </Button>
-                  <p className="text-xs text-muted-foreground mt-2">
-                    ⚠️ Löscht Kunde aus Stripe UND Datenbank (inkl. Abo)
-                  </p>
-                </div>
-              )}
+                  {formData.stripe_customer_id && (
+                    <div className="pt-4 border-t">
+                      <Button
+                        onClick={() => setShowDeleteDialog(true)}
+                        variant="destructive"
+                        className="gap-2"
+                        disabled={deleting}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                        {deleting ? "Lösche..." : "Kunde komplett löschen"}
+                      </Button>
+                      <p className="text-xs text-muted-foreground mt-2">
+                        ⚠️ Löscht Kunde aus Stripe UND Datenbank (inkl. Abo). Nur für Admins.
+                      </p>
+                    </div>
+                  )}
+                </TabsContent>
+
+                <TabsContent value="history" className="mt-4">
+                  {statusHistory && statusHistory.length > 0 ? (
+                    <div className="space-y-2">
+                      {statusHistory.map((entry) => (
+                        <div key={entry.id} className="p-3 border rounded-lg">
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2">
+                                <span className="font-semibold">{entry.old_status || 'Neu'}</span>
+                                <span>→</span>
+                                <span className="font-semibold text-primary">{entry.new_status}</span>
+                              </div>
+                              <div className="text-sm text-muted-foreground mt-1">
+                                Geändert durch: {entry.changed_by_email || 'System'} ({entry.change_source})
+                              </div>
+                              <div className="text-xs text-muted-foreground">
+                                {new Date(entry.created_at).toLocaleString('de-DE')}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center text-muted-foreground py-8">
+                      Keine Statusänderungen vorhanden
+                    </div>
+                  )}
+                </TabsContent>
+
+                <TabsContent value="invoices" className="mt-4">
+                  {invoices && invoices.length > 0 ? (
+                    <div className="space-y-2">
+                      {invoices.map((invoice) => (
+                        <div key={invoice.id} className="p-3 border rounded-lg hover:bg-muted/50">
+                          <div className="flex items-center justify-between">
+                            <div className="flex-1">
+                              <div className="font-semibold">
+                                {(invoice.total_amount_cents / 100).toFixed(2)} {invoice.currency?.toUpperCase() || 'EUR'}
+                              </div>
+                              <div className="text-sm text-muted-foreground">
+                                Status: {invoice.status} • {new Date(invoice.issued_at || invoice.created_at).toLocaleDateString('de-DE')}
+                              </div>
+                            </div>
+                            {invoice.pdf_url && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                asChild
+                              >
+                                <a href={invoice.pdf_url} target="_blank" rel="noopener noreferrer">
+                                  <Download className="w-4 h-4 mr-2" />
+                                  PDF
+                                </a>
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center text-muted-foreground py-8">
+                      Keine Rechnungen vorhanden
+                    </div>
+                  )}
+                </TabsContent>
+              </Tabs>
             </div>
           </GlassCard>
 
@@ -749,45 +871,8 @@ const CustomerDetail = () => {
             </div>
           </GlassCard>
 
-          {/* Aufsteller-Designs */}
-          <GlassCard>
-            <h2 className="text-xl font-bold mb-4">Aufsteller-Designs</h2>
-
-            {formData.design_urls && formData.design_urls.length > 0 && (
-              <div className="grid grid-cols-1 gap-4 mb-4">
-                {formData.design_urls.map((url, index) => (
-                  <div key={index} className="relative group">
-                    <img
-                      src={url}
-                      alt={`Design ${index + 1}`}
-                      className="w-full rounded-lg border border-border"
-                    />
-                    <a
-                      href={url}
-                      download={`${formData.company_name || formData.name}-Design-${index + 1}.png`}
-                      className="absolute top-2 right-2 p-2 bg-background/90 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity"
-                    >
-                      <Download className="w-4 h-4" />
-                    </a>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            <GradientButton
-              onClick={generateStandDesigns}
-              disabled={generatingDesigns || !formData.qr_code_url}
-              className="w-full"
-            >
-              {generatingDesigns ? "Generiere Design..." : "Aufsteller Design erstellen"}
-            </GradientButton>
-
-            {!formData.qr_code_url && (
-              <p className="text-sm text-muted-foreground mt-2">
-                ⚠️ QR-Code muss zuerst generiert werden
-              </p>
-            )}
-          </GlassCard>
+          {/* File Upload */}
+          <CustomerFileUpload customerId={id!} />
         </div>
       </div>
 
@@ -834,56 +919,27 @@ const CustomerDetail = () => {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Cancel Subscription Dialog */}
-      <AlertDialog open={showCancelDialog} onOpenChange={setShowCancelDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Abo wirklich kündigen?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Das Abo wird sofort in Stripe gekündigt und der Status wird auf "canceled" gesetzt.
-              Der Kunde kann die Dienste nicht mehr nutzen.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Abbrechen</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleCancelSubscription}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              Abo kündigen
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      {/* Cancel Subscription Dialog with Safety */}
+      <ConfirmActionDialog
+        open={showCancelDialog}
+        onOpenChange={setShowCancelDialog}
+        onConfirm={handleCancelSubscription}
+        title="Abo wirklich kündigen?"
+        description="Das Abo wird sofort in Stripe gekündigt und der Status wird auf 'canceled' gesetzt. Der Kunde kann die Dienste nicht mehr nutzen."
+        confirmText="Abo kündigen"
+        confirmPhrase="Kunde kündigen"
+      />
 
-      {/* Delete Customer Dialog */}
-      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>⚠️ Kunde komplett löschen?</AlertDialogTitle>
-            <AlertDialogDescription className="space-y-2">
-              <p className="font-semibold text-destructive">
-                ACHTUNG: Diese Aktion kann nicht rückgängig gemacht werden!
-              </p>
-              <p>Folgendes wird gelöscht:</p>
-              <ul className="list-disc pl-5 space-y-1">
-                <li>Kunde in Stripe (inkl. aller Zahlungsdaten)</li>
-                <li>Subscription in Stripe (falls vorhanden)</li>
-                <li>Kundendaten in der Datenbank</li>
-              </ul>
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Abbrechen</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDeleteCustomer}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              Endgültig löschen
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      {/* Delete Customer Dialog with Safety */}
+      <ConfirmActionDialog
+        open={showDeleteDialog}
+        onOpenChange={setShowDeleteDialog}
+        onConfirm={handleDeleteCustomer}
+        title="⚠️ Kunde komplett löschen?"
+        description="ACHTUNG: Diese Aktion kann nicht rückgängig gemacht werden! Es werden gelöscht: Kunde in Stripe (inkl. aller Zahlungsdaten), Subscription in Stripe, alle Kundendaten in der Datenbank."
+        confirmText="Endgültig löschen"
+        confirmPhrase="Kunde löschen"
+      />
 
       {/* Contacts Dialog */}
       <Dialog open={showContactsDialog} onOpenChange={setShowContactsDialog}>

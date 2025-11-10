@@ -5,15 +5,15 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.79.0";
 interface CheckoutRequest {
   customerName: string;
   customerEmail: string;
-  companyName?: string;
+  companyName: string; // Now required
   address?: {
     street: string;
     city: string;
     postalCode: string;
     country: string;
   };
+  packageType: 'basic' | 'plus' | 'pro'; // Required package selection
   extraDisplays?: number;
-  customDesign?: boolean;
   promoCodes?: string[];
 }
 
@@ -24,10 +24,19 @@ const corsHeaders = {
 
 // Direct Price IDs (from your Stripe account)
 const PRICE_IDS = {
-  BASE_SUBSCRIPTION: "price_1SR7ZBBhiBjCX9PmnruDxpBT", // 39.45 EUR/month
-  SETUP_FEE: "price_1SR7iVBhiBjCX9PmOHZOKmFO", // 149.00 EUR
-  EXTRA_DISPLAY: "price_1SR7mMBhiBjCX9PmoUFgpXJW", // 6.49 EUR
-  CUSTOM_DESIGN: "price_1SR7qMBhiBjCX9PmzUVR0wTC", // 34.95 EUR
+  // Monthly subscriptions
+  BASIC_SUBSCRIPTION: "price_1SRta7BhiBjCX9PmfweOTPSv", // 44.00 EUR/month
+  PLUS_SUBSCRIPTION: "price_1SRtcCBhiBjCX9PmtBPMf6vC", // 49.00 EUR/month
+  PRO_SUBSCRIPTION: "price_1SRteDBhiBjCX9PmycqkZF9V", // 59.00 EUR/month
+  
+  // Setup fees (one-time)
+  SETUP_BASIC: "price_1SRtiYBhiBjCX9Pm8TneAsXw", // 179.00 EUR
+  SETUP_PLUS: "price_1SRtjXBhiBjCX9PmF3UqZrq7", // 199.00 EUR
+  SETUP_PRO: "price_1SRtksBhiBjCX9PmqMo2nWCz", // 249.00 EUR
+  
+  // Add-ons
+  EXTRA_DISPLAY: "price_1SRtm4BhiBjCX9PmQjTWHTAV", // 6.50 EUR
+  CUSTOM_DESIGN: "price_1SRtnnBhiBjCX9PmBWCdJSBw", // 29.95 EUR
 };
 
 serve(async (req) => {
@@ -71,10 +80,14 @@ serve(async (req) => {
       customerEmail,
       companyName,
       address,
+      packageType,
       extraDisplays = 0,
-      customDesign = false,
       promoCodes,
     }: CheckoutRequest = await req.json();
+
+    if (!packageType || !['basic', 'plus', 'pro'].includes(packageType)) {
+      throw new Error('Invalid package type');
+    }
 
     console.log("[CREATE-CHECKOUT] Request data received");
 
@@ -101,29 +114,30 @@ serve(async (req) => {
       console.log("[CREATE-CHECKOUT] Created new customer:", customerId);
     }
 
-    // Build line items
-    const lineItems: any[] = [
-      {
-        price: PRICE_IDS.BASE_SUBSCRIPTION,
-        quantity: 1,
-      },
-      {
-        price: PRICE_IDS.SETUP_FEE,
-        quantity: 1,
-      },
-    ];
+    // Build line items based on package selection
+    const lineItems: any[] = [];
+    
+    // Add subscription based on package
+    switch (packageType) {
+      case 'basic':
+        lineItems.push({ price: PRICE_IDS.BASIC_SUBSCRIPTION, quantity: 1 });
+        lineItems.push({ price: PRICE_IDS.SETUP_BASIC, quantity: 1 });
+        break;
+      case 'plus':
+        lineItems.push({ price: PRICE_IDS.PLUS_SUBSCRIPTION, quantity: 1 });
+        lineItems.push({ price: PRICE_IDS.SETUP_PLUS, quantity: 1 });
+        break;
+      case 'pro':
+        lineItems.push({ price: PRICE_IDS.PRO_SUBSCRIPTION, quantity: 1 });
+        lineItems.push({ price: PRICE_IDS.SETUP_PRO, quantity: 1 });
+        break;
+    }
 
+    // Add extra displays if requested
     if (extraDisplays > 0) {
       lineItems.push({
         price: PRICE_IDS.EXTRA_DISPLAY,
         quantity: extraDisplays,
-      });
-    }
-
-    if (customDesign) {
-      lineItems.push({
-        price: PRICE_IDS.CUSTOM_DESIGN,
-        quantity: 1,
       });
     }
 
@@ -133,7 +147,8 @@ serve(async (req) => {
     const metadata: any = {
       customerName,
       customerEmail,
-      companyName: companyName || "",
+      companyName,
+      packageType,
       address: JSON.stringify(address || {}),
     };
 
