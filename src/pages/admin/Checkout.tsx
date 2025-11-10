@@ -97,7 +97,7 @@ export default function Checkout() {
       monthly,
       setup,
       extraDisplays: extraDisplaysCost,
-      firstPayment: setup + extraDisplaysCost
+      firstPayment: setup + monthly + extraDisplaysCost
     };
   };
 
