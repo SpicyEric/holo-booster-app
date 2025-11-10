@@ -134,43 +134,42 @@ serve(async (req) => {
             customer_id: customer.id,
           });
 
-        // Send welcome email
-        const resendApiKey = Deno.env.get('RESEND_API_KEY');
-        if (resendApiKey) {
-          try {
-            const loginUrl = `${supabaseUrl.replace('xcnfyawyoahlbhwfkyku.supabase.co', 'qrait.lovable.app')}/auth`;
-            
-            const response = await fetch('https://api.resend.com/emails', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${resendApiKey}`,
-              },
-              body: JSON.stringify({
-                from: 'QRait <kontakt@qrait.de>',
-                to: [email],
-                subject: 'Willkommen bei QRait - Ihre Zugangsdaten',
-                html: `
-                  <h1>Willkommen bei QRait!</h1>
-                  <p>Ihr Kundenaccount wurde erfolgreich erstellt.</p>
-                  <p><strong>Ihre Zugangsdaten:</strong></p>
-                  <p>E-Mail: ${email}<br>
-                  Passwort: ${temporaryPassword}</p>
-                  <p><strong>Login zum Dashboard:</strong><br>
-                  <a href="${loginUrl}">${loginUrl}</a></p>
-                  <p><strong>Wichtig:</strong> Bitte ändern Sie Ihr Passwort nach dem ersten Login in den Einstellungen.</p>
-                  <p>Mit freundlichen Grüßen,<br>
-                  Ihr QRait Team</p>
-                `,
-              }),
-            });
+        // Send welcome email with password setup link
+        try {
+          // Generate password reset (setup) link
+          const { data: linkData, error: linkError } = await supabase.auth.admin.generateLink({
+            type: 'recovery',
+            email,
+          });
 
-            if (!response.ok) {
-              console.error('Failed to send email:', await response.text());
+          if (linkError) {
+            console.error('Error generating password setup link:', linkError);
+          } else if (linkData?.properties?.action_link) {
+            const resetLink = linkData.properties.action_link as string;
+            // Send via dedicated function to ensure proper sender domain
+            const emailResponse = await fetch(
+              `${supabaseUrl}/functions/v1/sendWelcomeEmail`,
+              {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': `Bearer ${supabaseServiceKey}`,
+                },
+                body: JSON.stringify({
+                  customerEmail: email,
+                  customerName: company_name || name,
+                  resetLink,
+                }),
+              }
+            );
+
+            if (!emailResponse.ok) {
+              const txt = await emailResponse.text();
+              console.error('Failed to send welcome email:', emailResponse.status, txt);
             }
-          } catch (emailError) {
-            console.error('Error sending email:', emailError);
           }
+        } catch (emailError) {
+          console.error('Error sending welcome flow:', emailError);
         }
       }
     }
