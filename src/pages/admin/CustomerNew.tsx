@@ -26,8 +26,8 @@ const CustomerNew = () => {
   });
 
   const handleCreate = async () => {
-    if (!formData.company_name || !formData.google_review_url || !formData.offer_text) {
-      toast.error("Firmenname, Google Review URL und Gutscheintext sind Pflichtfelder");
+    if (!formData.company_name || !formData.google_review_url || !formData.offer_text || !formData.phone) {
+      toast.error("Firmenname, Telefonnummer, Google Review URL und Gutscheintext sind Pflichtfelder");
       return;
     }
 
@@ -127,7 +127,7 @@ const CustomerNew = () => {
             </div>
 
             <div>
-              <Label htmlFor="phone">Telefonnummer</Label>
+              <Label htmlFor="phone">Telefonnummer *</Label>
               <Input
                 id="phone"
                 value={formData.phone}
