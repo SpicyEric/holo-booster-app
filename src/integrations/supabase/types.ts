@@ -176,6 +176,100 @@ export type Database = {
           },
         ]
       }
+      customer_files: {
+        Row: {
+          created_at: string
+          customer_id: string
+          file_name: string
+          file_path: string
+          file_size: number | null
+          file_type: string
+          id: string
+          mime_type: string | null
+          updated_at: string
+          uploaded_by_email: string | null
+          uploaded_by_user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          customer_id: string
+          file_name: string
+          file_path: string
+          file_size?: number | null
+          file_type: string
+          id?: string
+          mime_type?: string | null
+          updated_at?: string
+          uploaded_by_email?: string | null
+          uploaded_by_user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          customer_id?: string
+          file_name?: string
+          file_path?: string
+          file_size?: number | null
+          file_type?: string
+          id?: string
+          mime_type?: string | null
+          updated_at?: string
+          uploaded_by_email?: string | null
+          uploaded_by_user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_files_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      customer_status_history: {
+        Row: {
+          change_source: string
+          changed_by_email: string | null
+          changed_by_user_id: string | null
+          created_at: string
+          customer_id: string
+          id: string
+          metadata: Json | null
+          new_status: string
+          old_status: string | null
+        }
+        Insert: {
+          change_source: string
+          changed_by_email?: string | null
+          changed_by_user_id?: string | null
+          created_at?: string
+          customer_id: string
+          id?: string
+          metadata?: Json | null
+          new_status: string
+          old_status?: string | null
+        }
+        Update: {
+          change_source?: string
+          changed_by_email?: string | null
+          changed_by_user_id?: string | null
+          created_at?: string
+          customer_id?: string
+          id?: string
+          metadata?: Json | null
+          new_status?: string
+          old_status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_status_history_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       customer_subscriptions: {
         Row: {
           created_at: string
