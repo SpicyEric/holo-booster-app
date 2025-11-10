@@ -1,6 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 
-export type UserRole = 'admin' | 'partner' | 'merchant';
+export type UserRole = 'admin' | 'partner' | 'merchant' | 'customer';
 
 export const signUp = async (email: string, password: string, fullName?: string) => {
   const redirectUrl = `${window.location.origin}/`;

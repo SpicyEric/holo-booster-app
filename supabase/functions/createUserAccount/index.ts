@@ -42,10 +42,10 @@ serve(async (req) => {
       });
     }
 
-    const { email, full_name, role } = await req.json();
+    const { email, full_name, role, password: customPassword } = await req.json();
 
-    // Create user with auto-generated password
-    const password = crypto.randomUUID();
+    // Create user with custom password or auto-generated password
+    const password = customPassword || crypto.randomUUID();
     
     const { data: newUser, error: createError } = await supabase.auth.admin.createUser({
       email,

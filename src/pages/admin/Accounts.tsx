@@ -51,6 +51,7 @@ const Accounts = () => {
     email: "",
     full_name: "",
     role: "merchant",
+    password: "",
   });
 
   const [editFormData, setEditFormData] = useState({
@@ -133,9 +134,12 @@ const Accounts = () => {
 
       if (error) throw error;
 
-      toast.success(`Account erstellt! Temporäres Passwort: ${data.temporary_password}`);
+      const message = formData.password 
+        ? `Account erstellt!` 
+        : `Account erstellt! Temporäres Passwort: ${data.temporary_password}`;
+      toast.success(message);
       setDialogOpen(false);
-      setFormData({ email: "", full_name: "", role: "merchant" });
+      setFormData({ email: "", full_name: "", role: "merchant", password: "" });
       loadAccounts();
     } catch (error: any) {
       console.error("Fehler beim Erstellen des Accounts:", error);
@@ -305,9 +309,22 @@ const Accounts = () => {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="merchant">Vertriebspartner</SelectItem>
+                    <SelectItem value="partner">Partner</SelectItem>
+                    <SelectItem value="customer">Kunde</SelectItem>
                     <SelectItem value="admin">Administrator</SelectItem>
                   </SelectContent>
                 </Select>
+              </div>
+              
+              <div>
+                <Label htmlFor="password">Passwort (optional)</Label>
+                <Input
+                  id="password"
+                  type="password"
+                  value={formData.password}
+                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                  placeholder="Leer lassen für automatisches Passwort"
+                />
               </div>
               
               <Button 
