@@ -481,7 +481,7 @@ const Scan = () => {
               className="w-16 h-16 rounded-full bg-gradient-primary animate-pulse-glow mx-auto mb-4"
             />
           )}
-          <h1 className="text-3xl font-bold mb-2">{customer.name}</h1>
+          <h1 className="text-3xl font-bold mb-2">{customer.company_name || customer.name}</h1>
           <p className="text-muted-foreground">
             {customer.offer_title || 'Nur noch 1 Schritt zu deinem Vorteil'}
           </p>

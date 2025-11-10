@@ -23,6 +23,29 @@ const Overview = () => {
     loadRecentCustomers();
     loadCriticalEvents();
     loadRecentActivities();
+
+    // Setup realtime subscription for scans
+    const channel = supabase
+      .channel('dashboard-scans')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'scans'
+        },
+        (payload) => {
+          console.log('New scan detected:', payload);
+          // Reload activities when new scan comes in
+          loadRecentActivities();
+          loadStats();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const loadStats = async () => {

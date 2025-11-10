@@ -17,6 +17,7 @@ import CustomerNew from "./pages/admin/CustomerNew";
 import Accounts from "./pages/admin/Accounts";
 import Stats from "./pages/admin/Stats";
 import Checkout from "./pages/admin/Checkout";
+import CheckoutNew from "./pages/admin/CheckoutNew";
 import Billing from "./pages/account/Billing";
 import Settings from "./pages/admin/Settings";
 import MerchantDashboard from "./pages/merchant/Dashboard";
@@ -50,6 +51,7 @@ const App = () => (
             <Route path="accounts" element={<Accounts />} />
             <Route path="stats" element={<Stats />} />
             <Route path="checkout" element={<Checkout />} />
+            <Route path="checkout-new" element={<CheckoutNew />} />
             <Route path="settings" element={<Settings />} />
           </Route>
           <Route path="/account/billing" element={<Billing />} />
