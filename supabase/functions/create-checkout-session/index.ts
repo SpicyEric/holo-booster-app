@@ -13,6 +13,7 @@ interface CheckoutRequest {
     country: string;
   };
   packageType: 'basic' | 'plus' | 'pro'; // Required package selection
+  billingInterval?: 'monthly' | 'yearly'; // Neue Zahlungsweise
   extraDisplays?: number;
   promoCodes?: string[];
 }
@@ -81,6 +82,7 @@ serve(async (req) => {
       companyName,
       address,
       packageType,
+      billingInterval = 'monthly', // Standard: monatlich
       extraDisplays = 0,
       promoCodes,
     }: CheckoutRequest = await req.json();
@@ -89,7 +91,7 @@ serve(async (req) => {
       throw new Error('Invalid package type');
     }
 
-    console.log("[CREATE-CHECKOUT] Request data received");
+    console.log("[CREATE-CHECKOUT] Request data received", { packageType, billingInterval });
 
     const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
       apiVersion: "2024-10-28.acacia",
@@ -114,21 +116,57 @@ serve(async (req) => {
       console.log("[CREATE-CHECKOUT] Created new customer:", customerId);
     }
 
-    // Build line items based on package selection
+    // Build line items based on package selection and billing interval
     const lineItems: any[] = [];
     
-    // Add subscription based on package
+    // Add subscription based on package and billing interval
+    if (billingInterval === 'yearly') {
+      // Für jährliche Zahlung: 11 Monate als Preis
+      const yearlyPrices: Record<string, number> = {
+        basic: 48400, // 484.00 EUR (in cents)
+        plus: 53900, // 539.00 EUR (in cents)
+        pro: 64900, // 649.00 EUR (in cents)
+      };
+      
+      lineItems.push({
+        price_data: {
+          currency: 'eur',
+          unit_amount: yearlyPrices[packageType],
+          recurring: {
+            interval: 'year',
+            interval_count: 1,
+          },
+          product_data: {
+            name: `QRait ${packageType.charAt(0).toUpperCase() + packageType.slice(1)} Paket (Jährlich)`,
+            description: 'Jährliche Zahlung - 1 Monat geschenkt',
+          },
+        },
+        quantity: 1,
+      });
+    } else {
+      // Für monatliche Zahlung: bestehende Preis-IDs verwenden
+      switch (packageType) {
+        case 'basic':
+          lineItems.push({ price: PRICE_IDS.BASIC_SUBSCRIPTION, quantity: 1 });
+          break;
+        case 'plus':
+          lineItems.push({ price: PRICE_IDS.PLUS_SUBSCRIPTION, quantity: 1 });
+          break;
+        case 'pro':
+          lineItems.push({ price: PRICE_IDS.PRO_SUBSCRIPTION, quantity: 1 });
+          break;
+      }
+    }
+    
+    // Add setup fee based on package
     switch (packageType) {
       case 'basic':
-        lineItems.push({ price: PRICE_IDS.BASIC_SUBSCRIPTION, quantity: 1 });
         lineItems.push({ price: PRICE_IDS.SETUP_BASIC, quantity: 1 });
         break;
       case 'plus':
-        lineItems.push({ price: PRICE_IDS.PLUS_SUBSCRIPTION, quantity: 1 });
         lineItems.push({ price: PRICE_IDS.SETUP_PLUS, quantity: 1 });
         break;
       case 'pro':
-        lineItems.push({ price: PRICE_IDS.PRO_SUBSCRIPTION, quantity: 1 });
         lineItems.push({ price: PRICE_IDS.SETUP_PRO, quantity: 1 });
         break;
     }
@@ -149,6 +187,7 @@ serve(async (req) => {
       customerEmail,
       companyName,
       packageType,
+      billingInterval,
       address: JSON.stringify(address || {}),
     };
 

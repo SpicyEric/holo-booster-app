@@ -6,14 +6,17 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { Check, X, ChevronDown, ChevronUp, Minus, Plus, Star } from "lucide-react";
+import { Check, X, ChevronDown, ChevronUp, Minus, Plus, Star, Gift } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Switch } from "@/components/ui/switch";
+import { Badge } from "@/components/ui/badge";
 
 type PackageType = 'basic' | 'plus' | 'pro';
 
 interface PackageDetails {
   name: string;
   monthlyPrice: number;
+  yearlyPrice: number; // Jahrespreis (11 Monate)
   setupPrice: number;
   features: { name: string; included: boolean; value?: string }[];
   cardFeatures: string[]; // Simple list for the package cards
@@ -24,6 +27,7 @@ const PACKAGES: Record<PackageType, PackageDetails> = {
   basic: {
     name: "Basic",
     monthlyPrice: 44.00,
+    yearlyPrice: 484.00, // 11 Monate * 44 = 484
     setupPrice: 179.00,
     cardFeatures: [
       'Premium Support',
@@ -44,6 +48,7 @@ const PACKAGES: Record<PackageType, PackageDetails> = {
   plus: {
     name: "Plus",
     monthlyPrice: 49.00,
+    yearlyPrice: 539.00, // 11 Monate * 49 = 539
     setupPrice: 199.00,
     highlight: true,
     cardFeatures: [
@@ -66,6 +71,7 @@ const PACKAGES: Record<PackageType, PackageDetails> = {
   pro: {
     name: "Pro",
     monthlyPrice: 59.00,
+    yearlyPrice: 649.00, // 11 Monate * 59 = 649
     setupPrice: 249.00,
     cardFeatures: [
       'Alles was Plus hat, plus:',
@@ -94,6 +100,7 @@ export default function Checkout() {
   const [selectedPackage, setSelectedPackage] = useState<PackageType>('plus');
   const [showComparison, setShowComparison] = useState(false);
   const [extraDisplays, setExtraDisplays] = useState(0);
+  const [isYearlyBilling, setIsYearlyBilling] = useState(true); // Standardmäßig jährlich
   
   // Customer data
   const [customerName, setCustomerName] = useState("");
@@ -108,15 +115,30 @@ export default function Checkout() {
   const selectedPackageDetails = PACKAGES[selectedPackage];
   
   const calculateTotal = () => {
-    const monthly = selectedPackageDetails.monthlyPrice;
     const setup = selectedPackageDetails.setupPrice;
     const extraDisplaysCost = extraDisplays * EXTRA_DISPLAY_PRICE;
-    return {
-      monthly,
-      setup,
-      extraDisplays: extraDisplaysCost,
-      firstPayment: setup + monthly + extraDisplaysCost
-    };
+    
+    if (isYearlyBilling) {
+      // Bei jährlicher Zahlung: Jahrespreis (11 Monate), aber Anzeige auf 12 Monate verteilt
+      const yearly = selectedPackageDetails.yearlyPrice;
+      return {
+        monthly: yearly / 12, // Anzeige pro Monat (auf 12 Monate verteilt)
+        yearly,
+        setup,
+        extraDisplays: extraDisplaysCost,
+        firstPayment: setup + yearly + extraDisplaysCost
+      };
+    } else {
+      // Bei monatlicher Zahlung
+      const monthly = selectedPackageDetails.monthlyPrice;
+      return {
+        monthly,
+        yearly: null,
+        setup,
+        extraDisplays: extraDisplaysCost,
+        firstPayment: setup + monthly + extraDisplaysCost
+      };
+    }
   };
 
   const totals = calculateTotal();
@@ -146,6 +168,7 @@ export default function Checkout() {
               country,
             },
             packageType: selectedPackage,
+            billingInterval: isYearlyBilling ? 'yearly' : 'monthly', // Neue Zahlungsweise
             extraDisplays,
             promoCodes: promoCodes ? promoCodes.split(",").map(code => code.trim()) : [],
           },
@@ -190,6 +213,26 @@ export default function Checkout() {
               <CardDescription>Wähle das passende QRait-Paket für deinen Kunden</CardDescription>
             </CardHeader>
             <CardContent>
+              {/* Billing Toggle */}
+              <div className="mb-6 flex items-center justify-center gap-4 p-4 bg-muted/30 rounded-lg">
+                <Label htmlFor="billing-toggle" className={`text-base font-medium ${!isYearlyBilling ? 'text-primary' : 'text-muted-foreground'}`}>
+                  Monatlich
+                </Label>
+                <Switch
+                  id="billing-toggle"
+                  checked={isYearlyBilling}
+                  onCheckedChange={setIsYearlyBilling}
+                />
+                <Label htmlFor="billing-toggle" className={`text-base font-medium ${isYearlyBilling ? 'text-primary' : 'text-muted-foreground'}`}>
+                  Jährlich
+                </Label>
+                {isYearlyBilling && (
+                  <Badge variant="default" className="ml-2 bg-green-500 hover:bg-green-600">
+                    <Gift className="w-3 h-3 mr-1" />
+                    Einen Monat geschenkt
+                  </Badge>
+                )}
+              </div>
               <div className="grid md:grid-cols-3 gap-4 mb-6">
                 {(Object.keys(PACKAGES) as PackageType[]).map((packageType) => {
                   const pkg = PACKAGES[packageType];
@@ -214,8 +257,20 @@ export default function Checkout() {
                       <CardHeader>
                         <CardTitle className="text-xl">{pkg.name}</CardTitle>
                         <div className="space-y-1">
-                          <div className="text-3xl font-bold">{pkg.monthlyPrice.toFixed(2)}€</div>
-                          <div className="text-sm text-muted-foreground">pro Monat</div>
+                          {isYearlyBilling ? (
+                            <>
+                              <div className="text-3xl font-bold">{(pkg.yearlyPrice / 12).toFixed(2)}€</div>
+                              <div className="text-sm text-muted-foreground">pro Monat</div>
+                              <div className="text-xs text-muted-foreground">
+                                ({pkg.yearlyPrice.toFixed(2)}€ jährlich)
+                              </div>
+                            </>
+                          ) : (
+                            <>
+                              <div className="text-3xl font-bold">{pkg.monthlyPrice.toFixed(2)}€</div>
+                              <div className="text-sm text-muted-foreground">pro Monat</div>
+                            </>
+                          )}
                           <div className="text-sm font-semibold text-primary">
                             + {pkg.setupPrice.toFixed(2)}€ einmalig
                           </div>
@@ -523,10 +578,23 @@ export default function Checkout() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
-                  <div className="flex justify-between text-sm">
-                    <span>{selectedPackageDetails.name} (monatlich)</span>
-                    <span className="font-semibold">{totals.monthly.toFixed(2)}€</span>
-                  </div>
+                  {isYearlyBilling ? (
+                    <>
+                      <div className="flex justify-between text-sm">
+                        <span>{selectedPackageDetails.name} (jährlich)</span>
+                        <span className="font-semibold">{totals.yearly?.toFixed(2)}€</span>
+                      </div>
+                      <div className="flex justify-between text-xs text-muted-foreground">
+                        <span>({(totals.yearly! / 12).toFixed(2)}€ pro Monat)</span>
+                        <span className="text-green-600 font-medium">1 Monat geschenkt</span>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="flex justify-between text-sm">
+                      <span>{selectedPackageDetails.name} (monatlich)</span>
+                      <span className="font-semibold">{totals.monthly.toFixed(2)}€</span>
+                    </div>
+                  )}
                   <div className="flex justify-between text-sm">
                     <span>Setup-Gebühr (einmalig)</span>
                     <span className="font-semibold">{totals.setup.toFixed(2)}€</span>
@@ -544,14 +612,16 @@ export default function Checkout() {
                     <span>Erste Zahlung</span>
                     <span className="text-primary">{totals.firstPayment.toFixed(2)}€</span>
                   </div>
-                  <div className="flex justify-between text-sm text-muted-foreground">
-                    <span>Dann monatlich</span>
-                    <span>{totals.monthly.toFixed(2)}€</span>
-                  </div>
+                  {!isYearlyBilling && (
+                    <div className="flex justify-between text-sm text-muted-foreground">
+                      <span>Dann monatlich</span>
+                      <span>{totals.monthly.toFixed(2)}€</span>
+                    </div>
+                  )}
                 </div>
 
                 <div className="text-xs text-muted-foreground space-y-1 pt-2 border-t">
-                  <p>✓ Monatlich kündbar</p>
+                  <p>✓ {isYearlyBilling ? 'Jährliche Zahlung' : 'Monatlich kündbar'}</p>
                   <p>✓ 14 Tage Widerrufsrecht</p>
                   <p>✓ Sichere Zahlung über Stripe</p>
                 </div>
