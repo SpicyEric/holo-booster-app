@@ -92,7 +92,7 @@ serve(async (req) => {
     console.log("[CREATE-CHECKOUT] Request data received");
 
     const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
-      apiVersion: "2025-08-27.basil",
+      apiVersion: "2024-10-28.acacia",
     });
 
     // Create or retrieve Stripe customer
