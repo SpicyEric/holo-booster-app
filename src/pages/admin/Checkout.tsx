@@ -16,6 +16,7 @@ interface PackageDetails {
   monthlyPrice: number;
   setupPrice: number;
   features: { name: string; included: boolean; value?: string }[];
+  cardFeatures: string[]; // Simple list for the package cards
   highlight?: boolean;
 }
 
@@ -24,6 +25,11 @@ const PACKAGES: Record<PackageType, PackageDetails> = {
     name: "Basic",
     monthlyPrice: 44.00,
     setupPrice: 179.00,
+    cardFeatures: [
+      'Premium Support',
+      'QR-Bewertungssystem',
+      'Dashboard-Zugang'
+    ],
     features: [
       { name: "Premium-Support", included: true },
       { name: "Aufsteller inklusive", included: true, value: "1 Aufsteller inklusive" },
@@ -40,6 +46,12 @@ const PACKAGES: Record<PackageType, PackageDetails> = {
     monthlyPrice: 49.00,
     setupPrice: 199.00,
     highlight: true,
+    cardFeatures: [
+      'Alles was Basic hat, plus:',
+      'Digitale Stempelkarte',
+      'SMS-Aktionsmodul',
+      '2 Aufsteller inklusive'
+    ],
     features: [
       { name: "Premium-Support", included: true },
       { name: "Aufsteller inklusive", included: true, value: "2 Aufsteller inklusive" },
@@ -55,6 +67,12 @@ const PACKAGES: Record<PackageType, PackageDetails> = {
     name: "Pro",
     monthlyPrice: 59.00,
     setupPrice: 249.00,
+    cardFeatures: [
+      'Alles was Plus hat, plus:',
+      'Laufend neue Designs möglich',
+      'Mehrere Standorte',
+      '4 Aufsteller inklusive'
+    ],
     features: [
       { name: "Premium-Support", included: true },
       { name: "Aufsteller inklusive", included: true, value: "4 Aufsteller inklusive" },
@@ -205,16 +223,16 @@ export default function Checkout() {
                       </CardHeader>
                       <CardContent>
                         <ul className="space-y-2">
-                          {pkg.features.slice(0, 4).map((feature, idx) => (
-                            <li key={idx} className="flex items-center gap-2 text-sm">
-                              {feature.included ? (
-                                <Check className="h-4 w-4 text-primary flex-shrink-0" />
+                          {pkg.cardFeatures.map((feature, idx) => (
+                            <li key={idx} className="flex items-start gap-2 text-sm">
+                              {idx === 0 && packageType !== 'basic' ? (
+                                <span className="text-muted-foreground font-medium">{feature}</span>
                               ) : (
-                                <X className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                                <>
+                                  <Check className="h-4 w-4 text-primary flex-shrink-0 mt-0.5" />
+                                  <span>{feature}</span>
+                                </>
                               )}
-                              <span className={feature.included ? '' : 'text-muted-foreground'}>
-                                {feature.name}
-                              </span>
                             </li>
                           ))}
                         </ul>
