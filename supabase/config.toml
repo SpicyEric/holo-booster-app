@@ -1,5 +1,8 @@
 project_id = "xcnfyawyoahlbhwfkyku"
 
+[functions.createTestAccount]
+verify_jwt = false
+
 [functions.publicCaptureContact]
 verify_jwt = false
 
