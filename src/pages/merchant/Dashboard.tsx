@@ -7,6 +7,7 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { LogOut, QrCode, Gift, TrendingUp, Download, ShoppingBag } from "lucide-react";
 import qraitLogo from '@/assets/qrait-logo-full.png';
+import Particles from "@/components/Particles";
 
 const MerchantDashboard = () => {
   const navigate = useNavigate();
@@ -24,6 +25,18 @@ const MerchantDashboard = () => {
   return (
     <ProtectedRoute allowedRoles={['merchant']}>
       <div className="min-h-screen bg-background">
+        <Particles 
+          particleColors={['#8B5CF6', '#3B82F6', '#8B5CF6']}
+          particleCount={100}
+          particleSpread={8}
+          speed={0.05}
+          particleBaseSize={100}
+          sizeRandomness={1.5}
+          moveParticlesOnHover={true}
+          alphaParticles={true}
+          disableRotation={false}
+          cameraDistance={20}
+        />
         <div className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-10">
           <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
             <img src={qraitLogo} alt="QRait Logo" className="h-10 w-auto" />
@@ -34,7 +47,7 @@ const MerchantDashboard = () => {
           </div>
         </div>
 
-        <div className="max-w-7xl mx-auto p-6 sm:p-8">
+        <div className="max-w-7xl mx-auto p-6 sm:p-8 relative z-10">
           {/* Header */}
           <div className="mb-8">
             <h1 className="text-4xl font-bold mb-2">

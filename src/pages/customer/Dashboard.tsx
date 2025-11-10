@@ -17,6 +17,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import Particles from "@/components/Particles";
 
 interface Invoice {
   id: string;
@@ -197,7 +198,19 @@ export default function CustomerDashboard() {
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="border-b">
+      <Particles 
+        particleColors={['#8B5CF6', '#3B82F6', '#8B5CF6']}
+        particleCount={100}
+        particleSpread={8}
+        speed={0.05}
+        particleBaseSize={100}
+        sizeRandomness={1.5}
+        moveParticlesOnHover={true}
+        alphaParticles={true}
+        disableRotation={false}
+        cameraDistance={20}
+      />
+      <header className="border-b relative z-10">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold">QRait Dashboard</h1>
@@ -210,7 +223,7 @@ export default function CustomerDashboard() {
         </div>
       </header>
 
-      <main className="container mx-auto px-4 py-8 space-y-6">
+      <main className="container mx-auto px-4 py-8 space-y-6 relative z-10">
         {/* Subscription Info */}
         {subscriptionInfo?.hasSubscription && (
           <Card>
