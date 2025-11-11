@@ -65,9 +65,9 @@ serve(async (req) => {
 
     console.log("[CREATE-CUSTOMER-ACCOUNT] Account setup complete");
 
-    // Generate password reset link
+    // Generate password reset link so the customer can set a password
     const { data: resetData, error: resetError } = await supabaseAdmin.auth.admin.generateLink({
-      type: "magiclink",
+      type: 'recovery',
       email: customerEmail,
     });
 

@@ -246,23 +246,31 @@ const event = await stripe.webhooks.constructEventAsync(
         console.log("[WEBHOOK] Invoice saved");
 
         // Generate account access link if needed
-        let resetLink = null;
+        let resetLink: string | null = null;
         try {
-          // Check if user account exists
-          const { data: existingUser } = await supabase
-            .from("customer_users")
-            .select("user_id")
-            .eq("customer_id", customer.id)
-            .single();
+          // Always try to generate a password setup (recovery) link
+          const { data: linkData, error: recoveryError } = await supabase.auth.admin.generateLink({
+            type: 'recovery',
+            email: customer.email,
+          });
 
-          if (existingUser) {
-            // Generate password reset link for existing user
-            const { data: linkData } = await supabase.auth.admin.generateLink({
-              type: 'recovery',
+          if (recoveryError) {
+            console.error('[WEBHOOK] Recovery link generation error:', recoveryError);
+          }
+
+          if (linkData?.properties?.action_link) {
+            resetLink = linkData.properties.action_link as string;
+          } else {
+            // Fallback: generate a magic link so the user can still access the dashboard
+            const { data: magicData, error: magicError } = await supabase.auth.admin.generateLink({
+              type: 'magiclink',
               email: customer.email,
             });
-            if (linkData?.properties?.action_link) {
-              resetLink = linkData.properties.action_link as string;
+            if (magicError) {
+              console.error('[WEBHOOK] Magiclink generation error:', magicError);
+            }
+            if (magicData?.properties?.action_link) {
+              resetLink = magicData.properties.action_link as string;
             }
           }
         } catch (linkError) {
