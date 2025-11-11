@@ -65,6 +65,8 @@ const Auth = () => {
       }
     } else {
       toast.success("Erfolgreich angemeldet");
+      // Redirect immediately after successful login - ProtectedRoute will handle role-based routing
+      window.location.href = '/';
     }
   };
 
