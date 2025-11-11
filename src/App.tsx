@@ -22,6 +22,10 @@ import Settings from "./pages/admin/Settings";
 import MerchantDashboard from "./pages/merchant/Dashboard";
 import PartnerDashboard from "./pages/partner/Dashboard";
 import CustomerDashboard from "./pages/customer/Dashboard";
+import CustomerAccount from "./pages/customer/Account";
+import CustomerInvoices from "./pages/customer/Invoices";
+import SmsCampaigns from "./pages/customer/SmsCampaigns";
+import GoogleReviews from "./pages/customer/GoogleReviews";
 import Scan from "./pages/Scan";
 import NotFound from "./pages/NotFound";
 import CheckoutSuccess from "./pages/CheckoutSuccess";
@@ -54,6 +58,10 @@ const App = () => (
           </Route>
           <Route path="/account/billing" element={<Billing />} />
           <Route path="/customer" element={<CustomerDashboard />} />
+          <Route path="/customer/account" element={<CustomerAccount />} />
+          <Route path="/customer/invoices" element={<CustomerInvoices />} />
+          <Route path="/customer/sms-campaigns" element={<SmsCampaigns />} />
+          <Route path="/customer/google-reviews" element={<GoogleReviews />} />
           <Route path="/merchant" element={<MerchantDashboard />} />
           <Route path="/partner" element={<PartnerDashboard />} />
           <Route path="/s/:cid" element={<Scan />} />

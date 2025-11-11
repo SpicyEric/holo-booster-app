@@ -1,0 +1,321 @@
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { toast } from "sonner";
+import { Loader2, ArrowLeft, CreditCard, X, AlertTriangle } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import Particles from "@/components/Particles";
+import qraitLogo from '@/assets/qrait-logo-full.png';
+
+interface Customer {
+  id: string;
+  name: string;
+  email: string;
+  company_name: string | null;
+  status: string;
+}
+
+interface SubscriptionInfo {
+  hasSubscription: boolean;
+  status?: string;
+  currentPeriodStart?: string;
+  currentPeriodEnd?: string;
+  cancelAtPeriodEnd?: boolean;
+  cancelAt?: string | null;
+  plan?: {
+    name: string;
+    amount: number;
+    currency: string;
+    interval: string;
+  };
+}
+
+export default function CustomerAccount() {
+  const { user, loading: authLoading } = useAuth();
+  const navigate = useNavigate();
+  const [loading, setLoading] = useState(true);
+  const [customer, setCustomer] = useState<Customer | null>(null);
+  const [subscriptionInfo, setSubscriptionInfo] = useState<SubscriptionInfo | null>(null);
+  const [showCancelDialog, setShowCancelDialog] = useState(false);
+  const [cancelling, setCancelling] = useState(false);
+
+  useEffect(() => {
+    if (!authLoading && !user) {
+      navigate("/auth");
+    }
+  }, [user, authLoading, navigate]);
+
+  useEffect(() => {
+    if (user) {
+      loadData();
+    }
+  }, [user]);
+
+  const loadData = async () => {
+    try {
+      setLoading(true);
+
+      const { data: customerUser } = await supabase
+        .from("customer_users")
+        .select("customer_id")
+        .eq("user_id", user?.id)
+        .single();
+
+      if (!customerUser) {
+        toast.error("Kein Kunde gefunden");
+        return;
+      }
+
+      const { data: customerData } = await supabase
+        .from("customers")
+        .select("*")
+        .eq("id", customerUser.customer_id)
+        .single();
+
+      setCustomer(customerData);
+
+      const { data: subInfo, error: subError } = await supabase.functions.invoke("get-subscription-info");
+      if (!subError && subInfo) {
+        setSubscriptionInfo(subInfo);
+      }
+    } catch (error) {
+      console.error("Error loading data:", error);
+      toast.error("Fehler beim Laden der Daten");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const openCustomerPortal = async () => {
+    try {
+      const { data, error } = await supabase.functions.invoke("create-customer-portal");
+      
+      if (error) throw error;
+      
+      if (data?.url) {
+        window.open(data.url, "_blank");
+      }
+    } catch (error: any) {
+      console.error("Error opening customer portal:", error);
+      toast.error("Fehler beim Öffnen des Portals");
+    }
+  };
+
+  const cancelSubscription = async () => {
+    setCancelling(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("cancel-subscription");
+      
+      if (error) throw error;
+      
+      toast.success("Ihr Abonnement wird zum Ende der Laufzeit gekündigt");
+      setShowCancelDialog(false);
+      await loadData();
+    } catch (error: any) {
+      console.error("Error cancelling subscription:", error);
+      toast.error("Fehler beim Kündigen des Abonnements");
+    } finally {
+      setCancelling(false);
+    }
+  };
+
+  const formatAmount = (cents: number, currency: string) => {
+    return new Intl.NumberFormat("de-DE", {
+      style: "currency",
+      currency: currency.toUpperCase(),
+    }).format(cents / 100);
+  };
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString("de-DE", {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+  };
+
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case "active":
+        return <Badge variant="default" className="bg-green-600">Aktiv</Badge>;
+      case "past_due":
+        return <Badge variant="destructive">Überfällig</Badge>;
+      case "canceled":
+        return <Badge variant="secondary">Gekündigt</Badge>;
+      default:
+        return <Badge variant="outline">{status}</Badge>;
+    }
+  };
+
+  if (authLoading || loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-background">
+      <Particles 
+        particleColors={['#8B5CF6', '#3B82F6', '#8B5CF6']}
+        particleCount={100}
+        particleSpread={8}
+        speed={0.05}
+        particleBaseSize={100}
+        sizeRandomness={1.5}
+        moveParticlesOnHover={true}
+        alphaParticles={true}
+        disableRotation={false}
+        cameraDistance={20}
+      />
+      
+      <header className="border-b relative z-10 bg-background/80 backdrop-blur-sm">
+        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <Button variant="ghost" size="icon" onClick={() => navigate('/customer')}>
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
+            <img src={qraitLogo} alt="QRait Logo" className="h-10 w-auto" />
+          </div>
+        </div>
+      </header>
+
+      <main className="container mx-auto px-4 py-8 space-y-6 relative z-10 max-w-4xl">
+        <h1 className="text-3xl font-bold">Kontoinformationen</h1>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Ihre Daten</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <p className="text-sm text-muted-foreground">Name</p>
+                <p className="font-medium">{customer?.name}</p>
+              </div>
+              {customer?.company_name && (
+                <div>
+                  <p className="text-sm text-muted-foreground">Firma</p>
+                  <p className="font-medium">{customer?.company_name}</p>
+                </div>
+              )}
+              <div>
+                <p className="text-sm text-muted-foreground">E-Mail</p>
+                <p className="font-medium">{customer?.email}</p>
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Account-Status</p>
+                {getStatusBadge(customer?.status || "unknown")}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {subscriptionInfo?.hasSubscription && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Ihr Abonnement</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm text-muted-foreground">Paket</p>
+                  <p className="font-medium text-lg">{subscriptionInfo.plan?.name}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Preis</p>
+                  <p className="font-medium text-lg">
+                    {formatAmount(subscriptionInfo.plan?.amount || 0, subscriptionInfo.plan?.currency || "EUR")} / {subscriptionInfo.plan?.interval === "month" ? "Monat" : "Jahr"}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Status</p>
+                  {getStatusBadge(subscriptionInfo.status || "unknown")}
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Nächste Abrechnung</p>
+                  <p className="font-medium">
+                    {subscriptionInfo.currentPeriodEnd ? formatDate(subscriptionInfo.currentPeriodEnd) : "-"}
+                  </p>
+                </div>
+              </div>
+              
+              {subscriptionInfo.cancelAtPeriodEnd && subscriptionInfo.cancelAt && (
+                <div className="p-4 bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-800 rounded-lg">
+                  <div className="flex items-start gap-3">
+                    <AlertTriangle className="w-5 h-5 text-amber-600 dark:text-amber-400 mt-0.5" />
+                    <div>
+                      <p className="font-medium text-amber-900 dark:text-amber-100">Kündigung eingereicht</p>
+                      <p className="text-sm text-amber-800 dark:text-amber-200">
+                        Ihr Abonnement endet am {formatDate(subscriptionInfo.cancelAt)}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              <div className="flex gap-2 pt-2">
+                <Button onClick={openCustomerPortal} variant="outline" className="gap-2">
+                  <CreditCard className="h-4 w-4" />
+                  Zahlungsmethoden verwalten
+                </Button>
+                {!subscriptionInfo.cancelAtPeriodEnd && (
+                  <Button 
+                    onClick={() => setShowCancelDialog(true)} 
+                    variant="outline"
+                    className="gap-2"
+                  >
+                    <X className="h-4 w-4" />
+                    Abonnement kündigen
+                  </Button>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+      </main>
+
+      <AlertDialog open={showCancelDialog} onOpenChange={setShowCancelDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Abonnement kündigen?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Ihr Abonnement wird zum Ende der aktuellen Abrechnungsperiode gekündigt. Sie können alle Funktionen bis dahin weiter nutzen.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={cancelling}>Abbrechen</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={cancelSubscription}
+              disabled={cancelling}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {cancelling ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Wird gekündigt...
+                </>
+              ) : (
+                "Jetzt kündigen"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
+  );
+}

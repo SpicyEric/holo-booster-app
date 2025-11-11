@@ -118,11 +118,15 @@ export default function CustomerDashboard() {
       // Get statistics
       const customerId = customerUser.customer_id;
 
-      // Get total scans
+      // Get scans from last 7 days
+      const sevenDaysAgo = new Date();
+      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+      
       const { count: scansCount } = await supabase
         .from("scans")
         .select("*", { count: "exact", head: true })
-        .eq("customer_id", customerId);
+        .eq("customer_id", customerId)
+        .gte("created_at", sevenDaysAgo.toISOString());
 
       // Get total contacts
       const { count: contactsCount } = await supabase
@@ -259,20 +263,20 @@ export default function CustomerDashboard() {
                 Mein Konto
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56 bg-background">
-              <DropdownMenuItem onClick={() => setShowAccountInfo(true)}>
+            <DropdownMenuContent align="end" className="w-56 bg-background z-50">
+              <DropdownMenuItem onClick={() => navigate('/customer/account')}>
                 <User className="mr-2 h-4 w-4" />
                 Kontoinformationen
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setShowInvoices(true)}>
+              <DropdownMenuItem onClick={() => navigate('/customer/invoices')}>
                 <FileText className="mr-2 h-4 w-4" />
                 Rechnungen
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => toast.info("SMS-Kampagnen - Kommt bald!")}>
+              <DropdownMenuItem onClick={() => navigate('/customer/sms-campaigns')}>
                 <MessageSquare className="mr-2 h-4 w-4" />
                 SMS-Kampagnen
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => toast.info("Google-Bewertungen löschen - Kommt bald!")}>
+              <DropdownMenuItem onClick={() => navigate('/customer/google-reviews')}>
                 <Star className="mr-2 h-4 w-4" />
                 Google-Bewertungen löschen
               </DropdownMenuItem>
@@ -302,14 +306,14 @@ export default function CustomerDashboard() {
           <Card className="border-primary/20 hover:border-primary/40 transition-colors">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">
-                QR-Code-Scans gesamt
+                QR-Code-Scans
               </CardTitle>
               <QrCode className="h-5 w-5 text-primary" />
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold">{stats.totalScans}</div>
               <p className="text-xs text-muted-foreground mt-1">
-                Gesamtanzahl aller Scans
+                Letzte 7 Tage
               </p>
             </CardContent>
           </Card>
@@ -324,7 +328,7 @@ export default function CustomerDashboard() {
             <CardContent>
               <div className="text-3xl font-bold">{stats.totalContacts}</div>
               <p className="text-xs text-muted-foreground mt-1">
-                Aktive Kontakte in Ihrer Datenbank
+                Gesamt
               </p>
             </CardContent>
           </Card>
