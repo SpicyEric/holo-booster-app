@@ -142,42 +142,11 @@ const event = await stripe.webhooks.constructEventAsync(
               }
             }
             
-            // Create customer account and send welcome email (ONLY for non-SEPA)
+            // Create customer account for non-SEPA (no email sent yet, will be sent with invoice)
             if (!isSEPA) {
               try {
-              const accountResponse = await fetch(
-                `${Deno.env.get("SUPABASE_URL")}/functions/v1/createCustomerAccount`,
-                {
-                  method: "POST",
-                  headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
-                  },
-                  body: JSON.stringify({
-                    customerEmail: newCustomer.email,
-                    customerId: newCustomer.id,
-                    customerName: newCustomer.name,
-                  }),
-                }
-              );
-
-const accountDataText = await accountResponse.text();
-let accountData: any = {};
-try {
-  accountData = JSON.parse(accountDataText);
-} catch {
-  console.error("[WEBHOOK] createCustomerAccount returned non-JSON response");
-}
-if (!accountResponse.ok) {
-  console.error("[WEBHOOK] createCustomerAccount failed:", accountResponse.status, accountDataText);
-} else {
-  console.log("[WEBHOOK] createCustomerAccount OK");
-}
-              
-              if (accountData.resetLink) {
-                // Send welcome email
-const emailResponse = await fetch(
-                  `${Deno.env.get("SUPABASE_URL")}/functions/v1/sendWelcomeEmail`,
+                const accountResponse = await fetch(
+                  `${Deno.env.get("SUPABASE_URL")}/functions/v1/createCustomerAccount`,
                   {
                     method: "POST",
                     headers: {
@@ -186,23 +155,23 @@ const emailResponse = await fetch(
                     },
                     body: JSON.stringify({
                       customerEmail: newCustomer.email,
+                      customerId: newCustomer.id,
                       customerName: newCustomer.name,
-                      resetLink: accountData.resetLink,
                     }),
                   }
                 );
-                const emailText = await emailResponse.text();
-                if (!emailResponse.ok) {
-                  console.error("[WEBHOOK] sendWelcomeEmail failed:", emailResponse.status, emailText);
+
+                const accountDataText = await accountResponse.text();
+                if (!accountResponse.ok) {
+                  console.error("[WEBHOOK] createCustomerAccount failed:", accountResponse.status, accountDataText);
                 } else {
-                  console.log("[WEBHOOK] Customer account created and welcome email sent");
+                  console.log("[WEBHOOK] Customer account created (email will be sent with invoice)");
                 }
-              }
               } catch (accountError) {
                 console.error("[WEBHOOK] Error creating customer account:", accountError);
               }
             } else {
-              console.log("[WEBHOOK] SEPA payment detected - welcome email will be sent after payment confirmation");
+              console.log("[WEBHOOK] SEPA payment detected - account creation and email will be sent after payment confirmation");
             }
           }
         }
@@ -234,7 +203,7 @@ const emailResponse = await fetch(
             .update({ status: "active" })
             .eq("id", customer.id);
 
-          // Now create account and send welcome email
+          // Now create account (email will be sent with invoice below)
           try {
             const accountResponse = await fetch(
               `${Deno.env.get("SUPABASE_URL")}/functions/v1/createCustomerAccount`,
@@ -252,43 +221,11 @@ const emailResponse = await fetch(
               }
             );
 
-const accountDataText = await accountResponse.text();
-let accountData: any = {};
-try {
-  accountData = JSON.parse(accountDataText);
-} catch {
-  console.error("[WEBHOOK] createCustomerAccount returned non-JSON response");
-}
-if (!accountResponse.ok) {
-  console.error("[WEBHOOK] createCustomerAccount failed:", accountResponse.status, accountDataText);
-} else {
-  console.log("[WEBHOOK] createCustomerAccount OK");
-}
-            
-            if (accountData.resetLink) {
-await (async () => {
-              const emailResponse = await fetch(
-                `${Deno.env.get("SUPABASE_URL")}/functions/v1/sendWelcomeEmail`,
-                {
-                  method: "POST",
-                  headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
-                  },
-                  body: JSON.stringify({
-                    customerEmail: customer.email,
-                    customerName: customer.name,
-                    resetLink: accountData.resetLink,
-                  }),
-                }
-              );
-              const emailText = await emailResponse.text();
-              if (!emailResponse.ok) {
-                console.error("[WEBHOOK] sendWelcomeEmail failed:", emailResponse.status, emailText);
-              } else {
-                console.log("[WEBHOOK] SEPA customer activated and welcome email sent");
-              }
-            })();
+            const accountDataText = await accountResponse.text();
+            if (!accountResponse.ok) {
+              console.error("[WEBHOOK] createCustomerAccount failed:", accountResponse.status, accountDataText);
+            } else {
+              console.log("[WEBHOOK] SEPA customer account created (email will be sent with invoice)");
             }
           } catch (accountError) {
             console.error("[WEBHOOK] Error creating SEPA customer account:", accountError);
@@ -308,7 +245,31 @@ await (async () => {
 
         console.log("[WEBHOOK] Invoice saved");
 
-        // Send invoice email with legal documents
+        // Generate account access link if needed
+        let resetLink = null;
+        try {
+          // Check if user account exists
+          const { data: existingUser } = await supabase
+            .from("customer_users")
+            .select("user_id")
+            .eq("customer_id", customer.id)
+            .single();
+
+          if (existingUser) {
+            // Generate password reset link for existing user
+            const { data: linkData } = await supabase.auth.admin.generateLink({
+              type: 'recovery',
+              email: customer.email,
+            });
+            if (linkData?.properties?.action_link) {
+              resetLink = linkData.properties.action_link as string;
+            }
+          }
+        } catch (linkError) {
+          console.error("[WEBHOOK] Error generating account link:", linkError);
+        }
+
+        // Send invoice email with legal documents and account access
         if (invoice.invoice_pdf && customer.email) {
           try {
             console.log("[WEBHOOK] Preparing invoice email for:", customer.email);
@@ -415,6 +376,30 @@ Stand: ${new Date().toLocaleDateString("de-DE")}`;
                     <li>Datenschutzerklärung</li>
                     <li>Widerrufsbelehrung</li>
                   </ul>
+                  
+                  ${resetLink ? `
+                  <h2 style="color: #555; margin-top: 30px;">Ihr Dashboard-Zugang</h2>
+                  <p>Über Ihr persönliches Dashboard können Sie:</p>
+                  <ul>
+                    <li>Ihre Rechnungen einsehen und herunterladen</li>
+                    <li>Zahlungsdaten verwalten</li>
+                    <li>QR-Codes und Designs herunterladen</li>
+                    <li>Ihr Abonnement verwalten</li>
+                  </ul>
+                  
+                  <div style="background-color: #f5f5f5; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                    <p style="margin: 0 0 10px 0;"><strong>So richten Sie Ihr Passwort ein:</strong></p>
+                    <a href="${resetLink}" 
+                       style="display: inline-block; background-color: #007bff; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: bold;">
+                      Passwort festlegen
+                    </a>
+                  </div>
+                  
+                  <p style="color: #666; font-size: 14px;">
+                    <strong>Hinweis:</strong> Dieser Link ist 24 Stunden gültig. Nach dem Festlegen Ihres Passworts können Sie sich jederzeit unter 
+                    <a href="${Deno.env.get("SUPABASE_URL")}/auth/v1/verify">Ihrem Dashboard</a> anmelden.
+                  </p>
+                  ` : ''}
                   
                   <p>Bei Fragen stehen wir Ihnen gerne zur Verfügung.</p>
                   
