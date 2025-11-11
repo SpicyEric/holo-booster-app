@@ -28,6 +28,7 @@ import CustomerInvoices from "./pages/customer/Invoices";
 import CustomerUpgrade from "./pages/customer/Upgrade";
 import SmsCampaigns from "./pages/customer/SmsCampaigns";
 import GoogleReviews from "./pages/customer/GoogleReviews";
+import Analytics from "./pages/customer/Analytics";
 import Scan from "./pages/Scan";
 import NotFound from "./pages/NotFound";
 import CheckoutSuccess from "./pages/CheckoutSuccess";
@@ -61,6 +62,7 @@ const App = () => (
           </Route>
           <Route path="/account/billing" element={<Billing />} />
           <Route path="/customer" element={<CustomerDashboard />} />
+          <Route path="/customer/analytics" element={<Analytics />} />
           <Route path="/customer/account" element={<CustomerAccount />} />
           <Route path="/customer/invoices" element={<CustomerInvoices />} />
           <Route path="/customer/upgrade" element={<CustomerUpgrade />} />
