@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { signIn } from "@/lib/auth";
+import { signIn, getUserRole } from "@/lib/auth";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -41,6 +41,7 @@ const Auth = () => {
       if (role === 'admin') navigate('/admin');
       else if (role === 'merchant') navigate('/merchant');
       else if (role === 'partner') navigate('/partner');
+      else if (role === 'customer') navigate('/customer');
     }
   }, [user, role, loading, navigate]);
 
@@ -54,19 +55,34 @@ const Auth = () => {
     }
 
     setIsLoading(true);
-    const { error } = await signIn(loginEmail, loginPassword);
-    setIsLoading(false);
-
+    const { data, error } = await signIn(loginEmail, loginPassword);
+    
     if (error) {
+      setIsLoading(false);
       if (error.message.includes('Invalid')) {
         toast.error("Ungültige Anmeldedaten");
       } else {
         toast.error("Login fehlgeschlagen: " + error.message);
       }
-    } else {
+    } else if (data?.user) {
+      // Get user role and redirect to appropriate dashboard
+      const userRole = await getUserRole(data.user.id);
+      setIsLoading(false);
       toast.success("Erfolgreich angemeldet");
-      // Redirect immediately after successful login - ProtectedRoute will handle role-based routing
-      window.location.href = '/';
+      
+      if (userRole === 'admin') {
+        navigate('/admin');
+      } else if (userRole === 'merchant') {
+        navigate('/merchant');
+      } else if (userRole === 'partner') {
+        navigate('/partner');
+      } else if (userRole === 'customer') {
+        navigate('/customer');
+      } else {
+        navigate('/');
+      }
+    } else {
+      setIsLoading(false);
     }
   };
 
