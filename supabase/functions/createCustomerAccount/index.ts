@@ -50,17 +50,25 @@ serve(async (req) => {
       throw linkError;
     }
 
-    // Assign customer role
+    // Assign customer role (idempotent - ignore if already exists)
     const { error: roleError } = await supabaseAdmin
       .from("user_roles")
       .insert({
         user_id: authData.user.id,
         role: "customer",
-      });
+      })
+      .select();
 
     if (roleError) {
-      console.error("[CREATE-CUSTOMER-ACCOUNT] Role error:", roleError);
-      throw roleError;
+      // If role already exists (unique constraint violation), that's OK
+      if (roleError.code === '23505') {
+        console.log("[CREATE-CUSTOMER-ACCOUNT] Role already exists for user:", authData.user.id);
+      } else {
+        console.error("[CREATE-CUSTOMER-ACCOUNT] Role error:", roleError);
+        throw roleError;
+      }
+    } else {
+      console.log("[CREATE-CUSTOMER-ACCOUNT] Role 'customer' assigned successfully");
     }
 
     console.log("[CREATE-CUSTOMER-ACCOUNT] Account setup complete");

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
-import { UserRole, getUserRole } from '@/lib/auth';
+import { UserRole, getUserRole, deriveUserRole } from '@/lib/auth';
 
 export const useAuth = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -19,7 +19,7 @@ export const useAuth = () => {
         // Defer role fetch to avoid deadlock
         if (session?.user) {
           setTimeout(() => {
-            getUserRole(session.user.id).then(setRole);
+            deriveUserRole(session.user.id).then(setRole);
           }, 0);
         } else {
           setRole(null);
@@ -35,7 +35,7 @@ export const useAuth = () => {
       setUser(session?.user ?? null);
       
       if (session?.user) {
-        getUserRole(session.user.id).then(setRole);
+        deriveUserRole(session.user.id).then(setRole);
       }
       
       setLoading(false);

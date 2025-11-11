@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { signIn, getUserRole } from "@/lib/auth";
+import { signIn, deriveUserRole } from "@/lib/auth";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -77,13 +77,16 @@ const Auth = () => {
     const { data: userData } = await supabase.auth.getUser();
     const authedUser = userData?.user;
     if (authedUser) {
-      const userRole = await getUserRole(authedUser.id);
+      const userRole = await deriveUserRole(authedUser.id);
+      console.log('[handleSetPassword] Derived role:', userRole);
       setIsLoading(false);
       if (userRole === 'admin') navigate('/admin');
       else if (userRole === 'merchant') navigate('/merchant');
       else if (userRole === 'partner') navigate('/partner');
       else if (userRole === 'customer') navigate('/customer');
-      else navigate('/');
+      else {
+        toast.error("Ihr Konto ist noch nicht freigeschaltet. Bitte laden Sie die Seite in 30 Sekunden neu oder kontaktieren Sie den Support.");
+      }
     } else {
       setIsLoading(false);
       navigate('/auth');
@@ -111,7 +114,8 @@ const Auth = () => {
       }
     } else if (data?.user) {
       // Get user role and redirect to appropriate dashboard
-      const userRole = await getUserRole(data.user.id);
+      const userRole = await deriveUserRole(data.user.id);
+      console.log('[handleLogin] Derived role:', userRole);
       setIsLoading(false);
       toast.success("Erfolgreich angemeldet");
       
@@ -124,7 +128,7 @@ const Auth = () => {
       } else if (userRole === 'customer') {
         navigate('/customer');
       } else {
-        navigate('/');
+        toast.error("Ihr Konto ist noch nicht freigeschaltet. Bitte laden Sie die Seite in 30 Sekunden neu oder kontaktieren Sie den Support.");
       }
     } else {
       setIsLoading(false);
