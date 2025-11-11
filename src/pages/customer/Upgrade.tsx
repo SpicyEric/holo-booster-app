@@ -1,12 +1,15 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
-import { Loader2, Check, Zap, Star, Rocket, ArrowRight } from "lucide-react";
+import { Loader2, Check, Zap, Star, Rocket, ArrowRight, Package, Palette, ShoppingCart, Clock, Phone } from "lucide-react";
 import Particles from "@/components/Particles";
 import { CustomerHeader } from "@/components/CustomerHeader";
 import {
@@ -82,12 +85,16 @@ const PACKAGES = {
 export default function CustomerUpgrade() {
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [loading, setLoading] = useState(true);
   const [upgrading, setUpgrading] = useState(false);
+  const [ordering, setOrdering] = useState(false);
   const [subscriptionInfo, setSubscriptionInfo] = useState<SubscriptionInfo | null>(null);
   const [currentPackage, setCurrentPackage] = useState<string | null>(null);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [selectedPackage, setSelectedPackage] = useState<string | null>(null);
+  const [aufstellerQuantity, setAufstellerQuantity] = useState(1);
+  const [designQuantity, setDesignQuantity] = useState(1);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -100,6 +107,21 @@ export default function CustomerUpgrade() {
       loadSubscriptionInfo();
     }
   }, [user]);
+
+  useEffect(() => {
+    // Check for order success/cancel in URL
+    const orderSuccess = searchParams.get('order_success');
+    const orderCancelled = searchParams.get('order_cancelled');
+    
+    if (orderSuccess) {
+      toast.success("Bestellung erfolgreich abgeschlossen!");
+      // Remove query params
+      navigate('/customer/upgrade', { replace: true });
+    } else if (orderCancelled) {
+      toast.info("Bestellung wurde abgebrochen");
+      navigate('/customer/upgrade', { replace: true });
+    }
+  }, [searchParams, navigate]);
 
   const loadSubscriptionInfo = async () => {
     try {
@@ -153,6 +175,64 @@ export default function CustomerUpgrade() {
       toast.error(error.message || "Fehler beim Paket-Wechsel");
     } finally {
       setUpgrading(false);
+    }
+  };
+
+  const handleOrderAufsteller = async () => {
+    if (aufstellerQuantity < 1 || aufstellerQuantity > 10) {
+      toast.error("Bitte wählen Sie zwischen 1 und 10 Aufstellern");
+      return;
+    }
+
+    setOrdering(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("create-order-payment", {
+        body: { 
+          orderType: "aufsteller",
+          quantity: aufstellerQuantity
+        }
+      });
+
+      if (error) throw error;
+
+      if (data?.url) {
+        window.open(data.url, "_blank");
+        toast.info("Stripe-Checkout wurde geöffnet");
+      }
+    } catch (error: any) {
+      console.error("Order error:", error);
+      toast.error(error.message || "Fehler bei der Bestellung");
+    } finally {
+      setOrdering(false);
+    }
+  };
+
+  const handleOrderDesign = async () => {
+    if (designQuantity < 1 || designQuantity > 5) {
+      toast.error("Bitte wählen Sie zwischen 1 und 5 Designs");
+      return;
+    }
+
+    setOrdering(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("create-order-payment", {
+        body: { 
+          orderType: "design",
+          quantity: designQuantity
+        }
+      });
+
+      if (error) throw error;
+
+      if (data?.url) {
+        window.open(data.url, "_blank");
+        toast.info("Stripe-Checkout wurde geöffnet");
+      }
+    } catch (error: any) {
+      console.error("Order error:", error);
+      toast.error(error.message || "Fehler bei der Bestellung");
+    } finally {
+      setOrdering(false);
     }
   };
 
@@ -286,6 +366,183 @@ export default function CustomerUpgrade() {
             <p>• Bei einem Downgrade erhalten Sie eine anteilige Gutschrift für die nächste Rechnung.</p>
             <p>• Die Änderung wird sofort wirksam.</p>
             <p>• Ihr Abrechnungszyklus bleibt unverändert.</p>
+          </CardContent>
+        </Card>
+
+        <Separator className="my-8" />
+
+        <div className="text-center space-y-2 mb-6">
+          <h2 className="text-3xl font-bold">Zusätzliche Bestellungen</h2>
+          <p className="text-muted-foreground">
+            Bestellen Sie weitere Aufsteller oder individuelle Designs
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Aufsteller Bestellung */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center gap-3 mb-2">
+                <div className="p-2 bg-primary/10 rounded-lg">
+                  <Package className="h-6 w-6 text-primary" />
+                </div>
+                <div>
+                  <CardTitle>Extra-Aufsteller</CardTitle>
+                  <CardDescription>Holz-Aufsteller mit QR-Code</CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="text-3xl font-bold">
+                6,50€ <span className="text-base font-normal text-muted-foreground">/ Stück</span>
+              </div>
+
+              <div className="space-y-3 text-sm text-muted-foreground">
+                <div className="flex items-start gap-2">
+                  <Clock className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                  <span>Lieferung innerhalb von 7 Werktagen</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <Check className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                  <span>Inklusive Ihrer aktuellen Designs</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <Check className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                  <span>Hochwertiger Holzfuß</span>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="aufsteller-quantity">Anzahl</Label>
+                <Input
+                  id="aufsteller-quantity"
+                  type="number"
+                  min="1"
+                  max="10"
+                  value={aufstellerQuantity}
+                  onChange={(e) => setAufstellerQuantity(parseInt(e.target.value) || 1)}
+                  className="w-full"
+                />
+              </div>
+
+              <div className="p-3 bg-muted rounded-lg">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm font-medium">Gesamt:</span>
+                  <span className="text-lg font-bold">
+                    {(aufstellerQuantity * 6.50).toFixed(2)}€
+                  </span>
+                </div>
+              </div>
+
+              <Button
+                onClick={handleOrderAufsteller}
+                disabled={ordering || aufstellerQuantity < 1}
+                className="w-full gap-2"
+              >
+                {ordering ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Wird verarbeitet...
+                  </>
+                ) : (
+                  <>
+                    <ShoppingCart className="h-4 w-4" />
+                    Jetzt bestellen
+                  </>
+                )}
+              </Button>
+            </CardContent>
+          </Card>
+
+          {/* Design Bestellung */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center gap-3 mb-2">
+                <div className="p-2 bg-purple-500/10 rounded-lg">
+                  <Palette className="h-6 w-6 text-purple-500" />
+                </div>
+                <div>
+                  <CardTitle>Individuelles Design</CardTitle>
+                  <CardDescription>Maßgeschneidertes Aufsteller-Design</CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="text-3xl font-bold">
+                29,95€ <span className="text-base font-normal text-muted-foreground">/ Design</span>
+              </div>
+
+              <div className="space-y-3 text-sm text-muted-foreground">
+                <div className="flex items-start gap-2">
+                  <Phone className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                  <span>Kontaktaufnahme innerhalb von 48 Stunden</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <Check className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                  <span>Design-Briefing & Abstimmung</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <Check className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                  <span>Anpassungen bis zur finalen Freigabe</span>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="design-quantity">Anzahl</Label>
+                <Input
+                  id="design-quantity"
+                  type="number"
+                  min="1"
+                  max="5"
+                  value={designQuantity}
+                  onChange={(e) => setDesignQuantity(parseInt(e.target.value) || 1)}
+                  className="w-full"
+                />
+              </div>
+
+              <div className="p-3 bg-muted rounded-lg">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm font-medium">Gesamt:</span>
+                  <span className="text-lg font-bold">
+                    {(designQuantity * 29.95).toFixed(2)}€
+                  </span>
+                </div>
+              </div>
+
+              <Button
+                onClick={handleOrderDesign}
+                disabled={ordering || designQuantity < 1}
+                className="w-full gap-2"
+                variant="secondary"
+              >
+                {ordering ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Wird verarbeitet...
+                  </>
+                ) : (
+                  <>
+                    <ShoppingCart className="h-4 w-4" />
+                    Jetzt bestellen
+                  </>
+                )}
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+
+        <Card className="bg-muted/50 mt-6">
+          <CardHeader>
+            <CardTitle>Wichtige Informationen</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2 text-sm text-muted-foreground">
+            <p><strong>Paket-Upgrade:</strong></p>
+            <p>• Bei einem Upgrade wird die Differenz anteilig berechnet und sofort abgebucht.</p>
+            <p>• Bei einem Downgrade erhalten Sie eine anteilige Gutschrift für die nächste Rechnung.</p>
+            <p className="pt-2"><strong>Bestellungen:</strong></p>
+            <p>• Alle Bestellungen werden sofort per Stripe bezahlt.</p>
+            <p>• Sie erhalten eine Bestätigung per E-Mail.</p>
+            <p>• Bestellungen werden in Ihrem Admin-Dashboard angezeigt.</p>
           </CardContent>
         </Card>
       </main>

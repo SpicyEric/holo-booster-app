@@ -1,17 +1,21 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Users, QrCode, BarChart3, Settings, AlertTriangle, UserPlus, XCircle, Clock } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Users, QrCode, BarChart3, Settings, AlertTriangle, UserPlus, XCircle, Clock, Package } from "lucide-react";
 import { format } from "date-fns";
 import { de } from "date-fns/locale";
 
 const Overview = () => {
+  const navigate = useNavigate();
   const [stats, setStats] = useState({
     customers: 0,
     scans: 0,
     contacts: 0,
     orders: 0,
+    pendingOrders: 0,
   });
 
   const [recentCustomers, setRecentCustomers] = useState<any[]>([]);
@@ -50,11 +54,12 @@ const Overview = () => {
 
   const loadStats = async () => {
     try {
-      const [customersRes, scansRes, contactsRes, ordersRes] = await Promise.all([
+      const [customersRes, scansRes, contactsRes, ordersRes, pendingOrdersRes] = await Promise.all([
         supabase.from("customers").select("id", { count: "exact", head: true }),
         supabase.from("scans").select("id", { count: "exact", head: true }),
         supabase.from("contacts").select("id", { count: "exact", head: true }),
         supabase.from("orders").select("id", { count: "exact", head: true }),
+        supabase.from("orders").select("id", { count: "exact", head: true }).in("status", ["pending", "in_progress"]),
       ]);
 
       setStats({
@@ -62,6 +67,7 @@ const Overview = () => {
         scans: scansRes.count || 0,
         contacts: contactsRes.count || 0,
         orders: ordersRes.count || 0,
+        pendingOrders: pendingOrdersRes.count || 0,
       });
     } catch (error) {
       console.error("Fehler beim Laden der Statistiken:", error);
@@ -231,14 +237,22 @@ const Overview = () => {
           </div>
         </Card>
 
-        <Card className="p-6 border-border hover:shadow-lg transition-shadow">
+        <Card 
+          className="p-6 border-border hover:shadow-lg transition-shadow cursor-pointer"
+          onClick={() => navigate("/admin/orders")}
+        >
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-gradient-primary flex items-center justify-center">
-              <Settings className="w-6 h-6 text-white" />
+            <div className="w-12 h-12 rounded-xl bg-gradient-primary flex items-center justify-center relative">
+              <Package className="w-6 h-6 text-white" />
+              {stats.pendingOrders > 0 && (
+                <div className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-red-500 flex items-center justify-center text-xs text-white font-bold">
+                  {stats.pendingOrders}
+                </div>
+              )}
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">Offene Orders</p>
-              <p className="text-2xl font-bold">{stats.orders}</p>
+              <p className="text-sm text-muted-foreground">Offene Bestellungen</p>
+              <p className="text-2xl font-bold">{stats.pendingOrders}</p>
             </div>
           </div>
         </Card>

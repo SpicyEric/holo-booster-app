@@ -1,4 +1,4 @@
-import { Home, Users, BarChart3, Settings, LogOut, UserCog, ShoppingCart, Menu } from "lucide-react";
+import { Home, Users, BarChart3, Settings, LogOut, UserCog, ShoppingCart, Menu, Package } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import {
   DropdownMenu,
@@ -15,6 +15,7 @@ import qraitLogo from '@/assets/qrait-logo-full.png';
 const menuItems = [
   { title: "Dashboard", url: "/admin", icon: Home },
   { title: "Kunden", url: "/admin/customers", icon: Users },
+  { title: "Bestellungen", url: "/admin/orders", icon: Package },
   { title: "Accounts", url: "/admin/accounts", icon: UserCog },
   { title: "Statistiken", url: "/admin/stats", icon: BarChart3 },
   { title: "Kunde abschließen", url: "/admin/checkout", icon: ShoppingCart },

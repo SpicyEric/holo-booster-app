@@ -539,36 +539,48 @@ export type Database = {
       }
       orders: {
         Row: {
+          amount_cents: number | null
           created_at: string
           customer_id: string
           id: string
           merchant_user_id: string | null
           notes: string | null
+          order_details: Json | null
           order_type: string
+          paid_at: string | null
           quantity: number | null
           status: string
+          stripe_payment_intent_id: string | null
           updated_at: string
         }
         Insert: {
+          amount_cents?: number | null
           created_at?: string
           customer_id: string
           id?: string
           merchant_user_id?: string | null
           notes?: string | null
+          order_details?: Json | null
           order_type: string
+          paid_at?: string | null
           quantity?: number | null
           status?: string
+          stripe_payment_intent_id?: string | null
           updated_at?: string
         }
         Update: {
+          amount_cents?: number | null
           created_at?: string
           customer_id?: string
           id?: string
           merchant_user_id?: string | null
           notes?: string | null
+          order_details?: Json | null
           order_type?: string
+          paid_at?: string | null
           quantity?: number | null
           status?: string
+          stripe_payment_intent_id?: string | null
           updated_at?: string
         }
         Relationships: [

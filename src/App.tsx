@@ -15,6 +15,7 @@ import Customers from "./pages/admin/Customers";
 import CustomerDetail from "./pages/admin/CustomerDetail";
 import CustomerNew from "./pages/admin/CustomerNew";
 import Accounts from "./pages/admin/Accounts";
+import Orders from "./pages/admin/Orders";
 import Stats from "./pages/admin/Stats";
 import Checkout from "./pages/admin/Checkout";
 import Billing from "./pages/account/Billing";
@@ -53,6 +54,7 @@ const App = () => (
             <Route path="customers/new" element={<CustomerNew />} />
             <Route path="customers/:id" element={<CustomerDetail />} />
             <Route path="accounts" element={<Accounts />} />
+            <Route path="orders" element={<Orders />} />
             <Route path="stats" element={<Stats />} />
             <Route path="checkout" element={<Checkout />} />
             <Route path="settings" element={<Settings />} />
