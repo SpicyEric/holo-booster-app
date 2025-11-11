@@ -5,9 +5,19 @@ import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { Scan, MessageSquare, Award, Star, TrendingUp, Users, Zap, Heart, Shield, ArrowRight } from 'lucide-react';
 import qraitLogo from '@/assets/qrait-logo-full.png';
+import { useEffect } from 'react';
 
 const Landing = () => {
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const hash = window.location.hash || "";
+    if (hash && (hash.includes('type=recovery') || hash.includes('type=signup'))) {
+      navigate(`/auth${hash}`, { replace: true });
+    }
+  }, [navigate]);
+
+
 
   const navItems = [
     { label: 'Home', href: '/' },

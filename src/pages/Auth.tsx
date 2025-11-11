@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import ClassicNav from "@/components/ClassicNav";
 import Particles from "@/components/Particles";
 import { Button } from "@/components/ui/button";
@@ -13,6 +13,7 @@ import { z } from "zod";
 import { LogIn } from "lucide-react";
 import { motion } from "framer-motion";
 import qraitLogo from '@/assets/qrait-logo-full.png';
+import { supabase } from "@/integrations/supabase/client";
 
 const loginSchema = z.object({
   email: z.string().email("Ungültige E-Mail-Adresse"),
@@ -26,7 +27,10 @@ const Auth = () => {
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [isResetMode, setIsResetMode] = useState(false);
+  const location = useLocation();
   const navItems = [
     { label: 'Home', href: '/' },
     { label: 'Kontakt', href: '/kontakt' },
@@ -34,16 +38,57 @@ const Auth = () => {
     { label: 'Impressum', href: '/impressum' },
     { label: 'Login', href: '/auth' }
   ];
+  // Detect Supabase auth callbacks and enable password set mode
+  useEffect(() => {
+    const hash = window.location.hash || location.hash || "";
+    if (hash.includes("type=recovery") || hash.includes("type=signup")) {
+      setIsResetMode(true);
+    }
+  }, [location.hash]);
 
   // Redirect if already logged in
   useEffect(() => {
-    if (!loading && user && role) {
+    if (!loading && user && role && !isResetMode) {
       if (role === 'admin') navigate('/admin');
       else if (role === 'merchant') navigate('/merchant');
       else if (role === 'partner') navigate('/partner');
       else if (role === 'customer') navigate('/customer');
     }
-  }, [user, role, loading, navigate]);
+  }, [user, role, loading, isResetMode, navigate]);
+
+  const handleSetPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (newPassword.length < 6) {
+      toast.error("Passwort muss mindestens 6 Zeichen lang sein");
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      toast.error("Passwörter stimmen nicht überein");
+      return;
+    }
+    setIsLoading(true);
+    const { error } = await supabase.auth.updateUser({ password: newPassword });
+    if (error) {
+      setIsLoading(false);
+      toast.error("Passwort konnte nicht gesetzt werden: " + error.message);
+      return;
+    }
+    toast.success("Passwort erfolgreich gesetzt");
+    const { data: userData } = await supabase.auth.getUser();
+    const authedUser = userData?.user;
+    if (authedUser) {
+      const userRole = await getUserRole(authedUser.id);
+      setIsLoading(false);
+      if (userRole === 'admin') navigate('/admin');
+      else if (userRole === 'merchant') navigate('/merchant');
+      else if (userRole === 'partner') navigate('/partner');
+      else if (userRole === 'customer') navigate('/customer');
+      else navigate('/');
+    } else {
+      setIsLoading(false);
+      navigate('/auth');
+    }
+  };
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -124,48 +169,84 @@ const Auth = () => {
           <div className="text-center mb-8">
             <img src={qraitLogo} alt="QRait Logo" className="h-16 w-auto mx-auto mb-4" />
             <h1 className="text-3xl font-bold">
-              Anmelden
+              {isResetMode ? 'Passwort festlegen' : 'Anmelden'}
             </h1>
-            <p className="text-muted-foreground mt-2">Zugang zu Ihrem Dashboard</p>
+            <p className="text-muted-foreground mt-2">{isResetMode ? 'Bitte neues Passwort wählen' : 'Zugang zu Ihrem Dashboard'}</p>
           </div>
 
           <Card className="p-6 border-border">
-            <form onSubmit={handleLogin} className="space-y-4">
-              <div>
-                <Label htmlFor="login-email">E-Mail</Label>
-                <Input
-                  id="login-email"
-                  type="email"
-                  placeholder="name@firma.de"
-                  value={loginEmail}
-                  onChange={(e) => setLoginEmail(e.target.value)}
-                  required
-                  className="mt-2"
-                />
-              </div>
-              
-              <div>
-                <Label htmlFor="login-password">Passwort</Label>
-                <Input
-                  id="login-password"
-                  type="password"
-                  placeholder="••••••••"
-                  value={loginPassword}
-                  onChange={(e) => setLoginPassword(e.target.value)}
-                  required
-                  className="mt-2"
-                />
-              </div>
-
-              <Button
-                type="submit"
-                className="w-full bg-foreground text-background hover:bg-foreground/90"
-                disabled={isLoading}
-              >
-                <LogIn className="mr-2 w-4 h-4" />
-                {isLoading ? 'Anmeldung...' : 'Anmelden'}
-              </Button>
-            </form>
+            {isResetMode ? (
+              <form onSubmit={handleSetPassword} className="space-y-4">
+                <div>
+                  <Label htmlFor="new-password">Neues Passwort</Label>
+                  <Input
+                    id="new-password"
+                    type="password"
+                    placeholder="••••••••"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    required
+                    className="mt-2"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="confirm-password">Passwort bestätigen</Label>
+                  <Input
+                    id="confirm-password"
+                    type="password"
+                    placeholder="••••••••"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    required
+                    className="mt-2"
+                  />
+                </div>
+                <Button
+                  type="submit"
+                  className="w-full bg-foreground text-background hover:bg-foreground/90"
+                  disabled={isLoading}
+                >
+                  {isLoading ? 'Speichern...' : 'Passwort festlegen'}
+                </Button>
+              </form>
+            ) : (
+              <form onSubmit={handleLogin} className="space-y-4">
+                <div>
+                  <Label htmlFor="login-email">E-Mail</Label>
+                  <Input
+                    id="login-email"
+                    type="email"
+                    placeholder="name@firma.de"
+                    value={loginEmail}
+                    onChange={(e) => setLoginEmail(e.target.value)}
+                    required
+                    className="mt-2"
+                  />
+                </div>
+                
+                <div>
+                  <Label htmlFor="login-password">Passwort</Label>
+                  <Input
+                    id="login-password"
+                    type="password"
+                    placeholder="••••••••"
+                    value={loginPassword}
+                    onChange={(e) => setLoginPassword(e.target.value)}
+                    required
+                    className="mt-2"
+                  />
+                </div>
+    
+                <Button
+                  type="submit"
+                  className="w-full bg-foreground text-background hover:bg-foreground/90"
+                  disabled={isLoading}
+                >
+                  <LogIn className="mr-2 w-4 h-4" />
+                  {isLoading ? 'Anmeldung...' : 'Anmelden'}
+                </Button>
+              </form>
+            )}
           </Card>
 
           <p className="text-center text-sm text-muted-foreground mt-6">
