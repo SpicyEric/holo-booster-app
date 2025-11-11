@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Loader2, ArrowLeft, CreditCard, X, AlertTriangle } from "lucide-react";
+import { Loader2, CreditCard, X, AlertTriangle } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -18,7 +18,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import Particles from "@/components/Particles";
-import qraitLogo from '@/assets/qrait-logo-full.png';
+import { CustomerHeader } from "@/components/CustomerHeader";
 
 interface Customer {
   id: string;
@@ -183,16 +183,7 @@ export default function CustomerAccount() {
         cameraDistance={20}
       />
       
-      <header className="border-b relative z-10 bg-background/80 backdrop-blur-sm">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Button variant="ghost" size="icon" onClick={() => navigate('/customer')}>
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
-            <img src={qraitLogo} alt="QRait Logo" className="h-10 w-auto" />
-          </div>
-        </div>
-      </header>
+      <CustomerHeader />
 
       <main className="container mx-auto px-4 py-8 space-y-6 relative z-10 max-w-4xl">
         <h1 className="text-3xl font-bold">Kontoinformationen</h1>

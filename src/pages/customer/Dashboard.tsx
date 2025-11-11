@@ -6,15 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Loader2, Download, LogOut, CreditCard, X, AlertTriangle, QrCode, Phone, Star, MessageSquare, FileText, User } from "lucide-react";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import qraitLogo from '@/assets/qrait-logo-full.png';
+import { Loader2, CreditCard, X, AlertTriangle, QrCode, Phone, Star, Download } from "lucide-react";
+import { CustomerHeader } from "@/components/CustomerHeader";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -196,10 +189,6 @@ export default function CustomerDashboard() {
     }
   };
 
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    navigate("/auth");
-  };
 
   const formatAmount = (cents: number, currency: string) => {
     return new Intl.NumberFormat("de-DE", {
@@ -252,43 +241,7 @@ export default function CustomerDashboard() {
         cameraDistance={20}
       />
       
-      <header className="border-b relative z-10 bg-background/80 backdrop-blur-sm">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <img src={qraitLogo} alt="QRait Logo" className="h-10 w-auto" />
-          
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="gap-2">
-                <User className="h-4 w-4" />
-                Mein Konto
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56 bg-background z-50">
-              <DropdownMenuItem onClick={() => navigate('/customer/account')}>
-                <User className="mr-2 h-4 w-4" />
-                Kontoinformationen
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => navigate('/customer/invoices')}>
-                <FileText className="mr-2 h-4 w-4" />
-                Rechnungen
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => navigate('/customer/sms-campaigns')}>
-                <MessageSquare className="mr-2 h-4 w-4" />
-                SMS-Kampagnen
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => navigate('/customer/google-reviews')}>
-                <Star className="mr-2 h-4 w-4" />
-                Google-Bewertungen löschen
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={handleLogout}>
-                <LogOut className="mr-2 h-4 w-4" />
-                Abmelden
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-      </header>
+      <CustomerHeader />
 
       <main className="container mx-auto px-4 py-8 space-y-8 relative z-10">
         {/* Welcome Message */}
