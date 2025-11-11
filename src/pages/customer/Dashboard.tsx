@@ -6,7 +6,15 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Loader2, Download, LogOut, CreditCard, X, AlertTriangle } from "lucide-react";
+import { Loader2, Download, LogOut, CreditCard, X, AlertTriangle, QrCode, Phone, Star, MessageSquare, FileText, User } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import qraitLogo from '@/assets/qrait-logo-full.png';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -62,6 +70,13 @@ export default function CustomerDashboard() {
   const [subscriptionInfo, setSubscriptionInfo] = useState<SubscriptionInfo | null>(null);
   const [showCancelDialog, setShowCancelDialog] = useState(false);
   const [cancelling, setCancelling] = useState(false);
+  const [stats, setStats] = useState({
+    totalScans: 0,
+    totalContacts: 0,
+    totalReviews: 0
+  });
+  const [showAccountInfo, setShowAccountInfo] = useState(false);
+  const [showInvoices, setShowInvoices] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -99,6 +114,28 @@ export default function CustomerDashboard() {
         .single();
 
       setCustomer(customerData);
+
+      // Get statistics
+      const customerId = customerUser.customer_id;
+
+      // Get total scans
+      const { count: scansCount } = await supabase
+        .from("scans")
+        .select("*", { count: "exact", head: true })
+        .eq("customer_id", customerId);
+
+      // Get total contacts
+      const { count: contactsCount } = await supabase
+        .from("contacts")
+        .select("*", { count: "exact", head: true })
+        .eq("customer_id", customerId)
+        .is("deleted_at", null);
+
+      setStats({
+        totalScans: scansCount || 0,
+        totalContacts: contactsCount || 0,
+        totalReviews: 0 // Placeholder for future implementation
+      });
 
       // Get invoices
       const { data: invoicesData } = await supabase
@@ -210,25 +247,112 @@ export default function CustomerDashboard() {
         disableRotation={false}
         cameraDistance={20}
       />
-      <header className="border-b relative z-10">
+      
+      <header className="border-b relative z-10 bg-background/80 backdrop-blur-sm">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold">QRait Dashboard</h1>
-            <p className="text-sm text-muted-foreground">{customer?.email}</p>
-          </div>
-          <Button variant="outline" onClick={handleLogout}>
-            <LogOut className="mr-2 h-4 w-4" />
-            Abmelden
-          </Button>
+          <img src={qraitLogo} alt="QRait Logo" className="h-10 w-auto" />
+          
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" className="gap-2">
+                <User className="h-4 w-4" />
+                Mein Konto
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56 bg-background">
+              <DropdownMenuItem onClick={() => setShowAccountInfo(true)}>
+                <User className="mr-2 h-4 w-4" />
+                Kontoinformationen
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setShowInvoices(true)}>
+                <FileText className="mr-2 h-4 w-4" />
+                Rechnungen
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => toast.info("SMS-Kampagnen - Kommt bald!")}>
+                <MessageSquare className="mr-2 h-4 w-4" />
+                SMS-Kampagnen
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => toast.info("Google-Bewertungen löschen - Kommt bald!")}>
+                <Star className="mr-2 h-4 w-4" />
+                Google-Bewertungen löschen
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={handleLogout}>
+                <LogOut className="mr-2 h-4 w-4" />
+                Abmelden
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </header>
 
-      <main className="container mx-auto px-4 py-8 space-y-6 relative z-10">
-        {/* Subscription Info */}
+      <main className="container mx-auto px-4 py-8 space-y-8 relative z-10">
+        {/* Welcome Message */}
+        <div className="text-center space-y-2">
+          <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+            Willkommen zurück!
+          </h1>
+          <p className="text-muted-foreground">
+            Hier ist Ihre Erfolgsübersicht
+          </p>
+        </div>
+
+        {/* Statistics Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <Card className="border-primary/20 hover:border-primary/40 transition-colors">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">
+                QR-Code-Scans gesamt
+              </CardTitle>
+              <QrCode className="h-5 w-5 text-primary" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold">{stats.totalScans}</div>
+              <p className="text-xs text-muted-foreground mt-1">
+                Gesamtanzahl aller Scans
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card className="border-primary/20 hover:border-primary/40 transition-colors">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">
+                Hinterlegte Handynummern
+              </CardTitle>
+              <Phone className="h-5 w-5 text-primary" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold">{stats.totalContacts}</div>
+              <p className="text-xs text-muted-foreground mt-1">
+                Aktive Kontakte in Ihrer Datenbank
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card className="border-primary/20 hover:border-primary/40 transition-colors">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">
+                Neue Bewertungen
+              </CardTitle>
+              <Star className="h-5 w-5 text-primary" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold">{stats.totalReviews}</div>
+              <p className="text-xs text-muted-foreground mt-1">
+                Kommt bald verfügbar
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Subscription Status - Only if active */}
         {subscriptionInfo?.hasSubscription && (
-          <Card>
+          <Card className="border-primary/20">
             <CardHeader>
-              <CardTitle>Ihr Abonnement</CardTitle>
+              <CardTitle className="flex items-center gap-2">
+                <CreditCard className="h-5 w-5" />
+                Ihr Abonnement
+              </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -237,20 +361,8 @@ export default function CustomerDashboard() {
                   <p className="font-medium text-lg">{subscriptionInfo.plan?.name}</p>
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">Preis</p>
-                  <p className="font-medium text-lg">
-                    {formatAmount(subscriptionInfo.plan?.amount || 0, subscriptionInfo.plan?.currency || "EUR")} / {subscriptionInfo.plan?.interval === "month" ? "Monat" : "Jahr"}
-                  </p>
-                </div>
-                <div>
                   <p className="text-sm text-muted-foreground">Status</p>
                   {getStatusBadge(subscriptionInfo.status || "unknown")}
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Nächste Abrechnung</p>
-                  <p className="font-medium">
-                    {subscriptionInfo.currentPeriodEnd ? formatDate(subscriptionInfo.currentPeriodEnd) : "-"}
-                  </p>
                 </div>
               </div>
               
@@ -267,29 +379,21 @@ export default function CustomerDashboard() {
                   </div>
                 </div>
               )}
-
-              <div className="flex gap-2 pt-2">
-                {!subscriptionInfo.cancelAtPeriodEnd && (
-                  <Button 
-                    onClick={() => setShowCancelDialog(true)} 
-                    variant="outline"
-                    className="gap-2"
-                  >
-                    <X className="h-4 w-4" />
-                    Abonnement kündigen
-                  </Button>
-                )}
-              </div>
             </CardContent>
           </Card>
         )}
+      </main>
 
-        {/* Customer Info */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Ihre Kontoinformationen</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
+      {/* Account Info Dialog */}
+      <AlertDialog open={showAccountInfo} onOpenChange={setShowAccountInfo}>
+        <AlertDialogContent className="max-w-2xl">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Kontoinformationen</AlertDialogTitle>
+            <AlertDialogDescription>
+              Ihre Konto- und Abonnementdetails
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="space-y-4 py-4">
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <p className="text-sm text-muted-foreground">Name</p>
@@ -310,25 +414,69 @@ export default function CustomerDashboard() {
                 {getStatusBadge(customer?.status || "unknown")}
               </div>
             </div>
-            <div className="pt-4">
-              <Button onClick={openCustomerPortal} variant="outline" className="gap-2">
-                <CreditCard className="h-4 w-4" />
-                Zahlungsmethoden verwalten
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+            {subscriptionInfo?.hasSubscription && (
+              <div className="pt-4 border-t space-y-4">
+                <h3 className="font-semibold">Abonnement</h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Paket</p>
+                    <p className="font-medium">{subscriptionInfo.plan?.name}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Preis</p>
+                    <p className="font-medium">
+                      {formatAmount(subscriptionInfo.plan?.amount || 0, subscriptionInfo.plan?.currency || "EUR")} / {subscriptionInfo.plan?.interval === "month" ? "Monat" : "Jahr"}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Nächste Abrechnung</p>
+                    <p className="font-medium">
+                      {subscriptionInfo.currentPeriodEnd ? formatDate(subscriptionInfo.currentPeriodEnd) : "-"}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex gap-2 pt-2">
+                  <Button onClick={openCustomerPortal} variant="outline" className="gap-2">
+                    <CreditCard className="h-4 w-4" />
+                    Zahlungsmethoden verwalten
+                  </Button>
+                  {!subscriptionInfo.cancelAtPeriodEnd && (
+                    <Button 
+                      onClick={() => {
+                        setShowAccountInfo(false);
+                        setShowCancelDialog(true);
+                      }} 
+                      variant="outline"
+                      className="gap-2"
+                    >
+                      <X className="h-4 w-4" />
+                      Abonnement kündigen
+                    </Button>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Schließen</AlertDialogCancel>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
-        {/* Invoices */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Ihre Rechnungen</CardTitle>
-          </CardHeader>
-          <CardContent>
+      {/* Invoices Dialog */}
+      <AlertDialog open={showInvoices} onOpenChange={setShowInvoices}>
+        <AlertDialogContent className="max-w-2xl">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Ihre Rechnungen</AlertDialogTitle>
+            <AlertDialogDescription>
+              Alle Ihre bisherigen Rechnungen im Überblick
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="py-4">
             {invoices.length === 0 ? (
-              <p className="text-muted-foreground">Keine Rechnungen vorhanden</p>
+              <p className="text-muted-foreground text-center py-8">Keine Rechnungen vorhanden</p>
             ) : (
-              <div className="space-y-2">
+              <div className="space-y-2 max-h-96 overflow-y-auto">
                 {invoices.map((invoice) => (
                   <div
                     key={invoice.id}
@@ -358,9 +506,12 @@ export default function CustomerDashboard() {
                 ))}
               </div>
             )}
-          </CardContent>
-        </Card>
-      </main>
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Schließen</AlertDialogCancel>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Cancel Subscription Dialog */}
       <AlertDialog open={showCancelDialog} onOpenChange={setShowCancelDialog}>
