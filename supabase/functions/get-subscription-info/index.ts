@@ -76,15 +76,19 @@ serve(async (req) => {
     const subscriptionInfo = {
       hasSubscription: true,
       status: subscription.status,
-      currentPeriodStart: new Date(subscription.current_period_start * 1000).toISOString(),
-      currentPeriodEnd: new Date(subscription.current_period_end * 1000).toISOString(),
-      cancelAtPeriodEnd: subscription.cancel_at_period_end,
+      currentPeriodStart: subscription.current_period_start 
+        ? new Date(subscription.current_period_start * 1000).toISOString() 
+        : null,
+      currentPeriodEnd: subscription.current_period_end 
+        ? new Date(subscription.current_period_end * 1000).toISOString() 
+        : null,
+      cancelAtPeriodEnd: subscription.cancel_at_period_end || false,
       cancelAt: subscription.cancel_at ? new Date(subscription.cancel_at * 1000).toISOString() : null,
       plan: {
-        name: product.name,
-        amount: price.unit_amount,
-        currency: price.currency,
-        interval: price.recurring?.interval,
+        name: product.name || 'Unknown Plan',
+        amount: price.unit_amount || 0,
+        currency: price.currency || 'eur',
+        interval: price.recurring?.interval || 'month',
       }
     };
     
