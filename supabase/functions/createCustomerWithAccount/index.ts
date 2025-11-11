@@ -110,6 +110,14 @@ serve(async (req) => {
       } else {
         customerUser = newUser.user;
 
+        // Create customer_users link (wichtig für Dashboard-Zugriff)
+        await supabase
+          .from('customer_users')
+          .insert({
+            user_id: customerUser.id,
+            customer_id: customer.id,
+          });
+
         // Assign merchant role
         await supabase
           .from('user_roles')

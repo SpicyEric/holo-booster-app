@@ -5,8 +5,10 @@ import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Loader2, CreditCard, X, AlertTriangle } from "lucide-react";
+import { Loader2, CreditCard, X, AlertTriangle, KeyRound } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -51,6 +53,10 @@ export default function CustomerAccount() {
   const [subscriptionInfo, setSubscriptionInfo] = useState<SubscriptionInfo | null>(null);
   const [showCancelDialog, setShowCancelDialog] = useState(false);
   const [cancelling, setCancelling] = useState(false);
+  const [showPasswordDialog, setShowPasswordDialog] = useState(false);
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [changingPassword, setChangingPassword] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -129,6 +135,37 @@ export default function CustomerAccount() {
       toast.error("Fehler beim Kündigen des Abonnements");
     } finally {
       setCancelling(false);
+    }
+  };
+
+  const changePassword = async () => {
+    if (newPassword !== confirmPassword) {
+      toast.error("Passwörter stimmen nicht überein");
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      toast.error("Passwort muss mindestens 6 Zeichen lang sein");
+      return;
+    }
+
+    setChangingPassword(true);
+    try {
+      const { error } = await supabase.auth.updateUser({
+        password: newPassword,
+      });
+
+      if (error) throw error;
+
+      toast.success("Passwort erfolgreich geändert");
+      setShowPasswordDialog(false);
+      setNewPassword("");
+      setConfirmPassword("");
+    } catch (error: any) {
+      console.error("Error changing password:", error);
+      toast.error("Fehler beim Ändern des Passworts");
+    } finally {
+      setChangingPassword(false);
     }
   };
 
@@ -212,6 +249,16 @@ export default function CustomerAccount() {
                 <p className="text-sm text-muted-foreground">Account-Status</p>
                 {getStatusBadge(customer?.status || "unknown")}
               </div>
+            </div>
+            <div className="pt-4 border-t">
+              <Button
+                onClick={() => setShowPasswordDialog(true)}
+                variant="outline"
+                className="gap-2"
+              >
+                <KeyRound className="h-4 w-4" />
+                Passwort ändern
+              </Button>
             </div>
           </CardContent>
         </Card>
@@ -302,6 +349,57 @@ export default function CustomerAccount() {
                 </>
               ) : (
                 "Jetzt kündigen"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={showPasswordDialog} onOpenChange={setShowPasswordDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Passwort ändern</AlertDialogTitle>
+            <AlertDialogDescription>
+              Geben Sie Ihr neues Passwort ein (mindestens 6 Zeichen).
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="new-password">Neues Passwort</Label>
+              <Input
+                id="new-password"
+                type="password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                placeholder="Neues Passwort"
+                disabled={changingPassword}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="confirm-password">Passwort bestätigen</Label>
+              <Input
+                id="confirm-password"
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                placeholder="Passwort bestätigen"
+                disabled={changingPassword}
+              />
+            </div>
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={changingPassword}>Abbrechen</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={changePassword}
+              disabled={changingPassword || !newPassword || !confirmPassword}
+            >
+              {changingPassword ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Wird geändert...
+                </>
+              ) : (
+                "Passwort ändern"
               )}
             </AlertDialogAction>
           </AlertDialogFooter>
