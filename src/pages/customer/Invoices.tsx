@@ -137,7 +137,16 @@ export default function CustomerInvoices() {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => window.open(invoice.pdf_url!, "_blank")}
+                        onClick={() => {
+                          const link = document.createElement('a');
+                          link.href = invoice.pdf_url!;
+                          link.download = `Rechnung-${invoice.stripe_invoice_id}.pdf`;
+                          link.target = '_blank';
+                          link.rel = 'noopener noreferrer';
+                          document.body.appendChild(link);
+                          link.click();
+                          document.body.removeChild(link);
+                        }}
                         className="gap-2"
                       >
                         <Download className="h-4 w-4" />

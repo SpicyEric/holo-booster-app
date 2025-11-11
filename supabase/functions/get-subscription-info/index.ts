@@ -69,6 +69,12 @@ serve(async (req) => {
       expand: ['items.data.price.product']
     });
     
+    logStep("Subscription retrieved", { 
+      id: subscription.id, 
+      currentPeriodStart: subscription.current_period_start,
+      currentPeriodEnd: subscription.current_period_end 
+    });
+    
     const item = subscription.items.data[0];
     const price = item.price;
     const product = price.product as Stripe.Product;

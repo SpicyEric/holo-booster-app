@@ -222,15 +222,19 @@ export default function Billing() {
                           <Button
                             variant="outline"
                             size="sm"
-                            asChild
+                            onClick={() => {
+                              const link = document.createElement('a');
+                              link.href = invoice.pdf_url!;
+                              link.download = `Rechnung-${invoice.stripe_invoice_id}.pdf`;
+                              link.target = '_blank';
+                              link.rel = 'noopener noreferrer';
+                              document.body.appendChild(link);
+                              link.click();
+                              document.body.removeChild(link);
+                            }}
                           >
-                            <a
-                              href={invoice.pdf_url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                            >
-                              <ExternalLink className="h-4 w-4" />
-                            </a>
+                            <FileText className="h-4 w-4 mr-1" />
+                            PDF
                           </Button>
                         )}
                       </div>
