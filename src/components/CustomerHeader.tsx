@@ -7,7 +7,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { Menu, User, FileText, MessageSquare, Star, LogOut, Home } from "lucide-react";
+import { Menu, User, FileText, MessageSquare, Star, LogOut, Home, Zap } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import qraitLogo from '@/assets/qrait-logo-full.png';
 
@@ -21,6 +21,7 @@ export function CustomerHeader() {
 
   const menuItems = [
     { label: "Dashboard", icon: Home, path: "/customer" },
+    { label: "Paket wechseln", icon: Zap, path: "/customer/upgrade" },
     { label: "Kontoinformationen", icon: User, path: "/customer/account" },
     { label: "Rechnungen", icon: FileText, path: "/customer/invoices" },
     { label: "SMS-Kampagnen", icon: MessageSquare, path: "/customer/sms-campaigns" },

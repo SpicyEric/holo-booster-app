@@ -24,6 +24,7 @@ import PartnerDashboard from "./pages/partner/Dashboard";
 import CustomerDashboard from "./pages/customer/Dashboard";
 import CustomerAccount from "./pages/customer/Account";
 import CustomerInvoices from "./pages/customer/Invoices";
+import CustomerUpgrade from "./pages/customer/Upgrade";
 import SmsCampaigns from "./pages/customer/SmsCampaigns";
 import GoogleReviews from "./pages/customer/GoogleReviews";
 import Scan from "./pages/Scan";
@@ -60,6 +61,7 @@ const App = () => (
           <Route path="/customer" element={<CustomerDashboard />} />
           <Route path="/customer/account" element={<CustomerAccount />} />
           <Route path="/customer/invoices" element={<CustomerInvoices />} />
+          <Route path="/customer/upgrade" element={<CustomerUpgrade />} />
           <Route path="/customer/sms-campaigns" element={<SmsCampaigns />} />
           <Route path="/customer/google-reviews" element={<GoogleReviews />} />
           <Route path="/merchant" element={<MerchantDashboard />} />
