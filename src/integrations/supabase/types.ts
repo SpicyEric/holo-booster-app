@@ -14,6 +14,107 @@ export type Database = {
   }
   public: {
     Tables: {
+      campaign_messages: {
+        Row: {
+          campaign_id: string
+          contact_id: string
+          cost_minor: number | null
+          created_at: string
+          delivered_at: string | null
+          error_code: string | null
+          id: string
+          provider_msg_id: string | null
+          sent_at: string | null
+          status: string
+        }
+        Insert: {
+          campaign_id: string
+          contact_id: string
+          cost_minor?: number | null
+          created_at?: string
+          delivered_at?: string | null
+          error_code?: string | null
+          id?: string
+          provider_msg_id?: string | null
+          sent_at?: string | null
+          status?: string
+        }
+        Update: {
+          campaign_id?: string
+          contact_id?: string
+          cost_minor?: number | null
+          created_at?: string
+          delivered_at?: string | null
+          error_code?: string | null
+          id?: string
+          provider_msg_id?: string | null
+          sent_at?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "campaign_messages_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "campaign_messages_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      campaigns: {
+        Row: {
+          add_unsubscribe: boolean | null
+          created_at: string
+          created_by_user_id: string | null
+          customer_id: string
+          est_recipients: number
+          id: string
+          message_text: string
+          package_tier: string
+          segment: Json
+          status: string
+        }
+        Insert: {
+          add_unsubscribe?: boolean | null
+          created_at?: string
+          created_by_user_id?: string | null
+          customer_id: string
+          est_recipients: number
+          id?: string
+          message_text: string
+          package_tier: string
+          segment: Json
+          status?: string
+        }
+        Update: {
+          add_unsubscribe?: boolean | null
+          created_at?: string
+          created_by_user_id?: string | null
+          customer_id?: string
+          est_recipients?: number
+          id?: string
+          message_text?: string
+          package_tier?: string
+          segment?: Json
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "campaigns_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       claims: {
         Row: {
           code: string
@@ -141,9 +242,13 @@ export type Database = {
           customer_id: string
           deleted_at: string | null
           email: string | null
+          first_scan_at: string | null
           id: string
+          last_scan_at: string | null
           opt_in: boolean
+          opted_out_at: string | null
           phone: string | null
+          scan_count: number | null
           unsubscribe_token: string
         }
         Insert: {
@@ -151,9 +256,13 @@ export type Database = {
           customer_id: string
           deleted_at?: string | null
           email?: string | null
+          first_scan_at?: string | null
           id?: string
+          last_scan_at?: string | null
           opt_in?: boolean
+          opted_out_at?: string | null
           phone?: string | null
+          scan_count?: number | null
           unsubscribe_token?: string
         }
         Update: {
@@ -161,9 +270,13 @@ export type Database = {
           customer_id?: string
           deleted_at?: string | null
           email?: string | null
+          first_scan_at?: string | null
           id?: string
+          last_scan_at?: string | null
           opt_in?: boolean
+          opted_out_at?: string | null
           phone?: string | null
+          scan_count?: number | null
           unsubscribe_token?: string
         }
         Relationships: [
@@ -767,6 +880,44 @@ export type Database = {
             columns: ["customer_id"]
             isOneToOne: false
             referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      stripe_sms_orders: {
+        Row: {
+          amount_cents: number
+          campaign_id: string
+          checkout_session_id: string
+          created_at: string
+          id: string
+          paid_at: string | null
+          status: string
+        }
+        Insert: {
+          amount_cents: number
+          campaign_id: string
+          checkout_session_id: string
+          created_at?: string
+          id?: string
+          paid_at?: string | null
+          status?: string
+        }
+        Update: {
+          amount_cents?: number
+          campaign_id?: string
+          checkout_session_id?: string
+          created_at?: string
+          id?: string
+          paid_at?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stripe_sms_orders_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
             referencedColumns: ["id"]
           },
         ]

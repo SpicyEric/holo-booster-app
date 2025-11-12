@@ -175,6 +175,52 @@ const event = await stripe.webhooks.constructEventAsync(
             }
           }
         }
+
+        // Handle SMS campaign payments
+        if (metadata.type === 'sms_campaign' && metadata.campaign_id) {
+          console.log("[WEBHOOK] SMS Campaign payment detected:", metadata.campaign_id);
+          
+          // Update SMS order status
+          await supabase
+            .from('stripe_sms_orders')
+            .update({ 
+              status: 'paid',
+              paid_at: new Date().toISOString()
+            })
+            .eq('checkout_session_id', session.id);
+          
+          // Update campaign status
+          await supabase
+            .from('campaigns')
+            .update({ status: 'paid' })
+            .eq('id', metadata.campaign_id);
+          
+          console.log("[WEBHOOK] Campaign status updated to paid, triggering send");
+          
+          // Trigger send in background
+          try {
+            const sendResponse = await fetch(
+              `${Deno.env.get("SUPABASE_URL")}/functions/v1/send-campaign`,
+              {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  "Authorization": `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
+                },
+                body: JSON.stringify({ campaignId: metadata.campaign_id }),
+              }
+            );
+            
+            if (!sendResponse.ok) {
+              console.error("[WEBHOOK] Failed to trigger campaign send:", await sendResponse.text());
+            } else {
+              console.log("[WEBHOOK] Campaign send triggered successfully");
+            }
+          } catch (sendError) {
+            console.error("[WEBHOOK] Error triggering campaign send:", sendError);
+          }
+        }
+
         break;
       }
 

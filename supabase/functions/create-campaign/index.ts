@@ -1,0 +1,75 @@
+import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
+
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+};
+
+serve(async (req) => {
+  if (req.method === 'OPTIONS') {
+    return new Response(null, { headers: corsHeaders });
+  }
+
+  try {
+    const supabaseClient = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+      { global: { headers: { Authorization: req.headers.get('Authorization')! } } }
+    );
+
+    const { data: { user } } = await supabaseClient.auth.getUser();
+    if (!user) throw new Error('Not authenticated');
+
+    const { data: customerUser } = await supabaseClient
+      .from('customer_users')
+      .select('customer_id')
+      .eq('user_id', user.id)
+      .single();
+
+    if (!customerUser) throw new Error('No customer found for user');
+
+    const { segment, messageText, addUnsubscribe, packageTier, estRecipients } = await req.json();
+
+    // Validate message length
+    if (!messageText || messageText.length > 612) {
+      throw new Error('Message text must be between 1 and 612 characters');
+    }
+
+    // Validate package tier
+    if (!['100', '300', '500', '1000'].includes(packageTier)) {
+      throw new Error('Invalid package tier');
+    }
+
+    // Create campaign
+    const { data: campaign, error } = await supabaseClient
+      .from('campaigns')
+      .insert({
+        customer_id: customerUser.customer_id,
+        created_by_user_id: user.id,
+        segment,
+        est_recipients: estRecipients,
+        package_tier: packageTier,
+        message_text: messageText,
+        add_unsubscribe: addUnsubscribe || false,
+        status: 'payment_required'
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    return new Response(
+      JSON.stringify({ campaign }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+
+  } catch (error) {
+    console.error('Error creating campaign:', error);
+    const message = error instanceof Error ? error.message : 'Unknown error';
+    return new Response(
+      JSON.stringify({ error: message }),
+      { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+  }
+});
