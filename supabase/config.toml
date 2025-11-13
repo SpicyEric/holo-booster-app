@@ -24,3 +24,9 @@ verify_jwt = false
 [functions.sendWelcomeEmail]
 verify_jwt = false
 
+[functions.google-oauth-callback]
+verify_jwt = false
+
+[functions.fetch-google-reviews]
+verify_jwt = false
+
