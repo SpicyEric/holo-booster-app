@@ -180,6 +180,27 @@ const event = await stripe.webhooks.constructEventAsync(
         if (metadata.type === 'sms_campaign' && metadata.campaign_id) {
           console.log("[WEBHOOK] SMS Campaign payment detected:", metadata.campaign_id);
           
+          // Get campaign to find customer_id
+          const { data: campaign } = await supabase
+            .from('campaigns')
+            .select('customer_id')
+            .eq('id', metadata.campaign_id)
+            .single();
+
+          if (campaign) {
+            // Create invoice for SMS campaign payment
+            await supabase.from("invoices").insert({
+              customer_id: campaign.customer_id,
+              stripe_invoice_id: `sms_${session.id}`, // Use session ID as invoice reference
+              pdf_url: null, // One-time payments don't generate PDF invoices automatically
+              total_amount_cents: session.amount_total || 0,
+              currency: (session.currency || 'eur').toUpperCase(),
+              status: "paid",
+              issued_at: new Date().toISOString(),
+            });
+            console.log("[WEBHOOK] SMS Campaign invoice created");
+          }
+
           // Update SMS order status
           await supabase
             .from('stripe_sms_orders')
