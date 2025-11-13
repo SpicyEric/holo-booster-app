@@ -32,12 +32,15 @@ serve(async (req) => {
     const { segment, messageText, addUnsubscribe, packageTier, estRecipients } = await req.json();
 
     // Validate message length
-    if (!messageText || messageText.length > 612) {
-      throw new Error('Message text must be between 1 and 612 characters');
+    if (!messageText || messageText.length > 120) {
+      throw new Error('Message text must be between 1 and 120 characters');
     }
 
+    // Remove emojis
+    const cleanText = messageText.replace(/[\u{1F600}-\u{1F64F}|\u{1F300}-\u{1F5FF}|\u{1F680}-\u{1F6FF}|\u{2600}-\u{26FF}|\u{2700}-\u{27BF}|\u{1F900}-\u{1F9FF}|\u{1F1E0}-\u{1F1FF}]/gu, '');
+
     // Validate package tier
-    if (!['100', '300', '500', '1000'].includes(packageTier)) {
+    if (!['100', '250', '500', '800', '1200'].includes(packageTier)) {
       throw new Error('Invalid package tier');
     }
 
@@ -50,7 +53,7 @@ serve(async (req) => {
         segment,
         est_recipients: estRecipients,
         package_tier: packageTier,
-        message_text: messageText,
+        message_text: cleanText,
         add_unsubscribe: addUnsubscribe || false,
         status: 'payment_required'
       })

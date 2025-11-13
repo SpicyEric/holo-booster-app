@@ -92,10 +92,11 @@ serve(async (req) => {
     
     // Recommend package tier
     let recommendedTier = '100';
-    if (estRecipients > 1000) recommendedTier = '1000';
-    else if (estRecipients > 500) recommendedTier = '1000';
-    else if (estRecipients > 300) recommendedTier = '500';
-    else if (estRecipients > 100) recommendedTier = '300';
+    if (estRecipients > 1000) recommendedTier = '1200';
+    else if (estRecipients > 800) recommendedTier = '1200';
+    else if (estRecipients > 500) recommendedTier = '800';
+    else if (estRecipients > 250) recommendedTier = '500';
+    else if (estRecipients > 100) recommendedTier = '250';
 
     return new Response(
       JSON.stringify({ estRecipients, recommendedTier }),

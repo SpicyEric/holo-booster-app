@@ -9,24 +9,29 @@ const corsHeaders = {
 
 const PACKAGE_PRICES: Record<string, { price_id: string; amount_cents: number; name: string }> = {
   '100': { 
-    price_id: 'price_sms_100', 
-    amount_cents: 1500,
-    name: 'SMS Paket ≤100'
+    price_id: 'price_1SSwOiBhiBjCX9PmJhUwc6d8', 
+    amount_cents: 1785,
+    name: 'QRait SMS-Paket ≤ 100'
   },
-  '300': { 
-    price_id: 'price_sms_300', 
-    amount_cents: 4000,
-    name: 'SMS Paket ≤300'
+  '250': { 
+    price_id: 'price_1SSwRDBhiBjCX9PmvGQB0q4i', 
+    amount_cents: 4463,
+    name: 'QRait SMS-Paket ≤ 250'
   },
   '500': { 
-    price_id: 'price_sms_500', 
-    amount_cents: 6500,
-    name: 'SMS Paket ≤500'
+    price_id: 'price_1SSwTQBhiBjCX9PmI1TGSTjN', 
+    amount_cents: 8925,
+    name: 'QRait SMS-Paket ≤ 500'
   },
-  '1000': { 
-    price_id: 'price_sms_1000', 
-    amount_cents: 12000,
-    name: 'SMS Paket ≤1000'
+  '800': { 
+    price_id: 'price_1SSwVFBhiBjCX9Pm9Dfogl3x', 
+    amount_cents: 14280,
+    name: 'QRait SMS-Paket ≤ 800'
+  },
+  '1200': { 
+    price_id: 'price_1SSwXJBhiBjCX9PmYm60UkTr', 
+    amount_cents: 21420,
+    name: 'QRait SMS-Paket ≤ 1200'
   }
 };
 

@@ -25,10 +25,11 @@ interface Segment {
 }
 
 const PACKAGE_OPTIONS = [
-  { tier: '100', price: 15, maxRecipients: 100 },
-  { tier: '300', price: 40, maxRecipients: 300 },
-  { tier: '500', price: 65, maxRecipients: 500 },
-  { tier: '1000', price: 120, maxRecipients: 1000 },
+  { tier: '100', price: 17.85, priceId: 'price_1SSwOiBhiBjCX9PmJhUwc6d8', max: 100 },
+  { tier: '250', price: 44.63, priceId: 'price_1SSwRDBhiBjCX9PmvGQB0q4i', max: 250 },
+  { tier: '500', price: 89.25, priceId: 'price_1SSwTQBhiBjCX9PmI1TGSTjN', max: 500 },
+  { tier: '800', price: 142.80, priceId: 'price_1SSwVFBhiBjCX9Pm9Dfogl3x', max: 800 },
+  { tier: '1200', price: 214.20, priceId: 'price_1SSwXJBhiBjCX9PmYm60UkTr', max: 1200 }
 ];
 
 export default function SmsCampaigns() {
@@ -338,7 +339,7 @@ export default function SmsCampaigns() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-lg">
                 <Users className="h-5 w-5" />
-                Aktuell versendbare Handynummern
+                Aktuell verwendbare Handynummern
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -524,28 +525,27 @@ export default function SmsCampaigns() {
             <CardHeader>
               <CardTitle>Schritt 2: Nachricht verfassen</CardTitle>
               <CardDescription>
-                Schreiben Sie Ihre SMS-Nachricht (max. 612 Zeichen)
+                Schreiben Sie Ihre SMS-Nachricht (max. 120 Zeichen, nur Text, keine Emojis)
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
                 <Textarea
                   value={messageText}
-                  onChange={(e) => setMessageText(e.target.value)}
-                  placeholder="Ihre Nachricht..."
-                  rows={6}
-                  maxLength={612}
+                  onChange={(e) => {
+                    const text = e.target.value;
+                    // Remove emojis and limit to 120 chars
+                    const cleanText = text.replace(/[\u{1F600}-\u{1F64F}|\u{1F300}-\u{1F5FF}|\u{1F680}-\u{1F6FF}|\u{2600}-\u{26FF}|\u{2700}-\u{27BF}|\u{1F900}-\u{1F9FF}|\u{1F1E0}-\u{1F1FF}]/gu, '');
+                    setMessageText(cleanText.slice(0, 120));
+                  }}
+                  placeholder="Ihre Nachricht (nur Text, keine Emojis)..."
+                  rows={4}
+                  maxLength={120}
                   className="resize-none"
                 />
                 <div className="flex justify-between text-sm text-muted-foreground mt-2">
-                  <span>{getCharCount()} / 612 Zeichen</span>
-                  <span>≈ {getSMSCount()} SMS-Teil{getSMSCount() > 1 ? 'e' : ''}</span>
+                  <span>{messageText.length} / 120 Zeichen</span>
                 </div>
-                {getCharCount() <= 160 && (
-                  <p className="text-xs text-green-600 mt-1">
-                    Perfekt! Passt in eine SMS (≤160 Zeichen)
-                  </p>
-                )}
               </div>
 
               <div className="flex items-center justify-between">
@@ -597,7 +597,7 @@ export default function SmsCampaigns() {
               <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
                 {PACKAGE_OPTIONS.map((pkg) => {
                   const isRecommended = pkg.tier === recommendedTier;
-                  const canSelect = estRecipients <= pkg.maxRecipients || (useLimit && customLimit <= pkg.maxRecipients);
+                  const canSelect = estRecipients <= pkg.max || (useLimit && customLimit <= pkg.max);
                   
                   return (
                     <Card
@@ -622,7 +622,7 @@ export default function SmsCampaigns() {
                       <CardContent>
                         <div className="text-2xl font-bold">€{pkg.price}</div>
                         <p className="text-xs text-muted-foreground mt-1">
-                          Bis zu {pkg.maxRecipients} Empfänger
+                          Bis zu {pkg.max} Empfänger
                         </p>
                       </CardContent>
                     </Card>

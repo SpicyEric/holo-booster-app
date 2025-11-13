@@ -35,6 +35,7 @@ async function sendSMSBatch(
       body: JSON.stringify({
         to: phoneNumbers,
         text: message,
+        from: 'QRait',
         label: `${campaignId}`,
         foreign_id: `cmp:${campaignId}:${batchNo}`
       })
