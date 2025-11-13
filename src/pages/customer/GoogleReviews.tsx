@@ -128,7 +128,7 @@ export default function GoogleReviews() {
         return;
       }
 
-      const redirectUri = `${window.location.origin}/api/google-callback`;
+      const redirectUri = 'https://xcnfyawyoahlbhwfkyku.supabase.co/functions/v1/google-oauth-callback';
       const scope = 'https://www.googleapis.com/auth/business.manage';
       
       const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
