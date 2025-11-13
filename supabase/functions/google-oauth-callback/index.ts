@@ -27,7 +27,7 @@ serve(async (req) => {
     // Exchange code for access token
     const clientId = Deno.env.get('GOOGLE_CLIENT_ID')!;
     const clientSecret = Deno.env.get('GOOGLE_CLIENT_SECRET')!;
-    const redirectUri = `${url.origin}/api/google-callback`;
+    const redirectUri = 'https://xcnfyawyoahlbhwfkyku.supabase.co/functions/v1/google-oauth-callback';
 
     const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
       method: 'POST',
