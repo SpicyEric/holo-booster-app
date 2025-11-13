@@ -1,9 +1,205 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Star, AlertCircle } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { Star, AlertCircle, CheckCircle2, Link as LinkIcon, Clock } from "lucide-react";
 import Particles from "@/components/Particles";
 import { CustomerHeader } from "@/components/CustomerHeader";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { toast } from "sonner";
+
+interface MockReview {
+  id: string;
+  googleId: string;
+  stars: number;
+  reviewerName: string;
+  reviewText: string;
+  date: string;
+  selected: boolean;
+}
+
+const PRICE_PER_REVIEW = 79.00; // EUR netto pro erfolgreich gelöschter Bewertung
 
 export default function GoogleReviews() {
+  const { user } = useAuth();
+  const [customerId, setCustomerId] = useState<string | null>(null);
+  const [googleAccountLinked, setGoogleAccountLinked] = useState(false);
+  const [businessName, setBusinessName] = useState("Ihr Unternehmen");
+  const [reviews, setReviews] = useState<MockReview[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [orders, setOrders] = useState<any[]>([]);
+
+  useEffect(() => {
+    loadCustomerData();
+  }, [user]);
+
+  const loadCustomerData = async () => {
+    if (!user) return;
+
+    try {
+      const { data: customerUser } = await supabase
+        .from("customer_users")
+        .select("customer_id")
+        .eq("user_id", user.id)
+        .single();
+
+      if (!customerUser) return;
+
+      setCustomerId(customerUser.customer_id);
+
+      // Load customer details
+      const { data: customer } = await supabase
+        .from("customers")
+        .select("company_name")
+        .eq("id", customerUser.customer_id)
+        .single();
+
+      if (customer?.company_name) {
+        setBusinessName(customer.company_name);
+      }
+
+      // Load existing orders
+      const { data: ordersData } = await supabase
+        .from("review_deletion_orders")
+        .select("*")
+        .eq("customer_id", customerUser.customer_id)
+        .order("created_at", { ascending: false });
+
+      setOrders(ordersData || []);
+    } catch (error) {
+      console.error("Error loading customer data:", error);
+    }
+  };
+
+  const handleLinkGoogleAccount = () => {
+    // Simulate linking Google account
+    setGoogleAccountLinked(true);
+    toast.success("Google-Konto erfolgreich verknüpft!");
+    
+    // Load mock reviews (in production, this would fetch from Google Business Profile API)
+    loadMockReviews();
+  };
+
+  const loadMockReviews = () => {
+    setLoading(true);
+    // Mock reviews with 1-3 stars only
+    const mockReviews: MockReview[] = [
+      {
+        id: "1",
+        googleId: "review_123456",
+        stars: 1,
+        reviewerName: "Max Mustermann",
+        reviewText: "Sehr unzufrieden mit dem Service. Lange Wartezeiten und unfreundliches Personal.",
+        date: "2024-03-15",
+        selected: false
+      },
+      {
+        id: "2",
+        googleId: "review_123457",
+        stars: 2,
+        reviewerName: "Anna Schmidt",
+        reviewText: "Durchschnittliche Qualität, Preis-Leistung stimmt nicht.",
+        date: "2024-03-10",
+        selected: false
+      },
+      {
+        id: "3",
+        googleId: "review_123458",
+        stars: 3,
+        reviewerName: "Thomas Weber",
+        reviewText: "Okay, aber nichts Besonderes.",
+        date: "2024-03-05",
+        selected: false
+      },
+      {
+        id: "4",
+        googleId: "review_123459",
+        stars: 1,
+        reviewerName: "Lisa Müller",
+        reviewText: "Katastrophale Erfahrung. Nicht zu empfehlen!",
+        date: "2024-02-28",
+        selected: false
+      }
+    ];
+    
+    setTimeout(() => {
+      setReviews(mockReviews);
+      setLoading(false);
+    }, 1000);
+  };
+
+  const toggleReviewSelection = (reviewId: string) => {
+    setReviews(reviews.map(r => 
+      r.id === reviewId ? { ...r, selected: !r.selected } : r
+    ));
+  };
+
+  const selectedCount = reviews.filter(r => r.selected).length;
+  const maxCost = selectedCount * PRICE_PER_REVIEW;
+
+  const handleSubmitOrder = async () => {
+    if (!customerId || selectedCount === 0) return;
+
+    setSubmitting(true);
+    try {
+      const selectedReviews = reviews.filter(r => r.selected);
+      
+      const { data: order, error } = await supabase
+        .from("review_deletion_orders")
+        .insert({
+          customer_id: customerId,
+          created_by_user_id: user?.id,
+          status: "eingereicht",
+          google_account_linked: googleAccountLinked,
+          google_business_name: businessName,
+          total_reviews_selected: selectedCount,
+          max_cost_cents: Math.round(maxCost * 100),
+          reviews_data: selectedReviews.map(r => ({
+            googleId: r.googleId,
+            stars: r.stars,
+            reviewerName: r.reviewerName,
+            reviewText: r.reviewText,
+            date: r.date
+          }))
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      // Create individual review entries
+      for (const review of selectedReviews) {
+        await supabase
+          .from("review_deletion_results")
+          .insert({
+            order_id: order.id,
+            review_google_id: review.googleId,
+            review_stars: review.stars,
+            review_text: review.reviewText,
+            review_date: review.date,
+            reviewer_name: review.reviewerName
+          });
+      }
+
+      toast.success("Löschauftrag erfolgreich eingereicht!");
+      
+      // Reset selections
+      setReviews(reviews.map(r => ({ ...r, selected: false })));
+      loadCustomerData();
+      
+    } catch (error: any) {
+      console.error("Error submitting order:", error);
+      toast.error("Fehler beim Einreichen des Auftrags");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <Particles 
@@ -21,42 +217,306 @@ export default function GoogleReviews() {
       
       <CustomerHeader />
 
-      <main className="container mx-auto px-4 py-8 space-y-6 relative z-10 max-w-4xl">
-        <h1 className="text-3xl font-bold">Google-Bewertungen löschen lassen</h1>
+      <main className="container mx-auto px-4 py-8 space-y-6 relative z-10 max-w-6xl">
+        <h1 className="text-3xl font-bold">Die Löschung von Fake Google-Bewertungen</h1>
 
+        {/* Informations-Sektion */}
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Star className="h-5 w-5" />
-              Service zur Löschung negativer Bewertungen
-            </CardTitle>
+            <CardTitle>Für welche Bewertungen gilt dies?</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="p-4 bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-lg">
-              <div className="flex items-start gap-3">
-                <AlertCircle className="w-5 h-5 text-blue-600 dark:text-blue-400 mt-0.5" />
-                <div>
-                  <p className="font-medium text-blue-900 dark:text-blue-100">Kommende Funktion</p>
-                  <p className="text-sm text-blue-800 dark:text-blue-200">
-                    Wir arbeiten daran, Ihnen einen umfassenden Service zur rechtlichen Prüfung und Löschung unberechtigter Google-Bewertungen anzubieten.
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div className="space-y-3">
-              <h3 className="font-semibold">Geplante Features:</h3>
-              <ul className="list-disc list-inside space-y-2 text-muted-foreground">
-                <li>Rechtliche Prüfung von Bewertungen</li>
-                <li>Unterstützung bei der Kontaktaufnahme mit Google</li>
-                <li>Dokumentation und Nachverfolgung</li>
-                <li>Beratung zu präventiven Maßnahmen</li>
-              </ul>
-            </div>
-
-            <p className="text-sm text-muted-foreground pt-4">
-              Bei dringenden Fällen können Sie sich bereits jetzt an unseren Support wenden.
+            <p className="text-muted-foreground">
+              Dies betrifft alle Bewertungen, bei denen Sie nicht sicher wissen, ob der Bewerter eine eigene Erfahrung mit Ihrem Unternehmen gemacht hat. Aufgrund der Anonymität der Bewertungen dürfte eine sichere Zuordnung fast nie möglich sein.
             </p>
+
+            <div className="space-y-3 pt-4">
+              <div>
+                <h3 className="font-semibold mb-2">Ablauf:</h3>
+                <p className="text-sm text-muted-foreground">
+                  Wir kontaktieren Google und weisen darauf hin, dass bei den betroffenen Bewertungen unklar ist, ob überhaupt ein Geschäftskontakt/eine eigene Erfahrung des Bewerters bestand. Unsere Dienstleistung beschränkt sich ausschließlich auf diesen konkreten Vorgang!
+                </p>
+              </div>
+
+              <div>
+                <h3 className="font-semibold mb-2">Erfolgschancen:</h3>
+                <p className="text-sm text-muted-foreground">
+                  Die durchschnittliche Löschquote liegt bei ca. 90%.
+                </p>
+              </div>
+
+              <div>
+                <h3 className="font-semibold mb-2">Bezahlung:</h3>
+                <p className="text-sm text-muted-foreground">
+                  Nach Abschluss des Vorgangs erhalten Sie eine Übersicht der gelöschten Bewertungen. Zudem bezahlen Sie nur für erfolgreich gelöschte Bewertungen.
+                </p>
+              </div>
+
+              <div>
+                <h3 className="font-semibold mb-2">Bearbeitungszeit:</h3>
+                <p className="text-sm text-muted-foreground">
+                  Nach Auftragseingang dauert es typischerweise 14 Tage, bis Sie Ihr Ergebnis zurückbekommen.
+                </p>
+              </div>
+
+              <Alert className="mt-4">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>
+                  <strong>Hinweis:</strong> Wir prüfen nicht den Inhalt einer Bewertung und bieten keine Rechtsdienstleistung/Rechtsberatung an. Die Dienstleistung beschränkt sich auf den oben beschriebenen Vorgang.
+                </AlertDescription>
+              </Alert>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Wichtiger Hinweis vor der Auftragserstellung */}
+        <Alert className="border-yellow-500 bg-yellow-50 dark:bg-yellow-950">
+          <AlertCircle className="h-4 w-4 text-yellow-600 dark:text-yellow-400" />
+          <AlertDescription className="text-yellow-800 dark:text-yellow-200">
+            <strong>Achtung:</strong> Bewertungen, die von Ihrem Google-Profil aus beantwortet wurden, werden von Google pauschal nicht gelöscht. Sie können daher nur Bewertungen beauftragen, die vom Inhaber des Google-Profils nicht beantwortet sind. Stellen Sie sicher, dass Sie die Antworten unter den Bewertungen entfernt haben, bevor Sie den Auftrag einreichen.
+          </AlertDescription>
+        </Alert>
+
+        {/* Google-Konto Verknüpfung */}
+        {!googleAccountLinked ? (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <LinkIcon className="h-5 w-5" />
+                Google-Konto verknüpfen
+              </CardTitle>
+              <CardDescription>
+                Verknüpfe dein Google-Unternehmensprofil, um deine 1–3 Sterne Bewertungen direkt hier auszuwählen und zur Löschung einzureichen.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button onClick={handleLinkGoogleAccount} className="w-full sm:w-auto">
+                <LinkIcon className="mr-2 h-4 w-4" />
+                Google-Konto verknüpfen
+              </Button>
+            </CardContent>
+          </Card>
+        ) : (
+          <>
+            {/* Verknüpfungsstatus */}
+            <Card>
+              <CardContent className="pt-6">
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 className="h-5 w-5 text-green-600" />
+                  <span className="font-medium">Google-Konto verknüpft</span>
+                  <span className="text-muted-foreground">({businessName})</span>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Bewertungs-Auswahl */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Wähle die Google-Bewertungen aus, die du löschen lassen möchtest</CardTitle>
+                <CardDescription>
+                  Es werden nur Bewertungen mit 1–3 Sternen angezeigt, da 4–5 Sterne Bewertungen von Google pauschal nicht zur Überprüfung akzeptiert werden.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {loading ? (
+                  <div className="flex items-center justify-center py-8">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                  </div>
+                ) : reviews.length === 0 ? (
+                  <p className="text-center text-muted-foreground py-8">
+                    Keine 1–3 Sterne Bewertungen gefunden.
+                  </p>
+                ) : (
+                  <div className="space-y-4">
+                    {reviews.map((review) => (
+                      <div 
+                        key={review.id} 
+                        className="flex items-start gap-4 p-4 border rounded-lg hover:bg-accent/50 transition-colors"
+                      >
+                        <Checkbox
+                          checked={review.selected}
+                          onCheckedChange={() => toggleReviewSelection(review.id)}
+                          className="mt-1"
+                        />
+                        <div className="flex-1 space-y-2">
+                          <div className="flex items-center gap-3 flex-wrap">
+                            <div className="flex">
+                              {[...Array(5)].map((_, i) => (
+                                <Star
+                                  key={i}
+                                  className={`h-4 w-4 ${
+                                    i < review.stars
+                                      ? "fill-yellow-400 text-yellow-400"
+                                      : "fill-gray-200 text-gray-200"
+                                  }`}
+                                />
+                              ))}
+                            </div>
+                            <span className="text-sm font-medium">{review.reviewerName}</span>
+                            <span className="text-xs text-muted-foreground">{review.date}</span>
+                          </div>
+                          <p className="text-sm text-muted-foreground">{review.reviewText}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Auswahl und Kosten */}
+            {reviews.length > 0 && (
+              <Card>
+                <CardContent className="pt-6 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <span className="font-medium">Ausgewählte Bewertungen:</span>
+                    <Badge variant="secondary" className="text-lg px-3 py-1">
+                      {selectedCount}
+                    </Badge>
+                  </div>
+
+                  {selectedCount > 0 && (
+                    <Alert>
+                      <AlertDescription className="space-y-2">
+                        <div className="font-semibold text-lg">
+                          Maximal mögliche Kosten: {maxCost.toFixed(2)} € netto
+                        </div>
+                        <p className="text-sm">
+                          <strong>Abrechnung 100% erfolgsbasiert:</strong> Du zahlst nur für Bewertungen, die tatsächlich gelöscht werden. Sollte z.B. nur 2 von 3 Bewertungen erfolgreich gelöscht werden, zahlst du auch nur diese 2.
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          Preis pro erfolgreich gelöschter Bewertung: {PRICE_PER_REVIEW.toFixed(2)} € netto
+                        </p>
+                      </AlertDescription>
+                    </Alert>
+                  )}
+
+                  <Button
+                    onClick={handleSubmitOrder}
+                    disabled={selectedCount === 0 || submitting}
+                    className="w-full"
+                    size="lg"
+                  >
+                    {submitting ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                        Wird eingereicht...
+                      </>
+                    ) : (
+                      `Löschauftrag für ${selectedCount} Bewertung${selectedCount !== 1 ? 'en' : ''} stellen`
+                    )}
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
+          </>
+        )}
+
+        {/* Meine Löschaufträge & Reportings */}
+        {orders.length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Meine Löschaufträge & Reportings</CardTitle>
+              <CardDescription>
+                Hier finden Sie alle Ihre eingereichten Aufträge und die Ergebnisse der Löschungen.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {orders.map((order) => (
+                  <div key={order.id} className="border rounded-lg p-4 space-y-2">
+                    <div className="flex items-center justify-between flex-wrap gap-2">
+                      <div className="flex items-center gap-2">
+                        <Clock className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-sm text-muted-foreground">
+                          {new Date(order.created_at).toLocaleDateString('de-DE')}
+                        </span>
+                      </div>
+                      <Badge variant={
+                        order.status === 'abgeschlossen' ? 'default' :
+                        order.status === 'in_bearbeitung' ? 'secondary' :
+                        order.status === 'storniert' ? 'destructive' :
+                        'outline'
+                      }>
+                        {order.status}
+                      </Badge>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4 text-sm">
+                      <div>
+                        <span className="text-muted-foreground">Bewertungen:</span>
+                        <span className="ml-2 font-medium">{order.total_reviews_selected}</span>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground">Max. Kosten:</span>
+                        <span className="ml-2 font-medium">{(order.max_cost_cents / 100).toFixed(2)} €</span>
+                      </div>
+                    </div>
+                    {order.status === 'abgeschlossen' && order.actual_cost_cents && (
+                      <div className="pt-2 border-t">
+                        <div className="text-sm">
+                          <span className="text-muted-foreground">Tatsächliche Kosten:</span>
+                          <span className="ml-2 font-medium text-green-600">
+                            {(order.actual_cost_cents / 100).toFixed(2)} €
+                          </span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* FAQ Sektion */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Häufige Fragen</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Accordion type="single" collapsible className="w-full">
+              <AccordionItem value="item-1">
+                <AccordionTrigger>Wird der Bewerter kontaktiert?</AccordionTrigger>
+                <AccordionContent>
+                  Der Bewerter wird nicht direkt kontaktiert. Die Bewertungen werden bei Google – mit dem Ziel die Echtheit der Bewertung überprüfen zu lassen – gemeldet. Google entscheidet dann in eigenem Ermessen, ob sie den Bewerter kontaktieren oder nicht.
+                </AccordionContent>
+              </AccordionItem>
+
+              <AccordionItem value="item-2">
+                <AccordionTrigger>Wie wahrscheinlich ist eine Löschung?</AccordionTrigger>
+                <AccordionContent>
+                  Die durchschnittliche Löschquote liegt bei 90%. Demnach liegen die Chancen einer Löschung grundsätzlich sehr gut.
+                </AccordionContent>
+              </AccordionItem>
+
+              <AccordionItem value="item-3">
+                <AccordionTrigger>Wie ist der Ablauf?</AccordionTrigger>
+                <AccordionContent>
+                  Google wird kontaktiert und darum gebeten die Echtheit der Bewertung/en zu überprüfen. Unsere Dienstleistung beschränkt sich ausschließlich auf diesen konkreten Vorgang. Google entscheidet dann, ob die Bewertungen in Ordnung sind oder nicht. Dieser Vorgang dauert ca. 2 Wochen. Anschließend erhalten wir eine Rückmeldung von Google, welche Bewertungen gelöscht wurden. Erfahrungsgemäß werden ca. 90 Prozent gelöscht, da sie FAKE sind.
+                </AccordionContent>
+              </AccordionItem>
+
+              <AccordionItem value="item-4">
+                <AccordionTrigger>Welche Bewertungen können gelöscht werden?</AccordionTrigger>
+                <AccordionContent>
+                  Grundsätzlich können alle Bewertungen zwischen 1 und 3 Sterne – mit dem Ziel die Echtheit einer Bewertung zu überprüfen – gemeldet werden. Die Löschung von 4 und 5 Sterne Bewertungen wird von Google pauschal abgelehnt.
+                </AccordionContent>
+              </AccordionItem>
+
+              <AccordionItem value="item-5">
+                <AccordionTrigger>Warum ist eine Bewertung nicht gelöscht worden?</AccordionTrigger>
+                <AccordionContent>
+                  Google entscheidet in eigenem Ermessen, ob eine Bewertung gelöscht wird oder nicht. Unser Vorgang beschränkt sich darauf die Echtheit einer Bewertung überprüfen zu lassen. Google teilt sodann mit, ob eine Bewertung gelöscht wurde oder nicht. Darüberhinaus können Sie rechtlich gegen eine Bewertung vorgehen. Hierzu müssen Sie einen Anwalt konsultieren.
+                </AccordionContent>
+              </AccordionItem>
+
+              <AccordionItem value="item-6">
+                <AccordionTrigger>Was passiert, wenn der Bewerter nach Löschung erneut bewertet?</AccordionTrigger>
+                <AccordionContent>
+                  Erfahrungsgemäß kommt es lediglich in Ausnahmefällen (unter 1% der Fälle), nach erfolgreicher Löschung, zur erneuten Bewertung desselben Verfassers.
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
           </CardContent>
         </Card>
       </main>
