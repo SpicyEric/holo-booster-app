@@ -583,6 +583,7 @@ export type Database = {
           currency: string | null
           customer_id: string | null
           id: string
+          invoice_type: string | null
           issued_at: string | null
           pdf_url: string | null
           status: string | null
@@ -594,6 +595,7 @@ export type Database = {
           currency?: string | null
           customer_id?: string | null
           id?: string
+          invoice_type?: string | null
           issued_at?: string | null
           pdf_url?: string | null
           status?: string | null
@@ -605,6 +607,7 @@ export type Database = {
           currency?: string | null
           customer_id?: string | null
           id?: string
+          invoice_type?: string | null
           issued_at?: string | null
           pdf_url?: string | null
           status?: string | null

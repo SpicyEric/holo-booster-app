@@ -191,11 +191,12 @@ const event = await stripe.webhooks.constructEventAsync(
             // Create invoice for SMS campaign payment
             await supabase.from("invoices").insert({
               customer_id: campaign.customer_id,
-              stripe_invoice_id: `sms_${session.id}`, // Use session ID as invoice reference
-              pdf_url: null, // One-time payments don't generate PDF invoices automatically
+              stripe_invoice_id: `sms_${session.id}`,
+              pdf_url: null,
               total_amount_cents: session.amount_total || 0,
               currency: (session.currency || 'eur').toUpperCase(),
               status: "paid",
+              invoice_type: "sms_campaign",
               issued_at: new Date().toISOString(),
             });
             console.log("[WEBHOOK] SMS Campaign invoice created");
@@ -307,6 +308,7 @@ const event = await stripe.webhooks.constructEventAsync(
           total_amount_cents: invoice.amount_paid,
           currency: invoice.currency.toUpperCase(),
           status: "paid",
+          invoice_type: "subscription",
           issued_at: new Date(invoice.created * 1000).toISOString(),
         });
 
@@ -661,6 +663,38 @@ Stand: ${new Date().toLocaleDateString("de-DE")}`;
             .eq("stripe_customer_id", customer.id);
 
           console.log("[WEBHOOK] Customer marked as deleted in database");
+        }
+        break;
+      }
+
+      case "charge.refunded": {
+        const charge = event.data.object as Stripe.Charge;
+        console.log("[WEBHOOK] Charge refunded:", charge.id);
+
+        // Find customer
+        const { data: refundCustomer } = await supabase
+          .from("customers")
+          .select("id, name, email")
+          .eq("stripe_customer_id", charge.customer as string)
+          .single();
+
+        if (refundCustomer) {
+          // Get refund details
+          const refund = charge.refunds?.data?.[0];
+          if (refund) {
+            // Create refund invoice
+            await supabase.from("invoices").insert({
+              customer_id: refundCustomer.id,
+              stripe_invoice_id: `refund_${refund.id}`,
+              pdf_url: null,
+              total_amount_cents: -refund.amount, // Negative amount for refund
+              currency: refund.currency.toUpperCase(),
+              status: "paid",
+              invoice_type: "refund",
+              issued_at: new Date(refund.created * 1000).toISOString(),
+            });
+            console.log("[WEBHOOK] Refund invoice created");
+          }
         }
         break;
       }

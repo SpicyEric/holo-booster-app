@@ -17,6 +17,7 @@ interface Invoice {
   currency: string;
   status: string;
   issued_at: string;
+  invoice_type: string;
 }
 
 export default function CustomerInvoices() {
@@ -24,6 +25,7 @@ export default function CustomerInvoices() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [invoices, setInvoices] = useState<Invoice[]>([]);
+  const [filterType, setFilterType] = useState<string>("all");
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -82,6 +84,25 @@ export default function CustomerInvoices() {
     });
   };
 
+  const getInvoiceTypeLabel = (type: string) => {
+    const labels: Record<string, string> = {
+      subscription: "Abo",
+      sms_campaign: "SMS-Kampagne",
+      refund: "Erstattung"
+    };
+    return labels[type] || type;
+  };
+
+  const getInvoiceTypeBadgeVariant = (type: string): "default" | "secondary" | "destructive" => {
+    if (type === "refund") return "destructive";
+    if (type === "sms_campaign") return "secondary";
+    return "default";
+  };
+
+  const filteredInvoices = filterType === "all" 
+    ? invoices 
+    : invoices.filter(inv => inv.invoice_type === filterType);
+
   if (authLoading || loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -112,22 +133,71 @@ export default function CustomerInvoices() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Alle Rechnungen</CardTitle>
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <CardTitle>Alle Rechnungen</CardTitle>
+              <div className="flex gap-2">
+                <Button
+                  variant={filterType === "all" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setFilterType("all")}
+                >
+                  Alle
+                </Button>
+                <Button
+                  variant={filterType === "subscription" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setFilterType("subscription")}
+                >
+                  Abo
+                </Button>
+                <Button
+                  variant={filterType === "sms_campaign" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setFilterType("sms_campaign")}
+                >
+                  SMS-Kampagnen
+                </Button>
+                <Button
+                  variant={filterType === "refund" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setFilterType("refund")}
+                >
+                  Erstattungen
+                </Button>
+              </div>
+            </div>
           </CardHeader>
           <CardContent>
-            {invoices.length === 0 ? (
-              <p className="text-muted-foreground text-center py-8">Keine Rechnungen vorhanden</p>
+            {filteredInvoices.length === 0 ? (
+              <p className="text-muted-foreground text-center py-8">
+                {filterType === "all" 
+                  ? "Keine Rechnungen vorhanden" 
+                  : `Keine ${getInvoiceTypeLabel(filterType)}-Rechnungen vorhanden`}
+              </p>
             ) : (
               <div className="space-y-2">
-                {invoices.map((invoice) => (
+                {filteredInvoices.map((invoice) => (
                   <div
                     key={invoice.id}
                     className="flex items-center justify-between p-4 border rounded-lg hover:bg-accent/5 transition-colors"
                   >
-                    <div>
-                      <p className="font-medium">
-                        Rechnung vom {formatDate(invoice.issued_at)}
-                      </p>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <p className="font-medium">
+                          Rechnung vom {formatDate(invoice.issued_at)}
+                        </p>
+                        <span 
+                          className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                            invoice.invoice_type === 'refund' 
+                              ? 'bg-destructive/10 text-destructive' 
+                              : invoice.invoice_type === 'sms_campaign'
+                              ? 'bg-secondary text-secondary-foreground'
+                              : 'bg-primary/10 text-primary'
+                          }`}
+                        >
+                          {getInvoiceTypeLabel(invoice.invoice_type)}
+                        </span>
+                      </div>
                       <p className="text-sm text-muted-foreground">
                         {formatAmount(invoice.total_amount_cents, invoice.currency)} •{" "}
                         <span className="capitalize">{invoice.status}</span>
