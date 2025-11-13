@@ -173,7 +173,7 @@ serve(async (req) => {
     // Prepare message
     let finalMessage = campaign.message_text;
     if (campaign.add_unsubscribe) {
-      finalMessage += '\n\nStop mit STOP.';
+      finalMessage += '\n\nAbbestellen: https://qrait.de/delete';
     }
 
     // Create campaign_messages records

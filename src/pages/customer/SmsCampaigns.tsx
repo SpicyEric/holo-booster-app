@@ -210,7 +210,7 @@ export default function SmsCampaigns() {
         body: {
           segment: buildSegment(),
           messageText: messageText.trim(),
-          addUnsubscribe,
+          addUnsubscribe: true,
           packageTier: selectedPackage,
           estRecipients
         }
@@ -240,8 +240,8 @@ export default function SmsCampaigns() {
 
       if (error) throw error;
 
-      // Redirect to Stripe Checkout
-      window.location.href = data.checkoutUrl;
+      // Open Stripe Checkout in new tab
+      window.open(data.checkoutUrl, '_blank');
     } catch (error: any) {
       toast({
         title: "Fehler beim Checkout",
@@ -288,7 +288,8 @@ export default function SmsCampaigns() {
 
   const getCharCount = () => {
     let text = messageText;
-    if (addUnsubscribe) text += '\n\nStop mit STOP.';
+    // Unsubscribe text is always added
+    text += '\n\nAbbestellen: https://qrait.de/delete';
     return text.length;
   };
 
@@ -548,21 +549,14 @@ export default function SmsCampaigns() {
                 </div>
               </div>
 
-              <div className="flex items-center justify-between">
-                <Label htmlFor="add-unsub">Abbestell-Hinweis anhängen</Label>
-                <Switch
-                  id="add-unsub"
-                  checked={addUnsubscribe}
-                  onCheckedChange={setAddUnsubscribe}
-                />
-              </div>
-              {addUnsubscribe && (
-                <Alert>
-                  <AlertDescription className="text-xs">
-                    Folgender Text wird angehängt: "Stop mit STOP."
-                  </AlertDescription>
-                </Alert>
-              )}
+              <Alert>
+                <AlertDescription className="text-xs">
+                  <strong>Pflicht-Abbestellhinweis:</strong> Folgender Text wird automatisch angehängt:
+                  <div className="mt-2 p-2 bg-muted rounded text-xs font-mono">
+                    Abbestellen: https://qrait.de/delete
+                  </div>
+                </AlertDescription>
+              </Alert>
             </CardContent>
             <CardFooter className="flex justify-between">
               <Button variant="outline" onClick={() => setCurrentStep(1)}>

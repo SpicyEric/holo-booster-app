@@ -54,7 +54,7 @@ serve(async (req) => {
         est_recipients: estRecipients,
         package_tier: packageTier,
         message_text: cleanText,
-        add_unsubscribe: addUnsubscribe || false,
+        add_unsubscribe: true,
         status: 'payment_required'
       })
       .select()
