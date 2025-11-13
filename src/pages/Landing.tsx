@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { Scan, MessageSquare, Award, Star, TrendingUp, Users, Zap, Heart, Shield, ArrowRight } from 'lucide-react';
 import qraitLogo from '@/assets/qrait-logo-full.png';
+import heroPersonQr from '@/assets/hero-person-qr.jpg';
 import { useEffect } from 'react';
 
 const Landing = () => {
@@ -104,29 +105,52 @@ const Landing = () => {
       {/* Hero Section */}
       <section className="relative z-10 pt-32 pb-20 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
-          <div className="text-center max-w-4xl mx-auto">
+          <div className="text-center max-w-4xl mx-auto mb-12">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6 }}
             >
-              <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold mb-6 text-foreground">
+              <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold mb-8 text-foreground">
                 Mehr Google-Bewertungen.<br />
                 <span className="bg-gradient-primary bg-clip-text text-transparent">
                   Mehr Erfolg.
                 </span>
               </h1>
-              <p className="text-xl sm:text-2xl text-muted-foreground mb-8 leading-relaxed">
-                Die innovative Lösung für mehr Google-Bewertungen und nachhaltiges Wachstum Ihres Unternehmens.
-              </p>
-              <Button 
-                onClick={() => navigate('/kontakt')}
-                size="lg"
-                className="bg-foreground text-background hover:bg-foreground/90 text-lg px-8 py-6"
-              >
-                Jetzt Kontakt aufnehmen
-                <ArrowRight className="ml-2 w-5 h-5" />
-              </Button>
+            </motion.div>
+          </div>
+
+          {/* Image and Text Section */}
+          <div className="max-w-6xl mx-auto">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+              className="grid md:grid-cols-2 gap-8 items-center"
+            >
+              {/* Left: Image */}
+              <div className="flex justify-center md:justify-end">
+                <img 
+                  src={heroPersonQr} 
+                  alt="QRait Marketing System" 
+                  className="w-full max-w-md h-auto rounded-lg"
+                />
+              </div>
+
+              {/* Right: Text and Button */}
+              <div className="space-y-6">
+                <p className="text-xl sm:text-2xl text-muted-foreground leading-relaxed">
+                  Qrate ist ein automatisiertes Marketing-System für lokale Geschäfte, das Bewertungen, Kundenkontakte und Wiederbesucher erzeugt. Vollautomatisch für nachhaltiges Wachstum Ihres Unternehmens.
+                </p>
+                <Button 
+                  size="lg"
+                  onClick={() => navigate('/kontakt')}
+                  className="group"
+                >
+                  Jetzt starten
+                  <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
+                </Button>
+              </div>
             </motion.div>
           </div>
         </div>
