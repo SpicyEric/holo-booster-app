@@ -91,22 +91,19 @@ const Landing = () => {
             y: 0
           }} transition={{
             duration: 0.6
-          }} className="grid md:grid-cols-2 gap-12 items-center">
-              {/* Left: Image */}
-              <div className="flex justify-center md:justify-start">
-                <img src={heroPersonQr} alt="QRait Marketing System" className="w-full h-auto" />
-              </div>
-
-              {/* Right: Headline, Text and Button */}
+          }} className="grid md:grid-cols-2 gap-12 items-end">
+              {/* Left: Headline and Text */}
               <div className="space-y-6">
-                <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold text-foreground">
-                  Mehr Google-Bewertungen.<br />
-                  <span className="bg-gradient-primary bg-clip-text text-transparent">
-                    Mehr Erfolg.
-                  </span>
+                <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-foreground">
+                  Mehr Google-Bewertungen, <span className="bg-gradient-primary bg-clip-text text-transparent">mehr Erfolg.</span>
                 </h1>
                 <p className="text-xl sm:text-2xl text-muted-foreground leading-relaxed">QRait ist ein automatisiertes Marketing-System für lokale Geschäfte, das Bewertungen, Kundenkontakte und Wiederbesucher erzeugt. Vollautomatisch für nachhaltiges Wachstum Ihres Unternehmens.</p>
-                <Button size="lg" onClick={() => navigate('/kontakt')} className="group">
+              </div>
+
+              {/* Right: Image and Button */}
+              <div className="flex flex-col items-center gap-6">
+                <img src={heroPersonQr} alt="QRait Marketing System" className="w-full max-w-sm h-auto" />
+                <Button size="lg" onClick={() => navigate('/kontakt')} className="group w-full max-w-sm">
                   Jetzt starten
                   <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
                 </Button>
