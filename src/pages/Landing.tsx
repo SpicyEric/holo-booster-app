@@ -82,26 +82,6 @@ const Landing = () => {
       {/* Hero Section */}
       <section className="relative z-10 pt-32 pb-20 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
-          <div className="text-center max-w-4xl mx-auto mb-12">
-            <motion.div initial={{
-            opacity: 0,
-            y: 20
-          }} animate={{
-            opacity: 1,
-            y: 0
-          }} transition={{
-            duration: 0.6
-          }}>
-              <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold mb-8 text-foreground">
-                Mehr Google-Bewertungen.<br />
-                <span className="bg-gradient-primary bg-clip-text text-transparent">
-                  Mehr Erfolg.
-                </span>
-              </h1>
-            </motion.div>
-          </div>
-
-          {/* Image and Text Section */}
           <div className="max-w-6xl mx-auto">
             <motion.div initial={{
             opacity: 0,
@@ -110,16 +90,21 @@ const Landing = () => {
             opacity: 1,
             y: 0
           }} transition={{
-            duration: 0.6,
-            delay: 0.2
-          }} className="grid md:grid-cols-2 gap-8 items-center">
+            duration: 0.6
+          }} className="grid md:grid-cols-2 gap-12 items-center">
               {/* Left: Image */}
-              <div className="flex justify-center md:justify-end">
-                <img src={heroPersonQr} alt="QRait Marketing System" className="w-full max-w-md h-auto rounded-lg" />
+              <div className="flex justify-center md:justify-start">
+                <img src={heroPersonQr} alt="QRait Marketing System" className="w-full h-auto" />
               </div>
 
-              {/* Right: Text and Button */}
+              {/* Right: Headline, Text and Button */}
               <div className="space-y-6">
+                <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold text-foreground">
+                  Mehr Google-Bewertungen.<br />
+                  <span className="bg-gradient-primary bg-clip-text text-transparent">
+                    Mehr Erfolg.
+                  </span>
+                </h1>
                 <p className="text-xl sm:text-2xl text-muted-foreground leading-relaxed">QRait ist ein automatisiertes Marketing-System für lokale Geschäfte, das Bewertungen, Kundenkontakte und Wiederbesucher erzeugt. Vollautomatisch für nachhaltiges Wachstum Ihres Unternehmens.</p>
                 <Button size="lg" onClick={() => navigate('/kontakt')} className="group">
                   Jetzt starten
