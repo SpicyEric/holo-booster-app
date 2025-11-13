@@ -22,7 +22,7 @@ interface MockReview {
   selected: boolean;
 }
 
-const PRICE_PER_REVIEW = 79.00; // EUR netto pro erfolgreich gelöschter Bewertung
+const PRICE_PER_REVIEW = 19.45; // EUR brutto pro erfolgreich gelöschter Bewertung
 
 export default function GoogleReviews() {
   const { user } = useAuth();
@@ -33,9 +33,18 @@ export default function GoogleReviews() {
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [orders, setOrders] = useState<any[]>([]);
+  const [starFilter, setStarFilter] = useState<number | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const REVIEWS_PER_PAGE = 10;
 
   useEffect(() => {
     loadCustomerData();
+    
+    // Check if returning from OAuth
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('linked') === 'true' && customerId) {
+      handleLinkGoogleAccount();
+    }
   }, [user]);
 
   const loadCustomerData = async () => {
@@ -76,13 +85,67 @@ export default function GoogleReviews() {
     }
   };
 
-  const handleLinkGoogleAccount = () => {
-    // Simulate linking Google account
-    setGoogleAccountLinked(true);
-    toast.success("Google-Konto erfolgreich verknüpft!");
-    
-    // Load mock reviews (in production, this would fetch from Google Business Profile API)
-    loadMockReviews();
+  const handleLinkGoogleAccount = async () => {
+    if (!customerId) {
+      toast.error("Kunde nicht gefunden");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      // Check if account is already linked
+      const { data: customer } = await supabase
+        .from("customers")
+        .select("google_access_token, google_business_name")
+        .eq("id", customerId)
+        .single();
+
+      if (customer?.google_access_token) {
+        setGoogleAccountLinked(true);
+        setBusinessName(customer.google_business_name || businessName);
+        
+        // Fetch reviews
+        const { data: reviewsData, error: reviewsError } = await supabase.functions.invoke(
+          'fetch-google-reviews',
+          { body: { customer_id: customerId } }
+        );
+
+        if (reviewsError) throw reviewsError;
+        
+        if (reviewsData?.reviews) {
+          setReviews(reviewsData.reviews);
+          toast.success("Google-Bewertungen erfolgreich geladen!");
+        }
+        setLoading(false);
+        return;
+      }
+
+      // Redirect to Google OAuth if not linked
+      const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+      if (!clientId) {
+        toast.error("Google Client ID nicht konfiguriert");
+        setLoading(false);
+        return;
+      }
+
+      const redirectUri = `${window.location.origin}/api/google-callback`;
+      const scope = 'https://www.googleapis.com/auth/business.manage';
+      
+      const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
+        `client_id=${clientId}&` +
+        `redirect_uri=${encodeURIComponent(redirectUri)}&` +
+        `response_type=code&` +
+        `scope=${encodeURIComponent(scope)}&` +
+        `access_type=offline&` +
+        `prompt=consent&` +
+        `state=${customerId}`;
+      
+      window.location.href = authUrl;
+    } catch (error: any) {
+      console.error("Error linking Google account:", error);
+      toast.error("Fehler beim Verknüpfen des Google-Kontos");
+      setLoading(false);
+    }
   };
 
   const loadMockReviews = () => {
@@ -139,6 +202,15 @@ export default function GoogleReviews() {
     ));
   };
 
+  // Filter and paginate reviews
+  const filteredReviews = starFilter 
+    ? reviews.filter(r => r.stars === starFilter)
+    : reviews;
+  
+  const totalPages = Math.ceil(filteredReviews.length / REVIEWS_PER_PAGE);
+  const startIndex = (currentPage - 1) * REVIEWS_PER_PAGE;
+  const paginatedReviews = filteredReviews.slice(startIndex, startIndex + REVIEWS_PER_PAGE);
+  
   const selectedCount = reviews.filter(r => r.selected).length;
   const maxCost = selectedCount * PRICE_PER_REVIEW;
 
@@ -318,6 +390,35 @@ export default function GoogleReviews() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
+                {/* Filter */}
+                {reviews.length > 0 && (
+                  <div className="flex gap-2 mb-4">
+                    <Button
+                      variant={starFilter === null ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => {
+                        setStarFilter(null);
+                        setCurrentPage(1);
+                      }}
+                    >
+                      Alle
+                    </Button>
+                    {[1, 2, 3].map((stars) => (
+                      <Button
+                        key={stars}
+                        variant={starFilter === stars ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => {
+                          setStarFilter(stars);
+                          setCurrentPage(1);
+                        }}
+                      >
+                        {stars} {stars === 1 ? 'Stern' : 'Sterne'}
+                      </Button>
+                    ))}
+                  </div>
+                )}
+                
                 {loading ? (
                   <div className="flex items-center justify-center py-8">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
@@ -327,8 +428,9 @@ export default function GoogleReviews() {
                     Keine 1–3 Sterne Bewertungen gefunden.
                   </p>
                 ) : (
-                  <div className="space-y-4">
-                    {reviews.map((review) => (
+                  <>
+                    <div className="space-y-4">
+                      {paginatedReviews.map((review) => (
                       <div 
                         key={review.id} 
                         className="flex items-start gap-4 p-4 border rounded-lg hover:bg-accent/50 transition-colors"
@@ -358,8 +460,34 @@ export default function GoogleReviews() {
                           <p className="text-sm text-muted-foreground">{review.reviewText}</p>
                         </div>
                       </div>
-                    ))}
-                  </div>
+                      ))}
+                    </div>
+                    
+                    {/* Pagination */}
+                    {totalPages > 1 && (
+                      <div className="flex items-center justify-center gap-2 mt-6">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                          disabled={currentPage === 1}
+                        >
+                          Zurück
+                        </Button>
+                        <span className="text-sm text-muted-foreground">
+                          Seite {currentPage} von {totalPages}
+                        </span>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                          disabled={currentPage === totalPages}
+                        >
+                          Weiter
+                        </Button>
+                      </div>
+                    )}
+                  </>
                 )}
               </CardContent>
             </Card>
@@ -385,7 +513,7 @@ export default function GoogleReviews() {
                           <strong>Abrechnung 100% erfolgsbasiert:</strong> Du zahlst nur für Bewertungen, die tatsächlich gelöscht werden. Sollte z.B. nur 2 von 3 Bewertungen erfolgreich gelöscht werden, zahlst du auch nur diese 2.
                         </p>
                         <p className="text-xs text-muted-foreground">
-                          Preis pro erfolgreich gelöschter Bewertung: {PRICE_PER_REVIEW.toFixed(2)} € netto
+                          Preis pro erfolgreich gelöschter Bewertung: {PRICE_PER_REVIEW.toFixed(2)} € brutto
                         </p>
                       </AlertDescription>
                     </Alert>
