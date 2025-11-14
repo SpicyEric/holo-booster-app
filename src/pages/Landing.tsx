@@ -199,11 +199,11 @@ const Landing = () => {
               className="grid md:grid-cols-2 gap-12 items-center"
             >
               {/* Left: Headline and Text */}
-              <div className="space-y-6">
+              <div className="space-y-6 pr-8">
                 <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-foreground leading-tight">
-                  Mehr <span className="bg-gradient-primary bg-clip-text text-transparent">Google-Bewertungen</span> und <span className="bg-gradient-primary bg-clip-text text-transparent">Stammkunden</span> durch ein einziges <span className="bg-gradient-primary bg-clip-text text-transparent">QR-System</span>
+                  Mehr Google-<span className="bg-gradient-primary bg-clip-text text-transparent">Bewertungen</span> und Stammkunden durch ein einziges <span className="bg-gradient-primary bg-clip-text text-transparent">QR-System</span>
                 </h1>
-                <p className="text-lg text-muted-foreground leading-relaxed">
+                <p className="text-xl text-muted-foreground leading-relaxed">
                   QRait kombiniert Bewertungsboost, digitale Stempelkarte, SMS-Marketing und einen professionellen Löschservice für negative Bewertungen – speziell für lokale Unternehmen.
                 </p>
               </div>

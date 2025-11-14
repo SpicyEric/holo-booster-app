@@ -473,7 +473,11 @@ export type Database = {
           customer_number: number | null
           design_urls: string[] | null
           email: string | null
+          google_access_token: string | null
+          google_business_name: string | null
+          google_refresh_token: string | null
           google_review_url: string
+          google_token_expires_at: string | null
           id: string
           industry: string | null
           last_contact_date: string | null
@@ -505,7 +509,11 @@ export type Database = {
           customer_number?: number | null
           design_urls?: string[] | null
           email?: string | null
+          google_access_token?: string | null
+          google_business_name?: string | null
+          google_refresh_token?: string | null
           google_review_url: string
+          google_token_expires_at?: string | null
           id?: string
           industry?: string | null
           last_contact_date?: string | null
@@ -537,7 +545,11 @@ export type Database = {
           customer_number?: number | null
           design_urls?: string[] | null
           email?: string | null
+          google_access_token?: string | null
+          google_business_name?: string | null
+          google_refresh_token?: string | null
           google_review_url?: string
+          google_token_expires_at?: string | null
           id?: string
           industry?: string | null
           last_contact_date?: string | null
@@ -812,6 +824,115 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      review_deletion_orders: {
+        Row: {
+          actual_cost_cents: number | null
+          completed_at: string | null
+          created_at: string
+          created_by_user_id: string | null
+          customer_id: string
+          google_account_linked: boolean | null
+          google_business_name: string | null
+          id: string
+          max_cost_cents: number
+          notes: string | null
+          reviews_data: Json
+          status: string
+          total_reviews_selected: number
+          updated_at: string
+        }
+        Insert: {
+          actual_cost_cents?: number | null
+          completed_at?: string | null
+          created_at?: string
+          created_by_user_id?: string | null
+          customer_id: string
+          google_account_linked?: boolean | null
+          google_business_name?: string | null
+          id?: string
+          max_cost_cents?: number
+          notes?: string | null
+          reviews_data?: Json
+          status?: string
+          total_reviews_selected?: number
+          updated_at?: string
+        }
+        Update: {
+          actual_cost_cents?: number | null
+          completed_at?: string | null
+          created_at?: string
+          created_by_user_id?: string | null
+          customer_id?: string
+          google_account_linked?: boolean | null
+          google_business_name?: string | null
+          id?: string
+          max_cost_cents?: number
+          notes?: string | null
+          reviews_data?: Json
+          status?: string
+          total_reviews_selected?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "review_deletion_orders_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      review_deletion_results: {
+        Row: {
+          created_at: string
+          deletion_notes: string | null
+          deletion_successful: boolean | null
+          id: string
+          order_id: string
+          review_date: string | null
+          review_google_id: string
+          review_stars: number
+          review_text: string | null
+          reviewer_name: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          deletion_notes?: string | null
+          deletion_successful?: boolean | null
+          id?: string
+          order_id: string
+          review_date?: string | null
+          review_google_id: string
+          review_stars: number
+          review_text?: string | null
+          reviewer_name?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          deletion_notes?: string | null
+          deletion_successful?: boolean | null
+          id?: string
+          order_id?: string
+          review_date?: string | null
+          review_google_id?: string
+          review_stars?: number
+          review_text?: string | null
+          reviewer_name?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "review_deletion_results_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "review_deletion_orders"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       scans: {
         Row: {
