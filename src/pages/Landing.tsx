@@ -200,21 +200,12 @@ const Landing = () => {
             >
               {/* Left: Headline and Text */}
               <div className="space-y-6">
-                <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-foreground leading-tight">
-                  Mehr Google-Bewertungen und <span className="bg-gradient-primary bg-clip-text text-transparent">Stammkunden</span> durch ein einziges QR-System
+                <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-foreground leading-tight">
+                  Mehr <span className="bg-gradient-primary bg-clip-text text-transparent">Google-Bewertungen</span> und <span className="bg-gradient-primary bg-clip-text text-transparent">Stammkunden</span> durch ein einziges <span className="bg-gradient-primary bg-clip-text text-transparent">QR-System</span>
                 </h1>
-                <p className="text-lg sm:text-xl text-muted-foreground leading-relaxed">
+                <p className="text-lg text-muted-foreground leading-relaxed">
                   QRait kombiniert Bewertungsboost, digitale Stempelkarte, SMS-Marketing und einen professionellen Löschservice für negative Bewertungen – speziell für lokale Unternehmen.
                 </p>
-                <div className="space-y-3">
-                  <p className="text-sm text-muted-foreground">
-                    <span className="font-semibold text-foreground">Perfekt für:</span> Cafés, Friseure, Beautysalons, Fitnessstudios, Bäckereien, Restaurants und mehr
-                  </p>
-                  <div className="flex items-center gap-2 text-sm">
-                    <ShieldCheck className="h-4 w-4 text-primary" />
-                    <span className="text-muted-foreground">DSGVO-konform</span>
-                  </div>
-                </div>
               </div>
 
               {/* Right: Image with CTA */}
@@ -223,7 +214,7 @@ const Landing = () => {
                   initial={{ opacity: 0, scale: 0.95 }}
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ duration: 0.6, delay: 0.2 }}
-                  className="relative rounded-3xl overflow-hidden shadow-glow"
+                  className="relative rounded-2xl overflow-hidden max-w-md mx-auto"
                 >
                   <img 
                     src={heroPersonQr} 
@@ -275,8 +266,8 @@ const Landing = () => {
                 transition={{ duration: 0.5, delay: index * 0.1 }}
               >
                 <GlassCard className="h-full">
-                  <div className="space-y-4">
-                    <div className="w-12 h-12 rounded-2xl bg-gradient-primary flex items-center justify-center">
+                  <div className="space-y-4 text-center">
+                    <div className="w-12 h-12 rounded-2xl bg-gradient-primary flex items-center justify-center mx-auto">
                       <feature.icon className="h-6 w-6 text-primary-foreground" />
                     </div>
                     <h3 className="text-xl font-bold text-foreground">
@@ -284,8 +275,8 @@ const Landing = () => {
                     </h3>
                     <ul className="space-y-2">
                       {feature.points.map((point, idx) => (
-                        <li key={idx} className="flex items-start gap-2 text-sm text-muted-foreground">
-                          <CheckCircle className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+                        <li key={idx} className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+                          <CheckCircle className="h-4 w-4 text-primary shrink-0" />
                           <span>{point}</span>
                         </li>
                       ))}
@@ -313,7 +304,7 @@ const Landing = () => {
             </h2>
           </motion.div>
 
-          <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-6">
+          <div className="flex flex-wrap justify-center gap-4">
             {processSteps.map((step, index) => (
               <motion.div
                 key={index}
@@ -321,22 +312,20 @@ const Landing = () => {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.5, delay: index * 0.1 }}
-                className="relative"
+                className="relative w-40"
               >
-                <GlassCard className="h-full">
-                  <div className="space-y-4 text-center">
+                <GlassCard className="h-full p-4">
+                  <div className="space-y-3 text-center">
                     <div className="relative inline-flex items-center justify-center">
-                      <div className="w-16 h-16 rounded-full bg-gradient-primary flex items-center justify-center">
-                        <step.icon className="h-8 w-8 text-primary-foreground" />
-                      </div>
-                      <div className="absolute -top-2 -right-2 w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-bold">
-                        {step.number}
+                      <div className="w-12 h-12 rounded-full bg-gradient-primary flex items-center justify-center">
+                        <span className="text-lg font-bold text-primary-foreground">{step.number}</span>
                       </div>
                     </div>
-                    <h3 className="text-lg font-bold text-foreground">
+                    <step.icon className="h-6 w-6 text-primary mx-auto" />
+                    <h3 className="text-sm font-bold text-foreground">
                       {step.title}
                     </h3>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-xs text-muted-foreground">
                       {step.description}
                     </p>
                   </div>
@@ -411,7 +400,7 @@ const Landing = () => {
             </p>
           </motion.div>
 
-          <div className="grid sm:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 max-w-4xl mx-auto">
             {deletionFeatures.map((feature, index) => (
               <motion.div
                 key={index}
@@ -420,15 +409,15 @@ const Landing = () => {
                 viewport={{ once: true }}
                 transition={{ duration: 0.5, delay: index * 0.1 }}
               >
-                <GlassCard className="h-full text-center">
-                  <div className="space-y-4">
-                    <div className="w-16 h-16 rounded-full bg-gradient-primary flex items-center justify-center mx-auto">
-                      <feature.icon className="h-8 w-8 text-primary-foreground" />
+                <GlassCard className="h-full text-center p-6">
+                  <div className="space-y-3">
+                    <div className="w-12 h-12 rounded-full bg-gradient-primary flex items-center justify-center mx-auto">
+                      <feature.icon className="h-6 w-6 text-primary-foreground" />
                     </div>
-                    <h3 className="text-xl font-bold text-foreground">
+                    <h3 className="text-lg font-bold text-foreground">
                       {feature.title}
                     </h3>
-                    <p className="text-muted-foreground">
+                    <p className="text-sm text-muted-foreground">
                       {feature.description}
                     </p>
                   </div>
@@ -463,12 +452,12 @@ const Landing = () => {
               whileInView={{ opacity: 1, scale: 1 }}
               viewport={{ once: true }}
               transition={{ duration: 0.6 }}
-              className="relative"
+              className="relative max-w-md mx-auto"
             >
               <motion.img
                 src={qrStandProduct}
                 alt="QRait Aufsteller im Einsatz"
-                className="w-full h-auto rounded-3xl"
+                className="w-full h-auto rounded-2xl"
                 animate={{
                   scale: [1, 1.02, 1],
                 }}
