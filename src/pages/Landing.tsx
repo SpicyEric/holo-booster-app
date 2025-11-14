@@ -209,12 +209,12 @@ const Landing = () => {
               </div>
 
               {/* Right: Image with CTA */}
-              <div className="space-y-6">
+              <div className="space-y-4 flex flex-col items-center">
                 <motion.div
                   initial={{ opacity: 0, scale: 0.95 }}
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ duration: 0.6, delay: 0.2 }}
-                  className="relative rounded-2xl overflow-hidden max-w-md mx-auto"
+                  className="relative rounded-2xl overflow-hidden max-w-xs mx-auto"
                 >
                   <img 
                     src={heroPersonQr} 
@@ -226,11 +226,12 @@ const Landing = () => {
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.6, delay: 0.4 }}
+                  className="w-auto"
                 >
                   <Button
                     onClick={() => navigate('/auth')}
-                    size="lg"
-                    className="w-full bg-gradient-primary text-primary-foreground hover:shadow-glow text-lg py-6 rounded-2xl"
+                    size="default"
+                    className="bg-gradient-primary text-primary-foreground hover:shadow-glow px-8 py-5 rounded-2xl"
                   >
                     Jetzt starten
                   </Button>
@@ -400,7 +401,7 @@ const Landing = () => {
             </p>
           </motion.div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 max-w-4xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
             {deletionFeatures.map((feature, index) => (
               <motion.div
                 key={index}
