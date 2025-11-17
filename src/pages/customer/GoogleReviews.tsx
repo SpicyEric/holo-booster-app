@@ -92,32 +92,49 @@ export default function GoogleReviews() {
 
     setLoading(true);
     try {
-      // TODO: Check if account is already linked once types are updated
-      // const { data: customer } = await supabase
-      //   .from("customers")
-      //   .select("google_access_token, google_business_name")
-      //   .eq("id", customerId)
-      //   .single();
+      // Check if account is already linked
+      const { data: customer } = await supabase
+        .from("customers")
+        .select("google_access_token, google_business_name")
+        .eq("id", customerId)
+        .single();
 
-      // if (customer?.google_access_token) {
-      //   setGoogleAccountLinked(true);
-      //   setBusinessName(customer.google_business_name || businessName);
-      //   
-      //   // Fetch reviews
-      //   const { data: reviewsData, error: reviewsError } = await supabase.functions.invoke(
-      //     'fetch-google-reviews',
-      //     { body: { customer_id: customerId } }
-      //   );
-      //
-      //   if (reviewsError) throw reviewsError;
-      //   
-      //   if (reviewsData?.reviews) {
-      //     setReviews(reviewsData.reviews);
-      //     toast.success("Google-Bewertungen erfolgreich geladen!");
-      //   }
-      //   setLoading(false);
-      //   return;
-      // }
+      if (customer?.google_access_token) {
+        setGoogleAccountLinked(true);
+        setBusinessName(customer.google_business_name || businessName);
+        
+        // Fetch reviews
+        const { data: reviewsData, error: reviewsError } = await supabase.functions.invoke(
+          'fetch-google-reviews',
+          { body: { customer_id: customerId } }
+        );
+
+        if (reviewsError) {
+          console.error("Error fetching reviews:", reviewsError);
+          toast.error("Fehler beim Laden der Bewertungen: " + reviewsError.message);
+          setLoading(false);
+          return;
+        }
+        
+        if (reviewsData?.reviews) {
+          const formattedReviews = reviewsData.reviews.map((review: any) => ({
+            id: review.name,
+            googleId: review.name,
+            stars: review.starRating === "FIVE" ? 5 : 
+                   review.starRating === "FOUR" ? 4 :
+                   review.starRating === "THREE" ? 3 :
+                   review.starRating === "TWO" ? 2 : 1,
+            reviewerName: review.reviewer?.displayName || "Anonym",
+            reviewText: review.comment || "",
+            date: review.createTime || new Date().toISOString(),
+            selected: false
+          }));
+          setReviews(formattedReviews);
+          toast.success("Google-Bewertungen erfolgreich geladen!");
+        }
+        setLoading(false);
+        return;
+      }
 
       // Redirect to Google OAuth if not linked
       const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
