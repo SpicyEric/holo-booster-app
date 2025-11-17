@@ -6,8 +6,11 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Loader2, CreditCard, X, AlertTriangle, QrCode, Phone, Star, Download } from "lucide-react";
+import { Loader2, CreditCard, X, AlertTriangle, QrCode, Phone, Star, Download, Clock } from "lucide-react";
 import { CustomerHeader } from "@/components/CustomerHeader";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -18,6 +21,13 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import Particles from "@/components/Particles";
 
 interface Invoice {
@@ -37,6 +47,9 @@ interface Customer {
   company_name: string | null;
   status: string;
   stripe_customer_id: string | null;
+  google_access_token?: string | null;
+  auto_reply_enabled?: boolean;
+  auto_reply_daily_time?: string;
 }
 
 interface SubscriptionInfo {
@@ -70,6 +83,13 @@ export default function CustomerDashboard() {
   });
   const [showAccountInfo, setShowAccountInfo] = useState(false);
   const [showInvoices, setShowInvoices] = useState(false);
+  const [googleLinked, setGoogleLinked] = useState(false);
+  const [reviews, setReviews] = useState<any[]>([]);
+  const [loadingReviews, setLoadingReviews] = useState(false);
+  const [autoReplyEnabled, setAutoReplyEnabled] = useState(false);
+  const [autoReplyTime, setAutoReplyTime] = useState("18:00");
+  const [savingSettings, setSavingSettings] = useState(false);
+  const [showAutoReplySettings, setShowAutoReplySettings] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -108,6 +128,15 @@ export default function CustomerDashboard() {
 
       setCustomer(customerData);
 
+      // Check if Google is linked
+      if (customerData?.google_access_token) {
+        setGoogleLinked(true);
+        setAutoReplyEnabled(customerData.auto_reply_enabled || false);
+        setAutoReplyTime(customerData.auto_reply_daily_time || "18:00");
+        // Load reviews
+        await loadReviews(customerUser.customer_id);
+      }
+
       // Get statistics
       const customerId = customerUser.customer_id;
 
@@ -131,7 +160,7 @@ export default function CustomerDashboard() {
       setStats({
         totalScans: scansCount || 0,
         totalContacts: contactsCount || 0,
-        totalReviews: 0 // Placeholder for future implementation
+        totalReviews: reviews.length
       });
 
       // Get invoices
@@ -187,6 +216,78 @@ export default function CustomerDashboard() {
     } finally {
       setCancelling(false);
     }
+  };
+
+  const loadReviews = async (customerId: string) => {
+    try {
+      setLoadingReviews(true);
+      const { data, error } = await supabase.functions.invoke("fetch-google-reviews", {
+        body: { customerId }
+      });
+
+      if (error) throw error;
+
+      if (data?.reviews) {
+        setReviews(data.reviews.slice(0, 5));
+        setStats(prev => ({ ...prev, totalReviews: data.reviews.length }));
+      }
+    } catch (error) {
+      console.error("Error loading reviews:", error);
+    } finally {
+      setLoadingReviews(false);
+    }
+  };
+
+  const saveAutoReplySettings = async () => {
+    try {
+      setSavingSettings(true);
+
+      if (!customer?.id) {
+        toast.error("Kein Kunde gefunden");
+        return;
+      }
+
+      const { error } = await supabase
+        .from("customers")
+        .update({
+          auto_reply_enabled: autoReplyEnabled,
+          auto_reply_daily_time: autoReplyTime,
+        })
+        .eq("id", customer.id);
+
+      if (error) throw error;
+
+      toast.success("Einstellungen gespeichert");
+      setShowAutoReplySettings(false);
+    } catch (error) {
+      console.error("Error saving settings:", error);
+      toast.error("Fehler beim Speichern");
+    } finally {
+      setSavingSettings(false);
+    }
+  };
+
+  const startGoogleOAuth = () => {
+    if (!customer?.id) {
+      toast.error("Kein Kunde gefunden");
+      return;
+    }
+    
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+    const redirectUrl = `${supabaseUrl}/functions/v1/google-oauth-callback?customer_id=${customer.id}`;
+    
+    const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || "";
+    const scope = "https://www.googleapis.com/auth/business.manage";
+    
+    const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
+      `client_id=${clientId}&` +
+      `redirect_uri=${encodeURIComponent(redirectUrl)}&` +
+      `response_type=code&` +
+      `scope=${encodeURIComponent(scope)}&` +
+      `access_type=offline&` +
+      `prompt=consent`;
+    
+    window.location.href = authUrl;
   };
 
 
@@ -296,11 +397,104 @@ export default function CustomerDashboard() {
             <CardContent>
               <div className="text-3xl font-bold">{stats.totalReviews}</div>
               <p className="text-xs text-muted-foreground mt-1">
-                Kommt bald verfügbar
+                {googleLinked ? "Letzte 30 Tage" : "Google-Konto verknüpfen"}
               </p>
             </CardContent>
           </Card>
         </div>
+
+        {/* Google Reviews Section */}
+        <Card className="border-primary/20">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center gap-2">
+                <Star className="h-5 w-5 text-primary" />
+                Google Bewertungen
+              </CardTitle>
+              {googleLinked && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowAutoReplySettings(true)}
+                >
+                  <Clock className="h-4 w-4 mr-2" />
+                  Auto-Reply Einstellungen
+                </Button>
+              )}
+            </div>
+          </CardHeader>
+          <CardContent>
+            {!googleLinked ? (
+              <div className="text-center py-8 space-y-4">
+                <div className="text-muted-foreground">
+                  Verknüpfen Sie Ihr Google-Konto, um Ihre Bewertungen hier zu sehen
+                  und automatisch auf positive Bewertungen zu antworten.
+                </div>
+                <Button
+                  size="lg"
+                  onClick={startGoogleOAuth}
+                  className="bg-gradient-to-r from-primary to-primary/80"
+                >
+                  Google-Konto jetzt verknüpfen
+                </Button>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {autoReplyEnabled && (
+                  <div className="bg-primary/10 border border-primary/20 rounded-lg p-4 flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-full bg-primary/20 flex items-center justify-center">
+                      <Clock className="h-5 w-5 text-primary" />
+                    </div>
+                    <div>
+                      <div className="font-medium">Auto-Reply aktiviert</div>
+                      <div className="text-sm text-muted-foreground">
+                        Tägliche Ausführung um {autoReplyTime} Uhr
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {loadingReviews ? (
+                  <div className="flex justify-center py-8">
+                    <Loader2 className="h-6 w-6 animate-spin" />
+                  </div>
+                ) : reviews.length > 0 ? (
+                  <div className="space-y-3">
+                    {reviews.map((review: any) => (
+                      <div
+                        key={review.reviewId}
+                        className="border rounded-lg p-4 space-y-2 hover:border-primary/40 transition-colors"
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="font-medium">{review.reviewer?.displayName || "Unbekannt"}</div>
+                          <div className="flex items-center gap-1">
+                            {Array.from({ length: parseInt(review.starRating?.replace(/\D/g, "") || "0") }).map((_, i) => (
+                              <Star key={i} className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                            ))}
+                          </div>
+                        </div>
+                        <p className="text-sm text-muted-foreground">{review.comment}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {review.createTime ? new Date(review.createTime).toLocaleDateString("de-DE") : ""}
+                        </p>
+                        {review.reviewReply && (
+                          <div className="bg-muted/50 rounded p-3 mt-2">
+                            <p className="text-sm font-medium mb-1">Ihre Antwort:</p>
+                            <p className="text-sm text-muted-foreground">{review.reviewReply.comment}</p>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-muted-foreground">
+                    Noch keine Bewertungen vorhanden
+                  </div>
+                )}
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
         {/* Subscription Status - Only if active */}
         {subscriptionInfo?.hasSubscription && (
@@ -340,6 +534,64 @@ export default function CustomerDashboard() {
           </Card>
         )}
       </main>
+
+      {/* Auto-Reply Settings Dialog */}
+      <Dialog open={showAutoReplySettings} onOpenChange={setShowAutoReplySettings}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Auto-Reply Einstellungen</DialogTitle>
+            <DialogDescription>
+              Lassen Sie Q-Rait automatisch auf 4-5 Sterne Google-Bewertungen antworten.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-6 py-4">
+            <div className="flex items-center justify-between">
+              <Label htmlFor="auto-reply-toggle" className="flex flex-col gap-1">
+                <span className="font-medium">Auto-Reply aktivieren</span>
+                <span className="text-sm text-muted-foreground font-normal">
+                  Automatische Antworten auf positive Bewertungen
+                </span>
+              </Label>
+              <Switch
+                id="auto-reply-toggle"
+                checked={autoReplyEnabled}
+                onCheckedChange={setAutoReplyEnabled}
+              />
+            </div>
+
+            {autoReplyEnabled && (
+              <div className="space-y-2">
+                <Label htmlFor="auto-reply-time">Tägliche Ausführungszeit</Label>
+                <Input
+                  id="auto-reply-time"
+                  type="time"
+                  value={autoReplyTime}
+                  onChange={(e) => setAutoReplyTime(e.target.value)}
+                />
+                <p className="text-sm text-muted-foreground">
+                  Q-Rait prüft täglich zu dieser Uhrzeit auf neue Bewertungen und antwortet automatisch.
+                </p>
+              </div>
+            )}
+
+            <div className="bg-muted/50 rounded-lg p-4 space-y-2">
+              <div className="font-medium text-sm">Standardantwort:</div>
+              <p className="text-sm text-muted-foreground">
+                "{`{Name}`}, vielen Dank für deine positive Bewertung! 😊 Wir freuen uns sehr, dass du zufrieden bist."
+              </p>
+            </div>
+          </div>
+          <div className="flex gap-2 justify-end">
+            <Button variant="outline" onClick={() => setShowAutoReplySettings(false)}>
+              Abbrechen
+            </Button>
+            <Button onClick={saveAutoReplySettings} disabled={savingSettings}>
+              {savingSettings && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              Speichern
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Account Info Dialog */}
       <AlertDialog open={showAccountInfo} onOpenChange={setShowAccountInfo}>
