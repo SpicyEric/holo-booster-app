@@ -466,6 +466,9 @@ export type Database = {
       customers: {
         Row: {
           active: boolean
+          auto_reply_daily_time: string | null
+          auto_reply_enabled: boolean | null
+          auto_reply_min_rating: number | null
           billing_address: Json | null
           company_name: string | null
           contact_person: string | null
@@ -480,10 +483,12 @@ export type Database = {
           google_token_expires_at: string | null
           id: string
           industry: string | null
+          last_auto_reply_check: string | null
           last_contact_date: string | null
           lead_source: string | null
           logo_url: string | null
           name: string
+          next_auto_reply_run: string | null
           next_followup_date: string | null
           offer_details: string | null
           offer_text: string
@@ -502,6 +507,9 @@ export type Database = {
         }
         Insert: {
           active?: boolean
+          auto_reply_daily_time?: string | null
+          auto_reply_enabled?: boolean | null
+          auto_reply_min_rating?: number | null
           billing_address?: Json | null
           company_name?: string | null
           contact_person?: string | null
@@ -516,10 +524,12 @@ export type Database = {
           google_token_expires_at?: string | null
           id?: string
           industry?: string | null
+          last_auto_reply_check?: string | null
           last_contact_date?: string | null
           lead_source?: string | null
           logo_url?: string | null
           name: string
+          next_auto_reply_run?: string | null
           next_followup_date?: string | null
           offer_details?: string | null
           offer_text: string
@@ -538,6 +548,9 @@ export type Database = {
         }
         Update: {
           active?: boolean
+          auto_reply_daily_time?: string | null
+          auto_reply_enabled?: boolean | null
+          auto_reply_min_rating?: number | null
           billing_address?: Json | null
           company_name?: string | null
           contact_person?: string | null
@@ -552,10 +565,12 @@ export type Database = {
           google_token_expires_at?: string | null
           id?: string
           industry?: string | null
+          last_auto_reply_check?: string | null
           last_contact_date?: string | null
           lead_source?: string | null
           logo_url?: string | null
           name?: string
+          next_auto_reply_run?: string | null
           next_followup_date?: string | null
           offer_details?: string | null
           offer_text?: string
@@ -824,6 +839,50 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      review_auto_replies: {
+        Row: {
+          created_at: string | null
+          customer_id: string | null
+          error_message: string | null
+          id: string
+          reply_text: string
+          review_id: string
+          review_text: string | null
+          reviewer_name: string | null
+          status: string
+        }
+        Insert: {
+          created_at?: string | null
+          customer_id?: string | null
+          error_message?: string | null
+          id?: string
+          reply_text: string
+          review_id: string
+          review_text?: string | null
+          reviewer_name?: string | null
+          status?: string
+        }
+        Update: {
+          created_at?: string | null
+          customer_id?: string | null
+          error_message?: string | null
+          id?: string
+          reply_text?: string
+          review_id?: string
+          review_text?: string | null
+          reviewer_name?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "review_auto_replies_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       review_deletion_orders: {
         Row: {

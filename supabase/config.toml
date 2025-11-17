@@ -30,3 +30,6 @@ verify_jwt = false
 [functions.fetch-google-reviews]
 verify_jwt = false
 
+[functions.auto-reply-cron]
+verify_jwt = false
+
