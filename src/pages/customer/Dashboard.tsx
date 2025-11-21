@@ -133,8 +133,12 @@ export default function CustomerDashboard() {
         setGoogleLinked(true);
         setAutoReplyEnabled(customerData.auto_reply_enabled || false);
         setAutoReplyTime(customerData.auto_reply_daily_time || "18:00");
+        console.log('[Dashboard] Google account linked, loading reviews...');
         // Load reviews
         await loadReviews(customerUser.customer_id);
+      } else {
+        console.log('[Dashboard] Google account not linked');
+        setGoogleLinked(false);
       }
 
       // Get statistics
@@ -221,18 +225,36 @@ export default function CustomerDashboard() {
   const loadReviews = async (customerId: string) => {
     try {
       setLoadingReviews(true);
+      console.log('[Dashboard] Loading reviews for customer:', customerId);
+      
       const { data, error } = await supabase.functions.invoke("fetch-google-reviews", {
-        body: { customerId }
+        body: { customer_id: customerId } // Fixed: use customer_id not customerId
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error("[Dashboard] Error loading reviews:", error);
+        toast.error("Fehler beim Laden der Bewertungen");
+        return;
+      }
 
-      if (data?.reviews) {
-        setReviews(data.reviews.slice(0, 5));
-        setStats(prev => ({ ...prev, totalReviews: data.reviews.length }));
+      console.log('[Dashboard] Reviews data received:', data);
+
+      // Use allReviews for dashboard display
+      if (data?.allReviews && Array.isArray(data.allReviews)) {
+        const formattedReviews = data.allReviews.map((review: any) => ({
+          ...review,
+          stars: review.starRating === "FIVE" ? 5 : 
+                 review.starRating === "FOUR" ? 4 :
+                 review.starRating === "THREE" ? 3 :
+                 review.starRating === "TWO" ? 2 : 1,
+        }));
+        setReviews(formattedReviews.slice(0, 5));
+        setStats(prev => ({ ...prev, totalReviews: data.allReviews.length }));
+        console.log('[Dashboard] Reviews loaded successfully:', formattedReviews.length);
       }
     } catch (error) {
-      console.error("Error loading reviews:", error);
+      console.error("[Dashboard] Exception loading reviews:", error);
+      toast.error("Fehler beim Laden der Bewertungen");
     } finally {
       setLoadingReviews(false);
     }
@@ -247,20 +269,40 @@ export default function CustomerDashboard() {
         return;
       }
 
+      console.log('[Dashboard] Saving auto-reply settings:', { autoReplyEnabled, autoReplyTime });
+
+      // Calculate next run time
+      const now = new Date();
+      const [hours, minutes] = autoReplyTime.split(':');
+      const nextRun = new Date(now.toDateString() + ' ' + autoReplyTime);
+      if (nextRun < now) {
+        nextRun.setDate(nextRun.getDate() + 1);
+      }
+
       const { error } = await supabase
         .from("customers")
         .update({
           auto_reply_enabled: autoReplyEnabled,
           auto_reply_daily_time: autoReplyTime,
+          last_auto_reply_check: autoReplyEnabled ? new Date().toISOString() : null,
+          next_auto_reply_run: autoReplyEnabled ? nextRun.toISOString() : null,
         })
         .eq("id", customer.id);
 
-      if (error) throw error;
+      if (error) {
+        console.error('[Dashboard] Error saving settings:', error);
+        throw error;
+      }
 
+      console.log('[Dashboard] Settings saved successfully');
+      
+      // Reload customer data to refresh UI
+      await loadData();
+      
       toast.success("Einstellungen gespeichert");
       setShowAutoReplySettings(false);
     } catch (error) {
-      console.error("Error saving settings:", error);
+      console.error("[Dashboard] Exception saving settings:", error);
       toast.error("Fehler beim Speichern");
     } finally {
       setSavingSettings(false);
