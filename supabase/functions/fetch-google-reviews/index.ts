@@ -13,6 +13,7 @@ serve(async (req) => {
 
   try {
     const { customer_id } = await req.json();
+    console.log('[fetch-google-reviews] Starting fetch for customer:', customer_id);
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
@@ -25,14 +26,32 @@ serve(async (req) => {
       .eq('id', customer_id)
       .single();
 
-    if (customerError || !customer?.google_access_token) {
+    console.log('[fetch-google-reviews] Customer lookup:', {
+      found: !!customer,
+      hasToken: !!customer?.google_access_token,
+      error: customerError?.message
+    });
+
+    if (customerError) {
+      throw new Error('Customer not found: ' + customerError.message);
+    }
+
+    if (!customer?.google_access_token) {
       throw new Error('Google account not linked');
     }
 
     let accessToken = customer.google_access_token;
 
     // Check if token is expired and refresh if needed
-    if (new Date(customer.google_token_expires_at) < new Date()) {
+    const expiresAt = new Date(customer.google_token_expires_at);
+    console.log('[fetch-google-reviews] Token status:', {
+      expiresAt: expiresAt.toISOString(),
+      now: new Date().toISOString(),
+      expired: expiresAt < new Date()
+    });
+
+    if (expiresAt < new Date()) {
+      console.log('[fetch-google-reviews] Refreshing expired token...');
       const clientId = Deno.env.get('GOOGLE_CLIENT_ID')!;
       const clientSecret = Deno.env.get('GOOGLE_CLIENT_SECRET')!;
 
@@ -48,7 +67,15 @@ serve(async (req) => {
       });
 
       const refreshData = await refreshResponse.json();
+      console.log('[fetch-google-reviews] Token refresh status:', refreshResponse.status);
+      
+      if (!refreshData.access_token) {
+        console.error('[fetch-google-reviews] Token refresh failed:', refreshData);
+        throw new Error('Failed to refresh access token: ' + (refreshData.error || 'Unknown error'));
+      }
+
       accessToken = refreshData.access_token;
+      console.log('[fetch-google-reviews] Token refreshed successfully');
 
       // Update token in database
       await supabase
@@ -61,6 +88,7 @@ serve(async (req) => {
     }
 
     // Get accounts
+    console.log('[fetch-google-reviews] Fetching Google Business accounts...');
     const accountsResponse = await fetch(
       'https://mybusinessaccountmanagement.googleapis.com/v1/accounts',
       {
@@ -69,13 +97,24 @@ serve(async (req) => {
     );
 
     const accountsData = await accountsResponse.json();
+    console.log('[fetch-google-reviews] Accounts response:', {
+      status: accountsResponse.status,
+      accountCount: accountsData.accounts?.length || 0
+    });
+
+    if (!accountsResponse.ok) {
+      console.error('[fetch-google-reviews] Accounts fetch failed:', accountsData);
+      throw new Error('Failed to fetch Google Business accounts: ' + (accountsData.error?.message || 'Unknown error'));
+    }
+
     const accountName = accountsData.accounts?.[0]?.name;
 
     if (!accountName) {
-      throw new Error('No business account found');
+      throw new Error('No business account found. Please ensure you have a Google Business Profile set up.');
     }
 
     // Get locations
+    console.log('[fetch-google-reviews] Fetching locations for account:', accountName);
     const locationsResponse = await fetch(
       `https://mybusinessbusinessinformation.googleapis.com/v1/${accountName}/locations`,
       {
@@ -84,13 +123,24 @@ serve(async (req) => {
     );
 
     const locationsData = await locationsResponse.json();
+    console.log('[fetch-google-reviews] Locations response:', {
+      status: locationsResponse.status,
+      locationCount: locationsData.locations?.length || 0
+    });
+
+    if (!locationsResponse.ok) {
+      console.error('[fetch-google-reviews] Locations fetch failed:', locationsData);
+      throw new Error('Failed to fetch locations: ' + (locationsData.error?.message || 'Unknown error'));
+    }
+
     const locationName = locationsData.locations?.[0]?.name;
 
     if (!locationName) {
-      throw new Error('No location found');
+      throw new Error('No location found. Please ensure your Google Business Profile has at least one location.');
     }
 
     // Get reviews
+    console.log('[fetch-google-reviews] Fetching reviews for location:', locationName);
     const reviewsResponse = await fetch(
       `https://mybusiness.googleapis.com/v4/${locationName}/reviews`,
       {
@@ -99,24 +149,35 @@ serve(async (req) => {
     );
 
     const reviewsData = await reviewsResponse.json();
+    console.log('[fetch-google-reviews] Reviews response:', {
+      status: reviewsResponse.status,
+      reviewCount: reviewsData.reviews?.length || 0
+    });
+
+    if (!reviewsResponse.ok) {
+      console.error('[fetch-google-reviews] Reviews fetch failed:', reviewsData);
+      throw new Error('Failed to fetch reviews: ' + (reviewsData.error?.message || 'Unknown error'));
+    }
     
-    // Filter for 1-3 star reviews only
-    const lowStarReviews = (reviewsData.reviews || [])
-      .filter((review: any) => review.starRating && review.starRating <= 3)
-      .map((review: any) => ({
-        id: review.reviewId,
-        googleId: review.reviewId,
-        stars: review.starRating,
-        reviewerName: review.reviewer?.displayName || 'Anonymous',
-        reviewText: review.comment || '',
-        date: review.createTime?.split('T')[0] || new Date().toISOString().split('T')[0],
-        selected: false,
-      }));
+    // Return ALL reviews, not just low-star ones
+    const allReviews = reviewsData.reviews || [];
+    
+    // Also filter for 1-3 star reviews for deletion purposes
+    const lowStarReviews = allReviews.filter((review: any) => {
+      const rating = review.starRating;
+      return rating === 'ONE' || rating === 'TWO' || rating === 'THREE';
+    });
+
+    console.log('[fetch-google-reviews] Success:', {
+      total: allReviews.length,
+      lowStar: lowStarReviews.length
+    });
 
     return new Response(
       JSON.stringify({ 
-        reviews: lowStarReviews,
-        businessName: customer.google_business_name,
+        reviews: lowStarReviews, // For deletion page
+        allReviews: allReviews,  // For dashboard
+        businessName: customer.google_business_name || accountsData.accounts[0].accountName,
       }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -124,10 +185,14 @@ serve(async (req) => {
     );
 
   } catch (error) {
-    console.error('Error fetching Google reviews:', error);
+    console.error('[fetch-google-reviews] Error:', error);
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    const errorDetails = error instanceof Error ? error.stack : String(error);
     return new Response(
-      JSON.stringify({ error: errorMessage }),
+      JSON.stringify({ 
+        error: errorMessage,
+        details: errorDetails
+      }),
       { 
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
