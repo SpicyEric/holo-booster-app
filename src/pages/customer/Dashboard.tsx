@@ -130,15 +130,21 @@ export default function CustomerDashboard() {
 
       // Check if Google is linked
       if (customerData?.google_access_token) {
+        console.log('[Dashboard] Google account linked:', {
+          hasToken: !!customerData.google_access_token,
+          autoReplyEnabled: customerData.auto_reply_enabled,
+          autoReplyTime: customerData.auto_reply_daily_time
+        });
         setGoogleLinked(true);
         setAutoReplyEnabled(customerData.auto_reply_enabled || false);
         setAutoReplyTime(customerData.auto_reply_daily_time || "18:00");
-        console.log('[Dashboard] Google account linked, loading reviews...');
+        
         // Load reviews
         await loadReviews(customerUser.customer_id);
       } else {
         console.log('[Dashboard] Google account not linked');
         setGoogleLinked(false);
+        setAutoReplyEnabled(false);
       }
 
       // Get statistics
@@ -223,21 +229,56 @@ export default function CustomerDashboard() {
   };
 
   const loadReviews = async (customerId: string) => {
+    if (!customerId) {
+      console.log('[Dashboard] No customer ID provided');
+      return;
+    }
+
     try {
       setLoadingReviews(true);
       console.log('[Dashboard] Loading reviews for customer:', customerId);
       
       const { data, error } = await supabase.functions.invoke("fetch-google-reviews", {
-        body: { customer_id: customerId } // Fixed: use customer_id not customerId
+        body: { customer_id: customerId }
       });
 
       if (error) {
         console.error("[Dashboard] Error loading reviews:", error);
-        toast.error("Fehler beim Laden der Bewertungen");
+        
+        // Check if it's an API permission error
+        if (error.message?.includes('SERVICE_DISABLED') || error.message?.includes('PERMISSION_DENIED')) {
+          toast.error(
+            "Google APIs sind nicht aktiviert. Bitte aktivieren Sie die Google My Business APIs in Ihrem Google Cloud Projekt.",
+            { duration: 8000 }
+          );
+        } else if (error.message?.includes('No business account found')) {
+          toast.error("Kein Google Business Profil gefunden. Stellen Sie sicher, dass Sie ein Google Business Profil haben.");
+        } else {
+          toast.error("Fehler beim Laden der Bewertungen: " + (error.message || "Unbekannter Fehler"));
+        }
+        
+        setLoadingReviews(false);
         return;
       }
 
       console.log('[Dashboard] Reviews data received:', data);
+
+      // Check for error in response data
+      if (data?.error) {
+        console.error("[Dashboard] Error in response:", data.error);
+        
+        if (data.error.includes('SERVICE_DISABLED') || data.error.includes('PERMISSION_DENIED')) {
+          toast.error(
+            "⚠️ Google APIs müssen aktiviert werden!\n\nBitte aktivieren Sie folgende APIs in der Google Cloud Console:\n- My Business Account Management API\n- My Business Business Information API\n- My Business Reviews API",
+            { duration: 10000 }
+          );
+        } else {
+          toast.error("Fehler: " + data.error);
+        }
+        
+        setLoadingReviews(false);
+        return;
+      }
 
       // Use allReviews for dashboard display
       if (data?.allReviews && Array.isArray(data.allReviews)) {
@@ -251,25 +292,33 @@ export default function CustomerDashboard() {
         setReviews(formattedReviews.slice(0, 5));
         setStats(prev => ({ ...prev, totalReviews: data.allReviews.length }));
         console.log('[Dashboard] Reviews loaded successfully:', formattedReviews.length);
+      } else {
+        console.log('[Dashboard] No reviews found or wrong format');
+        setReviews([]);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("[Dashboard] Exception loading reviews:", error);
-      toast.error("Fehler beim Laden der Bewertungen");
+      toast.error("Fehler beim Laden der Bewertungen: " + (error.message || "Unbekannter Fehler"));
     } finally {
       setLoadingReviews(false);
     }
   };
 
   const saveAutoReplySettings = async () => {
+    if (!customer?.id) {
+      console.error('[Dashboard] No customer ID, cannot save');
+      toast.error("Kein Kunde gefunden");
+      return;
+    }
+
+    setSavingSettings(true);
+    
     try {
-      setSavingSettings(true);
-
-      if (!customer?.id) {
-        toast.error("Kein Kunde gefunden");
-        return;
-      }
-
-      console.log('[Dashboard] Saving auto-reply settings:', { autoReplyEnabled, autoReplyTime });
+      console.log('[Dashboard] Saving auto-reply settings:', { 
+        customerId: customer.id,
+        autoReplyEnabled, 
+        autoReplyTime 
+      });
 
       // Calculate next run time
       const now = new Date();
@@ -279,31 +328,43 @@ export default function CustomerDashboard() {
         nextRun.setDate(nextRun.getDate() + 1);
       }
 
-      const { error } = await supabase
+      const updateData = {
+        auto_reply_enabled: autoReplyEnabled,
+        auto_reply_daily_time: autoReplyTime,
+        last_auto_reply_check: autoReplyEnabled ? new Date().toISOString() : null,
+        next_auto_reply_run: autoReplyEnabled ? nextRun.toISOString() : null,
+      };
+
+      console.log('[Dashboard] Update data:', updateData);
+
+      const { data: result, error } = await supabase
         .from("customers")
-        .update({
-          auto_reply_enabled: autoReplyEnabled,
-          auto_reply_daily_time: autoReplyTime,
-          last_auto_reply_check: autoReplyEnabled ? new Date().toISOString() : null,
-          next_auto_reply_run: autoReplyEnabled ? nextRun.toISOString() : null,
-        })
-        .eq("id", customer.id);
+        .update(updateData)
+        .eq("id", customer.id)
+        .select();
 
       if (error) {
         console.error('[Dashboard] Error saving settings:', error);
         throw error;
       }
 
-      console.log('[Dashboard] Settings saved successfully');
+      console.log('[Dashboard] Settings saved successfully, result:', result);
       
-      // Reload customer data to refresh UI
-      await loadData();
+      // Update local state to reflect the saved values
+      if (result && result.length > 0) {
+        setCustomer(prev => prev ? { ...prev, ...result[0] } : null);
+      }
       
-      toast.success("Einstellungen gespeichert");
+      toast.success("Einstellungen erfolgreich gespeichert");
       setShowAutoReplySettings(false);
-    } catch (error) {
+      
+      // Small delay to ensure UI updates
+      setTimeout(() => {
+        console.log('[Dashboard] Current state after save:', { autoReplyEnabled, autoReplyTime });
+      }, 100);
+    } catch (error: any) {
       console.error("[Dashboard] Exception saving settings:", error);
-      toast.error("Fehler beim Speichern");
+      toast.error("Fehler beim Speichern der Einstellungen: " + (error.message || "Unbekannter Fehler"));
     } finally {
       setSavingSettings(false);
     }
