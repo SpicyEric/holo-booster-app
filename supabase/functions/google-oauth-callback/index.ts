@@ -12,13 +12,13 @@ serve(async (req) => {
   }
 
   try {
-    const url = new URL(req.url);
-    const code = url.searchParams.get('code');
-    const state = url.searchParams.get('state'); // customer_id
+    const { code, customer_id } = await req.json();
     
-    if (!code || !state) {
-      throw new Error('Missing code or state parameter');
+    if (!code || !customer_id) {
+      throw new Error('Missing code or customer_id');
     }
+
+    console.log('[OAUTH] Processing callback for customer:', customer_id);
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
@@ -27,7 +27,11 @@ serve(async (req) => {
     // Exchange code for access token
     const clientId = Deno.env.get('GOOGLE_CLIENT_ID')!;
     const clientSecret = Deno.env.get('GOOGLE_CLIENT_SECRET')!;
-    const redirectUri = 'https://xcnfyawyoahlbhwfkyku.supabase.co/functions/v1/google-oauth-callback';
+    
+    // Use the frontend redirect URI (where the code was received)
+    const redirectUri = `https://3ee30c31-4eaa-4550-a0fd-340678fe1b0c.lovableproject.com/customer/google-reviews`;
+
+    console.log('[OAUTH] Exchanging code for tokens...');
 
     const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
       method: 'POST',
@@ -43,11 +47,17 @@ serve(async (req) => {
 
     const tokenData = await tokenResponse.json();
     
+    console.log('[OAUTH] Token response status:', tokenResponse.status);
+    
     if (!tokenData.access_token) {
-      throw new Error('Failed to get access token');
+      console.error('[OAUTH] Token error:', tokenData);
+      throw new Error(`Failed to get access token: ${JSON.stringify(tokenData)}`);
     }
 
+    console.log('[OAUTH] Access token received');
+
     // Get business account info
+    console.log('[OAUTH] Fetching business account info...');
     const accountsResponse = await fetch(
       'https://mybusinessaccountmanagement.googleapis.com/v1/accounts',
       {
@@ -56,9 +66,12 @@ serve(async (req) => {
     );
 
     const accountsData = await accountsResponse.json();
+    console.log('[OAUTH] Accounts response status:', accountsResponse.status);
+    
     const accountName = accountsData.accounts?.[0]?.accountName || 'Unknown Business';
 
     // Store tokens in database
+    console.log('[OAUTH] Storing tokens for customer:', customer_id);
     const { error: updateError } = await supabase
       .from('customers')
       .update({
@@ -67,20 +80,25 @@ serve(async (req) => {
         google_token_expires_at: new Date(Date.now() + tokenData.expires_in * 1000).toISOString(),
         google_business_name: accountName,
       })
-      .eq('id', state);
+      .eq('id', customer_id);
 
     if (updateError) {
+      console.error('[OAUTH] Database update error:', updateError);
       throw updateError;
     }
 
-    // Redirect back to the app
-    return new Response(null, {
-      status: 302,
-      headers: {
-        ...corsHeaders,
-        Location: `${url.origin}/customer/google-reviews?linked=true`,
-      },
-    });
+    console.log('[OAUTH] Successfully linked account');
+
+    // Return success
+    return new Response(
+      JSON.stringify({ 
+        success: true,
+        business_name: accountName 
+      }),
+      {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      }
+    );
 
   } catch (error) {
     console.error('Error in google-oauth-callback:', error);

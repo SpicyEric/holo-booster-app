@@ -39,13 +39,20 @@ export default function GoogleReviews() {
 
   useEffect(() => {
     loadCustomerData();
-    
-    // Check if returning from OAuth
-    const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.get('linked') === 'true' && customerId) {
-      handleLinkGoogleAccount();
-    }
   }, [user]);
+
+  useEffect(() => {
+    // Check if returning from OAuth with code
+    const urlParams = new URLSearchParams(window.location.search);
+    const code = urlParams.get('code');
+    const state = urlParams.get('state'); // customer_id
+    
+    if (code && state && state === customerId) {
+      handleOAuthCallback(code);
+      // Clean URL
+      window.history.replaceState({}, '', '/customer/google-reviews');
+    }
+  }, [customerId]);
 
   const loadCustomerData = async () => {
     if (!user) return;
@@ -84,6 +91,76 @@ export default function GoogleReviews() {
     }
   };
 
+  const handleOAuthCallback = async (code: string) => {
+    if (!customerId) return;
+
+    setLoading(true);
+    try {
+      toast.info("Google-Konto wird verknüpft...");
+
+      const { data, error } = await supabase.functions.invoke(
+        'google-oauth-callback',
+        { 
+          body: { 
+            code,
+            customer_id: customerId 
+          } 
+        }
+      );
+
+      if (error) throw error;
+
+      setGoogleAccountLinked(true);
+      setBusinessName(data.business_name || businessName);
+      toast.success("Google-Konto erfolgreich verknüpft!");
+
+      // Fetch reviews
+      await fetchReviews();
+    } catch (error: any) {
+      console.error("Error in OAuth callback:", error);
+      toast.error("Fehler beim Verknüpfen: " + error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchReviews = async () => {
+    if (!customerId) return;
+
+    try {
+      const { data: reviewsData, error: reviewsError } = await supabase.functions.invoke(
+        'fetch-google-reviews',
+        { body: { customer_id: customerId } }
+      );
+
+      if (reviewsError) {
+        console.error("Error fetching reviews:", reviewsError);
+        toast.error("Fehler beim Laden der Bewertungen");
+        return;
+      }
+      
+      if (reviewsData?.reviews) {
+        const formattedReviews = reviewsData.reviews.map((review: any) => ({
+          id: review.name,
+          googleId: review.name,
+          stars: review.starRating === "FIVE" ? 5 : 
+                 review.starRating === "FOUR" ? 4 :
+                 review.starRating === "THREE" ? 3 :
+                 review.starRating === "TWO" ? 2 : 1,
+          reviewerName: review.reviewer?.displayName || "Anonym",
+          reviewText: review.comment || "",
+          date: review.createTime || new Date().toISOString(),
+          selected: false
+        }));
+        setReviews(formattedReviews);
+        toast.success("Bewertungen geladen!");
+      }
+    } catch (error) {
+      console.error("Error fetching reviews:", error);
+      toast.error("Fehler beim Laden der Bewertungen");
+    }
+  };
+
   const handleLinkGoogleAccount = async () => {
     if (!customerId) {
       toast.error("Kunde nicht gefunden");
@@ -102,41 +179,12 @@ export default function GoogleReviews() {
       if (customer?.google_access_token) {
         setGoogleAccountLinked(true);
         setBusinessName(customer.google_business_name || businessName);
-        
-        // Fetch reviews
-        const { data: reviewsData, error: reviewsError } = await supabase.functions.invoke(
-          'fetch-google-reviews',
-          { body: { customer_id: customerId } }
-        );
-
-        if (reviewsError) {
-          console.error("Error fetching reviews:", reviewsError);
-          toast.error("Fehler beim Laden der Bewertungen: " + reviewsError.message);
-          setLoading(false);
-          return;
-        }
-        
-        if (reviewsData?.reviews) {
-          const formattedReviews = reviewsData.reviews.map((review: any) => ({
-            id: review.name,
-            googleId: review.name,
-            stars: review.starRating === "FIVE" ? 5 : 
-                   review.starRating === "FOUR" ? 4 :
-                   review.starRating === "THREE" ? 3 :
-                   review.starRating === "TWO" ? 2 : 1,
-            reviewerName: review.reviewer?.displayName || "Anonym",
-            reviewText: review.comment || "",
-            date: review.createTime || new Date().toISOString(),
-            selected: false
-          }));
-          setReviews(formattedReviews);
-          toast.success("Google-Bewertungen erfolgreich geladen!");
-        }
+        await fetchReviews();
         setLoading(false);
         return;
       }
 
-      // Redirect to Google OAuth if not linked
+      // Redirect to Google OAuth with new strategy: redirect to frontend
       const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
       if (!clientId) {
         toast.error("Google Client ID nicht konfiguriert");
@@ -144,7 +192,8 @@ export default function GoogleReviews() {
         return;
       }
 
-      const redirectUri = 'https://xcnfyawyoahlbhwfkyku.supabase.co/functions/v1/google-oauth-callback';
+      // NEW: Redirect to frontend app instead of edge function
+      const redirectUri = `${window.location.origin}/customer/google-reviews`;
       const scope = 'https://www.googleapis.com/auth/business.manage';
       
       const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
