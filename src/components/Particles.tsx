@@ -116,6 +116,8 @@ const Particles = ({
 }: ParticlesProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const mouseRef = useRef({ x: 0, y: 0 });
+  const scrollSpeedMultiplierRef = useRef(1);
+  const scrollTimeoutRef = useRef<number | null>(null);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -161,9 +163,23 @@ const Particles = ({
       mouseRef.current = { x, y };
     };
 
+    const handleScroll = () => {
+      scrollSpeedMultiplierRef.current = 12;
+      
+      if (scrollTimeoutRef.current !== null) {
+        clearTimeout(scrollTimeoutRef.current);
+      }
+      
+      scrollTimeoutRef.current = window.setTimeout(() => {
+        scrollSpeedMultiplierRef.current = 1;
+      }, 200);
+    };
+
     if (moveParticlesOnHover) {
       container.addEventListener('mousemove', handleMouseMove);
     }
+
+    window.addEventListener('wheel', handleScroll, { passive: true });
 
     const count = particleCount;
     const positions = new Float32Array(count * 3);
@@ -216,7 +232,7 @@ const Particles = ({
       animationFrameId = requestAnimationFrame(update);
       const delta = t - lastTime;
       lastTime = t;
-      elapsed += delta * speed;
+      elapsed += delta * speed * scrollSpeedMultiplierRef.current;
 
       program.uniforms.uTime.value = elapsed * 0.001;
 
@@ -241,8 +257,12 @@ const Particles = ({
 
       return () => {
         window.removeEventListener('resize', resize);
+        window.removeEventListener('wheel', handleScroll);
         if (moveParticlesOnHover) {
           container.removeEventListener('mousemove', handleMouseMove);
+        }
+        if (scrollTimeoutRef.current !== null) {
+          clearTimeout(scrollTimeoutRef.current);
         }
         cancelAnimationFrame(animationFrameId);
         if (container.contains(gl.canvas)) {
