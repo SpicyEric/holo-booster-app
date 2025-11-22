@@ -37,7 +37,7 @@ interface SubscriptionInfo {
 const PACKAGES = {
   basic: {
     id: "basic",
-    name: "Loyo Basic",
+    name: "Eloyo Basic",
     price: 44,
     icon: Check,
     color: "text-blue-500",
@@ -51,7 +51,7 @@ const PACKAGES = {
   },
   plus: {
     id: "plus",
-    name: "Loyo Plus",
+    name: "Eloyo Plus",
     price: 49,
     icon: Zap,
     color: "text-purple-500",
@@ -66,7 +66,7 @@ const PACKAGES = {
   },
   pro: {
     id: "pro",
-    name: "Loyo Pro",
+    name: "Eloyo Pro",
     price: 59,
     icon: Rocket,
     color: "text-amber-500",

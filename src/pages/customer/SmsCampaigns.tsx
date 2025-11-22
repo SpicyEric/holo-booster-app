@@ -289,7 +289,7 @@ export default function SmsCampaigns() {
   const getCharCount = () => {
     let text = messageText;
     // Unsubscribe text is always added
-    text += '\n\nAbbestellen: https://loyo.de/delete';
+    text += '\n\nAbbestellen: https://eloyo.de/delete';
     return text.length;
   };
 

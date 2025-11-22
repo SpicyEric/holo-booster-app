@@ -1,6 +1,6 @@
 import ClassicNav from '@/components/ClassicNav';
 import Particles from '@/components/Particles';
-import loyoLogo from '@/assets/loyo-logo.png';
+import eloyoLogo from '@/assets/eloyo-logo.png';
 
 const Impressum = () => {
   const navItems = [
@@ -28,7 +28,7 @@ const Impressum = () => {
       
       <ClassicNav 
         items={navItems}
-        logo={<img src={loyoLogo} alt="Loyo Logo" className="h-10 w-auto" />}
+        logo={<img src={eloyoLogo} alt="Eloyo Logo" className="h-10 w-auto" />}
       />
 
       <div className="pt-32 pb-20 px-4 sm:px-6 lg:px-8">
@@ -45,7 +45,7 @@ const Impressum = () => {
               </p>
               <p className="text-muted-foreground mt-4">
                 <strong>Hinweis:</strong> Es handelt sich um ein Einzelunternehmen. 
-                "Loyo" ist ein Fantasiename und keine Rechtsform.
+                "Eloyo" ist ein Fantasiename und keine Rechtsform.
               </p>
             </section>
 
@@ -60,7 +60,7 @@ const Impressum = () => {
               <h2 className="text-2xl font-bold mb-4">Kontakt</h2>
               <p className="text-muted-foreground">
                 Telefon: +49 151 62665596<br />
-                E-Mail: kontakt@loyo.de
+                E-Mail: kontakt@eloyo.de
               </p>
             </section>
 

@@ -8,7 +8,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Trash2, Shield, CheckCircle2 } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
-import loyoLogo from '@/assets/loyo-logo.png';
+import eloyoLogo from '@/assets/eloyo-logo.png';
 
 const Delete = () => {
   const [searchParams] = useSearchParams();
@@ -89,7 +89,7 @@ const Delete = () => {
         
         <ClassicNav 
           items={navItems}
-          logo={<img src={loyoLogo} alt="Loyo Logo" className="h-10 w-auto" />}
+          logo={<img src={eloyoLogo} alt="Eloyo Logo" className="h-10 w-auto" />}
         />
 
         <div className="pt-32 pb-20 px-4 sm:px-6 lg:px-8">
@@ -129,7 +129,7 @@ const Delete = () => {
       
       <ClassicNav 
         items={navItems}
-        logo={<img src={loyoLogo} alt="Loyo Logo" className="h-10 w-auto" />}
+        logo={<img src={eloyoLogo} alt="Eloyo Logo" className="h-10 w-auto" />}
       />
 
       <div className="pt-32 pb-20 px-4 sm:px-6 lg:px-8">

@@ -10,7 +10,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { signOut } from "@/lib/auth";
 import { toast } from "sonner";
-import loyoLogo from '@/assets/loyo-logo.png';
+import eloyoLogo from '@/assets/eloyo-logo.png';
 
 const menuItems = [
   { title: "Dashboard", url: "/admin", icon: Home },
@@ -44,7 +44,7 @@ export function AdminTopNav() {
   return (
     <header className="sticky top-0 z-40 w-full border-b bg-background">
       <div className="flex h-16 items-center gap-4 px-6">
-        <img src={loyoLogo} alt="Loyo Logo" className="h-8 w-auto" />
+        <img src={eloyoLogo} alt="Eloyo Logo" className="h-8 w-auto" />
         
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
