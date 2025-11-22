@@ -210,7 +210,7 @@ export default function Checkout() {
           <Card className="border-2">
             <CardHeader>
               <CardTitle>Paket auswählen</CardTitle>
-              <CardDescription>Wähle das passende Loyo-Paket für deinen Kunden</CardDescription>
+              <CardDescription>Wähle das passende Eloyo-Paket für deinen Kunden</CardDescription>
             </CardHeader>
             <CardContent>
               {/* Billing Toggle */}
@@ -320,7 +320,7 @@ export default function Checkout() {
                       <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
                         <Star className="w-5 h-5 text-primary-foreground" />
                       </div>
-                      <h3 className="text-2xl font-bold">Loyo Paketübersicht</h3>
+                      <h3 className="text-2xl font-bold">Eloyo Paketübersicht</h3>
                     </div>
                     
                     <div className="overflow-x-auto">

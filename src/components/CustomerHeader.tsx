@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/sheet";
 import { Menu, User, FileText, MessageSquare, Star, LogOut, Home, ShoppingBag, BarChart3 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import loyoLogo from '@/assets/loyo-logo.png';
+import eloyoLogo from '@/assets/eloyo-logo.png';
 
 export function CustomerHeader() {
   const navigate = useNavigate();
@@ -33,8 +33,8 @@ export function CustomerHeader() {
     <header className="border-b relative z-10 bg-background/80 backdrop-blur-sm sticky top-0">
       <div className="container mx-auto px-4 py-4 flex items-center justify-between">
         <img 
-          src={loyoLogo} 
-          alt="Loyo Logo"
+          src={eloyoLogo} 
+          alt="Eloyo Logo"
           className="h-10 w-auto cursor-pointer" 
           onClick={() => navigate('/customer')}
         />

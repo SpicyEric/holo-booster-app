@@ -12,7 +12,7 @@ import { toast } from "sonner";
 import { z } from "zod";
 import { LogIn } from "lucide-react";
 import { motion } from "framer-motion";
-import loyoLogo from '@/assets/loyo-logo.png';
+import eloyoLogo from '@/assets/eloyo-logo.png';
 import { supabase } from "@/integrations/supabase/client";
 
 const loginSchema = z.object({
@@ -161,7 +161,7 @@ const Auth = () => {
       
       <ClassicNav 
         items={navItems}
-        logo={<img src={loyoLogo} alt="Loyo Logo" className="h-10 w-auto" />}
+        logo={<img src={eloyoLogo} alt="Eloyo Logo" className="h-10 w-auto" />}
       />
 
       <div className="pt-32 pb-20 px-4 flex items-center justify-center min-h-screen">
@@ -171,7 +171,7 @@ const Auth = () => {
           className="w-full max-w-md"
         >
           <div className="text-center mb-8">
-            <img src={loyoLogo} alt="Loyo Logo" className="h-16 w-auto mx-auto mb-4" />
+            <img src={eloyoLogo} alt="Eloyo Logo" className="h-16 w-auto mx-auto mb-4" />
             <h1 className="text-3xl font-bold">
               {isResetMode ? 'Passwort festlegen' : 'Anmelden'}
             </h1>
