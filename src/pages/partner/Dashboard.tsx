@@ -5,7 +5,7 @@ import { signOut } from "@/lib/auth";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { LogOut, Euro, TrendingUp, Calendar, AlertCircle } from "lucide-react";
-import qraitLogo from '@/assets/qrait-logo-full.png';
+import loyoLogo from '@/assets/loyo-logo.png';
 import Particles from "@/components/Particles";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
@@ -40,7 +40,7 @@ const PartnerDashboard = () => {
         />
         <div className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-10">
           <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-            <img src={qraitLogo} alt="QRait Logo" className="h-10 w-auto" />
+            <img src={loyoLogo} alt="Loyo Logo" className="h-10 w-auto" />
             <Button onClick={handleLogout} variant="outline">
               <LogOut className="mr-2 w-4 h-4" />
               Logout

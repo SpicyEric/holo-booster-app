@@ -2,7 +2,7 @@ import ClassicNav from '@/components/ClassicNav';
 import Particles from '@/components/Particles';
 import { useNavigate } from 'react-router-dom';
 import { Shield, ArrowRight } from 'lucide-react';
-import qraitLogo from '@/assets/qrait-logo-full.png';
+import loyoLogo from '@/assets/loyo-logo.png';
 
 const Datenschutz = () => {
   const navigate = useNavigate();
@@ -32,7 +32,7 @@ const Datenschutz = () => {
       
       <ClassicNav 
         items={navItems}
-        logo={<img src={qraitLogo} alt="QRait Logo" className="h-10 w-auto" />}
+        logo={<img src={loyoLogo} alt="Loyo Logo" className="h-10 w-auto" />}
       />
 
       <div className="pt-32 pb-20 px-4 sm:px-6 lg:px-8">
@@ -84,7 +84,7 @@ const Datenschutz = () => {
                 86836 Untermeitingen<br />
                 <br />
                 Telefon: +49 151 62665596<br />
-                E-Mail: kontakt@qrait.de
+                E-Mail: kontakt@loyo.de
               </p>
             </section>
 

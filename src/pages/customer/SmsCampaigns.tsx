@@ -289,7 +289,7 @@ export default function SmsCampaigns() {
   const getCharCount = () => {
     let text = messageText;
     // Unsubscribe text is always added
-    text += '\n\nAbbestellen: https://qrait.de/delete';
+    text += '\n\nAbbestellen: https://loyo.de/delete';
     return text.length;
   };
 
@@ -553,7 +553,7 @@ export default function SmsCampaigns() {
                 <AlertDescription className="text-xs">
                   <strong>Pflicht-Abbestellhinweis:</strong> Folgender Text wird automatisch angehängt:
                   <div className="mt-2 p-2 bg-muted rounded text-xs font-mono">
-                    Abbestellen: https://qrait.de/delete
+                    Abbestellen: https://loyo.de/delete
                   </div>
                 </AlertDescription>
               </Alert>
