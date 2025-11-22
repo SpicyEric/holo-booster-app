@@ -9,11 +9,11 @@ const AdminDashboard = () => {
       <div className="min-h-screen w-full bg-background">
         <Particles 
           particleColors={['#8B5CF6', '#3B82F6', '#8B5CF6']}
-          particleCount={100}
+          particleCount={250}
           particleSpread={8}
           speed={0.05}
-          particleBaseSize={100}
-          sizeRandomness={1.5}
+          particleBaseSize={180}
+          sizeRandomness={1.8}
           moveParticlesOnHover={true}
           alphaParticles={true}
           disableRotation={false}
