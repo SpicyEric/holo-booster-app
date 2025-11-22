@@ -20,7 +20,7 @@ import {
   Scale,
   BarChart3
 } from 'lucide-react';
-import qraitLogo from '@/assets/qrait-logo-full.png';
+import loyoLogo from '@/assets/loyo-logo.png';
 import heroPersonQr from '@/assets/hero-person-qr.jpg';
 import qrStandProduct from '@/assets/qr-stand-product.png';
 import { useEffect } from 'react';
@@ -101,7 +101,7 @@ const Landing = () => {
       number: 3,
       icon: Smartphone,
       title: 'Handynummer eingeben',
-      description: 'DSGVO-konformes Eintragen auf deiner QRait-Seite.'
+      description: 'DSGVO-konformes Eintragen auf deiner Loyo-Seite.'
     },
     {
       number: 4,
@@ -185,7 +185,7 @@ const Landing = () => {
       
       <ClassicNav 
         items={navItems} 
-        logo={<img src={qraitLogo} alt="QRait Logo" className="h-10 w-auto" />} 
+        logo={<img src={loyoLogo} alt="Loyo Logo" className="h-10 w-auto" />} 
       />
 
       {/* Hero Section */}
@@ -204,7 +204,7 @@ const Landing = () => {
                   Mehr Google-<span className="bg-gradient-primary bg-clip-text text-transparent">Bewertungen</span> und Stammkunden durch <span className="whitespace-nowrap">ein einziges <span className="bg-gradient-primary bg-clip-text text-transparent">QR-System</span></span>
                 </h1>
                 <p className="text-xl text-muted-foreground leading-relaxed">
-                  QRait kombiniert Bewertungsboost, digitale Stempelkarte, SMS-Marketing und einen professionellen Löschservice für negative Bewertungen – speziell für lokale Unternehmen.
+                  Loyo kombiniert Bewertungsboost, digitale Stempelkarte, SMS-Marketing und einen professionellen Löschservice für negative Bewertungen – speziell für lokale Unternehmen.
                 </p>
               </div>
 
@@ -218,7 +218,7 @@ const Landing = () => {
                 >
                   <img 
                     src={heroPersonQr} 
-                    alt="QRait in Aktion" 
+                    alt="Loyo in Aktion" 
                     className="w-full h-auto"
                   />
                 </motion.div>
@@ -253,7 +253,7 @@ const Landing = () => {
             className="text-center mb-16"
           >
             <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-foreground mb-4">
-              Was QRait für dein Geschäft erledigt
+              Was Loyo für dein Geschäft erledigt
             </h2>
           </motion.div>
 
@@ -348,7 +348,7 @@ const Landing = () => {
             className="text-center mb-16"
           >
             <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-foreground mb-4">
-              Deine Vorteile mit QRait
+              Deine Vorteile mit Loyo
             </h2>
           </motion.div>
 
@@ -441,10 +441,10 @@ const Landing = () => {
               className="space-y-6"
             >
               <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-foreground">
-                QRait in deinem Geschäft
+                Loyo in deinem Geschäft
               </h2>
               <p className="text-lg text-muted-foreground">
-                So sieht QRait in deinem Geschäft aus – der QR-Aufsteller macht den gesamten Prozess für deine Kunden einfach, logisch und schnell.
+                So sieht Loyo in deinem Geschäft aus – der QR-Aufsteller macht den gesamten Prozess für deine Kunden einfach, logisch und schnell.
               </p>
             </motion.div>
 
@@ -457,7 +457,7 @@ const Landing = () => {
             >
               <motion.img
                 src={qrStandProduct}
-                alt="QRait Aufsteller im Einsatz"
+                alt="Loyo Aufsteller im Einsatz"
                 className="w-full h-auto rounded-2xl"
                 animate={{
                   scale: [1, 1.02, 1],
@@ -505,7 +505,7 @@ const Landing = () => {
         <div className="max-w-7xl mx-auto">
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-8">
             <div>
-              <img src={qraitLogo} alt="QRait Logo" className="h-8 w-auto mb-4" />
+              <img src={loyoLogo} alt="Loyo Logo" className="h-8 w-auto mb-4" />
               <p className="text-sm text-muted-foreground">
                 Das Marketing-System für lokale Geschäfte
               </p>
@@ -542,7 +542,7 @@ const Landing = () => {
               <h3 className="font-semibold text-foreground mb-4">Social Media</h3>
               <ul className="space-y-2">
                 <li>
-                  <a href="https://instagram.com/qrait.de" target="_blank" rel="noopener noreferrer" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                  <a href="https://instagram.com/loyo.de" target="_blank" rel="noopener noreferrer" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
                     Instagram
                   </a>
                 </li>
@@ -552,7 +552,7 @@ const Landing = () => {
 
           <div className="mt-12 pt-8 border-t border-border/50 text-center">
             <p className="text-sm text-muted-foreground">
-              © {new Date().getFullYear()} QRait. Alle Rechte vorbehalten.
+              © {new Date().getFullYear()} Loyo. Alle Rechte vorbehalten.
             </p>
           </div>
         </div>
