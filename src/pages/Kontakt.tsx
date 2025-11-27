@@ -178,8 +178,8 @@ const Kontakt = () => {
                     </div>
                     <div>
                       <h3 className="font-semibold mb-1">E-Mail</h3>
-                      <a href="mailto:kontakt@eloyo.de" className="text-muted-foreground hover:text-foreground transition-colors">
-                        kontakt@eloyo.de
+                      <a href="mailto:support@eloyo.de" className="text-muted-foreground hover:text-foreground transition-colors">
+                        support@eloyo.de
                       </a>
                     </div>
                   </div>

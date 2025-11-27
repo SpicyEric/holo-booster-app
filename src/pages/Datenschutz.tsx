@@ -84,7 +84,7 @@ const Datenschutz = () => {
                 86836 Untermeitingen<br />
                 <br />
                 Telefon: +49 151 62665596<br />
-                E-Mail: kontakt@eloyo.de
+                E-Mail: support@eloyo.de
               </p>
             </section>
 
@@ -98,12 +98,12 @@ const Datenschutz = () => {
                 der Anfrage und für den Fall von Anschlussfragen bei uns gespeichert.
               </p>
 
-              <h3 className="text-xl font-semibold mb-3">QR-Code Scans</h3>
+              <h3 className="text-xl font-semibold mb-3">NFC-Interaktionen</h3>
               <p className="text-muted-foreground mb-4">
-                Beim Scannen unserer QR-Codes erfassen wir folgende Daten:
+                Bei der Nutzung unserer NFC-Stempel erfassen wir folgende Daten:
               </p>
               <ul className="list-disc list-inside text-muted-foreground mb-4 space-y-2">
-                <li>Zeitpunkt des Scans</li>
+                <li>Zeitpunkt der Interaktion</li>
                 <li>Telefonnummer (optional, bei Opt-in)</li>
                 <li>E-Mail-Adresse (optional, bei Opt-in)</li>
               </ul>
