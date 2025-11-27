@@ -49,6 +49,8 @@ const App = () => (
           <Route path="/datenschutz" element={<Datenschutz />} />
           <Route path="/delete" element={<Delete />} />
           <Route path="/auth" element={<Auth />} />
+          
+          {/* Admin Dashboard (role: admin) */}
           <Route path="/admin" element={<AdminDashboard />}>
             <Route index element={<Overview />} />
             <Route path="customers" element={<Customers />} />
@@ -60,6 +62,15 @@ const App = () => (
             <Route path="checkout" element={<Checkout />} />
             <Route path="settings" element={<Settings />} />
           </Route>
+          
+          {/* Händler Dashboard (role: kunde) */}
+          <Route path="/kunde/dashboard" element={<MerchantDashboard />} />
+          <Route path="/merchant" element={<MerchantDashboard />} />
+          
+          {/* Partner Dashboard (role: admin - Partner-Funktionen werden über Admin verwaltet) */}
+          <Route path="/partner" element={<PartnerDashboard />} />
+          
+          {/* Legacy Customer Routes (aus alter Website-DB, werden schrittweise migriert) */}
           <Route path="/account/billing" element={<Billing />} />
           <Route path="/customer" element={<CustomerDashboard />} />
           <Route path="/customer/analytics" element={<Analytics />} />
@@ -68,11 +79,14 @@ const App = () => (
           <Route path="/customer/upgrade" element={<CustomerUpgrade />} />
           <Route path="/customer/sms-campaigns" element={<SmsCampaigns />} />
           <Route path="/customer/google-reviews" element={<GoogleReviews />} />
-          <Route path="/merchant" element={<MerchantDashboard />} />
-          <Route path="/partner" element={<PartnerDashboard />} />
+          
+          {/* Scan Route */}
           <Route path="/s/:cid" element={<Scan />} />
+          
+          {/* Checkout Routes */}
           <Route path="/checkout/success" element={<CheckoutSuccess />} />
           <Route path="/checkout/cancel" element={<CheckoutCancel />} />
+          
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

@@ -10,6 +10,7 @@ import Particles from "@/components/Particles";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 
+// Partner Dashboard - nur für Admins zugänglich (Partner-Funktion wird über Admin verwaltet)
 const PartnerDashboard = () => {
   const navigate = useNavigate();
 
@@ -24,7 +25,7 @@ const PartnerDashboard = () => {
   };
 
   return (
-    <ProtectedRoute allowedRoles={['partner']}>
+    <ProtectedRoute allowedRoles={['admin']}>
       <div className="min-h-screen bg-background">
         <Particles 
           particleColors={['#8B5CF6', '#3B82F6', '#8B5CF6']}
@@ -54,7 +55,7 @@ const PartnerDashboard = () => {
               Partner Dashboard
             </h1>
             <p className="text-muted-foreground text-lg">
-              Übersicht deiner Provisionen und Konditionen
+              Übersicht der Provisionen und Konditionen
             </p>
           </div>
 

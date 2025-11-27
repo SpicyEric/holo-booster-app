@@ -3,6 +3,7 @@ import { AdminTopNav } from "@/components/AdminTopNav";
 import { Outlet } from "react-router-dom";
 import Particles from "@/components/Particles";
 
+// Admin Dashboard - nur für User mit App-Rolle 'admin'
 const AdminDashboard = () => {
   return (
     <ProtectedRoute allowedRoles={['admin']}>

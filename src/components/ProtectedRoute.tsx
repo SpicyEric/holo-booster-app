@@ -17,7 +17,14 @@ export const ProtectedRoute = ({ children, allowedRoles }: ProtectedRouteProps) 
       if (!user) {
         navigate('/auth');
       } else if (role && !allowedRoles.includes(role)) {
-        navigate('/auth');
+        // Redirect basierend auf tatsächlicher Rolle
+        if (role === 'admin') {
+          navigate('/admin');
+        } else if (role === 'kunde') {
+          navigate('/kunde/dashboard');
+        } else {
+          navigate('/auth');
+        }
       }
     }
   }, [user, role, loading, allowedRoles, navigate]);
