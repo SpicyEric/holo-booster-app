@@ -26,6 +26,7 @@ import nfcStampHero from '@/assets/nfc-stamp-hero.png';
 import eloyoAppMockup from '@/assets/eloyo-app-mockup.jpg';
 import businessNetwork from '@/assets/business-network.png';
 import heroPersonQr from '@/assets/hero-person-qr.png';
+import contactPerson from '@/assets/contact-person.png';
 import { useEffect } from 'react';
 
 const Landing = () => {
@@ -523,18 +524,19 @@ const Landing = () => {
             transition={{ duration: 0.6 }}
             className="flex flex-col lg:flex-row items-center gap-8 lg:gap-16"
           >
-            {/* Image with button overlay */}
-            <div className="relative flex-shrink-0">
+            {/* Image + Button as one clickable unit */}
+            <div 
+              className="relative flex-shrink-0 cursor-pointer group flex flex-col items-center"
+              onClick={() => navigate('/kontakt')}
+            >
               <img 
-                src={heroPersonQr} 
+                src={contactPerson} 
                 alt="Eloyo Beratung" 
-                className="w-[200px] sm:w-[240px] lg:w-[280px] h-auto"
+                className="w-[180px] sm:w-[220px] lg:w-[260px] h-auto relative z-10 mb-[-8px]"
               />
-              {/* Button positioned to cover the QR text */}
               <Button
-                onClick={() => navigate('/kontakt')}
                 size="lg"
-                className="absolute bottom-[10%] right-[2%] bg-gradient-primary text-primary-foreground hover:shadow-glow text-sm sm:text-base py-3 sm:py-4 px-5 sm:px-8 rounded-full shadow-xl"
+                className="bg-gradient-primary text-primary-foreground group-hover:shadow-glow text-sm sm:text-base py-3 sm:py-4 px-6 sm:px-10 rounded-full shadow-xl transition-all"
               >
                 Jetzt Kontakt aufnehmen
               </Button>
