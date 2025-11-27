@@ -523,16 +523,9 @@ const Landing = () => {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.6 }}
-            className="flex flex-col lg:flex-row items-center gap-8 lg:gap-16"
+            className="flex flex-col-reverse lg:flex-row items-center gap-8 lg:gap-16"
           >
-            <img 
-              src={contactCtaButton} 
-              alt="Kostenlos beraten lassen" 
-              onClick={() => navigate('/kontakt')}
-              className="w-[250px] sm:w-[300px] lg:w-[350px] h-auto cursor-pointer hover:scale-105 transition-transform duration-300"
-            />
-            
-            {/* Text content */}
+            {/* Text content - links */}
             <div className="text-center lg:text-left space-y-6">
               <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-foreground">
                 Bereit, deine Kundenbindung zu revolutionieren?
@@ -541,6 +534,14 @@ const Landing = () => {
                 Lass dich kostenlos und unverbindlich beraten. Wir zeigen dir, wie Eloyo dein Geschäft auf das nächste Level bringt.
               </p>
             </div>
+            
+            {/* Button-Bild - rechts */}
+            <img 
+              src={contactCtaButton} 
+              alt="Kostenlos beraten lassen" 
+              onClick={() => navigate('/kontakt')}
+              className="w-[250px] sm:w-[300px] lg:w-[350px] h-auto cursor-pointer hover:scale-105 transition-transform duration-300"
+            />
           </motion.div>
         </div>
       </section>
