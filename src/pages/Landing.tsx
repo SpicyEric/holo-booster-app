@@ -26,6 +26,7 @@ import nfcStampHero from '@/assets/nfc-stamp-hero.png';
 import eloyoAppMockup from '@/assets/eloyo-app-mockup.jpg';
 import businessNetwork from '@/assets/business-network.png';
 import heroPersonQr from '@/assets/hero-person-qr.png';
+import contactCtaButton from '@/assets/contact-cta-button.png';
 
 import { useEffect } from 'react';
 
@@ -524,13 +525,12 @@ const Landing = () => {
             transition={{ duration: 0.6 }}
             className="flex flex-col lg:flex-row items-center gap-8 lg:gap-16"
           >
-            <Button
+            <img 
+              src={contactCtaButton} 
+              alt="Kostenlos beraten lassen" 
               onClick={() => navigate('/kontakt')}
-              size="lg"
-              className="bg-gradient-primary text-primary-foreground hover:shadow-glow text-lg py-4 px-10 rounded-full shadow-xl transition-all"
-            >
-              Jetzt Kontakt aufnehmen
-            </Button>
+              className="w-[250px] sm:w-[300px] lg:w-[350px] h-auto cursor-pointer hover:scale-105 transition-transform duration-300"
+            />
             
             {/* Text content */}
             <div className="text-center lg:text-left space-y-6">
