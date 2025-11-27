@@ -23,7 +23,7 @@ const MerchantDashboard = () => {
   };
 
   return (
-    <ProtectedRoute allowedRoles={['merchant']}>
+    <ProtectedRoute allowedRoles={['kunde', 'admin']}>
       <div className="min-h-screen bg-background">
         <Particles 
           particleColors={['#8B5CF6', '#3B82F6', '#8B5CF6']}
@@ -51,10 +51,10 @@ const MerchantDashboard = () => {
           {/* Header */}
           <div className="mb-8">
             <h1 className="text-4xl font-bold mb-2">
-              Merchant Dashboard
+              Händler Dashboard
             </h1>
             <p className="text-muted-foreground text-lg">
-              Ihre Statistiken, Gutscheine & Materialien
+              Ihre Statistiken, Prämien & Materialien
             </p>
           </div>
 
@@ -113,7 +113,7 @@ const MerchantDashboard = () => {
 
           {/* Actions */}
           <Card className="p-6 border-border">
-            <h2 className="text-2xl font-bold mb-4">QR-Code & Materialien</h2>
+            <h2 className="text-2xl font-bold mb-4">NFC-Stempel & Materialien</h2>
             <div className="flex flex-wrap gap-4">
               <Button className="bg-foreground text-background hover:bg-foreground/90">
                 <Download className="mr-2 w-4 h-4" />

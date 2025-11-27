@@ -13,7 +13,7 @@ import { z } from "zod";
 import { LogIn } from "lucide-react";
 import { motion } from "framer-motion";
 import eloyoLogo from '@/assets/eloyo-logo.png';
-import { supabase } from "@/integrations/supabase/client";
+import { appSupabase } from "@/integrations/app-supabase/client";
 
 const loginSchema = z.object({
   email: z.string().email("Ungültige E-Mail-Adresse"),
@@ -38,6 +38,7 @@ const Auth = () => {
     { label: 'Impressum', href: '/impressum' },
     { label: 'Login', href: '/auth' }
   ];
+
   // Detect Supabase auth callbacks and enable password set mode
   useEffect(() => {
     const hash = window.location.hash || location.hash || "";
@@ -49,12 +50,22 @@ const Auth = () => {
   // Redirect if already logged in
   useEffect(() => {
     if (!loading && user && role && !isResetMode) {
-      if (role === 'admin') navigate('/admin');
-      else if (role === 'merchant') navigate('/merchant');
-      else if (role === 'partner') navigate('/partner');
-      else if (role === 'customer') navigate('/customer');
+      redirectByRole(role);
     }
   }, [user, role, loading, isResetMode, navigate]);
+
+  // Helper: Redirect basierend auf App-Rolle
+  const redirectByRole = (userRole: string) => {
+    if (userRole === 'admin') {
+      navigate('/admin');
+    } else if (userRole === 'kunde') {
+      navigate('/kunde/dashboard');
+    } else if (userRole === 'endkunde') {
+      // Endkunden haben kein Dashboard auf der Website
+      toast.info("Als Endkunde nutzen Sie bitte die Eloyo App");
+      navigate('/');
+    }
+  };
 
   const handleSetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -67,24 +78,22 @@ const Auth = () => {
       return;
     }
     setIsLoading(true);
-    const { error } = await supabase.auth.updateUser({ password: newPassword });
+    const { error } = await appSupabase.auth.updateUser({ password: newPassword });
     if (error) {
       setIsLoading(false);
       toast.error("Passwort konnte nicht gesetzt werden: " + error.message);
       return;
     }
     toast.success("Passwort erfolgreich gesetzt");
-    const { data: userData } = await supabase.auth.getUser();
+    const { data: userData } = await appSupabase.auth.getUser();
     const authedUser = userData?.user;
     if (authedUser) {
       const userRole = await deriveUserRole(authedUser.id);
       console.log('[handleSetPassword] Derived role:', userRole);
       setIsLoading(false);
-      if (userRole === 'admin') navigate('/admin');
-      else if (userRole === 'merchant') navigate('/merchant');
-      else if (userRole === 'partner') navigate('/partner');
-      else if (userRole === 'customer') navigate('/customer');
-      else {
+      if (userRole) {
+        redirectByRole(userRole);
+      } else {
         toast.error("Ihr Konto ist noch nicht freigeschaltet. Bitte laden Sie die Seite in 30 Sekunden neu oder kontaktieren Sie den Support.");
       }
     } else {
@@ -119,14 +128,8 @@ const Auth = () => {
       setIsLoading(false);
       toast.success("Erfolgreich angemeldet");
       
-      if (userRole === 'admin') {
-        navigate('/admin');
-      } else if (userRole === 'merchant') {
-        navigate('/merchant');
-      } else if (userRole === 'partner') {
-        navigate('/partner');
-      } else if (userRole === 'customer') {
-        navigate('/customer');
+      if (userRole) {
+        redirectByRole(userRole);
       } else {
         toast.error("Ihr Konto ist noch nicht freigeschaltet. Bitte laden Sie die Seite in 30 Sekunden neu oder kontaktieren Sie den Support.");
       }
@@ -134,7 +137,6 @@ const Auth = () => {
       setIsLoading(false);
     }
   };
-
 
   if (loading) {
     return (
