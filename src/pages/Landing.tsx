@@ -26,7 +26,7 @@ import nfcStampHero from '@/assets/nfc-stamp-hero.png';
 import eloyoAppMockup from '@/assets/eloyo-app-mockup.jpg';
 import businessNetwork from '@/assets/business-network.png';
 import heroPersonQr from '@/assets/hero-person-qr.png';
-import contactPerson from '@/assets/contact-person.png';
+
 import { useEffect } from 'react';
 
 const Landing = () => {
@@ -524,23 +524,13 @@ const Landing = () => {
             transition={{ duration: 0.6 }}
             className="flex flex-col lg:flex-row items-center gap-8 lg:gap-16"
           >
-            {/* Image + Button as one clickable unit */}
-            <div 
-              className="relative flex-shrink-0 cursor-pointer group flex flex-col items-center"
+            <Button
               onClick={() => navigate('/kontakt')}
+              size="lg"
+              className="bg-gradient-primary text-primary-foreground hover:shadow-glow text-lg py-4 px-10 rounded-full shadow-xl transition-all"
             >
-              <img 
-                src={contactPerson} 
-                alt="Eloyo Beratung" 
-                className="w-[180px] sm:w-[220px] lg:w-[260px] h-auto relative z-10 mb-[-8px]"
-              />
-              <Button
-                size="lg"
-                className="bg-gradient-primary text-primary-foreground group-hover:shadow-glow text-sm sm:text-base py-3 sm:py-4 px-6 sm:px-10 rounded-full shadow-xl transition-all"
-              >
-                Jetzt Kontakt aufnehmen
-              </Button>
-            </div>
+              Jetzt Kontakt aufnehmen
+            </Button>
             
             {/* Text content */}
             <div className="text-center lg:text-left space-y-6">
