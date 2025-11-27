@@ -24,7 +24,7 @@ import {
 import eloyoLogo from '@/assets/eloyo-logo.png';
 import nfcStampHero from '@/assets/nfc-stamp-hero.jpg';
 import eloyoAppMockup from '@/assets/eloyo-app-mockup.jpg';
-import businessNetwork from '@/assets/business-network.jpg';
+import businessNetwork from '@/assets/business-network.png';
 import { useEffect } from 'react';
 
 const Landing = () => {
