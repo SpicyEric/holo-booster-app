@@ -22,7 +22,7 @@ import {
   Wifi
 } from 'lucide-react';
 import eloyoLogo from '@/assets/eloyo-logo.png';
-import nfcStampHero from '@/assets/nfc-stamp-hero.jpg';
+import nfcStampHero from '@/assets/nfc-stamp-hero.png';
 import eloyoAppMockup from '@/assets/eloyo-app-mockup.jpg';
 import businessNetwork from '@/assets/business-network.png';
 import { useEffect } from 'react';
