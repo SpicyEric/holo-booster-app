@@ -25,6 +25,7 @@ import eloyoLogo from '@/assets/eloyo-logo.png';
 import nfcStampHero from '@/assets/nfc-stamp-hero.png';
 import eloyoAppMockup from '@/assets/eloyo-app-mockup.jpg';
 import businessNetwork from '@/assets/business-network.png';
+import heroPersonQr from '@/assets/hero-person-qr.png';
 import { useEffect } from 'react';
 
 const Landing = () => {
@@ -514,27 +515,40 @@ const Landing = () => {
 
       {/* Final CTA */}
       <section className="relative z-10 py-20 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-4xl mx-auto text-center">
+        <div className="max-w-6xl mx-auto">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.6 }}
-            className="space-y-8"
+            className="flex flex-col lg:flex-row items-center gap-8 lg:gap-16"
           >
-            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-foreground">
-              Bereit, deine Kundenbindung zu revolutionieren?
-            </h2>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Lass dich kostenlos und unverbindlich beraten. Wir zeigen dir, wie Eloyo dein Geschäft auf das nächste Level bringt.
-            </p>
-            <Button
-              onClick={() => navigate('/kontakt')}
-              size="lg"
-              className="bg-gradient-primary text-primary-foreground hover:shadow-glow text-xl py-8 px-12 rounded-2xl"
-            >
-              Jetzt Kontakt aufnehmen
-            </Button>
+            {/* Image with button overlay */}
+            <div className="relative flex-shrink-0">
+              <img 
+                src={heroPersonQr} 
+                alt="Eloyo Beratung" 
+                className="w-[320px] sm:w-[400px] lg:w-[450px] h-auto"
+              />
+              {/* Button positioned to cover the QR text */}
+              <Button
+                onClick={() => navigate('/kontakt')}
+                size="lg"
+                className="absolute bottom-[12%] right-[5%] bg-gradient-primary text-primary-foreground hover:shadow-glow text-base sm:text-lg py-4 sm:py-6 px-6 sm:px-10 rounded-full shadow-xl"
+              >
+                Jetzt Kontakt aufnehmen
+              </Button>
+            </div>
+            
+            {/* Text content */}
+            <div className="text-center lg:text-left space-y-6">
+              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-foreground">
+                Bereit, deine Kundenbindung zu revolutionieren?
+              </h2>
+              <p className="text-lg text-muted-foreground max-w-xl">
+                Lass dich kostenlos und unverbindlich beraten. Wir zeigen dir, wie Eloyo dein Geschäft auf das nächste Level bringt.
+              </p>
+            </div>
           </motion.div>
         </div>
       </section>
