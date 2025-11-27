@@ -302,55 +302,58 @@ const Landing = () => {
       {/* The Network - Key Differentiator */}
       <section className="relative z-10 py-20 px-4 sm:px-6 lg:px-8 bg-muted/30">
         <div className="max-w-7xl mx-auto">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
-            <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.6 }}
-              className="space-y-6"
-            >
-              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-foreground">
-                Das Eloyo-Netzwerk: <span className="bg-gradient-primary bg-clip-text text-transparent">Deine neue Werbefläche</span>
-              </h2>
-              <p className="text-lg text-muted-foreground">
-                Das Besondere an Eloyo: Du profitierst automatisch von allen anderen Geschäften, die ebenfalls Eloyo nutzen. Kunden, die woanders einkaufen, sehen auch dein Geschäft in der App.
-              </p>
-              <div className="space-y-4">
-                {networkBenefits.map((benefit, index) => (
-                  <motion.div
-                    key={index}
-                    initial={{ opacity: 0, x: -10 }}
-                    whileInView={{ opacity: 1, x: 0 }}
-                    viewport={{ once: true }}
-                    transition={{ duration: 0.4, delay: index * 0.1 }}
-                    className="flex items-start gap-4"
-                  >
-                    <div className="w-10 h-10 rounded-xl bg-gradient-primary flex items-center justify-center flex-shrink-0">
-                      <benefit.icon className="h-5 w-5 text-primary-foreground" />
-                    </div>
-                    <div>
-                      <h3 className="font-bold text-foreground">{benefit.title}</h3>
-                      <p className="text-muted-foreground text-sm">{benefit.description}</p>
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
-            </motion.div>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+            className="text-center mb-12"
+          >
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-foreground mb-4">
+              Das Eloyo-Netzwerk: <span className="bg-gradient-primary bg-clip-text text-transparent">Deine neue Werbefläche</span>
+            </h2>
+            <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
+              Das Besondere an Eloyo: Du profitierst automatisch von allen anderen Geschäften, die ebenfalls Eloyo nutzen. Kunden, die woanders einkaufen, sehen auch dein Geschäft in der App.
+            </p>
+          </motion.div>
 
+          <div className="flex items-center justify-center gap-6">
+            {/* Small square network image */}
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               whileInView={{ opacity: 1, scale: 1 }}
               viewport={{ once: true }}
               transition={{ duration: 0.6 }}
-              className="relative"
+              className="hidden sm:block flex-shrink-0"
             >
               <img
                 src={businessNetwork}
                 alt="Eloyo Geschäftsnetzwerk"
-                className="w-full h-auto rounded-2xl shadow-2xl"
+                className="w-36 h-36 object-cover rounded-xl shadow-lg"
               />
             </motion.div>
+
+            {/* Benefits next to image */}
+            <div className="space-y-4">
+              {networkBenefits.map((benefit, index) => (
+                <motion.div
+                  key={index}
+                  initial={{ opacity: 0, x: -10 }}
+                  whileInView={{ opacity: 1, x: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.4, delay: index * 0.1 }}
+                  className="flex items-start gap-4"
+                >
+                  <div className="w-10 h-10 rounded-xl bg-gradient-primary flex items-center justify-center flex-shrink-0">
+                    <benefit.icon className="h-5 w-5 text-primary-foreground" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-foreground">{benefit.title}</h3>
+                    <p className="text-muted-foreground text-sm max-w-sm">{benefit.description}</p>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
           </div>
         </div>
       </section>
