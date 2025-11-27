@@ -528,13 +528,13 @@ const Landing = () => {
               <img 
                 src={heroPersonQr} 
                 alt="Eloyo Beratung" 
-                className="w-[320px] sm:w-[400px] lg:w-[450px] h-auto"
+                className="w-[200px] sm:w-[240px] lg:w-[280px] h-auto"
               />
               {/* Button positioned to cover the QR text */}
               <Button
                 onClick={() => navigate('/kontakt')}
                 size="lg"
-                className="absolute bottom-[12%] right-[5%] bg-gradient-primary text-primary-foreground hover:shadow-glow text-base sm:text-lg py-4 sm:py-6 px-6 sm:px-10 rounded-full shadow-xl"
+                className="absolute bottom-[10%] right-[2%] bg-gradient-primary text-primary-foreground hover:shadow-glow text-sm sm:text-base py-3 sm:py-4 px-5 sm:px-8 rounded-full shadow-xl"
               >
                 Jetzt Kontakt aufnehmen
               </Button>
