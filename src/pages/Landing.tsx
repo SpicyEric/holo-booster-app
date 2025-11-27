@@ -176,9 +176,6 @@ const Landing = () => {
                 <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-foreground leading-tight">
                   Das moderne <span className="bg-gradient-primary bg-clip-text text-transparent">NFC-Stempelsystem</span> für maximale Kundenbindung
                 </h1>
-                <p className="text-xl text-muted-foreground leading-relaxed">
-                  Eloyo verbindet echte Holzstempel mit NFC-Technologie und einer smarten App. Schaffe ein einzigartiges Bonussystem, das deine Kunden lieben werden – und gewinne automatisch Neukunden durch unser Netzwerk.
-                </p>
                 <div className="flex flex-col sm:flex-row gap-4">
                   <Button
                     onClick={() => navigate('/kontakt')}
