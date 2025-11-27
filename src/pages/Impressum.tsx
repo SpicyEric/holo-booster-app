@@ -60,7 +60,7 @@ const Impressum = () => {
               <h2 className="text-2xl font-bold mb-4">Kontakt</h2>
               <p className="text-muted-foreground">
                 Telefon: +49 151 62665596<br />
-                E-Mail: kontakt@eloyo.de
+                E-Mail: support@eloyo.de
               </p>
             </section>
 
