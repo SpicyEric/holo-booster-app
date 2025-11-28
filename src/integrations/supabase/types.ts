@@ -14,6 +14,27 @@ export type Database = {
   }
   public: {
     Tables: {
+      boxes: {
+        Row: {
+          box_id: string
+          created_at: string
+          id: string
+          notes: string | null
+        }
+        Insert: {
+          box_id: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+        }
+        Update: {
+          box_id?: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+        }
+        Relationships: []
+      }
       campaign_messages: {
         Row: {
           campaign_id: string
@@ -282,6 +303,42 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "contacts_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      customer_boxes: {
+        Row: {
+          assigned_at: string
+          box_id: string
+          customer_id: string
+          id: string
+        }
+        Insert: {
+          assigned_at?: string
+          box_id: string
+          customer_id: string
+          id?: string
+        }
+        Update: {
+          assigned_at?: string
+          box_id?: string
+          customer_id?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_boxes_box_id_fkey"
+            columns: ["box_id"]
+            isOneToOne: true
+            referencedRelation: "boxes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_boxes_customer_id_fkey"
             columns: ["customer_id"]
             isOneToOne: false
             referencedRelation: "customers"

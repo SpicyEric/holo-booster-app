@@ -18,7 +18,7 @@ import Accounts from "./pages/admin/Accounts";
 import Orders from "./pages/admin/Orders";
 import Stats from "./pages/admin/Stats";
 import Checkout from "./pages/admin/Checkout";
-
+import BoxManagement from "./pages/admin/BoxManagement";
 import Settings from "./pages/admin/Settings";
 import MerchantLayout from "./components/MerchantLayout";
 import KundeDashboard from "./pages/merchant/KundeDashboard";
@@ -57,6 +57,7 @@ const App = () => (
             <Route path="orders" element={<Orders />} />
             <Route path="stats" element={<Stats />} />
             <Route path="checkout" element={<Checkout />} />
+            <Route path="boxes" element={<BoxManagement />} />
             <Route path="settings" element={<Settings />} />
           </Route>
           
