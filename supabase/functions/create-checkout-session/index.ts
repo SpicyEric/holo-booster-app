@@ -5,16 +5,14 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.79.0";
 interface CheckoutRequest {
   customerName: string;
   customerEmail: string;
-  companyName: string; // Now required
+  companyName: string;
   address?: {
     street: string;
     city: string;
     postalCode: string;
     country: string;
   };
-  packageType: 'basic' | 'plus' | 'pro'; // Required package selection
-  billingInterval?: 'monthly' | 'yearly'; // Neue Zahlungsweise
-  extraDisplays?: number;
+  billingInterval: 'monthly' | 'yearly';
   promoCodes?: string[];
 }
 
@@ -23,22 +21,17 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Direct Price IDs (from your Stripe account)
+// Eloyo Stripe Price IDs
 const PRICE_IDS = {
-  // Monthly subscriptions
-  BASIC_SUBSCRIPTION: "price_1SRta7BhiBjCX9PmfweOTPSv", // 44.00 EUR/month
-  PLUS_SUBSCRIPTION: "price_1SRtcCBhiBjCX9PmtBPMf6vC", // 49.00 EUR/month
-  PRO_SUBSCRIPTION: "price_1SRteDBhiBjCX9PmycqkZF9V", // 59.00 EUR/month
+  // Startbox (one-time) - €149.45
+  STARTBOX: "price_1SYPFvBhiBjCX9PmvCYIpxGd",
   
-  // Setup fees (one-time)
-  SETUP_BASIC: "price_1SRtiYBhiBjCX9Pm8TneAsXw", // 179.00 EUR
-  SETUP_PLUS: "price_1SRtjXBhiBjCX9PmF3UqZrq7", // 199.00 EUR
-  SETUP_PRO: "price_1SRtksBhiBjCX9PmqMo2nWCz", // 249.00 EUR
-  
-  // Add-ons
-  EXTRA_DISPLAY: "price_1SRtm4BhiBjCX9PmQjTWHTAV", // 6.50 EUR
-  CUSTOM_DESIGN: "price_1SRtnnBhiBjCX9PmBWCdJSBw", // 29.95 EUR
+  // Abo (monthly) - €49.45/month
+  ABO_MONTHLY: "price_1SYPBgBhiBjCX9PmImKaK2YC",
 };
+
+// Yearly price: 11 months * €49.45 = €543.95 (in cents: 54395)
+const ABO_YEARLY_AMOUNT = 54395;
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -48,7 +41,6 @@ serve(async (req) => {
   try {
     console.log("[CREATE-CHECKOUT] Function started");
 
-    // Use service role key to bypass RLS for admin role check
     const supabaseClient = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
@@ -63,7 +55,7 @@ serve(async (req) => {
 
     console.log("[CREATE-CHECKOUT] User authenticated:", userData.user.id);
 
-    // Check if user is admin (support multiple roles)
+    // Check if user is admin
     const { data: roles, error: rolesError } = await supabaseClient
       .from("user_roles")
       .select("role")
@@ -81,17 +73,11 @@ serve(async (req) => {
       customerEmail,
       companyName,
       address,
-      packageType,
-      billingInterval = 'monthly', // Standard: monatlich
-      extraDisplays = 0,
+      billingInterval,
       promoCodes,
     }: CheckoutRequest = await req.json();
 
-    if (!packageType || !['basic', 'plus', 'pro'].includes(packageType)) {
-      throw new Error('Invalid package type');
-    }
-
-    console.log("[CREATE-CHECKOUT] Request data received", { packageType, billingInterval });
+    console.log("[CREATE-CHECKOUT] Request data received", { billingInterval, promoCodes });
 
     const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
       apiVersion: "2024-10-28.acacia",
@@ -111,82 +97,56 @@ serve(async (req) => {
       const customer = await stripe.customers.create({
         email: customerEmail,
         name: customerName,
+        metadata: {
+          companyName,
+        },
       });
       customerId = customer.id;
       console.log("[CREATE-CHECKOUT] Created new customer:", customerId);
     }
 
-    // Build line items based on package selection and billing interval
+    // Build line items
     const lineItems: any[] = [];
     
-    // Add subscription based on package and billing interval
+    // 1. Startbox (one-time) - always included
+    lineItems.push({
+      price: PRICE_IDS.STARTBOX,
+      quantity: 1,
+    });
+
+    // 2. Abo (subscription)
     if (billingInterval === 'yearly') {
-      // Für jährliche Zahlung: 11 Monate als Preis
-      const yearlyPrices: Record<string, number> = {
-        basic: 48400, // 484.00 EUR (in cents)
-        plus: 53900, // 539.00 EUR (in cents)
-        pro: 64900, // 649.00 EUR (in cents)
-      };
-      
+      // Yearly: 11 months price, billed annually
       lineItems.push({
         price_data: {
           currency: 'eur',
-          unit_amount: yearlyPrices[packageType],
+          unit_amount: ABO_YEARLY_AMOUNT,
           recurring: {
             interval: 'year',
             interval_count: 1,
           },
           product_data: {
-            name: `QRait ${packageType.charAt(0).toUpperCase() + packageType.slice(1)} Paket (Jährlich)`,
-            description: 'Jährliche Zahlung - 1 Monat geschenkt',
+            name: 'Eloyo Abo (Jährlich)',
+            description: 'Jährliche Zahlung - 11 Monate zahlen, 12 Monate nutzen',
           },
         },
         quantity: 1,
       });
     } else {
-      // Für monatliche Zahlung: bestehende Preis-IDs verwenden
-      switch (packageType) {
-        case 'basic':
-          lineItems.push({ price: PRICE_IDS.BASIC_SUBSCRIPTION, quantity: 1 });
-          break;
-        case 'plus':
-          lineItems.push({ price: PRICE_IDS.PLUS_SUBSCRIPTION, quantity: 1 });
-          break;
-        case 'pro':
-          lineItems.push({ price: PRICE_IDS.PRO_SUBSCRIPTION, quantity: 1 });
-          break;
-      }
-    }
-    
-    // Add setup fee based on package
-    switch (packageType) {
-      case 'basic':
-        lineItems.push({ price: PRICE_IDS.SETUP_BASIC, quantity: 1 });
-        break;
-      case 'plus':
-        lineItems.push({ price: PRICE_IDS.SETUP_PLUS, quantity: 1 });
-        break;
-      case 'pro':
-        lineItems.push({ price: PRICE_IDS.SETUP_PRO, quantity: 1 });
-        break;
-    }
-
-    // Add extra displays if requested
-    if (extraDisplays > 0) {
+      // Monthly
       lineItems.push({
-        price: PRICE_IDS.EXTRA_DISPLAY,
-        quantity: extraDisplays,
+        price: PRICE_IDS.ABO_MONTHLY,
+        quantity: 1,
       });
     }
 
     console.log("[CREATE-CHECKOUT] Line items built:", lineItems.length);
 
     // Create metadata
-    const metadata: any = {
+    const metadata: Record<string, string> = {
       customerName,
       customerEmail,
       companyName,
-      packageType,
       billingInterval,
       address: JSON.stringify(address || {}),
     };
@@ -196,17 +156,20 @@ serve(async (req) => {
       customer: customerId,
       mode: "subscription",
       line_items: lineItems,
-      payment_method_types: ["card"], // SEPA can be added after activating in Stripe Dashboard
+      payment_method_types: ["card"],
       success_url: `${req.headers.get("origin")}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${req.headers.get("origin")}/checkout/cancel`,
       metadata,
     };
-    console.log("[CREATE-CHECKOUT] PM types:", sessionParams.payment_method_types);
-    // Apply promo codes if provided, otherwise allow manual promo code entry
+
+    // Apply promo codes if provided
     if (promoCodes && promoCodes.length > 0) {
       const discounts: Array<{ promotion_code: string }> = [];
       
-      for (const code of promoCodes) {
+      // Max 2 promo codes
+      const codesToApply = promoCodes.slice(0, 2);
+      
+      for (const code of codesToApply) {
         try {
           const promoCodesList = await stripe.promotionCodes.list({
             code: code,
@@ -216,14 +179,19 @@ serve(async (req) => {
           if (promoCodesList.data.length > 0) {
             discounts.push({ promotion_code: promoCodesList.data[0].id });
             console.log("[CREATE-CHECKOUT] Promo code applied:", code);
+          } else {
+            console.log("[CREATE-CHECKOUT] Promo code not found:", code);
           }
         } catch (error) {
-          console.log("[CREATE-CHECKOUT] Invalid promo code:", code);
+          console.log("[CREATE-CHECKOUT] Invalid promo code:", code, error);
         }
       }
       
       if (discounts.length > 0) {
         sessionParams.discounts = discounts;
+      } else {
+        // Allow manual promo code entry if none were valid
+        sessionParams.allow_promotion_codes = true;
       }
     } else {
       // Allow users to enter promo codes manually in Stripe Checkout
