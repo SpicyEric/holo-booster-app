@@ -18,20 +18,14 @@ import Accounts from "./pages/admin/Accounts";
 import Orders from "./pages/admin/Orders";
 import Stats from "./pages/admin/Stats";
 import Checkout from "./pages/admin/Checkout";
-import Billing from "./pages/account/Billing";
+
 import Settings from "./pages/admin/Settings";
 import MerchantLayout from "./components/MerchantLayout";
-import MerchantDashboard from "./pages/merchant/Dashboard";
+import KundeDashboard from "./pages/merchant/KundeDashboard";
 import Stempelkarte from "./pages/merchant/Stempelkarte";
 import GoogleBewertungen from "./pages/merchant/GoogleBewertungen";
+import MeinKonto from "./pages/merchant/MeinKonto";
 import PartnerDashboard from "./pages/partner/Dashboard";
-import CustomerDashboard from "./pages/customer/Dashboard";
-import CustomerAccount from "./pages/customer/Account";
-import CustomerInvoices from "./pages/customer/Invoices";
-import CustomerUpgrade from "./pages/customer/Upgrade";
-import SmsCampaigns from "./pages/customer/SmsCampaigns";
-import GoogleReviews from "./pages/customer/GoogleReviews";
-import Analytics from "./pages/customer/Analytics";
 import Scan from "./pages/Scan";
 import NotFound from "./pages/NotFound";
 import CheckoutSuccess from "./pages/CheckoutSuccess";
@@ -68,29 +62,30 @@ const App = () => (
           
           {/* Händler Dashboard (role: kunde) with nested layout */}
           <Route path="/kunde" element={<MerchantLayout />}>
-            <Route index element={<Navigate to="/kunde/stempelkarte" replace />} />
+            <Route index element={<KundeDashboard />} />
             <Route path="stempelkarte" element={<Stempelkarte />} />
             <Route path="google-bewertungen" element={<GoogleBewertungen />} />
+            <Route path="konto" element={<MeinKonto />} />
           </Route>
           
           {/* Legacy routes - redirect to new structure */}
-          <Route path="/kunde/dashboard" element={<Navigate to="/kunde/stempelkarte" replace />} />
+          <Route path="/kunde/dashboard" element={<Navigate to="/kunde" replace />} />
           <Route path="/kunde/settings" element={<Navigate to="/kunde/stempelkarte" replace />} />
-          <Route path="/merchant" element={<Navigate to="/kunde/stempelkarte" replace />} />
+          <Route path="/merchant" element={<Navigate to="/kunde" replace />} />
           <Route path="/merchant/settings" element={<Navigate to="/kunde/stempelkarte" replace />} />
+          
+          {/* Legacy Customer Routes - redirect to /kunde */}
+          <Route path="/customer" element={<Navigate to="/kunde" replace />} />
+          <Route path="/customer/analytics" element={<Navigate to="/kunde" replace />} />
+          <Route path="/customer/account" element={<Navigate to="/kunde/konto" replace />} />
+          <Route path="/customer/invoices" element={<Navigate to="/kunde/konto" replace />} />
+          <Route path="/customer/upgrade" element={<Navigate to="/kunde" replace />} />
+          <Route path="/customer/sms-campaigns" element={<Navigate to="/kunde" replace />} />
+          <Route path="/customer/google-reviews" element={<Navigate to="/kunde/google-bewertungen" replace />} />
+          <Route path="/account/billing" element={<Navigate to="/kunde/konto" replace />} />
           
           {/* Partner Dashboard (role: admin - Partner-Funktionen werden über Admin verwaltet) */}
           <Route path="/partner" element={<PartnerDashboard />} />
-          
-          {/* Legacy Customer Routes (aus alter Website-DB, werden schrittweise migriert) */}
-          <Route path="/account/billing" element={<Billing />} />
-          <Route path="/customer" element={<CustomerDashboard />} />
-          <Route path="/customer/analytics" element={<Analytics />} />
-          <Route path="/customer/account" element={<CustomerAccount />} />
-          <Route path="/customer/invoices" element={<CustomerInvoices />} />
-          <Route path="/customer/upgrade" element={<CustomerUpgrade />} />
-          <Route path="/customer/sms-campaigns" element={<SmsCampaigns />} />
-          <Route path="/customer/google-reviews" element={<GoogleReviews />} />
           
           {/* Scan Route */}
           <Route path="/s/:cid" element={<Scan />} />
