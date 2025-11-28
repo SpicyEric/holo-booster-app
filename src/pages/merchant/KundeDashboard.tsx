@@ -10,6 +10,7 @@ import {
   Loader2, Users, Trophy, Gift, Clock, Star, TrendingUp,
   AlertTriangle, Pause, UserCheck, Target
 } from "lucide-react";
+import { DashboardCharts } from "@/components/merchant/DashboardCharts";
 
 interface Customer {
   id: string;
@@ -53,6 +54,7 @@ export default function KundeDashboard() {
   const [customer, setCustomer] = useState<Customer | null>(null);
   const [subscriptionInfo, setSubscriptionInfo] = useState<SubscriptionInfo | null>(null);
   const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [merchantId, setMerchantId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -117,6 +119,7 @@ export default function KundeDashboard() {
 
       if (!merchantData) {
         // Set placeholder stats if no merchant found
+        setMerchantId(null);
         setStats({
           totalLoyaltyUsers: 0,
           totalPointsGiven: 0,
@@ -131,19 +134,20 @@ export default function KundeDashboard() {
         return;
       }
 
-      const merchantId = merchantData.id;
+      const foundMerchantId = merchantData.id;
+      setMerchantId(foundMerchantId);
 
       // Load loyalty accounts count
       const { count: loyaltyUsersCount } = await appSupabase
         .from("loyalty_accounts")
         .select("*", { count: "exact", head: true })
-        .eq("merchant_id", merchantId);
+        .eq("merchant_id", foundMerchantId);
 
       // Load transactions for points data
       const { data: transactions } = await appSupabase
         .from("transactions")
         .select("points_change, created_at")
-        .eq("merchant_id", merchantId);
+        .eq("merchant_id", foundMerchantId);
 
       let totalPointsGiven = 0;
       let totalPointsRedeemed = 0;
@@ -167,7 +171,7 @@ export default function KundeDashboard() {
       const { count: rewardsCount } = await appSupabase
         .from("reward_redemptions")
         .select("*", { count: "exact", head: true })
-        .eq("merchant_id", merchantId);
+        .eq("merchant_id", foundMerchantId);
 
       // Find peak hour
       let peakHour = "—";
@@ -183,7 +187,7 @@ export default function KundeDashboard() {
       const { data: loyaltyAccounts } = await appSupabase
         .from("loyalty_accounts")
         .select("user_id, created_at")
-        .eq("merchant_id", merchantId);
+        .eq("merchant_id", foundMerchantId);
 
       // Count new customers in last 7 days
       const sevenDaysAgo = new Date();
@@ -535,6 +539,9 @@ export default function KundeDashboard() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Charts Section */}
+      <DashboardCharts merchantId={merchantId} />
 
       {/* Subscription Status (if active) */}
       {subscriptionInfo?.hasSubscription && (
