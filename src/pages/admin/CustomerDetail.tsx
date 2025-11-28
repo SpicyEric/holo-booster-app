@@ -1,15 +1,13 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
+import { appSupabase } from "@/integrations/app-supabase/client";
 import { GlassCard } from "@/components/GlassCard";
 import { GradientButton } from "@/components/GradientButton";
-import { ArrowLeft, Save, QrCode, Upload, Download, AlertTriangle, XCircle, Trash2, Users, FileText, History } from "lucide-react";
+import { ArrowLeft, Save, Trash2, Users, ExternalLink, Store } from "lucide-react";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Switch } from "@/components/ui/switch";
-import { QRCodeSVG } from "qrcode.react";
 import { Button } from "@/components/ui/button";
 import {
   AlertDialog,
@@ -22,81 +20,114 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import CustomerContacts from "./CustomerContacts";
-import { ConfirmActionDialog } from "@/components/ConfirmActionDialog";
-import { CustomerFileUpload } from "@/components/CustomerFileUpload";
-import { useQuery } from "@tanstack/react-query";
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
+// Categories from the merchant system
+const CATEGORIES = [
+  "Café",
+  "Restaurant", 
+  "Shishabar",
+  "CBD-Shop",
+  "Bäckerei",
+  "Fashion Store",
+  "Barbershop",
+  "Apotheke",
+  "Supermarkt",
+  "Reformhaus",
+  "Veganes Restaurant",
+  "Lieferservice",
+  "Sonstiges",
+];
 
 const CustomerDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const qrRef = useRef<HTMLDivElement>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [uploading, setUploading] = useState(false);
-  const [generatingDesigns, setGeneratingDesigns] = useState(false);
-  const [showRegenerateDialog, setShowRegenerateDialog] = useState(false);
-  const [showCancelDialog, setShowCancelDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  const [showContactsDialog, setShowContactsDialog] = useState(false);
-  const [showStatusHistory, setShowStatusHistory] = useState(false);
-  const [showInvoices, setShowInvoices] = useState(false);
-  const [cancelling, setCancelling] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [confirmText, setConfirmText] = useState("");
-  const [customerNumber, setCustomerNumber] = useState<number | null>(null);
+  
   const [stats, setStats] = useState({
-    totalContacts: 0,
-    totalScans: 0,
-    totalStamps: 0,
+    totalLoyaltyAccounts: 0,
+    totalTransactions: 0,
+    totalRewards: 0,
   });
   
   const [formData, setFormData] = useState({
     name: "",
-    company_name: "",
-    industry: "",
-    contact_person: "",
-    phone: "",
-    email: "",
-    google_review_url: "",
-    offer_text: "",
-    offer_title: "Nur noch ein Schritt bis zu deinem Geschenk",
-    offer_details: "",
+    description: "",
+    category: "",
+    address: "",
+    postal_code: "",
+    city: "",
+    phone_number: "",
+    website: "",
+    instagram_url: "",
+    facebook_url: "",
+    twitter_url: "",
     logo_url: "",
-    qr_code_url: "",
-    design_urls: [] as string[],
-    active: true,
-    stripe_customer_id: "",
-    stripe_subscription_id: "",
-    status: "",
-    stamps_required: 5,
-    stamp_reward_text: "Gratis Kaffee",
+    cover_image_url: "",
+    owner_user_id: "",
   });
 
   useEffect(() => {
     if (id) {
-      loadCustomer();
+      loadMerchant();
       loadStats();
     }
   }, [id]);
 
-  const loadCustomer = async () => {
+  const loadMerchant = async () => {
     try {
-      const { data, error } = await supabase
-        .from("customers")
+      const { data, error } = await appSupabase
+        .from("merchants")
         .select("*")
         .eq("id", id)
         .single();
 
       if (error) throw error;
-      setFormData(data);
-      setCustomerNumber(data.customer_number);
+      if (!data) throw new Error("Keine Daten gefunden");
+      
+      // Cast data to correct type
+      const merchant = data as {
+        name: string;
+        description: string | null;
+        category: string | null;
+        address: string;
+        postal_code: string | null;
+        city: string;
+        phone_number: string | null;
+        website: string | null;
+        instagram_url: string | null;
+        facebook_url: string | null;
+        twitter_url: string | null;
+        logo_url: string | null;
+        cover_image_url: string | null;
+        owner_user_id: string | null;
+      };
+      
+      setFormData({
+        name: merchant.name || "",
+        description: merchant.description || "",
+        category: merchant.category || "",
+        address: merchant.address || "",
+        postal_code: merchant.postal_code || "",
+        city: merchant.city || "",
+        phone_number: merchant.phone_number || "",
+        website: merchant.website || "",
+        instagram_url: merchant.instagram_url || "",
+        facebook_url: merchant.facebook_url || "",
+        twitter_url: merchant.twitter_url || "",
+        logo_url: merchant.logo_url || "",
+        cover_image_url: merchant.cover_image_url || "",
+        owner_user_id: merchant.owner_user_id || "",
+      });
     } catch (error: any) {
       toast.error("Kunde nicht gefunden");
       navigate("/admin/customers");
@@ -107,80 +138,48 @@ const CustomerDetail = () => {
 
   const loadStats = async () => {
     try {
-      const [contactsRes, scansRes, stampsRes] = await Promise.all([
-        supabase.from("contacts").select("id", { count: "exact", head: true }).eq("customer_id", id),
-        supabase.from("scans").select("id", { count: "exact", head: true }).eq("customer_id", id),
-        supabase.from("stamps").select("id", { count: "exact", head: true }).eq("customer_id", id),
+      const [loyaltyRes, transactionsRes, rewardsRes] = await Promise.all([
+        appSupabase.from("loyalty_accounts").select("id", { count: "exact", head: true }).eq("merchant_id", id),
+        appSupabase.from("transactions").select("id", { count: "exact", head: true }).eq("merchant_id", id),
+        appSupabase.from("rewards").select("id", { count: "exact", head: true }).eq("merchant_id", id),
       ]);
 
       setStats({
-        totalContacts: contactsRes.count || 0,
-        totalScans: scansRes.count || 0,
-        totalStamps: stampsRes.count || 0,
+        totalLoyaltyAccounts: loyaltyRes.count || 0,
+        totalTransactions: transactionsRes.count || 0,
+        totalRewards: rewardsRes.count || 0,
       });
     } catch (error) {
       console.error("Error loading stats:", error);
     }
   };
 
-  // Query for status history
-  const { data: statusHistory } = useQuery({
-    queryKey: ['customer-status-history', id],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('customer_status_history')
-        .select('*')
-        .eq('customer_id', id)
-        .order('created_at', { ascending: false });
-      
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!id,
-  });
-
-  // Query for invoices
-  const { data: invoices } = useQuery({
-    queryKey: ['customer-invoices', id],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('invoices')
-        .select('*')
-        .eq('customer_id', id)
-        .order('issued_at', { ascending: false });
-      
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!id,
-  });
-
   const handleSave = async () => {
-    if (!formData.company_name || !formData.google_review_url) {
-      toast.error("Firmenname und Google Review URL sind Pflichtfelder");
+    if (!formData.name || !formData.address || !formData.city) {
+      toast.error("Name, Adresse und Stadt sind Pflichtfelder");
       return;
     }
 
     setSaving(true);
     try {
-      const { error } = await supabase
-        .from("customers")
-        .update({
-          name: formData.company_name,
-          company_name: formData.company_name,
-          industry: formData.industry,
-          contact_person: formData.contact_person,
-          phone: formData.phone,
-          email: formData.email,
-          google_review_url: formData.google_review_url,
-          offer_text: formData.offer_text,
-          offer_title: formData.offer_title,
-          offer_details: formData.offer_details,
-          logo_url: formData.logo_url,
-          active: formData.active,
-          stamps_required: formData.stamps_required,
-          stamp_reward_text: formData.stamp_reward_text,
-        })
+      // Use any cast for external DB type compatibility
+      const updateData = {
+        name: formData.name,
+        description: formData.description,
+        category: formData.category,
+        address: formData.address,
+        postal_code: formData.postal_code,
+        city: formData.city,
+        phone_number: formData.phone_number,
+        website: formData.website,
+        instagram_url: formData.instagram_url,
+        facebook_url: formData.facebook_url,
+        twitter_url: formData.twitter_url,
+      };
+      
+      const { error } = await (appSupabase
+        .from("merchants") as any)
+        .update(updateData)
         .eq("id", id);
 
       if (error) throw error;
@@ -193,199 +192,22 @@ const CustomerDetail = () => {
     }
   };
 
-  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    setUploading(true);
-    try {
-      const fileExt = file.name.split(".").pop();
-      const fileName = `${id}-logo-${Date.now()}.${fileExt}`;
-      const filePath = `logos/${fileName}`;
-
-      const { error: uploadError } = await supabase.storage
-        .from("customer-assets")
-        .upload(filePath, file);
-
-      if (uploadError) throw uploadError;
-
-      const { data: { publicUrl } } = supabase.storage
-        .from("customer-assets")
-        .getPublicUrl(filePath);
-
-      setFormData({ ...formData, logo_url: publicUrl });
-      
-      // Direkt in DB speichern
-      await supabase
-        .from("customers")
-        .update({ logo_url: publicUrl })
-        .eq("id", id);
-
-      toast.success("Logo hochgeladen");
-    } catch (error: any) {
-      toast.error("Fehler beim Upload");
-      console.error(error);
-    } finally {
-      setUploading(false);
-    }
-  };
-
-  const generateQRCode = async (isRegeneration = false) => {
-    try {
-      // Erstelle einen temporären Container für die QR-Code-Generierung
-      const tempContainer = document.createElement('div');
-      tempContainer.style.position = 'absolute';
-      tempContainer.style.left = '-9999px';
-      document.body.appendChild(tempContainer);
-
-      // Importiere QRCode dynamisch für Canvas-Rendering
-      const QRCode = (await import('qrcode')).default;
-      const qrCodeDataUrl = await QRCode.toDataURL(qrCodeUrl, {
-        width: 512,
-        margin: 2,
-        errorCorrectionLevel: 'H'
-      });
-
-      // Konvertiere Base64 zu Blob
-      const response = await fetch(qrCodeDataUrl);
-      const blob = await response.blob();
-
-      const fileName = `${id}-qr-${Date.now()}.png`;
-      const filePath = `qrcodes/${fileName}`;
-
-      // Wenn es eine Regenerierung ist, lösche alten QR-Code
-      if (isRegeneration && formData.qr_code_url) {
-        const oldPath = formData.qr_code_url.split('/').pop();
-        if (oldPath) {
-          await supabase.storage
-            .from("customer-assets")
-            .remove([`qrcodes/${oldPath}`]);
-        }
-      }
-
-      const { error: uploadError } = await supabase.storage
-        .from("customer-assets")
-        .upload(filePath, blob);
-
-      if (uploadError) throw uploadError;
-
-      const { data: { publicUrl } } = supabase.storage
-        .from("customer-assets")
-        .getPublicUrl(filePath);
-
-      await supabase
-        .from("customers")
-        .update({ qr_code_url: publicUrl })
-        .eq("id", id);
-
-      setFormData({ ...formData, qr_code_url: publicUrl });
-      document.body.removeChild(tempContainer);
-      
-      toast.success(isRegeneration ? "Neuer QR-Code generiert" : "QR-Code generiert und gespeichert");
-    } catch (error: any) {
-      toast.error("Fehler beim Generieren des QR-Codes");
-      console.error(error);
-    }
-  };
-
-  const handleRegenerateConfirm = () => {
-    if (confirmText.toLowerCase() === "sicher") {
-      generateQRCode(true);
-      setShowRegenerateDialog(false);
-      setConfirmText("");
-    } else {
-      toast.error('Bitte gib "Sicher" ein, um fortzufahren');
-    }
-  };
-
-  const downloadQRCode = async () => {
-    if (!formData.qr_code_url) {
-      toast.error("Kein QR-Code verfügbar");
+  const handleDeleteMerchant = async () => {
+    if (confirmText.toLowerCase() !== "löschen") {
+      toast.error('Bitte gib "löschen" ein, um fortzufahren');
       return;
     }
-
-    try {
-      const response = await fetch(formData.qr_code_url);
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `${formData.company_name}-QR-Code.png`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      window.URL.revokeObjectURL(url);
-      toast.success("QR-Code heruntergeladen");
-    } catch (error) {
-      toast.error("Fehler beim Download");
-      console.error(error);
-    }
-  };
-
-  const generateStandDesigns = async () => {
-    if (!formData.qr_code_url) {
-      toast.error('Bitte generiere zuerst einen QR-Code');
-      return;
-    }
-
-    setGeneratingDesigns(true);
-    try {
-      const { data, error } = await supabase.functions.invoke('generateStandDesigns', {
-        body: { customerId: id },
-      });
-
-      if (error) throw error;
-
-      if (data.needsTemplate) {
-        toast.error('Template fehlt! Bitte lade in den Einstellungen ein Base-Template hoch.');
-        return;
-      }
-
-      if (data.designUrls && data.designUrls.length > 0) {
-        setFormData({ ...formData, design_urls: data.designUrls });
-        await loadCustomer();
-        toast.success('Design erfolgreich erstellt! 🎨');
-      } else {
-        toast.error('Keine Designs konnten erstellt werden');
-      }
-    } catch (error: any) {
-      toast.error('Fehler beim Generieren der Designs');
-      console.error(error);
-    } finally {
-      setGeneratingDesigns(false);
-    }
-  };
-
-  const handleCancelSubscription = async () => {
-    setCancelling(true);
-    try {
-      const { error } = await supabase.functions.invoke('admin-cancel-subscription', {
-        body: { customerId: id },
-      });
-
-      if (error) throw error;
-
-      toast.success("Abo erfolgreich gekündigt");
-      await loadCustomer();
-    } catch (error: any) {
-      toast.error(error.message || "Fehler beim Kündigen des Abos");
-      console.error(error);
-    } finally {
-      setCancelling(false);
-      setShowCancelDialog(false);
-    }
-  };
-
-  const handleDeleteCustomer = async () => {
+    
     setDeleting(true);
     try {
-      const { error } = await supabase.functions.invoke('admin-delete-customer', {
-        body: { customerId: id },
-      });
+      const { error } = await appSupabase
+        .from("merchants")
+        .delete()
+        .eq("id", id);
 
       if (error) throw error;
 
-      toast.success("Kunde und alle Stripe-Daten erfolgreich gelöscht");
+      toast.success("Kunde erfolgreich gelöscht");
       navigate("/admin/customers");
     } catch (error: any) {
       toast.error(error.message || "Fehler beim Löschen des Kunden");
@@ -404,8 +226,6 @@ const CustomerDetail = () => {
     );
   }
 
-  const qrCodeUrl = `${window.location.origin}/s/${id}`;
-
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">
@@ -415,491 +235,276 @@ const CustomerDetail = () => {
         >
           <ArrowLeft className="w-5 h-5" />
         </button>
-        <div>
+        <div className="flex-1">
           <h1 className="text-3xl font-bold bg-gradient-primary bg-clip-text text-transparent">
             {formData.name}
           </h1>
           <p className="text-muted-foreground mt-1">Kundendetails bearbeiten</p>
         </div>
+        {formData.owner_user_id && (
+          <div className="text-right">
+            <p className="text-xs text-muted-foreground">Owner ID</p>
+            <code className="text-xs bg-muted px-2 py-1 rounded">
+              {formData.owner_user_id.substring(0, 8)}...
+            </code>
+          </div>
+        )}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Hauptdaten */}
+        {/* Main Content */}
         <div className="lg:col-span-2 space-y-6">
-          {/* Zahlungsinformationen */}
-          <GlassCard>
-            <h2 className="text-xl font-bold mb-4">Zahlungsinformationen</h2>
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="p-4 border rounded-lg">
-                  <p className="text-sm text-muted-foreground mb-1">Kundennummer</p>
-                  <p className="font-mono text-lg font-bold text-primary">
-                    {customerNumber ? `CUR-${customerNumber}` : "Wird erstellt..."}
-                  </p>
-                </div>
-                <div className="p-4 border rounded-lg">
-                  <p className="text-sm text-muted-foreground mb-1">Zahlungsstatus</p>
-                  <p className="font-semibold">
-                    {formData.status === "active" && "✅ Aktiv"}
-                    {formData.status === "pending" && "⏳ Ausstehend"}
-                    {formData.status === "past_due" && "⚠️ Überfällig"}
-                    {formData.status === "canceled" && "❌ Gekündigt"}
-                    {!formData.status && "— Nicht definiert"}
-                  </p>
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="p-4 border rounded-lg">
-                  <p className="text-sm text-muted-foreground mb-1">Stripe Customer ID</p>
-                  <p className="font-mono text-xs break-all">
-                    {formData.stripe_customer_id || "Nicht angelegt"}
-                  </p>
-                </div>
-                <div className="p-4 border rounded-lg">
-                  <p className="text-sm text-muted-foreground mb-1">Subscription ID</p>
-                  <p className="font-mono text-xs break-all">
-                    {formData.stripe_subscription_id || "Kein Abo"}
-                  </p>
-                </div>
-              </div>
-
-              {/* Tabs for Status History and Invoices */}
-              <Tabs defaultValue="info" className="w-full">
-                <TabsList className="grid w-full grid-cols-3">
-                  <TabsTrigger value="info">Info</TabsTrigger>
-                  <TabsTrigger value="history">
-                    <History className="w-4 h-4 mr-2" />
-                    Status-Verlauf
-                  </TabsTrigger>
-                  <TabsTrigger value="invoices">
-                    <FileText className="w-4 h-4 mr-2" />
-                    Rechnungen
-                  </TabsTrigger>
-                </TabsList>
-                
-                <TabsContent value="info" className="space-y-4 mt-4">
-                  {/* Admin Actions */}
-                  {formData.stripe_subscription_id && formData.status !== "canceled" && (
-                    <div className="pt-4 border-t">
-                      <div className="flex gap-2">
-                        <Button
-                          onClick={() => setShowCancelDialog(true)}
-                          variant="destructive"
-                          className="gap-2"
-                          disabled={cancelling}
-                        >
-                          <XCircle className="w-4 h-4" />
-                          {cancelling ? "Kündige..." : "Abo kündigen"}
-                        </Button>
-                      </div>
-                      <p className="text-xs text-muted-foreground mt-2">
-                        Kündigt das Abo sofort in Stripe und in der Datenbank
-                      </p>
-                    </div>
-                  )}
-
-                  {formData.stripe_customer_id && (
-                    <div className="pt-4 border-t">
-                      <Button
-                        onClick={() => setShowDeleteDialog(true)}
-                        variant="destructive"
-                        className="gap-2"
-                        disabled={deleting}
-                      >
-                        <Trash2 className="w-4 h-4" />
-                        {deleting ? "Lösche..." : "Kunde komplett löschen"}
-                      </Button>
-                      <p className="text-xs text-muted-foreground mt-2">
-                        ⚠️ Löscht Kunde aus Stripe UND Datenbank (inkl. Abo). Nur für Admins.
-                      </p>
-                    </div>
-                  )}
-                </TabsContent>
-
-                <TabsContent value="history" className="mt-4">
-                  {statusHistory && statusHistory.length > 0 ? (
-                    <div className="space-y-2">
-                      {statusHistory.map((entry) => (
-                        <div key={entry.id} className="p-3 border rounded-lg">
-                          <div className="flex items-start justify-between">
-                            <div className="flex-1">
-                              <div className="flex items-center gap-2">
-                                <span className="font-semibold">{entry.old_status || 'Neu'}</span>
-                                <span>→</span>
-                                <span className="font-semibold text-primary">{entry.new_status}</span>
-                              </div>
-                              <div className="text-sm text-muted-foreground mt-1">
-                                Geändert durch: {entry.changed_by_email || 'System'} ({entry.change_source})
-                              </div>
-                              <div className="text-xs text-muted-foreground">
-                                {new Date(entry.created_at).toLocaleString('de-DE')}
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="text-center text-muted-foreground py-8">
-                      Keine Statusänderungen vorhanden
-                    </div>
-                  )}
-                </TabsContent>
-
-                <TabsContent value="invoices" className="mt-4">
-                  {invoices && invoices.length > 0 ? (
-                    <div className="space-y-2">
-                      {invoices.map((invoice) => (
-                        <div key={invoice.id} className="p-3 border rounded-lg hover:bg-muted/50">
-                          <div className="flex items-center justify-between">
-                            <div className="flex-1">
-                              <div className="font-semibold">
-                                {(invoice.total_amount_cents / 100).toFixed(2)} {invoice.currency?.toUpperCase() || 'EUR'}
-                              </div>
-                              <div className="text-sm text-muted-foreground">
-                                Status: {invoice.status} • {new Date(invoice.issued_at || invoice.created_at).toLocaleDateString('de-DE')}
-                              </div>
-                            </div>
-                            {invoice.pdf_url && (
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                asChild
-                              >
-                                <a href={invoice.pdf_url} target="_blank" rel="noopener noreferrer">
-                                  <Download className="w-4 h-4 mr-2" />
-                                  PDF
-                                </a>
-                              </Button>
-                            )}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="text-center text-muted-foreground py-8">
-                      Keine Rechnungen vorhanden
-                    </div>
-                  )}
-                </TabsContent>
-              </Tabs>
-            </div>
-          </GlassCard>
-
-          {/* Kontakte & Scans */}
+          
+          {/* Statistics */}
           <GlassCard>
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-bold">Kontakte & Scans</h2>
-              <div className="text-3xl font-bold bg-gradient-primary bg-clip-text text-transparent">
-                {stats.totalContacts}
-              </div>
+              <h2 className="text-xl font-bold flex items-center gap-2">
+                <Users className="w-5 h-5" />
+                Statistiken
+              </h2>
             </div>
             
-            <div className="grid grid-cols-3 gap-4 mb-6">
+            <div className="grid grid-cols-3 gap-4">
               <div className="p-4 border rounded-lg text-center">
-                <p className="text-sm text-muted-foreground mb-1">Gesamt Kontakte</p>
-                <p className="text-2xl font-bold">{stats.totalContacts}</p>
+                <p className="text-sm text-muted-foreground mb-1">Stempelkartennutzer</p>
+                <p className="text-2xl font-bold">{stats.totalLoyaltyAccounts}</p>
               </div>
               <div className="p-4 border rounded-lg text-center">
-                <p className="text-sm text-muted-foreground mb-1">Gesamt Scans</p>
-                <p className="text-2xl font-bold">{stats.totalScans}</p>
+                <p className="text-sm text-muted-foreground mb-1">Transaktionen</p>
+                <p className="text-2xl font-bold">{stats.totalTransactions}</p>
               </div>
               <div className="p-4 border rounded-lg text-center">
-                <p className="text-sm text-muted-foreground mb-1">Gesamt Stempel</p>
-                <p className="text-2xl font-bold">{stats.totalStamps}</p>
+                <p className="text-sm text-muted-foreground mb-1">Aktive Belohnungen</p>
+                <p className="text-2xl font-bold">{stats.totalRewards}</p>
               </div>
             </div>
-            
-            <Button 
-              onClick={() => setShowContactsDialog(true)}
-              className="w-full gap-2"
-            >
-              <Users className="w-4 h-4" />
-              Alle Kontakte anzeigen
-            </Button>
           </GlassCard>
 
+          {/* Basic Data */}
           <GlassCard>
             <h2 className="text-xl font-bold mb-4">Grunddaten</h2>
             <div className="space-y-4">
               <div>
-                <Label htmlFor="company_name">Firmenname *</Label>
+                <Label htmlFor="name">Firmenname *</Label>
                 <Input
-                  id="company_name"
-                  value={formData.company_name}
-                  onChange={(e) =>
-                    setFormData({ ...formData, company_name: e.target.value })
-                  }
+                  id="name"
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   placeholder="z.B. Bäckerei Müller"
                 />
               </div>
 
               <div>
-                <Label htmlFor="industry">Branche</Label>
-                <Input
-                  id="industry"
-                  value={formData.industry || ""}
-                  onChange={(e) =>
-                    setFormData({ ...formData, industry: e.target.value })
-                  }
-                  placeholder="z.B. Gastronomie, Einzelhandel"
+                <Label htmlFor="description">Beschreibung</Label>
+                <Textarea
+                  id="description"
+                  value={formData.description}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  placeholder="Kurze Beschreibung des Geschäfts..."
+                  rows={3}
                 />
               </div>
 
               <div>
-                <Label htmlFor="contact_person">Ansprechpartner</Label>
+                <Label htmlFor="category">Kategorie</Label>
+                <Select
+                  value={formData.category}
+                  onValueChange={(value) => setFormData({ ...formData, category: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Kategorie wählen" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {CATEGORIES.map((cat) => (
+                      <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </GlassCard>
+
+          {/* Address */}
+          <GlassCard>
+            <h2 className="text-xl font-bold mb-4">Adresse</h2>
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="address">Straße und Hausnummer *</Label>
                 <Input
-                  id="contact_person"
-                  value={formData.contact_person || ""}
-                  onChange={(e) =>
-                    setFormData({ ...formData, contact_person: e.target.value })
-                  }
-                  placeholder="Max Mustermann"
+                  id="address"
+                  value={formData.address}
+                  onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                  placeholder="Musterstraße 123"
                 />
               </div>
 
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="postal_code">PLZ</Label>
+                  <Input
+                    id="postal_code"
+                    value={formData.postal_code}
+                    onChange={(e) => setFormData({ ...formData, postal_code: e.target.value })}
+                    placeholder="12345"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="city">Stadt *</Label>
+                  <Input
+                    id="city"
+                    value={formData.city}
+                    onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                    placeholder="Musterstadt"
+                  />
+                </div>
+              </div>
+            </div>
+          </GlassCard>
+
+          {/* Contact */}
+          <GlassCard>
+            <h2 className="text-xl font-bold mb-4">Kontaktdaten</h2>
+            <div className="space-y-4">
               <div>
-                <Label htmlFor="phone">Telefonnummer</Label>
+                <Label htmlFor="phone_number">Telefonnummer</Label>
                 <Input
-                  id="phone"
-                  value={formData.phone || ""}
-                  onChange={(e) =>
-                    setFormData({ ...formData, phone: e.target.value })
-                  }
+                  id="phone_number"
+                  value={formData.phone_number}
+                  onChange={(e) => setFormData({ ...formData, phone_number: e.target.value })}
                   placeholder="+49 123 456789"
                 />
               </div>
 
               <div>
-                <Label htmlFor="email">E-Mail-Adresse</Label>
+                <Label htmlFor="website">Website</Label>
                 <Input
-                  id="email"
-                  type="email"
-                  value={formData.email || ""}
-                  onChange={(e) =>
-                    setFormData({ ...formData, email: e.target.value })
-                  }
-                  placeholder="info@firma.de"
+                  id="website"
+                  value={formData.website}
+                  onChange={(e) => setFormData({ ...formData, website: e.target.value })}
+                  placeholder="https://www.beispiel.de"
                 />
               </div>
 
               <div>
-                <Label htmlFor="google_review_url">Google Review URL *</Label>
+                <Label htmlFor="instagram_url">Instagram</Label>
                 <Input
-                  id="google_review_url"
-                  value={formData.google_review_url}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      google_review_url: e.target.value,
-                    })
-                  }
-                  placeholder="https://g.page/r/..."
+                  id="instagram_url"
+                  value={formData.instagram_url}
+                  onChange={(e) => setFormData({ ...formData, instagram_url: e.target.value })}
+                  placeholder="https://instagram.com/beispiel"
                 />
               </div>
 
-              <div className="flex items-center justify-between">
-                <Label htmlFor="active">Kunde aktiv</Label>
-                <Switch
-                  id="active"
-                  checked={formData.active}
-                  onCheckedChange={(checked) =>
-                    setFormData({ ...formData, active: checked })
-                  }
+              <div>
+                <Label htmlFor="facebook_url">Facebook</Label>
+                <Input
+                  id="facebook_url"
+                  value={formData.facebook_url}
+                  onChange={(e) => setFormData({ ...formData, facebook_url: e.target.value })}
+                  placeholder="https://facebook.com/beispiel"
                 />
               </div>
             </div>
           </GlassCard>
 
-          <GlassCard>
-            <h2 className="text-xl font-bold mb-4">Angebot & Texte</h2>
-            <div className="space-y-4">
-              <div>
-                <Label htmlFor="offer_title">Überschrift auf Scan-Seite</Label>
-                <Input
-                  id="offer_title"
-                  value={formData.offer_title}
-                  onChange={(e) =>
-                    setFormData({ ...formData, offer_title: e.target.value })
-                  }
-                  placeholder="Nur noch ein Schritt zu deinem Geschenk"
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="offer_text">Gutschein-Text (kurz)</Label>
-                <Input
-                  id="offer_text"
-                  value={formData.offer_text}
-                  onChange={(e) =>
-                    setFormData({ ...formData, offer_text: e.target.value })
-                  }
-                  placeholder="Erhalte 10% Rabatt auf dein nächstes Getränk"
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="offer_details">Detailbeschreibung</Label>
-                <Textarea
-                  id="offer_details"
-                  value={formData.offer_details || ""}
-                  onChange={(e) =>
-                    setFormData({ ...formData, offer_details: e.target.value })
-                  }
-                  placeholder="Zeige diesen Gutschein einfach an der Kasse vor und erhalte deinen Rabatt. Gültig für 15 Minuten nach Erhalt."
-                  rows={4}
-                />
-              </div>
-            </div>
-          </GlassCard>
-
-          <GlassCard>
-            <h2 className="text-xl font-bold mb-4">Stempelkarten-System</h2>
-            <div className="space-y-4">
-              <div>
-                <Label htmlFor="stamps_required">Anzahl Stempel bis zur Belohnung</Label>
-                <Input
-                  id="stamps_required"
-                  type="number"
-                  min="1"
-                  max="20"
-                  value={formData.stamps_required}
-                  onChange={(e) =>
-                    setFormData({ ...formData, stamps_required: parseInt(e.target.value) || 5 })
-                  }
-                  placeholder="5"
-                />
-                <p className="text-xs text-muted-foreground mt-1">
-                  Wie viele Besuche braucht ein Kunde, um eine Belohnung zu erhalten?
-                </p>
-              </div>
-
-              <div>
-                <Label htmlFor="stamp_reward_text">Belohnungs-Text</Label>
-                <Input
-                  id="stamp_reward_text"
-                  value={formData.stamp_reward_text}
-                  onChange={(e) =>
-                    setFormData({ ...formData, stamp_reward_text: e.target.value })
-                  }
-                  placeholder="Gratis Kaffee"
-                />
-                <p className="text-xs text-muted-foreground mt-1">
-                  Was bekommt der Kunde, wenn die Stempelkarte voll ist?
-                </p>
-              </div>
-            </div>
-          </GlassCard>
-
-          <div className="flex justify-end">
+          <div className="flex justify-between">
+            <Button
+              variant="destructive"
+              onClick={() => setShowDeleteDialog(true)}
+              className="gap-2"
+            >
+              <Trash2 className="w-4 h-4" />
+              Kunde löschen
+            </Button>
+            
             <GradientButton onClick={handleSave} disabled={saving} icon={Save}>
               {saving ? "Speichern..." : "Änderungen speichern"}
             </GradientButton>
           </div>
         </div>
 
-        {/* Sidebar */}
+        {/* Sidebar - Preview & Info */}
         <div className="space-y-6">
+          {/* Logo Preview */}
           <GlassCard>
             <h2 className="text-xl font-bold mb-4">Logo</h2>
-            {formData.logo_url && (
+            {formData.logo_url ? (
               <img
                 src={formData.logo_url}
                 alt="Logo"
-                className="w-full rounded-lg mb-4"
+                className="w-full rounded-lg mb-4 max-h-48 object-contain bg-muted/30"
               />
-            )}
-            <label>
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handleLogoUpload}
-                className="hidden"
-              />
-              <div className="w-full cursor-pointer px-4 py-2 bg-background/50 hover:bg-background border border-border rounded-lg transition-colors text-center flex items-center justify-center gap-2">
-                <Upload className="w-4 h-4" />
-                {uploading ? "Hochladen..." : "Logo hochladen"}
+            ) : (
+              <div className="w-full h-32 rounded-lg bg-muted/30 flex items-center justify-center mb-4">
+                <Store className="w-12 h-12 text-muted-foreground" />
               </div>
-            </label>
+            )}
+            <p className="text-xs text-muted-foreground text-center">
+              Logo wird vom Kunden selbst in seinem Dashboard hochgeladen
+            </p>
           </GlassCard>
 
+          {/* Cover Image Preview */}
           <GlassCard>
-            <h2 className="text-xl font-bold mb-4">QR-Code</h2>
-            
-            <div ref={qrRef} className="mb-4 bg-white p-4 rounded-lg">
-              <QRCodeSVG value={qrCodeUrl} size={200} level="H" className="mx-auto" />
-            </div>
-
-            <div className="space-y-2">
-              {!formData.qr_code_url ? (
-                <GradientButton onClick={() => generateQRCode(false)} icon={QrCode} className="w-full">
-                  QR-Code generieren & speichern
-                </GradientButton>
-              ) : (
-                <>
-                  <button
-                    onClick={downloadQRCode}
-                    className="w-full px-4 py-2 bg-background/50 hover:bg-background border border-border rounded-lg transition-colors flex items-center justify-center gap-2"
-                  >
-                    <Download className="w-4 h-4" />
-                    QR-Code herunterladen
-                  </button>
-                  
-                  <a
-                    href={qrCodeUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="w-full px-4 py-2 bg-primary/10 hover:bg-primary/20 border border-primary/30 rounded-lg transition-colors flex items-center justify-center gap-2 text-primary"
-                  >
-                    Test-Link öffnen
-                  </a>
-
-                  <button
-                    onClick={() => setShowRegenerateDialog(true)}
-                    className="w-full px-4 py-2 bg-destructive/10 hover:bg-destructive/20 border border-destructive/30 rounded-lg transition-colors flex items-center justify-center gap-2 text-destructive"
-                  >
-                    <AlertTriangle className="w-4 h-4" />
-                    Neuen QR-Code generieren
-                  </button>
-                </>
-              )}
-            </div>
-
-            <div className="mt-4 p-3 bg-muted/50 rounded-lg">
-              <p className="text-xs text-muted-foreground mb-1">Volle URL:</p>
-              <p className="text-xs font-mono break-all">{qrCodeUrl}</p>
-            </div>
+            <h2 className="text-xl font-bold mb-4">Titelbild</h2>
+            {formData.cover_image_url ? (
+              <img
+                src={formData.cover_image_url}
+                alt="Titelbild"
+                className="w-full rounded-lg mb-4 max-h-32 object-cover"
+              />
+            ) : (
+              <div className="w-full h-24 rounded-lg bg-muted/30 flex items-center justify-center mb-4">
+                <p className="text-sm text-muted-foreground">Kein Titelbild</p>
+              </div>
+            )}
+            <p className="text-xs text-muted-foreground text-center">
+              Titelbild wird vom Kunden selbst hochgeladen
+            </p>
           </GlassCard>
 
-          {/* File Upload */}
-          <CustomerFileUpload customerId={id!} />
+          {/* Merchant Dashboard Link */}
+          <GlassCard>
+            <h2 className="text-xl font-bold mb-4">Kunden-Ansicht</h2>
+            <p className="text-sm text-muted-foreground mb-4">
+              So sieht der Kunde sein eigenes Dashboard, wenn er angemeldet ist.
+            </p>
+            <Button
+              variant="outline"
+              className="w-full gap-2"
+              onClick={() => {
+                // Open merchant preview - this would need to be implemented
+                toast.info("Vorschau-Funktion wird noch implementiert");
+              }}
+            >
+              <ExternalLink className="w-4 h-4" />
+              Händler-Dashboard ansehen
+            </Button>
+          </GlassCard>
         </div>
       </div>
 
-      <AlertDialog open={showRegenerateDialog} onOpenChange={setShowRegenerateDialog}>
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2 text-destructive">
-              <AlertTriangle className="w-5 h-5" />
-              QR-Code wirklich neu generieren?
+            <AlertDialogTitle className="text-destructive">
+              Kunde wirklich löschen?
             </AlertDialogTitle>
             <AlertDialogDescription className="space-y-3">
-              <p className="font-semibold">
-                ⚠️ ACHTUNG: Der alte QR-Code wird dadurch ungültig!
-              </p>
               <p>
-                Falls der Kunde bereits gedruckte Aufsteller mit dem alten QR-Code hat,
-                funktionieren diese nicht mehr.
+                Diese Aktion kann nicht rückgängig gemacht werden. Der Kunde{" "}
+                <strong>{formData.name}</strong> und alle zugehörigen Daten werden permanent gelöscht.
               </p>
               <div className="pt-2">
-                <Label htmlFor="confirm-text">
-                  Tippe <span className="font-bold">"Sicher"</span> ein, um fortzufahren:
+                <Label htmlFor="confirm-delete">
+                  Tippe <span className="font-bold">"löschen"</span> ein, um fortzufahren:
                 </Label>
                 <Input
-                  id="confirm-text"
+                  id="confirm-delete"
                   value={confirmText}
                   onChange={(e) => setConfirmText(e.target.value)}
-                  placeholder="Sicher"
+                  placeholder="löschen"
                   className="mt-2"
                 />
               </div>
@@ -910,46 +515,15 @@ const CustomerDetail = () => {
               Abbrechen
             </AlertDialogCancel>
             <AlertDialogAction
-              onClick={handleRegenerateConfirm}
+              onClick={handleDeleteMerchant}
+              disabled={deleting}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              Code ändern
+              {deleting ? "Lösche..." : "Endgültig löschen"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-
-      {/* Cancel Subscription Dialog with Safety */}
-      <ConfirmActionDialog
-        open={showCancelDialog}
-        onOpenChange={setShowCancelDialog}
-        onConfirm={handleCancelSubscription}
-        title="Abo wirklich kündigen?"
-        description="Das Abo wird sofort in Stripe gekündigt und der Status wird auf 'canceled' gesetzt. Der Kunde kann die Dienste nicht mehr nutzen."
-        confirmText="Abo kündigen"
-        confirmPhrase="Kunde kündigen"
-      />
-
-      {/* Delete Customer Dialog with Safety */}
-      <ConfirmActionDialog
-        open={showDeleteDialog}
-        onOpenChange={setShowDeleteDialog}
-        onConfirm={handleDeleteCustomer}
-        title="⚠️ Kunde komplett löschen?"
-        description="ACHTUNG: Diese Aktion kann nicht rückgängig gemacht werden! Es werden gelöscht: Kunde in Stripe (inkl. aller Zahlungsdaten), Subscription in Stripe, alle Kundendaten in der Datenbank."
-        confirmText="Endgültig löschen"
-        confirmPhrase="Kunde löschen"
-      />
-
-      {/* Contacts Dialog */}
-      <Dialog open={showContactsDialog} onOpenChange={setShowContactsDialog}>
-        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Kontakte für {formData.name}</DialogTitle>
-          </DialogHeader>
-          <CustomerContacts customerId={id!} />
-        </DialogContent>
-      </Dialog>
     </div>
   );
 };
