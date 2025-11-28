@@ -3,16 +3,9 @@ import { Button } from "@/components/ui/button";
 import { signOut } from "@/lib/auth";
 import { useNavigate, useLocation, Outlet } from "react-router-dom";
 import { toast } from "sonner";
-import { LogOut, Star, CreditCard, Home, User, Menu } from "lucide-react";
+import { LogOut, Star, CreditCard, Home, User } from "lucide-react";
 import eloyoLogo from '@/assets/eloyo-logo.png';
 import Particles from "@/components/Particles";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 
 const MerchantLayout = () => {
   const navigate = useNavigate();
@@ -29,26 +22,10 @@ const MerchantLayout = () => {
   };
 
   const navItems = [
-    { 
-      path: '/kunde', 
-      label: 'Dashboard', 
-      icon: Home 
-    },
-    { 
-      path: '/kunde/stempelkarte', 
-      label: 'Stempelkarte', 
-      icon: CreditCard 
-    },
-    { 
-      path: '/kunde/google-bewertungen', 
-      label: 'Google-Bewertungen', 
-      icon: Star 
-    },
-    { 
-      path: '/kunde/konto', 
-      label: 'Mein Konto', 
-      icon: User 
-    },
+    { path: '/kunde', label: 'Dashboard', icon: Home },
+    { path: '/kunde/stempelkarte', label: 'Stempelkarte', icon: CreditCard },
+    { path: '/kunde/google-bewertungen', label: 'Google-Bewertungen', icon: Star },
+    { path: '/kunde/konto', label: 'Mein Konto', icon: User },
   ];
 
   const isActive = (path: string) => {
@@ -74,41 +51,41 @@ const MerchantLayout = () => {
           cameraDistance={20}
         />
         
-        {/* Header */}
+        {/* Header with inline navigation */}
         <div className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-10">
-          <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+          <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
             <img 
               src={eloyoLogo} 
               alt="Eloyo Logo" 
-              className="h-10 w-auto cursor-pointer" 
+              className="h-9 w-auto cursor-pointer" 
               onClick={() => navigate('/kunde')}
             />
             
-            {/* Dropdown Menu - Right Side */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="icon">
-                  <Menu className="h-5 w-5" />
+            {/* Inline Navigation */}
+            <nav className="flex items-center gap-1">
+              {navItems.map((item) => (
+                <Button
+                  key={item.path}
+                  variant={isActive(item.path) ? "default" : "ghost"}
+                  size="sm"
+                  onClick={() => navigate(item.path)}
+                  className="gap-2"
+                >
+                  <item.icon className="h-4 w-4" />
+                  <span className="hidden sm:inline">{item.label}</span>
                 </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56 bg-background">
-                {navItems.map((item) => (
-                  <DropdownMenuItem
-                    key={item.path}
-                    onClick={() => navigate(item.path)}
-                    className={isActive(item.path) ? "bg-primary/10 text-primary" : ""}
-                  >
-                    <item.icon className="mr-2 h-4 w-4" />
-                    {item.label}
-                  </DropdownMenuItem>
-                ))}
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleLogout} className="text-destructive">
-                  <LogOut className="mr-2 h-4 w-4" />
-                  Logout
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+              ))}
+              <div className="w-px h-6 bg-border mx-2 hidden sm:block" />
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={handleLogout}
+                className="gap-2 text-destructive hover:text-destructive hover:bg-destructive/10"
+              >
+                <LogOut className="h-4 w-4" />
+                <span className="hidden sm:inline">Logout</span>
+              </Button>
+            </nav>
           </div>
         </div>
 
