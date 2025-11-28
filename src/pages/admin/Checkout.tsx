@@ -79,11 +79,22 @@ export default function Checkout() {
 
   const totals = calculateTotal();
 
+  // Email validation helper
+  const isValidEmail = (email: string) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+    return emailRegex.test(email);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!customerName || !customerEmail || !companyName) {
       toast.error("Bitte fülle alle Pflichtfelder aus");
+      return;
+    }
+
+    if (!isValidEmail(customerEmail)) {
+      toast.error("Bitte gib eine gültige E-Mail-Adresse ein");
       return;
     }
 
