@@ -137,25 +137,75 @@ serve(async (req) => {
       metadata,
     };
 
-    // Apply promo code if provided (Stripe allows only 1 discount per session)
+    // Handle multiple promo codes by combining their discounts
+    // Stripe only allows 1 discount per session, so we combine them into one coupon
     if (promoCodes && promoCodes.length > 0) {
-      const code = promoCodes[0]; // Only use the first code
+      const validCodes = promoCodes.slice(0, 2); // Max 2 codes
+      let totalPercentOff = 0;
+      let totalAmountOff = 0;
+      const appliedCodes: string[] = [];
       
-      try {
-        const promoCodesList = await stripe.promotionCodes.list({
-          code: code,
-          active: true,
-          limit: 1,
-        });
-        if (promoCodesList.data.length > 0) {
-          sessionParams.discounts = [{ promotion_code: promoCodesList.data[0].id }];
-          console.log("[CREATE-CHECKOUT] Promo code applied:", code);
+      for (const code of validCodes) {
+        try {
+          const promoCodesList = await stripe.promotionCodes.list({
+            code: code.trim(),
+            active: true,
+            limit: 1,
+          });
+          
+          if (promoCodesList.data.length > 0) {
+            const promoCode = promoCodesList.data[0];
+            const coupon = await stripe.coupons.retrieve(promoCode.coupon.id);
+            
+            if (coupon.percent_off) {
+              totalPercentOff += coupon.percent_off;
+            }
+            if (coupon.amount_off) {
+              totalAmountOff += coupon.amount_off;
+            }
+            appliedCodes.push(code.trim());
+            console.log("[CREATE-CHECKOUT] Promo code found:", code, { percent_off: coupon.percent_off, amount_off: coupon.amount_off });
+          } else {
+            console.log("[CREATE-CHECKOUT] Promo code not found:", code);
+          }
+        } catch (error) {
+          console.log("[CREATE-CHECKOUT] Error looking up promo code:", code, error);
+        }
+      }
+      
+      // If we found any valid codes, create a combined coupon
+      if (appliedCodes.length > 0) {
+        // Cap percent_off at 100%
+        totalPercentOff = Math.min(totalPercentOff, 100);
+        
+        const couponParams: any = {
+          duration: 'once',
+          name: `Kombiniert: ${appliedCodes.join(' + ')}`,
+          metadata: {
+            applied_codes: appliedCodes.join(', '),
+          },
+        };
+        
+        // Prefer percent_off if available, otherwise use amount_off
+        if (totalPercentOff > 0) {
+          couponParams.percent_off = totalPercentOff;
+        } else if (totalAmountOff > 0) {
+          couponParams.amount_off = totalAmountOff;
+          couponParams.currency = 'eur';
+        }
+        
+        if (couponParams.percent_off || couponParams.amount_off) {
+          const combinedCoupon = await stripe.coupons.create(couponParams);
+          sessionParams.discounts = [{ coupon: combinedCoupon.id }];
+          console.log("[CREATE-CHECKOUT] Combined coupon created:", combinedCoupon.id, { totalPercentOff, totalAmountOff });
+          
+          // Store applied codes in metadata
+          metadata.appliedPromoCodes = appliedCodes.join(', ');
         } else {
-          console.log("[CREATE-CHECKOUT] Promo code not found:", code);
           sessionParams.allow_promotion_codes = true;
         }
-      } catch (error) {
-        console.log("[CREATE-CHECKOUT] Invalid promo code:", code, error);
+      } else {
+        // No valid codes found, allow manual entry
         sessionParams.allow_promotion_codes = true;
       }
     } else {
