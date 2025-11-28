@@ -378,11 +378,13 @@ const Stempelkarte = () => {
                           type="file"
                           accept="image/*"
                           className="hidden"
+                          onClick={(e) => { (e.target as HTMLInputElement).value = ''; }}
                           onChange={(e) => {
                             const file = e.target.files?.[0];
                             if (file) handleImageUpload(file, "logo");
                           }}
                         />
+                        {uploadingLogo ? "Hochladen..." : "Ändern"}
                         Ändern
                       </label>
                     </div>
@@ -424,12 +426,13 @@ const Stempelkarte = () => {
                           type="file"
                           accept="image/*"
                           className="hidden"
+                          onClick={(e) => { (e.target as HTMLInputElement).value = ''; }}
                           onChange={(e) => {
                             const file = e.target.files?.[0];
                             if (file) handleImageUpload(file, "cover");
                           }}
                         />
-                        Ändern
+                        {uploadingCover ? "Hochladen..." : "Ändern"}
                       </label>
                     </div>
                   ) : (
