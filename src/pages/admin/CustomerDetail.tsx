@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { appSupabase } from "@/integrations/app-supabase/client";
+import { supabase } from "@/integrations/supabase/client";
 import { ArrowLeft, Save, Trash2, ExternalLink, CreditCard, FileText, Hash } from "lucide-react";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
@@ -46,6 +47,8 @@ const CustomerDetail = () => {
     totalRewards: 0,
   });
   
+  const [customerNumber, setCustomerNumber] = useState<string | null>(null);
+  
   const [formData, setFormData] = useState({
     name: "",
     description: "",
@@ -64,15 +67,49 @@ const CustomerDetail = () => {
     created_at: "",
   });
 
-  // Generate a display customer number from the ID (first 6 chars)
-  const customerNumber = id ? id.substring(0, 8).toUpperCase() : "—";
-
   useEffect(() => {
     if (id) {
       loadMerchant();
       loadStats();
+      loadCustomerNumber();
     }
   }, [id]);
+
+  // Load real customer number from main database (customers table)
+  const loadCustomerNumber = async () => {
+    try {
+      // Try to find customer by matching owner_user_id with customer_users
+      const { data: merchantData } = await appSupabase
+        .from("merchants")
+        .select("owner_user_id")
+        .eq("id", id)
+        .single();
+      
+      const ownerUserId = (merchantData as any)?.owner_user_id;
+      if (!ownerUserId) return;
+      
+      // Look up customer via customer_users table
+      const { data: customerUser } = await supabase
+        .from("customer_users")
+        .select("customer_id")
+        .eq("user_id", ownerUserId)
+        .single();
+      
+      if (!customerUser?.customer_id) return;
+      
+      const { data: customer } = await supabase
+        .from("customers")
+        .select("customer_number")
+        .eq("id", customerUser.customer_id)
+        .single();
+      
+      if (customer?.customer_number) {
+        setCustomerNumber(String(customer.customer_number));
+      }
+    } catch (error) {
+      console.error("Error loading customer number:", error);
+    }
+  };
 
   const loadMerchant = async () => {
     try {
@@ -206,9 +243,11 @@ const CustomerDetail = () => {
         <div className="flex-1">
           <div className="flex items-center gap-2">
             <h1 className="text-xl font-semibold">{formData.name}</h1>
-            <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded font-mono">
-              #{customerNumber}
-            </span>
+            {customerNumber && (
+              <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded font-mono">
+                #{customerNumber}
+              </span>
+            )}
           </div>
           <p className="text-xs text-muted-foreground">
             Erstellt: {new Date(formData.created_at).toLocaleDateString("de-DE")}
@@ -356,7 +395,7 @@ const CustomerDetail = () => {
                 <Hash className="w-4 h-4 text-muted-foreground" />
                 <div>
                   <p className="text-xs text-muted-foreground">Kunden-Nr.</p>
-                  <p className="font-mono font-semibold">{customerNumber}</p>
+                  <p className="font-mono font-semibold">{customerNumber || "—"}</p>
                 </div>
               </div>
               <div className="flex items-center gap-2">
@@ -448,7 +487,7 @@ const CustomerDetail = () => {
         onOpenChange={setShowDeleteDialog}
         onConfirm={handleDeleteMerchant}
         title="Kunde endgültig löschen?"
-        description={`Der Kunde "${formData.name}" (${customerNumber}) und alle zugehörigen Daten werden permanent gelöscht. Diese Aktion kann NICHT rückgängig gemacht werden!`}
+        description={`Der Kunde "${formData.name}"${customerNumber ? ` (#${customerNumber})` : ""} und alle zugehörigen Daten werden permanent gelöscht. Diese Aktion kann NICHT rückgängig gemacht werden!`}
         confirmText={deleting ? "Lösche..." : "Endgültig löschen"}
         confirmPhrase="LÖSCHEN"
         destructive
