@@ -181,14 +181,18 @@ const Stempelkarte = () => {
   };
 
   const handleImageUpload = async (file: File, type: "logo" | "cover") => {
-    if (!user?.id) return;
+    if (!user?.id || !merchantId) {
+      toast.error("Bitte speichere zuerst deine Daten, bevor du Bilder hochlädst.");
+      return;
+    }
     
     const setUploading = type === "logo" ? setUploadingLogo : setUploadingCover;
     setUploading(true);
     
     try {
       const fileExt = file.name.split('.').pop();
-      const fileName = `${user.id}/${type}-${Date.now()}.${fileExt}`;
+      // Use merchantId in path to match RLS policy, and underscore naming convention
+      const fileName = `${merchantId}/${type}_${Date.now()}.${fileExt}`;
       
       const { error: uploadError } = await appSupabase.storage
         .from("merchant-images")
