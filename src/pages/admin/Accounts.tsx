@@ -120,6 +120,26 @@ const Accounts = () => {
       // Cast to correct type
       const profiles = profilesData as { id: string; first_name: string | null; last_name: string | null; created_at: string }[] | null;
       
+      // Fetch emails from auth.users via Edge Function
+      const userIds = roles?.map(r => r.user_id) || [];
+      let emailsMap: Record<string, string> = {};
+      
+      if (userIds.length > 0) {
+        try {
+          const { data: emailsData, error: emailsError } = await appSupabase.functions.invoke('getUserEmails', {
+            body: { userIds }
+          });
+          
+          if (emailsError) {
+            console.error("Error fetching emails:", emailsError);
+          } else if (emailsData?.emails) {
+            emailsMap = emailsData.emails;
+          }
+        } catch (emailError) {
+          console.error("Failed to fetch emails:", emailError);
+        }
+      }
+      
       const accountsData = roles?.map(role => {
         const profile = profiles?.find(p => p.id === role.user_id);
         const fullName = profile 
@@ -128,7 +148,7 @@ const Accounts = () => {
         
         return {
           id: role.user_id,
-          email: "",
+          email: emailsMap[role.user_id] || "",
           full_name: fullName || `User ${role.user_id.substring(0, 8)}`,
           role: role.role as AppRole,
           created_at: role.created_at || profile?.created_at || "",
@@ -441,7 +461,7 @@ const Accounts = () => {
             <TableHeader>
               <TableRow>
                 <TableHead>Name</TableHead>
-                <TableHead>User ID</TableHead>
+                <TableHead>E-Mail</TableHead>
                 <TableHead>Rolle</TableHead>
                 <TableHead>Erstellt am</TableHead>
                 <TableHead className="text-right">Aktionen</TableHead>
@@ -452,9 +472,11 @@ const Accounts = () => {
                 <TableRow key={account.id}>
                   <TableCell className="font-medium">{account.full_name}</TableCell>
                   <TableCell>
-                    <code className="text-xs bg-muted px-2 py-1 rounded">
-                      {account.id.substring(0, 8)}...
-                    </code>
+                    {account.email ? (
+                      <span className="text-sm">{account.email}</span>
+                    ) : (
+                      <span className="text-muted-foreground text-sm">—</span>
+                    )}
                   </TableCell>
                   <TableCell>{getRoleBadge(account.role)}</TableCell>
                   <TableCell>
