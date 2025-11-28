@@ -73,28 +73,6 @@ const Landing = () => {
     }
   ];
 
-  const howItWorks = [
-    {
-      number: 1,
-      title: 'NFC-Stempel bereithalten',
-      description: 'Dein hochwertiger Holzstempel mit NFC-Chip steht an der Kasse bereit.'
-    },
-    {
-      number: 2,
-      title: 'Kunde öffnet die App',
-      description: 'Dein Kunde öffnet die kostenlose Eloyo-App auf seinem Smartphone.'
-    },
-    {
-      number: 3,
-      title: 'Smartphone an den Stempel halten',
-      description: 'Ein kurzes Antippen genügt – Punkte werden sofort gutgeschrieben.'
-    },
-    {
-      number: 4,
-      title: 'Prämien einlösen',
-      description: 'Der Kunde entscheidet selbst, wann und wofür er seine Punkte einlöst.'
-    }
-  ];
 
   const networkBenefits = [
     {
@@ -254,50 +232,6 @@ const Landing = () => {
         </div>
       </section>
 
-      {/* How It Works */}
-      <section className="relative z-10 py-20 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
-            className="text-center mb-16"
-          >
-            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-foreground mb-4">
-              So einfach funktioniert es
-            </h2>
-            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-              Für dich und deine Kunden – kinderleicht und ohne Aufwand.
-            </p>
-          </motion.div>
-
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-8">
-            {howItWorks.map((step, index) => (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.5, delay: index * 0.1 }}
-                className="relative"
-              >
-                <div className="text-center">
-                  <div className="w-16 h-16 rounded-full bg-gradient-primary flex items-center justify-center mx-auto mb-4">
-                    <span className="text-2xl font-bold text-primary-foreground">{step.number}</span>
-                  </div>
-                  <h3 className="text-lg font-bold text-foreground mb-2">
-                    {step.title}
-                  </h3>
-                  <p className="text-muted-foreground text-sm">
-                    {step.description}
-                  </p>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
 
       {/* The Network - Key Differentiator */}
       <section className="relative z-10 py-20 px-4 sm:px-6 lg:px-8 bg-muted/30">
