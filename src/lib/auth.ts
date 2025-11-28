@@ -75,21 +75,31 @@ export const getUserRole = async (userId: string): Promise<UserRole | null> => {
 
 export const deriveUserRole = async (userId: string): Promise<UserRole | null> => {
   try {
-    // Rolle aus App-DB holen
-    const { data: roleData, error: roleError } = await appSupabase
+    // Alle Rollen des Users aus App-DB holen (ein User kann mehrere Rollen haben)
+    const { data: rolesData, error: roleError } = await appSupabase
       .from('user_roles')
       .select('role')
-      .eq('user_id', userId)
-      .maybeSingle();
+      .eq('user_id', userId);
     
     if (roleError) {
       console.error('[deriveUserRole] Error fetching from App-DB user_roles:', roleError);
     }
     
-    if (roleData) {
-      const roleValue = (roleData as { role: string }).role;
-      console.log('[deriveUserRole] Found role in App-DB:', roleValue);
-      return roleValue as UserRole;
+    if (rolesData && rolesData.length > 0) {
+      const roles = rolesData.map((r: { role: string }) => r.role);
+      console.log('[deriveUserRole] Found roles in App-DB:', roles);
+      
+      // Priorisiere Rollen für Website-Zugang: admin > kunde > endkunde
+      // Das ermöglicht Usern, in der App als endkunde und auf der Website als admin zu agieren
+      if (roles.includes('admin')) {
+        return 'admin';
+      }
+      if (roles.includes('kunde')) {
+        return 'kunde';
+      }
+      if (roles.includes('endkunde')) {
+        return 'endkunde';
+      }
     }
     
     // Wenn keine Rolle gefunden, prüfen ob User als Merchant-Owner existiert
