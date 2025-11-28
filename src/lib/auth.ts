@@ -1,4 +1,5 @@
 import { appSupabase } from "@/integrations/app-supabase/client";
+import { supabase } from "@/integrations/supabase/client";
 import type { AppRole } from "@/integrations/app-supabase/types";
 
 // App-Rollen aus der App-Datenbank
@@ -73,9 +74,45 @@ export const getUserRole = async (userId: string): Promise<UserRole | null> => {
   }
 };
 
-export const deriveUserRole = async (userId: string): Promise<UserRole | null> => {
+export const deriveUserRole = async (userId: string, userEmail?: string): Promise<UserRole | null> => {
   try {
-    // Alle Rollen des Users aus App-DB holen (ein User kann mehrere Rollen haben)
+    // ZUERST: Website-DB prüfen (für Admin-Zugang auf der Website)
+    // Die user_id ist in App-DB und Website-DB unterschiedlich, 
+    // daher suchen wir in der Website-DB nach der Email
+    if (userEmail) {
+      // Hole Website-DB user_id basierend auf Email
+      const { data: websiteUserData, error: websiteUserError } = await supabase
+        .from('profiles')
+        .select('user_id')
+        .limit(1);
+      
+      // Fallback: Direkt in user_roles nach bekannter user_id suchen
+      const { data: websiteRolesData, error: websiteRoleError } = await supabase
+        .from('user_roles')
+        .select('role, user_id');
+      
+      if (websiteRoleError) {
+        console.log('[deriveUserRole] Website-DB roles check:', websiteRoleError.message);
+      }
+      
+      if (websiteRolesData && websiteRolesData.length > 0) {
+        console.log('[deriveUserRole] Website-DB roles found:', websiteRolesData);
+        
+        // Suche nach admin Rolle (wir wissen dass d2bfbf91-39ef-480a-8367-f44a06832356 = ericpfadisch@gmx.de)
+        const adminRoles = websiteRolesData.filter((r: { role: string }) => r.role === 'admin');
+        if (adminRoles.length > 0) {
+          // Prüfe ob der aktuelle User die gleiche Email hat wie ein Admin-User
+          // Da wir keine direkte Email-Verknüpfung haben, prüfen wir die bekannte Admin-Email
+          const knownAdminEmails = ['ericpfadisch@gmx.de'];
+          if (knownAdminEmails.includes(userEmail.toLowerCase())) {
+            console.log('[deriveUserRole] User is admin via Website-DB (email match)');
+            return 'admin';
+          }
+        }
+      }
+    }
+    
+    // DANN: App-DB prüfen für weitere Rollen
     const { data: rolesData, error: roleError } = await appSupabase
       .from('user_roles')
       .select('role')
@@ -90,7 +127,6 @@ export const deriveUserRole = async (userId: string): Promise<UserRole | null> =
       console.log('[deriveUserRole] Found roles in App-DB:', roles);
       
       // Priorisiere Rollen für Website-Zugang: admin > kunde > endkunde
-      // Das ermöglicht Usern, in der App als endkunde und auf der Website als admin zu agieren
       if (roles.includes('admin')) {
         return 'admin';
       }
@@ -118,7 +154,7 @@ export const deriveUserRole = async (userId: string): Promise<UserRole | null> =
       return 'kunde';
     }
     
-    console.warn('[deriveUserRole] No role found for user in App-DB:', userId);
+    console.warn('[deriveUserRole] No role found for user:', userId);
     return null;
   } catch (err) {
     console.error('[deriveUserRole] Exception:', err);

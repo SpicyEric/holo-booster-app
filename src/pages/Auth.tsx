@@ -6,11 +6,11 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { signIn, deriveUserRole } from "@/lib/auth";
+import { signIn, signOut, deriveUserRole } from "@/lib/auth";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { z } from "zod";
-import { LogIn } from "lucide-react";
+import { LogIn, LogOut } from "lucide-react";
 import { motion } from "framer-motion";
 import eloyoLogo from '@/assets/eloyo-logo.png';
 import { appSupabase } from "@/integrations/app-supabase/client";
@@ -47,10 +47,13 @@ const Auth = () => {
     }
   }, [location.hash]);
 
-  // Redirect if already logged in
+  // Redirect if already logged in (aber nicht für endkunde - die sollen sich ausloggen können)
   useEffect(() => {
     if (!loading && user && role && !isResetMode) {
-      redirectByRole(role);
+      // Endkunden nicht automatisch weiterleiten - sie sollen sich hier ausloggen können
+      if (role !== 'endkunde') {
+        redirectByRole(role);
+      }
     }
   }, [user, role, loading, isResetMode, navigate]);
 
@@ -88,7 +91,7 @@ const Auth = () => {
     const { data: userData } = await appSupabase.auth.getUser();
     const authedUser = userData?.user;
     if (authedUser) {
-      const userRole = await deriveUserRole(authedUser.id);
+      const userRole = await deriveUserRole(authedUser.id, authedUser.email);
       console.log('[handleSetPassword] Derived role:', userRole);
       setIsLoading(false);
       if (userRole) {
@@ -123,7 +126,7 @@ const Auth = () => {
       }
     } else if (data?.user) {
       // Get user role and redirect to appropriate dashboard
-      const userRole = await deriveUserRole(data.user.id);
+      const userRole = await deriveUserRole(data.user.id, data.user.email);
       console.log('[handleLogin] Derived role:', userRole);
       setIsLoading(false);
       toast.success("Erfolgreich angemeldet");
@@ -181,7 +184,35 @@ const Auth = () => {
           </div>
 
           <Card className="p-6 border-border">
-            {isResetMode ? (
+            {/* Wenn User als Endkunde eingeloggt ist, zeige Logout-Option */}
+            {user && role === 'endkunde' ? (
+              <div className="space-y-4 text-center">
+                <p className="text-muted-foreground">
+                  Sie sind angemeldet als <strong>{user.email}</strong>
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  Als Endkunde nutzen Sie bitte die Eloyo App für Ihr Treueprogramm.
+                </p>
+                <Button
+                  onClick={async () => {
+                    setIsLoading(true);
+                    await signOut();
+                    setIsLoading(false);
+                    toast.success("Erfolgreich abgemeldet");
+                    window.location.reload();
+                  }}
+                  variant="outline"
+                  className="w-full"
+                  disabled={isLoading}
+                >
+                  <LogOut className="mr-2 w-4 h-4" />
+                  {isLoading ? 'Abmeldung...' : 'Abmelden'}
+                </Button>
+                <p className="text-xs text-muted-foreground mt-4">
+                  Möchten Sie sich mit einem anderen Konto anmelden? Melden Sie sich zuerst ab.
+                </p>
+              </div>
+            ) : isResetMode ? (
               <form onSubmit={handleSetPassword} className="space-y-4">
                 <div>
                   <Label htmlFor="new-password">Neues Passwort</Label>
