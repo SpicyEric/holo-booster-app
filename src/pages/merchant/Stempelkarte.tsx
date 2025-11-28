@@ -303,19 +303,16 @@ const Stempelkarte = () => {
             <h3 className="text-lg font-semibold mb-4 text-center">Smartphone-Vorschau</h3>
             <div className="mx-auto w-[300px] h-[620px] bg-foreground rounded-[40px] p-3 shadow-2xl">
               <div className="w-full h-full bg-background rounded-[32px] overflow-hidden relative">
-                {/* Phone Notch */}
-                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-24 h-6 bg-foreground rounded-b-xl z-20"></div>
-                
                 {/* iframe mit echter App-Preview */}
                 {merchantId ? (
                   <iframe
                     src={`https://eloyo.lovable.app/preview/${merchantId}?points=25&t=${Date.now()}`}
-                    className="w-full h-full border-none pt-6"
+                    className="w-full h-full border-none"
                     title="App-Vorschau"
                     key={`preview-${merchantId}-${saving ? 'saving' : 'idle'}`}
                   />
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center text-muted-foreground text-sm pt-6">
+                  <div className="w-full h-full flex items-center justify-center text-muted-foreground text-sm">
                     <div className="text-center p-4">
                       <Store className="w-12 h-12 mx-auto mb-3 text-muted-foreground/50" />
                       <p>Speichere deine Daten, um die Vorschau zu sehen</p>
