@@ -89,6 +89,15 @@ export default function Checkout() {
     setLoading(true);
 
     try {
+      // Ensure we have an authenticated session
+      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError || !sessionData.session) {
+        toast.error("Du musst eingeloggt sein um fortzufahren");
+        navigate("/auth");
+        return;
+      }
+
       const { data, error } = await supabase.functions.invoke(
         "create-checkout-session",
         {
