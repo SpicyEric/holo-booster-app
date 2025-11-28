@@ -137,35 +137,25 @@ serve(async (req) => {
       metadata,
     };
 
-    // Apply promo codes if provided
+    // Apply promo code if provided (Stripe allows only 1 discount per session)
     if (promoCodes && promoCodes.length > 0) {
-      const discounts: Array<{ promotion_code: string }> = [];
+      const code = promoCodes[0]; // Only use the first code
       
-      // Max 2 promo codes
-      const codesToApply = promoCodes.slice(0, 2);
-      
-      for (const code of codesToApply) {
-        try {
-          const promoCodesList = await stripe.promotionCodes.list({
-            code: code,
-            active: true,
-            limit: 1,
-          });
-          if (promoCodesList.data.length > 0) {
-            discounts.push({ promotion_code: promoCodesList.data[0].id });
-            console.log("[CREATE-CHECKOUT] Promo code applied:", code);
-          } else {
-            console.log("[CREATE-CHECKOUT] Promo code not found:", code);
-          }
-        } catch (error) {
-          console.log("[CREATE-CHECKOUT] Invalid promo code:", code, error);
+      try {
+        const promoCodesList = await stripe.promotionCodes.list({
+          code: code,
+          active: true,
+          limit: 1,
+        });
+        if (promoCodesList.data.length > 0) {
+          sessionParams.discounts = [{ promotion_code: promoCodesList.data[0].id }];
+          console.log("[CREATE-CHECKOUT] Promo code applied:", code);
+        } else {
+          console.log("[CREATE-CHECKOUT] Promo code not found:", code);
+          sessionParams.allow_promotion_codes = true;
         }
-      }
-      
-      if (discounts.length > 0) {
-        sessionParams.discounts = discounts;
-      } else {
-        // Allow manual promo code entry if none were valid
+      } catch (error) {
+        console.log("[CREATE-CHECKOUT] Invalid promo code:", code, error);
         sessionParams.allow_promotion_codes = true;
       }
     } else {

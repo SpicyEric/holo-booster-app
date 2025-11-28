@@ -361,20 +361,20 @@ export default function Checkout() {
             </CardContent>
           </Card>
 
-          {/* Rabattcodes */}
+          {/* Rabattcode */}
           <Card>
             <CardHeader>
-              <CardTitle>Rabattcodes</CardTitle>
-              <CardDescription>Maximal 2 Rabattcodes, mit Komma getrennt</CardDescription>
+              <CardTitle>Rabattcode</CardTitle>
+              <CardDescription>Optional: Einen Rabattcode eingeben</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-2">
-                <Label htmlFor="promoCodes">Rabattcodes (optional)</Label>
+                <Label htmlFor="promoCodes">Rabattcode (optional)</Label>
                 <Input
                   id="promoCodes"
                   value={promoCodes}
                   onChange={(e) => setPromoCodes(e.target.value)}
-                  placeholder="CODE1, CODE2"
+                  placeholder="CODE123"
                 />
               </div>
             </CardContent>
