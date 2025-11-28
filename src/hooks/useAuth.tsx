@@ -19,7 +19,7 @@ export const useAuth = () => {
         // Defer role fetch to avoid deadlock
         if (session?.user) {
           setTimeout(() => {
-            deriveUserRole(session.user.id).then(setRole);
+            deriveUserRole(session.user.id, session.user.email).then(setRole);
           }, 0);
         } else {
           setRole(null);
@@ -35,7 +35,7 @@ export const useAuth = () => {
       setUser(session?.user ?? null);
       
       if (session?.user) {
-        deriveUserRole(session.user.id).then(setRole);
+        deriveUserRole(session.user.id, session.user.email).then(setRole);
       }
       
       setLoading(false);
