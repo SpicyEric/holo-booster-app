@@ -41,7 +41,13 @@ interface Customer {
   company_name: string | null;
   status: string;
   customer_number: number | null;
-  box_id: string | null;
+}
+
+interface CustomerBox {
+  id: string;
+  box_id: string;
+  assigned_at: string;
+  box_code: string;
 }
 
 interface Invoice {
@@ -76,6 +82,7 @@ export default function MeinKonto() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [customer, setCustomer] = useState<Customer | null>(null);
+  const [customerBoxes, setCustomerBoxes] = useState<CustomerBox[]>([]);
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [subscriptionInfo, setSubscriptionInfo] = useState<SubscriptionInfo | null>(null);
   
@@ -96,7 +103,7 @@ export default function MeinKonto() {
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [deleteConfirmed, setDeleteConfirmed] = useState(false);
-  const [boxId, setBoxId] = useState("");
+  const [newBoxId, setNewBoxId] = useState("");
   const [savingBoxId, setSavingBoxId] = useState(false);
 
   useEffect(() => {
@@ -134,7 +141,26 @@ export default function MeinKonto() {
         .single();
 
       setCustomer(customerData);
-      setBoxId(customerData?.box_id || "");
+
+      // Load customer boxes
+      const { data: boxesData } = await supabase
+        .from("customer_boxes")
+        .select(`
+          id,
+          box_id,
+          assigned_at,
+          boxes:box_id (box_id)
+        `)
+        .eq("customer_id", customerUser.customer_id)
+        .order("assigned_at", { ascending: false });
+
+      const mappedBoxes: CustomerBox[] = (boxesData || []).map((b: any) => ({
+        id: b.id,
+        box_id: b.box_id,
+        assigned_at: b.assigned_at,
+        box_code: b.boxes?.box_id || "Unbekannt"
+      }));
+      setCustomerBoxes(mappedBoxes);
 
       // Load invoices
       const { data: invoicesData } = await supabase
@@ -272,20 +298,106 @@ export default function MeinKonto() {
     }
   };
 
+  const formatBoxIdInput = (value: string) => {
+    // Remove all non-alphanumeric characters
+    const clean = value.replace(/[^A-Za-z0-9]/g, "").toUpperCase();
+    // Insert dashes every 5 characters
+    const parts = [];
+    for (let i = 0; i < clean.length && i < 15; i += 5) {
+      parts.push(clean.slice(i, i + 5));
+    }
+    return parts.join("-");
+  };
+
+  const handleBoxIdChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setNewBoxId(formatBoxIdInput(e.target.value));
+  };
+
   const saveBoxId = async () => {
-    if (!customer?.id) return;
+    if (!customer?.id || !newBoxId) return;
+    
+    const cleanId = newBoxId.replace(/-/g, "");
+    if (cleanId.length !== 15) {
+      toast.error("Box-ID muss genau 15 Zeichen haben (XXXXX-XXXXX-XXXXX)");
+      return;
+    }
     
     setSavingBoxId(true);
     try {
-      const { error } = await supabase
-        .from("customers")
-        .update({ box_id: boxId.trim() || null })
-        .eq("id", customer.id);
+      // Check if box exists in boxes table
+      const { data: boxData, error: boxError } = await supabase
+        .from("boxes")
+        .select("id, box_id")
+        .eq("box_id", newBoxId)
+        .maybeSingle();
 
-      if (error) throw error;
+      if (boxError) throw boxError;
 
-      toast.success("Box-ID wurde gespeichert");
-      setCustomer(prev => prev ? { ...prev, box_id: boxId.trim() || null } : null);
+      if (!boxData) {
+        toast.error("Diese Box-ID ist nicht gültig. Bitte überprüfen Sie die Eingabe.");
+        setSavingBoxId(false);
+        return;
+      }
+
+      // Check if already assigned to this customer
+      const { data: existingAssignment } = await supabase
+        .from("customer_boxes")
+        .select("id")
+        .eq("customer_id", customer.id)
+        .eq("box_id", boxData.id)
+        .maybeSingle();
+
+      if (existingAssignment) {
+        toast.error("Diese Box-ID ist bereits mit Ihrem Konto verknüpft.");
+        setSavingBoxId(false);
+        return;
+      }
+
+      // Check if assigned to another customer
+      const { data: otherAssignment } = await supabase
+        .from("customer_boxes")
+        .select("id")
+        .eq("box_id", boxData.id)
+        .maybeSingle();
+
+      if (otherAssignment) {
+        toast.error("Diese Box-ID ist bereits einem anderen Konto zugewiesen.");
+        setSavingBoxId(false);
+        return;
+      }
+
+      // Assign box to customer
+      const { error: assignError } = await supabase
+        .from("customer_boxes")
+        .insert({
+          customer_id: customer.id,
+          box_id: boxData.id
+        });
+
+      if (assignError) throw assignError;
+
+      toast.success("Box-ID wurde erfolgreich hinzugefügt");
+      setNewBoxId("");
+      
+      // Reload customer boxes
+      const { data: updatedBoxes } = await supabase
+        .from("customer_boxes")
+        .select(`
+          id,
+          box_id,
+          assigned_at,
+          boxes:box_id (box_id)
+        `)
+        .eq("customer_id", customer.id)
+        .order("assigned_at", { ascending: false });
+
+      const mappedBoxes: CustomerBox[] = (updatedBoxes || []).map((b: any) => ({
+        id: b.id,
+        box_id: b.box_id,
+        assigned_at: b.assigned_at,
+        box_code: b.boxes?.box_id || "Unbekannt"
+      }));
+      setCustomerBoxes(mappedBoxes);
     } catch (error: any) {
       console.error("Error saving box ID:", error);
       toast.error("Fehler beim Speichern der Box-ID");
@@ -542,32 +654,62 @@ export default function MeinKonto() {
                 Box-ID
               </CardTitle>
               <CardDescription>
-                Geben Sie die ID Ihrer Eloyo Starterbox ein
+                Verknüpfen Sie Ihre Eloyo Starterbox mit Ihrem Konto
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="flex gap-3">
-                <div className="flex-1">
-                  <Input
-                    id="box-id"
-                    value={boxId}
-                    onChange={(e) => setBoxId(e.target.value)}
-                    placeholder="z.B. BOX-12345"
-                    className="font-mono"
-                  />
+              {/* Already assigned boxes */}
+              {customerBoxes.length > 0 && (
+                <div className="space-y-2">
+                  <p className="text-sm font-medium">Ihre verknüpften Boxen:</p>
+                  <div className="space-y-2">
+                    {customerBoxes.map((box) => (
+                      <div 
+                        key={box.id}
+                        className="flex items-center justify-between p-3 bg-muted/50 rounded-lg border"
+                      >
+                        <div className="flex items-center gap-3">
+                          <Package className="h-4 w-4 text-primary" />
+                          <span className="font-mono font-medium">{box.box_code}</span>
+                        </div>
+                        <span className="text-xs text-muted-foreground">
+                          Hinzugefügt am {new Date(box.assigned_at).toLocaleDateString("de-DE")}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-                <Button 
-                  onClick={saveBoxId} 
-                  disabled={savingBoxId || boxId === (customer?.box_id || "")}
-                  className="gap-2"
-                >
-                  {savingBoxId ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-                  Speichern
-                </Button>
+              )}
+
+              {/* Add new box */}
+              <div className="space-y-3 pt-2 border-t">
+                <p className="text-sm font-medium">
+                  {customerBoxes.length > 0 ? "Weitere Box hinzufügen:" : "Box-ID eingeben:"}
+                </p>
+                <div className="flex gap-3">
+                  <div className="flex-1">
+                    <Input
+                      id="box-id"
+                      value={newBoxId}
+                      onChange={handleBoxIdChange}
+                      placeholder="XXXXX-XXXXX-XXXXX"
+                      className="font-mono"
+                      maxLength={17}
+                    />
+                  </div>
+                  <Button 
+                    onClick={saveBoxId} 
+                    disabled={savingBoxId || newBoxId.replace(/-/g, "").length !== 15}
+                    className="gap-2"
+                  >
+                    {savingBoxId ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                    Hinzufügen
+                  </Button>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Die Box-ID finden Sie auf der Innenseite des Deckels Ihrer Starterbox.
+                </p>
               </div>
-              <p className="text-sm text-muted-foreground">
-                Die Box-ID finden Sie auf der Unterseite Ihrer Starterbox oder auf der Verpackung.
-              </p>
             </CardContent>
           </Card>
 
