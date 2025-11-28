@@ -11,7 +11,7 @@ import { toast } from "sonner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   Loader2, CreditCard, X, AlertTriangle, KeyRound, Download, 
-  User, FileText, Pause, Trash2, Settings
+  User, FileText, Pause, Trash2, Settings, Package, Save
 } from "lucide-react";
 import {
   AlertDialog,
@@ -41,6 +41,7 @@ interface Customer {
   company_name: string | null;
   status: string;
   customer_number: number | null;
+  box_id: string | null;
 }
 
 interface Invoice {
@@ -95,6 +96,8 @@ export default function MeinKonto() {
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [deleteConfirmed, setDeleteConfirmed] = useState(false);
+  const [boxId, setBoxId] = useState("");
+  const [savingBoxId, setSavingBoxId] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -131,6 +134,7 @@ export default function MeinKonto() {
         .single();
 
       setCustomer(customerData);
+      setBoxId(customerData?.box_id || "");
 
       // Load invoices
       const { data: invoicesData } = await supabase
@@ -265,6 +269,28 @@ export default function MeinKonto() {
       toast.error("Fehler beim Löschen des Accounts");
     } finally {
       setDeleting(false);
+    }
+  };
+
+  const saveBoxId = async () => {
+    if (!customer?.id) return;
+    
+    setSavingBoxId(true);
+    try {
+      const { error } = await supabase
+        .from("customers")
+        .update({ box_id: boxId.trim() || null })
+        .eq("id", customer.id);
+
+      if (error) throw error;
+
+      toast.success("Box-ID wurde gespeichert");
+      setCustomer(prev => prev ? { ...prev, box_id: boxId.trim() || null } : null);
+    } catch (error: any) {
+      console.error("Error saving box ID:", error);
+      toast.error("Fehler beim Speichern der Box-ID");
+    } finally {
+      setSavingBoxId(false);
     }
   };
 
@@ -509,6 +535,42 @@ export default function MeinKonto() {
 
         {/* Tab: Einstellungen */}
         <TabsContent value="settings" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Package className="h-5 w-5" />
+                Box-ID
+              </CardTitle>
+              <CardDescription>
+                Geben Sie die ID Ihrer Eloyo Starterbox ein
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex gap-3">
+                <div className="flex-1">
+                  <Input
+                    id="box-id"
+                    value={boxId}
+                    onChange={(e) => setBoxId(e.target.value)}
+                    placeholder="z.B. BOX-12345"
+                    className="font-mono"
+                  />
+                </div>
+                <Button 
+                  onClick={saveBoxId} 
+                  disabled={savingBoxId || boxId === (customer?.box_id || "")}
+                  className="gap-2"
+                >
+                  {savingBoxId ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                  Speichern
+                </Button>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                Die Box-ID finden Sie auf der Unterseite Ihrer Starterbox oder auf der Verpackung.
+              </p>
+            </CardContent>
+          </Card>
+
           <Card>
             <CardHeader>
               <CardTitle>Kontodaten</CardTitle>
