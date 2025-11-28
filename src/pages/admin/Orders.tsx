@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
   Select,
@@ -11,8 +10,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { toast } from "sonner";
-import { Loader2, Package, Palette, CheckCircle2, Clock, XCircle } from "lucide-react";
+import { Package, Palette, CheckCircle2, Clock, XCircle, RefreshCw } from "lucide-react";
 
 interface Order {
   id: string;
@@ -51,7 +58,6 @@ export default function Orders() {
       .eq("user_id", user?.id);
 
     if (roles && roles.length > 0) {
-      // Admin has priority
       if (roles.some(r => r.role === "admin")) {
         setUserRole("admin");
       } else if (roles.some(r => r.role === "merchant")) {
@@ -75,12 +81,10 @@ export default function Orders() {
         .in("order_type", ["aufsteller", "design"])
         .order("created_at", { ascending: false });
 
-      // Filter by status if not "all"
       if (filterStatus !== "all") {
         query = query.eq("status", filterStatus);
       }
 
-      // If merchant, only show orders for assigned customers
       if (userRole === "merchant") {
         const { data: assignments } = await supabase
           .from("merchant_assignments")
@@ -91,7 +95,6 @@ export default function Orders() {
           const customerIds = assignments.map(a => a.customer_id);
           query = query.in("customer_id", customerIds);
         } else {
-          // Merchant has no assignments
           setOrders([]);
           setLoading(false);
           return;
@@ -105,7 +108,7 @@ export default function Orders() {
       setOrders(data || []);
     } catch (error) {
       console.error("Error loading orders:", error);
-      toast.error("Fehler beim Laden der Bestellungen");
+      toast.error("Fehler beim Laden");
     } finally {
       setLoading(false);
     }
@@ -124,44 +127,33 @@ export default function Orders() {
       loadOrders();
     } catch (error) {
       console.error("Error updating status:", error);
-      toast.error("Fehler beim Aktualisieren des Status");
+      toast.error("Fehler");
     }
   };
 
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "pending":
-        return <Badge variant="secondary" className="gap-1"><Clock className="h-3 w-3" />Offen</Badge>;
+        return <Badge variant="secondary" className="gap-1 text-xs"><Clock className="h-2.5 w-2.5" />Offen</Badge>;
       case "in_progress":
-        return <Badge variant="default" className="gap-1"><Clock className="h-3 w-3" />In Bearbeitung</Badge>;
+        return <Badge variant="default" className="gap-1 text-xs"><Clock className="h-2.5 w-2.5" />Bearbeitung</Badge>;
       case "completed":
-        return <Badge variant="default" className="bg-green-600 gap-1"><CheckCircle2 className="h-3 w-3" />Abgeschlossen</Badge>;
+        return <Badge className="bg-green-600 gap-1 text-xs"><CheckCircle2 className="h-2.5 w-2.5" />Fertig</Badge>;
       case "cancelled":
-        return <Badge variant="destructive" className="gap-1"><XCircle className="h-3 w-3" />Storniert</Badge>;
+        return <Badge variant="destructive" className="gap-1 text-xs"><XCircle className="h-2.5 w-2.5" />Storniert</Badge>;
       default:
-        return <Badge variant="outline">{status}</Badge>;
+        return <Badge variant="outline" className="text-xs">{status}</Badge>;
     }
   };
 
   const getOrderIcon = (orderType: string) => {
     switch (orderType) {
       case "aufsteller":
-        return <Package className="h-5 w-5 text-primary" />;
+        return <Package className="h-3.5 w-3.5 text-primary" />;
       case "design":
-        return <Palette className="h-5 w-5 text-purple-500" />;
+        return <Palette className="h-3.5 w-3.5 text-purple-500" />;
       default:
         return null;
-    }
-  };
-
-  const getOrderTypeName = (orderType: string) => {
-    switch (orderType) {
-      case "aufsteller":
-        return "Aufsteller";
-      case "design":
-        return "Design";
-      default:
-        return orderType;
     }
   };
 
@@ -175,9 +167,9 @@ export default function Orders() {
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("de-DE", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
+      day: "2-digit",
+      month: "2-digit",
+      year: "2-digit",
       hour: "2-digit",
       minute: "2-digit",
     });
@@ -187,129 +179,118 @@ export default function Orders() {
   const inProgressCount = orders.filter(o => o.status === "in_progress").length;
   const completedCount = orders.filter(o => o.status === "completed").length;
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <Loader2 className="h-8 w-8 animate-spin" />
-      </div>
-    );
-  }
-
   return (
-    <div className="space-y-6">
-      <div>
-        <h2 className="text-3xl font-bold tracking-tight">Bestellungen</h2>
-        <p className="text-muted-foreground">
-          Verwalten Sie alle Aufsteller- und Design-Bestellungen
-        </p>
+    <div className="space-y-3">
+      {/* Header - compact */}
+      <div className="flex justify-between items-center border-b pb-3">
+        <div>
+          <h1 className="text-xl font-semibold">Bestellungen</h1>
+          <p className="text-xs text-muted-foreground">
+            {orders.length} Bestellungen · {pendingCount} offen · {inProgressCount} in Bearbeitung · {completedCount} fertig
+          </p>
+        </div>
+        <Button size="sm" variant="outline" onClick={() => loadOrders()}>
+          <RefreshCw className="w-3 h-3 mr-1" />
+          Aktualisieren
+        </Button>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card>
-          <CardHeader className="pb-3">
-            <CardDescription>Offen</CardDescription>
-            <CardTitle className="text-3xl">{pendingCount}</CardTitle>
-          </CardHeader>
-        </Card>
-        <Card>
-          <CardHeader className="pb-3">
-            <CardDescription>In Bearbeitung</CardDescription>
-            <CardTitle className="text-3xl">{inProgressCount}</CardTitle>
-          </CardHeader>
-        </Card>
-        <Card>
-          <CardHeader className="pb-3">
-            <CardDescription>Abgeschlossen</CardDescription>
-            <CardTitle className="text-3xl">{completedCount}</CardTitle>
-          </CardHeader>
-        </Card>
-      </div>
-
-      {/* Filter */}
-      <div className="flex items-center gap-4">
+      {/* Filter - compact */}
+      <div className="flex gap-2 items-center bg-muted/30 p-2 rounded border">
+        <span className="text-xs text-muted-foreground">Status:</span>
         <Select value={filterStatus} onValueChange={setFilterStatus}>
-          <SelectTrigger className="w-[200px]">
-            <SelectValue placeholder="Status filtern" />
+          <SelectTrigger className="h-8 w-[150px] text-sm">
+            <SelectValue placeholder="Status" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">Alle Bestellungen</SelectItem>
+            <SelectItem value="all">Alle</SelectItem>
             <SelectItem value="pending">Offen</SelectItem>
             <SelectItem value="in_progress">In Bearbeitung</SelectItem>
-            <SelectItem value="completed">Abgeschlossen</SelectItem>
+            <SelectItem value="completed">Fertig</SelectItem>
             <SelectItem value="cancelled">Storniert</SelectItem>
           </SelectContent>
         </Select>
       </div>
 
-      {/* Orders List */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Bestellungen ({orders.length})</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {orders.length === 0 ? (
-            <p className="text-center text-muted-foreground py-8">
-              Keine Bestellungen gefunden
-            </p>
-          ) : (
-            <div className="space-y-4">
+      {/* Table - dense */}
+      <div className="border rounded">
+        {loading ? (
+          <div className="text-center py-8 text-sm text-muted-foreground">
+            Laden...
+          </div>
+        ) : orders.length === 0 ? (
+          <div className="text-center py-8 text-sm text-muted-foreground">
+            Keine Bestellungen gefunden
+          </div>
+        ) : (
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-muted/50 hover:bg-muted/50">
+                <TableHead className="h-8 text-xs font-semibold w-8"></TableHead>
+                <TableHead className="h-8 text-xs font-semibold">Bestellnr.</TableHead>
+                <TableHead className="h-8 text-xs font-semibold">Kunde</TableHead>
+                <TableHead className="h-8 text-xs font-semibold">Typ</TableHead>
+                <TableHead className="h-8 text-xs font-semibold">Menge</TableHead>
+                <TableHead className="h-8 text-xs font-semibold">Betrag</TableHead>
+                <TableHead className="h-8 text-xs font-semibold">Datum</TableHead>
+                <TableHead className="h-8 text-xs font-semibold">Status</TableHead>
+                <TableHead className="h-8 text-xs font-semibold w-32">Aktion</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
               {orders.map((order) => (
-                <div
-                  key={order.id}
-                  className="flex flex-col md:flex-row md:items-center gap-4 p-4 border rounded-lg hover:bg-accent/5 transition-colors"
-                >
-                  <div className="flex items-center gap-3 flex-1">
-                    <div className="p-2 bg-muted rounded-lg">
-                      {getOrderIcon(order.order_type)}
+                <TableRow key={order.id} className="hover:bg-accent/30">
+                  <TableCell className="py-1.5">
+                    {getOrderIcon(order.order_type)}
+                  </TableCell>
+                  <TableCell className="py-1.5 font-mono text-xs">
+                    {order.id.substring(0, 8).toUpperCase()}
+                  </TableCell>
+                  <TableCell className="py-1.5">
+                    <div>
+                      <p className="text-sm font-medium">{order.customers?.name || "—"}</p>
+                      {order.customers?.customer_number && (
+                        <p className="text-[10px] text-muted-foreground">#{order.customers.customer_number}</p>
+                      )}
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <p className="font-semibold">
-                          {order.customers.name}
-                        </p>
-                        <Badge variant="outline" className="text-xs">
-                          #{order.customers.customer_number}
-                        </Badge>
-                      </div>
-                      <p className="text-sm text-muted-foreground">
-                        {getOrderTypeName(order.order_type)} 
-                        {order.quantity && ` • ${order.quantity}x`}
-                        {" • "}
-                        {formatDate(order.created_at)}
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-3">
-                    <div className="text-right">
-                      <p className="font-semibold">
-                        {formatAmount(order.amount_cents)}
-                      </p>
-                      {getStatusBadge(order.status)}
-                    </div>
-
+                  </TableCell>
+                  <TableCell className="py-1.5 text-sm">
+                    {order.order_type === "aufsteller" ? "Aufsteller" : order.order_type === "design" ? "Design" : order.order_type}
+                  </TableCell>
+                  <TableCell className="py-1.5 text-sm">
+                    {order.quantity || "—"}
+                  </TableCell>
+                  <TableCell className="py-1.5 text-sm font-medium">
+                    {formatAmount(order.amount_cents)}
+                  </TableCell>
+                  <TableCell className="py-1.5 text-xs text-muted-foreground">
+                    {formatDate(order.created_at)}
+                  </TableCell>
+                  <TableCell className="py-1.5">
+                    {getStatusBadge(order.status)}
+                  </TableCell>
+                  <TableCell className="py-1.5">
                     <Select
                       value={order.status}
                       onValueChange={(value) => updateOrderStatus(order.id, value)}
                     >
-                      <SelectTrigger className="w-[160px]">
+                      <SelectTrigger className="h-7 text-xs w-28">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="pending">Offen</SelectItem>
-                        <SelectItem value="in_progress">In Bearbeitung</SelectItem>
-                        <SelectItem value="completed">Abgeschlossen</SelectItem>
+                        <SelectItem value="in_progress">Bearbeitung</SelectItem>
+                        <SelectItem value="completed">Fertig</SelectItem>
                         <SelectItem value="cancelled">Storniert</SelectItem>
                       </SelectContent>
                     </Select>
-                  </div>
-                </div>
+                  </TableCell>
+                </TableRow>
               ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+            </TableBody>
+          </Table>
+        )}
+      </div>
     </div>
   );
 }

@@ -1,24 +1,13 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { appSupabase } from "@/integrations/app-supabase/client";
-import { GlassCard } from "@/components/GlassCard";
-import { GradientButton } from "@/components/GradientButton";
-import { ArrowLeft, Save, Trash2, Users, ExternalLink, Store } from "lucide-react";
+import { ArrowLeft, Save, Trash2, ExternalLink, CreditCard, FileText, Hash } from "lucide-react";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+import { ConfirmActionDialog } from "@/components/ConfirmActionDialog";
 import {
   Select,
   SelectContent,
@@ -27,7 +16,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-// Categories from the merchant system
 const CATEGORIES = [
   "Café",
   "Restaurant", 
@@ -51,7 +39,6 @@ const CustomerDetail = () => {
   const [saving, setSaving] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [deleting, setDeleting] = useState(false);
-  const [confirmText, setConfirmText] = useState("");
   
   const [stats, setStats] = useState({
     totalLoyaltyAccounts: 0,
@@ -74,7 +61,11 @@ const CustomerDetail = () => {
     logo_url: "",
     cover_image_url: "",
     owner_user_id: "",
+    created_at: "",
   });
+
+  // Generate a display customer number from the ID (first 6 chars)
+  const customerNumber = id ? id.substring(0, 8).toUpperCase() : "—";
 
   useEffect(() => {
     if (id) {
@@ -94,23 +85,7 @@ const CustomerDetail = () => {
       if (error) throw error;
       if (!data) throw new Error("Keine Daten gefunden");
       
-      // Cast data to correct type
-      const merchant = data as {
-        name: string;
-        description: string | null;
-        category: string | null;
-        address: string;
-        postal_code: string | null;
-        city: string;
-        phone_number: string | null;
-        website: string | null;
-        instagram_url: string | null;
-        facebook_url: string | null;
-        twitter_url: string | null;
-        logo_url: string | null;
-        cover_image_url: string | null;
-        owner_user_id: string | null;
-      };
+      const merchant = data as any;
       
       setFormData({
         name: merchant.name || "",
@@ -127,6 +102,7 @@ const CustomerDetail = () => {
         logo_url: merchant.logo_url || "",
         cover_image_url: merchant.cover_image_url || "",
         owner_user_id: merchant.owner_user_id || "",
+        created_at: merchant.created_at || "",
       });
     } catch (error: any) {
       toast.error("Kunde nicht gefunden");
@@ -162,7 +138,6 @@ const CustomerDetail = () => {
 
     setSaving(true);
     try {
-      // Use any cast for external DB type compatibility
       const updateData = {
         name: formData.name,
         description: formData.description,
@@ -183,7 +158,7 @@ const CustomerDetail = () => {
         .eq("id", id);
 
       if (error) throw error;
-      toast.success("Kunde erfolgreich gespeichert");
+      toast.success("Gespeichert");
     } catch (error: any) {
       toast.error("Fehler beim Speichern");
       console.error(error);
@@ -193,11 +168,6 @@ const CustomerDetail = () => {
   };
 
   const handleDeleteMerchant = async () => {
-    if (confirmText.toLowerCase() !== "löschen") {
-      toast.error('Bitte gib "löschen" ein, um fortzufahren');
-      return;
-    }
-    
     setDeleting(true);
     try {
       const { error } = await appSupabase
@@ -207,10 +177,10 @@ const CustomerDetail = () => {
 
       if (error) throw error;
 
-      toast.success("Kunde erfolgreich gelöscht");
+      toast.success("Kunde gelöscht");
       navigate("/admin/customers");
     } catch (error: any) {
-      toast.error(error.message || "Fehler beim Löschen des Kunden");
+      toast.error(error.message || "Fehler beim Löschen");
       console.error(error);
     } finally {
       setDeleting(false);
@@ -221,98 +191,66 @@ const CustomerDetail = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[50vh]">
-        <div className="w-16 h-16 rounded-full bg-gradient-primary animate-pulse-glow" />
+        <div className="text-sm text-muted-foreground">Laden...</div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center gap-4">
-        <button
-          onClick={() => navigate("/admin/customers")}
-          className="p-2 hover:bg-accent rounded-lg transition-colors"
-        >
-          <ArrowLeft className="w-5 h-5" />
-        </button>
+    <div className="space-y-3">
+      {/* Header - compact */}
+      <div className="flex items-center gap-3 border-b pb-3">
+        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => navigate("/admin/customers")}>
+          <ArrowLeft className="w-4 h-4" />
+        </Button>
         <div className="flex-1">
-          <h1 className="text-3xl font-bold bg-gradient-primary bg-clip-text text-transparent">
-            {formData.name}
-          </h1>
-          <p className="text-muted-foreground mt-1">Kundendetails bearbeiten</p>
-        </div>
-        {formData.owner_user_id && (
-          <div className="text-right">
-            <p className="text-xs text-muted-foreground">Owner ID</p>
-            <code className="text-xs bg-muted px-2 py-1 rounded">
-              {formData.owner_user_id.substring(0, 8)}...
-            </code>
+          <div className="flex items-center gap-2">
+            <h1 className="text-xl font-semibold">{formData.name}</h1>
+            <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded font-mono">
+              #{customerNumber}
+            </span>
           </div>
-        )}
+          <p className="text-xs text-muted-foreground">
+            Erstellt: {new Date(formData.created_at).toLocaleDateString("de-DE")}
+          </p>
+        </div>
+        <div className="flex gap-2">
+          <Button size="sm" variant="outline" onClick={handleSave} disabled={saving}>
+            <Save className="w-3 h-3 mr-1" />
+            {saving ? "..." : "Speichern"}
+          </Button>
+          <Button size="sm" variant="destructive" onClick={() => setShowDeleteDialog(true)}>
+            <Trash2 className="w-3 h-3 mr-1" />
+            Löschen
+          </Button>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Main Content */}
-        <div className="lg:col-span-2 space-y-6">
-          
-          {/* Statistics */}
-          <GlassCard>
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-bold flex items-center gap-2">
-                <Users className="w-5 h-5" />
-                Statistiken
-              </h2>
-            </div>
+      {/* Two Column Layout - like SAP */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {/* Left Column - Stammdaten */}
+        <div className="space-y-3">
+          {/* Anschrift */}
+          <fieldset className="border rounded p-3 space-y-2">
+            <legend className="text-xs font-semibold px-1 text-muted-foreground">Anschrift</legend>
             
-            <div className="grid grid-cols-3 gap-4">
-              <div className="p-4 border rounded-lg text-center">
-                <p className="text-sm text-muted-foreground mb-1">Stempelkartennutzer</p>
-                <p className="text-2xl font-bold">{stats.totalLoyaltyAccounts}</p>
-              </div>
-              <div className="p-4 border rounded-lg text-center">
-                <p className="text-sm text-muted-foreground mb-1">Transaktionen</p>
-                <p className="text-2xl font-bold">{stats.totalTransactions}</p>
-              </div>
-              <div className="p-4 border rounded-lg text-center">
-                <p className="text-sm text-muted-foreground mb-1">Aktive Belohnungen</p>
-                <p className="text-2xl font-bold">{stats.totalRewards}</p>
-              </div>
-            </div>
-          </GlassCard>
-
-          {/* Basic Data */}
-          <GlassCard>
-            <h2 className="text-xl font-bold mb-4">Grunddaten</h2>
-            <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-2">
               <div>
-                <Label htmlFor="name">Firmenname *</Label>
+                <Label className="text-xs">Firma *</Label>
                 <Input
-                  id="name"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  placeholder="z.B. Bäckerei Müller"
+                  className="h-8 text-sm"
                 />
               </div>
-
               <div>
-                <Label htmlFor="description">Beschreibung</Label>
-                <Textarea
-                  id="description"
-                  value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  placeholder="Kurze Beschreibung des Geschäfts..."
-                  rows={3}
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="category">Kategorie</Label>
+                <Label className="text-xs">Kategorie</Label>
                 <Select
                   value={formData.category}
                   onValueChange={(value) => setFormData({ ...formData, category: value })}
                 >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Kategorie wählen" />
+                  <SelectTrigger className="h-8 text-sm">
+                    <SelectValue placeholder="Wählen" />
                   </SelectTrigger>
                   <SelectContent>
                     {CATEGORIES.map((cat) => (
@@ -322,208 +260,199 @@ const CustomerDetail = () => {
                 </Select>
               </div>
             </div>
-          </GlassCard>
 
-          {/* Address */}
-          <GlassCard>
-            <h2 className="text-xl font-bold mb-4">Adresse</h2>
-            <div className="space-y-4">
+            <div>
+              <Label className="text-xs">Straße *</Label>
+              <Input
+                value={formData.address}
+                onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                className="h-8 text-sm"
+              />
+            </div>
+
+            <div className="grid grid-cols-3 gap-2">
               <div>
-                <Label htmlFor="address">Straße und Hausnummer *</Label>
+                <Label className="text-xs">PLZ</Label>
                 <Input
-                  id="address"
-                  value={formData.address}
-                  onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                  placeholder="Musterstraße 123"
+                  value={formData.postal_code}
+                  onChange={(e) => setFormData({ ...formData, postal_code: e.target.value })}
+                  className="h-8 text-sm"
                 />
               </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="postal_code">PLZ</Label>
-                  <Input
-                    id="postal_code"
-                    value={formData.postal_code}
-                    onChange={(e) => setFormData({ ...formData, postal_code: e.target.value })}
-                    placeholder="12345"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="city">Stadt *</Label>
-                  <Input
-                    id="city"
-                    value={formData.city}
-                    onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                    placeholder="Musterstadt"
-                  />
-                </div>
+              <div className="col-span-2">
+                <Label className="text-xs">Ort *</Label>
+                <Input
+                  value={formData.city}
+                  onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                  className="h-8 text-sm"
+                />
               </div>
             </div>
-          </GlassCard>
+          </fieldset>
 
-          {/* Contact */}
-          <GlassCard>
-            <h2 className="text-xl font-bold mb-4">Kontaktdaten</h2>
-            <div className="space-y-4">
+          {/* Kommunikation */}
+          <fieldset className="border rounded p-3 space-y-2">
+            <legend className="text-xs font-semibold px-1 text-muted-foreground">Kommunikation</legend>
+            
+            <div className="grid grid-cols-2 gap-2">
               <div>
-                <Label htmlFor="phone_number">Telefonnummer</Label>
+                <Label className="text-xs">Telefon</Label>
                 <Input
-                  id="phone_number"
                   value={formData.phone_number}
                   onChange={(e) => setFormData({ ...formData, phone_number: e.target.value })}
-                  placeholder="+49 123 456789"
+                  className="h-8 text-sm"
                 />
               </div>
-
               <div>
-                <Label htmlFor="website">Website</Label>
+                <Label className="text-xs">Website</Label>
                 <Input
-                  id="website"
                   value={formData.website}
                   onChange={(e) => setFormData({ ...formData, website: e.target.value })}
-                  placeholder="https://www.beispiel.de"
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="instagram_url">Instagram</Label>
-                <Input
-                  id="instagram_url"
-                  value={formData.instagram_url}
-                  onChange={(e) => setFormData({ ...formData, instagram_url: e.target.value })}
-                  placeholder="https://instagram.com/beispiel"
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="facebook_url">Facebook</Label>
-                <Input
-                  id="facebook_url"
-                  value={formData.facebook_url}
-                  onChange={(e) => setFormData({ ...formData, facebook_url: e.target.value })}
-                  placeholder="https://facebook.com/beispiel"
+                  className="h-8 text-sm"
                 />
               </div>
             </div>
-          </GlassCard>
 
-          <div className="flex justify-between">
-            <Button
-              variant="destructive"
-              onClick={() => setShowDeleteDialog(true)}
-              className="gap-2"
-            >
-              <Trash2 className="w-4 h-4" />
-              Kunde löschen
-            </Button>
-            
-            <GradientButton onClick={handleSave} disabled={saving} icon={Save}>
-              {saving ? "Speichern..." : "Änderungen speichern"}
-            </GradientButton>
-          </div>
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <Label className="text-xs">Instagram</Label>
+                <Input
+                  value={formData.instagram_url}
+                  onChange={(e) => setFormData({ ...formData, instagram_url: e.target.value })}
+                  className="h-8 text-sm"
+                />
+              </div>
+              <div>
+                <Label className="text-xs">Facebook</Label>
+                <Input
+                  value={formData.facebook_url}
+                  onChange={(e) => setFormData({ ...formData, facebook_url: e.target.value })}
+                  className="h-8 text-sm"
+                />
+              </div>
+            </div>
+          </fieldset>
+
+          {/* Beschreibung */}
+          <fieldset className="border rounded p-3">
+            <legend className="text-xs font-semibold px-1 text-muted-foreground">Beschreibung</legend>
+            <Textarea
+              value={formData.description}
+              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              className="text-sm min-h-[60px]"
+              rows={2}
+            />
+          </fieldset>
         </div>
 
-        {/* Sidebar - Preview & Info */}
-        <div className="space-y-6">
-          {/* Logo Preview */}
-          <GlassCard>
-            <h2 className="text-xl font-bold mb-4">Logo</h2>
-            {formData.logo_url ? (
-              <img
-                src={formData.logo_url}
-                alt="Logo"
-                className="w-full rounded-lg mb-4 max-h-48 object-contain bg-muted/30"
-              />
-            ) : (
-              <div className="w-full h-32 rounded-lg bg-muted/30 flex items-center justify-center mb-4">
-                <Store className="w-12 h-12 text-muted-foreground" />
+        {/* Right Column - Kontodaten & Statistiken */}
+        <div className="space-y-3">
+          {/* Kundendaten */}
+          <fieldset className="border rounded p-3 space-y-2">
+            <legend className="text-xs font-semibold px-1 text-muted-foreground">Kundendaten</legend>
+            
+            <div className="grid grid-cols-2 gap-3 text-sm">
+              <div className="flex items-center gap-2">
+                <Hash className="w-4 h-4 text-muted-foreground" />
+                <div>
+                  <p className="text-xs text-muted-foreground">Kunden-Nr.</p>
+                  <p className="font-mono font-semibold">{customerNumber}</p>
+                </div>
               </div>
-            )}
-            <p className="text-xs text-muted-foreground text-center">
-              Logo wird vom Kunden selbst in seinem Dashboard hochgeladen
-            </p>
-          </GlassCard>
-
-          {/* Cover Image Preview */}
-          <GlassCard>
-            <h2 className="text-xl font-bold mb-4">Titelbild</h2>
-            {formData.cover_image_url ? (
-              <img
-                src={formData.cover_image_url}
-                alt="Titelbild"
-                className="w-full rounded-lg mb-4 max-h-32 object-cover"
-              />
-            ) : (
-              <div className="w-full h-24 rounded-lg bg-muted/30 flex items-center justify-center mb-4">
-                <p className="text-sm text-muted-foreground">Kein Titelbild</p>
+              <div className="flex items-center gap-2">
+                <FileText className="w-4 h-4 text-muted-foreground" />
+                <div>
+                  <p className="text-xs text-muted-foreground">Owner-ID</p>
+                  <p className="font-mono text-xs">{formData.owner_user_id ? formData.owner_user_id.substring(0, 8) + "..." : "—"}</p>
+                </div>
               </div>
-            )}
-            <p className="text-xs text-muted-foreground text-center">
-              Titelbild wird vom Kunden selbst hochgeladen
-            </p>
-          </GlassCard>
+            </div>
+          </fieldset>
 
-          {/* Merchant Dashboard Link */}
-          <GlassCard>
-            <h2 className="text-xl font-bold mb-4">Kunden-Ansicht</h2>
-            <p className="text-sm text-muted-foreground mb-4">
-              So sieht der Kunde sein eigenes Dashboard, wenn er angemeldet ist.
-            </p>
-            <Button
-              variant="outline"
-              className="w-full gap-2"
-              onClick={() => {
-                // Open merchant preview - this would need to be implemented
-                toast.info("Vorschau-Funktion wird noch implementiert");
-              }}
-            >
-              <ExternalLink className="w-4 h-4" />
-              Händler-Dashboard ansehen
+          {/* Statistiken */}
+          <fieldset className="border rounded p-3">
+            <legend className="text-xs font-semibold px-1 text-muted-foreground">Statistiken</legend>
+            
+            <div className="grid grid-cols-3 gap-2 text-center">
+              <div className="bg-muted/30 rounded p-2">
+                <p className="text-lg font-bold">{stats.totalLoyaltyAccounts}</p>
+                <p className="text-[10px] text-muted-foreground">Nutzer</p>
+              </div>
+              <div className="bg-muted/30 rounded p-2">
+                <p className="text-lg font-bold">{stats.totalTransactions}</p>
+                <p className="text-[10px] text-muted-foreground">Transaktionen</p>
+              </div>
+              <div className="bg-muted/30 rounded p-2">
+                <p className="text-lg font-bold">{stats.totalRewards}</p>
+                <p className="text-[10px] text-muted-foreground">Belohnungen</p>
+              </div>
+            </div>
+          </fieldset>
+
+          {/* Zahlungsverlauf */}
+          <fieldset className="border rounded p-3">
+            <legend className="text-xs font-semibold px-1 text-muted-foreground">Zahlungsverlauf</legend>
+            
+            <Button variant="outline" size="sm" className="w-full gap-2" onClick={() => toast.info("Stripe Dashboard öffnen...")}>
+              <CreditCard className="w-3 h-3" />
+              Zahlungen in Stripe anzeigen
             </Button>
-          </GlassCard>
+          </fieldset>
+
+          {/* Bestellverlauf */}
+          <fieldset className="border rounded p-3">
+            <legend className="text-xs font-semibold px-1 text-muted-foreground">Bestellverlauf</legend>
+            
+            <Button variant="outline" size="sm" className="w-full gap-2" onClick={() => navigate("/admin/orders")}>
+              <FileText className="w-3 h-3" />
+              Bestellungen anzeigen
+            </Button>
+          </fieldset>
+
+          {/* Vorschau */}
+          <fieldset className="border rounded p-3">
+            <legend className="text-xs font-semibold px-1 text-muted-foreground">Kunden-Dashboard</legend>
+            
+            <Button variant="outline" size="sm" className="w-full gap-2" onClick={() => toast.info("Vorschau wird implementiert...")}>
+              <ExternalLink className="w-3 h-3" />
+              Dashboard ansehen
+            </Button>
+          </fieldset>
+
+          {/* Media Preview */}
+          {(formData.logo_url || formData.cover_image_url) && (
+            <fieldset className="border rounded p-3">
+              <legend className="text-xs font-semibold px-1 text-muted-foreground">Medien</legend>
+              <div className="grid grid-cols-2 gap-2">
+                {formData.logo_url && (
+                  <div>
+                    <p className="text-[10px] text-muted-foreground mb-1">Logo</p>
+                    <img src={formData.logo_url} alt="Logo" className="h-12 object-contain rounded border bg-muted/30" />
+                  </div>
+                )}
+                {formData.cover_image_url && (
+                  <div>
+                    <p className="text-[10px] text-muted-foreground mb-1">Cover</p>
+                    <img src={formData.cover_image_url} alt="Cover" className="h-12 object-cover rounded border" />
+                  </div>
+                )}
+              </div>
+            </fieldset>
+          )}
         </div>
       </div>
 
       {/* Delete Confirmation Dialog */}
-      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle className="text-destructive">
-              Kunde wirklich löschen?
-            </AlertDialogTitle>
-            <AlertDialogDescription className="space-y-3">
-              <p>
-                Diese Aktion kann nicht rückgängig gemacht werden. Der Kunde{" "}
-                <strong>{formData.name}</strong> und alle zugehörigen Daten werden permanent gelöscht.
-              </p>
-              <div className="pt-2">
-                <Label htmlFor="confirm-delete">
-                  Tippe <span className="font-bold">"löschen"</span> ein, um fortzufahren:
-                </Label>
-                <Input
-                  id="confirm-delete"
-                  value={confirmText}
-                  onChange={(e) => setConfirmText(e.target.value)}
-                  placeholder="löschen"
-                  className="mt-2"
-                />
-              </div>
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setConfirmText("")}>
-              Abbrechen
-            </AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDeleteMerchant}
-              disabled={deleting}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              {deleting ? "Lösche..." : "Endgültig löschen"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <ConfirmActionDialog
+        open={showDeleteDialog}
+        onOpenChange={setShowDeleteDialog}
+        onConfirm={handleDeleteMerchant}
+        title="Kunde endgültig löschen?"
+        description={`Der Kunde "${formData.name}" (${customerNumber}) und alle zugehörigen Daten werden permanent gelöscht. Diese Aktion kann NICHT rückgängig gemacht werden!`}
+        confirmText={deleting ? "Lösche..." : "Endgültig löschen"}
+        confirmPhrase="LÖSCHEN"
+        destructive
+      />
     </div>
   );
 };

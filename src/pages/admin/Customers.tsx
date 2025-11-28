@@ -1,9 +1,7 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { appSupabase } from "@/integrations/app-supabase/client";
-import { GlassCard } from "@/components/GlassCard";
-import { GradientButton } from "@/components/GradientButton";
-import { Edit, Search, Trash2, RefreshCw, Store } from "lucide-react";
+import { Edit, Search, Trash2, RefreshCw, Plus, Phone, MapPin } from "lucide-react";
 import { toast } from "sonner";
 import {
   Table,
@@ -13,22 +11,11 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
+import { ConfirmActionDialog } from "@/components/ConfirmActionDialog";
 
-// Merchant aus der App-DB (eloyo)
 interface Merchant {
   id: string;
   name: string;
@@ -38,7 +25,6 @@ interface Merchant {
   city: string;
   postal_code: string | null;
   logo_url: string | null;
-  cover_image_url: string | null;
   phone_number: string | null;
   website: string | null;
   owner_user_id: string | null;
@@ -51,11 +37,10 @@ const Customers = () => {
   const [filteredMerchants, setFilteredMerchants] = useState<Merchant[]>([]);
   const [loading, setLoading] = useState(true);
   
-  // Filter states
   const [searchTerm, setSearchTerm] = useState("");
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [sortBy, setSortBy] = useState<string>("created_desc");
-  const [deleteMerchantId, setDeleteMerchantId] = useState<string | null>(null);
+  const [deleteMerchant, setDeleteMerchant] = useState<Merchant | null>(null);
 
   const loadMerchants = async () => {
     try {
@@ -84,13 +69,13 @@ const Customers = () => {
   }, [merchants, searchTerm, categoryFilter, sortBy]);
 
   const handleDelete = async () => {
-    if (!deleteMerchantId) return;
+    if (!deleteMerchant) return;
     
     try {
       const { error } = await appSupabase
         .from("merchants")
         .delete()
-        .eq("id", deleteMerchantId);
+        .eq("id", deleteMerchant.id);
 
       if (error) throw error;
       
@@ -100,14 +85,13 @@ const Customers = () => {
       toast.error("Fehler beim Löschen des Kunden");
       console.error(error);
     } finally {
-      setDeleteMerchantId(null);
+      setDeleteMerchant(null);
     }
   };
 
   const applyFilters = () => {
     let filtered = [...merchants];
 
-    // Search filter
     if (searchTerm) {
       const term = searchTerm.toLowerCase();
       filtered = filtered.filter(
@@ -115,16 +99,15 @@ const Customers = () => {
           m.name.toLowerCase().includes(term) ||
           m.city?.toLowerCase().includes(term) ||
           m.category?.toLowerCase().includes(term) ||
-          m.address?.toLowerCase().includes(term)
+          m.address?.toLowerCase().includes(term) ||
+          m.phone_number?.includes(term)
       );
     }
 
-    // Category filter
     if (categoryFilter !== "all") {
       filtered = filtered.filter((m) => m.category === categoryFilter);
     }
 
-    // Sorting
     filtered.sort((a, b) => {
       switch (sortBy) {
         case "created_desc":
@@ -143,162 +126,142 @@ const Customers = () => {
     setFilteredMerchants(filtered);
   };
 
-  // Get unique categories for filter
   const categories = [...new Set(merchants.map(m => m.category).filter(Boolean))];
 
-  const getCategoryBadge = (category: string | null) => {
-    if (!category) return <Badge variant="outline">Keine Kategorie</Badge>;
-    return <Badge variant="secondary">{category}</Badge>;
-  };
-
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
+    <div className="space-y-3">
+      {/* Header - compact */}
+      <div className="flex justify-between items-center border-b pb-3">
         <div>
-          <h1 className="text-3xl font-bold bg-gradient-primary bg-clip-text text-transparent">
-            Kundenverwaltung
-          </h1>
-          <p className="text-muted-foreground mt-1">
-            {filteredMerchants.length} {filteredMerchants.length === 1 ? "Kunde" : "Kunden"}
-            {searchTerm || categoryFilter !== "all" 
-              ? ` (gefiltert von ${merchants.length} gesamt)` 
-              : ""}
+          <h1 className="text-xl font-semibold">Kundenverwaltung</h1>
+          <p className="text-xs text-muted-foreground">
+            {filteredMerchants.length} von {merchants.length} Kunden
           </p>
         </div>
         <div className="flex gap-2">
-          <Button
-            onClick={loadMerchants}
-            variant="outline"
-            className="gap-2"
-          >
-            <RefreshCw className="w-4 h-4" />
+          <Button size="sm" variant="outline" onClick={loadMerchants}>
+            <RefreshCw className="w-3 h-3 mr-1" />
             Aktualisieren
           </Button>
-          <GradientButton
-            onClick={() => navigate("/admin/checkout")}
-          >
-            Kunde abschließen
-          </GradientButton>
+          <Button size="sm" onClick={() => navigate("/admin/checkout")}>
+            <Plus className="w-3 h-3 mr-1" />
+            Neuer Kunde
+          </Button>
         </div>
       </div>
 
-      {/* Filters */}
-      <GlassCard>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <Input
-              placeholder="Name, Stadt oder Adresse suchen..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-9"
-            />
-          </div>
-          
-          <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-            <SelectTrigger>
-              <SelectValue placeholder="Kategorie filtern" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Alle Kategorien</SelectItem>
-              {categories.map((cat) => (
-                <SelectItem key={cat} value={cat!}>{cat}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-
-          <Select value={sortBy} onValueChange={setSortBy}>
-            <SelectTrigger>
-              <SelectValue placeholder="Sortierung" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="created_desc">Neueste zuerst</SelectItem>
-              <SelectItem value="created_asc">Älteste zuerst</SelectItem>
-              <SelectItem value="name_asc">Name A-Z</SelectItem>
-              <SelectItem value="name_desc">Name Z-A</SelectItem>
-            </SelectContent>
-          </Select>
+      {/* Filters - compact row */}
+      <div className="flex gap-2 items-center bg-muted/30 p-2 rounded border">
+        <div className="relative flex-1 max-w-xs">
+          <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-muted-foreground" />
+          <Input
+            placeholder="Suchen..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="h-8 pl-7 text-sm"
+          />
         </div>
-      </GlassCard>
+        
+        <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+          <SelectTrigger className="h-8 w-[150px] text-sm">
+            <SelectValue placeholder="Kategorie" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Alle</SelectItem>
+            {categories.map((cat) => (
+              <SelectItem key={cat} value={cat!}>{cat}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
 
-      <GlassCard>
+        <Select value={sortBy} onValueChange={setSortBy}>
+          <SelectTrigger className="h-8 w-[140px] text-sm">
+            <SelectValue placeholder="Sortierung" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="created_desc">Neueste</SelectItem>
+            <SelectItem value="created_asc">Älteste</SelectItem>
+            <SelectItem value="name_asc">A-Z</SelectItem>
+            <SelectItem value="name_desc">Z-A</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* Table - dense */}
+      <div className="border rounded">
         {loading ? (
-          <div className="text-center py-8">
-            <div className="w-12 h-12 rounded-full bg-gradient-primary animate-pulse-glow mx-auto" />
+          <div className="text-center py-8 text-sm text-muted-foreground">
+            Laden...
           </div>
         ) : filteredMerchants.length === 0 ? (
-          <div className="text-center py-12">
-            <p className="text-muted-foreground mb-4">
-              {merchants.length === 0 
-                ? "Noch keine Kunden angelegt" 
-                : "Keine Kunden gefunden mit den aktuellen Filtern"}
-            </p>
-            {merchants.length === 0 && (
-              <GradientButton
-                onClick={() => navigate("/admin/checkout")}
-              >
-                Ersten Kunden abschließen
-              </GradientButton>
-            )}
+          <div className="text-center py-8 text-sm text-muted-foreground">
+            {merchants.length === 0 
+              ? "Noch keine Kunden angelegt" 
+              : "Keine Ergebnisse"}
           </div>
         ) : (
           <Table>
             <TableHeader>
-              <TableRow>
-                <TableHead>Kunde</TableHead>
-                <TableHead>Kategorie</TableHead>
-                <TableHead>Stadt</TableHead>
-                <TableHead>Angelegt</TableHead>
-                <TableHead className="text-right">Aktionen</TableHead>
+              <TableRow className="bg-muted/50 hover:bg-muted/50">
+                <TableHead className="h-8 text-xs font-semibold">Firma</TableHead>
+                <TableHead className="h-8 text-xs font-semibold">Kategorie</TableHead>
+                <TableHead className="h-8 text-xs font-semibold">Adresse</TableHead>
+                <TableHead className="h-8 text-xs font-semibold">Telefon</TableHead>
+                <TableHead className="h-8 text-xs font-semibold">Angelegt</TableHead>
+                <TableHead className="h-8 text-xs font-semibold w-20"></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filteredMerchants.map((merchant) => (
-                <TableRow key={merchant.id}>
-                  <TableCell>
-                    <div className="flex items-center gap-3">
-                      {merchant.logo_url ? (
-                        <img 
-                          src={merchant.logo_url} 
-                          alt={merchant.name}
-                          className="w-10 h-10 rounded-lg object-cover"
-                        />
-                      ) : (
-                        <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center">
-                          <Store className="w-5 h-5 text-muted-foreground" />
-                        </div>
-                      )}
-                      <div>
-                        <p className="font-medium">{merchant.name}</p>
-                        {merchant.address && (
-                          <p className="text-sm text-muted-foreground">{merchant.address}</p>
-                        )}
-                      </div>
+                <TableRow 
+                  key={merchant.id} 
+                  className="cursor-pointer hover:bg-accent/50"
+                  onClick={() => navigate(`/admin/customers/${merchant.id}`)}
+                >
+                  <TableCell className="py-2">
+                    <div className="font-medium text-sm">{merchant.name}</div>
+                  </TableCell>
+                  <TableCell className="py-2 text-sm text-muted-foreground">
+                    {merchant.category || "—"}
+                  </TableCell>
+                  <TableCell className="py-2">
+                    <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                      <MapPin className="w-3 h-3 flex-shrink-0" />
+                      <span className="truncate max-w-[180px]">
+                        {merchant.postal_code} {merchant.city}
+                      </span>
                     </div>
                   </TableCell>
-                  <TableCell>{getCategoryBadge(merchant.category)}</TableCell>
-                  <TableCell>{merchant.city || "—"}</TableCell>
-                  <TableCell>
+                  <TableCell className="py-2">
+                    {merchant.phone_number ? (
+                      <div className="flex items-center gap-1 text-sm">
+                        <Phone className="w-3 h-3 text-muted-foreground" />
+                        {merchant.phone_number}
+                      </div>
+                    ) : (
+                      <span className="text-sm text-muted-foreground">—</span>
+                    )}
+                  </TableCell>
+                  <TableCell className="py-2 text-sm text-muted-foreground">
                     {new Date(merchant.created_at).toLocaleDateString("de-DE")}
                   </TableCell>
-                  <TableCell>
-                    <div className="flex items-center justify-end gap-2">
+                  <TableCell className="py-2" onClick={(e) => e.stopPropagation()}>
+                    <div className="flex items-center gap-1">
                       <Button
                         variant="ghost"
                         size="icon"
+                        className="h-7 w-7"
                         onClick={() => navigate(`/admin/customers/${merchant.id}`)}
-                        title="Bearbeiten"
                       >
-                        <Edit className="h-4 w-4" />
+                        <Edit className="h-3 w-3" />
                       </Button>
                       <Button
                         variant="ghost"
                         size="icon"
-                        onClick={() => setDeleteMerchantId(merchant.id)}
-                        title="Löschen"
-                        className="text-destructive hover:text-destructive"
+                        className="h-7 w-7 text-destructive hover:text-destructive"
+                        onClick={() => setDeleteMerchant(merchant)}
                       >
-                        <Trash2 className="h-4 w-4" />
+                        <Trash2 className="h-3 w-3" />
                       </Button>
                     </div>
                   </TableCell>
@@ -307,25 +270,19 @@ const Customers = () => {
             </TableBody>
           </Table>
         )}
-      </GlassCard>
+      </div>
 
-      {/* Delete Confirmation Dialog */}
-      <AlertDialog open={!!deleteMerchantId} onOpenChange={(open) => !open && setDeleteMerchantId(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Kunde löschen?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Diese Aktion kann nicht rückgängig gemacht werden. Der Kunde und alle zugehörigen Daten werden dauerhaft gelöscht.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Abbrechen</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-              Löschen
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      {/* Delete Confirmation Dialog with text confirmation */}
+      <ConfirmActionDialog
+        open={!!deleteMerchant}
+        onOpenChange={(open) => !open && setDeleteMerchant(null)}
+        onConfirm={handleDelete}
+        title="Kunde löschen?"
+        description={`Der Kunde "${deleteMerchant?.name}" und alle zugehörigen Daten werden dauerhaft gelöscht. Diese Aktion kann nicht rückgängig gemacht werden.`}
+        confirmText="Löschen"
+        confirmPhrase="LÖSCHEN"
+        destructive
+      />
     </div>
   );
 };
