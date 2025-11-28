@@ -62,7 +62,7 @@ const Auth = () => {
     if (userRole === 'admin') {
       navigate('/admin');
     } else if (userRole === 'kunde') {
-      navigate('/kunde/dashboard');
+      navigate('/kunde/stempelkarte');
     } else if (userRole === 'endkunde') {
       // Endkunden haben kein Dashboard auf der Website
       toast.info("Als Endkunde nutzen Sie bitte die Eloyo App");
