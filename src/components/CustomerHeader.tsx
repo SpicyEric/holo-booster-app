@@ -7,7 +7,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { Menu, User, FileText, MessageSquare, Star, LogOut, Home, ShoppingBag, BarChart3 } from "lucide-react";
+import { Menu, User, MessageSquare, Star, LogOut, Home, ShoppingBag, BarChart3 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import eloyoLogo from '@/assets/eloyo-logo.png';
 
@@ -24,9 +24,8 @@ export function CustomerHeader() {
     { label: "Analytics", icon: BarChart3, path: "/customer/analytics" },
     { label: "SMS-Kampagnen", icon: MessageSquare, path: "/customer/sms-campaigns" },
     { label: "Google-Bewertungen löschen", icon: Star, path: "/customer/google-reviews" },
-    { label: "Kontoinformationen", icon: User, path: "/customer/account" },
+    { label: "Mein Konto", icon: User, path: "/customer/account" },
     { label: "Shop", icon: ShoppingBag, path: "/customer/upgrade" },
-    { label: "Rechnungen", icon: FileText, path: "/customer/invoices" },
   ];
 
   return (
