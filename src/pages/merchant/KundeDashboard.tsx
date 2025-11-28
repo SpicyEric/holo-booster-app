@@ -1,12 +1,15 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { appSupabase } from "@/integrations/app-supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Loader2, CreditCard, Star, User, ArrowRight, AlertTriangle, Pause } from "lucide-react";
+import { 
+  Loader2, Users, Trophy, Gift, Clock, Star, TrendingUp,
+  AlertTriangle, Pause, UserCheck, Target
+} from "lucide-react";
 
 interface Customer {
   id: string;
@@ -31,12 +34,25 @@ interface SubscriptionInfo {
   };
 }
 
+interface DashboardStats {
+  totalLoyaltyUsers: number;
+  totalPointsGiven: number;
+  totalPointsRedeemed: number;
+  totalRewardsRedeemed: number;
+  peakHour: string;
+  genderRatio: { male: number; female: number; other: number };
+  topAgeGroup: string;
+  newCustomers7Days: number;
+  googleReviewClicks: number;
+}
+
 export default function KundeDashboard() {
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [customer, setCustomer] = useState<Customer | null>(null);
   const [subscriptionInfo, setSubscriptionInfo] = useState<SubscriptionInfo | null>(null);
+  const [stats, setStats] = useState<DashboardStats | null>(null);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -79,6 +95,9 @@ export default function KundeDashboard() {
       if (!subError && subInfo) {
         setSubscriptionInfo(subInfo);
       }
+
+      // Load dashboard stats from app database
+      await loadDashboardStats(customerUser.customer_id);
     } catch (error) {
       console.error("Error loading data:", error);
       toast.error("Fehler beim Laden der Daten");
@@ -87,11 +106,169 @@ export default function KundeDashboard() {
     }
   };
 
-  const formatAmount = (cents: number, currency: string) => {
-    return new Intl.NumberFormat("de-DE", {
-      style: "currency",
-      currency: currency.toUpperCase(),
-    }).format(cents / 100);
+  const loadDashboardStats = async (customerId: string) => {
+    try {
+      // Try to find merchant by owner_user_id (which should be the logged-in user)
+      const { data: merchantData } = await appSupabase
+        .from("merchants")
+        .select("id")
+        .eq("owner_user_id", user?.id || "")
+        .maybeSingle() as { data: { id: string } | null };
+
+      if (!merchantData) {
+        // Set placeholder stats if no merchant found
+        setStats({
+          totalLoyaltyUsers: 0,
+          totalPointsGiven: 0,
+          totalPointsRedeemed: 0,
+          totalRewardsRedeemed: 0,
+          peakHour: "—",
+          genderRatio: { male: 0, female: 0, other: 0 },
+          topAgeGroup: "—",
+          newCustomers7Days: 0,
+          googleReviewClicks: 0,
+        });
+        return;
+      }
+
+      const merchantId = merchantData.id;
+
+      // Load loyalty accounts count
+      const { count: loyaltyUsersCount } = await appSupabase
+        .from("loyalty_accounts")
+        .select("*", { count: "exact", head: true })
+        .eq("merchant_id", merchantId);
+
+      // Load transactions for points data
+      const { data: transactions } = await appSupabase
+        .from("transactions")
+        .select("points_change, created_at")
+        .eq("merchant_id", merchantId);
+
+      let totalPointsGiven = 0;
+      let totalPointsRedeemed = 0;
+      const hourCounts: Record<number, number> = {};
+
+      (transactions || []).forEach((tx) => {
+        if (tx.points_change > 0) {
+          totalPointsGiven += tx.points_change;
+        } else {
+          totalPointsRedeemed += Math.abs(tx.points_change);
+        }
+
+        // Track hour for peak analysis
+        if (tx.created_at) {
+          const hour = new Date(tx.created_at).getHours();
+          hourCounts[hour] = (hourCounts[hour] || 0) + 1;
+        }
+      });
+
+      // Load reward redemptions count
+      const { count: rewardsCount } = await appSupabase
+        .from("reward_redemptions")
+        .select("*", { count: "exact", head: true })
+        .eq("merchant_id", merchantId);
+
+      // Find peak hour
+      let peakHour = "—";
+      let maxCount = 0;
+      Object.entries(hourCounts).forEach(([hour, count]) => {
+        if (count > maxCount) {
+          maxCount = count;
+          peakHour = `${hour}:00 - ${parseInt(hour) + 1}:00 Uhr`;
+        }
+      });
+
+      // Load user demographics from loyalty accounts
+      const { data: loyaltyAccounts } = await appSupabase
+        .from("loyalty_accounts")
+        .select("user_id, created_at")
+        .eq("merchant_id", merchantId);
+
+      // Count new customers in last 7 days
+      const sevenDaysAgo = new Date();
+      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+      const newCustomers7Days = (loyaltyAccounts || []).filter(
+        (acc) => new Date(acc.created_at) >= sevenDaysAgo
+      ).length;
+
+      // Get user profiles for gender/age data
+      const userIds = (loyaltyAccounts || []).map((acc: any) => acc.user_id);
+      let genderRatio = { male: 0, female: 0, other: 0 };
+      let ageGroups: Record<string, number> = {};
+
+      if (userIds.length > 0) {
+        const { data: profiles } = await appSupabase
+          .from("profiles")
+          .select("gender, birth_date")
+          .in("id", userIds);
+
+        (profiles || []).forEach((profile) => {
+          // Gender
+          if (profile.gender === "male") genderRatio.male++;
+          else if (profile.gender === "female") genderRatio.female++;
+          else genderRatio.other++;
+
+          // Age groups
+          if (profile.birth_date) {
+            const age = Math.floor(
+              (Date.now() - new Date(profile.birth_date).getTime()) / 
+              (365.25 * 24 * 60 * 60 * 1000)
+            );
+            let ageGroup = "Unbekannt";
+            if (age < 18) ageGroup = "Unter 18";
+            else if (age < 25) ageGroup = "18-24";
+            else if (age < 35) ageGroup = "25-34";
+            else if (age < 45) ageGroup = "35-44";
+            else if (age < 55) ageGroup = "45-54";
+            else ageGroup = "55+";
+            ageGroups[ageGroup] = (ageGroups[ageGroup] || 0) + 1;
+          }
+        });
+      }
+
+      // Find top age group
+      let topAgeGroup = "—";
+      let maxAgeCount = 0;
+      Object.entries(ageGroups).forEach(([group, count]) => {
+        if (count > maxAgeCount) {
+          maxAgeCount = count;
+          topAgeGroup = group;
+        }
+      });
+
+      // Load Google review clicks (from scans table - scans that led to Google reviews)
+      const { count: googleClicks } = await supabase
+        .from("scans")
+        .select("*", { count: "exact", head: true })
+        .eq("customer_id", customerId);
+
+      setStats({
+        totalLoyaltyUsers: loyaltyUsersCount || 0,
+        totalPointsGiven,
+        totalPointsRedeemed,
+        totalRewardsRedeemed: rewardsCount || 0,
+        peakHour,
+        genderRatio,
+        topAgeGroup,
+        newCustomers7Days,
+        googleReviewClicks: googleClicks || 0,
+      });
+    } catch (error) {
+      console.error("Error loading dashboard stats:", error);
+      // Set default stats on error
+      setStats({
+        totalLoyaltyUsers: 0,
+        totalPointsGiven: 0,
+        totalPointsRedeemed: 0,
+        totalRewardsRedeemed: 0,
+        peakHour: "—",
+        genderRatio: { male: 0, female: 0, other: 0 },
+        topAgeGroup: "—",
+        newCustomers7Days: 0,
+        googleReviewClicks: 0,
+      });
+    }
   };
 
   const formatDate = (dateString: string) => {
@@ -117,6 +294,19 @@ export default function KundeDashboard() {
     }
   };
 
+  const calculatePointsRatio = () => {
+    if (!stats || stats.totalPointsGiven === 0) return "0%";
+    const ratio = (stats.totalPointsRedeemed / stats.totalPointsGiven) * 100;
+    return `${ratio.toFixed(1)}%`;
+  };
+
+  const calculateGenderPercentage = (count: number) => {
+    if (!stats) return 0;
+    const total = stats.genderRatio.male + stats.genderRatio.female + stats.genderRatio.other;
+    if (total === 0) return 0;
+    return Math.round((count / total) * 100);
+  };
+
   if (authLoading || loading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
@@ -126,26 +316,26 @@ export default function KundeDashboard() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-6 py-8 space-y-8">
+    <div className="max-w-7xl mx-auto px-6 py-8 space-y-6">
       {/* Welcome Section */}
-      <div className="space-y-2">
-        <h1 className="text-3xl font-bold">
+      <div className="space-y-1">
+        <h1 className="text-2xl font-bold">
           Willkommen zurück{customer?.company_name ? `, ${customer.company_name}` : ''}!
         </h1>
-        <p className="text-muted-foreground">
-          Hier ist eine Übersicht Ihres Eloyo-Kontos
+        <p className="text-sm text-muted-foreground">
+          Hier ist eine Übersicht Ihrer Bonuskarten-Performance
         </p>
       </div>
 
       {/* Status Alerts */}
       {customer?.status === "paused" && (
-        <div className="p-4 bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-800 rounded-lg">
+        <div className="p-3 bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-800 rounded-lg">
           <div className="flex items-start gap-3">
             <Pause className="w-5 h-5 text-amber-600 dark:text-amber-400 mt-0.5" />
             <div>
-              <p className="font-medium text-amber-900 dark:text-amber-100">Abo pausiert</p>
-              <p className="text-sm text-amber-800 dark:text-amber-200">
-                Ihr Abonnement ist pausiert. Während der Pause sind Sie nicht in der Endkunden-App sichtbar.
+              <p className="font-medium text-amber-900 dark:text-amber-100 text-sm">Abo pausiert</p>
+              <p className="text-xs text-amber-800 dark:text-amber-200">
+                Während der Pause sind Sie nicht in der Endkunden-App sichtbar.
               </p>
             </div>
           </div>
@@ -153,12 +343,12 @@ export default function KundeDashboard() {
       )}
 
       {subscriptionInfo?.cancelAtPeriodEnd && subscriptionInfo.cancelAt && (
-        <div className="p-4 bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-800 rounded-lg">
+        <div className="p-3 bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-800 rounded-lg">
           <div className="flex items-start gap-3">
             <AlertTriangle className="w-5 h-5 text-amber-600 dark:text-amber-400 mt-0.5" />
             <div>
-              <p className="font-medium text-amber-900 dark:text-amber-100">Kündigung eingereicht</p>
-              <p className="text-sm text-amber-800 dark:text-amber-200">
+              <p className="font-medium text-amber-900 dark:text-amber-100 text-sm">Kündigung eingereicht</p>
+              <p className="text-xs text-amber-800 dark:text-amber-200">
                 Ihr Abonnement endet am {formatDate(subscriptionInfo.cancelAt)}
               </p>
             </div>
@@ -166,93 +356,206 @@ export default function KundeDashboard() {
         </div>
       )}
 
-      {/* Quick Stats */}
-      {subscriptionInfo?.hasSubscription && (
+      {/* Main Stats Grid */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {/* Bonuskartenbenutzer */}
         <Card>
-          <CardHeader>
-            <CardTitle>Aktueller Tarif</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="space-y-1">
-                <p className="text-sm text-muted-foreground">Paket</p>
-                <p className="text-xl font-bold">{subscriptionInfo.plan?.name || "Eloyo Basispaket"}</p>
+          <CardContent className="pt-4 pb-3">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-primary/10">
+                <Users className="w-5 h-5 text-primary" />
               </div>
-              <div className="space-y-1">
-                <p className="text-sm text-muted-foreground">Preis</p>
-                <p className="text-xl font-bold">
-                  {formatAmount(subscriptionInfo.plan?.amount || 0, subscriptionInfo.plan?.currency || "EUR")}
-                  <span className="text-sm font-normal text-muted-foreground">
-                    {" "}/ {subscriptionInfo.plan?.interval === "month" ? "Monat" : "Jahr"}
-                  </span>
+              <div>
+                <p className="text-2xl font-bold">{stats?.totalLoyaltyUsers || 0}</p>
+                <p className="text-xs text-muted-foreground">Bonuskarten-Nutzer</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Vergebene Punkte */}
+        <Card>
+          <CardContent className="pt-4 pb-3">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-green-100 dark:bg-green-900">
+                <Target className="w-5 h-5 text-green-600 dark:text-green-400" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold">{stats?.totalPointsGiven || 0}</p>
+                <p className="text-xs text-muted-foreground">Punkte vergeben</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Eingelöste Punkte */}
+        <Card>
+          <CardContent className="pt-4 pb-3">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-amber-100 dark:bg-amber-900">
+                <Trophy className="w-5 h-5 text-amber-600 dark:text-amber-400" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold">{stats?.totalPointsRedeemed || 0}</p>
+                <p className="text-xs text-muted-foreground">
+                  Eingelöst ({calculatePointsRatio()})
                 </p>
               </div>
-              <div className="space-y-1">
-                <p className="text-sm text-muted-foreground">Status</p>
-                <div>{getStatusBadge(subscriptionInfo.status || customer?.status || "unknown")}</div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Prämien eingelöst */}
+        <Card>
+          <CardContent className="pt-4 pb-3">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-purple-100 dark:bg-purple-900">
+                <Gift className="w-5 h-5 text-purple-600 dark:text-purple-400" />
               </div>
+              <div>
+                <p className="text-2xl font-bold">{stats?.totalRewardsRedeemed || 0}</p>
+                <p className="text-xs text-muted-foreground">Prämien eingelöst</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Secondary Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {/* Peak Time */}
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm flex items-center gap-2">
+              <Clock className="w-4 h-4" />
+              Primetime
+            </CardTitle>
+            <CardDescription className="text-xs">
+              Häufigste Stempelzeit
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="text-xl font-bold">{stats?.peakHour || "—"}</p>
+          </CardContent>
+        </Card>
+
+        {/* Gender Ratio */}
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm flex items-center gap-2">
+              <UserCheck className="w-4 h-4" />
+              Geschlechterverhältnis
+            </CardTitle>
+            <CardDescription className="text-xs">
+              Ihrer Bonuskarten-Nutzer
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center gap-4">
+              <div className="flex-1">
+                <div className="flex justify-between text-xs mb-1">
+                  <span>Männlich</span>
+                  <span className="font-medium">{calculateGenderPercentage(stats?.genderRatio.male || 0)}%</span>
+                </div>
+                <div className="h-2 bg-muted rounded-full overflow-hidden">
+                  <div 
+                    className="h-full bg-blue-500 rounded-full" 
+                    style={{ width: `${calculateGenderPercentage(stats?.genderRatio.male || 0)}%` }}
+                  />
+                </div>
+              </div>
+              <div className="flex-1">
+                <div className="flex justify-between text-xs mb-1">
+                  <span>Weiblich</span>
+                  <span className="font-medium">{calculateGenderPercentage(stats?.genderRatio.female || 0)}%</span>
+                </div>
+                <div className="h-2 bg-muted rounded-full overflow-hidden">
+                  <div 
+                    className="h-full bg-pink-500 rounded-full" 
+                    style={{ width: `${calculateGenderPercentage(stats?.genderRatio.female || 0)}%` }}
+                  />
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Top Age Group */}
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm flex items-center gap-2">
+              <Users className="w-4 h-4" />
+              Top-Altersgruppe
+            </CardTitle>
+            <CardDescription className="text-xs">
+              Stärkste Nutzergruppe
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="text-xl font-bold">{stats?.topAgeGroup || "—"}</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Tertiary Stats Row */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Kundenzuwachs 7 Tage */}
+        <Card>
+          <CardContent className="py-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-green-100 dark:bg-green-900">
+                  <TrendingUp className="w-5 h-5 text-green-600 dark:text-green-400" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium">Kundenzuwachs (7 Tage)</p>
+                  <p className="text-xs text-muted-foreground">Neue Bonuskarten-Nutzer</p>
+                </div>
+              </div>
+              <p className="text-2xl font-bold text-green-600">+{stats?.newCustomers7Days || 0}</p>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Google Review Clicks */}
+        <Card>
+          <CardContent className="py-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-amber-100 dark:bg-amber-900">
+                  <Star className="w-5 h-5 text-amber-600 dark:text-amber-400" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium">Google-Bewertungs-Klicks</p>
+                  <p className="text-xs text-muted-foreground">Bewertung angefordert</p>
+                </div>
+              </div>
+              <p className="text-2xl font-bold">{stats?.googleReviewClicks || 0}</p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Subscription Status (if active) */}
+      {subscriptionInfo?.hasSubscription && (
+        <Card>
+          <CardContent className="py-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">Aktueller Tarif</p>
+                <p className="font-medium">{subscriptionInfo.plan?.name || "Eloyo Basispaket"}</p>
+              </div>
+              <div>{getStatusBadge(subscriptionInfo.status || customer?.status || "unknown")}</div>
             </div>
           </CardContent>
         </Card>
       )}
 
-      {/* Quick Actions */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate('/kunde/stempelkarte')}>
-          <CardHeader className="pb-2">
-            <CreditCard className="w-8 h-8 text-primary mb-2" />
-            <CardTitle className="text-lg">Stempelkarte</CardTitle>
-            <CardDescription>
-              Bearbeiten Sie Ihr Profil und Ihre Standortdaten
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Button variant="ghost" className="p-0 h-auto text-primary">
-              Öffnen <ArrowRight className="ml-2 h-4 w-4" />
-            </Button>
-          </CardContent>
-        </Card>
-
-        <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate('/kunde/google-bewertungen')}>
-          <CardHeader className="pb-2">
-            <Star className="w-8 h-8 text-primary mb-2" />
-            <CardTitle className="text-lg">Google-Bewertungen</CardTitle>
-            <CardDescription>
-              Verwalten Sie Ihre Google-Bewertungen
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Button variant="ghost" className="p-0 h-auto text-primary">
-              Öffnen <ArrowRight className="ml-2 h-4 w-4" />
-            </Button>
-          </CardContent>
-        </Card>
-
-        <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate('/kunde/konto')}>
-          <CardHeader className="pb-2">
-            <User className="w-8 h-8 text-primary mb-2" />
-            <CardTitle className="text-lg">Mein Konto</CardTitle>
-            <CardDescription>
-              Rechnungen, Zahlungsdaten und Einstellungen
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Button variant="ghost" className="p-0 h-auto text-primary">
-              Öffnen <ArrowRight className="ml-2 h-4 w-4" />
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Customer Info */}
+      {/* Customer Number */}
       {customer?.customer_number && (
-        <Card>
-          <CardContent className="py-4">
-            <p className="text-sm text-muted-foreground">
-              Kundennummer: <span className="font-medium text-foreground">ELO-{String(customer.customer_number).padStart(5, '0')}</span>
-            </p>
-          </CardContent>
-        </Card>
+        <p className="text-xs text-muted-foreground text-center">
+          Kundennummer: ELO-{String(customer.customer_number).padStart(5, '0')}
+        </p>
       )}
     </div>
   );
