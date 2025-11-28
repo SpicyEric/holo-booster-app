@@ -191,7 +191,7 @@ const Stempelkarte = () => {
       const fileName = `${user.id}/${type}-${Date.now()}.${fileExt}`;
       
       const { error: uploadError } = await appSupabase.storage
-        .from("merchant-assets")
+        .from("merchant-images")
         .upload(fileName, file, { upsert: true });
       
       if (uploadError) {
@@ -203,7 +203,7 @@ const Stempelkarte = () => {
       }
       
       const { data: { publicUrl } } = appSupabase.storage
-        .from("merchant-assets")
+        .from("merchant-images")
         .getPublicUrl(fileName);
       
       const field = type === "logo" ? "logo_url" : "cover_image_url";
