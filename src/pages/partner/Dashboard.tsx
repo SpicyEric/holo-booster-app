@@ -6,11 +6,11 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { LogOut, Euro, TrendingUp, Calendar, AlertCircle } from "lucide-react";
 import eloyoLogo from '@/assets/eloyo-logo.png';
-import Particles from "@/components/Particles";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 
 // Partner Dashboard - nur für Admins zugänglich (Partner-Funktion wird über Admin verwaltet)
+// Kein Partikel-Hintergrund für Partner (funktionales Design)
 const PartnerDashboard = () => {
   const navigate = useNavigate();
 
@@ -27,29 +27,17 @@ const PartnerDashboard = () => {
   return (
     <ProtectedRoute allowedRoles={['admin']}>
       <div className="min-h-screen bg-background">
-        <Particles 
-          particleColors={['#8B5CF6', '#3B82F6', '#8B5CF6']}
-          particleCount={100}
-          particleSpread={8}
-          speed={0.05}
-          particleBaseSize={100}
-          sizeRandomness={1.5}
-          moveParticlesOnHover={true}
-          alphaParticles={true}
-          disableRotation={false}
-          cameraDistance={20}
-        />
-        <div className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-10">
+        <div className="border-b border-border bg-card sticky top-0 z-10">
           <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
             <img src={eloyoLogo} alt="Eloyo Logo" className="h-10 w-auto" />
-            <Button onClick={handleLogout} variant="outline">
+            <Button onClick={handleLogout} variant="outline" size="sm">
               <LogOut className="mr-2 w-4 h-4" />
               Logout
             </Button>
           </div>
         </div>
 
-        <div className="max-w-7xl mx-auto p-6 sm:p-8 relative z-10 space-y-8">
+        <div className="max-w-7xl mx-auto p-6 space-y-6">
           <div>
             <h1 className="text-4xl font-bold mb-2">
               Partner Dashboard
