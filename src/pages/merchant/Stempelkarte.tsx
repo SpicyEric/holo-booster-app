@@ -23,7 +23,8 @@ import {
   Twitter,
   Star,
   Clock,
-  Store
+  Store,
+  RefreshCw
 } from "lucide-react";
 import { appSupabase } from "@/integrations/app-supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -296,151 +297,56 @@ const Stempelkarte = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Smartphone Preview */}
+        {/* Smartphone Preview - Echte App-Vorschau via iframe */}
         <div className="lg:col-span-1 order-2 lg:order-1">
           <div className="sticky top-24">
             <h3 className="text-lg font-semibold mb-4 text-center">Smartphone-Vorschau</h3>
-            <div className="mx-auto w-[280px] h-[580px] bg-foreground rounded-[40px] p-3 shadow-2xl">
+            <div className="mx-auto w-[300px] h-[620px] bg-foreground rounded-[40px] p-3 shadow-2xl">
               <div className="w-full h-full bg-background rounded-[32px] overflow-hidden relative">
                 {/* Phone Notch */}
                 <div className="absolute top-0 left-1/2 -translate-x-1/2 w-24 h-6 bg-foreground rounded-b-xl z-20"></div>
                 
-                {/* Preview Content */}
-                <div className="h-full overflow-y-auto">
-                  {/* Cover Image */}
-                  <div className="relative h-36 bg-gradient-to-br from-primary/20 to-primary/40">
-                    {formData.cover_image_url ? (
-                      <img 
-                        src={formData.cover_image_url} 
-                        alt="Cover" 
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-muted-foreground text-sm">
-                        Titelbild
-                      </div>
-                    )}
-                    
-                    {/* Logo Overlay */}
-                    <div className="absolute -bottom-10 left-4">
-                      <div className="w-20 h-20 rounded-xl bg-card border-4 border-background shadow-lg overflow-hidden">
-                        {formData.logo_url ? (
-                          <img 
-                            src={formData.logo_url} 
-                            alt="Logo" 
-                            className="w-full h-full object-cover"
-                          />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center bg-muted">
-                            <Store className="w-8 h-8 text-muted-foreground" />
-                          </div>
-                        )}
-                      </div>
+                {/* iframe mit echter App-Preview */}
+                {merchantId ? (
+                  <iframe
+                    src={`https://eloyo.lovable.app/preview/${merchantId}?points=25&t=${Date.now()}`}
+                    className="w-full h-full border-none pt-6"
+                    title="App-Vorschau"
+                    key={`preview-${merchantId}-${saving ? 'saving' : 'idle'}`}
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-muted-foreground text-sm pt-6">
+                    <div className="text-center p-4">
+                      <Store className="w-12 h-12 mx-auto mb-3 text-muted-foreground/50" />
+                      <p>Speichere deine Daten, um die Vorschau zu sehen</p>
                     </div>
                   </div>
-                  
-                  {/* Content */}
-                  <div className="pt-14 px-4 pb-4">
-                    <h4 className="text-lg font-bold truncate">
-                      {formData.name || "Geschäftsname"}
-                    </h4>
-                    {formData.category && (
-                      <span className="inline-block text-xs bg-primary/10 text-primary px-2 py-1 rounded-full mt-1">
-                        {getCategoryLabel(formData.category)}
-                      </span>
-                    )}
-                    
-                    {formData.description && (
-                      <p className="text-xs text-muted-foreground mt-2 line-clamp-2">
-                        {formData.description}
-                      </p>
-                    )}
-                    
-                    {/* Address */}
-                    {(formData.address || formData.city) && (
-                      <div className="flex items-start gap-2 mt-3 text-xs text-muted-foreground">
-                        <MapPin className="w-3 h-3 mt-0.5 flex-shrink-0" />
-                        <span className="line-clamp-2">
-                          {formData.address}{formData.address && formData.city ? ", " : ""}
-                          {formData.postal_code} {formData.city}
-                        </span>
-                      </div>
-                    )}
-                    
-                    {/* Phone */}
-                    {formData.phone_number && (
-                      <div className="flex items-center gap-2 mt-2 text-xs text-muted-foreground">
-                        <Phone className="w-3 h-3" />
-                        <span>{formData.phone_number}</span>
-                      </div>
-                    )}
-                    
-                    {/* Opening Hours Preview */}
-                    <div className="mt-3 text-xs">
-                      <div className="flex items-center gap-1 text-muted-foreground mb-1">
-                        <Clock className="w-3 h-3" />
-                        <span>Öffnungszeiten</span>
-                      </div>
-                      <div className="space-y-0.5">
-                        {DAYS.slice(0, 3).map(day => (
-                          <div key={day.key} className="flex justify-between text-muted-foreground">
-                            <span>{day.label.slice(0, 2)}</span>
-                            <span>
-                              {formData.opening_hours[day.key]?.closed 
-                                ? "Geschlossen" 
-                                : `${formData.opening_hours[day.key]?.open || "09:00"} - ${formData.opening_hours[day.key]?.close || "18:00"}`
-                              }
-                            </span>
-                          </div>
-                        ))}
-                        <div className="text-muted-foreground/60">...</div>
-                      </div>
-                    </div>
-                    
-                    {/* Social Links Preview */}
-                    <div className="flex gap-2 mt-3">
-                      {formData.website && (
-                        <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center">
-                          <Globe className="w-4 h-4 text-muted-foreground" />
-                        </div>
-                      )}
-                      {formData.instagram_url && (
-                        <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center">
-                          <Instagram className="w-4 h-4 text-muted-foreground" />
-                        </div>
-                      )}
-                      {formData.facebook_url && (
-                        <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center">
-                          <Facebook className="w-4 h-4 text-muted-foreground" />
-                        </div>
-                      )}
-                      {formData.twitter_url && (
-                        <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center">
-                          <Twitter className="w-4 h-4 text-muted-foreground" />
-                        </div>
-                      )}
-                    </div>
-                    
-                    {/* Google Review Link */}
-                    {formData.google_review_url && (
-                      <div className="mt-3 p-2 bg-amber-50 rounded-lg border border-amber-200">
-                        <div className="flex items-center gap-2 text-xs text-amber-700">
-                          <Star className="w-3 h-3 fill-amber-500 text-amber-500" />
-                          <span>Google Bewertung verknüpft</span>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
+                )}
               </div>
             </div>
             
             {/* Save Button - Below Phone Preview */}
-            <div className="mt-6">
+            <div className="mt-6 space-y-2">
               <Button onClick={handleSave} disabled={saving} className="w-full" size="lg">
                 <Save className="mr-2 w-4 h-4" />
                 {saving ? "Speichern..." : "Änderungen speichern"}
               </Button>
+              {merchantId && (
+                <Button 
+                  variant="outline" 
+                  className="w-full" 
+                  size="sm"
+                  onClick={() => {
+                    // Force iframe reload
+                    const iframe = document.querySelector('iframe');
+                    if (iframe) {
+                      iframe.src = `https://eloyo.lovable.app/preview/${merchantId}?points=25&t=${Date.now()}`;
+                    }
+                  }}
+                >
+                  Vorschau aktualisieren
+                </Button>
+              )}
             </div>
           </div>
         </div>
