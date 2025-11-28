@@ -21,6 +21,7 @@ import Checkout from "./pages/admin/Checkout";
 import Billing from "./pages/account/Billing";
 import Settings from "./pages/admin/Settings";
 import MerchantDashboard from "./pages/merchant/Dashboard";
+import MerchantSettings from "./pages/merchant/Settings";
 import PartnerDashboard from "./pages/partner/Dashboard";
 import CustomerDashboard from "./pages/customer/Dashboard";
 import CustomerAccount from "./pages/customer/Account";
@@ -65,7 +66,9 @@ const App = () => (
           
           {/* Händler Dashboard (role: kunde) */}
           <Route path="/kunde/dashboard" element={<MerchantDashboard />} />
+          <Route path="/kunde/settings" element={<MerchantSettings />} />
           <Route path="/merchant" element={<MerchantDashboard />} />
+          <Route path="/merchant/settings" element={<MerchantSettings />} />
           
           {/* Partner Dashboard (role: admin - Partner-Funktionen werden über Admin verwaltet) */}
           <Route path="/partner" element={<PartnerDashboard />} />

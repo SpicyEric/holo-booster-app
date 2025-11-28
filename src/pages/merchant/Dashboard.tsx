@@ -5,7 +5,7 @@ import { CircularProgress } from "@/components/CircularProgress";
 import { signOut } from "@/lib/auth";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import { LogOut, QrCode, Gift, TrendingUp, Download, ShoppingBag } from "lucide-react";
+import { LogOut, QrCode, Gift, TrendingUp, Download, ShoppingBag, Settings } from "lucide-react";
 import eloyoLogo from '@/assets/eloyo-logo.png';
 import Particles from "@/components/Particles";
 
@@ -40,10 +40,19 @@ const MerchantDashboard = () => {
         <div className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-10">
           <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
             <img src={eloyoLogo} alt="Eloyo Logo" className="h-10 w-auto" />
-            <Button onClick={handleLogout} variant="outline">
-              <LogOut className="mr-2 w-4 h-4" />
-              Logout
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button 
+                onClick={() => navigate('/kunde/settings')} 
+                variant="outline"
+              >
+                <Settings className="mr-2 w-4 h-4" />
+                Einstellungen
+              </Button>
+              <Button onClick={handleLogout} variant="outline">
+                <LogOut className="mr-2 w-4 h-4" />
+                Logout
+              </Button>
+            </div>
           </div>
         </div>
 
