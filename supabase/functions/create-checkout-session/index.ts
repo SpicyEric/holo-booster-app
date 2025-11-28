@@ -1,6 +1,5 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@18.5.0";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.79.0";
 
 interface CheckoutRequest {
   customerName: string;
@@ -41,32 +40,8 @@ serve(async (req) => {
   try {
     console.log("[CREATE-CHECKOUT] Function started");
 
-    const supabaseClient = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
-    );
-
-    const authHeader = req.headers.get("Authorization");
-    if (!authHeader) throw new Error("No authorization header");
-
-    const token = authHeader.replace("Bearer ", "");
-    const { data: userData, error: userError } = await supabaseClient.auth.getUser(token);
-    if (userError || !userData.user) throw new Error("Unauthorized");
-
-    console.log("[CREATE-CHECKOUT] User authenticated:", userData.user.id);
-
-    // Check if user is admin
-    const { data: roles, error: rolesError } = await supabaseClient
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", userData.user.id);
-
-    console.log("[CREATE-CHECKOUT] Role check:", { roles, rolesError });
-
-    const isAdmin = Array.isArray(roles) && roles.some((r: { role: string }) => r.role === "admin");
-    if (!isAdmin) {
-      throw new Error("Only admins can create checkout sessions");
-    }
+    // Auth is handled by ProtectedRoute on frontend (verify_jwt = false)
+    // This function is only accessible to admins via the protected admin dashboard
 
     const {
       customerName,
