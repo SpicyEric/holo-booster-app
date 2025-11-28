@@ -1,9 +1,9 @@
 import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
+import { appSupabase } from "@/integrations/app-supabase/client";
 import { GlassCard } from "@/components/GlassCard";
 import { GradientButton } from "@/components/GradientButton";
-import { Edit, QrCode, Search, Trash2, RefreshCw } from "lucide-react";
+import { Edit, Search, Trash2, RefreshCw, Store } from "lucide-react";
 import { toast } from "sonner";
 import {
   Table,
@@ -28,44 +28,45 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 
-interface Customer {
+// Merchant aus der App-DB (eloyo)
+interface Merchant {
   id: string;
   name: string;
-  email: string | null;
-  company_name: string | null;
-  google_review_url: string;
-  offer_text: string;
+  description: string | null;
+  category: string | null;
+  address: string;
+  city: string;
+  postal_code: string | null;
   logo_url: string | null;
-  qr_code_url: string | null;
-  active: boolean;
-  status: string | null;
+  cover_image_url: string | null;
+  phone_number: string | null;
+  website: string | null;
+  owner_user_id: string | null;
   created_at: string;
-  priority: string | null;
-  lead_source: string | null;
 }
 
 const Customers = () => {
   const navigate = useNavigate();
-  const [customers, setCustomers] = useState<Customer[]>([]);
-  const [filteredCustomers, setFilteredCustomers] = useState<Customer[]>([]);
+  const [merchants, setMerchants] = useState<Merchant[]>([]);
+  const [filteredMerchants, setFilteredMerchants] = useState<Merchant[]>([]);
   const [loading, setLoading] = useState(true);
   
   // Filter states
   const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [sortBy, setSortBy] = useState<string>("created_desc");
-  const [priorityFilter, setPriorityFilter] = useState<string>("all");
-  const [deleteCustomerId, setDeleteCustomerId] = useState<string | null>(null);
-  const [syncing, setSyncing] = useState(false);
+  const [deleteMerchantId, setDeleteMerchantId] = useState<string | null>(null);
 
-  const loadCustomers = async () => {
+  const loadMerchants = async () => {
     try {
-      const { data, error } = await supabase
-        .from("customers")
-        .select("*");
+      setLoading(true);
+      const { data, error } = await appSupabase
+        .from("merchants")
+        .select("*")
+        .order("created_at", { ascending: false });
 
       if (error) throw error;
-      setCustomers(data || []);
+      setMerchants(data || []);
     } catch (error: any) {
       toast.error("Fehler beim Laden der Kunden");
       console.error(error);
@@ -74,96 +75,53 @@ const Customers = () => {
     }
   };
 
-  const syncStripeStatus = useCallback(async () => {
-    setSyncing(true);
-    try {
-      const { data, error } = await supabase.functions.invoke("syncStripeStatus");
-      
-      if (error) throw error;
-
-      if (data.updated > 0) {
-        toast.success(`${data.updated} Kunden-Status aktualisiert`);
-        await loadCustomers();
-      } else {
-        toast.info("Alle Status sind bereits aktuell");
-      }
-    } catch (error: any) {
-      console.error("Stripe sync error:", error);
-      toast.error("Fehler bei der Stripe-Synchronisation");
-    } finally {
-      setSyncing(false);
-    }
+  useEffect(() => {
+    loadMerchants();
   }, []);
 
   useEffect(() => {
-    loadCustomers();
-    
-    // Check if redirected from successful checkout
-    const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.get('checkout') === 'success') {
-      // Auto-sync after successful checkout
-      setTimeout(() => {
-        syncStripeStatus();
-      }, 2000);
-      
-      // Clean URL
-      window.history.replaceState({}, '', '/admin/customers');
-    }
-  }, [syncStripeStatus]);
-
-  useEffect(() => {
     applyFilters();
-  }, [customers, searchTerm, statusFilter, sortBy, priorityFilter]);
+  }, [merchants, searchTerm, categoryFilter, sortBy]);
 
   const handleDelete = async () => {
-    if (!deleteCustomerId) return;
+    if (!deleteMerchantId) return;
     
     try {
-      const { error } = await supabase
-        .from("customers")
+      const { error } = await appSupabase
+        .from("merchants")
         .delete()
-        .eq("id", deleteCustomerId);
+        .eq("id", deleteMerchantId);
 
       if (error) throw error;
       
       toast.success("Kunde erfolgreich gelöscht");
-      loadCustomers();
+      loadMerchants();
     } catch (error: any) {
       toast.error("Fehler beim Löschen des Kunden");
       console.error(error);
     } finally {
-      setDeleteCustomerId(null);
+      setDeleteMerchantId(null);
     }
   };
 
   const applyFilters = () => {
-    let filtered = [...customers];
+    let filtered = [...merchants];
 
     // Search filter
     if (searchTerm) {
       const term = searchTerm.toLowerCase();
       filtered = filtered.filter(
-        (c) =>
-          c.name.toLowerCase().includes(term) ||
-          c.company_name?.toLowerCase().includes(term) ||
-          c.email?.toLowerCase().includes(term)
+        (m) =>
+          m.name.toLowerCase().includes(term) ||
+          m.city?.toLowerCase().includes(term) ||
+          m.category?.toLowerCase().includes(term) ||
+          m.address?.toLowerCase().includes(term)
       );
     }
 
-    // Status filter
-    if (statusFilter !== "all") {
-      if (statusFilter === "active") {
-        filtered = filtered.filter((c) => c.active && c.status === "active");
-      } else if (statusFilter === "inactive") {
-        filtered = filtered.filter((c) => !c.active);
-      } else {
-        filtered = filtered.filter((c) => c.status === statusFilter);
-      }
-    }
-
-    // Priority filter
-    if (priorityFilter !== "all") {
-      filtered = filtered.filter((c) => c.priority === priorityFilter);
+    // Category filter
+    if (categoryFilter !== "all") {
+      filtered = filtered.filter((m) => m.category === categoryFilter);
     }
 
     // Sorting
@@ -182,37 +140,15 @@ const Customers = () => {
       }
     });
 
-    setFilteredCustomers(filtered);
+    setFilteredMerchants(filtered);
   };
 
-  const getStatusBadge = (customer: Customer) => {
-    if (!customer.active) {
-      return <Badge variant="secondary">Inaktiv</Badge>;
-    }
-    switch (customer.status) {
-      case "active":
-        return <Badge variant="default">Aktiv</Badge>;
-      case "pending":
-        return <Badge variant="outline">Ausstehend</Badge>;
-      case "past_due":
-        return <Badge variant="destructive">Überfällig</Badge>;
-      case "canceled":
-        return <Badge variant="secondary">Gekündigt</Badge>;
-      default:
-        return <Badge variant="outline">{customer.status || "Unbekannt"}</Badge>;
-    }
-  };
+  // Get unique categories for filter
+  const categories = [...new Set(merchants.map(m => m.category).filter(Boolean))];
 
-  const getPriorityBadge = (priority: string | null) => {
-    if (!priority || priority === "normal") return null;
-    
-    if (priority === "high") {
-      return <Badge variant="destructive">Hoch</Badge>;
-    } else if (priority === "low") {
-      return <Badge variant="secondary">Niedrig</Badge>;
-    }
-    
-    return <Badge variant="outline">{priority}</Badge>;
+  const getCategoryBadge = (category: string | null) => {
+    if (!category) return <Badge variant="outline">Keine Kategorie</Badge>;
+    return <Badge variant="secondary">{category}</Badge>;
   };
 
   return (
@@ -223,21 +159,20 @@ const Customers = () => {
             Kundenverwaltung
           </h1>
           <p className="text-muted-foreground mt-1">
-            {filteredCustomers.length} {filteredCustomers.length === 1 ? "Kunde" : "Kunden"}
-            {searchTerm || statusFilter !== "all" || priorityFilter !== "all" 
-              ? ` (gefiltert von ${customers.length} gesamt)` 
+            {filteredMerchants.length} {filteredMerchants.length === 1 ? "Kunde" : "Kunden"}
+            {searchTerm || categoryFilter !== "all" 
+              ? ` (gefiltert von ${merchants.length} gesamt)` 
               : ""}
           </p>
         </div>
         <div className="flex gap-2">
           <Button
-            onClick={syncStripeStatus}
-            disabled={syncing}
+            onClick={loadMerchants}
             variant="outline"
             className="gap-2"
           >
-            <RefreshCw className={`w-4 h-4 ${syncing ? "animate-spin" : ""}`} />
-            {syncing ? "Synchronisiere..." : "Status aktualisieren"}
+            <RefreshCw className="w-4 h-4" />
+            Aktualisieren
           </Button>
           <GradientButton
             onClick={() => navigate("/admin/checkout")}
@@ -249,40 +184,26 @@ const Customers = () => {
 
       {/* Filters */}
       <GlassCard>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
-              placeholder="Name, Firma oder E-Mail suchen..."
+              placeholder="Name, Stadt oder Adresse suchen..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-9"
             />
           </div>
           
-          <Select value={statusFilter} onValueChange={setStatusFilter}>
+          <Select value={categoryFilter} onValueChange={setCategoryFilter}>
             <SelectTrigger>
-              <SelectValue placeholder="Status filtern" />
+              <SelectValue placeholder="Kategorie filtern" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Alle Status</SelectItem>
-              <SelectItem value="active">Aktiv</SelectItem>
-              <SelectItem value="pending">Ausstehend</SelectItem>
-              <SelectItem value="past_due">Überfällig</SelectItem>
-              <SelectItem value="canceled">Gekündigt</SelectItem>
-              <SelectItem value="inactive">Inaktiv</SelectItem>
-            </SelectContent>
-          </Select>
-
-          <Select value={priorityFilter} onValueChange={setPriorityFilter}>
-            <SelectTrigger>
-              <SelectValue placeholder="Priorität filtern" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Alle Prioritäten</SelectItem>
-              <SelectItem value="high">Hoch</SelectItem>
-              <SelectItem value="normal">Normal</SelectItem>
-              <SelectItem value="low">Niedrig</SelectItem>
+              <SelectItem value="all">Alle Kategorien</SelectItem>
+              {categories.map((cat) => (
+                <SelectItem key={cat} value={cat!}>{cat}</SelectItem>
+              ))}
             </SelectContent>
           </Select>
 
@@ -305,14 +226,14 @@ const Customers = () => {
           <div className="text-center py-8">
             <div className="w-12 h-12 rounded-full bg-gradient-primary animate-pulse-glow mx-auto" />
           </div>
-        ) : filteredCustomers.length === 0 ? (
+        ) : filteredMerchants.length === 0 ? (
           <div className="text-center py-12">
             <p className="text-muted-foreground mb-4">
-              {customers.length === 0 
+              {merchants.length === 0 
                 ? "Noch keine Kunden angelegt" 
                 : "Keine Kunden gefunden mit den aktuellen Filtern"}
             </p>
-            {customers.length === 0 && (
+            {merchants.length === 0 && (
               <GradientButton
                 onClick={() => navigate("/admin/checkout")}
               >
@@ -325,48 +246,47 @@ const Customers = () => {
             <TableHeader>
               <TableRow>
                 <TableHead>Kunde</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Priorität</TableHead>
-                <TableHead>QR-Code</TableHead>
+                <TableHead>Kategorie</TableHead>
+                <TableHead>Stadt</TableHead>
                 <TableHead>Angelegt</TableHead>
                 <TableHead className="text-right">Aktionen</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredCustomers.map((customer) => (
-                <TableRow key={customer.id}>
+              {filteredMerchants.map((merchant) => (
+                <TableRow key={merchant.id}>
                   <TableCell>
-                    <div>
-                      <p className="font-medium">{customer.name}</p>
-                      {customer.company_name && (
-                        <p className="text-sm text-muted-foreground">{customer.company_name}</p>
+                    <div className="flex items-center gap-3">
+                      {merchant.logo_url ? (
+                        <img 
+                          src={merchant.logo_url} 
+                          alt={merchant.name}
+                          className="w-10 h-10 rounded-lg object-cover"
+                        />
+                      ) : (
+                        <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center">
+                          <Store className="w-5 h-5 text-muted-foreground" />
+                        </div>
                       )}
-                      {customer.email && (
-                        <p className="text-xs text-muted-foreground">{customer.email}</p>
-                      )}
+                      <div>
+                        <p className="font-medium">{merchant.name}</p>
+                        {merchant.address && (
+                          <p className="text-sm text-muted-foreground">{merchant.address}</p>
+                        )}
+                      </div>
                     </div>
                   </TableCell>
-                  <TableCell>{getStatusBadge(customer)}</TableCell>
-                  <TableCell>{getPriorityBadge(customer.priority)}</TableCell>
+                  <TableCell>{getCategoryBadge(merchant.category)}</TableCell>
+                  <TableCell>{merchant.city || "—"}</TableCell>
                   <TableCell>
-                    {customer.qr_code_url ? (
-                      <Badge variant="default" className="gap-1">
-                        <QrCode className="w-3 h-3" />
-                        Vorhanden
-                      </Badge>
-                    ) : (
-                      <Badge variant="outline">Fehlt</Badge>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    {new Date(customer.created_at).toLocaleDateString("de-DE")}
+                    {new Date(merchant.created_at).toLocaleDateString("de-DE")}
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center justify-end gap-2">
                       <Button
                         variant="ghost"
                         size="icon"
-                        onClick={() => navigate(`/admin/customers/${customer.id}`)}
+                        onClick={() => navigate(`/admin/customers/${merchant.id}`)}
                         title="Bearbeiten"
                       >
                         <Edit className="h-4 w-4" />
@@ -374,7 +294,7 @@ const Customers = () => {
                       <Button
                         variant="ghost"
                         size="icon"
-                        onClick={() => setDeleteCustomerId(customer.id)}
+                        onClick={() => setDeleteMerchantId(merchant.id)}
                         title="Löschen"
                         className="text-destructive hover:text-destructive"
                       >
@@ -390,7 +310,7 @@ const Customers = () => {
       </GlassCard>
 
       {/* Delete Confirmation Dialog */}
-      <AlertDialog open={!!deleteCustomerId} onOpenChange={(open) => !open && setDeleteCustomerId(null)}>
+      <AlertDialog open={!!deleteMerchantId} onOpenChange={(open) => !open && setDeleteMerchantId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Kunde löschen?</AlertDialogTitle>

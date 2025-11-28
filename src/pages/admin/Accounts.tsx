@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { appSupabase } from "@/integrations/app-supabase/client";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { UserPlus, Mail, Key, Trash2, Edit, RotateCcw } from "lucide-react";
+import { UserPlus, Trash2, Edit, RotateCcw, Search, Filter } from "lucide-react";
 import { toast } from "sonner";
 import {
   Dialog,
@@ -28,17 +28,19 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import type { AppRole } from "@/integrations/app-supabase/types";
 
 interface UserAccount {
   id: string;
   email: string;
   full_name: string;
-  role: string;
+  role: AppRole;
   created_at: string;
 }
 
 const Accounts = () => {
   const [accounts, setAccounts] = useState<UserAccount[]>([]);
+  const [filteredAccounts, setFilteredAccounts] = useState<UserAccount[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
@@ -47,61 +49,89 @@ const Accounts = () => {
   const [selectedAccount, setSelectedAccount] = useState<UserAccount | null>(null);
   const [deleteConfirmText, setDeleteConfirmText] = useState("");
   
+  // Filter states
+  const [searchTerm, setSearchTerm] = useState("");
+  const [roleFilter, setRoleFilter] = useState<string>("all");
+  
   const [formData, setFormData] = useState({
     email: "",
     full_name: "",
-    role: "merchant",
+    role: "endkunde" as AppRole,
     password: "",
   });
 
   const [editFormData, setEditFormData] = useState({
     full_name: "",
-    role: "",
+    role: "" as AppRole,
   });
 
   useEffect(() => {
     loadAccounts();
   }, []);
 
+  useEffect(() => {
+    applyFilters();
+  }, [accounts, searchTerm, roleFilter]);
+
+  const applyFilters = () => {
+    let filtered = [...accounts];
+
+    // Search filter
+    if (searchTerm) {
+      const term = searchTerm.toLowerCase();
+      filtered = filtered.filter(
+        (a) =>
+          a.full_name?.toLowerCase().includes(term) ||
+          a.email?.toLowerCase().includes(term)
+      );
+    }
+
+    // Role filter
+    if (roleFilter !== "all") {
+      filtered = filtered.filter((a) => a.role === roleFilter);
+    }
+
+    setFilteredAccounts(filtered);
+  };
+
   const loadAccounts = async () => {
     try {
       setLoading(true);
       
-      // Get all user roles
-      const { data: roles, error: rolesError } = await supabase
+      // Get all user roles from App-DB
+      const { data: rolesData, error: rolesError } = await appSupabase
         .from("user_roles")
-        .select("user_id, role");
+        .select("user_id, role, created_at");
 
       if (rolesError) throw rolesError;
+      
+      // Cast to correct type
+      const roles = rolesData as { user_id: string; role: string; created_at: string }[] | null;
 
-      // Get profiles for these users
-      const { data: profiles, error: profilesError } = await supabase
+      // Get profiles for these users from App-DB
+      const { data: profilesData, error: profilesError } = await appSupabase
         .from("profiles")
-        .select("user_id, full_name, created_at")
-        .in("user_id", roles?.map(r => r.user_id) || []);
+        .select("id, first_name, last_name, created_at");
 
-      if (profilesError) throw profilesError;
-
-      // Get emails from auth using edge function
-      const userIds = roles?.map(r => r.user_id) || [];
-      const { data: emailData, error: emailError } = await supabase.functions.invoke("getUserEmails", {
-        body: { userIds }
-      });
-
-      if (emailError) {
-        console.error("Error fetching emails:", emailError);
+      if (profilesError) {
+        console.error("Profiles error:", profilesError);
       }
-
-      const emails = emailData?.emails || {};
-
+      
+      // Cast to correct type
+      const profiles = profilesData as { id: string; first_name: string | null; last_name: string | null; created_at: string }[] | null;
+      
       const accountsData = roles?.map(role => {
-        const profile = profiles?.find(p => p.user_id === role.user_id);
+        const profile = profiles?.find(p => p.id === role.user_id);
+        const fullName = profile 
+          ? [profile.first_name, profile.last_name].filter(Boolean).join(' ')
+          : '';
+        
         return {
           id: role.user_id,
-          email: emails[role.user_id] || "",
-          full_name: profile?.full_name || "",
-          role: role.role,
-          created_at: profile?.created_at || "",
+          email: "",
+          full_name: fullName || `User ${role.user_id.substring(0, 8)}`,
+          role: role.role as AppRole,
+          created_at: role.created_at || profile?.created_at || "",
         };
       }) || [];
 
@@ -123,23 +153,31 @@ const Accounts = () => {
     setCreating(true);
 
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      const { data, error } = await supabase.functions.invoke("createUserAccount", {
-        body: formData,
-        headers: {
-          Authorization: `Bearer ${session?.access_token}`,
-        },
+      // Create user in App-DB auth
+      const { data: authData, error: authError } = await appSupabase.auth.signUp({
+        email: formData.email,
+        password: formData.password || Math.random().toString(36).slice(-12),
+        options: {
+          data: {
+            first_name: formData.full_name.split(' ')[0],
+            last_name: formData.full_name.split(' ').slice(1).join(' '),
+          }
+        }
       });
 
-      if (error) throw error;
+      if (authError) throw authError;
+      if (!authData.user) throw new Error("Benutzer konnte nicht erstellt werden");
 
-      const message = formData.password 
-        ? `Account erstellt!` 
-        : `Account erstellt! Temporäres Passwort: ${data.temporary_password}`;
-      toast.success(message);
+      // Add role (cast to any to bypass type checking for external DB)
+      const { error: roleError } = await appSupabase
+        .from("user_roles")
+        .insert([{ user_id: authData.user.id, role: formData.role }] as any);
+
+      if (roleError) throw roleError;
+
+      toast.success("Account erstellt!");
       setDialogOpen(false);
-      setFormData({ email: "", full_name: "", role: "merchant", password: "" });
+      setFormData({ email: "", full_name: "", role: "endkunde", password: "" });
       loadAccounts();
     } catch (error: any) {
       console.error("Fehler beim Erstellen des Accounts:", error);
@@ -162,26 +200,32 @@ const Accounts = () => {
     if (!selectedAccount) return;
 
     try {
-      // Update profile
-      const { error: profileError } = await supabase
+      // Update profile in App-DB (cast to any for external DB)
+      const nameParts = editFormData.full_name.split(' ');
+      const { error: profileError } = await appSupabase
         .from("profiles")
-        .update({ full_name: editFormData.full_name })
-        .eq("user_id", selectedAccount.id);
+        .upsert({ 
+          id: selectedAccount.id,
+          first_name: nameParts[0] || '',
+          last_name: nameParts.slice(1).join(' ') || '',
+        } as any);
 
-      if (profileError) throw profileError;
+      if (profileError) {
+        console.error("Profile update error:", profileError);
+      }
 
       // Update role if changed
       if (editFormData.role !== selectedAccount.role) {
         // Delete old role
-        await supabase
+        await appSupabase
           .from("user_roles")
           .delete()
           .eq("user_id", selectedAccount.id);
 
-        // Insert new role
-        const { error: roleError } = await supabase
+        // Insert new role (cast to any for external DB)
+        const { error: roleError } = await appSupabase
           .from("user_roles")
-          .insert([{ user_id: selectedAccount.id, role: editFormData.role as any }]);
+          .insert([{ user_id: selectedAccount.id, role: editFormData.role }] as any);
 
         if (roleError) throw roleError;
       }
@@ -196,14 +240,19 @@ const Accounts = () => {
   };
 
   const handleSendPasswordReset = async (email: string) => {
+    if (!email) {
+      toast.error("Keine E-Mail-Adresse verfügbar");
+      return;
+    }
+    
     try {
-      const { error } = await supabase.functions.invoke("sendPasswordReset", {
-        body: { email }
+      const { error } = await appSupabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/auth`,
       });
 
       if (error) throw error;
 
-      toast.success("Passwort-Reset-Link wurde generiert und kann dem Nutzer mitgeteilt werden");
+      toast.success("Passwort-Reset-E-Mail wurde gesendet");
     } catch (error: any) {
       console.error("Fehler beim Senden des Passwort-Resets:", error);
       toast.error("Fehler beim Senden des Passwort-Resets");
@@ -224,13 +273,16 @@ const Accounts = () => {
     }
 
     try {
-      const { error } = await supabase.functions.invoke("deleteUserAccount", {
-        body: { userId: selectedAccount.id }
-      });
+      // Delete role first
+      await appSupabase
+        .from("user_roles")
+        .delete()
+        .eq("user_id", selectedAccount.id);
 
-      if (error) throw error;
-
-      toast.success("Account erfolgreich gelöscht");
+      // Note: Deleting the actual auth user requires admin privileges
+      // For now, just remove the role which effectively disables access
+      
+      toast.success("Account-Rolle erfolgreich entfernt");
       setDeleteDialogOpen(false);
       loadAccounts();
     } catch (error: any) {
@@ -239,16 +291,23 @@ const Accounts = () => {
     }
   };
 
-  const getRoleBadge = (role: string) => {
-    const roleMap: Record<string, { label: string; variant: "default" | "secondary" | "outline" }> = {
-      admin: { label: "Administrator", variant: "default" },
-      merchant: { label: "Vertriebspartner", variant: "secondary" },
-      customer: { label: "Kunde", variant: "outline" },
-      partner: { label: "Partner", variant: "outline" },
+  const getRoleBadge = (role: AppRole) => {
+    const roleMap: Record<AppRole, { label: string; variant: "default" | "secondary" | "outline" | "destructive" }> = {
+      admin: { label: "Administrator", variant: "destructive" },
+      kunde: { label: "Kunde (Händler)", variant: "default" },
+      endkunde: { label: "Endkunde", variant: "outline" },
     };
     
     const config = roleMap[role] || { label: role, variant: "outline" };
     return <Badge variant={config.variant}>{config.label}</Badge>;
+  };
+
+  // Count accounts by role
+  const roleCounts = {
+    all: accounts.length,
+    admin: accounts.filter(a => a.role === 'admin').length,
+    kunde: accounts.filter(a => a.role === 'kunde').length,
+    endkunde: accounts.filter(a => a.role === 'endkunde').length,
   };
 
   return (
@@ -257,7 +316,7 @@ const Accounts = () => {
         <div>
           <h1 className="text-4xl font-bold">Account-Verwaltung</h1>
           <p className="text-muted-foreground mt-2">
-            Verwalten Sie Benutzer-Accounts und Rollen
+            {accounts.length} Accounts insgesamt • {roleCounts.admin} Admins • {roleCounts.kunde} Kunden • {roleCounts.endkunde} Endkunden
           </p>
         </div>
         
@@ -272,7 +331,7 @@ const Accounts = () => {
             <DialogHeader>
               <DialogTitle>Neuen Account erstellen</DialogTitle>
               <DialogDescription>
-                Erstellen Sie einen neuen Benutzer-Account für einen Admin oder Vertriebspartner.
+                Erstellen Sie einen neuen Benutzer-Account.
               </DialogDescription>
             </DialogHeader>
             
@@ -302,15 +361,14 @@ const Accounts = () => {
                 <Label htmlFor="role">Rolle</Label>
                 <Select
                   value={formData.role}
-                  onValueChange={(value) => setFormData({ ...formData, role: value })}
+                  onValueChange={(value) => setFormData({ ...formData, role: value as AppRole })}
                 >
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="merchant">Vertriebspartner</SelectItem>
-                    <SelectItem value="partner">Partner</SelectItem>
-                    <SelectItem value="customer">Kunde</SelectItem>
+                    <SelectItem value="endkunde">Endkunde</SelectItem>
+                    <SelectItem value="kunde">Kunde (Händler)</SelectItem>
                     <SelectItem value="admin">Administrator</SelectItem>
                   </SelectContent>
                 </Select>
@@ -339,31 +397,65 @@ const Accounts = () => {
         </Dialog>
       </div>
 
+      {/* Filter Section */}
+      <Card className="p-4">
+        <div className="flex flex-col md:flex-row gap-4">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input
+              placeholder="Name oder E-Mail suchen..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-9"
+            />
+          </div>
+          
+          <Select value={roleFilter} onValueChange={setRoleFilter}>
+            <SelectTrigger className="w-full md:w-[200px]">
+              <Filter className="w-4 h-4 mr-2" />
+              <SelectValue placeholder="Rolle filtern" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Alle Rollen ({roleCounts.all})</SelectItem>
+              <SelectItem value="admin">Admins ({roleCounts.admin})</SelectItem>
+              <SelectItem value="kunde">Kunden ({roleCounts.kunde})</SelectItem>
+              <SelectItem value="endkunde">Endkunden ({roleCounts.endkunde})</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </Card>
+
       <Card className="p-6">
         {loading ? (
           <div className="flex items-center justify-center py-8">
             <div className="w-8 h-8 rounded-full bg-gradient-primary animate-pulse-glow" />
           </div>
-        ) : accounts.length === 0 ? (
+        ) : filteredAccounts.length === 0 ? (
           <div className="text-center py-8 text-muted-foreground">
-            Keine Accounts gefunden
+            {accounts.length === 0 
+              ? "Keine Accounts gefunden" 
+              : "Keine Accounts mit diesen Filterkriterien gefunden"}
           </div>
         ) : (
           <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>Name</TableHead>
-                <TableHead>E-Mail</TableHead>
+                <TableHead>User ID</TableHead>
                 <TableHead>Rolle</TableHead>
                 <TableHead>Erstellt am</TableHead>
                 <TableHead className="text-right">Aktionen</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {accounts.map((account) => (
+              {filteredAccounts.map((account) => (
                 <TableRow key={account.id}>
                   <TableCell className="font-medium">{account.full_name}</TableCell>
-                  <TableCell>{account.email || "—"}</TableCell>
+                  <TableCell>
+                    <code className="text-xs bg-muted px-2 py-1 rounded">
+                      {account.id.substring(0, 8)}...
+                    </code>
+                  </TableCell>
                   <TableCell>{getRoleBadge(account.role)}</TableCell>
                   <TableCell>
                     {account.created_at ? new Date(account.created_at).toLocaleDateString('de-DE') : "—"}
@@ -374,21 +466,15 @@ const Accounts = () => {
                         variant="ghost"
                         size="sm"
                         onClick={() => handleEditAccount(account)}
+                        title="Bearbeiten"
                       >
                         <Edit className="h-4 w-4" />
                       </Button>
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => handleSendPasswordReset(account.email)}
-                        disabled={!account.email}
-                      >
-                        <RotateCcw className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
                         onClick={() => handleDeleteAccount(account)}
+                        title="Löschen"
                       >
                         <Trash2 className="h-4 w-4 text-destructive" />
                       </Button>
@@ -425,18 +511,22 @@ const Accounts = () => {
               <Label htmlFor="edit_role">Rolle</Label>
               <Select
                 value={editFormData.role}
-                onValueChange={(value) => setEditFormData({ ...editFormData, role: value })}
+                onValueChange={(value) => setEditFormData({ ...editFormData, role: value as AppRole })}
               >
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="merchant">Vertriebspartner</SelectItem>
+                  <SelectItem value="endkunde">Endkunde</SelectItem>
+                  <SelectItem value="kunde">Kunde (Händler)</SelectItem>
                   <SelectItem value="admin">Administrator</SelectItem>
-                  <SelectItem value="customer">Kunde</SelectItem>
-                  <SelectItem value="partner">Partner</SelectItem>
                 </SelectContent>
               </Select>
+              <p className="text-xs text-muted-foreground mt-2">
+                <strong>Endkunde:</strong> Nutzt die Eloyo-App<br />
+                <strong>Kunde:</strong> Händler mit eigenem Dashboard<br />
+                <strong>Admin:</strong> Vollzugriff auf alle Bereiche
+              </p>
             </div>
           </div>
 
@@ -457,8 +547,8 @@ const Accounts = () => {
           <AlertDialogHeader>
             <AlertDialogTitle>Account wirklich löschen?</AlertDialogTitle>
             <AlertDialogDescription>
-              Diese Aktion kann nicht rückgängig gemacht werden. Der Account von{" "}
-              <strong>{selectedAccount?.full_name}</strong> wird permanent gelöscht.
+              Diese Aktion entfernt die Rolle von{" "}
+              <strong>{selectedAccount?.full_name}</strong>. Der Benutzer kann sich dann nicht mehr anmelden.
               <div className="mt-4">
                 <Label htmlFor="delete_confirm">
                   Bitte gib "löschen" ein, um fortzufahren:
