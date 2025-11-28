@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Loader2, CreditCard, X, AlertTriangle, QrCode, Phone, Star, Download, Clock } from "lucide-react";
+import { Loader2, CreditCard, X, AlertTriangle, QrCode, Phone, Star, Download, Clock, Pause } from "lucide-react";
 import { CustomerHeader } from "@/components/CustomerHeader";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
@@ -27,7 +27,9 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
+  DialogFooter,
 } from "@/components/ui/dialog";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import Particles from "@/components/Particles";
 
 interface Invoice {
@@ -75,7 +77,10 @@ export default function CustomerDashboard() {
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [subscriptionInfo, setSubscriptionInfo] = useState<SubscriptionInfo | null>(null);
   const [showCancelDialog, setShowCancelDialog] = useState(false);
+  const [showPauseOption, setShowPauseOption] = useState(false);
   const [cancelling, setCancelling] = useState(false);
+  const [pausing, setPausing] = useState(false);
+  const [pauseMonths, setPauseMonths] = useState(1);
   const [stats, setStats] = useState({
     totalScans: 0,
     totalContacts: 0,
@@ -219,6 +224,7 @@ export default function CustomerDashboard() {
       
       toast.success("Ihr Abonnement wird zum Ende der Laufzeit gekündigt");
       setShowCancelDialog(false);
+      setShowPauseOption(false);
       await loadData(); // Refresh data
     } catch (error: any) {
       console.error("Error cancelling subscription:", error);
@@ -226,6 +232,31 @@ export default function CustomerDashboard() {
     } finally {
       setCancelling(false);
     }
+  };
+
+  const pauseSubscription = async () => {
+    setPausing(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("pause-subscription", {
+        body: { pauseMonths }
+      });
+      
+      if (error) throw error;
+      
+      toast.success(`Ihr Abonnement wurde für ${pauseMonths} ${pauseMonths === 1 ? 'Monat' : 'Monate'} pausiert`);
+      setShowPauseOption(false);
+      await loadData(); // Refresh data
+    } catch (error: any) {
+      console.error("Error pausing subscription:", error);
+      toast.error("Fehler beim Pausieren des Abonnements");
+    } finally {
+      setPausing(false);
+    }
+  };
+
+  // Handler for "Abo beenden" button - shows pause option first
+  const handleCancelClick = () => {
+    setShowPauseOption(true);
   };
 
   const loadReviews = async (customerId: string) => {
@@ -756,13 +787,13 @@ export default function CustomerDashboard() {
                     <Button 
                       onClick={() => {
                         setShowAccountInfo(false);
-                        setShowCancelDialog(true);
+                        handleCancelClick();
                       }} 
                       variant="outline"
                       className="gap-2"
                     >
                       <X className="h-4 w-4" />
-                      Abonnement kündigen
+                      Abo beenden
                     </Button>
                   )}
                 </div>
@@ -825,17 +856,99 @@ export default function CustomerDashboard() {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Cancel Subscription Dialog */}
+      {/* Pause Option Dialog - Shows first when user clicks "Abo beenden" */}
+      <Dialog open={showPauseOption} onOpenChange={setShowPauseOption}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Pause className="h-5 w-5" />
+              Möchten Sie Ihr Abo pausieren?
+            </DialogTitle>
+            <DialogDescription>
+              Bevor Sie Ihr Abo beenden, haben Sie die Möglichkeit, es vorübergehend zu pausieren. 
+              Während der Pause werden Sie nicht in der Endkunden-App angezeigt und es werden keine 
+              Beträge abgebucht. Nach der Pause wird Ihr Abo automatisch wieder aktiviert.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="py-4 space-y-4">
+            <div className="bg-primary/5 border border-primary/20 rounded-lg p-4">
+              <h4 className="font-medium mb-2">Abo pausieren</h4>
+              <p className="text-sm text-muted-foreground mb-3">
+                Wählen Sie die Pause-Dauer (max. 2 Monate):
+              </p>
+              <RadioGroup 
+                value={pauseMonths.toString()} 
+                onValueChange={(v) => setPauseMonths(parseInt(v))}
+                className="flex gap-4"
+              >
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="1" id="pause-1" />
+                  <Label htmlFor="pause-1">1 Monat</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="2" id="pause-2" />
+                  <Label htmlFor="pause-2">2 Monate</Label>
+                </div>
+              </RadioGroup>
+            </div>
+
+            <div className="text-sm text-muted-foreground">
+              <p>• Ihre Daten bleiben erhalten</p>
+              <p>• Keine Abbuchungen während der Pause</p>
+              <p>• Automatische Reaktivierung nach Ablauf</p>
+            </div>
+          </div>
+
+          <DialogFooter className="flex-col sm:flex-row gap-2">
+            <Button
+              onClick={pauseSubscription}
+              disabled={pausing}
+              className="gap-2"
+            >
+              {pausing ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Wird pausiert...
+                </>
+              ) : (
+                <>
+                  <Pause className="h-4 w-4" />
+                  Abo für {pauseMonths} {pauseMonths === 1 ? 'Monat' : 'Monate'} pausieren
+                </>
+              )}
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowPauseOption(false);
+                setShowCancelDialog(true);
+              }}
+              disabled={pausing}
+              className="text-destructive border-destructive/50 hover:bg-destructive/10"
+            >
+              Nein, Abo beenden
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Cancel Subscription Dialog - Final confirmation */}
       <AlertDialog open={showCancelDialog} onOpenChange={setShowCancelDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Abonnement kündigen?</AlertDialogTitle>
+            <AlertDialogTitle>Abo wirklich beenden?</AlertDialogTitle>
             <AlertDialogDescription>
-              Ihr Abonnement wird zum Ende der aktuellen Abrechnungsperiode gekündigt. Sie können alle Funktionen bis dahin weiter nutzen.
+              Das Abo wird zum Ende Ihres bereits bezahlten Zeitraums beendet. 
+              Sie sind ab dann nicht mehr sichtbar, und es werden keine weiteren 
+              Beträge abgebucht. Ihre Daten bleiben vorerst gespeichert, falls Sie 
+              später wieder starten möchten.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={cancelling}>Abbrechen</AlertDialogCancel>
+            <AlertDialogCancel disabled={cancelling}>
+              Abbrechen
+            </AlertDialogCancel>
             <AlertDialogAction 
               onClick={cancelSubscription}
               disabled={cancelling}
@@ -844,10 +957,10 @@ export default function CustomerDashboard() {
               {cancelling ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Wird gekündigt...
+                  Wird beendet...
                 </>
               ) : (
-                "Jetzt kündigen"
+                "Abo endgültig beenden"
               )}
             </AlertDialogAction>
           </AlertDialogFooter>
