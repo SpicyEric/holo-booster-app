@@ -470,6 +470,7 @@ export type Database = {
           auto_reply_enabled: boolean | null
           auto_reply_min_rating: number | null
           billing_address: Json | null
+          box_id: string | null
           company_name: string | null
           contact_person: string | null
           created_at: string
@@ -511,6 +512,7 @@ export type Database = {
           auto_reply_enabled?: boolean | null
           auto_reply_min_rating?: number | null
           billing_address?: Json | null
+          box_id?: string | null
           company_name?: string | null
           contact_person?: string | null
           created_at?: string
@@ -552,6 +554,7 @@ export type Database = {
           auto_reply_enabled?: boolean | null
           auto_reply_min_rating?: number | null
           billing_address?: Json | null
+          box_id?: string | null
           company_name?: string | null
           contact_person?: string | null
           created_at?: string
