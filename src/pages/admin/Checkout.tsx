@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { appSupabase } from "@/integrations/app-supabase/client";
 import { Check, Gift, Package, CreditCard } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
@@ -89,8 +90,8 @@ export default function Checkout() {
     setLoading(true);
 
     try {
-      // Ensure we have an authenticated session
-      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+      // Get session from App-Supabase (where user is actually logged in)
+      const { data: sessionData, error: sessionError } = await appSupabase.auth.getSession();
       
       if (sessionError || !sessionData.session) {
         toast.error("Du musst eingeloggt sein um fortzufahren");
@@ -98,6 +99,7 @@ export default function Checkout() {
         return;
       }
 
+      // Call edge function (JWT disabled, auth handled via ProtectedRoute)
       const { data, error } = await supabase.functions.invoke(
         "create-checkout-session",
         {
