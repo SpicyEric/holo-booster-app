@@ -55,6 +55,11 @@ All colors MUST be HSL.
     @apply border-border;
   }
 
+  /* Force light mode - ignore system dark mode preference */
+  html {
+    color-scheme: light !important;
+  }
+
   body {
     @apply bg-background text-foreground;
   }
