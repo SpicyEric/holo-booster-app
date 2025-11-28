@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Landing from "./pages/Landing";
 import Kontakt from "./pages/Kontakt";
 import Impressum from "./pages/Impressum";
@@ -20,8 +20,10 @@ import Stats from "./pages/admin/Stats";
 import Checkout from "./pages/admin/Checkout";
 import Billing from "./pages/account/Billing";
 import Settings from "./pages/admin/Settings";
+import MerchantLayout from "./components/MerchantLayout";
 import MerchantDashboard from "./pages/merchant/Dashboard";
-import MerchantSettings from "./pages/merchant/Settings";
+import Stempelkarte from "./pages/merchant/Stempelkarte";
+import GoogleBewertungen from "./pages/merchant/GoogleBewertungen";
 import PartnerDashboard from "./pages/partner/Dashboard";
 import CustomerDashboard from "./pages/customer/Dashboard";
 import CustomerAccount from "./pages/customer/Account";
@@ -64,11 +66,18 @@ const App = () => (
             <Route path="settings" element={<Settings />} />
           </Route>
           
-          {/* Händler Dashboard (role: kunde) */}
-          <Route path="/kunde/dashboard" element={<MerchantDashboard />} />
-          <Route path="/kunde/settings" element={<MerchantSettings />} />
-          <Route path="/merchant" element={<MerchantDashboard />} />
-          <Route path="/merchant/settings" element={<MerchantSettings />} />
+          {/* Händler Dashboard (role: kunde) with nested layout */}
+          <Route path="/kunde" element={<MerchantLayout />}>
+            <Route index element={<Navigate to="/kunde/stempelkarte" replace />} />
+            <Route path="stempelkarte" element={<Stempelkarte />} />
+            <Route path="google-bewertungen" element={<GoogleBewertungen />} />
+          </Route>
+          
+          {/* Legacy routes - redirect to new structure */}
+          <Route path="/kunde/dashboard" element={<Navigate to="/kunde/stempelkarte" replace />} />
+          <Route path="/kunde/settings" element={<Navigate to="/kunde/stempelkarte" replace />} />
+          <Route path="/merchant" element={<Navigate to="/kunde/stempelkarte" replace />} />
+          <Route path="/merchant/settings" element={<Navigate to="/kunde/stempelkarte" replace />} />
           
           {/* Partner Dashboard (role: admin - Partner-Funktionen werden über Admin verwaltet) */}
           <Route path="/partner" element={<PartnerDashboard />} />
