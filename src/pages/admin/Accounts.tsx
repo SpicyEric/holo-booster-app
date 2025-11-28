@@ -76,7 +76,7 @@ const Accounts = () => {
   const applyFilters = () => {
     let filtered = [...accounts];
 
-    // Search filter
+    // Search filter (name and email)
     if (searchTerm) {
       const term = searchTerm.toLowerCase();
       filtered = filtered.filter(
