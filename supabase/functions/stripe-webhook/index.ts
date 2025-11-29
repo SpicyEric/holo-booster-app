@@ -426,7 +426,7 @@ serve(async (req) => {
             type: 'recovery',
             email: customer.email,
             options: {
-              redirectTo: 'https://preview--xcnfyawyoahlbhwfkyku.lovable.app/auth',
+              redirectTo: 'https://eloyo.de/auth',
             },
           });
 
@@ -444,7 +444,7 @@ serve(async (req) => {
               type: 'magiclink',
               email: customer.email,
               options: {
-                redirectTo: 'https://preview--xcnfyawyoahlbhwfkyku.lovable.app/auth',
+                redirectTo: 'https://eloyo.de/auth',
               },
             });
             if (magicError) {
