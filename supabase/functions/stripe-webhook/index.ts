@@ -250,16 +250,116 @@ serve(async (req) => {
         const invoice = event.data.object as Stripe.Invoice;
         console.log("[WEBHOOK] Invoice paid:", invoice.id);
 
-        // Find customer
-        const { data: customer } = await supabase
-          .from("customers")
-          .select("id, promoter_id, email, name, company_name, status, onboarding_email_sent_at")
-          .eq("stripe_customer_id", invoice.customer as string)
-          .single();
+        // Retry logic for race condition with checkout.session.completed
+        let customer = null;
+        let retryCount = 0;
+        const maxRetries = 3;
+        const retryDelayMs = 3000;
 
+        while (!customer && retryCount < maxRetries) {
+          const { data } = await supabase
+            .from("customers")
+            .select("id, promoter_id, email, name, company_name, status, onboarding_email_sent_at")
+            .eq("stripe_customer_id", invoice.customer as string)
+            .single();
+
+          customer = data;
+
+          if (!customer && retryCount < maxRetries - 1) {
+            console.log(`[WEBHOOK] Customer not found, retry ${retryCount + 1}/${maxRetries} in ${retryDelayMs}ms`);
+            await new Promise(resolve => setTimeout(resolve, retryDelayMs));
+          }
+          retryCount++;
+        }
+
+        // If customer still not found after retries, create from Stripe data
         if (!customer) {
-          console.log("[WEBHOOK] Customer not found for invoice");
-          break;
+          console.log("[WEBHOOK] Customer not found after retries, creating from Stripe data...");
+          
+          try {
+            const stripeCustomer = await stripe.customers.retrieve(invoice.customer as string) as Stripe.Customer;
+            
+            // Get subscription info
+            let subscriptionId: string | null = null;
+            if (invoice.subscription) {
+              subscriptionId = invoice.subscription as string;
+            }
+
+            const { data: newCustomer, error: createError } = await supabase
+              .from("customers")
+              .insert({
+                name: stripeCustomer.name || stripeCustomer.email?.split('@')[0] || "Unknown",
+                email: stripeCustomer.email,
+                stripe_customer_id: invoice.customer as string,
+                stripe_subscription_id: subscriptionId,
+                status: "active",
+                google_review_url: "https://google.com/review",
+                offer_text: "Willkommen bei Eloyo!",
+              })
+              .select("id, promoter_id, email, name, company_name, status, onboarding_email_sent_at")
+              .single();
+
+            if (createError) {
+              console.error("[WEBHOOK] Failed to create customer from Stripe data:", createError);
+              break;
+            }
+            
+            customer = newCustomer;
+            console.log("[WEBHOOK] Created customer from Stripe data:", customer.id);
+
+            // Create customer account for this new customer
+            try {
+              const accountResponse = await fetch(
+                `${Deno.env.get("SUPABASE_URL")}/functions/v1/createCustomerAccount`,
+                {
+                  method: "POST",
+                  headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
+                  },
+                  body: JSON.stringify({
+                    customerEmail: customer.email,
+                    customerId: customer.id,
+                    customerName: customer.name,
+                  }),
+                }
+              );
+
+              const accountDataText = await accountResponse.text();
+              if (!accountResponse.ok) {
+                console.error("[WEBHOOK] createCustomerAccount failed:", accountResponse.status, accountDataText);
+              } else {
+                console.log("[WEBHOOK] Customer account created from invoice.paid fallback");
+              }
+            } catch (accountError) {
+              console.error("[WEBHOOK] Error creating customer account:", accountError);
+            }
+
+            // Send admin notification
+            const adminEmail = Deno.env.get('ADMIN_EMAIL');
+            if (adminEmail) {
+              try {
+                await resend.emails.send({
+                  from: 'Eloyo Team <support@eloyo.de>',
+                  to: [adminEmail],
+                  subject: '🎉 Neuer Kunde registriert (via invoice.paid)',
+                  html: `
+                    <h2>Neuer Kunde hat sich registriert</h2>
+                    <p><strong>Kunde:</strong> ${customer.name}</p>
+                    <p><strong>E-Mail:</strong> ${customer.email}</p>
+                    <p><strong>Stripe Customer ID:</strong> ${invoice.customer}</p>
+                    <p><em>Hinweis: Dieser Kunde wurde über invoice.paid erstellt (Race Condition Fallback)</em></p>
+                  `,
+                });
+                console.log("[WEBHOOK] Admin notification sent for customer created via invoice.paid");
+              } catch (emailError) {
+                console.error("[WEBHOOK] Failed to send admin notification:", emailError);
+              }
+            }
+          } catch (stripeError) {
+            console.error("[WEBHOOK] Failed to retrieve Stripe customer:", stripeError);
+            break;
+          }
         }
 
         // If customer was pending_payment (SEPA), activate and create account
@@ -315,7 +415,12 @@ serve(async (req) => {
         console.log("[WEBHOOK] Invoice saved");
 
         // Generate account access link
+        console.log("[WEBHOOK] Generating account access link for:", customer.email);
         let resetLink: string | null = null;
+        
+        // Wait a moment for the auth user to be fully created
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
         try {
           const { data: linkData, error: recoveryError } = await supabase.auth.admin.generateLink({
             type: 'recovery',
@@ -323,26 +428,37 @@ serve(async (req) => {
           });
 
           if (recoveryError) {
-            console.error('[WEBHOOK] Recovery link generation error:', recoveryError);
+            console.error('[WEBHOOK] Recovery link generation error:', recoveryError.message, recoveryError);
           }
 
           if (linkData?.properties?.action_link) {
             resetLink = linkData.properties.action_link as string;
+            console.log("[WEBHOOK] Recovery link generated successfully");
           } else {
+            console.log("[WEBHOOK] Recovery link not available, trying magiclink...");
             // Fallback: generate a magic link
             const { data: magicData, error: magicError } = await supabase.auth.admin.generateLink({
               type: 'magiclink',
               email: customer.email,
             });
             if (magicError) {
-              console.error('[WEBHOOK] Magiclink generation error:', magicError);
+              console.error('[WEBHOOK] Magiclink generation error:', magicError.message, magicError);
             }
             if (magicData?.properties?.action_link) {
               resetLink = magicData.properties.action_link as string;
+              console.log("[WEBHOOK] Magiclink generated successfully");
+            } else {
+              console.error('[WEBHOOK] Both recovery and magiclink failed to generate');
             }
           }
         } catch (linkError) {
           console.error("[WEBHOOK] Error generating account link:", linkError);
+        }
+        
+        // Log the resetLink status for debugging
+        if (!resetLink) {
+          console.error("[WEBHOOK] CRITICAL: resetLink is null - onboarding email cannot be sent!");
+          console.error("[WEBHOOK] This usually means the auth user was not created yet for:", customer.email);
         }
 
         // Extract Stripe data for onboarding email
@@ -384,6 +500,8 @@ serve(async (req) => {
         }
 
         // Send comprehensive onboarding email (only if not already sent)
+        console.log("[WEBHOOK] Onboarding email check - email:", !!customer.email, "resetLink:", !!resetLink, "alreadySent:", !!customer.onboarding_email_sent_at);
+        
         if (customer.email && resetLink && !customer.onboarding_email_sent_at) {
           console.log("[WEBHOOK] Sending onboarding email to:", customer.email);
           
@@ -426,6 +544,10 @@ serve(async (req) => {
           }
         } else if (customer.onboarding_email_sent_at) {
           console.log("[WEBHOOK] Onboarding email already sent, skipping");
+        } else if (!resetLink) {
+          console.error("[WEBHOOK] Cannot send onboarding email - resetLink is null");
+        } else if (!customer.email) {
+          console.error("[WEBHOOK] Cannot send onboarding email - customer email is missing");
         }
 
         // Calculate and save commissions (10% of net amount)
