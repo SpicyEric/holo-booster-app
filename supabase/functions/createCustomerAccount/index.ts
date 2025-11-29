@@ -19,9 +19,12 @@ serve(async (req) => {
 
     const { customerEmail, customerId, customerName } = await req.json();
 
-    console.log("[CREATE-CUSTOMER-ACCOUNT] Creating account for:", customerEmail);
+    console.log("[CREATE-CUSTOMER-ACCOUNT] Processing account for:", customerEmail);
 
-    // Create auth user
+    let userId: string;
+    let isExistingUser = false;
+
+    // Try to create auth user
     const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
       email: customerEmail,
       email_confirm: true,
@@ -31,47 +34,111 @@ serve(async (req) => {
     });
 
     if (authError) {
-      console.error("[CREATE-CUSTOMER-ACCOUNT] Auth error:", authError);
-      throw authError;
+      // Check if user already exists
+      if (authError.message?.includes("already been registered") || authError.code === "email_exists") {
+        console.log("[CREATE-CUSTOMER-ACCOUNT] User already exists, looking up existing user");
+        
+        // Get existing user by email
+        const { data: usersData, error: listError } = await supabaseAdmin.auth.admin.listUsers();
+        
+        if (listError) {
+          console.error("[CREATE-CUSTOMER-ACCOUNT] Error listing users:", listError);
+          throw listError;
+        }
+        
+        const existingUser = usersData.users.find(u => u.email === customerEmail);
+        
+        if (!existingUser) {
+          throw new Error("User exists but could not be found");
+        }
+        
+        userId = existingUser.id;
+        isExistingUser = true;
+        console.log("[CREATE-CUSTOMER-ACCOUNT] Found existing user:", userId);
+      } else {
+        console.error("[CREATE-CUSTOMER-ACCOUNT] Auth error:", authError);
+        throw authError;
+      }
+    } else {
+      userId = authData.user.id;
+      console.log("[CREATE-CUSTOMER-ACCOUNT] New auth user created:", userId);
     }
 
-    console.log("[CREATE-CUSTOMER-ACCOUNT] Auth user created:", authData.user.id);
-
-    // Link user to customer
-    const { error: linkError } = await supabaseAdmin
+    // Check if user is already linked to this customer
+    const { data: existingLink } = await supabaseAdmin
       .from("customer_users")
-      .insert({
-        user_id: authData.user.id,
-        customer_id: customerId,
-      });
+      .select("id")
+      .eq("user_id", userId)
+      .eq("customer_id", customerId)
+      .single();
 
-    if (linkError) {
-      console.error("[CREATE-CUSTOMER-ACCOUNT] Link error:", linkError);
-      throw linkError;
+    if (!existingLink) {
+      // Link user to customer
+      const { error: linkError } = await supabaseAdmin
+        .from("customer_users")
+        .insert({
+          user_id: userId,
+          customer_id: customerId,
+        });
+
+      if (linkError) {
+        // Ignore duplicate key errors
+        if (linkError.code !== '23505') {
+          console.error("[CREATE-CUSTOMER-ACCOUNT] Link error:", linkError);
+          throw linkError;
+        }
+      } else {
+        console.log("[CREATE-CUSTOMER-ACCOUNT] User linked to customer");
+      }
+    } else {
+      console.log("[CREATE-CUSTOMER-ACCOUNT] User already linked to customer");
     }
 
-    // Assign customer role (idempotent - ignore if already exists)
+    // Assign merchant role (idempotent - ignore if already exists)
     const { error: roleError } = await supabaseAdmin
       .from("user_roles")
       .insert({
-        user_id: authData.user.id,
-        role: "customer",
-      })
-      .select();
+        user_id: userId,
+        role: "merchant",
+      });
 
     if (roleError) {
       // If role already exists (unique constraint violation), that's OK
       if (roleError.code === '23505') {
-        console.log("[CREATE-CUSTOMER-ACCOUNT] Role already exists for user:", authData.user.id);
+        console.log("[CREATE-CUSTOMER-ACCOUNT] Role already exists for user:", userId);
       } else {
         console.error("[CREATE-CUSTOMER-ACCOUNT] Role error:", roleError);
         throw roleError;
       }
     } else {
-      console.log("[CREATE-CUSTOMER-ACCOUNT] Role 'customer' assigned successfully");
+      console.log("[CREATE-CUSTOMER-ACCOUNT] Role 'merchant' assigned successfully");
     }
 
-    console.log("[CREATE-CUSTOMER-ACCOUNT] Account setup complete - email will be sent via stripe-webhook after payment");
+    // Also create merchant_assignments if not exists
+    const { data: existingAssignment } = await supabaseAdmin
+      .from("merchant_assignments")
+      .select("id")
+      .eq("merchant_user_id", userId)
+      .eq("customer_id", customerId)
+      .single();
+
+    if (!existingAssignment) {
+      const { error: assignmentError } = await supabaseAdmin
+        .from("merchant_assignments")
+        .insert({
+          merchant_user_id: userId,
+          customer_id: customerId,
+        });
+
+      if (assignmentError && assignmentError.code !== '23505') {
+        console.error("[CREATE-CUSTOMER-ACCOUNT] Assignment error:", assignmentError);
+        // Don't throw, this is not critical
+      } else {
+        console.log("[CREATE-CUSTOMER-ACCOUNT] Merchant assignment created");
+      }
+    }
+
+    console.log("[CREATE-CUSTOMER-ACCOUNT] Account setup complete, generating password reset link");
 
     // Generate password reset link so the customer can set a password
     const { data: resetData, error: resetError } = await supabaseAdmin.auth.admin.generateLink({
@@ -81,12 +148,15 @@ serve(async (req) => {
 
     if (resetError) {
       console.error("[CREATE-CUSTOMER-ACCOUNT] Reset link error:", resetError);
+    } else {
+      console.log("[CREATE-CUSTOMER-ACCOUNT] Password reset link generated");
     }
 
     return new Response(
       JSON.stringify({ 
         success: true, 
-        userId: authData.user.id,
+        userId: userId,
+        isExistingUser: isExistingUser,
         resetLink: resetData?.properties?.action_link 
       }),
       {
