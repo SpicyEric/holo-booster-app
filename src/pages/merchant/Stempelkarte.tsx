@@ -26,7 +26,7 @@ import {
   Store,
   RefreshCw
 } from "lucide-react";
-import { appSupabase } from "@/integrations/app-supabase/client";
+import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 
 const INDUSTRIES = [
@@ -62,17 +62,18 @@ interface MerchantData {
   id: string;
   name: string;
   description: string;
-  category: string;
-  address: string;
+  industry: string;
+  street: string;
+  house_number: string;
   postal_code: string;
   city: string;
   logo_url: string;
   cover_image_url: string;
-  phone_number: string;
+  phone: string;
   website: string;
-  instagram_url: string;
-  facebook_url: string;
-  twitter_url: string;
+  instagram: string;
+  facebook: string;
+  twitter: string;
   google_review_url: string;
   opening_hours: OpeningHours;
 }
@@ -93,74 +94,99 @@ const Stempelkarte = () => {
   const [saving, setSaving] = useState(false);
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const [uploadingCover, setUploadingCover] = useState(false);
-  const [merchantId, setMerchantId] = useState<string | null>(null);
+  const [customerId, setCustomerId] = useState<string | null>(null);
   
   const [formData, setFormData] = useState<MerchantData>({
     id: "",
     name: "",
     description: "",
-    category: "",
-    address: "",
+    industry: "",
+    street: "",
+    house_number: "",
     postal_code: "",
     city: "",
     logo_url: "",
     cover_image_url: "",
-    phone_number: "",
+    phone: "",
     website: "",
-    instagram_url: "",
-    facebook_url: "",
-    twitter_url: "",
+    instagram: "",
+    facebook: "",
+    twitter: "",
     google_review_url: "",
     opening_hours: defaultOpeningHours,
   });
 
   useEffect(() => {
-    const fetchMerchant = async () => {
+    const fetchCustomerData = async () => {
       if (!user?.id) return;
       
       try {
-        const { data, error } = await appSupabase
-          .from("merchants")
-          .select("*")
-          .eq("owner_user_id", user.id)
+        // First get the customer_id from merchant_assignments
+        const { data: assignment, error: assignmentError } = await supabase
+          .from("merchant_assignments")
+          .select("customer_id")
+          .eq("merchant_user_id", user.id)
           .single();
         
-        if (error && error.code !== "PGRST116") {
-          console.error("Error fetching merchant:", error);
-          toast.error("Fehler beim Laden der Daten");
+        if (assignmentError) {
+          console.error("Error fetching merchant assignment:", assignmentError);
+          toast.error("Kein Geschäft zugewiesen. Bitte kontaktiere den Support.");
+          setLoading(false);
           return;
         }
         
-        if (data) {
-          const merchantData = data as any;
-          setMerchantId(merchantData.id);
+        if (!assignment?.customer_id) {
+          toast.error("Kein Geschäft gefunden.");
+          setLoading(false);
+          return;
+        }
+        
+        setCustomerId(assignment.customer_id);
+        
+        // Now fetch the customer data
+        const { data: customer, error: customerError } = await supabase
+          .from("customers")
+          .select("*")
+          .eq("id", assignment.customer_id)
+          .single();
+        
+        if (customerError) {
+          console.error("Error fetching customer:", customerError);
+          toast.error("Fehler beim Laden der Daten");
+          setLoading(false);
+          return;
+        }
+        
+        if (customer) {
           setFormData({
-            id: merchantData.id,
-            name: merchantData.name || "",
-            description: merchantData.description || "",
-            category: merchantData.category || "",
-            address: merchantData.address || "",
-            postal_code: merchantData.postal_code || "",
-            city: merchantData.city || "",
-            logo_url: merchantData.logo_url || "",
-            cover_image_url: merchantData.cover_image_url || "",
-            phone_number: merchantData.phone_number || "",
-            website: merchantData.website || "",
-            instagram_url: merchantData.instagram_url || "",
-            facebook_url: merchantData.facebook_url || "",
-            twitter_url: merchantData.twitter_url || "",
-            google_review_url: merchantData.google_review_url || "",
-            opening_hours: (merchantData.opening_hours as OpeningHours) || defaultOpeningHours,
+            id: customer.id,
+            name: customer.name || "",
+            description: customer.description || "",
+            industry: customer.industry || "",
+            street: customer.street || "",
+            house_number: customer.house_number || "",
+            postal_code: customer.postal_code || "",
+            city: customer.city || "",
+            logo_url: customer.logo_url || "",
+            cover_image_url: customer.cover_image_url || "",
+            phone: customer.phone || "",
+            website: customer.website || "",
+            instagram: customer.instagram || "",
+            facebook: customer.facebook || "",
+            twitter: customer.twitter || "",
+            google_review_url: customer.google_review_url || "",
+            opening_hours: (customer.opening_hours as OpeningHours) || defaultOpeningHours,
           });
         }
       } catch (err) {
         console.error("Error:", err);
+        toast.error("Fehler beim Laden");
       } finally {
         setLoading(false);
       }
     };
     
-    fetchMerchant();
+    fetchCustomerData();
   }, [user?.id]);
 
   const handleInputChange = (field: keyof MerchantData, value: string) => {
@@ -181,8 +207,8 @@ const Stempelkarte = () => {
   };
 
   const handleImageUpload = async (file: File, type: "logo" | "cover") => {
-    if (!user?.id || !merchantId) {
-      toast.error("Bitte speichere zuerst deine Daten, bevor du Bilder hochlädst.");
+    if (!user?.id || !customerId) {
+      toast.error("Bitte warte, bis deine Daten geladen sind.");
       return;
     }
     
@@ -191,23 +217,19 @@ const Stempelkarte = () => {
     
     try {
       const fileExt = file.name.split('.').pop();
-      // Use merchantId in path to match RLS policy, and underscore naming convention
-      const fileName = `${merchantId}/${type}_${Date.now()}.${fileExt}`;
+      const fileName = `${customerId}/${type}_${Date.now()}.${fileExt}`;
       
-      const { error: uploadError } = await appSupabase.storage
-        .from("merchant-images")
+      const { error: uploadError } = await supabase.storage
+        .from("customer-assets")
         .upload(fileName, file, { upsert: true });
       
       if (uploadError) {
-        if (uploadError.message.includes("Bucket not found")) {
-          toast.error("Storage-Bucket nicht gefunden. Bitte kontaktieren Sie den Support.");
-          return;
-        }
+        console.error("Upload error:", uploadError);
         throw uploadError;
       }
       
-      const { data: { publicUrl } } = appSupabase.storage
-        .from("merchant-images")
+      const { data: { publicUrl } } = supabase.storage
+        .from("customer-assets")
         .getPublicUrl(fileName);
       
       const field = type === "logo" ? "logo_url" : "cover_image_url";
@@ -215,70 +237,57 @@ const Stempelkarte = () => {
       toast.success(`${type === "logo" ? "Logo" : "Titelbild"} erfolgreich hochgeladen!`);
     } catch (error: any) {
       console.error("Upload error:", error);
-      toast.error("Fehler beim Hochladen");
+      toast.error("Fehler beim Hochladen: " + (error.message || "Unbekannter Fehler"));
     } finally {
       setUploading(false);
     }
   };
 
   const handleSave = async () => {
-    if (!user?.id) return;
+    if (!user?.id || !customerId) {
+      toast.error("Keine Berechtigung zum Speichern");
+      return;
+    }
     
     setSaving(true);
     try {
       const updateData = {
         name: formData.name,
         description: formData.description,
-        category: formData.category,
-        address: formData.address,
+        industry: formData.industry,
+        street: formData.street,
+        house_number: formData.house_number,
         postal_code: formData.postal_code,
         city: formData.city,
         logo_url: formData.logo_url,
         cover_image_url: formData.cover_image_url,
-        phone_number: formData.phone_number,
+        phone: formData.phone,
         website: formData.website,
-        instagram_url: formData.instagram_url,
-        facebook_url: formData.facebook_url,
-        twitter_url: formData.twitter_url,
+        instagram: formData.instagram,
+        facebook: formData.facebook,
+        twitter: formData.twitter,
         google_review_url: formData.google_review_url,
         opening_hours: formData.opening_hours,
         updated_at: new Date().toISOString(),
       };
       
-      if (merchantId) {
-        const { error } = await (appSupabase
-          .from("merchants") as any)
-          .update(updateData)
-          .eq("id", merchantId);
-        
-        if (error) throw error;
-      } else {
-        const { data, error } = await (appSupabase
-          .from("merchants") as any)
-          .insert({
-            ...updateData,
-            owner_user_id: user.id,
-            lat: 0,
-            lng: 0,
-          })
-          .select()
-          .single();
-        
-        if (error) throw error;
-        if (data) setMerchantId(data.id);
+      const { error } = await supabase
+        .from("customers")
+        .update(updateData)
+        .eq("id", customerId);
+      
+      if (error) {
+        console.error("Save error:", error);
+        throw error;
       }
       
       toast.success("Stempelkarte erfolgreich gespeichert!");
     } catch (error: any) {
       console.error("Save error:", error);
-      toast.error("Fehler beim Speichern");
+      toast.error("Fehler beim Speichern: " + (error.message || "Unbekannter Fehler"));
     } finally {
       setSaving(false);
     }
-  };
-
-  const getCategoryLabel = (value: string) => {
-    return INDUSTRIES.find(i => i.value === value)?.label || value;
   };
 
   if (loading) {
@@ -286,6 +295,20 @@ const Stempelkarte = () => {
       <div className="max-w-7xl mx-auto p-6 sm:p-8">
         <div className="flex items-center justify-center h-64">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!customerId) {
+    return (
+      <div className="max-w-7xl mx-auto p-6 sm:p-8">
+        <div className="text-center py-12">
+          <Store className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
+          <h2 className="text-xl font-semibold mb-2">Kein Geschäft zugewiesen</h2>
+          <p className="text-muted-foreground">
+            Bitte kontaktiere den Support unter support@eloyo.de
+          </p>
         </div>
       </div>
     );
@@ -301,25 +324,24 @@ const Stempelkarte = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Smartphone Preview - Echte App-Vorschau via iframe */}
+        {/* Smartphone Preview */}
         <div className="lg:col-span-1 order-2 lg:order-1">
           <div className="sticky top-24">
             <h3 className="text-lg font-semibold mb-4 text-center">Smartphone-Vorschau</h3>
             <div className="mx-auto w-[300px] h-[620px] bg-foreground rounded-[40px] p-3 shadow-2xl">
               <div className="w-full h-full bg-background rounded-[32px] overflow-hidden relative">
-                {/* iframe mit echter App-Preview */}
-                {merchantId ? (
+                {customerId ? (
                   <iframe
-                    src={`https://eloyo.lovable.app/preview/${merchantId}?points=25&t=${Date.now()}`}
+                    src={`https://eloyo.lovable.app/preview/${customerId}?points=25&t=${Date.now()}`}
                     className="w-full h-full border-none"
                     title="App-Vorschau"
-                    key={`preview-${merchantId}-${saving ? 'saving' : 'idle'}`}
+                    key={`preview-${customerId}-${saving ? 'saving' : 'idle'}`}
                   />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center text-muted-foreground text-sm">
                     <div className="text-center p-4">
                       <Store className="w-12 h-12 mx-auto mb-3 text-muted-foreground/50" />
-                      <p>Speichere deine Daten, um die Vorschau zu sehen</p>
+                      <p>Keine Vorschau verfügbar</p>
                     </div>
                   </div>
                 )}
@@ -332,19 +354,19 @@ const Stempelkarte = () => {
                 <Save className="mr-2 w-4 h-4" />
                 {saving ? "Speichern..." : "Änderungen speichern"}
               </Button>
-              {merchantId && (
+              {customerId && (
                 <Button 
                   variant="outline" 
                   className="w-full" 
                   size="sm"
                   onClick={() => {
-                    // Force iframe reload
                     const iframe = document.querySelector('iframe');
                     if (iframe) {
-                      iframe.src = `https://eloyo.lovable.app/preview/${merchantId}?points=25&t=${Date.now()}`;
+                      iframe.src = `https://eloyo.lovable.app/preview/${customerId}?points=25&t=${Date.now()}`;
                     }
                   }}
                 >
+                  <RefreshCw className="mr-2 w-4 h-4" />
                   Vorschau aktualisieren
                 </Button>
               )}
@@ -385,7 +407,6 @@ const Stempelkarte = () => {
                           }}
                         />
                         {uploadingLogo ? "Hochladen..." : "Ändern"}
-                        Ändern
                       </label>
                     </div>
                   ) : (
@@ -478,18 +499,18 @@ const Stempelkarte = () => {
               </div>
               
               <div>
-                <Label htmlFor="category">Branche *</Label>
+                <Label htmlFor="industry">Branche *</Label>
                 <Select
-                  value={formData.category}
-                  onValueChange={(value) => handleInputChange("category", value)}
+                  value={formData.industry}
+                  onValueChange={(value) => handleInputChange("industry", value)}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Branche auswählen" />
                   </SelectTrigger>
                   <SelectContent className="bg-background border border-border z-50">
-                    {INDUSTRIES.map((industry) => (
-                      <SelectItem key={industry.value} value={industry.value}>
-                        {industry.label}
+                    {INDUSTRIES.map((ind) => (
+                      <SelectItem key={ind.value} value={ind.value}>
+                        {ind.label}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -517,14 +538,25 @@ const Stempelkarte = () => {
             </h3>
             
             <div className="space-y-4">
-              <div>
-                <Label htmlFor="address">Straße & Hausnummer</Label>
-                <Input
-                  id="address"
-                  value={formData.address}
-                  onChange={(e) => handleInputChange("address", e.target.value)}
-                  placeholder="z.B. Hauptstraße 123"
-                />
+              <div className="grid grid-cols-3 gap-4">
+                <div className="col-span-2">
+                  <Label htmlFor="street">Straße</Label>
+                  <Input
+                    id="street"
+                    value={formData.street}
+                    onChange={(e) => handleInputChange("street", e.target.value)}
+                    placeholder="z.B. Hauptstraße"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="house_number">Nr.</Label>
+                  <Input
+                    id="house_number"
+                    value={formData.house_number}
+                    onChange={(e) => handleInputChange("house_number", e.target.value)}
+                    placeholder="123"
+                  />
+                </div>
               </div>
               
               <div className="grid grid-cols-2 gap-4">
@@ -601,13 +633,13 @@ const Stempelkarte = () => {
             
             <div className="space-y-4">
               <div>
-                <Label htmlFor="phone_number">Telefonnummer</Label>
+                <Label htmlFor="phone">Telefonnummer</Label>
                 <div className="relative">
                   <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                   <Input
-                    id="phone_number"
-                    value={formData.phone_number}
-                    onChange={(e) => handleInputChange("phone_number", e.target.value)}
+                    id="phone"
+                    value={formData.phone}
+                    onChange={(e) => handleInputChange("phone", e.target.value)}
                     placeholder="z.B. +49 123 456789"
                     className="pl-10"
                   />
@@ -629,13 +661,13 @@ const Stempelkarte = () => {
               </div>
               
               <div>
-                <Label htmlFor="instagram_url">Instagram</Label>
+                <Label htmlFor="instagram">Instagram</Label>
                 <div className="relative">
                   <Instagram className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                   <Input
-                    id="instagram_url"
-                    value={formData.instagram_url}
-                    onChange={(e) => handleInputChange("instagram_url", e.target.value)}
+                    id="instagram"
+                    value={formData.instagram}
+                    onChange={(e) => handleInputChange("instagram", e.target.value)}
                     placeholder="https://instagram.com/deinprofil"
                     className="pl-10"
                   />
@@ -643,13 +675,13 @@ const Stempelkarte = () => {
               </div>
               
               <div>
-                <Label htmlFor="facebook_url">Facebook</Label>
+                <Label htmlFor="facebook">Facebook</Label>
                 <div className="relative">
                   <Facebook className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                   <Input
-                    id="facebook_url"
-                    value={formData.facebook_url}
-                    onChange={(e) => handleInputChange("facebook_url", e.target.value)}
+                    id="facebook"
+                    value={formData.facebook}
+                    onChange={(e) => handleInputChange("facebook", e.target.value)}
                     placeholder="https://facebook.com/deinprofil"
                     className="pl-10"
                   />
@@ -657,13 +689,13 @@ const Stempelkarte = () => {
               </div>
               
               <div>
-                <Label htmlFor="twitter_url">X (Twitter)</Label>
+                <Label htmlFor="twitter">X (Twitter)</Label>
                 <div className="relative">
                   <Twitter className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                   <Input
-                    id="twitter_url"
-                    value={formData.twitter_url}
-                    onChange={(e) => handleInputChange("twitter_url", e.target.value)}
+                    id="twitter"
+                    value={formData.twitter}
+                    onChange={(e) => handleInputChange("twitter", e.target.value)}
                     placeholder="https://x.com/deinprofil"
                     className="pl-10"
                   />
