@@ -30,6 +30,7 @@ import Scan from "./pages/Scan";
 import NotFound from "./pages/NotFound";
 import CheckoutSuccess from "./pages/CheckoutSuccess";
 import CheckoutCancel from "./pages/CheckoutCancel";
+import DesignVariants from "./pages/DesignVariants";
 
 const queryClient = new QueryClient();
 
@@ -94,6 +95,9 @@ const App = () => (
           {/* Checkout Routes */}
           <Route path="/checkout/success" element={<CheckoutSuccess />} />
           <Route path="/checkout/cancel" element={<CheckoutCancel />} />
+          
+          {/* Temporary Design Variants Page */}
+          <Route path="/design-variants" element={<DesignVariants />} />
           
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
