@@ -6,14 +6,14 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { signIn, signOut, deriveUserRole } from "@/lib/auth";
+import { signIn, signOut, deriveUserRole, UserRole } from "@/lib/auth";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { z } from "zod";
 import { LogIn, LogOut } from "lucide-react";
 import { motion } from "framer-motion";
 import eloyoLogo from '@/assets/eloyo-logo.png';
-import { appSupabase } from "@/integrations/app-supabase/client";
+import { supabase } from "@/integrations/supabase/client";
 
 const loginSchema = z.object({
   email: z.string().email("Ungültige E-Mail-Adresse"),
@@ -47,26 +47,21 @@ const Auth = () => {
     }
   }, [location.hash]);
 
-  // Redirect if already logged in (aber nicht für endkunde - die sollen sich ausloggen können)
+  // Redirect if already logged in
   useEffect(() => {
     if (!loading && user && role && !isResetMode) {
-      // Endkunden nicht automatisch weiterleiten - sie sollen sich hier ausloggen können
-      if (role !== 'endkunde') {
-        redirectByRole(role);
-      }
+      redirectByRole(role);
     }
   }, [user, role, loading, isResetMode, navigate]);
 
-  // Helper: Redirect basierend auf App-Rolle
-  const redirectByRole = (userRole: string) => {
+  // Helper: Redirect basierend auf Rolle
+  const redirectByRole = (userRole: UserRole) => {
     if (userRole === 'admin') {
       navigate('/admin');
-    } else if (userRole === 'kunde') {
+    } else if (userRole === 'merchant') {
       navigate('/kunde/stempelkarte');
-    } else if (userRole === 'endkunde') {
-      // Endkunden haben kein Dashboard auf der Website
-      toast.info("Als Endkunde nutzen Sie bitte die Eloyo App");
-      navigate('/');
+    } else if (userRole === 'partner') {
+      navigate('/partner/dashboard');
     }
   };
 
@@ -81,14 +76,17 @@ const Auth = () => {
       return;
     }
     setIsLoading(true);
-    const { error } = await appSupabase.auth.updateUser({ password: newPassword });
+    
+    // Passwort über Lovable Cloud setzen
+    const { error } = await supabase.auth.updateUser({ password: newPassword });
     if (error) {
       setIsLoading(false);
       toast.error("Passwort konnte nicht gesetzt werden: " + error.message);
       return;
     }
+    
     toast.success("Passwort erfolgreich gesetzt");
-    const { data: userData } = await appSupabase.auth.getUser();
+    const { data: userData } = await supabase.auth.getUser();
     const authedUser = userData?.user;
     if (authedUser) {
       const userRole = await deriveUserRole(authedUser.id, authedUser.email);
@@ -129,12 +127,12 @@ const Auth = () => {
       const userRole = await deriveUserRole(data.user.id, data.user.email);
       console.log('[handleLogin] Derived role:', userRole);
       setIsLoading(false);
-      toast.success("Erfolgreich angemeldet");
       
       if (userRole) {
+        toast.success("Erfolgreich angemeldet");
         redirectByRole(userRole);
       } else {
-        toast.error("Ihr Konto ist noch nicht freigeschaltet. Bitte laden Sie die Seite in 30 Sekunden neu oder kontaktieren Sie den Support.");
+        toast.error("Ihr Konto ist noch nicht freigeschaltet oder Sie haben keinen Zugang zur Website. Bei Fragen kontaktieren Sie den Support.");
       }
     } else {
       setIsLoading(false);
@@ -184,35 +182,7 @@ const Auth = () => {
           </div>
 
           <Card className="p-6 border-border">
-            {/* Wenn User als Endkunde eingeloggt ist, zeige Logout-Option */}
-            {user && role === 'endkunde' ? (
-              <div className="space-y-4 text-center">
-                <p className="text-muted-foreground">
-                  Sie sind angemeldet als <strong>{user.email}</strong>
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  Als Endkunde nutzen Sie bitte die Eloyo App für Ihr Treueprogramm.
-                </p>
-                <Button
-                  onClick={async () => {
-                    setIsLoading(true);
-                    await signOut();
-                    setIsLoading(false);
-                    toast.success("Erfolgreich abgemeldet");
-                    window.location.reload();
-                  }}
-                  variant="outline"
-                  className="w-full"
-                  disabled={isLoading}
-                >
-                  <LogOut className="mr-2 w-4 h-4" />
-                  {isLoading ? 'Abmeldung...' : 'Abmelden'}
-                </Button>
-                <p className="text-xs text-muted-foreground mt-4">
-                  Möchten Sie sich mit einem anderen Konto anmelden? Melden Sie sich zuerst ab.
-                </p>
-              </div>
-            ) : isResetMode ? (
+            {isResetMode ? (
               <form onSubmit={handleSetPassword} className="space-y-4">
                 <div>
                   <Label htmlFor="new-password">Neues Passwort</Label>
@@ -246,6 +216,27 @@ const Auth = () => {
                   {isLoading ? 'Speichern...' : 'Passwort festlegen'}
                 </Button>
               </form>
+            ) : user && role ? (
+              <div className="space-y-4 text-center">
+                <p className="text-muted-foreground">
+                  Sie sind angemeldet als <strong>{user.email}</strong>
+                </p>
+                <Button
+                  onClick={async () => {
+                    setIsLoading(true);
+                    await signOut();
+                    setIsLoading(false);
+                    toast.success("Erfolgreich abgemeldet");
+                    window.location.reload();
+                  }}
+                  variant="outline"
+                  className="w-full"
+                  disabled={isLoading}
+                >
+                  <LogOut className="mr-2 w-4 h-4" />
+                  {isLoading ? 'Abmeldung...' : 'Abmelden'}
+                </Button>
+              </div>
             ) : (
               <form onSubmit={handleLogin} className="space-y-4">
                 <div>
@@ -287,7 +278,7 @@ const Auth = () => {
           </Card>
 
           <p className="text-center text-sm text-muted-foreground mt-6">
-            Zugang nur für registrierte Benutzer
+            Zugang nur für registrierte Geschäftskunden
           </p>
         </motion.div>
       </div>

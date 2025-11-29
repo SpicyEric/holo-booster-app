@@ -6,7 +6,6 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { appSupabase } from "@/integrations/app-supabase/client";
 import { Check, Gift, Package, CreditCard } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
@@ -101,8 +100,8 @@ export default function Checkout() {
     setLoading(true);
 
     try {
-      // Get session from App-Supabase (where user is actually logged in)
-      const { data: sessionData, error: sessionError } = await appSupabase.auth.getSession();
+      // Get session from Lovable Cloud (where user is authenticated)
+      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
       
       if (sessionError || !sessionData.session) {
         toast.error("Du musst eingeloggt sein um fortzufahren");

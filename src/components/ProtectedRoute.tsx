@@ -18,12 +18,18 @@ export const ProtectedRoute = ({ children, allowedRoles }: ProtectedRouteProps) 
         navigate('/auth');
       } else if (role && !allowedRoles.includes(role)) {
         // Redirect basierend auf tatsächlicher Rolle
-        if (role === 'admin') {
-          navigate('/admin');
-        } else if (role === 'kunde') {
-          navigate('/kunde/dashboard');
-        } else {
-          navigate('/auth');
+        switch (role) {
+          case 'admin':
+            navigate('/admin');
+            break;
+          case 'merchant':
+            navigate('/kunde/stempelkarte');
+            break;
+          case 'partner':
+            navigate('/partner/dashboard');
+            break;
+          default:
+            navigate('/auth');
         }
       }
     }

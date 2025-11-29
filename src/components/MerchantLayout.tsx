@@ -36,7 +36,7 @@ const MerchantLayout = () => {
   };
 
   return (
-    <ProtectedRoute allowedRoles={['kunde', 'admin']}>
+    <ProtectedRoute allowedRoles={['merchant', 'admin']}>
       <div className="min-h-screen bg-background">
         <Particles 
           particleColors={['#8B5CF6', '#3B82F6', '#8B5CF6']}
