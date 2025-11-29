@@ -528,19 +528,25 @@ export type Database = {
           auto_reply_min_rating: number | null
           billing_address: Json | null
           box_id: string | null
+          city: string | null
           company_name: string | null
           contact_person: string | null
+          cover_image_url: string | null
           created_at: string
           customer_number: number | null
+          description: string | null
           design_urls: string[] | null
           email: string | null
+          facebook: string | null
           google_access_token: string | null
           google_business_name: string | null
           google_refresh_token: string | null
           google_review_url: string
           google_token_expires_at: string | null
+          house_number: string | null
           id: string
           industry: string | null
+          instagram: string | null
           last_auto_reply_check: string | null
           last_contact_date: string | null
           lead_source: string | null
@@ -552,7 +558,9 @@ export type Database = {
           offer_text: string
           offer_title: string | null
           onboarding_email_sent_at: string | null
+          opening_hours: Json | null
           phone: string | null
+          postal_code: string | null
           priority: string | null
           promoter_id: string | null
           qr_code_url: string | null
@@ -560,9 +568,12 @@ export type Database = {
           stamp_reward_text: string | null
           stamps_required: number | null
           status: string | null
+          street: string | null
           stripe_customer_id: string | null
           stripe_subscription_id: string | null
+          twitter: string | null
           updated_at: string
+          website: string | null
         }
         Insert: {
           active?: boolean
@@ -571,19 +582,25 @@ export type Database = {
           auto_reply_min_rating?: number | null
           billing_address?: Json | null
           box_id?: string | null
+          city?: string | null
           company_name?: string | null
           contact_person?: string | null
+          cover_image_url?: string | null
           created_at?: string
           customer_number?: number | null
+          description?: string | null
           design_urls?: string[] | null
           email?: string | null
+          facebook?: string | null
           google_access_token?: string | null
           google_business_name?: string | null
           google_refresh_token?: string | null
           google_review_url: string
           google_token_expires_at?: string | null
+          house_number?: string | null
           id?: string
           industry?: string | null
+          instagram?: string | null
           last_auto_reply_check?: string | null
           last_contact_date?: string | null
           lead_source?: string | null
@@ -595,7 +612,9 @@ export type Database = {
           offer_text: string
           offer_title?: string | null
           onboarding_email_sent_at?: string | null
+          opening_hours?: Json | null
           phone?: string | null
+          postal_code?: string | null
           priority?: string | null
           promoter_id?: string | null
           qr_code_url?: string | null
@@ -603,9 +622,12 @@ export type Database = {
           stamp_reward_text?: string | null
           stamps_required?: number | null
           status?: string | null
+          street?: string | null
           stripe_customer_id?: string | null
           stripe_subscription_id?: string | null
+          twitter?: string | null
           updated_at?: string
+          website?: string | null
         }
         Update: {
           active?: boolean
@@ -614,19 +636,25 @@ export type Database = {
           auto_reply_min_rating?: number | null
           billing_address?: Json | null
           box_id?: string | null
+          city?: string | null
           company_name?: string | null
           contact_person?: string | null
+          cover_image_url?: string | null
           created_at?: string
           customer_number?: number | null
+          description?: string | null
           design_urls?: string[] | null
           email?: string | null
+          facebook?: string | null
           google_access_token?: string | null
           google_business_name?: string | null
           google_refresh_token?: string | null
           google_review_url?: string
           google_token_expires_at?: string | null
+          house_number?: string | null
           id?: string
           industry?: string | null
+          instagram?: string | null
           last_auto_reply_check?: string | null
           last_contact_date?: string | null
           lead_source?: string | null
@@ -638,7 +666,9 @@ export type Database = {
           offer_text?: string
           offer_title?: string | null
           onboarding_email_sent_at?: string | null
+          opening_hours?: Json | null
           phone?: string | null
+          postal_code?: string | null
           priority?: string | null
           promoter_id?: string | null
           qr_code_url?: string | null
@@ -646,9 +676,12 @@ export type Database = {
           stamp_reward_text?: string | null
           stamps_required?: number | null
           status?: string | null
+          street?: string | null
           stripe_customer_id?: string | null
           stripe_subscription_id?: string | null
+          twitter?: string | null
           updated_at?: string
+          website?: string | null
         }
         Relationships: []
       }
