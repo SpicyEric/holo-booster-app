@@ -23,9 +23,9 @@ import {
   Twitter,
   Star,
   Clock,
-  Store,
-  RefreshCw
+  Store
 } from "lucide-react";
+import MerchantPreview from "@/components/merchant/MerchantPreview";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -327,49 +327,36 @@ const Stempelkarte = () => {
         {/* Smartphone Preview */}
         <div className="lg:col-span-1 order-2 lg:order-1">
           <div className="sticky top-24">
-            <h3 className="text-lg font-semibold mb-4 text-center">Smartphone-Vorschau</h3>
+            <h3 className="text-lg font-semibold mb-4 text-center">Live-Vorschau</h3>
             <div className="mx-auto w-[300px] h-[620px] bg-foreground rounded-[40px] p-3 shadow-2xl">
               <div className="w-full h-full bg-background rounded-[32px] overflow-hidden relative">
-                {customerId ? (
-                  <iframe
-                    src={`https://eloyo.lovable.app/preview/${customerId}?points=25&t=${Date.now()}`}
-                    className="w-full h-full border-none"
-                    title="App-Vorschau"
-                    key={`preview-${customerId}-${saving ? 'saving' : 'idle'}`}
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center text-muted-foreground text-sm">
-                    <div className="text-center p-4">
-                      <Store className="w-12 h-12 mx-auto mb-3 text-muted-foreground/50" />
-                      <p>Keine Vorschau verfügbar</p>
-                    </div>
-                  </div>
-                )}
+                <MerchantPreview
+                  name={formData.name}
+                  description={formData.description}
+                  industry={formData.industry}
+                  logo_url={formData.logo_url}
+                  cover_image_url={formData.cover_image_url}
+                  street={formData.street}
+                  house_number={formData.house_number}
+                  postal_code={formData.postal_code}
+                  city={formData.city}
+                  phone={formData.phone}
+                  website={formData.website}
+                  instagram={formData.instagram}
+                  facebook={formData.facebook}
+                  twitter={formData.twitter}
+                  google_review_url={formData.google_review_url}
+                  opening_hours={formData.opening_hours}
+                />
               </div>
             </div>
             
             {/* Save Button - Below Phone Preview */}
-            <div className="mt-6 space-y-2">
+            <div className="mt-6">
               <Button onClick={handleSave} disabled={saving} className="w-full" size="lg">
                 <Save className="mr-2 w-4 h-4" />
                 {saving ? "Speichern..." : "Änderungen speichern"}
               </Button>
-              {customerId && (
-                <Button 
-                  variant="outline" 
-                  className="w-full" 
-                  size="sm"
-                  onClick={() => {
-                    const iframe = document.querySelector('iframe');
-                    if (iframe) {
-                      iframe.src = `https://eloyo.lovable.app/preview/${customerId}?points=25&t=${Date.now()}`;
-                    }
-                  }}
-                >
-                  <RefreshCw className="mr-2 w-4 h-4" />
-                  Vorschau aktualisieren
-                </Button>
-              )}
             </div>
           </div>
         </div>
