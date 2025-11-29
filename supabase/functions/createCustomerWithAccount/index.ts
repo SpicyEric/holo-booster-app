@@ -142,72 +142,7 @@ serve(async (req) => {
             customer_id: customer.id,
           });
 
-        // Send comprehensive onboarding email
-        try {
-          // Generate password reset (setup) link
-          const { data: linkData, error: linkError } = await supabase.auth.admin.generateLink({
-            type: 'recovery',
-            email,
-          });
-
-          if (linkError) {
-            console.error('Error generating password setup link:', linkError);
-          } else if (linkData?.properties?.action_link) {
-            const passwordSetupUrl = linkData.properties.action_link as string;
-            
-            // Send via new comprehensive onboarding email function
-            const emailResponse = await fetch(
-              `${supabaseUrl}/functions/v1/send-merchant-onboarding`,
-              {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                  'Authorization': `Bearer ${supabaseServiceKey}`,
-                },
-                body: JSON.stringify({
-                  to: email,
-                  companyName: company_name || name,
-                  contactName: name,
-                  passwordSetupUrl,
-                  privacyUrl: 'https://eloyo.de/datenschutz',
-                  termsUrl: 'https://eloyo.de/agb',
-                  customerId: customer.id,
-                }),
-              }
-            );
-
-            if (!emailResponse.ok) {
-              const txt = await emailResponse.text();
-              console.error('Failed to send onboarding email:', emailResponse.status, txt);
-              
-              // Fallback to legacy welcome email
-              console.log('Attempting fallback to sendWelcomeEmail...');
-              const fallbackResponse = await fetch(
-                `${supabaseUrl}/functions/v1/sendWelcomeEmail`,
-                {
-                  method: 'POST',
-                  headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${supabaseServiceKey}`,
-                  },
-                  body: JSON.stringify({
-                    customerEmail: email,
-                    customerName: company_name || name,
-                    resetLink: passwordSetupUrl,
-                  }),
-                }
-              );
-              
-              if (!fallbackResponse.ok) {
-                console.error('Fallback email also failed:', await fallbackResponse.text());
-              }
-            } else {
-              console.log('Onboarding email sent successfully');
-            }
-          }
-        } catch (emailError) {
-          console.error('Error sending onboarding email:', emailError);
-        }
+        console.log("[CREATE-CUSTOMER-WITH-ACCOUNT] Account created, email will be sent after Stripe payment confirmation");
       }
     }
 
