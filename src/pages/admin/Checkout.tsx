@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { Check, Gift, Package, CreditCard } from "lucide-react";
+import { Check, Gift, Package, CreditCard, Loader2, Tag, X } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 
@@ -37,9 +37,17 @@ const PRODUCTS = {
   },
 };
 
+interface ValidatedDiscount {
+  code: string;
+  discountType: 'percentage' | 'fixed';
+  discountValue: number;
+  appliesTo: 'one_time' | 'recurring' | 'both';
+}
+
 export default function Checkout() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+  const [validatingPromo, setValidatingPromo] = useState(false);
   const [isYearlyBilling, setIsYearlyBilling] = useState(false);
   
   // Customer data
@@ -50,30 +58,117 @@ export default function Checkout() {
   const [city, setCity] = useState("");
   const [postalCode, setPostalCode] = useState("");
   const [country, setCountry] = useState("Deutschland");
-  const [promoCodes, setPromoCodes] = useState("");
+  const [promoCodeInput, setPromoCodeInput] = useState("");
+  const [validatedDiscounts, setValidatedDiscounts] = useState<ValidatedDiscount[]>([]);
+
+  const validatePromoCode = async () => {
+    const codes = promoCodeInput.split(",").map(code => code.trim()).filter(Boolean);
+    
+    if (codes.length === 0) {
+      toast.error("Bitte gib mindestens einen Rabattcode ein");
+      return;
+    }
+
+    if (codes.length > 2) {
+      toast.error("Maximal 2 Rabattcodes erlaubt");
+      return;
+    }
+
+    // Check if codes are already validated
+    const newCodes = codes.filter(code => 
+      !validatedDiscounts.some(d => d.code.toUpperCase() === code.toUpperCase())
+    );
+
+    if (newCodes.length === 0) {
+      toast.info("Diese Codes wurden bereits hinzugefügt");
+      return;
+    }
+
+    setValidatingPromo(true);
+
+    try {
+      const results: ValidatedDiscount[] = [];
+      
+      for (const code of newCodes) {
+        const { data, error } = await supabase.functions.invoke("validate-promo-code", {
+          body: { code },
+        });
+
+        if (error) throw error;
+
+        if (data.valid) {
+          results.push({
+            code: code.toUpperCase(),
+            discountType: data.discountType,
+            discountValue: data.discountValue,
+            appliesTo: data.appliesTo,
+          });
+        } else {
+          toast.error(`Code "${code}": ${data.error || "Ungültig"}`);
+        }
+      }
+
+      if (results.length > 0) {
+        const combined = [...validatedDiscounts, ...results].slice(0, 2);
+        setValidatedDiscounts(combined);
+        setPromoCodeInput("");
+        toast.success(`${results.length} Rabattcode(s) erfolgreich angewendet!`);
+      }
+    } catch (error: any) {
+      console.error("Promo validation error:", error);
+      toast.error("Fehler bei der Validierung des Rabattcodes");
+    } finally {
+      setValidatingPromo(false);
+    }
+  };
+
+  const removeDiscount = (code: string) => {
+    setValidatedDiscounts(prev => prev.filter(d => d.code !== code));
+    toast.info(`Rabattcode "${code}" entfernt`);
+  };
 
   const calculateTotal = () => {
-    const startbox = PRODUCTS.startbox.price;
+    const baseStartbox = PRODUCTS.startbox.price;
+    const baseAbo = isYearlyBilling ? PRODUCTS.abo.yearlyPrice : PRODUCTS.abo.monthlyPrice;
     
-    if (isYearlyBilling) {
-      const yearly = PRODUCTS.abo.yearlyPrice;
-      return {
-        startbox,
-        aboMonthly: yearly / 12, // Anzeige pro Monat
-        aboTotal: yearly,
-        firstPayment: startbox + yearly,
-        savings: (PRODUCTS.abo.monthlyPrice * 12) - yearly,
-      };
-    } else {
-      const monthly = PRODUCTS.abo.monthlyPrice;
-      return {
-        startbox,
-        aboMonthly: monthly,
-        aboTotal: monthly,
-        firstPayment: startbox + monthly,
-        savings: 0,
-      };
+    let startboxDiscount = 0;
+    let aboDiscount = 0;
+
+    for (const discount of validatedDiscounts) {
+      // Calculate startbox discount (one_time or both)
+      if (discount.appliesTo === 'one_time' || discount.appliesTo === 'both') {
+        if (discount.discountType === 'percentage') {
+          startboxDiscount += baseStartbox * (discount.discountValue / 100);
+        } else {
+          startboxDiscount += discount.discountValue;
+        }
+      }
+      
+      // Calculate abo discount (recurring or both)
+      if (discount.appliesTo === 'recurring' || discount.appliesTo === 'both') {
+        if (discount.discountType === 'percentage') {
+          aboDiscount += baseAbo * (discount.discountValue / 100);
+        } else {
+          aboDiscount += discount.discountValue;
+        }
+      }
     }
+
+    const finalStartbox = Math.max(0, baseStartbox - startboxDiscount);
+    const finalAbo = Math.max(0, baseAbo - aboDiscount);
+    const yearlySavings = isYearlyBilling ? (PRODUCTS.abo.monthlyPrice * 12) - PRODUCTS.abo.yearlyPrice : 0;
+
+    return {
+      startbox: baseStartbox,
+      startboxDiscounted: finalStartbox,
+      startboxDiscount,
+      aboMonthly: isYearlyBilling ? finalAbo / 12 : finalAbo,
+      aboTotal: finalAbo,
+      aboDiscount,
+      firstPayment: finalStartbox + finalAbo,
+      savings: yearlySavings,
+      totalDiscount: startboxDiscount + aboDiscount,
+    };
   };
 
   const totals = calculateTotal();
@@ -124,7 +219,7 @@ export default function Checkout() {
               country,
             },
             billingInterval: isYearlyBilling ? 'yearly' : 'monthly',
-            promoCodes: promoCodes ? promoCodes.split(",").map(code => code.trim()).filter(Boolean) : [],
+            promoCodes: validatedDiscounts.map(d => d.code),
           },
         }
       );
@@ -363,19 +458,74 @@ export default function Checkout() {
           {/* Rabattcodes */}
           <Card>
             <CardHeader>
-              <CardTitle>Rabattcodes</CardTitle>
-              <CardDescription>Maximal 2 Rabattcodes, mit Komma getrennt (werden kombiniert)</CardDescription>
+              <CardTitle className="flex items-center gap-2">
+                <Tag className="w-5 h-5" />
+                Rabattcodes
+              </CardTitle>
+              <CardDescription>Maximal 2 Rabattcodes (werden kombiniert)</CardDescription>
             </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                <Label htmlFor="promoCodes">Rabattcodes (optional)</Label>
-                <Input
-                  id="promoCodes"
-                  value={promoCodes}
-                  onChange={(e) => setPromoCodes(e.target.value)}
-                  placeholder="CODE1, CODE2"
-                />
+            <CardContent className="space-y-4">
+              <div className="flex gap-2">
+                <div className="flex-1">
+                  <Input
+                    id="promoCode"
+                    value={promoCodeInput}
+                    onChange={(e) => setPromoCodeInput(e.target.value)}
+                    placeholder="Rabattcode eingeben..."
+                    disabled={validatedDiscounts.length >= 2 || validatingPromo}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        validatePromoCode();
+                      }
+                    }}
+                  />
+                </div>
+                <Button
+                  type="button"
+                  onClick={validatePromoCode}
+                  disabled={validatedDiscounts.length >= 2 || validatingPromo || !promoCodeInput.trim()}
+                  variant="secondary"
+                >
+                  {validatingPromo ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    "Anwenden"
+                  )}
+                </Button>
               </div>
+
+              {/* Angewendete Rabattcodes */}
+              {validatedDiscounts.length > 0 && (
+                <div className="space-y-2">
+                  <Label className="text-sm text-muted-foreground">Angewendete Codes:</Label>
+                  <div className="flex flex-wrap gap-2">
+                    {validatedDiscounts.map((discount) => (
+                      <Badge 
+                        key={discount.code} 
+                        variant="secondary"
+                        className="flex items-center gap-2 px-3 py-1.5 bg-green-100 text-green-800 hover:bg-green-200"
+                      >
+                        <Check className="w-3 h-3" />
+                        <span>{discount.code}</span>
+                        <span className="text-xs opacity-75">
+                          ({discount.discountType === 'percentage' ? `${discount.discountValue}%` : `${discount.discountValue}€`}
+                          {discount.appliesTo === 'one_time' && ' auf Startbox'}
+                          {discount.appliesTo === 'recurring' && ' auf Abo'}
+                          {discount.appliesTo === 'both' && ' auf alles'})
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => removeDiscount(discount.code)}
+                          className="ml-1 hover:text-red-600"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
 
@@ -385,36 +535,79 @@ export default function Checkout() {
               <CardTitle>Zusammenfassung</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
+              {/* Startbox */}
               <div className="flex justify-between items-center py-2 border-b">
                 <span>Eloyo Startbox Basic</span>
-                <span className="font-medium">{PRODUCTS.startbox.price.toFixed(2)}€</span>
+                <div className="text-right">
+                  {totals.startboxDiscount > 0 ? (
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm text-muted-foreground line-through">{totals.startbox.toFixed(2)}€</span>
+                      <span className="font-medium text-green-600">{totals.startboxDiscounted.toFixed(2)}€</span>
+                    </div>
+                  ) : (
+                    <span className="font-medium">{totals.startbox.toFixed(2)}€</span>
+                  )}
+                </div>
               </div>
+
+              {/* Abo */}
               <div className="flex justify-between items-center py-2 border-b">
                 <span>
                   Eloyo Abo ({isYearlyBilling ? 'Jährlich' : 'Monatlich'})
                 </span>
-                <span className="font-medium">
-                  {totals.aboTotal.toFixed(2)}€{isYearlyBilling ? '/Jahr' : '/Monat'}
-                </span>
+                <div className="text-right">
+                  {totals.aboDiscount > 0 ? (
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm text-muted-foreground line-through">
+                        {(isYearlyBilling ? PRODUCTS.abo.yearlyPrice : PRODUCTS.abo.monthlyPrice).toFixed(2)}€
+                      </span>
+                      <span className="font-medium text-green-600">
+                        {totals.aboTotal.toFixed(2)}€{isYearlyBilling ? '/Jahr' : '/Monat'}
+                      </span>
+                    </div>
+                  ) : (
+                    <span className="font-medium">
+                      {totals.aboTotal.toFixed(2)}€{isYearlyBilling ? '/Jahr' : '/Monat'}
+                    </span>
+                  )}
+                </div>
               </div>
-              {isYearlyBilling && (
+
+              {/* Jährliche Ersparnis */}
+              {isYearlyBilling && totals.savings > 0 && (
                 <div className="flex justify-between items-center py-2 text-green-600">
                   <span>Ersparnis (1 Monat geschenkt)</span>
                   <span className="font-medium">-{totals.savings.toFixed(2)}€</span>
                 </div>
               )}
+
+              {/* Rabatt-Ersparnis */}
+              {totals.totalDiscount > 0 && (
+                <div className="flex justify-between items-center py-2 text-green-600 bg-green-50 px-3 rounded-md">
+                  <span className="flex items-center gap-2">
+                    <Tag className="w-4 h-4" />
+                    Rabatt ({validatedDiscounts.map(d => d.code).join(', ')})
+                  </span>
+                  <span className="font-medium">-{totals.totalDiscount.toFixed(2)}€</span>
+                </div>
+              )}
+
+              {/* Gesamtsumme */}
               <div className="flex justify-between items-center py-3 border-t-2 text-lg font-bold">
                 <span>Erste Zahlung</span>
-                <span>{totals.firstPayment.toFixed(2)}€</span>
+                <span className={totals.totalDiscount > 0 ? "text-green-600" : ""}>
+                  {totals.firstPayment.toFixed(2)}€
+                </span>
               </div>
+
               {!isYearlyBilling && (
                 <p className="text-sm text-muted-foreground">
-                  Danach {PRODUCTS.abo.monthlyPrice.toFixed(2)}€/Monat
+                  Danach {totals.aboDiscount > 0 ? totals.aboTotal.toFixed(2) : PRODUCTS.abo.monthlyPrice.toFixed(2)}€/Monat
                 </p>
               )}
               {isYearlyBilling && (
                 <p className="text-sm text-muted-foreground">
-                  Danach {PRODUCTS.abo.yearlyPrice.toFixed(2)}€/Jahr (11 Monate zahlen, 12 Monate nutzen)
+                  Danach {totals.aboDiscount > 0 ? totals.aboTotal.toFixed(2) : PRODUCTS.abo.yearlyPrice.toFixed(2)}€/Jahr (11 Monate zahlen, 12 Monate nutzen)
                 </p>
               )}
             </CardContent>
