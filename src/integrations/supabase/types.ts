@@ -551,6 +551,7 @@ export type Database = {
           offer_details: string | null
           offer_text: string
           offer_title: string | null
+          onboarding_email_sent_at: string | null
           phone: string | null
           priority: string | null
           promoter_id: string | null
@@ -593,6 +594,7 @@ export type Database = {
           offer_details?: string | null
           offer_text: string
           offer_title?: string | null
+          onboarding_email_sent_at?: string | null
           phone?: string | null
           priority?: string | null
           promoter_id?: string | null
@@ -635,6 +637,7 @@ export type Database = {
           offer_details?: string | null
           offer_text?: string
           offer_title?: string | null
+          onboarding_email_sent_at?: string | null
           phone?: string | null
           priority?: string | null
           promoter_id?: string | null

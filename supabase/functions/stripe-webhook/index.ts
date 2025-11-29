@@ -102,7 +102,7 @@ const event = await stripe.webhooks.constructEventAsync(
               promoter_id: metadata.promoterId || null,
               status: isSEPA ? "pending_payment" : "active",
               google_review_url: "https://google.com/review",
-              offer_text: "Willkommen bei QRait!",
+              offer_text: "Willkommen bei Eloyo!",
               billing_address: metadata.address ? {
                 street: metadata.address.street,
                 city: metadata.address.city,
@@ -123,7 +123,7 @@ const event = await stripe.webhooks.constructEventAsync(
             if (adminEmail) {
               try {
                 await resend.emails.send({
-                  from: 'QRAIT <noreply@qrait.de>',
+                  from: 'Eloyo Team <support@eloyo.de>',
                   to: [adminEmail],
                   subject: '🎉 Neuer Kunde registriert',
                   html: `
@@ -360,16 +360,16 @@ const event = await stripe.webhooks.constructEventAsync(
             const pdfBase64 = base64Encode(pdfBuffer);
 
             // Prepare legal documents
-            const agbContent = `Allgemeine Geschäftsbedingungen (AGB) - QRait
+            const agbContent = `Allgemeine Geschäftsbedingungen (AGB) - Eloyo
 
 1. Geltungsbereich
-Diese AGB gelten für alle Verträge zwischen QRait und dem Kunden.
+Diese AGB gelten für alle Verträge zwischen Eloyo und dem Kunden.
 
 2. Vertragsschluss
 Der Vertrag kommt durch Bestätigung der Bestellung zustande.
 
 3. Leistungen
-QRait erbringt die vereinbarten Dienstleistungen gemäß Leistungsbeschreibung.
+Eloyo erbringt die vereinbarten Dienstleistungen gemäß Leistungsbeschreibung.
 
 4. Zahlung
 Die Zahlung erfolgt per SEPA-Lastschrift oder Kreditkarte gemäß vereinbarter Zahlungsbedingungen.
@@ -385,10 +385,10 @@ Wir verarbeiten personenbezogene Daten gemäß DSGVO.
 
 Stand: ${new Date().toLocaleDateString("de-DE")}`;
 
-            const datenschutzContent = `Datenschutzerklärung - QRait
+            const datenschutzContent = `Datenschutzerklärung - Eloyo
 
 1. Verantwortlicher
-QRait ist verantwortlich für die Verarbeitung Ihrer personenbezogenen Daten.
+Eloyo ist verantwortlich für die Verarbeitung Ihrer personenbezogenen Daten.
 
 2. Erhobene Daten
 Wir erheben folgende Daten: Name, E-Mail, Firmenname, Adresse, Zahlungsinformationen.
@@ -406,11 +406,11 @@ Daten werden für die Dauer der Geschäftsbeziehung und gesetzliche Aufbewahrung
 Sie haben das Recht auf Auskunft, Berichtigung, Löschung, Einschränkung, Datenübertragbarkeit und Widerspruch.
 
 7. Kontakt
-Datenschutzanfragen: datenschutz@qrait.de
+Datenschutzanfragen: datenschutz@eloyo.de
 
 Stand: ${new Date().toLocaleDateString("de-DE")}`;
 
-            const widerrufsbelehrungContent = `Widerrufsbelehrung - QRait
+            const widerrufsbelehrungContent = `Widerrufsbelehrung - Eloyo
 
 Widerrufsrecht
 
@@ -419,8 +419,8 @@ Sie haben das Recht, binnen vierzehn Tagen ohne Angabe von Gründen diesen Vertr
 Die Widerrufsfrist beträgt vierzehn Tage ab dem Tag des Vertragsabschlusses.
 
 Um Ihr Widerrufsrecht auszuüben, müssen Sie uns
-QRait
-E-Mail: info@qrait.de
+Eloyo
+E-Mail: support@eloyo.de
 
 mittels einer eindeutigen Erklärung (z. B. ein mit der Post versandter Brief oder E-Mail) über Ihren Entschluss, diesen Vertrag zu widerrufen, informieren.
 
@@ -436,62 +436,65 @@ Stand: ${new Date().toLocaleDateString("de-DE")}`;
 
             // Send email with all attachments
             await resend.emails.send({
-              from: "QRait <noreply@qrait.de>",
+              from: "Eloyo Team <support@eloyo.de>",
               to: [customer.email],
-              subject: "Ihre Rechnung von QRait",
+              subject: "Ihre Rechnung von Eloyo",
               html: `
-                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-                  <h1 style="color: #333;">Vielen Dank für Ihre Zahlung!</h1>
+                <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                  <div style="background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); padding: 30px; text-align: center; border-radius: 12px 12px 0 0;">
+                    <h1 style="color: #ffffff; margin: 0; font-size: 24px;">Vielen Dank für Ihre Zahlung!</h1>
+                  </div>
                   
-                  <p>Hallo ${customer.name}${customer.company_name ? ` (${customer.company_name})` : ""},</p>
+                  <div style="padding: 30px; background: #ffffff;">
+                  <p style="color: #374151; font-size: 16px;">Hallo ${customer.name}${customer.company_name ? ` (${customer.company_name})` : ""},</p>
                   
-                  <p>vielen Dank für Ihre Zahlung. Im Anhang finden Sie Ihre Rechnung sowie unsere rechtlichen Dokumente:</p>
+                  <p style="color: #374151; font-size: 15px;">vielen Dank für Ihre Zahlung. Im Anhang finden Sie Ihre Rechnung sowie unsere rechtlichen Dokumente:</p>
                   
-                  <ul>
+                  <ul style="color: #374151; font-size: 15px;">
                     <li>Rechnung (PDF)</li>
                     <li>Allgemeine Geschäftsbedingungen (AGB)</li>
                     <li>Datenschutzerklärung</li>
                     <li>Widerrufsbelehrung</li>
                   </ul>
+                  </div>
                   
                   ${resetLink ? `
-                  <h2 style="color: #555; margin-top: 30px;">Ihr Dashboard-Zugang</h2>
-                  <p>Über Ihr persönliches Dashboard können Sie:</p>
-                  <ul>
+                  <h2 style="color: #1f2937; font-size: 18px; margin-top: 30px;">Ihr Dashboard-Zugang</h2>
+                  <p style="color: #374151; font-size: 15px;">Über Ihr persönliches Dashboard können Sie:</p>
+                  <ul style="color: #374151; font-size: 15px;">
                     <li>Ihre Rechnungen einsehen und herunterladen</li>
                     <li>Zahlungsdaten verwalten</li>
-                    <li>QR-Codes und Designs herunterladen</li>
+                    <li>Ihr Kundenbindungsprogramm konfigurieren</li>
                     <li>Ihr Abonnement verwalten</li>
                   </ul>
                   
-                  <div style="background-color: #f5f5f5; padding: 20px; border-radius: 8px; margin: 20px 0;">
-                    <p style="margin: 0 0 10px 0;"><strong>So richten Sie Ihr Passwort ein:</strong></p>
+                  <div style="background-color: #f3f4f6; padding: 25px; border-radius: 8px; margin: 20px 0; text-align: center;">
+                    <p style="margin: 0 0 15px 0; color: #374151; font-weight: 600;">So richten Sie Ihr Passwort ein:</p>
                     <a href="${resetLink}" 
-                       style="display: inline-block; background-color: #007bff; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: bold;">
-                      Passwort festlegen
+                       style="display: inline-block; background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); color: white; padding: 14px 32px; text-decoration: none; border-radius: 8px; font-weight: 600;">
+                      🔑 Passwort festlegen
                     </a>
                   </div>
                   
-                  <p style="color: #666; font-size: 14px;">
-                    <strong>Hinweis:</strong> Dieser Link ist 24 Stunden gültig. Nach dem Festlegen Ihres Passworts können Sie sich jederzeit unter 
-                    <a href="${Deno.env.get("SUPABASE_URL")}/auth/v1/verify">Ihrem Dashboard</a> anmelden.
+                  <p style="color: #6b7280; font-size: 14px;">
+                    <strong>Hinweis:</strong> Dieser Link ist 24 Stunden gültig.
                   </p>
                   ` : ''}
                   
-                  <p>Bei Fragen stehen wir Ihnen gerne zur Verfügung.</p>
+                  <p style="color: #374151; font-size: 15px;">Bei Fragen stehen wir Ihnen gerne zur Verfügung.</p>
                   
-                  <p style="margin-top: 30px;">
-                    Mit freundlichen Grüßen<br>
-                    <strong>Ihr QRait Team</strong>
+                  <p style="margin-top: 30px; color: #374151; font-size: 15px;">
+                    Herzliche Grüße,<br>
+                    <strong>Ihr Eloyo Team</strong>
                   </p>
+                  </div>
                   
-                  <hr style="margin: 30px 0; border: none; border-top: 1px solid #eee;">
-                  
-                  <p style="font-size: 12px; color: #666;">
-                    QRait<br>
-                    E-Mail: info@qrait.de<br>
-                    Web: www.qrait.de
-                  </p>
+                  <div style="background-color: #f9fafb; padding: 25px; border-top: 1px solid #e5e7eb; text-align: center; border-radius: 0 0 12px 12px;">
+                    <p style="font-size: 13px; color: #6b7280; margin: 0;">
+                      Eloyo - Digitale Kundenbindung<br>
+                      E-Mail: <a href="mailto:support@eloyo.de" style="color: #6366f1;">support@eloyo.de</a>
+                    </p>
+                  </div>
                 </div>
               `,
               attachments: [
@@ -569,7 +572,7 @@ Stand: ${new Date().toLocaleDateString("de-DE")}`;
         if (adminEmailFailed && failedCustomer) {
           try {
             await resend.emails.send({
-              from: 'QRAIT <noreply@qrait.de>',
+              from: 'Eloyo Team <support@eloyo.de>',
               to: [adminEmailFailed],
               subject: '⚠️ Zahlungsproblem bei Kunde',
               html: `
@@ -612,7 +615,7 @@ Stand: ${new Date().toLocaleDateString("de-DE")}`;
         if (adminEmailCanceled && canceledCustomer) {
           try {
             await resend.emails.send({
-              from: 'QRAIT <noreply@qrait.de>',
+              from: 'Eloyo Team <support@eloyo.de>',
               to: [adminEmailCanceled],
               subject: '❌ Kunde hat gekündigt',
               html: `
