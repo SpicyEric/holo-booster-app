@@ -425,6 +425,9 @@ serve(async (req) => {
           const { data: linkData, error: recoveryError } = await supabase.auth.admin.generateLink({
             type: 'recovery',
             email: customer.email,
+            options: {
+              redirectTo: 'https://preview--xcnfyawyoahlbhwfkyku.lovable.app/auth',
+            },
           });
 
           if (recoveryError) {
@@ -440,6 +443,9 @@ serve(async (req) => {
             const { data: magicData, error: magicError } = await supabase.auth.admin.generateLink({
               type: 'magiclink',
               email: customer.email,
+              options: {
+                redirectTo: 'https://preview--xcnfyawyoahlbhwfkyku.lovable.app/auth',
+              },
             });
             if (magicError) {
               console.error('[WEBHOOK] Magiclink generation error:', magicError.message, magicError);

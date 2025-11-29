@@ -144,6 +144,9 @@ serve(async (req) => {
     const { data: resetData, error: resetError } = await supabaseAdmin.auth.admin.generateLink({
       type: 'recovery',
       email: customerEmail,
+      options: {
+        redirectTo: 'https://preview--xcnfyawyoahlbhwfkyku.lovable.app/auth',
+      },
     });
 
     if (resetError) {
