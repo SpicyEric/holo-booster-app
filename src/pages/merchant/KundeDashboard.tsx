@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { appSupabase } from "@/integrations/app-supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { getUserCustomer } from "@/lib/auth";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
@@ -72,27 +73,38 @@ export default function KundeDashboard() {
     try {
       setLoading(true);
 
-      // Load merchant directly from App database using owner_user_id
-      const { data: merchantData } = await appSupabase
-        .from("merchants")
-        .select("*")
-        .eq("owner_user_id", user?.id || "")
-        .maybeSingle() as { data: any };
-
-      if (merchantData) {
-        // Create a customer-like object from merchant data
-        setCustomer({
-          id: merchantData.id,
-          name: merchantData.name,
-          email: "",
-          company_name: merchantData.name,
-          status: "active",
-          customer_number: null
-        });
-        setMerchantId(merchantData.id);
+      // 1. Load customer data from Lovable Cloud (B2B data)
+      if (user?.id) {
+        const customerData = await getUserCustomer(user.id);
+        if (customerData) {
+          setCustomer({
+            id: customerData.id,
+            name: customerData.name,
+            email: customerData.email || user.email || "",
+            company_name: customerData.company_name,
+            status: customerData.status || "active",
+            customer_number: customerData.customer_number
+          });
+        } else {
+          // Fallback: Create basic customer object from auth user
+          setCustomer({
+            id: user.id,
+            name: user.email || "Kunde",
+            email: user.email || "",
+            company_name: null,
+            status: "active",
+            customer_number: null
+          });
+        }
       }
 
-      // Load subscription info (this uses Lovable Cloud edge function)
+      // 2. Try to find merchant in App-DB by email
+      // Note: This requires the merchant to have the same email in App-DB
+      if (user?.email) {
+        await loadMerchantByEmail(user.email);
+      }
+
+      // 3. Load subscription info from Lovable Cloud
       try {
         const { data: subInfo, error: subError } = await supabase.functions.invoke("get-subscription-info");
         if (!subError && subInfo) {
@@ -102,7 +114,7 @@ export default function KundeDashboard() {
         // Subscription info not available - that's ok
       }
 
-      // Load dashboard stats from app database
+      // 4. Load dashboard stats from App database
       await loadDashboardStats();
     } catch (error) {
       console.error("Error loading data:", error);
@@ -111,45 +123,66 @@ export default function KundeDashboard() {
     }
   };
 
-  const loadDashboardStats = async () => {
+  const loadMerchantByEmail = async (email: string) => {
     try {
-      // Use the already loaded merchantId
-      if (!merchantId) {
-        // Try to find merchant by owner_user_id
+      // First, try to find the user in App-DB by searching for a profile with matching email
+      // Since App-DB doesn't have direct email access, we need to find the merchant differently
+      
+      // Option 1: Check if there's a merchant with a profile that could be linked
+      // For now, we'll try to find merchant by owner_user_id if the user has registered in both systems
+      
+      // Alternative approach: Search for auth user in App-DB with same email via Edge Function
+      const { data: appUserData, error: appUserError } = await appSupabase.functions.invoke('findUserByEmail', {
+        body: { email }
+      });
+
+      if (appUserError) {
+        console.log('[loadMerchantByEmail] Edge function not available, will use fallback');
+        return;
+      }
+
+      if (appUserData?.userId) {
+        // Found a user in App-DB with same email, now find their merchant
         const { data: merchantData } = await appSupabase
           .from("merchants")
-          .select("id")
-          .eq("owner_user_id", user?.id || "")
-          .maybeSingle() as { data: { id: string } | null };
+          .select("*")
+          .eq("owner_user_id", appUserData.userId)
+          .maybeSingle() as { data: any };
 
-        if (!merchantData) {
-          setStats({
-            totalLoyaltyUsers: 0,
-            totalPointsGiven: 0,
-            totalPointsRedeemed: 0,
-            totalRewardsRedeemed: 0,
-            peakHour: "—",
-            genderRatio: { male: 0, female: 0, other: 0 },
-            topAgeGroup: "—",
-            newCustomers7Days: 0,
-            googleReviewClicks: 0,
-          });
-          return;
+        if (merchantData) {
+          setMerchantId(merchantData.id);
+          // Update customer with merchant info
+          setCustomer(prev => prev ? {
+            ...prev,
+            company_name: merchantData.name || prev.company_name
+          } : prev);
         }
-        setMerchantId(merchantData.id);
+      }
+    } catch (error) {
+      console.error('[loadMerchantByEmail] Error:', error);
+      // Silently fail - user might not have a merchant in App-DB yet
+    }
+  };
+
+  const loadDashboardStats = async () => {
+    try {
+      // If no merchantId found, show empty stats
+      if (!merchantId) {
+        setStats({
+          totalLoyaltyUsers: 0,
+          totalPointsGiven: 0,
+          totalPointsRedeemed: 0,
+          totalRewardsRedeemed: 0,
+          peakHour: "—",
+          genderRatio: { male: 0, female: 0, other: 0 },
+          topAgeGroup: "—",
+          newCustomers7Days: 0,
+          googleReviewClicks: 0,
+        });
+        return;
       }
 
-      let currentMerchantId = merchantId;
-      if (!currentMerchantId) {
-        const { data } = await appSupabase
-          .from("merchants")
-          .select("id")
-          .eq("owner_user_id", user?.id || "")
-          .maybeSingle() as { data: { id: string } | null };
-        currentMerchantId = data?.id || null;
-      }
-
-      if (!currentMerchantId) return;
+      const currentMerchantId = merchantId;
 
       // Load loyalty accounts count
       const { count: loyaltyUsersCount } = await appSupabase
@@ -255,10 +288,6 @@ export default function KundeDashboard() {
         }
       });
 
-      // Load Google review clicks - skip for now as this uses different DB
-      // This would need the customer_id from Lovable Cloud which we don't have
-      const googleClicks = 0;
-
       setStats({
         totalLoyaltyUsers: loyaltyUsersCount || 0,
         totalPointsGiven,
@@ -268,11 +297,10 @@ export default function KundeDashboard() {
         genderRatio,
         topAgeGroup,
         newCustomers7Days,
-        googleReviewClicks: googleClicks,
+        googleReviewClicks: 0,
       });
     } catch (error) {
       console.error("Error loading dashboard stats:", error);
-      // Set default stats on error
       setStats({
         totalLoyaltyUsers: 0,
         totalPointsGiven: 0,
@@ -366,6 +394,21 @@ export default function KundeDashboard() {
               <p className="font-medium text-amber-900 dark:text-amber-100 text-sm">Kündigung eingereicht</p>
               <p className="text-xs text-amber-800 dark:text-amber-200">
                 Ihr Abonnement endet am {formatDate(subscriptionInfo.cancelAt)}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* No Merchant Warning */}
+      {!merchantId && (
+        <div className="p-3 bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-lg">
+          <div className="flex items-start gap-3">
+            <AlertTriangle className="w-5 h-5 text-blue-600 dark:text-blue-400 mt-0.5" />
+            <div>
+              <p className="font-medium text-blue-900 dark:text-blue-100 text-sm">Händlerprofil noch nicht verknüpft</p>
+              <p className="text-xs text-blue-800 dark:text-blue-200">
+                Bonuskarten-Statistiken werden verfügbar, sobald Ihr Händlerprofil in der App eingerichtet ist.
               </p>
             </div>
           </div>
@@ -500,11 +543,11 @@ export default function KundeDashboard() {
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm flex items-center gap-2">
-              <Users className="w-4 h-4" />
-              Top-Altersgruppe
+              <TrendingUp className="w-4 h-4" />
+              Top Altersgruppe
             </CardTitle>
             <CardDescription className="text-xs">
-              Stärkste Nutzergruppe
+              Häufigste Altersgruppe
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -513,69 +556,43 @@ export default function KundeDashboard() {
         </Card>
       </div>
 
-      {/* Tertiary Stats Row */}
+      {/* Additional Stats Row */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {/* Kundenzuwachs 7 Tage */}
+        {/* New Customers */}
         <Card>
-          <CardContent className="py-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-green-100 dark:bg-green-900">
-                  <TrendingUp className="w-5 h-5 text-green-600 dark:text-green-400" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium">Kundenzuwachs (7 Tage)</p>
-                  <p className="text-xs text-muted-foreground">Neue Bonuskarten-Nutzer</p>
-                </div>
-              </div>
-              <p className="text-2xl font-bold text-green-600">+{stats?.newCustomers7Days || 0}</p>
-            </div>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm flex items-center gap-2">
+              <TrendingUp className="w-4 h-4" />
+              Neukunden (7 Tage)
+            </CardTitle>
+            <CardDescription className="text-xs">
+              Neue Bonuskarten-Registrierungen
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="text-xl font-bold">{stats?.newCustomers7Days || 0}</p>
           </CardContent>
         </Card>
 
         {/* Google Review Clicks */}
         <Card>
-          <CardContent className="py-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-amber-100 dark:bg-amber-900">
-                  <Star className="w-5 h-5 text-amber-600 dark:text-amber-400" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium">Google-Bewertungs-Klicks</p>
-                  <p className="text-xs text-muted-foreground">Bewertung angefordert</p>
-                </div>
-              </div>
-              <p className="text-2xl font-bold">{stats?.googleReviewClicks || 0}</p>
-            </div>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm flex items-center gap-2">
+              <Star className="w-4 h-4" />
+              Google-Bewertungen
+            </CardTitle>
+            <CardDescription className="text-xs">
+              Klicks auf Bewertungslink
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="text-xl font-bold">{stats?.googleReviewClicks || 0}</p>
           </CardContent>
         </Card>
       </div>
 
-      {/* Charts Section */}
-      <DashboardCharts merchantId={merchantId} />
-
-      {/* Subscription Status (if active) */}
-      {subscriptionInfo?.hasSubscription && (
-        <Card>
-          <CardContent className="py-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Aktueller Tarif</p>
-                <p className="font-medium">{subscriptionInfo.plan?.name || "Eloyo Basispaket"}</p>
-              </div>
-              <div>{getStatusBadge(subscriptionInfo.status || customer?.status || "unknown")}</div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Customer Number */}
-      {customer?.customer_number && (
-        <p className="text-xs text-muted-foreground text-center">
-          Kundennummer: ELO-{String(customer.customer_number).padStart(5, '0')}
-        </p>
-      )}
+      {/* Charts */}
+      {merchantId && <DashboardCharts merchantId={merchantId} />}
     </div>
   );
 }

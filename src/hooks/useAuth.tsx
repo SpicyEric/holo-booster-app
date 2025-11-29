@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
-import { appSupabase } from '@/integrations/app-supabase/client';
+import { supabase } from '@/integrations/supabase/client';
 import { UserRole, deriveUserRole } from '@/lib/auth';
 
 export const useAuth = () => {
@@ -10,8 +10,8 @@ export const useAuth = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Set up auth state listener FIRST (App-DB)
-    const { data: { subscription } } = appSupabase.auth.onAuthStateChange(
+    // Set up auth state listener FIRST (Lovable Cloud)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
@@ -30,7 +30,7 @@ export const useAuth = () => {
     );
 
     // THEN check for existing session
-    appSupabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
       

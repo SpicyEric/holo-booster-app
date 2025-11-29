@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { GlassCard } from "@/components/GlassCard";
-import { appSupabase } from "@/integrations/app-supabase/client";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { User, Lock, Mail } from "lucide-react";
 import { Label } from "@/components/ui/label";
@@ -35,7 +35,7 @@ const Settings = () => {
 
     setChangingPassword(true);
     try {
-      const { error } = await appSupabase.auth.updateUser({
+      const { error } = await supabase.auth.updateUser({
         password: passwordData.newPassword,
       });
 
@@ -59,7 +59,7 @@ const Settings = () => {
 
     setChangingEmail(true);
     try {
-      const { error } = await appSupabase.auth.updateUser({
+      const { error } = await supabase.auth.updateUser({
         email: emailData.newEmail,
       });
 
