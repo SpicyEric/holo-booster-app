@@ -145,7 +145,7 @@ serve(async (req) => {
       type: 'recovery',
       email: customerEmail,
       options: {
-        redirectTo: 'https://preview--xcnfyawyoahlbhwfkyku.lovable.app/auth',
+        redirectTo: 'https://eloyo.de/auth',
       },
     });
 
