@@ -30,7 +30,7 @@ serve(async (req) => {
     if (!signature) throw new Error("No stripe signature");
 
     const body = await req.text();
-const event = await stripe.webhooks.constructEventAsync(
+    const event = await stripe.webhooks.constructEventAsync(
       body,
       signature,
       Deno.env.get("STRIPE_WEBHOOK_SECRET") || ""
@@ -142,7 +142,7 @@ const event = await stripe.webhooks.constructEventAsync(
               }
             }
             
-            // Create customer account for non-SEPA (no email sent yet, will be sent with invoice)
+            // Create customer account for non-SEPA (email will be sent after invoice.paid)
             if (!isSEPA) {
               try {
                 const accountResponse = await fetch(
@@ -165,7 +165,7 @@ const event = await stripe.webhooks.constructEventAsync(
                 if (!accountResponse.ok) {
                   console.error("[WEBHOOK] createCustomerAccount failed:", accountResponse.status, accountDataText);
                 } else {
-                  console.log("[WEBHOOK] Customer account created (email will be sent with invoice)");
+                  console.log("[WEBHOOK] Customer account created (onboarding email will be sent with invoice.paid)");
                 }
               } catch (accountError) {
                 console.error("[WEBHOOK] Error creating customer account:", accountError);
@@ -253,7 +253,7 @@ const event = await stripe.webhooks.constructEventAsync(
         // Find customer
         const { data: customer } = await supabase
           .from("customers")
-          .select("id, promoter_id, email, name, company_name, status")
+          .select("id, promoter_id, email, name, company_name, status, onboarding_email_sent_at")
           .eq("stripe_customer_id", invoice.customer as string)
           .single();
 
@@ -262,7 +262,7 @@ const event = await stripe.webhooks.constructEventAsync(
           break;
         }
 
-        // If customer was pending_payment (SEPA), activate and send welcome email
+        // If customer was pending_payment (SEPA), activate and create account
         if (customer.status === "pending_payment") {
           console.log("[WEBHOOK] Activating SEPA customer after payment confirmation");
           
@@ -271,7 +271,7 @@ const event = await stripe.webhooks.constructEventAsync(
             .update({ status: "active" })
             .eq("id", customer.id);
 
-          // Now create account (email will be sent with invoice below)
+          // Now create account
           try {
             const accountResponse = await fetch(
               `${Deno.env.get("SUPABASE_URL")}/functions/v1/createCustomerAccount`,
@@ -293,7 +293,7 @@ const event = await stripe.webhooks.constructEventAsync(
             if (!accountResponse.ok) {
               console.error("[WEBHOOK] createCustomerAccount failed:", accountResponse.status, accountDataText);
             } else {
-              console.log("[WEBHOOK] SEPA customer account created (email will be sent with invoice)");
+              console.log("[WEBHOOK] SEPA customer account created");
             }
           } catch (accountError) {
             console.error("[WEBHOOK] Error creating SEPA customer account:", accountError);
@@ -314,10 +314,9 @@ const event = await stripe.webhooks.constructEventAsync(
 
         console.log("[WEBHOOK] Invoice saved");
 
-        // Generate account access link if needed
+        // Generate account access link
         let resetLink: string | null = null;
         try {
-          // Always try to generate a password setup (recovery) link
           const { data: linkData, error: recoveryError } = await supabase.auth.admin.generateLink({
             type: 'recovery',
             email: customer.email,
@@ -330,7 +329,7 @@ const event = await stripe.webhooks.constructEventAsync(
           if (linkData?.properties?.action_link) {
             resetLink = linkData.properties.action_link as string;
           } else {
-            // Fallback: generate a magic link so the user can still access the dashboard
+            // Fallback: generate a magic link
             const { data: magicData, error: magicError } = await supabase.auth.admin.generateLink({
               type: 'magiclink',
               email: customer.email,
@@ -346,181 +345,87 @@ const event = await stripe.webhooks.constructEventAsync(
           console.error("[WEBHOOK] Error generating account link:", linkError);
         }
 
-        // Send invoice email with legal documents and account access
-        if (invoice.invoice_pdf && customer.email) {
-          try {
-            console.log("[WEBHOOK] Preparing invoice email for:", customer.email);
-            
-            // Download PDF from Stripe
-            const pdfResponse = await fetch(invoice.invoice_pdf);
-            if (!pdfResponse.ok) {
-              throw new Error(`Failed to fetch PDF: ${pdfResponse.statusText}`);
+        // Extract Stripe data for onboarding email
+        let productName = "Eloyo Abo";
+        let pricePerMonth = "49,45 €";
+        let nextBillingDate: string | null = null;
+
+        // Get product name and price from invoice line items
+        if (invoice.lines?.data?.length > 0) {
+          const firstLine = invoice.lines.data[0];
+          if (firstLine.price?.product) {
+            try {
+              const product = await stripe.products.retrieve(firstLine.price.product as string);
+              productName = product.name || productName;
+            } catch (e) {
+              console.log("[WEBHOOK] Could not fetch product name:", e);
             }
-            const pdfBuffer = await pdfResponse.arrayBuffer();
-            const pdfBase64 = base64Encode(pdfBuffer);
-
-            // Prepare legal documents
-            const agbContent = `Allgemeine Geschäftsbedingungen (AGB) - Eloyo
-
-1. Geltungsbereich
-Diese AGB gelten für alle Verträge zwischen Eloyo und dem Kunden.
-
-2. Vertragsschluss
-Der Vertrag kommt durch Bestätigung der Bestellung zustande.
-
-3. Leistungen
-Eloyo erbringt die vereinbarten Dienstleistungen gemäß Leistungsbeschreibung.
-
-4. Zahlung
-Die Zahlung erfolgt per SEPA-Lastschrift oder Kreditkarte gemäß vereinbarter Zahlungsbedingungen.
-
-5. Laufzeit und Kündigung
-Der Vertrag hat eine Mindestlaufzeit von 12 Monaten und verlängert sich automatisch um weitere 12 Monate, sofern nicht mit einer Frist von 3 Monaten zum Ende der Laufzeit gekündigt wird.
-
-6. Haftung
-Die Haftung richtet sich nach den gesetzlichen Bestimmungen.
-
-7. Datenschutz
-Wir verarbeiten personenbezogene Daten gemäß DSGVO.
-
-Stand: ${new Date().toLocaleDateString("de-DE")}`;
-
-            const datenschutzContent = `Datenschutzerklärung - Eloyo
-
-1. Verantwortlicher
-Eloyo ist verantwortlich für die Verarbeitung Ihrer personenbezogenen Daten.
-
-2. Erhobene Daten
-Wir erheben folgende Daten: Name, E-Mail, Firmenname, Adresse, Zahlungsinformationen.
-
-3. Zweck der Verarbeitung
-Die Datenverarbeitung erfolgt zur Vertragserfüllung und Kundenbetreuung.
-
-4. Rechtsgrundlage
-Die Verarbeitung erfolgt auf Basis von Art. 6 Abs. 1 lit. b DSGVO.
-
-5. Speicherdauer
-Daten werden für die Dauer der Geschäftsbeziehung und gesetzliche Aufbewahrungsfristen gespeichert.
-
-6. Ihre Rechte
-Sie haben das Recht auf Auskunft, Berichtigung, Löschung, Einschränkung, Datenübertragbarkeit und Widerspruch.
-
-7. Kontakt
-Datenschutzanfragen: datenschutz@eloyo.de
-
-Stand: ${new Date().toLocaleDateString("de-DE")}`;
-
-            const widerrufsbelehrungContent = `Widerrufsbelehrung - Eloyo
-
-Widerrufsrecht
-
-Sie haben das Recht, binnen vierzehn Tagen ohne Angabe von Gründen diesen Vertrag zu widerrufen.
-
-Die Widerrufsfrist beträgt vierzehn Tage ab dem Tag des Vertragsabschlusses.
-
-Um Ihr Widerrufsrecht auszuüben, müssen Sie uns
-Eloyo
-E-Mail: support@eloyo.de
-
-mittels einer eindeutigen Erklärung (z. B. ein mit der Post versandter Brief oder E-Mail) über Ihren Entschluss, diesen Vertrag zu widerrufen, informieren.
-
-Zur Wahrung der Widerrufsfrist reicht es aus, dass Sie die Mitteilung über die Ausübung des Widerrufsrechts vor Ablauf der Widerrufsfrist absenden.
-
-Folgen des Widerrufs
-
-Wenn Sie diesen Vertrag widerrufen, haben wir Ihnen alle Zahlungen, die wir von Ihnen erhalten haben, unverzüglich und spätestens binnen vierzehn Tagen ab dem Tag zurückzuzahlen, an dem die Mitteilung über Ihren Widerruf dieses Vertrags bei uns eingegangen ist.
-
-Für diese Rückzahlung verwenden wir dasselbe Zahlungsmittel, das Sie bei der ursprünglichen Transaktion eingesetzt haben, es sei denn, mit Ihnen wurde ausdrücklich etwas anderes vereinbart; in keinem Fall werden Ihnen wegen dieser Rückzahlung Entgelte berechnet.
-
-Stand: ${new Date().toLocaleDateString("de-DE")}`;
-
-            // Send email with all attachments
-            await resend.emails.send({
-              from: "Eloyo Team <support@eloyo.de>",
-              to: [customer.email],
-              subject: "Ihre Rechnung von Eloyo",
-              html: `
-                <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-                  <div style="background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); padding: 30px; text-align: center; border-radius: 12px 12px 0 0;">
-                    <h1 style="color: #ffffff; margin: 0; font-size: 24px;">Vielen Dank für Ihre Zahlung!</h1>
-                  </div>
-                  
-                  <div style="padding: 30px; background: #ffffff;">
-                  <p style="color: #374151; font-size: 16px;">Hallo ${customer.name}${customer.company_name ? ` (${customer.company_name})` : ""},</p>
-                  
-                  <p style="color: #374151; font-size: 15px;">vielen Dank für Ihre Zahlung. Im Anhang finden Sie Ihre Rechnung sowie unsere rechtlichen Dokumente:</p>
-                  
-                  <ul style="color: #374151; font-size: 15px;">
-                    <li>Rechnung (PDF)</li>
-                    <li>Allgemeine Geschäftsbedingungen (AGB)</li>
-                    <li>Datenschutzerklärung</li>
-                    <li>Widerrufsbelehrung</li>
-                  </ul>
-                  </div>
-                  
-                  ${resetLink ? `
-                  <h2 style="color: #1f2937; font-size: 18px; margin-top: 30px;">Ihr Dashboard-Zugang</h2>
-                  <p style="color: #374151; font-size: 15px;">Über Ihr persönliches Dashboard können Sie:</p>
-                  <ul style="color: #374151; font-size: 15px;">
-                    <li>Ihre Rechnungen einsehen und herunterladen</li>
-                    <li>Zahlungsdaten verwalten</li>
-                    <li>Ihr Kundenbindungsprogramm konfigurieren</li>
-                    <li>Ihr Abonnement verwalten</li>
-                  </ul>
-                  
-                  <div style="background-color: #f3f4f6; padding: 25px; border-radius: 8px; margin: 20px 0; text-align: center;">
-                    <p style="margin: 0 0 15px 0; color: #374151; font-weight: 600;">So richten Sie Ihr Passwort ein:</p>
-                    <a href="${resetLink}" 
-                       style="display: inline-block; background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); color: white; padding: 14px 32px; text-decoration: none; border-radius: 8px; font-weight: 600;">
-                      🔑 Passwort festlegen
-                    </a>
-                  </div>
-                  
-                  <p style="color: #6b7280; font-size: 14px;">
-                    <strong>Hinweis:</strong> Dieser Link ist 24 Stunden gültig.
-                  </p>
-                  ` : ''}
-                  
-                  <p style="color: #374151; font-size: 15px;">Bei Fragen stehen wir Ihnen gerne zur Verfügung.</p>
-                  
-                  <p style="margin-top: 30px; color: #374151; font-size: 15px;">
-                    Herzliche Grüße,<br>
-                    <strong>Ihr Eloyo Team</strong>
-                  </p>
-                  </div>
-                  
-                  <div style="background-color: #f9fafb; padding: 25px; border-top: 1px solid #e5e7eb; text-align: center; border-radius: 0 0 12px 12px;">
-                    <p style="font-size: 13px; color: #6b7280; margin: 0;">
-                      Eloyo - Digitale Kundenbindung<br>
-                      E-Mail: <a href="mailto:support@eloyo.de" style="color: #6366f1;">support@eloyo.de</a>
-                    </p>
-                  </div>
-                </div>
-              `,
-              attachments: [
-                {
-                  filename: "Rechnung.pdf",
-                  content: pdfBase64,
-                },
-                {
-                  filename: "AGB.txt",
-                  content: base64Encode(new TextEncoder().encode(agbContent).buffer),
-                },
-                {
-                  filename: "Datenschutzerklaerung.txt",
-                  content: base64Encode(new TextEncoder().encode(datenschutzContent).buffer),
-                },
-                {
-                  filename: "Widerrufsbelehrung.txt",
-                  content: base64Encode(new TextEncoder().encode(widerrufsbelehrungContent).buffer),
-                },
-              ],
-            });
-            
-            console.log("[WEBHOOK] Invoice email sent successfully to:", customer.email);
-          } catch (emailError) {
-            console.error("[WEBHOOK] Error sending invoice email:", emailError);
           }
+          // Calculate price per month
+          const amountInCents = firstLine.amount || invoice.amount_paid;
+          pricePerMonth = `${(amountInCents / 100).toFixed(2).replace('.', ',')} €`;
+        }
+
+        // Get next billing date from subscription
+        if (invoice.subscription) {
+          try {
+            const subscription = await stripe.subscriptions.retrieve(invoice.subscription as string);
+            if (subscription.current_period_end) {
+              const nextDate = new Date(subscription.current_period_end * 1000);
+              nextBillingDate = nextDate.toLocaleDateString('de-DE', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric'
+              });
+            }
+          } catch (e) {
+            console.log("[WEBHOOK] Could not fetch subscription:", e);
+          }
+        }
+
+        // Send comprehensive onboarding email (only if not already sent)
+        if (customer.email && resetLink && !customer.onboarding_email_sent_at) {
+          console.log("[WEBHOOK] Sending onboarding email to:", customer.email);
+          
+          try {
+            const onboardingResponse = await fetch(
+              `${Deno.env.get("SUPABASE_URL")}/functions/v1/send-merchant-onboarding`,
+              {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  "Authorization": `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
+                },
+                body: JSON.stringify({
+                  to: customer.email,
+                  companyName: customer.company_name || customer.name,
+                  contactName: customer.name,
+                  productName,
+                  pricePerMonth,
+                  nextBillingDate,
+                  passwordSetupUrl: resetLink,
+                  invoiceUrl: invoice.invoice_pdf || null,
+                  customerId: customer.id,
+                }),
+              }
+            );
+
+            if (!onboardingResponse.ok) {
+              const errText = await onboardingResponse.text();
+              console.error("[WEBHOOK] Failed to send onboarding email:", onboardingResponse.status, errText);
+            } else {
+              const result = await onboardingResponse.json();
+              if (result.skipped) {
+                console.log("[WEBHOOK] Onboarding email already sent, skipped");
+              } else {
+                console.log("[WEBHOOK] Onboarding email sent successfully");
+              }
+            }
+          } catch (onboardingError) {
+            console.error("[WEBHOOK] Error calling send-merchant-onboarding:", onboardingError);
+          }
+        } else if (customer.onboarding_email_sent_at) {
+          console.log("[WEBHOOK] Onboarding email already sent, skipping");
         }
 
         // Calculate and save commissions (10% of net amount)

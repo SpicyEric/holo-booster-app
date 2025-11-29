@@ -71,7 +71,7 @@ serve(async (req) => {
       console.log("[CREATE-CUSTOMER-ACCOUNT] Role 'customer' assigned successfully");
     }
 
-    console.log("[CREATE-CUSTOMER-ACCOUNT] Account setup complete");
+    console.log("[CREATE-CUSTOMER-ACCOUNT] Account setup complete - email will be sent via stripe-webhook after payment");
 
     // Generate password reset link so the customer can set a password
     const { data: resetData, error: resetError } = await supabaseAdmin.auth.admin.generateLink({
