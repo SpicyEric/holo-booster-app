@@ -50,26 +50,30 @@ const ClassicNav = ({ items, logo }: ClassicNavProps) => {
                 )} />
               </button>
               
-              {/* Dropdown */}
+              {/* Dropdown - no gap, seamless hover */}
               {desktopMenuOpen && (
-                <div className="absolute top-full left-0 mt-1 py-2 bg-background border border-border rounded-lg shadow-lg min-w-[180px] z-50">
-                  {menuItems.map((item, index) => {
-                    const isActive = location.pathname === item.href;
-                    return (
-                      <Link
-                        key={index}
-                        to={item.href}
-                        className={cn(
-                          "block px-4 py-2 font-medium transition-all duration-200",
-                          isActive
-                            ? "bg-primary/10 text-primary"
-                            : "text-foreground hover:bg-muted"
-                        )}
-                      >
-                        {item.label}
-                      </Link>
-                    );
-                  })}
+                <div className="absolute top-full left-0 pt-0 z-50">
+                  {/* Invisible bridge to prevent hover gap */}
+                  <div className="h-1" />
+                  <div className="py-2 bg-background border border-border rounded-lg shadow-lg min-w-[180px]">
+                    {menuItems.map((item, index) => {
+                      const isActive = location.pathname === item.href;
+                      return (
+                        <Link
+                          key={index}
+                          to={item.href}
+                          className={cn(
+                            "block px-4 py-2 font-medium transition-all duration-200",
+                            isActive
+                              ? "bg-primary/10 text-primary"
+                              : "text-foreground hover:bg-muted"
+                          )}
+                        >
+                          {item.label}
+                        </Link>
+                      );
+                    })}
+                  </div>
                 </div>
               )}
             </div>
