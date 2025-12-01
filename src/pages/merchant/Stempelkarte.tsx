@@ -25,7 +25,8 @@ import {
   Clock,
   Store
 } from "lucide-react";
-import MerchantPreview from "@/components/merchant/MerchantPreview";
+import StampCardPreview, { StampCardData } from "@/components/StampCardPreview";
+import PhoneFrame from "@/components/PhoneFrame";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -86,6 +87,21 @@ const defaultOpeningHours: OpeningHours = {
   friday: { open: "09:00", close: "18:00", closed: false },
   saturday: { open: "10:00", close: "16:00", closed: false },
   sunday: { open: "00:00", close: "00:00", closed: true },
+};
+
+// Format opening hours for preview display
+const formatOpeningHoursPreview = (hours: OpeningHours): string => {
+  const dayNames: Record<string, string> = {
+    monday: "Mo", tuesday: "Di", wednesday: "Mi",
+    thursday: "Do", friday: "Fr", saturday: "Sa", sunday: "So"
+  };
+  
+  return Object.entries(hours)
+    .map(([day, h]) => {
+      if (h.closed) return `${dayNames[day]}: Geschlossen`;
+      return `${dayNames[day]}: ${h.open}-${h.close}`;
+    })
+    .join(", ");
 };
 
 const Stempelkarte = () => {
@@ -334,29 +350,22 @@ const Stempelkarte = () => {
         {/* Smartphone Preview */}
         <div className="lg:col-span-1 order-2 lg:order-1">
           <div className="sticky top-24">
-            <h3 className="text-lg font-semibold mb-4 text-center">Live-Vorschau</h3>
-            <div className="mx-auto w-[300px] h-[620px] bg-foreground rounded-[40px] p-3 shadow-2xl">
-              <div className="w-full h-full bg-background rounded-[32px] overflow-hidden relative">
-                <MerchantPreview
-                  name={formData.name}
-                  description={formData.description}
-                  industry={formData.industry}
-                  logo_url={formData.logo_url}
-                  cover_image_url={formData.cover_image_url}
-                  street={formData.street}
-                  house_number={formData.house_number}
-                  postal_code={formData.postal_code}
-                  city={formData.city}
-                  phone={formData.phone}
-                  website={formData.website}
-                  instagram={formData.instagram}
-                  facebook={formData.facebook}
-                  twitter={formData.twitter}
-                  google_review_url={formData.google_review_url}
-                  opening_hours={formData.opening_hours}
-                />
-              </div>
-            </div>
+            <PhoneFrame title="Live-Vorschau">
+              <StampCardPreview 
+                data={{
+                  name: formData.name || "Geschäftsname",
+                  points: 25, // Demo points
+                  coverImage: formData.cover_image_url,
+                  address: [formData.street, formData.house_number, formData.postal_code, formData.city]
+                    .filter(Boolean)
+                    .join(" "),
+                  phone: formData.phone,
+                  website: formData.website,
+                  instagram: formData.instagram,
+                  openingHours: formatOpeningHoursPreview(formData.opening_hours),
+                }}
+              />
+            </PhoneFrame>
             
             {/* Save Button - Below Phone Preview */}
             <div className="mt-6">
