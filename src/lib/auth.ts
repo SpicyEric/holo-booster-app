@@ -50,7 +50,11 @@ export const signIn = async (email: string, password: string) => {
 };
 
 export const signOut = async () => {
-  const { error } = await supabase.auth.signOut();
+  const { error } = await supabase.auth.signOut({ scope: 'local' });
+  // Ignoriere "session_not_found" Fehler - Session ist bereits beendet
+  if (error && error.message?.includes('session_not_found')) {
+    return { error: null };
+  }
   return { error };
 };
 
