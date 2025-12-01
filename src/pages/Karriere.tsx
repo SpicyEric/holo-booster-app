@@ -67,7 +67,7 @@ const Karriere = () => {
       id: 'inside-sales',
       title: 'Inside Sales Manager',
       subtitle: '(m/w/d)',
-      location: 'Frankfurt am Main / Remote',
+      location: 'München / Remote',
       type: 'Vollzeit',
       description: 'Du bist der erste Kontakt für potenzielle Kunden und begeisterst sie für unser innovatives NFC-Stempelsystem.',
       tasks: [
@@ -89,7 +89,7 @@ const Karriere = () => {
       id: 'fullstack-dev',
       title: 'Senior Full Stack Developer',
       subtitle: '(m/w/d)',
-      location: 'Frankfurt am Main / Remote',
+      location: 'München / Remote',
       type: 'Vollzeit',
       description: 'Du entwickelst die technische Zukunft von Eloyo – von der mobilen App bis zum Merchant-Dashboard.',
       tasks: [
