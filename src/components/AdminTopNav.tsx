@@ -1,4 +1,4 @@
-import { Home, Users, BarChart3, Settings, LogOut, UserCog, ShoppingCart, Menu, Package, Box } from "lucide-react";
+import { Home, Users, BarChart3, Settings, LogOut, UserCog, ShoppingCart, Menu, Package, Box, Map } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import {
   DropdownMenu,
@@ -15,6 +15,7 @@ import eloyoLogo from '@/assets/eloyo-logo.png';
 const menuItems = [
   { title: "Dashboard", url: "/admin", icon: Home },
   { title: "Kunden", url: "/admin/customers", icon: Users },
+  { title: "Karte", url: "/admin/map", icon: Map },
   { title: "Box-IDs", url: "/admin/boxes", icon: Box },
   { title: "Bestellungen", url: "/admin/orders", icon: Package },
   { title: "Accounts", url: "/admin/accounts", icon: UserCog },

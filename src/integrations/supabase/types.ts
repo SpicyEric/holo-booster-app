@@ -549,8 +549,10 @@ export type Database = {
           instagram: string | null
           last_auto_reply_check: string | null
           last_contact_date: string | null
+          latitude: number | null
           lead_source: string | null
           logo_url: string | null
+          longitude: number | null
           name: string
           next_auto_reply_run: string | null
           next_followup_date: string | null
@@ -603,8 +605,10 @@ export type Database = {
           instagram?: string | null
           last_auto_reply_check?: string | null
           last_contact_date?: string | null
+          latitude?: number | null
           lead_source?: string | null
           logo_url?: string | null
+          longitude?: number | null
           name: string
           next_auto_reply_run?: string | null
           next_followup_date?: string | null
@@ -657,8 +661,10 @@ export type Database = {
           instagram?: string | null
           last_auto_reply_check?: string | null
           last_contact_date?: string | null
+          latitude?: number | null
           lead_source?: string | null
           logo_url?: string | null
+          longitude?: number | null
           name?: string
           next_auto_reply_run?: string | null
           next_followup_date?: string | null
