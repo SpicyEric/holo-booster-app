@@ -126,16 +126,23 @@ const Stempelkarte = () => {
           .from("merchant_assignments")
           .select("customer_id")
           .eq("merchant_user_id", user.id)
-          .single();
+          .maybeSingle();
         
         if (assignmentError) {
           console.error("Error fetching merchant assignment:", assignmentError);
+          toast.error("Fehler beim Laden der Daten. Bitte versuche es erneut.");
+          setLoading(false);
+          return;
+        }
+        
+        if (!assignment) {
+          console.log("No merchant assignment found for user:", user.id);
           toast.error("Kein Geschäft zugewiesen. Bitte kontaktiere den Support.");
           setLoading(false);
           return;
         }
         
-        if (!assignment?.customer_id) {
+        if (!assignment.customer_id) {
           toast.error("Kein Geschäft gefunden.");
           setLoading(false);
           return;
