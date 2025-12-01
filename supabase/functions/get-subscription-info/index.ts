@@ -44,10 +44,17 @@ serve(async (req) => {
       .from("customer_users")
       .select("customer_id, customers(stripe_subscription_id, stripe_customer_id)")
       .eq("user_id", user.id)
-      .single();
+      .maybeSingle();
 
+    // No customer record - return gracefully
     if (!customerUser) {
-      throw new Error("No customer record found for this user");
+      logStep("No customer record found for user");
+      return new Response(JSON.stringify({ 
+        hasSubscription: false 
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
+      });
     }
 
     const subscriptionId = (customerUser.customers as any)?.stripe_subscription_id;
