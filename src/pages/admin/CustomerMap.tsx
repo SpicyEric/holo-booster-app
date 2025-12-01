@@ -1,13 +1,11 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { AdminTopNav } from '@/components/AdminTopNav';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
 import { MapPin, X, Save, Navigation } from 'lucide-react';
-import mapboxgl from 'mapbox-gl';
-import 'mapbox-gl/dist/mapbox-gl.css';
+import { GoogleMap, useJsApiLoader, Marker } from '@react-google-maps/api';
 
 interface Customer {
   id: string;
@@ -21,19 +19,29 @@ interface Customer {
   longitude: number | null;
 }
 
-const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN || '';
+const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || '';
+
+const mapContainerStyle = {
+  width: '100%',
+  height: '100%',
+};
+
+const defaultCenter = {
+  lat: 48.137154,
+  lng: 11.576124,
+};
 
 export default function CustomerMap() {
-  const mapContainer = useRef<HTMLDivElement>(null);
-  const map = useRef<mapboxgl.Map | null>(null);
-  const markersRef = useRef<Map<string, mapboxgl.Marker>>(new Map());
-  
+  const [map, setMap] = useState<google.maps.Map | null>(null);
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [isRepositioning, setIsRepositioning] = useState(false);
-  const [tempMarker, setTempMarker] = useState<mapboxgl.Marker | null>(null);
   const [newPosition, setNewPosition] = useState<{ lat: number; lng: number } | null>(null);
   const [loading, setLoading] = useState(true);
+
+  const { isLoaded, loadError } = useJsApiLoader({
+    googleMapsApiKey: GOOGLE_MAPS_API_KEY,
+  });
 
   // Fetch customers
   useEffect(() => {
@@ -55,105 +63,25 @@ export default function CustomerMap() {
     fetchCustomers();
   }, []);
 
-  // Initialize map
-  useEffect(() => {
-    if (!mapContainer.current || !MAPBOX_TOKEN) return;
+  const onLoad = useCallback((map: google.maps.Map) => {
+    setMap(map);
+  }, []);
 
-    mapboxgl.accessToken = MAPBOX_TOKEN;
+  const onUnmount = useCallback(() => {
+    setMap(null);
+  }, []);
 
-    map.current = new mapboxgl.Map({
-      container: mapContainer.current,
-      style: 'mapbox://styles/mapbox/streets-v12',
-      center: [11.576124, 48.137154], // Munich center
-      zoom: 10,
-    });
-
-    map.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
-
-    // Handle map click for repositioning
-    map.current.on('click', (e) => {
-      if (isRepositioning && selectedCustomer) {
-        const { lat, lng } = e.lngLat;
-        setNewPosition({ lat, lng });
-
-        // Remove old temp marker
-        if (tempMarker) {
-          tempMarker.remove();
-        }
-
-        // Add new temp marker
-        const marker = new mapboxgl.Marker({ color: '#22c55e' })
-          .setLngLat([lng, lat])
-          .addTo(map.current!);
-        setTempMarker(marker);
-      }
-    });
-
-    return () => {
-      map.current?.remove();
-    };
-  }, [MAPBOX_TOKEN]);
-
-  // Handle repositioning state change
-  useEffect(() => {
-    if (map.current) {
-      map.current.getCanvas().style.cursor = isRepositioning ? 'crosshair' : '';
+  const handleMapClick = useCallback((e: google.maps.MapMouseEvent) => {
+    if (isRepositioning && selectedCustomer && e.latLng) {
+      const lat = e.latLng.lat();
+      const lng = e.latLng.lng();
+      setNewPosition({ lat, lng });
     }
-  }, [isRepositioning]);
-
-  // Add markers for customers
-  useEffect(() => {
-    if (!map.current || loading) return;
-
-    // Clear existing markers
-    markersRef.current.forEach((marker) => marker.remove());
-    markersRef.current.clear();
-
-    // Add markers for customers with coordinates
-    customers.forEach((customer) => {
-      if (customer.latitude && customer.longitude) {
-        const el = document.createElement('div');
-        el.className = 'customer-marker';
-        el.style.cssText = `
-          width: 32px;
-          height: 32px;
-          background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
-          border-radius: 50%;
-          border: 3px solid white;
-          box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-          cursor: pointer;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-        `;
-        el.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="white"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`;
-
-        const marker = new mapboxgl.Marker({ element: el })
-          .setLngLat([customer.longitude, customer.latitude])
-          .addTo(map.current!);
-
-        el.addEventListener('click', () => {
-          setSelectedCustomer(customer);
-          setIsRepositioning(false);
-          setNewPosition(null);
-          if (tempMarker) {
-            tempMarker.remove();
-            setTempMarker(null);
-          }
-        });
-
-        markersRef.current.set(customer.id, marker);
-      }
-    });
-  }, [customers, loading]);
+  }, [isRepositioning, selectedCustomer]);
 
   const handleStartRepositioning = () => {
     setIsRepositioning(true);
     setNewPosition(null);
-    if (tempMarker) {
-      tempMarker.remove();
-      setTempMarker(null);
-    }
     toast.info('Klicke auf die Karte, um die neue Position zu setzen');
   };
 
@@ -174,7 +102,6 @@ export default function CustomerMap() {
     } else {
       toast.success('Position erfolgreich gespeichert');
       
-      // Update local state
       setCustomers((prev) =>
         prev.map((c) =>
           c.id === selectedCustomer.id
@@ -189,30 +116,25 @@ export default function CustomerMap() {
       
       setIsRepositioning(false);
       setNewPosition(null);
-      if (tempMarker) {
-        tempMarker.remove();
-        setTempMarker(null);
-      }
     }
   };
 
   const handleCancelRepositioning = () => {
     setIsRepositioning(false);
     setNewPosition(null);
-    if (tempMarker) {
-      tempMarker.remove();
-      setTempMarker(null);
-    }
   };
 
   const handleFlyToCustomer = (customer: Customer) => {
-    if (customer.latitude && customer.longitude && map.current) {
-      map.current.flyTo({
-        center: [customer.longitude, customer.latitude],
-        zoom: 15,
-        duration: 1500,
-      });
+    if (customer.latitude && customer.longitude && map) {
+      map.panTo({ lat: customer.latitude, lng: customer.longitude });
+      map.setZoom(15);
     }
+  };
+
+  const handleMarkerClick = (customer: Customer) => {
+    setSelectedCustomer(customer);
+    setIsRepositioning(false);
+    setNewPosition(null);
   };
 
   const getFullAddress = (customer: Customer) => {
@@ -228,21 +150,38 @@ export default function CustomerMap() {
   const customersWithCoords = customers.filter((c) => c.latitude && c.longitude);
   const customersWithoutCoords = customers.filter((c) => !c.latitude || !c.longitude);
 
-  if (!MAPBOX_TOKEN) {
+  if (loadError) {
     return (
       <ProtectedRoute allowedRoles={['admin']}>
         <div className="min-h-screen bg-background">
           <AdminTopNav />
           <div className="p-6">
-            <Card>
-              <CardContent className="p-8 text-center">
-                <MapPin className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                <h2 className="text-xl font-semibold mb-2">Mapbox Token fehlt</h2>
-                <p className="text-muted-foreground">
-                  Bitte füge VITE_MAPBOX_TOKEN zu den Umgebungsvariablen hinzu.
-                </p>
-              </CardContent>
-            </Card>
+            <div className="bg-card border rounded-lg p-8 text-center">
+              <MapPin className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+              <h2 className="text-xl font-semibold mb-2">Fehler beim Laden von Google Maps</h2>
+              <p className="text-muted-foreground">
+                Bitte überprüfe den Google Maps API-Schlüssel.
+              </p>
+            </div>
+          </div>
+        </div>
+      </ProtectedRoute>
+    );
+  }
+
+  if (!GOOGLE_MAPS_API_KEY) {
+    return (
+      <ProtectedRoute allowedRoles={['admin']}>
+        <div className="min-h-screen bg-background">
+          <AdminTopNav />
+          <div className="p-6">
+            <div className="bg-card border rounded-lg p-8 text-center">
+              <MapPin className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+              <h2 className="text-xl font-semibold mb-2">Google Maps API-Schlüssel fehlt</h2>
+              <p className="text-muted-foreground">
+                Bitte füge VITE_GOOGLE_MAPS_API_KEY zu den Umgebungsvariablen hinzu.
+              </p>
+            </div>
           </div>
         </div>
       </ProtectedRoute>
@@ -404,7 +343,59 @@ export default function CustomerMap() {
 
           {/* Map */}
           <div className="flex-1 relative">
-            <div ref={mapContainer} className="absolute inset-0" />
+            {isLoaded ? (
+              <GoogleMap
+                mapContainerStyle={mapContainerStyle}
+                center={defaultCenter}
+                zoom={10}
+                onLoad={onLoad}
+                onUnmount={onUnmount}
+                onClick={handleMapClick}
+                options={{
+                  disableDefaultUI: false,
+                  zoomControl: true,
+                  mapTypeControl: false,
+                  streetViewControl: false,
+                  fullscreenControl: true,
+                }}
+              >
+                {/* Customer markers */}
+                {customersWithCoords.map((customer) => (
+                  <Marker
+                    key={customer.id}
+                    position={{ lat: customer.latitude!, lng: customer.longitude! }}
+                    onClick={() => handleMarkerClick(customer)}
+                    icon={{
+                      path: google.maps.SymbolPath.CIRCLE,
+                      scale: 12,
+                      fillColor: selectedCustomer?.id === customer.id ? '#22c55e' : '#6366f1',
+                      fillOpacity: 1,
+                      strokeColor: '#ffffff',
+                      strokeWeight: 3,
+                    }}
+                  />
+                ))}
+
+                {/* New position marker */}
+                {newPosition && (
+                  <Marker
+                    position={newPosition}
+                    icon={{
+                      path: google.maps.SymbolPath.CIRCLE,
+                      scale: 14,
+                      fillColor: '#22c55e',
+                      fillOpacity: 1,
+                      strokeColor: '#ffffff',
+                      strokeWeight: 3,
+                    }}
+                  />
+                )}
+              </GoogleMap>
+            ) : (
+              <div className="absolute inset-0 bg-background/80 flex items-center justify-center">
+                <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+              </div>
+            )}
             
             {isRepositioning && (
               <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground px-4 py-2 rounded-full shadow-lg text-sm font-medium">
