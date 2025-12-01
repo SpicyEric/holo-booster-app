@@ -38,6 +38,7 @@ const ClassicNav = ({ items, logo }: ClassicNavProps) => {
               onMouseLeave={() => setDesktopMenuOpen(false)}
             >
               <button
+                onClick={() => setDesktopMenuOpen(!desktopMenuOpen)}
                 className={cn(
                   "px-6 py-2 rounded-lg font-medium transition-all duration-200 flex items-center gap-2",
                   "text-foreground hover:bg-muted"
@@ -45,37 +46,42 @@ const ClassicNav = ({ items, logo }: ClassicNavProps) => {
               >
                 Menü
                 <ChevronDown className={cn(
-                  "h-4 w-4 transition-transform duration-200",
+                  "h-4 w-4 transition-transform duration-300",
                   desktopMenuOpen && "rotate-180"
                 )} />
               </button>
               
-              {/* Dropdown - no gap, seamless hover */}
-              {desktopMenuOpen && (
-                <div className="absolute top-full left-0 pt-0 z-50">
-                  {/* Invisible bridge to prevent hover gap */}
-                  <div className="h-1" />
-                  <div className="py-2 bg-background border border-border rounded-lg shadow-lg min-w-[180px]">
-                    {menuItems.map((item, index) => {
-                      const isActive = location.pathname === item.href;
-                      return (
-                        <Link
-                          key={index}
-                          to={item.href}
-                          className={cn(
-                            "block px-4 py-2 font-medium transition-all duration-200",
-                            isActive
-                              ? "bg-primary/10 text-primary"
-                              : "text-foreground hover:bg-muted"
-                          )}
-                        >
-                          {item.label}
-                        </Link>
-                      );
-                    })}
-                  </div>
+              {/* Dropdown with animation */}
+              <div 
+                className={cn(
+                  "absolute top-full left-0 pt-1 z-50 transition-all duration-300 origin-top",
+                  desktopMenuOpen 
+                    ? "opacity-100 scale-y-100 translate-y-0" 
+                    : "opacity-0 scale-y-0 -translate-y-2 pointer-events-none"
+                )}
+              >
+                <div className="py-2 bg-background border border-border rounded-lg shadow-lg min-w-[180px]">
+                  {menuItems.map((item, index) => {
+                    const isActive = location.pathname === item.href;
+                    return (
+                      <Link
+                        key={index}
+                        to={item.href}
+                        style={{ animationDelay: `${index * 50}ms` }}
+                        className={cn(
+                          "block px-4 py-2 font-medium transition-all duration-200",
+                          desktopMenuOpen && "animate-fade-in",
+                          isActive
+                            ? "bg-primary/10 text-primary"
+                            : "text-foreground hover:bg-muted"
+                        )}
+                      >
+                        {item.label}
+                      </Link>
+                    );
+                  })}
                 </div>
-              )}
+              </div>
             </div>
 
             {/* Login Button */}
