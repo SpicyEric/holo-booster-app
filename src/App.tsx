@@ -15,6 +15,7 @@ import Overview from "./pages/admin/Overview";
 import Customers from "./pages/admin/Customers";
 import CustomerDetail from "./pages/admin/CustomerDetail";
 import CustomerNew from "./pages/admin/CustomerNew";
+import CustomerMap from "./pages/admin/CustomerMap";
 import Accounts from "./pages/admin/Accounts";
 import Orders from "./pages/admin/Orders";
 import Stats from "./pages/admin/Stats";
@@ -63,6 +64,9 @@ const App = () => (
             <Route path="boxes" element={<BoxManagement />} />
             <Route path="settings" element={<Settings />} />
           </Route>
+          
+          {/* Admin Map - standalone page with own navigation */}
+          <Route path="/admin/map" element={<CustomerMap />} />
           
           {/* Händler Dashboard (role: kunde) with nested layout */}
           <Route path="/kunde" element={<MerchantLayout />}>
