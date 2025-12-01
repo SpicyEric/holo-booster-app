@@ -1,22 +1,22 @@
 import { useEffect, useState, useCallback } from 'react';
 import { AdminTopNav } from '@/components/AdminTopNav';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
-import { supabase } from '@/integrations/supabase/client';
+import { appSupabase } from '@/integrations/app-supabase/client';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { MapPin, X, Save, Navigation } from 'lucide-react';
-import { GoogleMap, useJsApiLoader, Marker } from '@react-google-maps/api';
+import { GoogleMap, useJsApiLoader, OverlayView } from '@react-google-maps/api';
 
-interface Customer {
+interface Merchant {
   id: string;
   name: string;
-  company_name: string | null;
-  street: string | null;
-  house_number: string | null;
+  address: string | null;
   postal_code: string | null;
-  city: string | null;
-  latitude: number | null;
-  longitude: number | null;
+  city: string;
+  lat: number | null;
+  lng: number | null;
+  logo_url: string | null;
+  category: string | null;
 }
 
 const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || 'AIzaSyBZMmrGWon1J1LJDeZ2HgKMF6sd9D2jJ6Q';
@@ -31,10 +31,66 @@ const defaultCenter = {
   lng: 11.576124,
 };
 
+// Custom marker component with logo
+const CustomMarker = ({ 
+  merchant, 
+  isSelected, 
+  onClick 
+}: { 
+  merchant: Merchant; 
+  isSelected: boolean; 
+  onClick: () => void;
+}) => {
+  const size = isSelected ? 56 : 48;
+  const borderColor = '#6d28d9'; // dark purple (violet-700)
+  
+  return (
+    <div
+      onClick={onClick}
+      className="cursor-pointer transform transition-transform hover:scale-110"
+      style={{
+        width: size,
+        height: size,
+        marginLeft: -size / 2,
+        marginTop: -size / 2,
+      }}
+    >
+      <div
+        className="rounded-full overflow-hidden flex items-center justify-center"
+        style={{
+          width: size,
+          height: size,
+          border: `3px solid ${borderColor}`,
+          backgroundColor: 'rgba(255, 255, 255, 0.9)',
+          boxShadow: isSelected ? '0 0 0 3px rgba(109, 40, 217, 0.3)' : '0 2px 8px rgba(0,0,0,0.2)',
+        }}
+      >
+        {merchant.logo_url ? (
+          <img
+            src={merchant.logo_url}
+            alt={merchant.name}
+            className="w-full h-full object-cover"
+            onError={(e) => {
+              (e.target as HTMLImageElement).style.display = 'none';
+            }}
+          />
+        ) : (
+          <div 
+            className="w-full h-full flex items-center justify-center text-white font-bold"
+            style={{ backgroundColor: borderColor }}
+          >
+            {merchant.name.charAt(0).toUpperCase()}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
 export default function CustomerMap() {
   const [map, setMap] = useState<google.maps.Map | null>(null);
-  const [customers, setCustomers] = useState<Customer[]>([]);
-  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
+  const [merchants, setMerchants] = useState<Merchant[]>([]);
+  const [selectedMerchant, setSelectedMerchant] = useState<Merchant | null>(null);
   const [isRepositioning, setIsRepositioning] = useState(false);
   const [newPosition, setNewPosition] = useState<{ lat: number; lng: number } | null>(null);
   const [loading, setLoading] = useState(true);
@@ -43,24 +99,23 @@ export default function CustomerMap() {
     googleMapsApiKey: GOOGLE_MAPS_API_KEY,
   });
 
-  // Fetch customers
+  // Fetch merchants from App-Database
   useEffect(() => {
-    const fetchCustomers = async () => {
-      const { data, error } = await supabase
-        .from('customers')
-        .select('id, name, company_name, street, house_number, postal_code, city, latitude, longitude')
-        .eq('active', true);
+    const fetchMerchants = async () => {
+      const { data, error } = await appSupabase
+        .from('merchants')
+        .select('id, name, address, postal_code, city, lat, lng, logo_url, category');
 
       if (error) {
-        toast.error('Fehler beim Laden der Kunden');
+        toast.error('Fehler beim Laden der Händler');
         console.error(error);
       } else {
-        setCustomers(data || []);
+        setMerchants(data || []);
       }
       setLoading(false);
     };
 
-    fetchCustomers();
+    fetchMerchants();
   }, []);
 
   const onLoad = useCallback((map: google.maps.Map) => {
@@ -72,12 +127,12 @@ export default function CustomerMap() {
   }, []);
 
   const handleMapClick = useCallback((e: google.maps.MapMouseEvent) => {
-    if (isRepositioning && selectedCustomer && e.latLng) {
+    if (isRepositioning && selectedMerchant && e.latLng) {
       const lat = e.latLng.lat();
       const lng = e.latLng.lng();
       setNewPosition({ lat, lng });
     }
-  }, [isRepositioning, selectedCustomer]);
+  }, [isRepositioning, selectedMerchant]);
 
   const handleStartRepositioning = () => {
     setIsRepositioning(true);
@@ -86,15 +141,16 @@ export default function CustomerMap() {
   };
 
   const handleSavePosition = async () => {
-    if (!selectedCustomer || !newPosition) return;
+    if (!selectedMerchant || !newPosition) return;
 
-    const { error } = await supabase
-      .from('customers')
+    // Use type assertion for the entire chain due to AppDatabase type limitations
+    const { error } = await (appSupabase
+      .from('merchants') as any)
       .update({
-        latitude: newPosition.lat,
-        longitude: newPosition.lng,
+        lat: newPosition.lat,
+        lng: newPosition.lng,
       })
-      .eq('id', selectedCustomer.id);
+      .eq('id', selectedMerchant.id);
 
     if (error) {
       toast.error('Fehler beim Speichern der Position');
@@ -102,16 +158,16 @@ export default function CustomerMap() {
     } else {
       toast.success('Position erfolgreich gespeichert');
       
-      setCustomers((prev) =>
-        prev.map((c) =>
-          c.id === selectedCustomer.id
-            ? { ...c, latitude: newPosition.lat, longitude: newPosition.lng }
-            : c
+      setMerchants((prev) =>
+        prev.map((m) =>
+          m.id === selectedMerchant.id
+            ? { ...m, lat: newPosition.lat, lng: newPosition.lng }
+            : m
         )
       );
       
-      setSelectedCustomer((prev) =>
-        prev ? { ...prev, latitude: newPosition.lat, longitude: newPosition.lng } : null
+      setSelectedMerchant((prev) =>
+        prev ? { ...prev, lat: newPosition.lat, lng: newPosition.lng } : null
       );
       
       setIsRepositioning(false);
@@ -124,31 +180,30 @@ export default function CustomerMap() {
     setNewPosition(null);
   };
 
-  const handleFlyToCustomer = (customer: Customer) => {
-    if (customer.latitude && customer.longitude && map) {
-      map.panTo({ lat: customer.latitude, lng: customer.longitude });
+  const handleFlyToMerchant = (merchant: Merchant) => {
+    if (merchant.lat && merchant.lng && map) {
+      map.panTo({ lat: merchant.lat, lng: merchant.lng });
       map.setZoom(15);
     }
   };
 
-  const handleMarkerClick = (customer: Customer) => {
-    setSelectedCustomer(customer);
+  const handleMarkerClick = (merchant: Merchant) => {
+    setSelectedMerchant(merchant);
     setIsRepositioning(false);
     setNewPosition(null);
   };
 
-  const getFullAddress = (customer: Customer) => {
+  const getFullAddress = (merchant: Merchant) => {
     const parts = [
-      customer.street,
-      customer.house_number,
-      customer.postal_code,
-      customer.city,
+      merchant.address,
+      merchant.postal_code,
+      merchant.city,
     ].filter(Boolean);
-    return parts.length > 0 ? parts.join(' ') : 'Keine Adresse';
+    return parts.length > 0 ? parts.join(', ') : 'Keine Adresse';
   };
 
-  const customersWithCoords = customers.filter((c) => c.latitude && c.longitude);
-  const customersWithoutCoords = customers.filter((c) => !c.latitude || !c.longitude);
+  const merchantsWithCoords = merchants.filter((m) => m.lat && m.lng);
+  const merchantsWithoutCoords = merchants.filter((m) => !m.lat || !m.lng);
 
   if (loadError) {
     return (
@@ -197,36 +252,48 @@ export default function CustomerMap() {
           {/* Sidebar */}
           <div className="w-80 border-r bg-background overflow-y-auto">
             <div className="p-4 border-b">
-              <h2 className="font-semibold text-lg">Kunden auf der Karte</h2>
+              <h2 className="font-semibold text-lg">Händler auf der Karte</h2>
               <p className="text-sm text-muted-foreground">
-                {customersWithCoords.length} mit Position, {customersWithoutCoords.length} ohne
+                {merchantsWithCoords.length} mit Position, {merchantsWithoutCoords.length} ohne
               </p>
             </div>
 
-            {/* Selected Customer Detail */}
-            {selectedCustomer && (
+            {/* Selected Merchant Detail */}
+            {selectedMerchant && (
               <div className="p-4 border-b bg-muted/50">
                 <div className="flex items-start justify-between mb-2">
-                  <h3 className="font-medium">{selectedCustomer.company_name || selectedCustomer.name}</h3>
+                  <div className="flex items-center gap-2">
+                    {selectedMerchant.logo_url && (
+                      <img
+                        src={selectedMerchant.logo_url}
+                        alt={selectedMerchant.name}
+                        className="w-8 h-8 rounded-full object-cover border-2 border-violet-700"
+                      />
+                    )}
+                    <h3 className="font-medium">{selectedMerchant.name}</h3>
+                  </div>
                   <Button
                     variant="ghost"
                     size="icon"
                     className="h-6 w-6"
                     onClick={() => {
-                      setSelectedCustomer(null);
+                      setSelectedMerchant(null);
                       handleCancelRepositioning();
                     }}
                   >
                     <X className="h-4 w-4" />
                   </Button>
                 </div>
+                {selectedMerchant.category && (
+                  <p className="text-xs text-violet-600 mb-1">{selectedMerchant.category}</p>
+                )}
                 <p className="text-sm text-muted-foreground mb-3">
-                  {getFullAddress(selectedCustomer)}
+                  {getFullAddress(selectedMerchant)}
                 </p>
                 
-                {selectedCustomer.latitude && selectedCustomer.longitude && (
+                {selectedMerchant.lat && selectedMerchant.lng && (
                   <p className="text-xs text-muted-foreground mb-3 font-mono">
-                    {selectedCustomer.latitude.toFixed(6)}, {selectedCustomer.longitude.toFixed(6)}
+                    {selectedMerchant.lat.toFixed(6)}, {selectedMerchant.lng.toFixed(6)}
                   </p>
                 )}
 
@@ -267,11 +334,11 @@ export default function CustomerMap() {
                       <MapPin className="h-4 w-4 mr-1" />
                       Neu platzieren
                     </Button>
-                    {selectedCustomer.latitude && selectedCustomer.longitude && (
+                    {selectedMerchant.lat && selectedMerchant.lng && (
                       <Button
                         size="sm"
                         variant="outline"
-                        onClick={() => handleFlyToCustomer(selectedCustomer)}
+                        onClick={() => handleFlyToMerchant(selectedMerchant)}
                       >
                         <Navigation className="h-4 w-4" />
                       </Button>
@@ -281,29 +348,44 @@ export default function CustomerMap() {
               </div>
             )}
 
-            {/* Customers without coordinates */}
-            {customersWithoutCoords.length > 0 && (
+            {/* Merchants without coordinates */}
+            {merchantsWithoutCoords.length > 0 && (
               <div className="p-4 border-b">
                 <h4 className="text-sm font-medium text-orange-600 mb-2">
-                  ⚠️ Ohne Koordinaten ({customersWithoutCoords.length})
+                  ⚠️ Ohne Koordinaten ({merchantsWithoutCoords.length})
                 </h4>
                 <div className="space-y-1">
-                  {customersWithoutCoords.map((customer) => (
+                  {merchantsWithoutCoords.map((merchant) => (
                     <button
-                      key={customer.id}
+                      key={merchant.id}
                       onClick={() => {
-                        setSelectedCustomer(customer);
+                        setSelectedMerchant(merchant);
                         handleCancelRepositioning();
                       }}
                       className={`w-full text-left px-2 py-1.5 rounded text-sm hover:bg-muted transition-colors ${
-                        selectedCustomer?.id === customer.id ? 'bg-muted' : ''
+                        selectedMerchant?.id === merchant.id ? 'bg-muted' : ''
                       }`}
                     >
-                      <div className="font-medium truncate">
-                        {customer.company_name || customer.name}
-                      </div>
-                      <div className="text-xs text-muted-foreground truncate">
-                        {getFullAddress(customer)}
+                      <div className="flex items-center gap-2">
+                        {merchant.logo_url ? (
+                          <img
+                            src={merchant.logo_url}
+                            alt={merchant.name}
+                            className="w-6 h-6 rounded-full object-cover border border-violet-700"
+                          />
+                        ) : (
+                          <div className="w-6 h-6 rounded-full bg-violet-700 flex items-center justify-center text-white text-xs font-bold">
+                            {merchant.name.charAt(0).toUpperCase()}
+                          </div>
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <div className="font-medium truncate">
+                            {merchant.name}
+                          </div>
+                          <div className="text-xs text-muted-foreground truncate">
+                            {getFullAddress(merchant)}
+                          </div>
+                        </div>
                       </div>
                     </button>
                   ))}
@@ -311,29 +393,44 @@ export default function CustomerMap() {
               </div>
             )}
 
-            {/* Customers with coordinates */}
+            {/* Merchants with coordinates */}
             <div className="p-4">
               <h4 className="text-sm font-medium text-green-600 mb-2">
-                ✓ Mit Koordinaten ({customersWithCoords.length})
+                ✓ Mit Koordinaten ({merchantsWithCoords.length})
               </h4>
               <div className="space-y-1">
-                {customersWithCoords.map((customer) => (
+                {merchantsWithCoords.map((merchant) => (
                   <button
-                    key={customer.id}
+                    key={merchant.id}
                     onClick={() => {
-                      setSelectedCustomer(customer);
-                      handleFlyToCustomer(customer);
+                      setSelectedMerchant(merchant);
+                      handleFlyToMerchant(merchant);
                       handleCancelRepositioning();
                     }}
                     className={`w-full text-left px-2 py-1.5 rounded text-sm hover:bg-muted transition-colors ${
-                      selectedCustomer?.id === customer.id ? 'bg-muted' : ''
+                      selectedMerchant?.id === merchant.id ? 'bg-muted' : ''
                     }`}
                   >
-                    <div className="font-medium truncate">
-                      {customer.company_name || customer.name}
-                    </div>
-                    <div className="text-xs text-muted-foreground truncate">
-                      {customer.city || 'Keine Stadt'}
+                    <div className="flex items-center gap-2">
+                      {merchant.logo_url ? (
+                        <img
+                          src={merchant.logo_url}
+                          alt={merchant.name}
+                          className="w-6 h-6 rounded-full object-cover border border-violet-700"
+                        />
+                      ) : (
+                        <div className="w-6 h-6 rounded-full bg-violet-700 flex items-center justify-center text-white text-xs font-bold">
+                          {merchant.name.charAt(0).toUpperCase()}
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <div className="font-medium truncate">
+                          {merchant.name}
+                        </div>
+                        <div className="text-xs text-muted-foreground truncate">
+                          {merchant.city || 'Keine Stadt'}
+                        </div>
+                      </div>
                     </div>
                   </button>
                 ))}
@@ -359,36 +456,40 @@ export default function CustomerMap() {
                   fullscreenControl: true,
                 }}
               >
-                {/* Customer markers */}
-                {customersWithCoords.map((customer) => (
-                  <Marker
-                    key={customer.id}
-                    position={{ lat: customer.latitude!, lng: customer.longitude! }}
-                    onClick={() => handleMarkerClick(customer)}
-                    icon={{
-                      path: google.maps.SymbolPath.CIRCLE,
-                      scale: 12,
-                      fillColor: selectedCustomer?.id === customer.id ? '#22c55e' : '#6366f1',
-                      fillOpacity: 1,
-                      strokeColor: '#ffffff',
-                      strokeWeight: 3,
-                    }}
-                  />
+                {/* Custom merchant markers with logos */}
+                {merchantsWithCoords.map((merchant) => (
+                  <OverlayView
+                    key={merchant.id}
+                    position={{ lat: merchant.lat!, lng: merchant.lng! }}
+                    mapPaneName={OverlayView.OVERLAY_MOUSE_TARGET}
+                  >
+                    <CustomMarker
+                      merchant={merchant}
+                      isSelected={selectedMerchant?.id === merchant.id}
+                      onClick={() => handleMarkerClick(merchant)}
+                    />
+                  </OverlayView>
                 ))}
 
                 {/* New position marker */}
                 {newPosition && (
-                  <Marker
+                  <OverlayView
                     position={newPosition}
-                    icon={{
-                      path: google.maps.SymbolPath.CIRCLE,
-                      scale: 14,
-                      fillColor: '#22c55e',
-                      fillOpacity: 1,
-                      strokeColor: '#ffffff',
-                      strokeWeight: 3,
-                    }}
-                  />
+                    mapPaneName={OverlayView.OVERLAY_MOUSE_TARGET}
+                  >
+                    <div
+                      style={{
+                        width: 24,
+                        height: 24,
+                        marginLeft: -12,
+                        marginTop: -12,
+                        borderRadius: '50%',
+                        backgroundColor: '#22c55e',
+                        border: '3px solid white',
+                        boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
+                      }}
+                    />
+                  </OverlayView>
                 )}
               </GoogleMap>
             ) : (
@@ -399,7 +500,7 @@ export default function CustomerMap() {
             
             {isRepositioning && (
               <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground px-4 py-2 rounded-full shadow-lg text-sm font-medium">
-                Klicke auf die Karte um "{selectedCustomer?.company_name || selectedCustomer?.name}" zu platzieren
+                Klicke auf die Karte um "{selectedMerchant?.name}" zu platzieren
               </div>
             )}
 
