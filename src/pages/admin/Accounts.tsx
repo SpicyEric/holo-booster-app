@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { appSupabase } from "@/integrations/app-supabase/client";
+import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,7 +16,6 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-  DialogFooter,
 } from "@/components/ui/dialog";
 import {
   AlertDialog,
@@ -28,7 +27,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import type { AppRole } from "@/integrations/app-supabase/types";
+
+type AppRole = 'admin' | 'partner' | 'merchant' | 'customer' | 'end_customer';
 
 interface UserAccount {
   id: string;
@@ -56,7 +56,7 @@ const Accounts = () => {
   const [formData, setFormData] = useState({
     email: "",
     full_name: "",
-    role: "endkunde" as AppRole,
+    role: "end_customer" as AppRole,
     password: "",
   });
 
@@ -98,62 +98,40 @@ const Accounts = () => {
     try {
       setLoading(true);
       
-      // Get all user roles from App-DB
-      const { data: rolesData, error: rolesError } = await appSupabase
+      // Get all user roles from Lovable Cloud
+      const { data: rolesData, error: rolesError } = await supabase
         .from("user_roles")
         .select("user_id, role, created_at");
 
       if (rolesError) throw rolesError;
       
-      // Cast to correct type
-      const roles = rolesData as { user_id: string; role: string; created_at: string }[] | null;
+      const roles = rolesData || [];
 
-      // Get profiles for these users from App-DB
-      const { data: profilesData, error: profilesError } = await appSupabase
+      // Get profiles for these users
+      const { data: profilesData, error: profilesError } = await supabase
         .from("profiles")
-        .select("id, first_name, last_name, created_at");
+        .select("user_id, first_name, last_name, full_name, created_at");
 
       if (profilesError) {
         console.error("Profiles error:", profilesError);
       }
       
-      // Cast to correct type
-      const profiles = profilesData as { id: string; first_name: string | null; last_name: string | null; created_at: string }[] | null;
+      const profiles = profilesData || [];
       
-      // Fetch emails from auth.users via Edge Function
-      const userIds = roles?.map(r => r.user_id) || [];
-      let emailsMap: Record<string, string> = {};
-      
-      if (userIds.length > 0) {
-        try {
-          const { data: emailsData, error: emailsError } = await appSupabase.functions.invoke('getUserEmails', {
-            body: { userIds }
-          });
-          
-          if (emailsError) {
-            console.error("Error fetching emails:", emailsError);
-          } else if (emailsData?.emails) {
-            emailsMap = emailsData.emails;
-          }
-        } catch (emailError) {
-          console.error("Failed to fetch emails:", emailError);
-        }
-      }
-      
-      const accountsData = roles?.map(role => {
-        const profile = profiles?.find(p => p.id === role.user_id);
-        const fullName = profile 
-          ? [profile.first_name, profile.last_name].filter(Boolean).join(' ')
-          : '';
+      const accountsData = roles.map(role => {
+        const profile = profiles.find(p => p.user_id === role.user_id);
+        const fullName = profile?.full_name || 
+          [profile?.first_name, profile?.last_name].filter(Boolean).join(' ') ||
+          `User ${role.user_id.substring(0, 8)}`;
         
         return {
           id: role.user_id,
-          email: emailsMap[role.user_id] || "",
-          full_name: fullName || `User ${role.user_id.substring(0, 8)}`,
+          email: "", // Email not available from public tables
+          full_name: fullName,
           role: role.role as AppRole,
           created_at: role.created_at || profile?.created_at || "",
         };
-      }) || [];
+      });
 
       setAccounts(accountsData);
     } catch (error) {
@@ -173,8 +151,8 @@ const Accounts = () => {
     setCreating(true);
 
     try {
-      // Create user in App-DB auth
-      const { data: authData, error: authError } = await appSupabase.auth.signUp({
+      // Create user in Lovable Cloud auth
+      const { data: authData, error: authError } = await supabase.auth.signUp({
         email: formData.email,
         password: formData.password || Math.random().toString(36).slice(-12),
         options: {
@@ -188,16 +166,16 @@ const Accounts = () => {
       if (authError) throw authError;
       if (!authData.user) throw new Error("Benutzer konnte nicht erstellt werden");
 
-      // Add role (cast to any to bypass type checking for external DB)
-      const { error: roleError } = await appSupabase
+      // Add role
+      const { error: roleError } = await supabase
         .from("user_roles")
-        .insert([{ user_id: authData.user.id, role: formData.role }] as any);
+        .insert([{ user_id: authData.user.id, role: formData.role }]);
 
       if (roleError) throw roleError;
 
       toast.success("Account erstellt!");
       setDialogOpen(false);
-      setFormData({ email: "", full_name: "", role: "endkunde", password: "" });
+      setFormData({ email: "", full_name: "", role: "end_customer", password: "" });
       loadAccounts();
     } catch (error: any) {
       console.error("Fehler beim Erstellen des Accounts:", error);
@@ -220,15 +198,16 @@ const Accounts = () => {
     if (!selectedAccount) return;
 
     try {
-      // Update profile in App-DB (cast to any for external DB)
+      // Update profile
       const nameParts = editFormData.full_name.split(' ');
-      const { error: profileError } = await appSupabase
+      const { error: profileError } = await supabase
         .from("profiles")
         .upsert({ 
-          id: selectedAccount.id,
+          user_id: selectedAccount.id,
           first_name: nameParts[0] || '',
           last_name: nameParts.slice(1).join(' ') || '',
-        } as any);
+          full_name: editFormData.full_name,
+        });
 
       if (profileError) {
         console.error("Profile update error:", profileError);
@@ -237,15 +216,15 @@ const Accounts = () => {
       // Update role if changed
       if (editFormData.role !== selectedAccount.role) {
         // Delete old role
-        await appSupabase
+        await supabase
           .from("user_roles")
           .delete()
           .eq("user_id", selectedAccount.id);
 
-        // Insert new role (cast to any for external DB)
-        const { error: roleError } = await appSupabase
+        // Insert new role
+        const { error: roleError } = await supabase
           .from("user_roles")
-          .insert([{ user_id: selectedAccount.id, role: editFormData.role }] as any);
+          .insert([{ user_id: selectedAccount.id, role: editFormData.role }]);
 
         if (roleError) throw roleError;
       }
@@ -266,7 +245,7 @@ const Accounts = () => {
     }
     
     try {
-      const { error } = await appSupabase.auth.resetPasswordForEmail(email, {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: `${window.location.origin}/auth`,
       });
 
@@ -294,14 +273,11 @@ const Accounts = () => {
 
     try {
       // Delete role first
-      await appSupabase
+      await supabase
         .from("user_roles")
         .delete()
         .eq("user_id", selectedAccount.id);
 
-      // Note: Deleting the actual auth user requires admin privileges
-      // For now, just remove the role which effectively disables access
-      
       toast.success("Account-Rolle erfolgreich entfernt");
       setDeleteDialogOpen(false);
       loadAccounts();
@@ -314,8 +290,10 @@ const Accounts = () => {
   const getRoleBadge = (role: AppRole) => {
     const roleMap: Record<AppRole, { label: string; variant: "default" | "secondary" | "outline" | "destructive" }> = {
       admin: { label: "Administrator", variant: "destructive" },
-      kunde: { label: "Kunde (Händler)", variant: "default" },
-      endkunde: { label: "Endkunde", variant: "outline" },
+      merchant: { label: "Kunde (Händler)", variant: "default" },
+      partner: { label: "Vertriebler", variant: "secondary" },
+      customer: { label: "Kunde (Alt)", variant: "outline" },
+      end_customer: { label: "Endkunde", variant: "outline" },
     };
     
     const config = roleMap[role] || { label: role, variant: "outline" };
@@ -326,8 +304,9 @@ const Accounts = () => {
   const roleCounts = {
     all: accounts.length,
     admin: accounts.filter(a => a.role === 'admin').length,
-    kunde: accounts.filter(a => a.role === 'kunde').length,
-    endkunde: accounts.filter(a => a.role === 'endkunde').length,
+    merchant: accounts.filter(a => a.role === 'merchant').length,
+    partner: accounts.filter(a => a.role === 'partner').length,
+    end_customer: accounts.filter(a => a.role === 'end_customer').length,
   };
 
   return (
@@ -336,7 +315,7 @@ const Accounts = () => {
         <div>
           <h1 className="text-4xl font-bold">Account-Verwaltung</h1>
           <p className="text-muted-foreground mt-2">
-            {accounts.length} Accounts insgesamt • {roleCounts.admin} Admins • {roleCounts.kunde} Kunden • {roleCounts.endkunde} Endkunden
+            {accounts.length} Accounts insgesamt • {roleCounts.admin} Admins • {roleCounts.merchant} Kunden • {roleCounts.end_customer} Endkunden
           </p>
         </div>
         
@@ -387,8 +366,9 @@ const Accounts = () => {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="endkunde">Endkunde</SelectItem>
-                    <SelectItem value="kunde">Kunde (Händler)</SelectItem>
+                    <SelectItem value="end_customer">Endkunde</SelectItem>
+                    <SelectItem value="merchant">Kunde (Händler)</SelectItem>
+                    <SelectItem value="partner">Vertriebler</SelectItem>
                     <SelectItem value="admin">Administrator</SelectItem>
                   </SelectContent>
                 </Select>
@@ -438,8 +418,9 @@ const Accounts = () => {
             <SelectContent>
               <SelectItem value="all">Alle Rollen ({roleCounts.all})</SelectItem>
               <SelectItem value="admin">Admins ({roleCounts.admin})</SelectItem>
-              <SelectItem value="kunde">Kunden ({roleCounts.kunde})</SelectItem>
-              <SelectItem value="endkunde">Endkunden ({roleCounts.endkunde})</SelectItem>
+              <SelectItem value="merchant">Kunden ({roleCounts.merchant})</SelectItem>
+              <SelectItem value="partner">Vertriebler ({roleCounts.partner})</SelectItem>
+              <SelectItem value="end_customer">Endkunden ({roleCounts.end_customer})</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -498,8 +479,18 @@ const Accounts = () => {
                         onClick={() => handleDeleteAccount(account)}
                         title="Löschen"
                       >
-                        <Trash2 className="h-4 w-4 text-destructive" />
+                        <Trash2 className="h-4 w-4" />
                       </Button>
+                      {account.email && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleSendPasswordReset(account.email)}
+                          title="Passwort zurücksetzen"
+                        >
+                          <RotateCcw className="h-4 w-4" />
+                        </Button>
+                      )}
                     </div>
                   </TableCell>
                 </TableRow>
@@ -515,7 +506,7 @@ const Accounts = () => {
           <DialogHeader>
             <DialogTitle>Account bearbeiten</DialogTitle>
             <DialogDescription>
-              Bearbeiten Sie die Accountdaten von {selectedAccount?.full_name}
+              Bearbeiten Sie den Account von {selectedAccount?.full_name}.
             </DialogDescription>
           </DialogHeader>
           
@@ -539,60 +530,43 @@ const Accounts = () => {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="endkunde">Endkunde</SelectItem>
-                  <SelectItem value="kunde">Kunde (Händler)</SelectItem>
+                  <SelectItem value="end_customer">Endkunde</SelectItem>
+                  <SelectItem value="merchant">Kunde (Händler)</SelectItem>
+                  <SelectItem value="partner">Vertriebler</SelectItem>
                   <SelectItem value="admin">Administrator</SelectItem>
                 </SelectContent>
               </Select>
-              <p className="text-xs text-muted-foreground mt-2">
-                <strong>Endkunde:</strong> Nutzt die Eloyo-App<br />
-                <strong>Kunde:</strong> Händler mit eigenem Dashboard<br />
-                <strong>Admin:</strong> Vollzugriff auf alle Bereiche
-              </p>
             </div>
-          </div>
-
-          <DialogFooter className="mt-4">
-            <Button variant="outline" onClick={() => setEditDialogOpen(false)}>
-              Abbrechen
-            </Button>
-            <Button onClick={handleSaveEdit}>
+            
+            <Button onClick={handleSaveEdit} className="w-full">
               Speichern
             </Button>
-          </DialogFooter>
+          </div>
         </DialogContent>
       </Dialog>
 
-      {/* Delete Confirmation Dialog */}
+      {/* Delete Dialog */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Account wirklich löschen?</AlertDialogTitle>
+            <AlertDialogTitle>Account löschen?</AlertDialogTitle>
             <AlertDialogDescription>
-              Diese Aktion entfernt die Rolle von{" "}
-              <strong>{selectedAccount?.full_name}</strong>. Der Benutzer kann sich dann nicht mehr anmelden.
+              Möchten Sie den Account von {selectedAccount?.full_name} wirklich löschen?
+              Diese Aktion entfernt die Rolle des Benutzers.
               <div className="mt-4">
-                <Label htmlFor="delete_confirm">
-                  Bitte gib "löschen" ein, um fortzufahren:
-                </Label>
+                <Label htmlFor="confirm">Bitte "löschen" eingeben:</Label>
                 <Input
-                  id="delete_confirm"
+                  id="confirm"
                   value={deleteConfirmText}
                   onChange={(e) => setDeleteConfirmText(e.target.value)}
-                  placeholder="löschen"
                   className="mt-2"
                 />
               </div>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setDeleteConfirmText("")}>
-              Abbrechen
-            </AlertDialogCancel>
-            <AlertDialogAction
-              onClick={confirmDeleteAccount}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
+            <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDeleteAccount}>
               Löschen
             </AlertDialogAction>
           </AlertDialogFooter>
