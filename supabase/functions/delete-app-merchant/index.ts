@@ -1,5 +1,4 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -22,62 +21,44 @@ serve(async (req) => {
       );
     }
 
+    const appAdminApiKey = Deno.env.get('APP_ADMIN_API_KEY');
     const appUrl = Deno.env.get('APP_SUPABASE_URL');
-    const appServiceKey = Deno.env.get('APP_SUPABASE_SERVICE_ROLE_KEY');
 
     console.log(`App URL: ${appUrl}`);
-    console.log(`Service key present: ${!!appServiceKey}`);
-    console.log(`Service key length: ${appServiceKey?.length || 0}`);
+    console.log(`Admin API Key present: ${!!appAdminApiKey}`);
     console.log(`Attempting to delete merchant with ID: ${merchantId}`);
 
-    // Create App-DB client with Service Role Key (bypasses RLS)
-    const appSupabaseAdmin = createClient(appUrl!, appServiceKey!);
+    // Call the App-Database's admin-api Edge Function
+    const response = await fetch(
+      `${appUrl}/functions/v1/admin-api`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-admin-key': appAdminApiKey!
+        },
+        body: JSON.stringify({
+          action: 'delete_merchant',
+          data: { merchantId }
+        })
+      }
+    );
 
-    // First, check if merchant exists
-    const { data: existingMerchant, error: selectError } = await appSupabaseAdmin
-      .from('merchants')
-      .select('id, name')
-      .eq('id', merchantId)
-      .single();
+    const result = await response.json();
+    console.log(`Admin API response:`, JSON.stringify(result));
 
-    console.log(`Select result:`, JSON.stringify({ existingMerchant, selectError }));
-
-    if (selectError) {
-      console.error('Error finding merchant:', selectError);
+    if (!response.ok) {
+      console.error('Admin API error:', result);
       return new Response(
-        JSON.stringify({ error: `Merchant not found: ${selectError.message}` }),
-        { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    console.log(`Found merchant: ${existingMerchant?.name}`);
-
-    // Delete merchant from App-DB
-    const { data: deleteData, error: deleteError, count } = await appSupabaseAdmin
-      .from('merchants')
-      .delete()
-      .eq('id', merchantId)
-      .select();
-
-    console.log(`Delete result:`, JSON.stringify({ deleteData, deleteError, count }));
-
-    if (deleteError) {
-      console.error('Delete error:', deleteError);
-      throw deleteError;
-    }
-
-    if (!deleteData || deleteData.length === 0) {
-      console.error('No rows were deleted - this should not happen after successful select');
-      return new Response(
-        JSON.stringify({ error: 'Deletion failed - no rows affected' }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        JSON.stringify({ error: result.error || 'Failed to delete merchant' }),
+        { status: response.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
     console.log(`Successfully deleted merchant: ${merchantId}`);
 
     return new Response(
-      JSON.stringify({ success: true, deleted: deleteData }),
+      JSON.stringify({ success: true, ...result }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error: any) {
