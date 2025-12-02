@@ -61,18 +61,21 @@ export type Database = {
           created_at: string
           id: string
           notes: string | null
+          stamp_preset: string
         }
         Insert: {
           box_id: string
           created_at?: string
           id?: string
           notes?: string | null
+          stamp_preset?: string
         }
         Update: {
           box_id?: string
           created_at?: string
           id?: string
           notes?: string | null
+          stamp_preset?: string
         }
         Relationships: []
       }

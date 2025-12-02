@@ -15,11 +15,26 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ConfirmActionDialog } from "@/components/ConfirmActionDialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
+
+const STAMP_PRESETS = {
+  standard_3: { label: "Standard (3 Stempel: Grün, Blau, Rot)", stamps: 3 },
+  standard_5: { label: "Erweitert (5 Stempel)", stamps: 5 },
+  custom: { label: "Individuell", stamps: 0 },
+};
 
 interface Box {
   id: string;
   box_id: string;
   notes: string | null;
+  stamp_preset: string;
   created_at: string;
   assigned_customer?: {
     customer_id: string;
@@ -38,6 +53,7 @@ const BoxManagement = () => {
   // New box form
   const [newBoxId, setNewBoxId] = useState("");
   const [newBoxNotes, setNewBoxNotes] = useState("");
+  const [newBoxPreset, setNewBoxPreset] = useState("standard_3");
   const [adding, setAdding] = useState(false);
   
   // Delete state
@@ -155,7 +171,8 @@ const BoxManagement = () => {
         .from("boxes")
         .insert({ 
           box_id: newBoxId, 
-          notes: newBoxNotes.trim() || null 
+          notes: newBoxNotes.trim() || null,
+          stamp_preset: newBoxPreset
         });
 
       if (error) throw error;
@@ -163,6 +180,7 @@ const BoxManagement = () => {
       toast.success("Box-ID erfolgreich hinzugefügt");
       setNewBoxId("");
       setNewBoxNotes("");
+      setNewBoxPreset("standard_3");
       loadBoxes();
     } catch (error: any) {
       toast.error("Fehler beim Hinzufügen der Box-ID");
@@ -230,20 +248,38 @@ const BoxManagement = () => {
           </CardDescription>
         </CardHeader>
         <CardContent className="py-3">
-          <div className="flex gap-2">
-            <Input
-              placeholder="XXXXX-XXXXX-XXXXX"
-              value={newBoxId}
-              onChange={handleNewBoxIdChange}
-              className="font-mono w-48"
-              maxLength={17}
-            />
-            <Input
-              placeholder="Notiz (optional)"
-              value={newBoxNotes}
-              onChange={(e) => setNewBoxNotes(e.target.value)}
-              className="flex-1"
-            />
+          <div className="flex gap-2 items-end">
+            <div className="space-y-1">
+              <Label className="text-xs">Box-ID</Label>
+              <Input
+                placeholder="XXXXX-XXXXX-XXXXX"
+                value={newBoxId}
+                onChange={handleNewBoxIdChange}
+                className="font-mono w-48"
+                maxLength={17}
+              />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs">Stempel-Konfiguration</Label>
+              <Select value={newBoxPreset} onValueChange={setNewBoxPreset}>
+                <SelectTrigger className="w-64">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {Object.entries(STAMP_PRESETS).map(([key, { label }]) => (
+                    <SelectItem key={key} value={key}>{label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1 flex-1">
+              <Label className="text-xs">Notiz (optional)</Label>
+              <Input
+                placeholder="z.B. Bestellung #123"
+                value={newBoxNotes}
+                onChange={(e) => setNewBoxNotes(e.target.value)}
+              />
+            </div>
             <Button 
               onClick={addBox} 
               disabled={adding || newBoxId.replace(/-/g, "").length !== 15}
@@ -312,6 +348,7 @@ const BoxManagement = () => {
             <TableHeader>
               <TableRow className="bg-muted/50 hover:bg-muted/50">
                 <TableHead className="h-8 text-xs font-semibold">Box-ID</TableHead>
+                <TableHead className="h-8 text-xs font-semibold">Stempel</TableHead>
                 <TableHead className="h-8 text-xs font-semibold">Status</TableHead>
                 <TableHead className="h-8 text-xs font-semibold">Zugewiesen an</TableHead>
                 <TableHead className="h-8 text-xs font-semibold">Notiz</TableHead>
@@ -324,6 +361,11 @@ const BoxManagement = () => {
                 <TableRow key={box.id}>
                   <TableCell className="py-2 font-mono text-sm font-medium">
                     {box.box_id}
+                  </TableCell>
+                  <TableCell className="py-2 text-sm">
+                    <Badge variant="outline">
+                      {STAMP_PRESETS[box.stamp_preset as keyof typeof STAMP_PRESETS]?.stamps || 3} Stempel
+                    </Badge>
                   </TableCell>
                   <TableCell className="py-2">
                     {box.assigned_customer ? (

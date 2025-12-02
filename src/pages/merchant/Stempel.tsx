@@ -147,6 +147,45 @@ const Stempel = () => {
     setNewBoxId(formatBoxIdInput(e.target.value));
   };
 
+  const createDefaultStamps = async (boxPreset: string, merchantCustomerId: string) => {
+    // Define stamp configurations based on preset
+    const stampConfigs: { stamp_name: string; stamp_color: string; points_value: number }[] = [];
+    
+    if (boxPreset === 'standard_3') {
+      stampConfigs.push(
+        { stamp_name: 'Stempel 1', stamp_color: 'grün', points_value: 1 },
+        { stamp_name: 'Stempel 2', stamp_color: 'blau', points_value: 1 },
+        { stamp_name: 'Stempel 3', stamp_color: 'rot', points_value: 1 }
+      );
+    } else if (boxPreset === 'standard_5') {
+      stampConfigs.push(
+        { stamp_name: 'Stempel 1', stamp_color: 'grün', points_value: 1 },
+        { stamp_name: 'Stempel 2', stamp_color: 'blau', points_value: 1 },
+        { stamp_name: 'Stempel 3', stamp_color: 'rot', points_value: 1 },
+        { stamp_name: 'Stempel 4', stamp_color: 'gelb', points_value: 1 },
+        { stamp_name: 'Stempel 5', stamp_color: 'lila', points_value: 1 }
+      );
+    }
+
+    // Create NFC chips for each stamp
+    for (let i = 0; i < stampConfigs.length; i++) {
+      const config = stampConfigs[i];
+      const chipUid = `${merchantCustomerId.substring(0, 8)}-${i + 1}`; // Generate unique chip UID
+      
+      await supabase
+        .from('nfc_chips')
+        .insert({
+          merchant_customer_id: merchantCustomerId,
+          chip_uid: chipUid,
+          stamp_name: config.stamp_name,
+          stamp_color: config.stamp_color,
+          points_value: config.points_value,
+          is_active: true,
+          is_default: i === 0
+        });
+    }
+  };
+
   const handleAddBox = async () => {
     if (!customerId || !newBoxId.trim()) return;
 
@@ -159,10 +198,10 @@ const Stempel = () => {
 
     setAddingBox(true);
     try {
-      // Check if box exists in registry
+      // Check if box exists in registry and get its preset
       const { data: boxData, error: boxError } = await supabase
         .from('boxes')
-        .select('id, box_id')
+        .select('id, box_id, stamp_preset')
         .eq('box_id', newBoxId.trim().toUpperCase())
         .maybeSingle();
 
@@ -215,7 +254,10 @@ const Stempel = () => {
         return;
       }
 
-      toast.success('Box-ID erfolgreich hinzugefügt!');
+      // Create default stamps based on box preset
+      await createDefaultStamps(boxData.stamp_preset || 'standard_3', customerId);
+
+      toast.success('Box-ID erfolgreich hinzugefügt! Stempel wurden automatisch erstellt.');
       setNewBoxId('');
       loadData();
     } catch (error) {
