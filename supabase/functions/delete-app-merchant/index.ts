@@ -28,6 +28,14 @@ serve(async (req) => {
     console.log(`Admin API Key present: ${!!appAdminApiKey}`);
     console.log(`Attempting to delete merchant with ID: ${merchantId}`);
 
+    // Build request payload - try merchant_id as expected by Admin API
+    const payload = {
+      action: 'delete_merchant',
+      data: { merchant_id: merchantId }
+    };
+    
+    console.log('Sending payload to Admin API:', JSON.stringify(payload));
+
     // Call the App-Database's admin-api Edge Function
     const response = await fetch(
       `${appUrl}/functions/v1/admin-api`,
@@ -37,10 +45,7 @@ serve(async (req) => {
           'Content-Type': 'application/json',
           'x-admin-key': appAdminApiKey!
         },
-        body: JSON.stringify({
-          action: 'delete_merchant',
-          data: { id: merchantId }
-        })
+        body: JSON.stringify(payload)
       }
     );
 
