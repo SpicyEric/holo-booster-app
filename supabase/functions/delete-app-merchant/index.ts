@@ -39,7 +39,7 @@ serve(async (req) => {
         },
         body: JSON.stringify({
           action: 'delete_merchant',
-          data: { merchantId }
+          data: { id: merchantId }
         })
       }
     );
