@@ -8,12 +8,58 @@ const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
   apiVersion: "2025-08-27.basil",
 });
 
+// Lovable Cloud Supabase (Website/Dashboard)
 const supabase = createClient(
   Deno.env.get("SUPABASE_URL") ?? "",
   Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
 );
 
+// App-Database Supabase (Mobile App - where merchants need to be created!)
+const appSupabase = createClient(
+  Deno.env.get("APP_SUPABASE_URL") ?? "",
+  Deno.env.get("APP_SUPABASE_SERVICE_ROLE_KEY") ?? ""
+);
+
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
+
+// Helper function to create merchant in App-DB
+async function createAppMerchant(customerData: {
+  id: string;
+  name: string;
+  email: string | null;
+  company_name: string | null;
+}) {
+  console.log("[WEBHOOK] Creating merchant in App-DB for:", customerData.name);
+  
+  try {
+    // Check if App-DB credentials are configured
+    if (!Deno.env.get("APP_SUPABASE_URL") || !Deno.env.get("APP_SUPABASE_SERVICE_ROLE_KEY")) {
+      console.log("[WEBHOOK] App-DB credentials not configured, skipping merchant creation");
+      return null;
+    }
+
+    const { data: merchant, error } = await appSupabase
+      .from("merchants")
+      .insert({
+        name: customerData.company_name || customerData.name,
+        email: customerData.email,
+        is_active: true,
+      })
+      .select()
+      .single();
+
+    if (error) {
+      console.error("[WEBHOOK] Failed to create App-DB merchant:", error);
+      return null;
+    }
+
+    console.log("[WEBHOOK] App-DB merchant created:", merchant.id);
+    return merchant;
+  } catch (err) {
+    console.error("[WEBHOOK] Error creating App-DB merchant:", err);
+    return null;
+  }
+}
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -117,6 +163,14 @@ serve(async (req) => {
             console.error("[WEBHOOK] Error creating customer:", error);
           } else {
             console.log("[WEBHOOK] Created new customer:", newCustomer.id);
+            
+            // Also create merchant in App-Database for mobile app
+            await createAppMerchant({
+              id: newCustomer.id,
+              name: newCustomer.name,
+              email: newCustomer.email,
+              company_name: newCustomer.company_name,
+            });
             
             // Send admin notification for new customer
             const adminEmail = Deno.env.get('ADMIN_EMAIL');
@@ -306,6 +360,14 @@ serve(async (req) => {
             
             customer = newCustomer;
             console.log("[WEBHOOK] Created customer from Stripe data:", customer.id);
+
+            // Also create merchant in App-Database for mobile app
+            await createAppMerchant({
+              id: customer.id,
+              name: customer.name,
+              email: customer.email,
+              company_name: customer.company_name,
+            });
 
             // Create customer account for this new customer
             try {
