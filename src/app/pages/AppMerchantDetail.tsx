@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
+import { BottomNav } from '@/app/components/layout/BottomNav';
 
 interface Merchant {
   id: string;
@@ -150,7 +151,7 @@ export const AppMerchantDetail = () => {
   const openingHours = formatOpeningHours(merchant.opening_hours);
 
   return (
-    <div className="min-h-screen pb-24">
+    <div className="min-h-screen bg-background pb-24">
       {/* Cover Image */}
       <div className="relative h-48">
         {merchant.cover_image_url ? (
@@ -348,6 +349,8 @@ export const AppMerchantDetail = () => {
           )}
         </TabsContent>
       </Tabs>
+
+      <BottomNav />
     </div>
   );
 };
