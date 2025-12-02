@@ -3,8 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Users, QrCode, BarChart3, Settings, AlertTriangle, UserPlus, XCircle, Clock, Package } from "lucide-react";
+import { Users, Stamp, BarChart3, AlertTriangle, UserPlus, XCircle, Clock, Package } from "lucide-react";
 import { format } from "date-fns";
 import { de } from "date-fns/locale";
 
@@ -12,36 +11,33 @@ const Overview = () => {
   const navigate = useNavigate();
   const [stats, setStats] = useState({
     customers: 0,
-    scans: 0,
+    stamps: 0,
     contacts: 0,
-    orders: 0,
     pendingOrders: 0,
   });
 
   const [recentCustomers, setRecentCustomers] = useState<any[]>([]);
   const [criticalEvents, setCriticalEvents] = useState<any[]>([]);
-  const [recentActivities, setRecentActivities] = useState<any[]>([]);
+  const [recentStamps, setRecentStamps] = useState<any[]>([]);
 
   useEffect(() => {
     loadStats();
     loadRecentCustomers();
     loadCriticalEvents();
-    loadRecentActivities();
+    loadRecentStamps();
 
-    // Setup realtime subscription for scans
+    // Setup realtime subscription for stamps
     const channel = supabase
-      .channel('dashboard-scans')
+      .channel('dashboard-stamps')
       .on(
         'postgres_changes',
         {
           event: 'INSERT',
           schema: 'public',
-          table: 'scans'
+          table: 'stamps'
         },
-        (payload) => {
-          console.log('New scan detected:', payload);
-          // Reload activities when new scan comes in
-          loadRecentActivities();
+        () => {
+          loadRecentStamps();
           loadStats();
         }
       )
@@ -54,19 +50,17 @@ const Overview = () => {
 
   const loadStats = async () => {
     try {
-      const [customersRes, scansRes, contactsRes, ordersRes, pendingOrdersRes] = await Promise.all([
+      const [customersRes, stampsRes, contactsRes, pendingOrdersRes] = await Promise.all([
         supabase.from("customers").select("id", { count: "exact", head: true }),
-        supabase.from("scans").select("id", { count: "exact", head: true }),
+        supabase.from("stamps").select("id", { count: "exact", head: true }),
         supabase.from("contacts").select("id", { count: "exact", head: true }),
-        supabase.from("orders").select("id", { count: "exact", head: true }),
-        supabase.from("orders").select("id", { count: "exact", head: true }).in("status", ["pending", "in_progress"]),
+        supabase.from("orders").select("id", { count: "exact", head: true }).eq("status", "pending"),
       ]);
 
       setStats({
         customers: customersRes.count || 0,
-        scans: scansRes.count || 0,
+        stamps: stampsRes.count || 0,
         contacts: contactsRes.count || 0,
-        orders: ordersRes.count || 0,
         pendingOrders: pendingOrdersRes.count || 0,
       });
     } catch (error) {
@@ -105,76 +99,18 @@ const Overview = () => {
     }
   };
 
-  const loadRecentActivities = async () => {
+  const loadRecentStamps = async () => {
     try {
-      // Get recent scans, new contacts, and new customers
-      const [scansRes, contactsRes, customersRes] = await Promise.all([
-        supabase
-          .from("scans")
-          .select("id, created_at, customer_id, customers(name, company_name)")
-          .order("created_at", { ascending: false })
-          .limit(3),
-        supabase
-          .from("contacts")
-          .select("id, created_at, customer_id, customers(name, company_name)")
-          .order("created_at", { ascending: false })
-          .limit(3),
-        supabase
-          .from("customers")
-          .select("id, name, company_name, created_at")
-          .order("created_at", { ascending: false })
-          .limit(3),
-      ]);
+      const { data, error } = await supabase
+        .from("stamps")
+        .select("id, created_at, customer_id, customers(name, company_name)")
+        .order("created_at", { ascending: false })
+        .limit(8);
 
-      const activities = [
-        ...(scansRes.data || []).map((scan: any) => ({
-          type: "scan",
-          timestamp: scan.created_at,
-          customer: scan.customers?.name || scan.customers?.company_name || "Unbekannt",
-        })),
-        ...(contactsRes.data || []).map((contact: any) => ({
-          type: "contact",
-          timestamp: contact.created_at,
-          customer: contact.customers?.name || contact.customers?.company_name || "Unbekannt",
-        })),
-        ...(customersRes.data || []).map((customer: any) => ({
-          type: "customer",
-          timestamp: customer.created_at,
-          customer: customer.name || customer.company_name || "Unbekannt",
-        })),
-      ]
-        .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
-        .slice(0, 8);
-
-      setRecentActivities(activities);
+      if (error) throw error;
+      setRecentStamps(data || []);
     } catch (error) {
-      console.error("Fehler beim Laden der Aktivitäten:", error);
-    }
-  };
-
-  const getActivityIcon = (type: string) => {
-    switch (type) {
-      case "scan":
-        return <QrCode className="w-4 h-4" />;
-      case "contact":
-        return <Users className="w-4 h-4" />;
-      case "customer":
-        return <UserPlus className="w-4 h-4" />;
-      default:
-        return <Clock className="w-4 h-4" />;
-    }
-  };
-
-  const getActivityText = (type: string, customer: string) => {
-    switch (type) {
-      case "scan":
-        return `QR-Code gescannt von ${customer}`;
-      case "contact":
-        return `Neuer Kontakt bei ${customer}`;
-      case "customer":
-        return `Neuer Kunde: ${customer}`;
-      default:
-        return "Aktivität";
+      console.error("Fehler beim Laden der Stempel:", error);
     }
   };
 
@@ -216,11 +152,11 @@ const Overview = () => {
         <Card className="p-6 border-border hover:shadow-lg transition-shadow">
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 rounded-xl bg-gradient-primary flex items-center justify-center">
-              <QrCode className="w-6 h-6 text-white" />
+              <Stamp className="w-6 h-6 text-white" />
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">Scans gesamt</p>
-              <p className="text-2xl font-bold">{stats.scans}</p>
+              <p className="text-sm text-muted-foreground">Stempel gesamt</p>
+              <p className="text-2xl font-bold">{stats.stamps}</p>
             </div>
           </div>
         </Card>
@@ -259,29 +195,31 @@ const Overview = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Recent Activities */}
+        {/* Recent Stamps */}
         <Card className="p-6 border-border">
           <div className="flex items-center gap-2 mb-4">
             <Clock className="w-5 h-5 text-primary" />
             <h2 className="text-xl font-semibold">Letzte Aktivitäten</h2>
           </div>
           <div className="space-y-3">
-            {recentActivities.length > 0 ? (
-              recentActivities.map((activity, index) => (
-                <div key={index} className="flex items-center gap-3 p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors">
+            {recentStamps.length > 0 ? (
+              recentStamps.map((stamp) => (
+                <div key={stamp.id} className="flex items-center gap-3 p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors">
                   <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary">
-                    {getActivityIcon(activity.type)}
+                    <Stamp className="w-4 h-4" />
                   </div>
                   <div className="flex-1">
-                    <p className="text-sm">{getActivityText(activity.type, activity.customer)}</p>
+                    <p className="text-sm">
+                      Stempel bei <span className="font-medium">{(stamp.customers as any)?.company_name || (stamp.customers as any)?.name || "Unbekannt"}</span>
+                    </p>
                     <p className="text-xs text-muted-foreground">
-                      {format(new Date(activity.timestamp), "dd.MM.yyyy, HH:mm", { locale: de })} Uhr
+                      {format(new Date(stamp.created_at), "dd.MM.yyyy, HH:mm", { locale: de })} Uhr
                     </p>
                   </div>
                 </div>
               ))
             ) : (
-              <p className="text-sm text-muted-foreground text-center py-4">Keine Aktivitäten</p>
+              <p className="text-sm text-muted-foreground text-center py-4">Keine Stempel vorhanden</p>
             )}
           </div>
         </Card>
@@ -297,7 +235,7 @@ const Overview = () => {
               recentCustomers.map((customer) => (
                 <div key={customer.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors">
                   <div className="flex-1">
-                    <p className="font-medium">{customer.name || customer.company_name}</p>
+                    <p className="font-medium">{customer.company_name || customer.name}</p>
                     <p className="text-xs text-muted-foreground">{customer.email}</p>
                   </div>
                   <div className="flex items-center gap-2">
@@ -332,7 +270,7 @@ const Overview = () => {
                     <AlertTriangle className="w-5 h-5 text-destructive" />
                   )}
                   <div>
-                    <p className="font-medium">{event.name || event.company_name}</p>
+                    <p className="font-medium">{event.company_name || event.name}</p>
                     <p className="text-xs text-muted-foreground">{event.email}</p>
                   </div>
                 </div>
