@@ -51,11 +51,10 @@ const Overview = () => {
 
   const loadStats = async () => {
     try {
-      // Merchants come from App-DB
+      // Merchants come from App-DB (no is_active column - all merchants are active)
       const merchantsRes = await appSupabase
         .from("merchants")
-        .select("id", { count: "exact", head: true })
-        .eq("is_active", true);
+        .select("id", { count: "exact", head: true });
 
       // Stamps, contacts, orders come from Lovable Cloud
       const [stampsRes, contactsRes, pendingOrdersRes] = await Promise.all([
@@ -77,10 +76,10 @@ const Overview = () => {
 
   const loadRecentMerchants = async () => {
     try {
-      // Load merchants from App-DB
+      // Load merchants from App-DB (no email/is_active columns)
       const { data, error } = await appSupabase
         .from("merchants")
-        .select("id, name, category, email, is_active, created_at")
+        .select("id, name, category, city, created_at")
         .order("created_at", { ascending: false })
         .limit(5);
 
@@ -266,12 +265,10 @@ const Overview = () => {
                 <div key={merchant.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors">
                   <div className="flex-1">
                     <p className="font-medium">{merchant.name}</p>
-                    <p className="text-xs text-muted-foreground">{merchant.category || merchant.email}</p>
+                    <p className="text-xs text-muted-foreground">{merchant.category || merchant.city}</p>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Badge variant={merchant.is_active ? "default" : "secondary"}>
-                      {merchant.is_active ? "Aktiv" : "Inaktiv"}
-                    </Badge>
+                    <Badge variant="default">Aktiv</Badge>
                     <p className="text-xs text-muted-foreground">
                       {format(new Date(merchant.created_at), "dd.MM.yyyy", { locale: de })}
                     </p>
