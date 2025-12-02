@@ -1,10 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 
-// Website-Rollen (Lovable Cloud)
-// 'admin' = Administrator
-// 'merchant' = Kunde (Händler der das Eloyo System kauft)
-// 'partner' = Vertriebler (Sales Partner)
-export type UserRole = 'admin' | 'merchant' | 'partner';
+// Alle Rollen (Website + App)
+export type UserRole = 'admin' | 'merchant' | 'partner' | 'end_customer' | 'customer';
 
 // Mapping für Redirects nach Login
 export const getRoleDashboardPath = (role: UserRole): string => {
@@ -15,6 +12,9 @@ export const getRoleDashboardPath = (role: UserRole): string => {
       return '/kunde/stempelkarte';
     case 'partner':
       return '/partner/dashboard';
+    case 'end_customer':
+    case 'customer':
+      return '/app';
     default:
       return '/';
   }
@@ -74,8 +74,10 @@ export const getUserRole = async (userId: string): Promise<UserRole | null> => {
     
     const roleValue = data.role as string;
     
-    // Nur Website-relevante Rollen zurückgeben
-    if (roleValue === 'admin' || roleValue === 'merchant' || roleValue === 'partner') {
+    // Alle gültigen Rollen zurückgeben
+    if (roleValue === 'admin' || roleValue === 'merchant' || roleValue === 'partner' || roleValue === 'end_customer' || roleValue === 'customer') {
+      // Normalize customer to end_customer
+      if (roleValue === 'customer') return 'end_customer';
       return roleValue as UserRole;
     }
     
@@ -109,7 +111,7 @@ export const deriveUserRole = async (userId: string, userEmail?: string): Promis
       const roles = rolesData.map((r) => r.role as string);
       console.log('[deriveUserRole] Found roles in Lovable Cloud:', roles);
       
-      // Priorisiere Rollen: admin > merchant > partner
+      // Priorisiere Rollen: admin > merchant > partner > end_customer
       if (roles.includes('admin')) {
         return 'admin';
       }
@@ -118,6 +120,9 @@ export const deriveUserRole = async (userId: string, userEmail?: string): Promis
       }
       if (roles.includes('partner')) {
         return 'partner';
+      }
+      if (roles.includes('end_customer') || roles.includes('customer')) {
+        return 'end_customer';
       }
     }
     

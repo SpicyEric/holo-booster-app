@@ -40,6 +40,8 @@ export const AppHome = () => {
 
   const loadData = async () => {
     setLoading(true);
+    console.log('[AppHome] Loading data for user:', user?.id);
+    
     try {
       // Load user's stamp cards
       const { data: cards, error: cardsError } = await supabase
@@ -53,6 +55,8 @@ export const AppHome = () => {
         `)
         .eq('user_id', user?.id);
 
+      console.log('[AppHome] Stamp cards:', cards, 'Error:', cardsError);
+      
       if (!cardsError && cards) {
         setStampCards(cards as unknown as UserStampCard[]);
       }
@@ -64,11 +68,13 @@ export const AppHome = () => {
         .eq('active', true)
         .limit(10);
 
+      console.log('[AppHome] Merchants:', merchants?.length, 'Error:', merchantsError);
+      
       if (!merchantsError && merchants) {
         setNearbyMerchants(merchants);
       }
     } catch (err) {
-      console.error('Error loading app data:', err);
+      console.error('[AppHome] Error loading app data:', err);
     } finally {
       setLoading(false);
     }
