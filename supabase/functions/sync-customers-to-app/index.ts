@@ -54,20 +54,20 @@ serve(async (req) => {
       );
     }
 
-    // 2. Fetch existing merchants from App-DB to avoid duplicates
+    // 2. Fetch existing merchants from App-DB to avoid duplicates (by name since no email column)
     const { data: existingMerchants, error: merchantsError } = await appSupabase
       .from("merchants")
-      .select("email, name");
+      .select("id, name");
 
     if (merchantsError) {
       console.error("[SYNC] Error fetching existing merchants:", merchantsError);
     }
 
-    // Create a Set of existing emails for quick lookup
-    const existingEmails = new Set(
+    // Create a Set of existing names for quick lookup (lowercase for comparison)
+    const existingNames = new Set(
       (existingMerchants || [])
-        .filter(m => m.email)
-        .map(m => m.email.toLowerCase())
+        .filter(m => m.name)
+        .map(m => m.name.toLowerCase())
     );
 
     console.log(`[SYNC] Found ${existingMerchants?.length || 0} existing merchants in App-DB`);
@@ -79,11 +79,13 @@ serve(async (req) => {
     const results: Array<{ name: string; status: string; error?: string }> = [];
 
     for (const customer of customers) {
-      // Skip if merchant with same email already exists
-      if (customer.email && existingEmails.has(customer.email.toLowerCase())) {
-        console.log(`[SYNC] Skipping ${customer.name} - already exists`);
+      const merchantName = customer.company_name || customer.name;
+      
+      // Skip if merchant with same name already exists
+      if (merchantName && existingNames.has(merchantName.toLowerCase())) {
+        console.log(`[SYNC] Skipping ${merchantName} - already exists`);
         skipped++;
-        results.push({ name: customer.name, status: "skipped" });
+        results.push({ name: merchantName, status: "skipped" });
         continue;
       }
 
@@ -93,11 +95,11 @@ serve(async (req) => {
         .join(" ");
 
       try {
+        // App-DB merchants table schema (no email column!)
         const { error: insertError } = await appSupabase
           .from("merchants")
           .insert({
-            name: customer.company_name || customer.name,
-            email: customer.email,
+            name: merchantName,
             address: address || null,
             postal_code: customer.postal_code || null,
             city: customer.city || null,
@@ -112,17 +114,17 @@ serve(async (req) => {
           });
 
         if (insertError) {
-          console.error(`[SYNC] Error syncing ${customer.name}:`, insertError);
+          console.error(`[SYNC] Error syncing ${merchantName}:`, insertError);
           errors++;
-          results.push({ name: customer.name, status: "error", error: insertError.message });
+          results.push({ name: merchantName, status: "error", error: insertError.message });
         } else {
-          console.log(`[SYNC] Synced ${customer.name}`);
+          console.log(`[SYNC] Synced ${merchantName}`);
           synced++;
-          results.push({ name: customer.name, status: "synced" });
+          results.push({ name: merchantName, status: "synced" });
           
           // Add to existing set to prevent duplicates within same batch
-          if (customer.email) {
-            existingEmails.add(customer.email.toLowerCase());
+          if (merchantName) {
+            existingNames.add(merchantName.toLowerCase());
           }
         }
       } catch (err: any) {
