@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { appSupabase } from "@/integrations/app-supabase/client";
+import { supabase } from "@/integrations/supabase/client";
 import { Edit, Search, Trash2, RefreshCw, Plus, Phone, MapPin } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -71,13 +72,13 @@ const Customers = () => {
     try {
       setIsDeleting(true);
       
-      // Delete merchant directly from App-DB
-      const { error } = await appSupabase
-        .from("merchants")
-        .delete()
-        .eq("id", deleteMerchant.id);
+      // Call Edge Function to delete merchant (uses Service Role Key to bypass RLS)
+      const { data, error } = await supabase.functions.invoke('delete-app-merchant', {
+        body: { merchantId: deleteMerchant.id }
+      });
 
       if (error) throw error;
+      if (data?.error) throw new Error(data.error);
       
       toast.success("Kunde erfolgreich gelöscht");
       // Remove from local state immediately
