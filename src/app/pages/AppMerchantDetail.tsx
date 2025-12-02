@@ -20,6 +20,7 @@ interface Merchant {
   cover_image_url: string | null;
   city: string | null;
   street: string | null;
+  house_number: string | null;
   postal_code: string | null;
   phone: string | null;
   website: string | null;
@@ -144,7 +145,8 @@ export const AppMerchantDetail = () => {
 
   if (!merchant) return null;
 
-  const address = [merchant.street, merchant.postal_code, merchant.city]
+  const streetWithNumber = [merchant.street, merchant.house_number].filter(Boolean).join(' ');
+  const address = [streetWithNumber, merchant.postal_code, merchant.city]
     .filter(Boolean)
     .join(', ');
 
