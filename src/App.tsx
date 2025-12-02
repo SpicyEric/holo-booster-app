@@ -40,6 +40,7 @@ import AppHome from "./app/pages/AppHome";
 import AppRewards from "./app/pages/AppRewards";
 import AppHistory from "./app/pages/AppHistory";
 import AppProfile from "./app/pages/AppProfile";
+import AppSettings from "./app/pages/AppSettings";
 import AppAuth from "./app/pages/AppAuth";
 import AppMerchantDetail from "./app/pages/AppMerchantDetail";
 import AppScan from "./app/pages/AppScan";
@@ -99,6 +100,7 @@ const App = () => (
           <Route path="/app/rewards" element={<AppProtectedRoute><AppRewards /></AppProtectedRoute>} />
           <Route path="/app/history" element={<AppProtectedRoute><AppHistory /></AppProtectedRoute>} />
           <Route path="/app/profile" element={<AppProtectedRoute><AppProfile /></AppProtectedRoute>} />
+          <Route path="/app/settings" element={<AppProtectedRoute><AppSettings /></AppProtectedRoute>} />
           <Route path="/app/scan" element={<AppProtectedRoute><AppScan /></AppProtectedRoute>} />
           <Route path="/app/merchant/:id" element={<AppProtectedRoute><AppMerchantDetail /></AppProtectedRoute>} />
           
