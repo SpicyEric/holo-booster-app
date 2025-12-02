@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Save, Plus, Trash2, Package } from 'lucide-react';
+import { Loader2, Save, Plus, Package } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -21,6 +21,7 @@ interface NfcChip {
 interface CustomerBox {
   id: string;
   box_id: string;
+  box_code: string;
   assigned_at: string;
 }
 
@@ -47,7 +48,7 @@ const Stempel = () => {
         .from('merchant_assignments')
         .select('customer_id')
         .eq('merchant_user_id', user.id)
-        .single();
+        .maybeSingle();
 
       if (!assignment) {
         setLoading(false);
@@ -67,15 +68,26 @@ const Stempel = () => {
         setNfcChips(chips);
       }
 
-      // Load customer boxes
+      // Load customer boxes with the actual box code
       const { data: boxes } = await supabase
         .from('customer_boxes')
-        .select('id, box_id, assigned_at')
+        .select(`
+          id,
+          box_id,
+          assigned_at,
+          boxes:box_id (box_id)
+        `)
         .eq('customer_id', assignment.customer_id)
         .order('assigned_at', { ascending: false });
 
       if (boxes) {
-        setCustomerBoxes(boxes);
+        const mappedBoxes: CustomerBox[] = boxes.map((b: any) => ({
+          id: b.id,
+          box_id: b.box_id,
+          box_code: b.boxes?.box_id || 'Unbekannt',
+          assigned_at: b.assigned_at
+        }));
+        setCustomerBoxes(mappedBoxes);
       }
     } catch (error) {
       console.error('Error loading data:', error);
@@ -120,6 +132,21 @@ const Stempel = () => {
     }
   };
 
+  const formatBoxIdInput = (value: string) => {
+    // Remove all non-alphanumeric characters and convert to uppercase
+    const clean = value.replace(/[^A-Za-z0-9]/g, '').toUpperCase();
+    // Insert dashes every 5 characters
+    const parts = [];
+    for (let i = 0; i < clean.length && i < 15; i += 5) {
+      parts.push(clean.slice(i, i + 5));
+    }
+    return parts.join('-');
+  };
+
+  const handleBoxIdInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setNewBoxId(formatBoxIdInput(e.target.value));
+  };
+
   const handleAddBox = async () => {
     if (!customerId || !newBoxId.trim()) return;
 
@@ -133,40 +160,62 @@ const Stempel = () => {
     setAddingBox(true);
     try {
       // Check if box exists in registry
-      const { data: boxExists } = await supabase
+      const { data: boxData, error: boxError } = await supabase
         .from('boxes')
-        .select('id')
+        .select('id, box_id')
         .eq('box_id', newBoxId.trim().toUpperCase())
-        .single();
+        .maybeSingle();
 
-      if (!boxExists) {
-        toast.error('Diese Box-ID existiert nicht im System');
+      if (boxError) {
+        console.error('Error checking box:', boxError);
+        toast.error('Fehler beim Überprüfen der Box-ID');
         return;
       }
 
-      // Check if already assigned
-      const { data: alreadyAssigned } = await supabase
+      if (!boxData) {
+        toast.error('Diese Box-ID existiert nicht im System. Bitte überprüfen Sie die Eingabe.');
+        return;
+      }
+
+      // Check if already assigned to this customer
+      const { data: ownAssignment } = await supabase
         .from('customer_boxes')
         .select('id')
-        .eq('box_id', boxExists.id)
-        .single();
+        .eq('customer_id', customerId)
+        .eq('box_id', boxData.id)
+        .maybeSingle();
 
-      if (alreadyAssigned) {
-        toast.error('Diese Box-ID ist bereits einem Kunden zugewiesen');
+      if (ownAssignment) {
+        toast.error('Diese Box-ID ist bereits mit Ihrem Konto verknüpft.');
         return;
       }
 
-      // Assign box
-      const { error } = await supabase
+      // Check if assigned to another customer (use admin policy via count)
+      const { count: otherCount } = await supabase
+        .from('customer_boxes')
+        .select('id', { count: 'exact', head: true })
+        .eq('box_id', boxData.id);
+
+      if (otherCount && otherCount > 0) {
+        toast.error('Diese Box-ID ist bereits einem anderen Kunden zugewiesen.');
+        return;
+      }
+
+      // Assign box to customer
+      const { error: insertError } = await supabase
         .from('customer_boxes')
         .insert({
           customer_id: customerId,
-          box_id: boxExists.id
+          box_id: boxData.id
         });
 
-      if (error) throw error;
+      if (insertError) {
+        console.error('Error inserting box:', insertError);
+        toast.error('Fehler beim Hinzufügen der Box-ID');
+        return;
+      }
 
-      toast.success('Box-ID hinzugefügt');
+      toast.success('Box-ID erfolgreich hinzugefügt!');
       setNewBoxId('');
       loadData();
     } catch (error) {
@@ -219,6 +268,53 @@ const Stempel = () => {
         <h1 className="text-2xl font-bold">Stempelverwaltung</h1>
         <p className="text-muted-foreground">Verwalten Sie Ihre NFC-Stempel und Box-IDs</p>
       </div>
+
+      {/* Box IDs - First since it's the main action */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Package className="h-5 w-5" />
+            Box-IDs
+          </CardTitle>
+          <CardDescription>
+            Die Box-ID finden Sie auf der Innenseite des Deckels Ihrer Starterbox
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {customerBoxes.length > 0 && (
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">Verknüpfte Boxen</Label>
+              {customerBoxes.map((box) => (
+                <div key={box.id} className="flex items-center justify-between p-3 border rounded-lg bg-muted/50">
+                  <code className="font-mono text-sm font-semibold">{box.box_code}</code>
+                  <span className="text-xs text-muted-foreground">
+                    Hinzugefügt: {new Date(box.assigned_at).toLocaleDateString('de-DE')}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+
+          <div className="space-y-2">
+            <Label className="text-sm font-medium">Neue Box-ID hinzufügen</Label>
+            <div className="flex gap-2">
+              <Input
+                value={newBoxId}
+                onChange={handleBoxIdInputChange}
+                placeholder="XXXXX-XXXXX-XXXXX"
+                className="font-mono"
+                maxLength={17}
+              />
+              <Button onClick={handleAddBox} disabled={addingBox || !newBoxId.trim()}>
+                {addingBox ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
+              </Button>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Format: XXXXX-XXXXX-XXXXX (15 Zeichen mit Bindestrichen)
+            </p>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* NFC Chips / Stamps */}
       <Card>
@@ -287,50 +383,6 @@ const Stempel = () => {
               </Button>
             </>
           )}
-        </CardContent>
-      </Card>
-
-      {/* Box IDs */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Package className="h-5 w-5" />
-            Box-IDs
-          </CardTitle>
-          <CardDescription>
-            Die Box-ID finden Sie auf der Innenseite des Deckels Ihrer Starterbox
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {customerBoxes.length > 0 && (
-            <div className="space-y-2">
-              {customerBoxes.map((box) => (
-                <div key={box.id} className="flex items-center justify-between p-3 border rounded-lg bg-muted/50">
-                  <code className="font-mono text-sm">{box.box_id}</code>
-                  <span className="text-xs text-muted-foreground">
-                    Hinzugefügt: {new Date(box.assigned_at).toLocaleDateString('de-DE')}
-                  </span>
-                </div>
-              ))}
-            </div>
-          )}
-
-          <div className="flex gap-2">
-            <Input
-              value={newBoxId}
-              onChange={(e) => setNewBoxId(e.target.value.toUpperCase())}
-              placeholder="XXXXX-XXXXX-XXXXX"
-              className="font-mono"
-              maxLength={17}
-            />
-            <Button onClick={handleAddBox} disabled={addingBox || !newBoxId.trim()}>
-              {addingBox ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
-            </Button>
-          </div>
-          
-          <p className="text-xs text-muted-foreground">
-            Format: XXXXX-XXXXX-XXXXX (15 Zeichen mit Bindestrichen)
-          </p>
         </CardContent>
       </Card>
     </div>
