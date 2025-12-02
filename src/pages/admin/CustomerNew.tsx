@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
+import { appSupabase } from "@/integrations/app-supabase/client";
 import { GlassCard } from "@/components/GlassCard";
 import { GradientButton } from "@/components/GradientButton";
 import { ArrowLeft, Plus } from "lucide-react";
@@ -8,59 +8,81 @@ import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
+const CATEGORIES = [
+  "Café",
+  "Restaurant", 
+  "Shishabar",
+  "CBD-Shop",
+  "Bäckerei",
+  "Fashion Store",
+  "Barbershop",
+  "Apotheke",
+  "Supermarkt",
+  "Reformhaus",
+  "Veganes Restaurant",
+  "Lieferservice",
+  "Sonstiges",
+];
 
 const CustomerNew = () => {
   const navigate = useNavigate();
   const [creating, setCreating] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
-    company_name: "",
-    industry: "",
-    contact_person: "",
-    phone: "",
-    email: "",
-    google_review_url: "",
-    offer_text: "Erhalte 10% Rabatt auf dein nächstes Getränk",
-    offer_title: "Nur noch ein Schritt bis zu deinem Geschenk",
-    offer_details: "Zeige diesen Gutschein einfach an der Kasse vor und erhalte deinen Rabatt. Gültig für 15 Minuten nach Erhalt.",
+    category: "",
+    description: "",
+    address: "",
+    postal_code: "",
+    city: "",
+    phone_number: "",
+    website: "",
+    instagram_url: "",
+    facebook_url: "",
   });
 
   const handleCreate = async () => {
-    if (!formData.company_name || !formData.google_review_url || !formData.offer_text || !formData.phone) {
-      toast.error("Firmenname, Telefonnummer, Google Review URL und Gutscheintext sind Pflichtfelder");
+    if (!formData.name || !formData.address || !formData.city) {
+      toast.error("Name, Adresse und Stadt sind Pflichtfelder");
       return;
     }
 
     setCreating(true);
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      const { data, error } = await supabase.functions.invoke("createCustomerWithAccount", {
-        body: {
-          name: formData.company_name,
-          company_name: formData.company_name,
-          industry: formData.industry,
-          contact_person: formData.contact_person,
-          phone: formData.phone,
-          email: formData.email,
-          google_review_url: formData.google_review_url,
-          offer_text: formData.offer_text,
-          offer_title: formData.offer_title,
-          offer_details: formData.offer_details,
-        },
-        headers: {
-          Authorization: `Bearer ${session?.access_token}`,
-        },
-      });
+      // Insert directly into merchants table in App-DB
+      const { data, error } = await (appSupabase
+        .from("merchants") as any)
+        .insert({
+          name: formData.name,
+          category: formData.category || null,
+          description: formData.description || null,
+          address: formData.address,
+          postal_code: formData.postal_code || null,
+          city: formData.city,
+          phone_number: formData.phone_number || null,
+          website: formData.website || null,
+          instagram_url: formData.instagram_url || null,
+          facebook_url: formData.facebook_url || null,
+          // Default coordinates - can be updated later via map
+          lat: 0,
+          lng: 0,
+        })
+        .select()
+        .single();
 
       if (error) throw error;
 
-      toast.success(formData.email 
-        ? "Kunde angelegt und Login-Daten per E-Mail versendet!" 
-        : "Kunde erfolgreich angelegt");
-      navigate(`/admin/customers/${data.customer.id}`);
+      toast.success("Kunde erfolgreich angelegt");
+      navigate(`/admin/customers/${data.id}`);
     } catch (error: any) {
-      toast.error("Fehler beim Anlegen des Kunden");
+      toast.error("Fehler beim Anlegen des Kunden: " + error.message);
       console.error(error);
     } finally {
       setCreating(false);
@@ -81,7 +103,7 @@ const CustomerNew = () => {
             Neuer Kunde
           </h1>
           <p className="text-muted-foreground mt-1">
-            Lege einen neuen Kunden an
+            Lege einen neuen Kunden in der App-Datenbank an
           </p>
         </div>
       </div>
@@ -90,116 +112,133 @@ const CustomerNew = () => {
         <GlassCard>
           <h2 className="text-xl font-bold mb-4">Grunddaten</h2>
           <div className="space-y-4">
-            <div>
-              <Label htmlFor="company_name">Firmenname *</Label>
-              <Input
-                id="company_name"
-                value={formData.company_name}
-                onChange={(e) =>
-                  setFormData({ ...formData, company_name: e.target.value })
-                }
-                placeholder="z.B. Bäckerei Müller"
-              />
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="name">Firmenname *</Label>
+                <Input
+                  id="name"
+                  value={formData.name}
+                  onChange={(e) =>
+                    setFormData({ ...formData, name: e.target.value })
+                  }
+                  placeholder="z.B. Bäckerei Müller"
+                />
+              </div>
+              <div>
+                <Label htmlFor="category">Kategorie</Label>
+                <Select
+                  value={formData.category}
+                  onValueChange={(value) => setFormData({ ...formData, category: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Wählen..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {CATEGORIES.map((cat) => (
+                      <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
             <div>
-              <Label htmlFor="industry">Branche</Label>
+              <Label htmlFor="address">Straße und Hausnummer *</Label>
               <Input
-                id="industry"
-                value={formData.industry}
+                id="address"
+                value={formData.address}
                 onChange={(e) =>
-                  setFormData({ ...formData, industry: e.target.value })
+                  setFormData({ ...formData, address: e.target.value })
                 }
-                placeholder="z.B. Gastronomie, Einzelhandel, Dienstleistung"
+                placeholder="z.B. Hauptstraße 15"
               />
             </div>
 
-            <div>
-              <Label htmlFor="contact_person">Ansprechpartner</Label>
-              <Input
-                id="contact_person"
-                value={formData.contact_person}
-                onChange={(e) =>
-                  setFormData({ ...formData, contact_person: e.target.value })
-                }
-                placeholder="Max Mustermann"
-              />
+            <div className="grid grid-cols-3 gap-4">
+              <div>
+                <Label htmlFor="postal_code">PLZ</Label>
+                <Input
+                  id="postal_code"
+                  value={formData.postal_code}
+                  onChange={(e) =>
+                    setFormData({ ...formData, postal_code: e.target.value })
+                  }
+                  placeholder="12345"
+                />
+              </div>
+              <div className="col-span-2">
+                <Label htmlFor="city">Stadt *</Label>
+                <Input
+                  id="city"
+                  value={formData.city}
+                  onChange={(e) =>
+                    setFormData({ ...formData, city: e.target.value })
+                  }
+                  placeholder="z.B. Frankfurt"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="phone_number">Telefonnummer</Label>
+                <Input
+                  id="phone_number"
+                  value={formData.phone_number}
+                  onChange={(e) =>
+                    setFormData({ ...formData, phone_number: e.target.value })
+                  }
+                  placeholder="+49 123 456789"
+                />
+              </div>
+              <div>
+                <Label htmlFor="website">Website</Label>
+                <Input
+                  id="website"
+                  value={formData.website}
+                  onChange={(e) =>
+                    setFormData({ ...formData, website: e.target.value })
+                  }
+                  placeholder="https://www.beispiel.de"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="instagram_url">Instagram</Label>
+                <Input
+                  id="instagram_url"
+                  value={formData.instagram_url}
+                  onChange={(e) =>
+                    setFormData({ ...formData, instagram_url: e.target.value })
+                  }
+                  placeholder="https://instagram.com/..."
+                />
+              </div>
+              <div>
+                <Label htmlFor="facebook_url">Facebook</Label>
+                <Input
+                  id="facebook_url"
+                  value={formData.facebook_url}
+                  onChange={(e) =>
+                    setFormData({ ...formData, facebook_url: e.target.value })
+                  }
+                  placeholder="https://facebook.com/..."
+                />
+              </div>
             </div>
 
             <div>
-              <Label htmlFor="phone">Telefonnummer *</Label>
-              <Input
-                id="phone"
-                value={formData.phone}
-                onChange={(e) =>
-                  setFormData({ ...formData, phone: e.target.value })
-                }
-                placeholder="+49 123 456789"
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="email">E-Mail-Adresse</Label>
-              <Input
-                id="email"
-                type="email"
-                value={formData.email}
-                onChange={(e) =>
-                  setFormData({ ...formData, email: e.target.value })
-                }
-                placeholder="info@firma.de"
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="google_review_url">Google Review URL *</Label>
-              <Input
-                id="google_review_url"
-                value={formData.google_review_url}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    google_review_url: e.target.value,
-                  })
-                }
-                placeholder="https://g.page/r/..."
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="offer_title">Überschrift auf Scan-Seite</Label>
-              <Input
-                id="offer_title"
-                value={formData.offer_title}
-                onChange={(e) =>
-                  setFormData({ ...formData, offer_title: e.target.value })
-                }
-                placeholder="Nur noch ein Schritt bis zu deinem Geschenk"
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="offer_text">Gutschein-Text (kurz) *</Label>
-              <Input
-                id="offer_text"
-                value={formData.offer_text}
-                onChange={(e) =>
-                  setFormData({ ...formData, offer_text: e.target.value })
-                }
-                placeholder="Erhalte 10% Rabatt auf dein nächstes Getränk"
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="offer_details">Detailbeschreibung</Label>
+              <Label htmlFor="description">Beschreibung</Label>
               <Textarea
-                id="offer_details"
-                value={formData.offer_details}
+                id="description"
+                value={formData.description}
                 onChange={(e) =>
-                  setFormData({ ...formData, offer_details: e.target.value })
+                  setFormData({ ...formData, description: e.target.value })
                 }
-                placeholder="Zeige diesen Gutschein einfach an der Kasse vor und erhalte deinen Rabatt. Gültig für 15 Minuten nach Erhalt."
-                rows={4}
+                placeholder="Kurze Beschreibung des Geschäfts..."
+                rows={3}
               />
             </div>
           </div>
