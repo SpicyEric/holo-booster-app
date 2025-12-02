@@ -27,6 +27,9 @@ import KundeDashboard from "./pages/merchant/KundeDashboard";
 import Stempelkarte from "./pages/merchant/Stempelkarte";
 import GoogleBewertungen from "./pages/merchant/GoogleBewertungen";
 import MeinKonto from "./pages/merchant/MeinKonto";
+import Stempel from "./pages/merchant/Stempel";
+import Zahlungen from "./pages/merchant/Zahlungen";
+import Nachrichten from "./pages/merchant/Nachrichten";
 import PartnerDashboard from "./pages/partner/Dashboard";
 import Scan from "./pages/Scan";
 import NotFound from "./pages/NotFound";
@@ -84,9 +87,14 @@ const App = () => (
           {/* Händler Dashboard (role: merchant) */}
           <Route path="/kunde" element={<MerchantLayout />}>
             <Route index element={<KundeDashboard />} />
-            <Route path="stempelkarte" element={<Stempelkarte />} />
+            <Route path="geschaeftsinformationen" element={<Stempelkarte />} />
+            <Route path="stempel" element={<Stempel />} />
             <Route path="google-bewertungen" element={<GoogleBewertungen />} />
+            <Route path="zahlungen" element={<Zahlungen />} />
+            <Route path="nachrichten" element={<Nachrichten />} />
             <Route path="konto" element={<MeinKonto />} />
+            {/* Legacy redirect */}
+            <Route path="stempelkarte" element={<Stempelkarte />} />
           </Route>
           
           {/* Partner Dashboard */}
