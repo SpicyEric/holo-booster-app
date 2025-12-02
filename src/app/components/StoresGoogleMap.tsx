@@ -52,7 +52,7 @@ export function StoresGoogleMap({ userLocation, stores }: StoresGoogleMapProps) 
     lng: userLocation[1],
   };
 
-  const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || '';
+  const apiKey = 'AIzaSyBZMmrGWon1J1LJDeZ2HgKMF6sd9D2jJ6Q';
 
   useEffect(() => {
     if (!isLoaded || typeof google === 'undefined') return;
