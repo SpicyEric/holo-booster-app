@@ -4,12 +4,15 @@ import { supabase } from "@/integrations/supabase/client";
 import { appSupabase } from "@/integrations/app-supabase/client";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Users, Stamp, BarChart3, AlertTriangle, UserPlus, XCircle, Clock, Package } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Users, Stamp, BarChart3, AlertTriangle, UserPlus, XCircle, Clock, Package, RefreshCw, Loader2 } from "lucide-react";
 import { format } from "date-fns";
 import { de } from "date-fns/locale";
+import { toast } from "sonner";
 
 const Overview = () => {
   const navigate = useNavigate();
+  const [syncing, setSyncing] = useState(false);
   const [stats, setStats] = useState({
     merchants: 0,
     stamps: 0,
@@ -20,6 +23,36 @@ const Overview = () => {
   const [recentMerchants, setRecentMerchants] = useState<any[]>([]);
   const [criticalEvents, setCriticalEvents] = useState<any[]>([]);
   const [recentStamps, setRecentStamps] = useState<any[]>([]);
+
+  const syncCustomersToApp = async () => {
+    setSyncing(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("sync-customers-to-app");
+      
+      if (error) throw error;
+      
+      if (data.synced > 0) {
+        toast.success(`${data.synced} Kunde(n) synchronisiert!`);
+      } else if (data.skipped > 0) {
+        toast.info(`Alle ${data.skipped} Kunden bereits synchronisiert`);
+      } else {
+        toast.info("Keine Kunden zum Synchronisieren gefunden");
+      }
+      
+      if (data.errors > 0) {
+        toast.warning(`${data.errors} Fehler bei der Synchronisierung`);
+      }
+      
+      // Reload stats and merchants after sync
+      loadStats();
+      loadRecentMerchants();
+    } catch (error: any) {
+      console.error("Sync error:", error);
+      toast.error("Fehler bei der Synchronisierung: " + error.message);
+    } finally {
+      setSyncing(false);
+    }
+  };
 
   useEffect(() => {
     loadStats();
@@ -156,13 +189,28 @@ const Overview = () => {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-4xl font-bold">
-          Dashboard
-        </h1>
-        <p className="text-muted-foreground mt-2">
-          Übersicht aller Aktivitäten
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-4xl font-bold">
+            Dashboard
+          </h1>
+          <p className="text-muted-foreground mt-2">
+            Übersicht aller Aktivitäten
+          </p>
+        </div>
+        <Button 
+          onClick={syncCustomersToApp} 
+          disabled={syncing}
+          variant="outline"
+          className="gap-2"
+        >
+          {syncing ? (
+            <Loader2 className="w-4 h-4 animate-spin" />
+          ) : (
+            <RefreshCw className="w-4 h-4" />
+          )}
+          {syncing ? "Synchronisiere..." : "Kunden zur App synchronisieren"}
+        </Button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
