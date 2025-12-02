@@ -14,6 +14,47 @@ export type Database = {
   }
   public: {
     Tables: {
+      app_messages: {
+        Row: {
+          body: string
+          id: string
+          merchant_customer_id: string
+          read_at: string | null
+          sent_at: string | null
+          show_in_storefront: boolean | null
+          title: string
+          user_id: string
+        }
+        Insert: {
+          body: string
+          id?: string
+          merchant_customer_id: string
+          read_at?: string | null
+          sent_at?: string | null
+          show_in_storefront?: boolean | null
+          title: string
+          user_id: string
+        }
+        Update: {
+          body?: string
+          id?: string
+          merchant_customer_id?: string
+          read_at?: string | null
+          sent_at?: string | null
+          show_in_storefront?: boolean | null
+          title?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "app_messages_merchant_customer_id_fkey"
+            columns: ["merchant_customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       boxes: {
         Row: {
           box_id: string
@@ -706,6 +747,38 @@ export type Database = {
         }
         Relationships: []
       }
+      google_review_claims: {
+        Row: {
+          claimed_at: string | null
+          id: string
+          merchant_customer_id: string
+          points_awarded: number
+          user_id: string
+        }
+        Insert: {
+          claimed_at?: string | null
+          id?: string
+          merchant_customer_id: string
+          points_awarded?: number
+          user_id: string
+        }
+        Update: {
+          claimed_at?: string | null
+          id?: string
+          merchant_customer_id?: string
+          points_awarded?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "google_review_claims_merchant_customer_id_fkey"
+            columns: ["merchant_customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       invoices: {
         Row: {
           created_at: string | null
@@ -753,6 +826,41 @@ export type Database = {
           },
         ]
       }
+      loyalty_accounts: {
+        Row: {
+          created_at: string | null
+          current_points_balance: number | null
+          id: string
+          merchant_customer_id: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          current_points_balance?: number | null
+          id?: string
+          merchant_customer_id: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          current_points_balance?: number | null
+          id?: string
+          merchant_customer_id?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "loyalty_accounts_merchant_customer_id_fkey"
+            columns: ["merchant_customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       merchant_assignments: {
         Row: {
           created_at: string
@@ -776,6 +884,141 @@ export type Database = {
           {
             foreignKeyName: "merchant_assignments_customer_id_fkey"
             columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      new_customer_offers: {
+        Row: {
+          bonus_stamps: number | null
+          created_at: string | null
+          description: string | null
+          id: string
+          is_active: boolean | null
+          merchant_customer_id: string
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          bonus_stamps?: number | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          merchant_customer_id: string
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          bonus_stamps?: number | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          merchant_customer_id?: string
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "new_customer_offers_merchant_customer_id_fkey"
+            columns: ["merchant_customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      nfc_chips: {
+        Row: {
+          chip_type: string | null
+          chip_uid: string
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          is_default: boolean | null
+          merchant_customer_id: string | null
+          points_value: number | null
+          stamp_color: string | null
+          stamp_name: string | null
+        }
+        Insert: {
+          chip_type?: string | null
+          chip_uid: string
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_default?: boolean | null
+          merchant_customer_id?: string | null
+          points_value?: number | null
+          stamp_color?: string | null
+          stamp_name?: string | null
+        }
+        Update: {
+          chip_type?: string | null
+          chip_uid?: string
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_default?: boolean | null
+          merchant_customer_id?: string | null
+          points_value?: number | null
+          stamp_color?: string | null
+          stamp_name?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nfc_chips_merchant_customer_id_fkey"
+            columns: ["merchant_customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      offers: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          id: string
+          image_url: string | null
+          is_active: boolean | null
+          merchant_customer_id: string
+          show_in_storefront: boolean | null
+          title: string
+          updated_at: string | null
+          valid_until: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean | null
+          merchant_customer_id: string
+          show_in_storefront?: boolean | null
+          title: string
+          updated_at?: string | null
+          valid_until?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean | null
+          merchant_customer_id?: string
+          show_in_storefront?: boolean | null
+          title?: string
+          updated_at?: string | null
+          valid_until?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "offers_merchant_customer_id_fkey"
+            columns: ["merchant_customer_id"]
             isOneToOne: false
             referencedRelation: "customers"
             referencedColumns: ["id"]
@@ -918,29 +1161,127 @@ export type Database = {
           },
         ]
       }
+      point_transactions: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          id: string
+          loyalty_account_id: string
+          merchant_customer_id: string
+          points_change: number
+          transaction_type: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          loyalty_account_id: string
+          merchant_customer_id: string
+          points_change: number
+          transaction_type?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          loyalty_account_id?: string
+          merchant_customer_id?: string
+          points_change?: number
+          transaction_type?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "point_transactions_loyalty_account_id_fkey"
+            columns: ["loyalty_account_id"]
+            isOneToOne: false
+            referencedRelation: "loyalty_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "point_transactions_merchant_customer_id_fkey"
+            columns: ["merchant_customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
+          avatar_url: string | null
+          birth_date: string | null
           created_at: string
+          first_name: string | null
           full_name: string | null
+          gender: string | null
           id: string
+          last_name: string | null
           updated_at: string
           user_id: string
         }
         Insert: {
+          avatar_url?: string | null
+          birth_date?: string | null
           created_at?: string
+          first_name?: string | null
           full_name?: string | null
+          gender?: string | null
           id?: string
+          last_name?: string | null
           updated_at?: string
           user_id: string
         }
         Update: {
+          avatar_url?: string | null
+          birth_date?: string | null
           created_at?: string
+          first_name?: string | null
           full_name?: string | null
+          gender?: string | null
           id?: string
+          last_name?: string | null
           updated_at?: string
           user_id?: string
         }
         Relationships: []
+      }
+      qr_tokens: {
+        Row: {
+          code: string
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          loyalty_account_id: string | null
+          type: string | null
+          user_id: string | null
+        }
+        Insert: {
+          code: string
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          loyalty_account_id?: string | null
+          type?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          code?: string
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          loyalty_account_id?: string | null
+          type?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "qr_tokens_loyalty_account_id_fkey"
+            columns: ["loyalty_account_id"]
+            isOneToOne: false
+            referencedRelation: "loyalty_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       review_auto_replies: {
         Row: {
@@ -1095,6 +1436,105 @@ export type Database = {
           },
         ]
       }
+      reward_redemptions: {
+        Row: {
+          id: string
+          loyalty_account_id: string
+          merchant_customer_id: string
+          points_spent: number
+          redeemed_at: string | null
+          reward_id: string
+          status: string | null
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          loyalty_account_id: string
+          merchant_customer_id: string
+          points_spent: number
+          redeemed_at?: string | null
+          reward_id: string
+          status?: string | null
+          user_id: string
+        }
+        Update: {
+          id?: string
+          loyalty_account_id?: string
+          merchant_customer_id?: string
+          points_spent?: number
+          redeemed_at?: string | null
+          reward_id?: string
+          status?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reward_redemptions_loyalty_account_id_fkey"
+            columns: ["loyalty_account_id"]
+            isOneToOne: false
+            referencedRelation: "loyalty_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reward_redemptions_merchant_customer_id_fkey"
+            columns: ["merchant_customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reward_redemptions_reward_id_fkey"
+            columns: ["reward_id"]
+            isOneToOne: false
+            referencedRelation: "rewards"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      rewards: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          id: string
+          image_url: string | null
+          is_active: boolean | null
+          merchant_customer_id: string
+          points_required: number
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean | null
+          merchant_customer_id: string
+          points_required?: number
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean | null
+          merchant_customer_id?: string
+          points_required?: number
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rewards_merchant_customer_id_fkey"
+            columns: ["merchant_customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       scans: {
         Row: {
           contact_id: string | null
@@ -1132,6 +1572,56 @@ export type Database = {
             foreignKeyName: "scans_customer_id_fkey"
             columns: ["customer_id"]
             isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      stamp_cards: {
+        Row: {
+          background_color: string | null
+          background_image_url: string | null
+          created_at: string | null
+          custom_stamp_image_url: string | null
+          id: string
+          merchant_customer_id: string
+          name: string | null
+          stamp_animation_url: string | null
+          stamp_count: number | null
+          stamp_type: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          background_color?: string | null
+          background_image_url?: string | null
+          created_at?: string | null
+          custom_stamp_image_url?: string | null
+          id?: string
+          merchant_customer_id: string
+          name?: string | null
+          stamp_animation_url?: string | null
+          stamp_count?: number | null
+          stamp_type?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          background_color?: string | null
+          background_image_url?: string | null
+          created_at?: string | null
+          custom_stamp_image_url?: string | null
+          id?: string
+          merchant_customer_id?: string
+          name?: string | null
+          stamp_animation_url?: string | null
+          stamp_count?: number | null
+          stamp_type?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stamp_cards_merchant_customer_id_fkey"
+            columns: ["merchant_customer_id"]
+            isOneToOne: true
             referencedRelation: "customers"
             referencedColumns: ["id"]
           },
@@ -1228,11 +1718,60 @@ export type Database = {
         }
         Relationships: []
       }
+      user_stamp_cards: {
+        Row: {
+          created_at: string | null
+          current_points: number | null
+          id: string
+          last_points_at: string | null
+          merchant_customer_id: string
+          stamp_card_id: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          current_points?: number | null
+          id?: string
+          last_points_at?: string | null
+          merchant_customer_id: string
+          stamp_card_id?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          current_points?: number | null
+          id?: string
+          last_points_at?: string | null
+          merchant_customer_id?: string
+          stamp_card_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_stamp_cards_merchant_customer_id_fkey"
+            columns: ["merchant_customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_stamp_cards_stamp_card_id_fkey"
+            columns: ["stamp_card_id"]
+            isOneToOne: false
+            referencedRelation: "stamp_cards"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
+      award_points_via_nfc: {
+        Args: { p_chip_uid: string; p_user_id: string }
+        Returns: Json
+      }
       generate_customer_number: { Args: never; Returns: string }
       has_role: {
         Args: {
@@ -1243,7 +1782,7 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "admin" | "partner" | "merchant" | "customer"
+      app_role: "admin" | "partner" | "merchant" | "customer" | "end_customer"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1371,7 +1910,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "partner", "merchant", "customer"],
+      app_role: ["admin", "partner", "merchant", "customer", "end_customer"],
     },
   },
 } as const

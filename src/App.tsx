@@ -34,6 +34,16 @@ import CheckoutSuccess from "./pages/CheckoutSuccess";
 import CheckoutCancel from "./pages/CheckoutCancel";
 import DesignVariants from "./pages/DesignVariants";
 
+// App (End Customer) imports
+import { AppProtectedRoute } from "./components/AppProtectedRoute";
+import AppLayout from "./app/layouts/AppLayout";
+import AppHome from "./app/pages/AppHome";
+import AppRewards from "./app/pages/AppRewards";
+import AppHistory from "./app/pages/AppHistory";
+import AppProfile from "./app/pages/AppProfile";
+import AppAuth from "./app/pages/AppAuth";
+import AppMerchantDetail from "./app/pages/AppMerchantDetail";
+
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -43,6 +53,7 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <Routes>
+          {/* ===== WEB ROUTES ===== */}
           <Route path="/" element={<Landing />} />
           <Route path="/karriere" element={<Karriere />} />
           <Route path="/kontakt" element={<Kontakt />} />
@@ -65,10 +76,9 @@ const App = () => (
             <Route path="settings" element={<Settings />} />
           </Route>
           
-          {/* Admin Map - standalone page with own navigation */}
           <Route path="/admin/map" element={<CustomerMap />} />
           
-          {/* Händler Dashboard (role: kunde) with nested layout */}
+          {/* Händler Dashboard (role: merchant) */}
           <Route path="/kunde" element={<MerchantLayout />}>
             <Route index element={<KundeDashboard />} />
             <Route path="stempelkarte" element={<Stempelkarte />} />
@@ -76,24 +86,18 @@ const App = () => (
             <Route path="konto" element={<MeinKonto />} />
           </Route>
           
-          {/* Legacy routes - redirect to new structure */}
-          <Route path="/kunde/dashboard" element={<Navigate to="/kunde" replace />} />
-          <Route path="/kunde/settings" element={<Navigate to="/kunde/stempelkarte" replace />} />
-          <Route path="/merchant" element={<Navigate to="/kunde" replace />} />
-          <Route path="/merchant/settings" element={<Navigate to="/kunde/stempelkarte" replace />} />
-          
-          {/* Legacy Customer Routes - redirect to /kunde */}
-          <Route path="/customer" element={<Navigate to="/kunde" replace />} />
-          <Route path="/customer/analytics" element={<Navigate to="/kunde" replace />} />
-          <Route path="/customer/account" element={<Navigate to="/kunde/konto" replace />} />
-          <Route path="/customer/invoices" element={<Navigate to="/kunde/konto" replace />} />
-          <Route path="/customer/upgrade" element={<Navigate to="/kunde" replace />} />
-          <Route path="/customer/sms-campaigns" element={<Navigate to="/kunde" replace />} />
-          <Route path="/customer/google-reviews" element={<Navigate to="/kunde/google-bewertungen" replace />} />
-          <Route path="/account/billing" element={<Navigate to="/kunde/konto" replace />} />
-          
-          {/* Partner Dashboard (role: admin - Partner-Funktionen werden über Admin verwaltet) */}
+          {/* Partner Dashboard */}
           <Route path="/partner" element={<PartnerDashboard />} />
+          
+          {/* ===== APP ROUTES (End Customer) ===== */}
+          <Route path="/app/auth" element={<AppAuth />} />
+          <Route path="/app" element={<AppProtectedRoute><AppLayout /></AppProtectedRoute>}>
+            <Route index element={<AppHome />} />
+            <Route path="rewards" element={<AppRewards />} />
+            <Route path="history" element={<AppHistory />} />
+            <Route path="profile" element={<AppProfile />} />
+            <Route path="merchant/:id" element={<AppMerchantDetail />} />
+          </Route>
           
           {/* Scan Route */}
           <Route path="/s/:cid" element={<Scan />} />
@@ -102,10 +106,12 @@ const App = () => (
           <Route path="/checkout/success" element={<CheckoutSuccess />} />
           <Route path="/checkout/cancel" element={<CheckoutCancel />} />
           
-          {/* Temporary Design Variants Page */}
-          <Route path="/design-variants" element={<DesignVariants />} />
+          {/* Legacy redirects */}
+          <Route path="/kunde/dashboard" element={<Navigate to="/kunde" replace />} />
+          <Route path="/merchant" element={<Navigate to="/kunde" replace />} />
+          <Route path="/customer" element={<Navigate to="/kunde" replace />} />
           
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+          <Route path="/design-variants" element={<DesignVariants />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
