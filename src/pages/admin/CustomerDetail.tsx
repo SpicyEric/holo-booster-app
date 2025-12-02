@@ -48,6 +48,7 @@ const CustomerDetail = () => {
   
   const [formData, setFormData] = useState({
     name: "",
+    email: "",
     description: "",
     industry: "",
     street: "",
@@ -85,6 +86,7 @@ const CustomerDetail = () => {
       
       setFormData({
         name: data.name || "",
+        email: data.email || "",
         description: data.description || "",
         industry: data.industry || "",
         street: data.street || "",
@@ -137,6 +139,7 @@ const CustomerDetail = () => {
     try {
       const updateData = {
         name: formData.name,
+        email: formData.email,
         description: formData.description,
         industry: formData.industry,
         street: formData.street,
@@ -303,6 +306,16 @@ const CustomerDetail = () => {
           {/* Kommunikation */}
           <fieldset className="border rounded p-3 space-y-2">
             <legend className="text-xs font-semibold px-1 text-muted-foreground">Kommunikation</legend>
+            
+            <div>
+              <Label className="text-xs">E-Mail *</Label>
+              <Input
+                type="email"
+                value={formData.email}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                className="h-8 text-sm"
+              />
+            </div>
             
             <div className="grid grid-cols-2 gap-2">
               <div>
