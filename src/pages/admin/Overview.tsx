@@ -56,6 +56,8 @@ const Overview = () => {
         .from("merchants")
         .select("id", { count: "exact", head: true });
 
+      console.log("[Dashboard] App-DB merchants count:", merchantsRes.count, "error:", merchantsRes.error);
+
       // Stamps, contacts, orders come from Lovable Cloud
       const [stampsRes, contactsRes, pendingOrdersRes] = await Promise.all([
         supabase.from("stamps").select("id", { count: "exact", head: true }),
@@ -82,6 +84,8 @@ const Overview = () => {
         .select("id, name, category, city, created_at")
         .order("created_at", { ascending: false })
         .limit(5);
+
+      console.log("[Dashboard] App-DB recent merchants:", data, "error:", error);
 
       if (error) throw error;
       setRecentMerchants(data || []);
