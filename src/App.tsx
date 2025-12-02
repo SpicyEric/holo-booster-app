@@ -43,6 +43,7 @@ import AppHistory from "./app/pages/AppHistory";
 import AppProfile from "./app/pages/AppProfile";
 import AppAuth from "./app/pages/AppAuth";
 import AppMerchantDetail from "./app/pages/AppMerchantDetail";
+import AppScan from "./app/pages/AppScan";
 
 const queryClient = new QueryClient();
 
@@ -96,6 +97,7 @@ const App = () => (
             <Route path="rewards" element={<AppRewards />} />
             <Route path="history" element={<AppHistory />} />
             <Route path="profile" element={<AppProfile />} />
+            <Route path="scan" element={<AppScan />} />
             <Route path="merchant/:id" element={<AppMerchantDetail />} />
           </Route>
           

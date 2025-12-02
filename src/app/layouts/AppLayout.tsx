@@ -1,5 +1,5 @@
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
-import { Home, Gift, Clock, User } from 'lucide-react';
+import { Home, Gift, Clock, User, Scan } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 /**
@@ -12,8 +12,8 @@ export const AppLayout = () => {
 
   const navItems = [
     { path: '/app', icon: Home, label: 'Home' },
+    { path: '/app/scan', icon: Scan, label: 'Scannen', highlight: true },
     { path: '/app/rewards', icon: Gift, label: 'Prämien' },
-    { path: '/app/history', icon: Clock, label: 'Verlauf' },
     { path: '/app/profile', icon: User, label: 'Profil' },
   ];
 
@@ -38,19 +38,30 @@ export const AppLayout = () => {
             const Icon = item.icon;
             const active = isActive(item.path);
             
+            const isHighlight = (item as any).highlight;
+            
             return (
               <button
                 key={item.path}
                 onClick={() => navigate(item.path)}
                 className={cn(
                   "flex flex-col items-center justify-center w-full h-full transition-colors",
+                  isHighlight && !active && "text-primary",
                   active 
                     ? "text-primary" 
-                    : "text-muted-foreground hover:text-foreground"
+                    : !isHighlight && "text-muted-foreground hover:text-foreground"
                 )}
               >
-                <Icon className={cn("h-5 w-5 mb-1", active && "stroke-[2.5]")} />
-                <span className="text-xs font-medium">{item.label}</span>
+                <div className={cn(
+                  "flex items-center justify-center mb-1",
+                  isHighlight && "bg-primary text-primary-foreground rounded-full p-2 -mt-4 shadow-lg"
+                )}>
+                  <Icon className={cn(
+                    isHighlight ? "h-6 w-6" : "h-5 w-5",
+                    active && !isHighlight && "stroke-[2.5]"
+                  )} />
+                </div>
+                <span className={cn("text-xs font-medium", isHighlight && "-mt-1")}>{item.label}</span>
               </button>
             );
           })}
