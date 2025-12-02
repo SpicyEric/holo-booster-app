@@ -36,7 +36,6 @@ import DesignVariants from "./pages/DesignVariants";
 
 // App (End Customer) imports
 import { AppProtectedRoute } from "./components/AppProtectedRoute";
-import AppLayout from "./app/layouts/AppLayout";
 import AppHome from "./app/pages/AppHome";
 import AppRewards from "./app/pages/AppRewards";
 import AppHistory from "./app/pages/AppHistory";
@@ -44,6 +43,8 @@ import AppProfile from "./app/pages/AppProfile";
 import AppAuth from "./app/pages/AppAuth";
 import AppMerchantDetail from "./app/pages/AppMerchantDetail";
 import AppScan from "./app/pages/AppScan";
+import AppMessages from "./app/pages/AppMessages";
+import AppStores from "./app/pages/AppStores";
 
 const queryClient = new QueryClient();
 
@@ -92,14 +93,14 @@ const App = () => (
           
           {/* ===== APP ROUTES (End Customer) ===== */}
           <Route path="/app/auth" element={<AppAuth />} />
-          <Route path="/app" element={<AppProtectedRoute><AppLayout /></AppProtectedRoute>}>
-            <Route index element={<AppHome />} />
-            <Route path="rewards" element={<AppRewards />} />
-            <Route path="history" element={<AppHistory />} />
-            <Route path="profile" element={<AppProfile />} />
-            <Route path="scan" element={<AppScan />} />
-            <Route path="merchant/:id" element={<AppMerchantDetail />} />
-          </Route>
+          <Route path="/app" element={<AppProtectedRoute><AppHome /></AppProtectedRoute>} />
+          <Route path="/app/messages" element={<AppProtectedRoute><AppMessages /></AppProtectedRoute>} />
+          <Route path="/app/stores" element={<AppProtectedRoute><AppStores /></AppProtectedRoute>} />
+          <Route path="/app/rewards" element={<AppProtectedRoute><AppRewards /></AppProtectedRoute>} />
+          <Route path="/app/history" element={<AppProtectedRoute><AppHistory /></AppProtectedRoute>} />
+          <Route path="/app/profile" element={<AppProtectedRoute><AppProfile /></AppProtectedRoute>} />
+          <Route path="/app/scan" element={<AppProtectedRoute><AppScan /></AppProtectedRoute>} />
+          <Route path="/app/merchant/:id" element={<AppProtectedRoute><AppMerchantDetail /></AppProtectedRoute>} />
           
           {/* Scan Route */}
           <Route path="/s/:cid" element={<Scan />} />
