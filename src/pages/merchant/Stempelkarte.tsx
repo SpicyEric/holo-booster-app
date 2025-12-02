@@ -266,6 +266,32 @@ const Stempelkarte = () => {
     }
   };
 
+  const geocodeAddress = async (street: string, houseNumber: string, postalCode: string, city: string): Promise<{ lat: number; lng: number } | null> => {
+    const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
+    if (!apiKey) {
+      console.warn("Google Maps API Key not configured");
+      return null;
+    }
+
+    const address = `${street} ${houseNumber}, ${postalCode} ${city}, Germany`;
+    const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(address)}&key=${apiKey}`;
+
+    try {
+      const response = await fetch(url);
+      const data = await response.json();
+      
+      if (data.status === "OK" && data.results.length > 0) {
+        const location = data.results[0].geometry.location;
+        return { lat: location.lat, lng: location.lng };
+      }
+      console.warn("Geocoding failed:", data.status);
+      return null;
+    } catch (error) {
+      console.error("Geocoding error:", error);
+      return null;
+    }
+  };
+
   const handleSave = async () => {
     if (!user?.id || !customerId) {
       toast.error("Keine Berechtigung zum Speichern");
@@ -274,7 +300,18 @@ const Stempelkarte = () => {
     
     setSaving(true);
     try {
-      const updateData = {
+      // Geocode address if we have enough data
+      let coordinates: { lat: number; lng: number } | null = null;
+      if (formData.street && formData.postal_code && formData.city) {
+        coordinates = await geocodeAddress(
+          formData.street,
+          formData.house_number || "",
+          formData.postal_code,
+          formData.city
+        );
+      }
+
+      const updateData: Record<string, any> = {
         name: formData.name,
         description: formData.description,
         industry: formData.industry,
@@ -293,6 +330,12 @@ const Stempelkarte = () => {
         opening_hours: formData.opening_hours,
         updated_at: new Date().toISOString(),
       };
+
+      // Add coordinates if geocoding was successful
+      if (coordinates) {
+        updateData.latitude = coordinates.lat;
+        updateData.longitude = coordinates.lng;
+      }
       
       const { error } = await supabase
         .from("customers")
