@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { appSupabase } from "@/integrations/app-supabase/client";
 import { supabase } from "@/integrations/supabase/client";
 import { ArrowLeft, Save, Trash2, ExternalLink, CreditCard, FileText, Hash } from "lucide-react";
 import { toast } from "sonner";
@@ -47,74 +46,36 @@ const CustomerDetail = () => {
     totalRewards: 0,
   });
   
-  const [customerNumber, setCustomerNumber] = useState<string | null>(null);
-  
   const [formData, setFormData] = useState({
     name: "",
     description: "",
-    category: "",
-    address: "",
+    industry: "",
+    street: "",
+    house_number: "",
     postal_code: "",
     city: "",
-    phone_number: "",
+    phone: "",
     website: "",
-    instagram_url: "",
-    facebook_url: "",
-    twitter_url: "",
+    instagram: "",
+    facebook: "",
+    twitter: "",
     logo_url: "",
     cover_image_url: "",
-    owner_user_id: "",
+    customer_number: null as number | null,
     created_at: "",
   });
 
   useEffect(() => {
     if (id) {
-      loadMerchant();
+      loadCustomer();
       loadStats();
-      loadCustomerNumber();
     }
   }, [id]);
 
-  // Load real customer number from main database (customers table)
-  const loadCustomerNumber = async () => {
+  const loadCustomer = async () => {
     try {
-      // Try to find customer by matching owner_user_id with customer_users
-      const { data: merchantData } = await appSupabase
-        .from("merchants")
-        .select("owner_user_id")
-        .eq("id", id)
-        .single();
-      
-      const ownerUserId = (merchantData as any)?.owner_user_id;
-      if (!ownerUserId) return;
-      
-      // Look up customer via customer_users table
-      const { data: customerUser } = await supabase
-        .from("customer_users")
-        .select("customer_id")
-        .eq("user_id", ownerUserId)
-        .single();
-      
-      if (!customerUser?.customer_id) return;
-      
-      const { data: customer } = await supabase
+      const { data, error } = await supabase
         .from("customers")
-        .select("customer_number")
-        .eq("id", customerUser.customer_id)
-        .single();
-      
-      if (customer?.customer_number) {
-        setCustomerNumber(String(customer.customer_number));
-      }
-    } catch (error) {
-      console.error("Error loading customer number:", error);
-    }
-  };
-
-  const loadMerchant = async () => {
-    try {
-      const { data, error } = await appSupabase
-        .from("merchants")
         .select("*")
         .eq("id", id)
         .single();
@@ -122,24 +83,23 @@ const CustomerDetail = () => {
       if (error) throw error;
       if (!data) throw new Error("Keine Daten gefunden");
       
-      const merchant = data as any;
-      
       setFormData({
-        name: merchant.name || "",
-        description: merchant.description || "",
-        category: merchant.category || "",
-        address: merchant.address || "",
-        postal_code: merchant.postal_code || "",
-        city: merchant.city || "",
-        phone_number: merchant.phone_number || "",
-        website: merchant.website || "",
-        instagram_url: merchant.instagram_url || "",
-        facebook_url: merchant.facebook_url || "",
-        twitter_url: merchant.twitter_url || "",
-        logo_url: merchant.logo_url || "",
-        cover_image_url: merchant.cover_image_url || "",
-        owner_user_id: merchant.owner_user_id || "",
-        created_at: merchant.created_at || "",
+        name: data.name || "",
+        description: data.description || "",
+        industry: data.industry || "",
+        street: data.street || "",
+        house_number: data.house_number || "",
+        postal_code: data.postal_code || "",
+        city: data.city || "",
+        phone: data.phone || "",
+        website: data.website || "",
+        instagram: data.instagram || "",
+        facebook: data.facebook || "",
+        twitter: data.twitter || "",
+        logo_url: data.logo_url || "",
+        cover_image_url: data.cover_image_url || "",
+        customer_number: data.customer_number,
+        created_at: data.created_at || "",
       });
     } catch (error: any) {
       toast.error("Kunde nicht gefunden");
@@ -152,9 +112,9 @@ const CustomerDetail = () => {
   const loadStats = async () => {
     try {
       const [loyaltyRes, transactionsRes, rewardsRes] = await Promise.all([
-        appSupabase.from("loyalty_accounts").select("id", { count: "exact", head: true }).eq("merchant_id", id),
-        appSupabase.from("transactions").select("id", { count: "exact", head: true }).eq("merchant_id", id),
-        appSupabase.from("rewards").select("id", { count: "exact", head: true }).eq("merchant_id", id),
+        supabase.from("loyalty_accounts").select("id", { count: "exact", head: true }).eq("merchant_customer_id", id),
+        supabase.from("point_transactions").select("id", { count: "exact", head: true }).eq("merchant_customer_id", id),
+        supabase.from("rewards").select("id", { count: "exact", head: true }).eq("merchant_customer_id", id),
       ]);
 
       setStats({
@@ -168,8 +128,8 @@ const CustomerDetail = () => {
   };
 
   const handleSave = async () => {
-    if (!formData.name || !formData.address || !formData.city) {
-      toast.error("Name, Adresse und Stadt sind Pflichtfelder");
+    if (!formData.name) {
+      toast.error("Name ist Pflichtfeld");
       return;
     }
 
@@ -178,19 +138,20 @@ const CustomerDetail = () => {
       const updateData = {
         name: formData.name,
         description: formData.description,
-        category: formData.category,
-        address: formData.address,
+        industry: formData.industry,
+        street: formData.street,
+        house_number: formData.house_number,
         postal_code: formData.postal_code,
         city: formData.city,
-        phone_number: formData.phone_number,
+        phone: formData.phone,
         website: formData.website,
-        instagram_url: formData.instagram_url,
-        facebook_url: formData.facebook_url,
-        twitter_url: formData.twitter_url,
+        instagram: formData.instagram,
+        facebook: formData.facebook,
+        twitter: formData.twitter,
       };
       
-      const { error } = await (appSupabase
-        .from("merchants") as any)
+      const { error } = await supabase
+        .from("customers")
         .update(updateData)
         .eq("id", id);
 
@@ -204,11 +165,11 @@ const CustomerDetail = () => {
     }
   };
 
-  const handleDeleteMerchant = async () => {
+  const handleDeleteCustomer = async () => {
     setDeleting(true);
     try {
-      const { error } = await appSupabase
-        .from("merchants")
+      const { error } = await supabase
+        .from("customers")
         .delete()
         .eq("id", id);
 
@@ -243,9 +204,9 @@ const CustomerDetail = () => {
         <div className="flex-1">
           <div className="flex items-center gap-2">
             <h1 className="text-xl font-semibold">{formData.name}</h1>
-            {customerNumber && (
+            {formData.customer_number && (
               <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded font-mono">
-                #{customerNumber}
+                #{formData.customer_number}
               </span>
             )}
           </div>
@@ -285,8 +246,8 @@ const CustomerDetail = () => {
               <div>
                 <Label className="text-xs">Kategorie</Label>
                 <Select
-                  value={formData.category}
-                  onValueChange={(value) => setFormData({ ...formData, category: value })}
+                  value={formData.industry}
+                  onValueChange={(value) => setFormData({ ...formData, industry: value })}
                 >
                   <SelectTrigger className="h-8 text-sm">
                     <SelectValue placeholder="Wählen" />
@@ -300,13 +261,23 @@ const CustomerDetail = () => {
               </div>
             </div>
 
-            <div>
-              <Label className="text-xs">Straße *</Label>
-              <Input
-                value={formData.address}
-                onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                className="h-8 text-sm"
-              />
+            <div className="grid grid-cols-3 gap-2">
+              <div className="col-span-2">
+                <Label className="text-xs">Straße</Label>
+                <Input
+                  value={formData.street}
+                  onChange={(e) => setFormData({ ...formData, street: e.target.value })}
+                  className="h-8 text-sm"
+                />
+              </div>
+              <div>
+                <Label className="text-xs">Hausnr.</Label>
+                <Input
+                  value={formData.house_number}
+                  onChange={(e) => setFormData({ ...formData, house_number: e.target.value })}
+                  className="h-8 text-sm"
+                />
+              </div>
             </div>
 
             <div className="grid grid-cols-3 gap-2">
@@ -319,7 +290,7 @@ const CustomerDetail = () => {
                 />
               </div>
               <div className="col-span-2">
-                <Label className="text-xs">Ort *</Label>
+                <Label className="text-xs">Ort</Label>
                 <Input
                   value={formData.city}
                   onChange={(e) => setFormData({ ...formData, city: e.target.value })}
@@ -337,8 +308,8 @@ const CustomerDetail = () => {
               <div>
                 <Label className="text-xs">Telefon</Label>
                 <Input
-                  value={formData.phone_number}
-                  onChange={(e) => setFormData({ ...formData, phone_number: e.target.value })}
+                  value={formData.phone}
+                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                   className="h-8 text-sm"
                 />
               </div>
@@ -356,16 +327,16 @@ const CustomerDetail = () => {
               <div>
                 <Label className="text-xs">Instagram</Label>
                 <Input
-                  value={formData.instagram_url}
-                  onChange={(e) => setFormData({ ...formData, instagram_url: e.target.value })}
+                  value={formData.instagram}
+                  onChange={(e) => setFormData({ ...formData, instagram: e.target.value })}
                   className="h-8 text-sm"
                 />
               </div>
               <div>
                 <Label className="text-xs">Facebook</Label>
                 <Input
-                  value={formData.facebook_url}
-                  onChange={(e) => setFormData({ ...formData, facebook_url: e.target.value })}
+                  value={formData.facebook}
+                  onChange={(e) => setFormData({ ...formData, facebook: e.target.value })}
                   className="h-8 text-sm"
                 />
               </div>
@@ -395,14 +366,14 @@ const CustomerDetail = () => {
                 <Hash className="w-4 h-4 text-muted-foreground" />
                 <div>
                   <p className="text-xs text-muted-foreground">Kunden-Nr.</p>
-                  <p className="font-mono font-semibold">{customerNumber || "—"}</p>
+                  <p className="font-mono font-semibold">{formData.customer_number || "—"}</p>
                 </div>
               </div>
               <div className="flex items-center gap-2">
                 <FileText className="w-4 h-4 text-muted-foreground" />
                 <div>
-                  <p className="text-xs text-muted-foreground">Owner-ID</p>
-                  <p className="font-mono text-xs">{formData.owner_user_id ? formData.owner_user_id.substring(0, 8) + "..." : "—"}</p>
+                  <p className="text-xs text-muted-foreground">ID</p>
+                  <p className="font-mono text-xs">{id ? id.substring(0, 8) + "..." : "—"}</p>
                 </div>
               </div>
             </div>
@@ -485,10 +456,10 @@ const CustomerDetail = () => {
       <ConfirmActionDialog
         open={showDeleteDialog}
         onOpenChange={setShowDeleteDialog}
-        onConfirm={handleDeleteMerchant}
+        onConfirm={handleDeleteCustomer}
         title="Kunde endgültig löschen?"
-        description={`Der Kunde "${formData.name}"${customerNumber ? ` (#${customerNumber})` : ""} und alle zugehörigen Daten werden permanent gelöscht. Diese Aktion kann NICHT rückgängig gemacht werden!`}
-        confirmText={deleting ? "Lösche..." : "Endgültig löschen"}
+        description={`"${formData.name}" wird mit allen zugehörigen Daten unwiderruflich gelöscht.`}
+        confirmText={deleting ? "Wird gelöscht..." : "Löschen"}
         confirmPhrase="LÖSCHEN"
         destructive
       />

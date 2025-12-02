@@ -1,5 +1,4 @@
 import { supabase } from "@/integrations/supabase/client";
-import { appSupabase } from "@/integrations/app-supabase/client";
 
 // Website-Rollen (Lovable Cloud)
 // 'admin' = Administrator
@@ -173,11 +172,11 @@ export const checkMerchantRole = async (userId: string): Promise<boolean> => {
   return role === 'merchant' || role === 'admin';
 };
 
-// Holt den Merchant aus der App-DB anhand der Email des eingeloggten Users
+// Holt den Customer aus Lovable Cloud anhand der Email des eingeloggten Users
 export const getUserMerchantByEmail = async (userEmail: string) => {
   try {
-    const { data, error } = await appSupabase
-      .from('merchants')
+    const { data, error } = await supabase
+      .from('customers')
       .select('*')
       .eq('email', userEmail)
       .maybeSingle();

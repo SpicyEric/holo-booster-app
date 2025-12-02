@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Star, ExternalLink, Copy, CheckCircle2 } from "lucide-react";
-import { appSupabase } from "@/integrations/app-supabase/client";
+import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 
 const GoogleBewertungen = () => {
@@ -13,29 +13,39 @@ const GoogleBewertungen = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [googleReviewUrl, setGoogleReviewUrl] = useState("");
-  const [merchantId, setMerchantId] = useState<string | null>(null);
+  const [customerId, setCustomerId] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
-    const fetchMerchant = async () => {
+    const fetchCustomer = async () => {
       if (!user?.id) return;
       
       try {
-        const { data, error } = await appSupabase
-          .from("merchants")
-          .select("id, google_review_url")
-          .eq("owner_user_id", user.id)
+        // Find customer via customer_users link
+        const { data: linkData } = await supabase
+          .from("customer_users")
+          .select("customer_id")
+          .eq("user_id", user.id)
           .single();
         
-        if (error && error.code !== "PGRST116") {
-          console.error("Error fetching merchant:", error);
-          return;
-        }
-        
-        if (data) {
-          const merchantData = data as any;
-          setMerchantId(merchantData.id);
-          setGoogleReviewUrl(merchantData.google_review_url || "");
+        if (linkData?.customer_id) {
+          setCustomerId(linkData.customer_id);
+          
+          // Load customer data
+          const { data: customerData, error } = await supabase
+            .from("customers")
+            .select("id, google_review_url")
+            .eq("id", linkData.customer_id)
+            .single();
+          
+          if (error && error.code !== "PGRST116") {
+            console.error("Error fetching customer:", error);
+            return;
+          }
+          
+          if (customerData) {
+            setGoogleReviewUrl(customerData.google_review_url || "");
+          }
         }
       } catch (err) {
         console.error("Error:", err);
@@ -44,40 +54,26 @@ const GoogleBewertungen = () => {
       }
     };
     
-    fetchMerchant();
+    fetchCustomer();
   }, [user?.id]);
 
   const handleSave = async () => {
-    if (!user?.id) return;
+    if (!customerId) {
+      toast.error("Kein Kundenprofil gefunden");
+      return;
+    }
     
     setSaving(true);
     try {
-      if (merchantId) {
-        const { error } = await (appSupabase
-          .from("merchants") as any)
-          .update({ 
-            google_review_url: googleReviewUrl,
-            updated_at: new Date().toISOString() 
-          })
-          .eq("id", merchantId);
-        
-        if (error) throw error;
-      } else {
-        const { data, error } = await (appSupabase
-          .from("merchants") as any)
-          .insert({
-            owner_user_id: user.id,
-            google_review_url: googleReviewUrl,
-            name: "Mein Geschäft",
-            lat: 0,
-            lng: 0,
-          })
-          .select()
-          .single();
-        
-        if (error) throw error;
-        if (data) setMerchantId(data.id);
-      }
+      const { error } = await supabase
+        .from("customers")
+        .update({ 
+          google_review_url: googleReviewUrl,
+          updated_at: new Date().toISOString() 
+        })
+        .eq("id", customerId);
+      
+      if (error) throw error;
       
       toast.success("Google-Bewertungslink gespeichert!");
     } catch (error: any) {

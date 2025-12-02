@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { appSupabase } from "@/integrations/app-supabase/client";
+import { supabase } from "@/integrations/supabase/client";
 import { GlassCard } from "@/components/GlassCard";
 import { GradientButton } from "@/components/GradientButton";
 import { ArrowLeft, Plus } from "lucide-react";
@@ -37,42 +37,42 @@ const CustomerNew = () => {
   const [creating, setCreating] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
-    category: "",
+    industry: "",
     description: "",
-    address: "",
+    street: "",
+    house_number: "",
     postal_code: "",
     city: "",
-    phone_number: "",
+    phone: "",
     website: "",
-    instagram_url: "",
-    facebook_url: "",
+    instagram: "",
+    facebook: "",
   });
 
   const handleCreate = async () => {
-    if (!formData.name || !formData.address || !formData.city) {
-      toast.error("Name, Adresse und Stadt sind Pflichtfelder");
+    if (!formData.name) {
+      toast.error("Name ist Pflichtfeld");
       return;
     }
 
     setCreating(true);
     try {
-      // Insert directly into merchants table in App-DB
-      const { data, error } = await (appSupabase
-        .from("merchants") as any)
+      const { data, error } = await supabase
+        .from("customers")
         .insert({
           name: formData.name,
-          category: formData.category || null,
+          industry: formData.industry || null,
           description: formData.description || null,
-          address: formData.address,
+          street: formData.street || null,
+          house_number: formData.house_number || null,
           postal_code: formData.postal_code || null,
-          city: formData.city,
-          phone_number: formData.phone_number || null,
+          city: formData.city || null,
+          phone: formData.phone || null,
           website: formData.website || null,
-          instagram_url: formData.instagram_url || null,
-          facebook_url: formData.facebook_url || null,
-          // Default coordinates - can be updated later via map
-          lat: 0,
-          lng: 0,
+          instagram: formData.instagram || null,
+          facebook: formData.facebook || null,
+          google_review_url: "",
+          offer_text: "",
         })
         .select()
         .single();
@@ -103,7 +103,7 @@ const CustomerNew = () => {
             Neuer Kunde
           </h1>
           <p className="text-muted-foreground mt-1">
-            Lege einen neuen Kunden in der App-Datenbank an
+            Lege einen neuen Kunden an
           </p>
         </div>
       </div>
@@ -125,10 +125,10 @@ const CustomerNew = () => {
                 />
               </div>
               <div>
-                <Label htmlFor="category">Kategorie</Label>
+                <Label htmlFor="industry">Kategorie</Label>
                 <Select
-                  value={formData.category}
-                  onValueChange={(value) => setFormData({ ...formData, category: value })}
+                  value={formData.industry}
+                  onValueChange={(value) => setFormData({ ...formData, industry: value })}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Wählen..." />
@@ -142,16 +142,29 @@ const CustomerNew = () => {
               </div>
             </div>
 
-            <div>
-              <Label htmlFor="address">Straße und Hausnummer *</Label>
-              <Input
-                id="address"
-                value={formData.address}
-                onChange={(e) =>
-                  setFormData({ ...formData, address: e.target.value })
-                }
-                placeholder="z.B. Hauptstraße 15"
-              />
+            <div className="grid grid-cols-3 gap-4">
+              <div className="col-span-2">
+                <Label htmlFor="street">Straße</Label>
+                <Input
+                  id="street"
+                  value={formData.street}
+                  onChange={(e) =>
+                    setFormData({ ...formData, street: e.target.value })
+                  }
+                  placeholder="z.B. Hauptstraße"
+                />
+              </div>
+              <div>
+                <Label htmlFor="house_number">Hausnr.</Label>
+                <Input
+                  id="house_number"
+                  value={formData.house_number}
+                  onChange={(e) =>
+                    setFormData({ ...formData, house_number: e.target.value })
+                  }
+                  placeholder="15"
+                />
+              </div>
             </div>
 
             <div className="grid grid-cols-3 gap-4">
@@ -167,7 +180,7 @@ const CustomerNew = () => {
                 />
               </div>
               <div className="col-span-2">
-                <Label htmlFor="city">Stadt *</Label>
+                <Label htmlFor="city">Stadt</Label>
                 <Input
                   id="city"
                   value={formData.city}
@@ -181,12 +194,12 @@ const CustomerNew = () => {
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="phone_number">Telefonnummer</Label>
+                <Label htmlFor="phone">Telefonnummer</Label>
                 <Input
-                  id="phone_number"
-                  value={formData.phone_number}
+                  id="phone"
+                  value={formData.phone}
                   onChange={(e) =>
-                    setFormData({ ...formData, phone_number: e.target.value })
+                    setFormData({ ...formData, phone: e.target.value })
                   }
                   placeholder="+49 123 456789"
                 />
@@ -206,23 +219,23 @@ const CustomerNew = () => {
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="instagram_url">Instagram</Label>
+                <Label htmlFor="instagram">Instagram</Label>
                 <Input
-                  id="instagram_url"
-                  value={formData.instagram_url}
+                  id="instagram"
+                  value={formData.instagram}
                   onChange={(e) =>
-                    setFormData({ ...formData, instagram_url: e.target.value })
+                    setFormData({ ...formData, instagram: e.target.value })
                   }
                   placeholder="https://instagram.com/..."
                 />
               </div>
               <div>
-                <Label htmlFor="facebook_url">Facebook</Label>
+                <Label htmlFor="facebook">Facebook</Label>
                 <Input
-                  id="facebook_url"
-                  value={formData.facebook_url}
+                  id="facebook"
+                  value={formData.facebook}
                   onChange={(e) =>
-                    setFormData({ ...formData, facebook_url: e.target.value })
+                    setFormData({ ...formData, facebook: e.target.value })
                   }
                   placeholder="https://facebook.com/..."
                 />

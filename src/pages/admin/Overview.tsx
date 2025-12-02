@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { appSupabase } from "@/integrations/app-supabase/client";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -14,53 +13,23 @@ const Overview = () => {
   const navigate = useNavigate();
   const [syncing, setSyncing] = useState(false);
   const [stats, setStats] = useState({
-    merchants: 0,
+    customers: 0,
     stamps: 0,
     contacts: 0,
     pendingOrders: 0,
   });
 
-  const [recentMerchants, setRecentMerchants] = useState<any[]>([]);
+  const [recentCustomers, setRecentCustomers] = useState<any[]>([]);
   const [criticalEvents, setCriticalEvents] = useState<any[]>([]);
   const [recentStamps, setRecentStamps] = useState<any[]>([]);
 
-  const syncCustomersToApp = async () => {
-    setSyncing(true);
-    try {
-      const { data, error } = await supabase.functions.invoke("sync-customers-to-app");
-      
-      if (error) throw error;
-      
-      if (data.synced > 0) {
-        toast.success(`${data.synced} Kunde(n) synchronisiert!`);
-      } else if (data.skipped > 0) {
-        toast.info(`Alle ${data.skipped} Kunden bereits synchronisiert`);
-      } else {
-        toast.info("Keine Kunden zum Synchronisieren gefunden");
-      }
-      
-      if (data.errors > 0) {
-        toast.warning(`${data.errors} Fehler bei der Synchronisierung`);
-      }
-      
-      // Reload stats and merchants after sync
-      loadStats();
-      loadRecentMerchants();
-    } catch (error: any) {
-      console.error("Sync error:", error);
-      toast.error("Fehler bei der Synchronisierung: " + error.message);
-    } finally {
-      setSyncing(false);
-    }
-  };
-
   useEffect(() => {
     loadStats();
-    loadRecentMerchants();
+    loadRecentCustomers();
     loadCriticalEvents();
     loadRecentStamps();
 
-    // Setup realtime subscription for stamps (from Lovable Cloud)
+    // Setup realtime subscription for stamps
     const channel = supabase
       .channel('dashboard-stamps')
       .on(
@@ -84,20 +53,15 @@ const Overview = () => {
 
   const loadStats = async () => {
     try {
-      // Merchants come from App-DB (no is_active column - all merchants are active)
-      const merchantsRes = await appSupabase
-        .from("merchants")
-        .select("id", { count: "exact", head: true });
-
-      // Stamps, contacts, orders come from Lovable Cloud
-      const [stampsRes, contactsRes, pendingOrdersRes] = await Promise.all([
+      const [customersRes, stampsRes, contactsRes, pendingOrdersRes] = await Promise.all([
+        supabase.from("customers").select("id", { count: "exact", head: true }).eq("active", true),
         supabase.from("stamps").select("id", { count: "exact", head: true }),
         supabase.from("contacts").select("id", { count: "exact", head: true }),
         supabase.from("orders").select("id", { count: "exact", head: true }).eq("status", "pending"),
       ]);
 
       setStats({
-        merchants: merchantsRes.count || 0,
+        customers: customersRes.count || 0,
         stamps: stampsRes.count || 0,
         contacts: contactsRes.count || 0,
         pendingOrders: pendingOrdersRes.count || 0,
@@ -107,17 +71,16 @@ const Overview = () => {
     }
   };
 
-  const loadRecentMerchants = async () => {
+  const loadRecentCustomers = async () => {
     try {
-      // Load merchants from App-DB (no email/is_active columns)
-      const { data, error } = await appSupabase
-        .from("merchants")
-        .select("id, name, category, city, created_at")
+      const { data, error } = await supabase
+        .from("customers")
+        .select("id, name, industry, city, created_at")
         .order("created_at", { ascending: false })
         .limit(5);
 
       if (error) throw error;
-      setRecentMerchants(data || []);
+      setRecentCustomers(data || []);
     } catch (error) {
       console.error("Fehler beim Laden neuer Kunden:", error);
     }
@@ -125,7 +88,6 @@ const Overview = () => {
 
   const loadCriticalEvents = async () => {
     try {
-      // Critical events from Lovable Cloud customers table (has Stripe status)
       const { data, error } = await supabase
         .from("customers")
         .select("id, name, company_name, email, status, updated_at")
@@ -142,7 +104,6 @@ const Overview = () => {
 
   const loadRecentStamps = async () => {
     try {
-      // Stamps from Lovable Cloud, but we need to get merchant names from App-DB
       const { data: stampsData, error: stampsError } = await supabase
         .from("stamps")
         .select("id, created_at, customer_id")
@@ -156,21 +117,21 @@ const Overview = () => {
         return;
       }
 
-      // Get unique customer IDs and fetch merchant names from App-DB
+      // Get customer names
       const customerIds = [...new Set(stampsData.map(s => s.customer_id))] as string[];
-      const { data: merchantsData } = await appSupabase
-        .from("merchants")
-        .select("id, name, category")
+      const { data: customersData } = await supabase
+        .from("customers")
+        .select("id, name, industry")
         .in("id", customerIds);
 
-      const merchantMap = new Map((merchantsData || []).map((m: any) => [m.id, m]));
+      const customerMap = new Map((customersData || []).map((c: any) => [c.id, c]));
 
-      const stampsWithMerchants = stampsData.map(stamp => ({
+      const stampsWithCustomers = stampsData.map(stamp => ({
         ...stamp,
-        merchant: merchantMap.get(stamp.customer_id) || null
+        customer: customerMap.get(stamp.customer_id) || null
       }));
 
-      setRecentStamps(stampsWithMerchants);
+      setRecentStamps(stampsWithCustomers);
     } catch (error) {
       console.error("Fehler beim Laden der Stempel:", error);
     }
@@ -199,17 +160,12 @@ const Overview = () => {
           </p>
         </div>
         <Button 
-          onClick={syncCustomersToApp} 
-          disabled={syncing}
+          onClick={loadStats} 
           variant="outline"
           className="gap-2"
         >
-          {syncing ? (
-            <Loader2 className="w-4 h-4 animate-spin" />
-          ) : (
-            <RefreshCw className="w-4 h-4" />
-          )}
-          {syncing ? "Synchronisiere..." : "Kunden zur App synchronisieren"}
+          <RefreshCw className="w-4 h-4" />
+          Aktualisieren
         </Button>
       </div>
 
@@ -221,7 +177,7 @@ const Overview = () => {
             </div>
             <div>
               <p className="text-sm text-muted-foreground">Aktive Kunden</p>
-              <p className="text-2xl font-bold">{stats.merchants}</p>
+              <p className="text-2xl font-bold">{stats.customers}</p>
             </div>
           </div>
         </Card>
@@ -287,7 +243,7 @@ const Overview = () => {
                   </div>
                   <div className="flex-1">
                     <p className="text-sm">
-                      Stempel bei <span className="font-medium">{stamp.merchant?.name || "Unbekannt"}</span>
+                      Stempel bei <span className="font-medium">{stamp.customer?.name || "Unbekannt"}</span>
                     </p>
                     <p className="text-xs text-muted-foreground">
                       {format(new Date(stamp.created_at), "dd.MM.yyyy, HH:mm", { locale: de })} Uhr
@@ -301,24 +257,24 @@ const Overview = () => {
           </div>
         </Card>
 
-        {/* New Merchants (from App-DB) */}
+        {/* New Customers */}
         <Card className="p-6 border-border">
           <div className="flex items-center gap-2 mb-4">
             <UserPlus className="w-5 h-5 text-primary" />
             <h2 className="text-xl font-semibold">Neue Kunden</h2>
           </div>
           <div className="space-y-3">
-            {recentMerchants.length > 0 ? (
-              recentMerchants.map((merchant) => (
-                <div key={merchant.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors">
+            {recentCustomers.length > 0 ? (
+              recentCustomers.map((customer) => (
+                <div key={customer.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors">
                   <div className="flex-1">
-                    <p className="font-medium">{merchant.name}</p>
-                    <p className="text-xs text-muted-foreground">{merchant.category || merchant.city}</p>
+                    <p className="font-medium">{customer.name}</p>
+                    <p className="text-xs text-muted-foreground">{customer.industry || customer.city}</p>
                   </div>
                   <div className="flex items-center gap-2">
                     <Badge variant="default">Aktiv</Badge>
                     <p className="text-xs text-muted-foreground">
-                      {format(new Date(merchant.created_at), "dd.MM.yyyy", { locale: de })}
+                      {format(new Date(customer.created_at), "dd.MM.yyyy", { locale: de })}
                     </p>
                   </div>
                 </div>
@@ -330,7 +286,7 @@ const Overview = () => {
         </Card>
       </div>
 
-      {/* Critical Events (Stripe-related, from Lovable Cloud) */}
+      {/* Critical Events */}
       {criticalEvents.length > 0 && (
         <Card className="p-6 border-border border-destructive/50">
           <div className="flex items-center gap-2 mb-4">

@@ -5,8 +5,8 @@ import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, 
   ResponsiveContainer, AreaChart, Area 
 } from "recharts";
-import { appSupabase } from "@/integrations/app-supabase/client";
-import { Clock, Users, TrendingUp, CalendarDays } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { Clock, Users, TrendingUp } from "lucide-react";
 
 interface DashboardChartsProps {
   merchantId: string | null;
@@ -84,10 +84,10 @@ export function DashboardCharts({ merchantId }: DashboardChartsProps) {
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - hourlyRange);
 
-    const { data: transactions } = await appSupabase
-      .from("transactions")
+    const { data: transactions } = await supabase
+      .from("point_transactions")
       .select("created_at")
-      .eq("merchant_id", merchantId)
+      .eq("merchant_customer_id", merchantId)
       .gte("created_at", startDate.toISOString());
 
     // Initialize all 24 hours
@@ -118,10 +118,10 @@ export function DashboardCharts({ merchantId }: DashboardChartsProps) {
     startDate.setDate(startDate.getDate() - ageRange);
 
     // Get loyalty accounts created in range
-    const { data: loyaltyAccounts } = await appSupabase
+    const { data: loyaltyAccounts } = await supabase
       .from("loyalty_accounts")
       .select("user_id, created_at")
-      .eq("merchant_id", merchantId)
+      .eq("merchant_customer_id", merchantId)
       .gte("created_at", startDate.toISOString());
 
     const userIds = (loyaltyAccounts || []).map((acc: any) => acc.user_id);
@@ -142,10 +142,10 @@ export function DashboardCharts({ merchantId }: DashboardChartsProps) {
     ageBrackets.forEach(b => ageCounts[b.label] = 0);
 
     if (userIds.length > 0) {
-      const { data: profiles } = await appSupabase
+      const { data: profiles } = await supabase
         .from("profiles")
         .select("birth_date")
-        .in("id", userIds);
+        .in("user_id", userIds);
 
       (profiles || []).forEach((profile: any) => {
         if (profile.birth_date) {
@@ -177,10 +177,10 @@ export function DashboardCharts({ merchantId }: DashboardChartsProps) {
     startDate.setDate(startDate.getDate() - growthRange);
 
     // Get all loyalty accounts up to now
-    const { data: allAccounts } = await appSupabase
+    const { data: allAccounts } = await supabase
       .from("loyalty_accounts")
       .select("created_at")
-      .eq("merchant_id", merchantId)
+      .eq("merchant_customer_id", merchantId)
       .order("created_at", { ascending: true });
 
     // Group by date and calculate cumulative
