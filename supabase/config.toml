@@ -39,3 +39,6 @@ verify_jwt = false
 [functions.send-merchant-onboarding]
 verify_jwt = false
 
+[functions.geocode-address]
+verify_jwt = false
+
