@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { GoogleMap, LoadScript, Marker, InfoWindow } from '@react-google-maps/api';
 import { useNavigate } from 'react-router-dom';
 
@@ -47,19 +47,58 @@ export function StoresGoogleMap({ userLocation, stores }: StoresGoogleMapProps) 
   const [isLoaded, setIsLoaded] = useState(false);
   const [markerIcons, setMarkerIcons] = useState<{ [key: string]: google.maps.Icon }>({});
 
-  const center = {
-    lat: userLocation[0],
-    lng: userLocation[1],
-  };
+  // Filter stores with valid coordinates (not 0,0)
+  const validStores = stores.filter(store => store.lat !== 0 && store.lng !== 0);
 
-  const apiKey = 'AIzaSyBZMmrGWon1J1LJDeZ2HgKMF6sd9D2jJ6Q';
+  // Calculate center - prefer stores center if available, else user location
+  const calculateCenter = useCallback(() => {
+    if (validStores.length > 0) {
+      const avgLat = validStores.reduce((sum, s) => sum + s.lat, 0) / validStores.length;
+      const avgLng = validStores.reduce((sum, s) => sum + s.lng, 0) / validStores.length;
+      return { lat: avgLat, lng: avgLng };
+    }
+    return { lat: userLocation[0], lng: userLocation[1] };
+  }, [validStores, userLocation]);
+
+  const center = calculateCenter();
+
+  const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || 'AIzaSyBZMmrGWon1J1LJDeZ2HgKMF6sd9D2jJ6Q';
+
+  // Fit bounds to show all stores when map loads
+  const onMapLoad = useCallback((mapInstance: google.maps.Map) => {
+    setMap(mapInstance);
+    
+    if (validStores.length > 0) {
+      const bounds = new google.maps.LatLngBounds();
+      
+      // Add all store locations to bounds
+      validStores.forEach(store => {
+        bounds.extend({ lat: store.lat, lng: store.lng });
+      });
+      
+      // Add user location to bounds
+      bounds.extend({ lat: userLocation[0], lng: userLocation[1] });
+      
+      // Fit the map to show all markers
+      mapInstance.fitBounds(bounds);
+      
+      // Set a max zoom level so we don't zoom in too much
+      const listener = google.maps.event.addListener(mapInstance, 'idle', () => {
+        const currentZoom = mapInstance.getZoom();
+        if (currentZoom && currentZoom > 15) {
+          mapInstance.setZoom(15);
+        }
+        google.maps.event.removeListener(listener);
+      });
+    }
+  }, [validStores, userLocation]);
 
   useEffect(() => {
     if (!isLoaded || typeof google === 'undefined') return;
 
     const icons: { [key: string]: google.maps.Icon } = {};
 
-    stores.forEach((store) => {
+    validStores.forEach((store) => {
       if (store.logo_url) {
         const canvas = document.createElement('canvas');
         const size = 44;
@@ -95,7 +134,7 @@ export function StoresGoogleMap({ userLocation, stores }: StoresGoogleMapProps) 
         }
       }
     });
-  }, [isLoaded, stores]);
+  }, [isLoaded, validStores]);
 
   if (!apiKey) {
     return (
@@ -115,7 +154,7 @@ export function StoresGoogleMap({ userLocation, stores }: StoresGoogleMapProps) 
           mapContainerStyle={mapContainerStyle}
           center={center}
           zoom={14}
-          onLoad={setMap}
+          onLoad={onMapLoad}
           options={{
             zoomControl: true,
             streetViewControl: false,
@@ -124,8 +163,9 @@ export function StoresGoogleMap({ userLocation, stores }: StoresGoogleMapProps) 
             styles: mapStyles,
           }}
         >
+          {/* User location marker */}
           <Marker
-            position={center}
+            position={{ lat: userLocation[0], lng: userLocation[1] }}
             icon={{
               path: google.maps.SymbolPath.CIRCLE,
               fillColor: '#3b82f6',
@@ -134,18 +174,20 @@ export function StoresGoogleMap({ userLocation, stores }: StoresGoogleMapProps) 
               strokeWeight: 3,
               scale: 10,
             }}
+            title="Dein Standort"
           />
 
-          {stores.map((store) => (
+          {/* Store markers - only valid coordinates */}
+          {validStores.map((store) => (
             <Marker
               key={store.id}
               position={{ lat: store.lat, lng: store.lng }}
               onClick={() => setSelectedStore(store)}
               icon={markerIcons[store.id] || {
                 path: google.maps.SymbolPath.CIRCLE,
-                fillColor: '#ef4444',
+                fillColor: '#9333EA',
                 fillOpacity: 1,
-                strokeColor: '#9333EA',
+                strokeColor: '#ffffff',
                 strokeWeight: 3,
                 scale: 12,
               }}
