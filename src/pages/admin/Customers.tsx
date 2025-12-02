@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
+import { appSupabase } from "@/integrations/app-supabase/client";
 import { Edit, Search, Trash2, RefreshCw, Plus, Phone, MapPin } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -16,43 +16,39 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Button } from "@/components/ui/button";
 import { ConfirmActionDialog } from "@/components/ConfirmActionDialog";
 
-interface Customer {
+interface Merchant {
   id: string;
   name: string;
-  company_name: string | null;
-  industry: string | null;
-  street: string | null;
-  house_number: string | null;
+  category: string | null;
+  address: string;
   postal_code: string | null;
-  city: string | null;
-  phone: string | null;
-  email: string | null;
-  status: string | null;
+  city: string;
+  phone_number: string | null;
   created_at: string;
 }
 
 const Customers = () => {
   const navigate = useNavigate();
-  const [customers, setCustomers] = useState<Customer[]>([]);
-  const [filteredCustomers, setFilteredCustomers] = useState<Customer[]>([]);
+  const [merchants, setMerchants] = useState<Merchant[]>([]);
+  const [filteredMerchants, setFilteredMerchants] = useState<Merchant[]>([]);
   const [loading, setLoading] = useState(true);
   
   const [searchTerm, setSearchTerm] = useState("");
-  const [industryFilter, setIndustryFilter] = useState<string>("all");
+  const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [sortBy, setSortBy] = useState<string>("created_desc");
-  const [deleteCustomer, setDeleteCustomer] = useState<Customer | null>(null);
+  const [deleteMerchant, setDeleteMerchant] = useState<Merchant | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  const loadCustomers = async () => {
+  const loadMerchants = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
-        .from("customers")
-        .select("id, name, company_name, industry, street, house_number, postal_code, city, phone, email, status, created_at")
+      const { data, error } = await appSupabase
+        .from("merchants")
+        .select("id, name, category, address, postal_code, city, phone_number, created_at")
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      setCustomers(data || []);
+      setMerchants((data as Merchant[]) || []);
     } catch (error: any) {
       toast.error("Fehler beim Laden der Kunden");
       console.error(error);
@@ -62,64 +58,56 @@ const Customers = () => {
   };
 
   useEffect(() => {
-    loadCustomers();
+    loadMerchants();
   }, []);
 
   useEffect(() => {
     applyFilters();
-  }, [customers, searchTerm, industryFilter, sortBy]);
+  }, [merchants, searchTerm, categoryFilter, sortBy]);
 
   const handleDelete = async () => {
-    if (!deleteCustomer || isDeleting) return;
+    if (!deleteMerchant || isDeleting) return;
     
     try {
       setIsDeleting(true);
       
-      // Call the admin-delete-customer edge function for full cleanup
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        toast.error("Nicht authentifiziert");
-        return;
-      }
+      // Delete merchant directly from App-DB
+      const { error } = await appSupabase
+        .from("merchants")
+        .delete()
+        .eq("id", deleteMerchant.id);
 
-      const response = await supabase.functions.invoke("admin-delete-customer", {
-        body: { customerId: deleteCustomer.id },
-      });
-
-      if (response.error) {
-        throw new Error(response.error.message || "Fehler beim Löschen");
-      }
+      if (error) throw error;
       
       toast.success("Kunde erfolgreich gelöscht");
       // Remove from local state immediately
-      setCustomers(prev => prev.filter(c => c.id !== deleteCustomer.id));
+      setMerchants(prev => prev.filter(m => m.id !== deleteMerchant.id));
     } catch (error: any) {
       toast.error("Fehler beim Löschen des Kunden: " + error.message);
       console.error(error);
     } finally {
       setIsDeleting(false);
-      setDeleteCustomer(null);
+      setDeleteMerchant(null);
     }
   };
 
   const applyFilters = () => {
-    let filtered = [...customers];
+    let filtered = [...merchants];
 
     if (searchTerm) {
       const term = searchTerm.toLowerCase();
       filtered = filtered.filter(
-        (c) =>
-          c.name?.toLowerCase().includes(term) ||
-          c.company_name?.toLowerCase().includes(term) ||
-          c.city?.toLowerCase().includes(term) ||
-          c.industry?.toLowerCase().includes(term) ||
-          c.email?.toLowerCase().includes(term) ||
-          c.phone?.includes(term)
+        (m) =>
+          m.name?.toLowerCase().includes(term) ||
+          m.city?.toLowerCase().includes(term) ||
+          m.category?.toLowerCase().includes(term) ||
+          m.phone_number?.includes(term) ||
+          m.address?.toLowerCase().includes(term)
       );
     }
 
-    if (industryFilter !== "all") {
-      filtered = filtered.filter((c) => c.industry === industryFilter);
+    if (categoryFilter !== "all") {
+      filtered = filtered.filter((m) => m.category === categoryFilter);
     }
 
     filtered.sort((a, b) => {
@@ -129,22 +117,21 @@ const Customers = () => {
         case "created_asc":
           return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
         case "name_asc":
-          return (a.name || a.company_name || "").localeCompare(b.name || b.company_name || "");
+          return (a.name || "").localeCompare(b.name || "");
         case "name_desc":
-          return (b.name || b.company_name || "").localeCompare(a.name || a.company_name || "");
+          return (b.name || "").localeCompare(a.name || "");
         default:
           return 0;
       }
     });
 
-    setFilteredCustomers(filtered);
+    setFilteredMerchants(filtered);
   };
 
-  const industries = [...new Set(customers.map(c => c.industry).filter(Boolean))];
+  const categories = [...new Set(merchants.map(m => m.category).filter(Boolean))];
 
-  const getDisplayName = (customer: Customer) => customer.company_name || customer.name;
-  const getAddress = (customer: Customer) => {
-    const parts = [customer.postal_code, customer.city].filter(Boolean);
+  const getAddress = (merchant: Merchant) => {
+    const parts = [merchant.postal_code, merchant.city].filter(Boolean);
     return parts.length > 0 ? parts.join(" ") : "—";
   };
 
@@ -155,11 +142,11 @@ const Customers = () => {
         <div>
           <h1 className="text-xl font-semibold">Kundenverwaltung</h1>
           <p className="text-xs text-muted-foreground">
-            {filteredCustomers.length} von {customers.length} Kunden
+            {filteredMerchants.length} von {merchants.length} Kunden
           </p>
         </div>
         <div className="flex gap-2">
-          <Button size="sm" variant="outline" onClick={loadCustomers}>
+          <Button size="sm" variant="outline" onClick={loadMerchants}>
             <RefreshCw className="w-3 h-3 mr-1" />
             Aktualisieren
           </Button>
@@ -182,14 +169,14 @@ const Customers = () => {
           />
         </div>
         
-        <Select value={industryFilter} onValueChange={setIndustryFilter}>
+        <Select value={categoryFilter} onValueChange={setCategoryFilter}>
           <SelectTrigger className="h-8 w-[150px] text-sm">
-            <SelectValue placeholder="Branche" />
+            <SelectValue placeholder="Kategorie" />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Alle</SelectItem>
-            {industries.map((ind) => (
-              <SelectItem key={ind} value={ind!}>{ind}</SelectItem>
+            {categories.map((cat) => (
+              <SelectItem key={cat} value={cat!}>{cat}</SelectItem>
             ))}
           </SelectContent>
         </Select>
@@ -213,9 +200,9 @@ const Customers = () => {
           <div className="text-center py-8 text-sm text-muted-foreground">
             Laden...
           </div>
-        ) : filteredCustomers.length === 0 ? (
+        ) : filteredMerchants.length === 0 ? (
           <div className="text-center py-8 text-sm text-muted-foreground">
-            {customers.length === 0 
+            {merchants.length === 0 
               ? "Noch keine Kunden angelegt" 
               : "Keine Ergebnisse"}
           </div>
@@ -224,7 +211,7 @@ const Customers = () => {
             <TableHeader>
               <TableRow className="bg-muted/50 hover:bg-muted/50">
                 <TableHead className="h-8 text-xs font-semibold">Firma</TableHead>
-                <TableHead className="h-8 text-xs font-semibold">Branche</TableHead>
+                <TableHead className="h-8 text-xs font-semibold">Kategorie</TableHead>
                 <TableHead className="h-8 text-xs font-semibold">Adresse</TableHead>
                 <TableHead className="h-8 text-xs font-semibold">Telefon</TableHead>
                 <TableHead className="h-8 text-xs font-semibold">Angelegt</TableHead>
@@ -232,38 +219,38 @@ const Customers = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredCustomers.map((customer) => (
+              {filteredMerchants.map((merchant) => (
                 <TableRow 
-                  key={customer.id} 
+                  key={merchant.id} 
                   className="cursor-pointer hover:bg-accent/50"
-                  onClick={() => navigate(`/admin/customers/${customer.id}`)}
+                  onClick={() => navigate(`/admin/customers/${merchant.id}`)}
                 >
                   <TableCell className="py-2">
-                    <div className="font-medium text-sm">{getDisplayName(customer)}</div>
+                    <div className="font-medium text-sm">{merchant.name}</div>
                   </TableCell>
                   <TableCell className="py-2 text-sm text-muted-foreground">
-                    {customer.industry || "—"}
+                    {merchant.category || "—"}
                   </TableCell>
                   <TableCell className="py-2">
                     <div className="flex items-center gap-1 text-sm text-muted-foreground">
                       <MapPin className="w-3 h-3 flex-shrink-0" />
                       <span className="truncate max-w-[180px]">
-                        {getAddress(customer)}
+                        {getAddress(merchant)}
                       </span>
                     </div>
                   </TableCell>
                   <TableCell className="py-2">
-                    {customer.phone ? (
+                    {merchant.phone_number ? (
                       <div className="flex items-center gap-1 text-sm">
                         <Phone className="w-3 h-3 text-muted-foreground" />
-                        {customer.phone}
+                        {merchant.phone_number}
                       </div>
                     ) : (
                       <span className="text-sm text-muted-foreground">—</span>
                     )}
                   </TableCell>
                   <TableCell className="py-2 text-sm text-muted-foreground">
-                    {new Date(customer.created_at).toLocaleDateString("de-DE")}
+                    {new Date(merchant.created_at).toLocaleDateString("de-DE")}
                   </TableCell>
                   <TableCell className="py-2" onClick={(e) => e.stopPropagation()}>
                     <div className="flex items-center gap-1">
@@ -271,7 +258,7 @@ const Customers = () => {
                         variant="ghost"
                         size="icon"
                         className="h-7 w-7"
-                        onClick={() => navigate(`/admin/customers/${customer.id}`)}
+                        onClick={() => navigate(`/admin/customers/${merchant.id}`)}
                       >
                         <Edit className="h-3 w-3" />
                       </Button>
@@ -279,7 +266,7 @@ const Customers = () => {
                         variant="ghost"
                         size="icon"
                         className="h-7 w-7 text-destructive hover:text-destructive"
-                        onClick={() => setDeleteCustomer(customer)}
+                        onClick={() => setDeleteMerchant(merchant)}
                       >
                         <Trash2 className="h-3 w-3" />
                       </Button>
@@ -294,11 +281,11 @@ const Customers = () => {
 
       {/* Delete Confirmation Dialog with text confirmation */}
       <ConfirmActionDialog
-        open={!!deleteCustomer}
-        onOpenChange={(open) => !open && setDeleteCustomer(null)}
+        open={!!deleteMerchant}
+        onOpenChange={(open) => !open && setDeleteMerchant(null)}
         onConfirm={handleDelete}
         title="Kunde löschen?"
-        description={`Der Kunde "${deleteCustomer ? getDisplayName(deleteCustomer) : ""}" und alle zugehörigen Daten werden dauerhaft gelöscht. Diese Aktion kann nicht rückgängig gemacht werden.`}
+        description={`Der Kunde "${deleteMerchant?.name || ""}" und alle zugehörigen Daten werden dauerhaft gelöscht. Diese Aktion kann nicht rückgängig gemacht werden.`}
         confirmText={isDeleting ? "Wird gelöscht..." : "Löschen"}
         confirmPhrase="LÖSCHEN"
         destructive
