@@ -13,6 +13,7 @@ interface Store {
   name: string;
   category: string | null;
   logo_url: string | null;
+  cover_image_url: string | null;
   lat: number;
   lng: number;
   address: string;
@@ -51,7 +52,7 @@ export default function AppStores() {
       try {
         const { data: customersData, error: customersError } = await supabase
           .from('customers')
-          .select('id, name, company_name, logo_url, industry, city, street, postal_code, latitude, longitude')
+          .select('id, name, company_name, logo_url, cover_image_url, industry, city, street, house_number, postal_code, latitude, longitude')
           .eq('active', true);
 
         if (customersError) throw customersError;
@@ -76,14 +77,18 @@ export default function AppStores() {
               )
             : undefined;
 
+          const storeName = customer.company_name || customer.name || 'Unbekannt';
+          const streetWithNumber = [customer.street, customer.house_number].filter(Boolean).join(' ');
+
           return {
             id: customer.id,
-            name: customer.company_name || customer.name,
-            category: customer.industry,
+            name: storeName,
+            category: customer.industry || null,
             logo_url: customer.logo_url,
+            cover_image_url: customer.cover_image_url,
             lat: customer.latitude || 0,
             lng: customer.longitude || 0,
-            address: [customer.street, customer.postal_code, customer.city].filter(Boolean).join(', '),
+            address: [streetWithNumber, customer.postal_code, customer.city].filter(Boolean).join(', '),
             points: stampCard?.current_points ?? 0,
             distance: distance !== undefined ? Math.round(distance * 10) / 10 : undefined,
           };
@@ -120,10 +125,26 @@ export default function AppStores() {
   const StoreCard = ({ store }: { store: Store }) => (
     <button
       onClick={() => navigate(`/app/merchant/${store.id}`)}
-      className="w-full bg-card rounded-xl p-4 shadow-md hover:shadow-lg transition-shadow text-left"
+      className="w-full rounded-xl overflow-hidden shadow-md hover:shadow-lg transition-shadow text-left relative h-28"
     >
-      <div className="flex items-start gap-3">
-        <div className="w-12 h-12 rounded-lg bg-muted flex items-center justify-center overflow-hidden">
+      {/* Background - Cover Image or Gradient */}
+      <div className="absolute inset-0">
+        {store.cover_image_url ? (
+          <img
+            src={store.cover_image_url}
+            alt=""
+            className="w-full h-full object-cover"
+          />
+        ) : (
+          <div className="w-full h-full bg-gradient-to-br from-primary/80 to-secondary/80" />
+        )}
+        {/* Dark overlay */}
+        <div className="absolute inset-0 bg-black/60" />
+      </div>
+      
+      {/* Content */}
+      <div className="relative z-10 p-4 h-full flex items-center gap-3">
+        <div className="w-14 h-14 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center overflow-hidden flex-shrink-0 border border-white/30">
           {store.logo_url ? (
             <img
               src={store.logo_url}
@@ -131,34 +152,29 @@ export default function AppStores() {
               className="w-full h-full object-cover"
             />
           ) : (
-            <span className="text-lg font-bold text-primary">
+            <span className="text-lg font-bold text-white">
               {store.name.charAt(0)}
             </span>
           )}
         </div>
         <div className="flex-1 min-w-0">
-          <div className="flex items-start justify-between gap-2">
-            <div>
-              <h3 className="font-semibold text-card-foreground flex items-center gap-2">
-                {store.name}
-                {store.points && store.points > 0 && (
-                  <Heart className="h-4 w-4 fill-accent text-accent" />
-                )}
-              </h3>
-              <p className="text-sm text-muted-foreground">{store.category}</p>
-            </div>
-            {store.distance !== undefined && (
-              <span className="text-sm font-medium text-primary whitespace-nowrap">
-                {store.distance} km
-              </span>
+          <h3 className="font-semibold text-white flex items-center gap-2 truncate">
+            {store.name}
+            {store.points && store.points > 0 && (
+              <Heart className="h-4 w-4 fill-pink-400 text-pink-400 flex-shrink-0" />
             )}
-          </div>
-          {store.points && store.points > 0 && (
-            <div className="mt-2 inline-flex items-center gap-1 px-2 py-1 bg-primary/10 text-primary rounded-full text-xs font-medium">
-              {store.points} Punkte
-            </div>
+          </h3>
+          {store.category && (
+            <p className="text-sm text-white/70 capitalize">{store.category}</p>
           )}
         </div>
+        
+        {/* Distance Badge - Top Right */}
+        {store.distance !== undefined && (
+          <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm rounded-full px-2.5 py-1">
+            <span className="text-xs font-semibold text-primary">{store.distance} km</span>
+          </div>
+        )}
       </div>
     </button>
   );
