@@ -2,13 +2,14 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Scanner } from '@yudiel/react-qr-scanner';
-import { Scan, Nfc, QrCode, CheckCircle, XCircle, ArrowLeft, Sparkles } from 'lucide-react';
+import { Scan, Nfc, QrCode, CheckCircle, XCircle, Sparkles } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { toast } from 'sonner';
 import confetti from 'canvas-confetti';
+import { MainLayout } from '@/app/components/layout/MainLayout';
 
 type ScanMode = 'idle' | 'qr' | 'nfc';
 type ScanResult = {
@@ -164,14 +165,7 @@ export const AppScan = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-primary/5 to-background p-4">
-      {/* Header */}
-      <div className="flex items-center gap-4 mb-6">
-        <Button variant="ghost" size="icon" onClick={() => navigate('/app')}>
-          <ArrowLeft className="h-5 w-5" />
-        </Button>
-        <h1 className="text-xl font-bold">Punkte sammeln</h1>
-      </div>
+    <MainLayout title="Punkte sammeln">
 
       <AnimatePresence mode="wait">
         {/* Result View */}
@@ -352,7 +346,7 @@ export const AppScan = () => {
           </motion.div>
         )}
       </AnimatePresence>
-    </div>
+    </MainLayout>
   );
 };
 
