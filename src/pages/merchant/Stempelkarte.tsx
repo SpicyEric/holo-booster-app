@@ -267,24 +267,22 @@ const Stempelkarte = () => {
   };
 
   const geocodeAddress = async (street: string, houseNumber: string, postalCode: string, city: string): Promise<{ lat: number; lng: number } | null> => {
-    const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
-    if (!apiKey) {
-      console.warn("Google Maps API Key not configured");
-      return null;
-    }
-
-    const address = `${street} ${houseNumber}, ${postalCode} ${city}, Germany`;
-    const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(address)}&key=${apiKey}`;
-
     try {
-      const response = await fetch(url);
-      const data = await response.json();
-      
-      if (data.status === "OK" && data.results.length > 0) {
-        const location = data.results[0].geometry.location;
-        return { lat: location.lat, lng: location.lng };
+      const { data, error } = await supabase.functions.invoke('geocode-address', {
+        body: { street, houseNumber, postalCode, city }
+      });
+
+      if (error) {
+        console.error("Geocoding error:", error);
+        return null;
       }
-      console.warn("Geocoding failed:", data.status);
+
+      if (data?.lat && data?.lng) {
+        console.log("Geocoding successful:", data);
+        return { lat: data.lat, lng: data.lng };
+      }
+
+      console.warn("Geocoding returned no coordinates");
       return null;
     } catch (error) {
       console.error("Geocoding error:", error);
