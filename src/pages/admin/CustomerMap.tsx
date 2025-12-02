@@ -11,6 +11,7 @@ interface Customer {
   id: string;
   name: string;
   street: string | null;
+  house_number: string | null;
   postal_code: string | null;
   city: string | null;
   latitude: number | null;
@@ -104,7 +105,7 @@ export default function CustomerMap() {
     const fetchCustomers = async () => {
       const { data, error } = await supabase
         .from('customers')
-        .select('id, name, street, postal_code, city, latitude, longitude, logo_url, industry');
+        .select('id, name, street, house_number, postal_code, city, latitude, longitude, logo_url, industry');
 
       if (error) {
         toast.error('Fehler beim Laden der Kunden');
@@ -193,8 +194,11 @@ export default function CustomerMap() {
   };
 
   const getFullAddress = (customer: Customer) => {
+    const streetWithNumber = customer.street 
+      ? `${customer.street} ${customer.house_number || ''}`.trim()
+      : null;
     const parts = [
-      customer.street,
+      streetWithNumber,
       customer.postal_code,
       customer.city,
     ].filter(Boolean);
