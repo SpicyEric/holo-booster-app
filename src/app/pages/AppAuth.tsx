@@ -90,22 +90,16 @@ export const AppAuth = () => {
       if (error) throw error;
 
       if (data.user) {
-        // Create profile
+        // Create/update profile - role is automatically assigned via DB trigger
         await supabase.from('profiles').upsert({
           user_id: data.user.id,
           first_name: firstName,
           last_name: lastName,
           full_name: `${firstName} ${lastName}`.trim(),
         });
-
-        // Assign end_customer role
-        await supabase.from('user_roles').insert({
-          user_id: data.user.id,
-          role: 'end_customer',
-        });
       }
 
-      toast.success('Konto erstellt! Bitte bestätige deine E-Mail.');
+      toast.success('Willkommen bei Eloyo!');
       navigate('/app');
     } catch (error: any) {
       console.error('Signup error:', error);
