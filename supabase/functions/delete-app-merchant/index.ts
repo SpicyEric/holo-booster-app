@@ -22,29 +22,62 @@ serve(async (req) => {
       );
     }
 
-    console.log(`Deleting merchant with ID: ${merchantId}`);
+    const appUrl = Deno.env.get('APP_SUPABASE_URL');
+    const appServiceKey = Deno.env.get('APP_SUPABASE_SERVICE_ROLE_KEY');
+
+    console.log(`App URL: ${appUrl}`);
+    console.log(`Service key present: ${!!appServiceKey}`);
+    console.log(`Service key length: ${appServiceKey?.length || 0}`);
+    console.log(`Attempting to delete merchant with ID: ${merchantId}`);
 
     // Create App-DB client with Service Role Key (bypasses RLS)
-    const appSupabaseAdmin = createClient(
-      Deno.env.get('APP_SUPABASE_URL')!,
-      Deno.env.get('APP_SUPABASE_SERVICE_ROLE_KEY')!
-    );
+    const appSupabaseAdmin = createClient(appUrl!, appServiceKey!);
+
+    // First, check if merchant exists
+    const { data: existingMerchant, error: selectError } = await appSupabaseAdmin
+      .from('merchants')
+      .select('id, name')
+      .eq('id', merchantId)
+      .single();
+
+    console.log(`Select result:`, JSON.stringify({ existingMerchant, selectError }));
+
+    if (selectError) {
+      console.error('Error finding merchant:', selectError);
+      return new Response(
+        JSON.stringify({ error: `Merchant not found: ${selectError.message}` }),
+        { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    console.log(`Found merchant: ${existingMerchant?.name}`);
 
     // Delete merchant from App-DB
-    const { error } = await appSupabaseAdmin
+    const { data: deleteData, error: deleteError, count } = await appSupabaseAdmin
       .from('merchants')
       .delete()
-      .eq('id', merchantId);
+      .eq('id', merchantId)
+      .select();
 
-    if (error) {
-      console.error('Delete error:', error);
-      throw error;
+    console.log(`Delete result:`, JSON.stringify({ deleteData, deleteError, count }));
+
+    if (deleteError) {
+      console.error('Delete error:', deleteError);
+      throw deleteError;
+    }
+
+    if (!deleteData || deleteData.length === 0) {
+      console.error('No rows were deleted - this should not happen after successful select');
+      return new Response(
+        JSON.stringify({ error: 'Deletion failed - no rows affected' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
     console.log(`Successfully deleted merchant: ${merchantId}`);
 
     return new Response(
-      JSON.stringify({ success: true }),
+      JSON.stringify({ success: true, deleted: deleteData }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error: any) {
