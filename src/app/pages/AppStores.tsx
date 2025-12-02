@@ -89,8 +89,8 @@ export default function AppStores() {
           };
         });
 
+        // Show all stores in list, sort by distance (stores without coords at the end)
         const nearbyStores = storesWithPoints
-          .filter(store => store.lat !== 0 && store.lng !== 0)
           .sort((a, b) => (a.distance || 999) - (b.distance || 999));
         
         setStores(nearbyStores);
