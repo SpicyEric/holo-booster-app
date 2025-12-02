@@ -47,23 +47,33 @@ export default function AppStores() {
 
   useEffect(() => {
     const fetchData = async () => {
-      if (!user) return;
-
       try {
+        console.log('Fetching stores...');
         const { data: customersData, error: customersError } = await supabase
           .from('customers')
           .select('id, name, company_name, logo_url, cover_image_url, industry, city, street, house_number, postal_code, latitude, longitude')
           .eq('active', true);
 
-        if (customersError) throw customersError;
+        if (customersError) {
+          console.error('Error fetching customers:', customersError);
+          throw customersError;
+        }
 
-        const { data: stampCardsData, error: stampCardsError } = await supabase
-          .from('user_stamp_cards')
-          .select('merchant_customer_id, current_points')
-          .eq('user_id', user.id);
+        console.log('Fetched customers:', customersData?.length, customersData);
 
-        if (stampCardsError) {
-          console.error('Error fetching stamp cards:', stampCardsError);
+        // Only fetch stamp cards if user is logged in
+        let stampCardsData: any[] = [];
+        if (user) {
+          const { data, error: stampCardsError } = await supabase
+            .from('user_stamp_cards')
+            .select('merchant_customer_id, current_points')
+            .eq('user_id', user.id);
+
+          if (stampCardsError) {
+            console.error('Error fetching stamp cards:', stampCardsError);
+          } else {
+            stampCardsData = data || [];
+          }
         }
 
         const storesWithPoints = (customersData || []).map(customer => {
@@ -93,6 +103,8 @@ export default function AppStores() {
             distance: distance !== undefined ? Math.round(distance * 10) / 10 : undefined,
           };
         });
+
+        console.log('Stores with coordinates:', storesWithPoints.filter(s => s.lat !== 0 && s.lng !== 0));
 
         // Show all stores in list, sort by distance (stores without coords at the end)
         const nearbyStores = storesWithPoints
