@@ -5,6 +5,7 @@ import eloyoLogo from '@/assets/eloyo-logo.png';
 const Impressum = () => {
   const navItems = [
     { label: 'Home', href: '/' },
+    { label: 'Karriere', href: '/karriere' },
     { label: 'Kontakt', href: '/kontakt' },
     { label: 'Datenschutz', href: '/datenschutz' },
     { label: 'Impressum', href: '/impressum' },
