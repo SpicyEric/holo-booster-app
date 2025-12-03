@@ -1,7 +1,7 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'app.lovable.3ee30c314eaa4550a0fd340678fe1b0c',
+  appId: 'com.eloyo.app',
   appName: 'Eloyo',
   webDir: 'dist',
   // DEVELOPMENT ONLY: Uncomment server block for hot-reload during development
