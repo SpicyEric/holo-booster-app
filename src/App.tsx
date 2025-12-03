@@ -3,6 +3,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { DeepLinkProvider } from "@/app/components/DeepLinkProvider";
 import Landing from "./pages/Landing";
 import Karriere from "./pages/Karriere";
 import Kontakt from "./pages/Kontakt";
@@ -58,6 +59,7 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
+        <DeepLinkProvider>
         <Routes>
           {/* ===== WEB ROUTES ===== */}
           <Route path="/" element={<Landing />} />
@@ -125,8 +127,9 @@ const App = () => (
           <Route path="/customer" element={<Navigate to="/kunde" replace />} />
           
           <Route path="/design-variants" element={<DesignVariants />} />
-          <Route path="*" element={<NotFound />} />
+        <Route path="*" element={<NotFound />} />
         </Routes>
+        </DeepLinkProvider>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
