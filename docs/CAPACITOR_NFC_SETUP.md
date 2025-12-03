@@ -22,7 +22,30 @@ npx cap add android
 # Projekt bauen und synchronisieren
 npm run build
 npx cap sync
+
+# ⭐ AUTOMATISCHE iOS NFC Konfiguration
+node scripts/configure-ios-nfc.js
 ```
+
+## Automatische Skripte
+
+Das Projekt enthält automatische Konfigurationsskripte:
+
+### `scripts/configure-ios-nfc.js`
+Konfiguriert automatisch alle iOS NFC-Berechtigungen:
+- Info.plist Einträge
+- App.entitlements
+
+```bash
+# Manuell ausführen
+node scripts/configure-ios-nfc.js
+
+# Oder nach jedem cap sync
+npx cap sync && node scripts/capacitor-hooks.js
+```
+
+### `scripts/capacitor-hooks.js`
+Post-Sync Hook für iOS und Android Konfiguration.
 
 ## iOS-spezifische Konfiguration
 
