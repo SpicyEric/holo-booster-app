@@ -59,7 +59,7 @@ const Auth = () => {
     if (userRole === 'admin') {
       navigate('/admin');
     } else if (userRole === 'merchant') {
-      navigate('/kunde/stempelkarte');
+      navigate('/kunde');
     } else if (userRole === 'partner') {
       navigate('/partner/dashboard');
     }

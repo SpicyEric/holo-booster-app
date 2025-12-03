@@ -75,7 +75,7 @@ const Stempel = () => {
           id,
           box_id,
           assigned_at,
-          boxes:box_id (box_id)
+          boxes:box_id (box_id, stamp_preset)
         `)
         .eq('customer_id', assignment.customer_id)
         .order('assigned_at', { ascending: false });
@@ -88,6 +88,22 @@ const Stempel = () => {
           assigned_at: b.assigned_at
         }));
         setCustomerBoxes(mappedBoxes);
+
+        // Auto-create stamps if boxes exist but no chips
+        if (boxes.length > 0 && (!chips || chips.length === 0)) {
+          const firstBox = boxes[0] as any;
+          const preset = firstBox.boxes?.stamp_preset || 'standard_3';
+          await createDefaultStamps(preset, assignment.customer_id);
+          // Reload chips after creation
+          const { data: newChips } = await supabase
+            .from('nfc_chips')
+            .select('*')
+            .eq('merchant_customer_id', assignment.customer_id)
+            .order('created_at', { ascending: true });
+          if (newChips) {
+            setNfcChips(newChips);
+          }
+        }
       }
     } catch (error) {
       console.error('Error loading data:', error);
