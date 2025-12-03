@@ -16,6 +16,7 @@ const Kontakt = () => {
 
   const navItems = [
     { label: 'Home', href: '/' },
+    { label: 'Karriere', href: '/karriere' },
     { label: 'Kontakt', href: '/kontakt' },
     { label: 'Datenschutz', href: '/datenschutz' },
     { label: 'Impressum', href: '/impressum' },
