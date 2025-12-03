@@ -37,6 +37,22 @@ const NFC_INTENT_FILTERS = `
         <intent-filter>
             <action android:name="android.nfc.action.TAG_DISCOVERED"/>
             <category android:name="android.intent.category.DEFAULT"/>
+        </intent-filter>
+        
+        <!-- Deep Link URL Scheme: eloyo://scan?chip=XXX -->
+        <intent-filter>
+            <action android:name="android.intent.action.VIEW"/>
+            <category android:name="android.intent.category.DEFAULT"/>
+            <category android:name="android.intent.category.BROWSABLE"/>
+            <data android:scheme="eloyo"/>
+        </intent-filter>
+        
+        <!-- Universal Links: https://eloyo.de/app/* -->
+        <intent-filter android:autoVerify="true">
+            <action android:name="android.intent.action.VIEW"/>
+            <category android:name="android.intent.category.DEFAULT"/>
+            <category android:name="android.intent.category.BROWSABLE"/>
+            <data android:scheme="https" android:host="eloyo.de" android:pathPrefix="/app"/>
         </intent-filter>`;
 
 const NFC_TECH_LIST = `<?xml version="1.0" encoding="utf-8"?>
