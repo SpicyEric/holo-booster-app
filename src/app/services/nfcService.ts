@@ -1,9 +1,7 @@
 // NFC Service that reads NDEF text records containing Box-ID:Color data
 // Format on NFC chip: "XXXXX-XXXXX-XXXXX:grün" (Box-ID:StampColor)
 // 
-// IMPORTANT: For native iOS/Android, install the Capacitor NFC plugin:
-// npm install @capawesome-team/capacitor-nfc
-// Then run: npx cap sync
+// Uses @exxili/capacitor-nfc for native iOS/Android support
 
 interface NfcReadResult {
   chipData: string;
@@ -38,18 +36,21 @@ class NfcService {
   private nfcPlugin: any = null;
   private webNdefReader: any = null;
   private nfcPluginAvailable: boolean | null = null;
+  private currentCallback: NfcReadCallback | null = null;
+  private removeListener: (() => void) | null = null;
 
   async isSupported(): Promise<boolean> {
     if (this.isNative) {
-      // Try to load native Capacitor NFC plugin dynamically
+      // Try to load @exxili/capacitor-nfc plugin
       try {
-        const nfcModule = await (Function('return import("@capawesome-team/capacitor-nfc")')() as Promise<any>);
-        this.nfcPlugin = nfcModule.Nfc;
+        const nfcModule = await import('@exxili/capacitor-nfc');
+        this.nfcPlugin = nfcModule.NFC;
         const result = await this.nfcPlugin.isSupported();
-        this.nfcPluginAvailable = true;
-        return result.isSupported;
+        this.nfcPluginAvailable = result.supported;
+        console.log('NFC Plugin isSupported:', result);
+        return result.supported;
       } catch (error) {
-        console.log('Capacitor NFC plugin not installed or unavailable:', error);
+        console.log('NFC plugin not available:', error);
         this.nfcPluginAvailable = false;
         return false;
       }
@@ -60,26 +61,19 @@ class NfcService {
   }
 
   async isEnabled(): Promise<boolean> {
-    if (this.isNative && this.nfcPlugin) {
-      try {
-        const result = await this.nfcPlugin.isEnabled();
-        return result.isEnabled;
-      } catch {
-        return false;
-      }
+    // @exxili/capacitor-nfc doesn't have a separate isEnabled check
+    // If isSupported returns true, NFC should be enabled
+    if (this.isNative && this.nfcPluginAvailable) {
+      return true;
     }
     // Web NFC doesn't have enable check
     return true;
   }
 
   async openSettings(): Promise<void> {
-    if (this.isNative && this.nfcPlugin) {
-      try {
-        await this.nfcPlugin.openSettings();
-      } catch (error) {
-        console.error('Failed to open NFC settings:', error);
-      }
-    }
+    // @exxili/capacitor-nfc doesn't have openSettings
+    // We could potentially use App plugin to open settings, but for now just log
+    console.log('Opening NFC settings is not supported by this plugin');
   }
 
   async startScan(onRead: NfcReadCallback): Promise<void> {
@@ -91,17 +85,8 @@ class NfcService {
       return;
     }
 
-    const enabled = await this.isEnabled();
-    if (!enabled) {
-      onRead({ 
-        chipData: '', 
-        success: false, 
-        error: 'NFC ist deaktiviert. Bitte in den Einstellungen aktivieren.' 
-      });
-      return;
-    }
-
     this.isScanning = true;
+    this.currentCallback = onRead;
 
     if (this.isNative && this.nfcPlugin) {
       await this.startNativeScan(onRead);
@@ -110,43 +95,32 @@ class NfcService {
     }
   }
 
-  private extractNdefText(nfcTag: any): string | null {
-    // Extract text from NDEF message records
+  private extractTextFromNdefMessages(data: any): string | null {
     try {
-      const message = nfcTag.message || nfcTag.ndefMessage;
-      if (!message || !message.records) return null;
+      // Use the string() method to get decoded text
+      const stringData = data.string();
+      console.log('NFC String Data:', JSON.stringify(stringData, null, 2));
       
-      for (const record of message.records) {
-        // TNF 0x01 = Well-Known, RTD = "T" for Text
-        if (record.tnf === 1 && record.type) {
-          const typeStr = typeof record.type === 'string' 
-            ? record.type 
-            : new TextDecoder().decode(new Uint8Array(record.type));
-          
-          if (typeStr === 'T') {
-            // Text record: first byte is language code length, rest is text
-            const payload = record.payload instanceof Uint8Array 
-              ? record.payload 
-              : new Uint8Array(record.payload);
-            const langLength = payload[0] & 0x3F;
-            const text = new TextDecoder().decode(payload.slice(1 + langLength));
-            return text;
-          }
-        }
-        
-        // Also check for plain text payload
-        if (record.payload) {
-          try {
-            const payload = record.payload instanceof Uint8Array 
-              ? record.payload 
-              : new Uint8Array(record.payload);
-            const text = new TextDecoder().decode(payload);
-            // Check if it looks like our format (BOX_ID:COLOR)
-            if (text.includes(':') && text.match(/^[A-Z0-9]{5}-[A-Z0-9]{5}-[A-Z0-9]{5}:/i)) {
-              return text;
+      if (stringData.messages && stringData.messages.length > 0) {
+        for (const message of stringData.messages) {
+          if (message.records && message.records.length > 0) {
+            for (const record of message.records) {
+              const payload = record.payload;
+              console.log('Record payload:', payload);
+              
+              // Check if it matches our format (BOX_ID:COLOR)
+              if (payload && typeof payload === 'string') {
+                // Remove language code prefix if present (e.g., "enHello" -> "Hello")
+                const cleanPayload = payload.replace(/^[a-z]{2}/i, '');
+                if (cleanPayload.match(/^[A-Z0-9]{5}-[A-Z0-9]{5}-[A-Z0-9]{5}:.+$/i)) {
+                  return cleanPayload;
+                }
+                // Also check original payload
+                if (payload.match(/^[A-Z0-9]{5}-[A-Z0-9]{5}-[A-Z0-9]{5}:.+$/i)) {
+                  return payload;
+                }
+              }
             }
-          } catch {
-            // Not valid text
           }
         }
       }
@@ -158,10 +132,13 @@ class NfcService {
 
   private async startNativeScan(onRead: NfcReadCallback): Promise<void> {
     try {
-      // Add listener for NFC tag scanned
-      await this.nfcPlugin.addListener('nfcTagScanned', (event: any) => {
-        const nfcTag = event.nfcTag;
-        const chipData = this.extractNdefText(nfcTag);
+      console.log('Starting native NFC scan...');
+      
+      // Set up listener for NFC tag reads
+      this.nfcPlugin.onRead((data: any) => {
+        console.log('NFC tag read:', data);
+        
+        const chipData = this.extractTextFromNdefMessages(data);
         
         if (chipData) {
           onRead({ chipData, success: true });
@@ -175,8 +152,21 @@ class NfcService {
         }
       });
 
-      // Start scanning session
-      await this.nfcPlugin.startScanSession();
+      // Set up error handler
+      this.nfcPlugin.onError((error: any) => {
+        console.error('NFC Error:', error);
+        this.isScanning = false;
+        onRead({ 
+          chipData: '', 
+          success: false, 
+          error: error.message || 'NFC Fehler' 
+        });
+      });
+
+      // Start the scan session
+      await this.nfcPlugin.startScan();
+      console.log('NFC scan started');
+      
     } catch (error: any) {
       console.error('Native NFC scan error:', error);
       this.isScanning = false;
@@ -239,11 +229,12 @@ class NfcService {
 
   async stopScan(): Promise<void> {
     this.isScanning = false;
+    this.currentCallback = null;
 
     if (this.isNative && this.nfcPlugin) {
       try {
-        await this.nfcPlugin.stopScanSession();
-        await this.nfcPlugin.removeAllListeners();
+        await this.nfcPlugin.cancelScan();
+        console.log('NFC scan cancelled');
       } catch (error) {
         console.error('Error stopping native scan:', error);
       }
