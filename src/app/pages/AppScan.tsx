@@ -1,8 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Scanner } from '@yudiel/react-qr-scanner';
-import { Scan, Nfc, QrCode, CheckCircle, XCircle, Sparkles, Settings } from 'lucide-react';
+import { Nfc, CheckCircle, XCircle, Sparkles, Settings, X } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
@@ -12,7 +11,6 @@ import confetti from 'canvas-confetti';
 import { MainLayout } from '@/app/components/layout/MainLayout';
 import { nfcService, type NfcReadResult } from '@/app/services/nfcService';
 
-type ScanMode = 'idle' | 'qr' | 'nfc';
 type ScanResult = {
   success: boolean;
   points?: number;
@@ -25,7 +23,6 @@ export const AppScan = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { user } = useAuth();
-  const [scanMode, setScanMode] = useState<ScanMode>('idle');
   const [scanning, setScanning] = useState(false);
   const [result, setResult] = useState<ScanResult | null>(null);
   const [nfcSupported, setNfcSupported] = useState(false);
@@ -54,13 +51,12 @@ export const AppScan = () => {
 
     checkNfcSupport();
 
-    // Cleanup on unmount
     return () => {
       nfcService.stopScan();
     };
   }, []);
 
-  // Handle direct chip_uid from URL (for NFC redirect)
+  // Handle direct chip_uid from URL (for Deep Link / NFC Intent)
   useEffect(() => {
     const chipUid = searchParams.get('chip');
     if (chipUid && user) {
@@ -79,7 +75,6 @@ export const AppScan = () => {
     setResult(null);
 
     try {
-      // Call the database function to award points
       const { data, error } = await supabase.rpc('award_points_via_nfc', {
         p_chip_uid: chipUid,
         p_user_id: user.id,
@@ -96,7 +91,6 @@ export const AppScan = () => {
       };
 
       if (response.success) {
-        // Get merchant name
         let merchantName = 'Händler';
         if (response.merchant_customer_id) {
           const { data: merchant } = await supabase
@@ -114,7 +108,6 @@ export const AppScan = () => {
           merchantName,
         });
 
-        // Celebration animation
         confetti({
           particleCount: 100,
           spread: 70,
@@ -138,25 +131,8 @@ export const AppScan = () => {
       toast.error('Scan fehlgeschlagen');
     } finally {
       setScanning(false);
-      setScanMode('idle');
     }
   }, [user, navigate]);
-
-  const handleQRScan = useCallback((qrResult: string) => {
-    // Extract chip_uid from QR code URL or direct value
-    let chipUid = qrResult;
-    
-    // If it's a URL, extract the chip parameter
-    try {
-      const url = new URL(qrResult);
-      const chip = url.searchParams.get('chip');
-      if (chip) chipUid = chip;
-    } catch {
-      // Not a URL, use as-is
-    }
-
-    handleChipScan(chipUid);
-  }, [handleChipScan]);
 
   const handleNfcRead = useCallback((nfcResult: NfcReadResult) => {
     if (nfcResult.success && nfcResult.tagId) {
@@ -164,16 +140,10 @@ export const AppScan = () => {
     } else if (nfcResult.error) {
       toast.error(nfcResult.error);
       setScanning(false);
-      setScanMode('idle');
     }
   }, [handleChipScan]);
 
   const startNFCScan = async () => {
-    if (!nfcSupported) {
-      toast.error('NFC wird auf diesem Gerät nicht unterstützt');
-      return;
-    }
-
     // Check if NFC is enabled
     const enabled = await nfcService.isEnabled();
     if (!enabled) {
@@ -182,33 +152,80 @@ export const AppScan = () => {
       return;
     }
 
-    setScanMode('nfc');
     setScanning(true);
-
+    setResult(null);
     await nfcService.startScan(handleNfcRead);
   };
 
   const handleOpenNfcSettings = async () => {
     await nfcService.openSettings();
-    // Re-check NFC status after returning from settings
     setTimeout(async () => {
       const enabled = await nfcService.isEnabled();
       setNfcEnabled(enabled);
+      if (enabled) {
+        setNfcSupported(true);
+      }
     }, 1000);
+  };
+
+  const cancelScan = () => {
+    nfcService.stopScan();
+    setScanning(false);
   };
 
   const resetScan = () => {
     nfcService.stopScan();
     setResult(null);
-    setScanMode('idle');
     setScanning(false);
   };
 
-  const cancelScan = () => {
-    nfcService.stopScan();
-    setScanMode('idle');
-    setScanning(false);
-  };
+  // NFC not supported - show error state
+  if (!checkingNfc && !nfcSupported) {
+    return (
+      <MainLayout title="Punkte sammeln">
+        <div className="flex flex-col items-center justify-center min-h-[60vh] px-4">
+          <Card className="w-full max-w-sm">
+            <CardContent className="pt-8 pb-6 text-center">
+              <div className="w-20 h-20 rounded-full bg-destructive/10 flex items-center justify-center mx-auto mb-4">
+                <XCircle className="h-10 w-10 text-destructive" />
+              </div>
+              <h2 className="text-xl font-bold mb-2">NFC nicht verfügbar</h2>
+              <p className="text-muted-foreground text-sm mb-4">
+                Dein Gerät unterstützt kein NFC. Um Eloyo zu nutzen, benötigst du ein Smartphone mit NFC-Funktion.
+              </p>
+              <Button variant="outline" onClick={() => navigate('/app')}>
+                Zurück
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      </MainLayout>
+    );
+  }
+
+  // NFC disabled - prompt to enable
+  if (!checkingNfc && nfcSupported && !nfcEnabled) {
+    return (
+      <MainLayout title="Punkte sammeln">
+        <div className="flex flex-col items-center justify-center min-h-[60vh] px-4">
+          <Card className="w-full max-w-sm">
+            <CardContent className="pt-8 pb-6 text-center">
+              <div className="w-20 h-20 rounded-full bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center mx-auto mb-4">
+                <Settings className="h-10 w-10 text-orange-600" />
+              </div>
+              <h2 className="text-xl font-bold mb-2">NFC deaktiviert</h2>
+              <p className="text-muted-foreground text-sm mb-4">
+                Bitte aktiviere NFC in deinen Geräteeinstellungen, um Punkte zu sammeln.
+              </p>
+              <Button onClick={handleOpenNfcSettings} className="w-full">
+                NFC-Einstellungen öffnen
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      </MainLayout>
+    );
+  }
 
   return (
     <MainLayout title="Punkte sammeln">
@@ -220,7 +237,7 @@ export const AppScan = () => {
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.9 }}
-            className="flex flex-col items-center justify-center min-h-[60vh]"
+            className="flex flex-col items-center justify-center min-h-[60vh] px-4"
           >
             <Card className="w-full max-w-sm">
               <CardContent className="pt-8 pb-6 text-center">
@@ -264,165 +281,112 @@ export const AppScan = () => {
           </motion.div>
         )}
 
-        {/* QR Scanner View */}
-        {scanMode === 'qr' && !result && (
+        {/* NFC Scanning Modal/Pop-up */}
+        {scanning && !result && (
           <motion.div
-            key="qr"
+            key="scanning"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="space-y-4"
+            className="fixed inset-0 z-50 bg-background/95 backdrop-blur-sm flex flex-col items-center justify-center p-6"
           >
-            <Card className="overflow-hidden">
-              <CardContent className="p-0">
-                <div className="aspect-square relative">
-                  <Scanner
-                    onScan={(scanResult) => {
-                      if (scanResult?.[0]?.rawValue) {
-                        handleQRScan(scanResult[0].rawValue);
-                      }
-                    }}
-                    onError={(error) => {
-                      console.error('QR Scanner error:', error);
-                    }}
-                    styles={{
-                      container: { width: '100%', height: '100%' },
-                      video: { width: '100%', height: '100%', objectFit: 'cover' },
-                    }}
-                  />
-                  {/* Scan overlay */}
-                  <div className="absolute inset-0 pointer-events-none">
-                    <div className="absolute inset-0 border-[60px] border-black/50" />
-                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 border-2 border-primary rounded-lg" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-            <p className="text-center text-muted-foreground">
-              Halte die Kamera auf den QR-Code
-            </p>
-            <Button variant="outline" onClick={cancelScan} className="w-full">
-              Abbrechen
-            </Button>
-          </motion.div>
-        )}
-
-        {/* NFC Scan View */}
-        {scanMode === 'nfc' && !result && (
-          <motion.div
-            key="nfc"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="flex flex-col items-center justify-center min-h-[60vh] space-y-6"
-          >
-            <motion.div
-              animate={{ scale: [1, 1.1, 1] }}
-              transition={{ repeat: Infinity, duration: 2 }}
-              className="w-32 h-32 rounded-full bg-primary/10 flex items-center justify-center"
+            {/* Close button */}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="absolute top-4 right-4"
+              onClick={cancelScan}
             >
-              <Nfc className="h-16 w-16 text-primary" />
+              <X className="h-6 w-6" />
+            </Button>
+
+            {/* NFC Animation */}
+            <motion.div
+              animate={{ 
+                scale: [1, 1.2, 1],
+                opacity: [0.7, 1, 0.7]
+              }}
+              transition={{ 
+                repeat: Infinity, 
+                duration: 2,
+                ease: "easeInOut"
+              }}
+              className="w-40 h-40 rounded-full bg-primary/20 flex items-center justify-center mb-8"
+            >
+              <motion.div
+                animate={{ scale: [1, 1.1, 1] }}
+                transition={{ repeat: Infinity, duration: 1.5 }}
+                className="w-28 h-28 rounded-full bg-primary/30 flex items-center justify-center"
+              >
+                <Nfc className="h-14 w-14 text-primary" />
+              </motion.div>
             </motion.div>
-            <div className="text-center">
-              <h2 className="text-xl font-bold mb-2">NFC bereit</h2>
-              <p className="text-muted-foreground">
-                Halte dein Handy an den Eloyo-Stempel
+
+            {/* Instructions */}
+            <h2 className="text-2xl font-bold mb-3 text-center">
+              NFC-Stempel scannen
+            </h2>
+            <p className="text-muted-foreground text-center max-w-xs mb-2">
+              Halte dein Handy jetzt an den Eloyo-Stempel
+            </p>
+            {nfcService.isNativeApp() && (
+              <p className="text-xs text-muted-foreground text-center">
+                {nfcService.getPlatformInfo().platform === 'ios' 
+                  ? 'Halte das iPhone oben an den Stempel' 
+                  : 'Halte die Rückseite deines Handys an den Stempel'}
               </p>
-              {nfcService.isNativeApp() && (
-                <p className="text-xs text-muted-foreground mt-2">
-                  {nfcService.getPlatformInfo().platform === 'ios' 
-                    ? 'Halte das iPhone oben an den Stempel' 
-                    : 'Halte das Handy mittig an den Stempel'}
-                </p>
-              )}
-            </div>
-            <Button variant="outline" onClick={cancelScan} className="w-full max-w-xs">
+            )}
+
+            {/* Cancel button */}
+            <Button 
+              variant="outline" 
+              onClick={cancelScan} 
+              className="mt-8 w-full max-w-xs"
+            >
               Abbrechen
             </Button>
           </motion.div>
         )}
 
-        {/* Mode Selection View */}
-        {scanMode === 'idle' && !result && (
+        {/* Idle State - Start Scan Button */}
+        {!scanning && !result && !checkingNfc && (
           <motion.div
             key="idle"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="space-y-6"
+            className="flex flex-col items-center justify-center min-h-[60vh] px-4"
           >
-            {/* Instructions */}
-            <Card>
-              <CardContent className="pt-6 text-center">
-                <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
-                  <Scan className="h-8 w-8 text-primary" />
-                </div>
-                <h2 className="text-lg font-semibold mb-2">So sammelst du Punkte</h2>
-                <p className="text-muted-foreground text-sm">
-                  Scanne den Eloyo-Stempel beim Händler per NFC oder QR-Code
-                </p>
-              </CardContent>
-            </Card>
+            {/* Main NFC Button */}
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={startNFCScan}
+              className="w-40 h-40 rounded-full bg-primary flex items-center justify-center shadow-lg mb-6"
+            >
+              <Nfc className="h-16 w-16 text-primary-foreground" />
+            </motion.button>
 
-            {/* Scan Options */}
-            <div className="grid gap-4">
-              {/* NFC Button - show if supported */}
-              {!checkingNfc && nfcSupported && (
-                <>
-                  {nfcEnabled ? (
-                    <Button
-                      onClick={startNFCScan}
-                      className="h-auto py-6 flex-col gap-2"
-                      size="lg"
-                    >
-                      <Nfc className="h-8 w-8" />
-                      <span className="text-lg font-semibold">NFC Scan</span>
-                      <span className="text-xs opacity-80">Halte dein Handy an den Stempel</span>
-                    </Button>
-                  ) : (
-                    <Button
-                      onClick={handleOpenNfcSettings}
-                      variant="outline"
-                      className="h-auto py-6 flex-col gap-2 border-orange-300 bg-orange-50 dark:bg-orange-900/20"
-                      size="lg"
-                    >
-                      <Settings className="h-8 w-8 text-orange-600" />
-                      <span className="text-lg font-semibold text-orange-600">NFC aktivieren</span>
-                      <span className="text-xs text-orange-600/80">NFC ist deaktiviert - Tippe zum Öffnen der Einstellungen</span>
-                    </Button>
-                  )}
-                </>
-              )}
+            <h2 className="text-xl font-bold mb-2 text-center">
+              Punkte sammeln
+            </h2>
+            <p className="text-muted-foreground text-center max-w-xs">
+              Tippe auf den Button und halte dein Handy an den Eloyo-Stempel
+            </p>
+          </motion.div>
+        )}
 
-              {/* QR Code Button - always available as fallback */}
-              <Button
-                onClick={() => setScanMode('qr')}
-                variant={nfcSupported && nfcEnabled ? 'outline' : 'default'}
-                className="h-auto py-6 flex-col gap-2"
-                size="lg"
-              >
-                <QrCode className="h-8 w-8" />
-                <span className="text-lg font-semibold">QR-Code scannen</span>
-                <span className="text-xs opacity-80">Scanne den QR-Code mit der Kamera</span>
-              </Button>
-            </div>
-
-            {/* NFC Status Info */}
-            {!checkingNfc && (
-              <p className="text-center text-xs text-muted-foreground">
-                {nfcSupported 
-                  ? (nfcEnabled 
-                      ? 'NFC ist verfügbar und aktiviert' 
-                      : 'NFC ist verfügbar aber deaktiviert')
-                  : 'NFC wird auf diesem Gerät nicht unterstützt - nutze QR-Code'}
-              </p>
-            )}
-
-            {checkingNfc && (
-              <p className="text-center text-xs text-muted-foreground animate-pulse">
-                Prüfe NFC-Verfügbarkeit...
-              </p>
-            )}
+        {/* Loading state */}
+        {checkingNfc && (
+          <motion.div
+            key="loading"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="flex flex-col items-center justify-center min-h-[60vh]"
+          >
+            <div className="w-16 h-16 rounded-full border-4 border-primary border-t-transparent animate-spin mb-4" />
+            <p className="text-muted-foreground">Prüfe NFC...</p>
           </motion.div>
         )}
       </AnimatePresence>
