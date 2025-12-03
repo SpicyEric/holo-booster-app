@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Scanner } from '@yudiel/react-qr-scanner';
-import { Scan, Nfc, QrCode, CheckCircle, XCircle, Sparkles } from 'lucide-react';
+import { Scan, Nfc, QrCode, CheckCircle, XCircle, Sparkles, Settings } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
@@ -10,6 +10,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { toast } from 'sonner';
 import confetti from 'canvas-confetti';
 import { MainLayout } from '@/app/components/layout/MainLayout';
+import { nfcService, type NfcReadResult } from '@/app/services/nfcService';
 
 type ScanMode = 'idle' | 'qr' | 'nfc';
 type ScanResult = {
@@ -28,12 +29,35 @@ export const AppScan = () => {
   const [scanning, setScanning] = useState(false);
   const [result, setResult] = useState<ScanResult | null>(null);
   const [nfcSupported, setNfcSupported] = useState(false);
+  const [nfcEnabled, setNfcEnabled] = useState(true);
+  const [checkingNfc, setCheckingNfc] = useState(true);
 
-  // Check for NFC support
+  // Check for NFC support on mount
   useEffect(() => {
-    if ('NDEFReader' in window) {
-      setNfcSupported(true);
-    }
+    const checkNfcSupport = async () => {
+      setCheckingNfc(true);
+      try {
+        const supported = await nfcService.isSupported();
+        setNfcSupported(supported);
+        
+        if (supported) {
+          const enabled = await nfcService.isEnabled();
+          setNfcEnabled(enabled);
+        }
+      } catch (error) {
+        console.error('Error checking NFC support:', error);
+        setNfcSupported(false);
+      } finally {
+        setCheckingNfc(false);
+      }
+    };
+
+    checkNfcSupport();
+
+    // Cleanup on unmount
+    return () => {
+      nfcService.stopScan();
+    };
   }, []);
 
   // Handle direct chip_uid from URL (for NFC redirect)
@@ -44,7 +68,7 @@ export const AppScan = () => {
     }
   }, [searchParams, user]);
 
-  const handleChipScan = async (chipUid: string) => {
+  const handleChipScan = useCallback(async (chipUid: string) => {
     if (!user) {
       toast.error('Bitte melde dich an');
       navigate('/app/auth');
@@ -63,7 +87,13 @@ export const AppScan = () => {
 
       if (error) throw error;
 
-      const response = data as { success: boolean; points_awarded?: number; total_points?: number; merchant_customer_id?: string; error?: string };
+      const response = data as { 
+        success: boolean; 
+        points_awarded?: number; 
+        total_points?: number; 
+        merchant_customer_id?: string; 
+        error?: string 
+      };
 
       if (response.success) {
         // Get merchant name
@@ -110,15 +140,15 @@ export const AppScan = () => {
       setScanning(false);
       setScanMode('idle');
     }
-  };
+  }, [user, navigate]);
 
-  const handleQRScan = (result: string) => {
+  const handleQRScan = useCallback((qrResult: string) => {
     // Extract chip_uid from QR code URL or direct value
-    let chipUid = result;
+    let chipUid = qrResult;
     
     // If it's a URL, extract the chip parameter
     try {
-      const url = new URL(result);
+      const url = new URL(qrResult);
       const chip = url.searchParams.get('chip');
       if (chip) chipUid = chip;
     } catch {
@@ -126,47 +156,62 @@ export const AppScan = () => {
     }
 
     handleChipScan(chipUid);
-  };
+  }, [handleChipScan]);
+
+  const handleNfcRead = useCallback((nfcResult: NfcReadResult) => {
+    if (nfcResult.success && nfcResult.tagId) {
+      handleChipScan(nfcResult.tagId);
+    } else if (nfcResult.error) {
+      toast.error(nfcResult.error);
+      setScanning(false);
+      setScanMode('idle');
+    }
+  }, [handleChipScan]);
 
   const startNFCScan = async () => {
-    if (!('NDEFReader' in window)) {
+    if (!nfcSupported) {
       toast.error('NFC wird auf diesem Gerät nicht unterstützt');
+      return;
+    }
+
+    // Check if NFC is enabled
+    const enabled = await nfcService.isEnabled();
+    if (!enabled) {
+      setNfcEnabled(false);
+      toast.error('Bitte aktiviere NFC in den Einstellungen');
       return;
     }
 
     setScanMode('nfc');
     setScanning(true);
 
-    try {
-      const ndef = new (window as any).NDEFReader();
-      await ndef.scan();
+    await nfcService.startScan(handleNfcRead);
+  };
 
-      ndef.addEventListener('reading', ({ serialNumber }: { serialNumber: string }) => {
-        handleChipScan(serialNumber);
-      });
-
-      ndef.addEventListener('readingerror', () => {
-        toast.error('NFC Lesefehler');
-        setScanning(false);
-        setScanMode('idle');
-      });
-    } catch (error: any) {
-      console.error('NFC error:', error);
-      toast.error('NFC konnte nicht gestartet werden');
-      setScanning(false);
-      setScanMode('idle');
-    }
+  const handleOpenNfcSettings = async () => {
+    await nfcService.openSettings();
+    // Re-check NFC status after returning from settings
+    setTimeout(async () => {
+      const enabled = await nfcService.isEnabled();
+      setNfcEnabled(enabled);
+    }, 1000);
   };
 
   const resetScan = () => {
+    nfcService.stopScan();
     setResult(null);
+    setScanMode('idle');
+    setScanning(false);
+  };
+
+  const cancelScan = () => {
+    nfcService.stopScan();
     setScanMode('idle');
     setScanning(false);
   };
 
   return (
     <MainLayout title="Punkte sammeln">
-
       <AnimatePresence mode="wait">
         {/* Result View */}
         {result && (
@@ -232,9 +277,9 @@ export const AppScan = () => {
               <CardContent className="p-0">
                 <div className="aspect-square relative">
                   <Scanner
-                    onScan={(result) => {
-                      if (result?.[0]?.rawValue) {
-                        handleQRScan(result[0].rawValue);
+                    onScan={(scanResult) => {
+                      if (scanResult?.[0]?.rawValue) {
+                        handleQRScan(scanResult[0].rawValue);
                       }
                     }}
                     onError={(error) => {
@@ -256,7 +301,7 @@ export const AppScan = () => {
             <p className="text-center text-muted-foreground">
               Halte die Kamera auf den QR-Code
             </p>
-            <Button variant="outline" onClick={() => setScanMode('idle')} className="w-full">
+            <Button variant="outline" onClick={cancelScan} className="w-full">
               Abbrechen
             </Button>
           </motion.div>
@@ -283,8 +328,15 @@ export const AppScan = () => {
               <p className="text-muted-foreground">
                 Halte dein Handy an den Eloyo-Stempel
               </p>
+              {nfcService.isNativeApp() && (
+                <p className="text-xs text-muted-foreground mt-2">
+                  {nfcService.getPlatformInfo().platform === 'ios' 
+                    ? 'Halte das iPhone oben an den Stempel' 
+                    : 'Halte das Handy mittig an den Stempel'}
+                </p>
+              )}
             </div>
-            <Button variant="outline" onClick={() => setScanMode('idle')} className="w-full max-w-xs">
+            <Button variant="outline" onClick={cancelScan} className="w-full max-w-xs">
               Abbrechen
             </Button>
           </motion.div>
@@ -314,21 +366,38 @@ export const AppScan = () => {
 
             {/* Scan Options */}
             <div className="grid gap-4">
-              {nfcSupported && (
-                <Button
-                  onClick={startNFCScan}
-                  className="h-auto py-6 flex-col gap-2"
-                  size="lg"
-                >
-                  <Nfc className="h-8 w-8" />
-                  <span className="text-lg font-semibold">NFC Scan</span>
-                  <span className="text-xs opacity-80">Halte dein Handy an den Stempel</span>
-                </Button>
+              {/* NFC Button - show if supported */}
+              {!checkingNfc && nfcSupported && (
+                <>
+                  {nfcEnabled ? (
+                    <Button
+                      onClick={startNFCScan}
+                      className="h-auto py-6 flex-col gap-2"
+                      size="lg"
+                    >
+                      <Nfc className="h-8 w-8" />
+                      <span className="text-lg font-semibold">NFC Scan</span>
+                      <span className="text-xs opacity-80">Halte dein Handy an den Stempel</span>
+                    </Button>
+                  ) : (
+                    <Button
+                      onClick={handleOpenNfcSettings}
+                      variant="outline"
+                      className="h-auto py-6 flex-col gap-2 border-orange-300 bg-orange-50 dark:bg-orange-900/20"
+                      size="lg"
+                    >
+                      <Settings className="h-8 w-8 text-orange-600" />
+                      <span className="text-lg font-semibold text-orange-600">NFC aktivieren</span>
+                      <span className="text-xs text-orange-600/80">NFC ist deaktiviert - Tippe zum Öffnen der Einstellungen</span>
+                    </Button>
+                  )}
+                </>
               )}
 
+              {/* QR Code Button - always available as fallback */}
               <Button
                 onClick={() => setScanMode('qr')}
-                variant={nfcSupported ? 'outline' : 'default'}
+                variant={nfcSupported && nfcEnabled ? 'outline' : 'default'}
                 className="h-auto py-6 flex-col gap-2"
                 size="lg"
               >
@@ -338,9 +407,20 @@ export const AppScan = () => {
               </Button>
             </div>
 
-            {!nfcSupported && (
+            {/* NFC Status Info */}
+            {!checkingNfc && (
               <p className="text-center text-xs text-muted-foreground">
-                NFC wird auf diesem Gerät nicht unterstützt
+                {nfcSupported 
+                  ? (nfcEnabled 
+                      ? 'NFC ist verfügbar und aktiviert' 
+                      : 'NFC ist verfügbar aber deaktiviert')
+                  : 'NFC wird auf diesem Gerät nicht unterstützt - nutze QR-Code'}
+              </p>
+            )}
+
+            {checkingNfc && (
+              <p className="text-center text-xs text-muted-foreground animate-pulse">
+                Prüfe NFC-Verfügbarkeit...
               </p>
             )}
           </motion.div>
