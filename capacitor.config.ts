@@ -2,12 +2,14 @@ import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
   appId: 'app.lovable.3ee30c314eaa4550a0fd340678fe1b0c',
-  appName: 'holo-booster-app',
+  appName: 'Eloyo',
   webDir: 'dist',
-  server: {
-    url: 'https://3ee30c31-4eaa-4550-a0fd-340678fe1b0c.lovableproject.com?forceHideBadge=true',
-    cleartext: true,
-  },
+  // DEVELOPMENT ONLY: Uncomment server block for hot-reload during development
+  // For production APK builds, keep this commented out!
+  // server: {
+  //   url: 'https://3ee30c31-4eaa-4550-a0fd-340678fe1b0c.lovableproject.com?forceHideBadge=true',
+  //   cleartext: true,
+  // },
   ios: {
     contentInset: 'automatic',
     allowsLinkPreview: true,
