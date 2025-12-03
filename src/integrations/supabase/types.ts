@@ -1772,7 +1772,7 @@ export type Database = {
     }
     Functions: {
       award_points_via_nfc: {
-        Args: { p_chip_uid: string; p_user_id: string }
+        Args: { p_chip_data: string; p_user_id: string }
         Returns: Json
       }
       generate_customer_number: { Args: never; Returns: string }
