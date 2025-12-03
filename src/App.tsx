@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { DeepLinkProvider } from "@/app/components/DeepLinkProvider";
 import Landing from "./pages/Landing";
+import Index from "./pages/Index";
 import Karriere from "./pages/Karriere";
 import Kontakt from "./pages/Kontakt";
 import Impressum from "./pages/Impressum";
@@ -61,8 +62,11 @@ const App = () => (
       <BrowserRouter>
         <DeepLinkProvider>
         <Routes>
+          {/* ===== ROOT ROUTE - handles native vs web ===== */}
+          <Route path="/" element={<Index />} />
+          
           {/* ===== WEB ROUTES ===== */}
-          <Route path="/" element={<Landing />} />
+          <Route path="/home" element={<Landing />} />
           <Route path="/karriere" element={<Karriere />} />
           <Route path="/kontakt" element={<Kontakt />} />
           <Route path="/impressum" element={<Impressum />} />

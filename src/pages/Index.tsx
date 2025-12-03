@@ -21,8 +21,8 @@ const Index = () => {
           navigate('/app/auth', { replace: true });
         }
       } else {
-        // Web: Redirect to website auth
-        navigate('/auth', { replace: true });
+        // Web: Redirect to website landing page
+        navigate('/home', { replace: true });
       }
       
       setChecking(false);
