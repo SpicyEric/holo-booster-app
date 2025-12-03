@@ -98,26 +98,55 @@ Post-Sync Hook für iOS und Android Konfiguration.
 
 ## Android-spezifische Konfiguration
 
-### AndroidManifest.xml
+### Automatische Konfiguration (empfohlen)
 
-Die NFC-Berechtigungen werden automatisch vom Plugin hinzugefügt. Überprüfe `android/app/src/main/AndroidManifest.xml`:
+```bash
+# Führt automatisch alle Android NFC Konfigurationen durch
+node scripts/configure-android-nfc.js
+```
+
+Dieses Skript fügt automatisch hinzu:
+- NFC Berechtigungen in AndroidManifest.xml
+- Intent-Filter für automatisches Öffnen bei NFC-Scan
+- NFC Tech Filter für alle gängigen Tag-Typen
+
+### AndroidManifest.xml (manuell)
+
+Falls manuell konfiguriert werden soll:
 
 ```xml
 <uses-permission android:name="android.permission.NFC" />
 <uses-feature android:name="android.hardware.nfc" android:required="false" />
 ```
 
-### Intent Filter (optional, für automatisches Öffnen)
+### Intent Filter für Auto-Launch
 
-Falls die App automatisch bei NFC-Scan öffnen soll:
+Die App öffnet sich automatisch bei NFC-Scan:
 
 ```xml
+<!-- NDEF Discovery - Eloyo Tags -->
 <intent-filter>
     <action android:name="android.nfc.action.NDEF_DISCOVERED"/>
     <category android:name="android.intent.category.DEFAULT"/>
     <data android:mimeType="application/vnd.eloyo.stamp"/>
 </intent-filter>
+
+<!-- Tech Discovery - NFC-A/B Tags -->
+<intent-filter>
+    <action android:name="android.nfc.action.TECH_DISCOVERED"/>
+    <category android:name="android.intent.category.DEFAULT"/>
+</intent-filter>
+
+<!-- Tag Discovery - Fallback für alle Tags -->
+<intent-filter>
+    <action android:name="android.nfc.action.TAG_DISCOVERED"/>
+    <category android:name="android.intent.category.DEFAULT"/>
+</intent-filter>
 ```
+
+### NFC Tech Filter
+
+Erstelle `android/app/src/main/res/xml/nfc_tech_filter.xml` für erweiterte Tag-Unterstützung (wird automatisch durch das Skript erstellt).
 
 ## App starten
 

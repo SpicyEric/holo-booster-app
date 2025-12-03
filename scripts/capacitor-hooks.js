@@ -52,19 +52,14 @@ function runAndroidHooks() {
 
   console.log('\n🤖 Führe Android Hooks aus...');
   
-  // Android NFC ist bereits durch das Plugin konfiguriert
-  // Hier können zusätzliche Anpassungen hinzugefügt werden
-  
-  const manifestPath = path.join(PLATFORM_ANDROID, 'app', 'src', 'main', 'AndroidManifest.xml');
-  if (fs.existsSync(manifestPath)) {
-    let manifest = fs.readFileSync(manifestPath, 'utf8');
-    
-    // Prüfe ob NFC Berechtigung vorhanden
-    if (manifest.includes('android.permission.NFC')) {
-      console.log('✅ Android NFC Berechtigung bereits vorhanden');
-    } else {
-      console.log('⚠️  Android NFC Berechtigung fehlt - wird vom Plugin hinzugefügt');
-    }
+  try {
+    // Android NFC Konfiguration mit Intent-Filtern
+    execSync('node scripts/configure-android-nfc.js', { 
+      stdio: 'inherit',
+      cwd: path.join(__dirname, '..')
+    });
+  } catch (error) {
+    console.error('❌ Android Hook Fehler:', error.message);
   }
 }
 
