@@ -56,15 +56,15 @@ export const AppScan = () => {
     };
   }, []);
 
-  // Handle direct chip_uid from URL (for Deep Link / NFC Intent)
+  // Handle direct chip_data from URL (for Deep Link / NFC Intent)
   useEffect(() => {
-    const chipUid = searchParams.get('chip');
-    if (chipUid && user) {
-      handleChipScan(chipUid);
+    const chipData = searchParams.get('chip');
+    if (chipData && user) {
+      handleChipScan(chipData);
     }
   }, [searchParams, user]);
 
-  const handleChipScan = useCallback(async (chipUid: string) => {
+  const handleChipScan = useCallback(async (chipData: string) => {
     if (!user) {
       toast.error('Bitte melde dich an');
       navigate('/app/auth');
@@ -76,7 +76,7 @@ export const AppScan = () => {
 
     try {
       const { data, error } = await supabase.rpc('award_points_via_nfc', {
-        p_chip_uid: chipUid,
+        p_chip_data: chipData,
         p_user_id: user.id,
       });
 
@@ -135,8 +135,8 @@ export const AppScan = () => {
   }, [user, navigate]);
 
   const handleNfcRead = useCallback((nfcResult: NfcReadResult) => {
-    if (nfcResult.success && nfcResult.tagId) {
-      handleChipScan(nfcResult.tagId);
+    if (nfcResult.success && nfcResult.chipData) {
+      handleChipScan(nfcResult.chipData);
     } else if (nfcResult.error) {
       toast.error(nfcResult.error);
       setScanning(false);
