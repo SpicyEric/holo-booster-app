@@ -8,7 +8,7 @@ import { StoresGoogleMap } from '@/app/components/StoresGoogleMap';
 import { Card } from '@/components/ui/card';
 import { getCurrentLocation, GeolocationError } from '@/app/services/geolocationService';
 import { Button } from '@/components/ui/button';
-import StoreCard from '@/app/components/StoreCard';
+import MerchantCard from '@/app/components/MerchantCard';
 
 interface Store {
   id: string;
@@ -166,7 +166,7 @@ export default function AppStores() {
           ) : (
             <div className="space-y-3">
               {stores.map((store) => (
-                <StoreCard key={store.id} store={store} />
+                <MerchantCard key={store.id} store={store} />
               ))}
             </div>
           )}
