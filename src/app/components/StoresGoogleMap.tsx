@@ -46,6 +46,7 @@ export function StoresGoogleMap({ userLocation, stores }: StoresGoogleMapProps) 
   const [map, setMap] = useState<google.maps.Map | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
   const [markerIcons, setMarkerIcons] = useState<{ [key: string]: google.maps.Icon }>({});
+  const [initialCenterSet, setInitialCenterSet] = useState(false);
 
   // Filter stores with valid coordinates (not 0,0)
   const validStores = stores.filter(store => store.lat !== 0 && store.lng !== 0);
@@ -82,6 +83,9 @@ export function StoresGoogleMap({ userLocation, stores }: StoresGoogleMapProps) 
         google.maps.event.removeListener(listener);
       });
     }
+    
+    // Mark initial center as set so we don't keep re-centering
+    setInitialCenterSet(true);
   }, [validStores, userLocation]);
 
   useEffect(() => {
@@ -144,7 +148,7 @@ export function StoresGoogleMap({ userLocation, stores }: StoresGoogleMapProps) 
       {isLoaded ? (
         <GoogleMap
           mapContainerStyle={mapContainerStyle}
-          center={center}
+          center={initialCenterSet ? undefined : center}
           zoom={14}
           onLoad={onMapLoad}
           options={{
@@ -156,6 +160,8 @@ export function StoresGoogleMap({ userLocation, stores }: StoresGoogleMapProps) 
             gestureHandling: 'greedy',
             draggable: true,
             scrollwheel: true,
+            disableDoubleClickZoom: false,
+            clickableIcons: false,
           }}
         >
           {/* User location marker */}
