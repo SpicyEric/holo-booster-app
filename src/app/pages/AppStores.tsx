@@ -1,12 +1,14 @@
 import { useEffect, useState } from 'react';
 import { MainLayout } from '@/app/components/layout/MainLayout';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Heart, MapPin } from 'lucide-react';
+import { Heart, MapPin, AlertCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { StoresGoogleMap } from '@/app/components/StoresGoogleMap';
 import { Card } from '@/components/ui/card';
+import { getCurrentLocation, GeolocationError } from '@/app/services/geolocationService';
+import { Button } from '@/components/ui/button';
 
 interface Store {
   id: string;
@@ -27,22 +29,25 @@ export default function AppStores() {
   const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
   const [stores, setStores] = useState<Store[]>([]);
   const [loading, setLoading] = useState(true);
+  const [locationError, setLocationError] = useState<string | null>(null);
   const navigate = useNavigate();
 
-  useEffect(() => {
-    if ('geolocation' in navigator) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          setUserLocation([position.coords.latitude, position.coords.longitude]);
-        },
-        (error) => {
-          console.error('Error getting location:', error);
-          setUserLocation([52.520008, 13.404954]); // Berlin fallback
-        }
-      );
-    } else {
-      setUserLocation([52.520008, 13.404954]);
+  const fetchUserLocation = async () => {
+    try {
+      setLocationError(null);
+      const location = await getCurrentLocation();
+      console.log('User location received:', location);
+      setUserLocation([location.latitude, location.longitude]);
+    } catch (error) {
+      const geoError = error as GeolocationError;
+      console.error('Location error:', geoError);
+      setLocationError(geoError.message);
+      // Don't set fallback - let user see error and retry
     }
+  };
+
+  useEffect(() => {
+    fetchUserLocation();
   }, []);
 
   useEffect(() => {
@@ -220,7 +225,17 @@ export default function AppStores() {
         </TabsContent>
 
         <TabsContent value="map" className="mt-4">
-          {userLocation ? (
+          {locationError ? (
+            <Card className="p-6 text-center">
+              <div className="mx-auto w-16 h-16 rounded-full bg-destructive/10 flex items-center justify-center mb-4">
+                <AlertCircle className="h-8 w-8 text-destructive" />
+              </div>
+              <p className="text-muted-foreground mb-4">{locationError}</p>
+              <Button onClick={fetchUserLocation} variant="outline">
+                Erneut versuchen
+              </Button>
+            </Card>
+          ) : userLocation ? (
             <div className="h-[calc(100vh-16rem)] rounded-xl overflow-hidden">
               <StoresGoogleMap stores={stores} userLocation={userLocation} />
             </div>
