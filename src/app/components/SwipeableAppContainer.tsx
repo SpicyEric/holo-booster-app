@@ -495,24 +495,45 @@ const AppStoresContent = () => {
             <Card className="p-6"><p className="text-muted-foreground text-center">Lädt...</p></Card>
           ) : filteredMerchants.length > 0 ? (
             <div className="space-y-3">
+              {/* TEST v1 - Yellow cards with red border */}
               {filteredMerchants.map((merchant) => (
-                <Card key={merchant.id} className="overflow-hidden cursor-pointer hover:shadow-lg transition-shadow" onClick={() => navigate(`/app/merchant/${merchant.id}`)}>
-                  <div className="relative h-24">
+                <button
+                  key={merchant.id}
+                  onClick={() => navigate(`/app/merchant/${merchant.id}`)}
+                  className="w-full rounded-xl overflow-hidden shadow-md text-left relative"
+                  style={{ aspectRatio: '1.55 / 1', border: '8px solid red', backgroundColor: 'yellow' }}
+                >
+                  <div className="absolute inset-0">
                     {merchant.cover_image_url ? (
-                      <img src={merchant.cover_image_url} alt="" className="w-full h-full object-cover" />
+                      <img src={merchant.cover_image_url} alt={merchant.company_name || merchant.name} className="w-full h-full object-cover" />
                     ) : (
-                      <div className="w-full h-full bg-gradient-to-br from-primary/20 to-secondary/20" />
+                      <div className="w-full h-full bg-gradient-to-br from-purple-500 to-blue-500" />
                     )}
-                    <div className="absolute inset-0 bg-black/40" />
-                    {merchant.distance !== null && (
-                      <div className="absolute top-2 right-2 px-2 py-1 bg-background/90 rounded-full text-xs font-medium">{merchant.distance.toFixed(1)} km</div>
-                    )}
-                    <div className="absolute bottom-0 left-0 right-0 p-3 text-white">
-                      <h3 className="font-semibold">{merchant.company_name || merchant.name}</h3>
-                      <p className="text-xs text-white/80">{merchant.industry || 'Geschäft'}</p>
-                    </div>
                   </div>
-                </Card>
+                  {/* Logo - Top Left */}
+                  <div className="absolute top-3 left-3 z-20 w-12 h-12 rounded-full bg-red-500 border-2 border-white shadow-lg flex items-center justify-center overflow-hidden">
+                    {merchant.logo_url ? (
+                      <img src={merchant.logo_url} alt="Logo" className="w-full h-full object-cover" />
+                    ) : (
+                      <span className="text-lg font-bold text-white">{(merchant.company_name || merchant.name || '?').charAt(0).toUpperCase()}</span>
+                    )}
+                  </div>
+                  {/* Distance Badge - Top Right */}
+                  {merchant.distance !== null && (
+                    <div className="absolute top-3 right-3 z-20">
+                      <span className="bg-white/95 backdrop-blur-sm text-gray-800 text-xs font-medium px-2 py-1 rounded-full shadow-sm">
+                        {merchant.distance < 1 ? `${Math.round(merchant.distance * 1000)}m` : `${merchant.distance.toFixed(1)}km`}
+                      </span>
+                    </div>
+                  )}
+                  {/* Gradient Overlay */}
+                  <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/70 via-black/40 to-transparent" />
+                  {/* Name and Category - Bottom */}
+                  <div className="absolute bottom-3 left-3 right-3 z-10">
+                    <h3 className="text-white font-semibold text-base truncate drop-shadow-md">{merchant.company_name || merchant.name}</h3>
+                    {merchant.industry && <p className="text-white/80 text-sm truncate drop-shadow-md">{merchant.industry}</p>}
+                  </div>
+                </button>
               ))}
             </div>
           ) : (
