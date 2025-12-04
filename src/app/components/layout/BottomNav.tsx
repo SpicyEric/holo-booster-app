@@ -66,7 +66,7 @@ export const BottomNav = () => {
             className="h-18 w-18 rounded-full shadow-lg bg-gradient-to-br from-primary to-secondary hover:shadow-xl transition-all"
             style={{ height: '72px', width: '72px' }}
           >
-            <Stamp className="h-10 w-10" strokeWidth={2.5} />
+            <Stamp className="h-11 w-11" strokeWidth={2.5} />
           </Button>
         </div>
 
