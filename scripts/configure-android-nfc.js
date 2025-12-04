@@ -1,10 +1,11 @@
 #!/usr/bin/env node
 
 /**
- * Automatisches Android NFC Konfigurationsskript
+ * Automatisches Android Konfigurationsskript
  * 
  * Dieses Skript aktualisiert automatisch:
  * - AndroidManifest.xml mit NFC Intent-Filtern
+ * - AndroidManifest.xml mit Geolocation-Berechtigungen
  * 
  * Verwendung:
  * node scripts/configure-android-nfc.js
@@ -168,6 +169,51 @@ function addNfcPermissions(manifest) {
 }
 
 /**
+ * Fügt Geolocation Berechtigungen zum Manifest hinzu
+ */
+function addGeolocationPermissions(manifest) {
+  console.log('\n📍 Konfiguriere Geolocation Berechtigungen...');
+
+  // ACCESS_COARSE_LOCATION
+  if (!manifest.includes('android.permission.ACCESS_COARSE_LOCATION')) {
+    const insertPos = manifest.indexOf('<application');
+    if (insertPos !== -1) {
+      const permission = '    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>\n';
+      manifest = manifest.slice(0, insertPos) + permission + manifest.slice(insertPos);
+      console.log('   ✅ ACCESS_COARSE_LOCATION Permission hinzugefügt');
+    }
+  } else {
+    console.log('   ⏭️  ACCESS_COARSE_LOCATION bereits vorhanden');
+  }
+
+  // ACCESS_FINE_LOCATION
+  if (!manifest.includes('android.permission.ACCESS_FINE_LOCATION')) {
+    const insertPos = manifest.indexOf('<application');
+    if (insertPos !== -1) {
+      const permission = '    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>\n';
+      manifest = manifest.slice(0, insertPos) + permission + manifest.slice(insertPos);
+      console.log('   ✅ ACCESS_FINE_LOCATION Permission hinzugefügt');
+    }
+  } else {
+    console.log('   ⏭️  ACCESS_FINE_LOCATION bereits vorhanden');
+  }
+
+  // Location Feature (optional)
+  if (!manifest.includes('android.hardware.location.gps')) {
+    const insertPos = manifest.indexOf('<application');
+    if (insertPos !== -1) {
+      const feature = '    <uses-feature android:name="android.hardware.location.gps" android:required="false"/>\n';
+      manifest = manifest.slice(0, insertPos) + feature + manifest.slice(insertPos);
+      console.log('   ✅ GPS Feature (optional) hinzugefügt');
+    }
+  } else {
+    console.log('   ⏭️  GPS Feature bereits vorhanden');
+  }
+
+  return manifest;
+}
+
+/**
  * Fügt Intent-Filter zur MainActivity hinzu
  */
 function addIntentFilters(manifest) {
@@ -233,6 +279,9 @@ function configureAndroidManifest() {
   // NFC Berechtigungen
   manifest = addNfcPermissions(manifest);
   
+  // Geolocation Berechtigungen
+  manifest = addGeolocationPermissions(manifest);
+  
   // Intent-Filter
   manifest = addIntentFilters(manifest);
   
@@ -246,8 +295,8 @@ function configureAndroidManifest() {
  * Hauptfunktion
  */
 function main() {
-  console.log('🔧 Eloyo Android NFC Konfiguration');
-  console.log('===================================\n');
+  console.log('🔧 Eloyo Android Konfiguration (NFC + Geolocation)');
+  console.log('==================================================\n');
 
   // Prüfe Android Plattform
   checkAndroidPlatform();
@@ -257,17 +306,20 @@ function main() {
   const manifestOk = configureAndroidManifest();
 
   // Zusammenfassung
-  console.log('\n===================================');
+  console.log('\n==================================================');
   if (techFilterOk && manifestOk) {
-    console.log('✅ Android NFC Konfiguration abgeschlossen!\n');
-    console.log('Die App öffnet sich jetzt automatisch wenn:');
-    console.log('• Ein NDEF-Tag mit Eloyo MIME-Type gescannt wird');
-    console.log('• Ein NFC-A/B/F/V Tag erkannt wird');
-    console.log('• Jedes andere NFC-Tag in Reichweite ist\n');
+    console.log('✅ Android Konfiguration abgeschlossen!\n');
+    console.log('NFC Features:');
+    console.log('• Die App öffnet sich automatisch bei NFC-Tag Scans');
+    console.log('• NDEF, Tech, und Tag Discovery aktiviert\n');
+    console.log('Geolocation Features:');
+    console.log('• ACCESS_COARSE_LOCATION aktiviert');
+    console.log('• ACCESS_FINE_LOCATION aktiviert');
+    console.log('• App fragt nach Standort-Berechtigung\n');
     console.log('Nächste Schritte:');
     console.log('1. npx cap sync android');
     console.log('2. npx cap run android');
-    console.log('3. Teste mit einem echten NFC-Tag\n');
+    console.log('3. Teste NFC und Standort-Features\n');
   } else {
     console.log('⚠️  Konfiguration mit Fehlern abgeschlossen');
     console.log('   Überprüfe die Dateien manuell.\n');
