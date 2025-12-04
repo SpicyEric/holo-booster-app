@@ -1,10 +1,11 @@
 #!/usr/bin/env node
 
 /**
- * Automatisches iOS NFC Konfigurationsskript
+ * Automatisches iOS Konfigurationsskript
  * 
  * Dieses Skript aktualisiert automatisch:
  * - Info.plist mit NFC-Berechtigungen
+ * - Info.plist mit Geolocation-Berechtigungen
  * - App.entitlements mit NFC-Capabilities
  * 
  * Verwendung:
@@ -28,6 +29,12 @@ const NFC_CONFIG = {
   iso7816SelectIdentifiers: ['D276000085010100'],
   felicaSystemCodes: ['0000'],
   readerSessionFormats: ['NDEF', 'TAG'],
+};
+
+// Geolocation Konfiguration
+const LOCATION_CONFIG = {
+  NSLocationWhenInUseUsageDescription: 'Eloyo benötigt deinen Standort um Stores in deiner Nähe zu finden.',
+  NSLocationAlwaysAndWhenInUseUsageDescription: 'Eloyo benötigt deinen Standort um Stores in deiner Nähe zu finden und dich über Angebote in der Nähe zu informieren.',
 };
 
 /**
@@ -100,16 +107,10 @@ function addPlistEntry(plistContent, key, value) {
 }
 
 /**
- * Konfiguriert Info.plist
+ * Konfiguriert Info.plist - NFC
  */
-function configureInfoPlist() {
-  console.log('\n📝 Konfiguriere Info.plist...');
-  
-  let plist = readPlist(INFO_PLIST_PATH);
-  if (!plist) {
-    console.error('❌ Info.plist nicht gefunden!');
-    return false;
-  }
+function configureNfcInPlist(plist) {
+  console.log('\n📡 Konfiguriere NFC in Info.plist...');
 
   // NFC Reader Usage Description
   plist = addPlistEntry(plist, 'NFCReaderUsageDescription', NFC_CONFIG.NFCReaderUsageDescription);
@@ -127,6 +128,50 @@ function configureInfoPlist() {
     'com.apple.developer.nfc.readersession.felica.systemcodes', 
     NFC_CONFIG.felicaSystemCodes
   );
+
+  return plist;
+}
+
+/**
+ * Konfiguriert Info.plist - Geolocation
+ */
+function configureGeolocationInPlist(plist) {
+  console.log('\n📍 Konfiguriere Geolocation in Info.plist...');
+
+  // When In Use Description
+  plist = addPlistEntry(
+    plist, 
+    'NSLocationWhenInUseUsageDescription', 
+    LOCATION_CONFIG.NSLocationWhenInUseUsageDescription
+  );
+
+  // Always and When In Use Description (für Hintergrund-Updates wenn gewünscht)
+  plist = addPlistEntry(
+    plist, 
+    'NSLocationAlwaysAndWhenInUseUsageDescription', 
+    LOCATION_CONFIG.NSLocationAlwaysAndWhenInUseUsageDescription
+  );
+
+  return plist;
+}
+
+/**
+ * Konfiguriert Info.plist
+ */
+function configureInfoPlist() {
+  console.log('\n📝 Konfiguriere Info.plist...');
+  
+  let plist = readPlist(INFO_PLIST_PATH);
+  if (!plist) {
+    console.error('❌ Info.plist nicht gefunden!');
+    return false;
+  }
+
+  // NFC Konfiguration
+  plist = configureNfcInPlist(plist);
+  
+  // Geolocation Konfiguration
+  plist = configureGeolocationInPlist(plist);
 
   writePlist(INFO_PLIST_PATH, plist);
   console.log('✅ Info.plist aktualisiert');
@@ -169,8 +214,8 @@ function configureEntitlements() {
  * Hauptfunktion
  */
 function main() {
-  console.log('🔧 Eloyo iOS NFC Konfiguration');
-  console.log('================================\n');
+  console.log('🔧 Eloyo iOS Konfiguration (NFC + Geolocation)');
+  console.log('===============================================\n');
 
   // Prüfe iOS Plattform
   checkiOSPlatform();
@@ -180,9 +225,17 @@ function main() {
   const entitlementsOk = configureEntitlements();
 
   // Zusammenfassung
-  console.log('\n================================');
+  console.log('\n===============================================');
   if (infoPlistOk && entitlementsOk) {
-    console.log('✅ iOS NFC Konfiguration abgeschlossen!\n');
+    console.log('✅ iOS Konfiguration abgeschlossen!\n');
+    console.log('NFC Features:');
+    console.log('• NFCReaderUsageDescription gesetzt');
+    console.log('• ISO7816 Select Identifiers konfiguriert');
+    console.log('• NFC Reader Session Formats aktiviert\n');
+    console.log('Geolocation Features:');
+    console.log('• NSLocationWhenInUseUsageDescription gesetzt');
+    console.log('• NSLocationAlwaysAndWhenInUseUsageDescription gesetzt');
+    console.log('• App fragt nach Standort-Berechtigung\n');
     console.log('Nächste Schritte:');
     console.log('1. Öffne Xcode: npx cap open ios');
     console.log('2. Gehe zu Signing & Capabilities');
