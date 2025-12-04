@@ -1,3 +1,4 @@
+// StoreCard Component - Updated 2025-12-04 v3
 import { useNavigate } from "react-router-dom";
 
 interface Store {
@@ -17,7 +18,6 @@ interface StoreCardProps {
   store: Store;
 }
 
-// VERSION 2 - Mit Logo oben links
 const StoreCard = ({ store }: StoreCardProps) => {
   const navigate = useNavigate();
 
@@ -40,7 +40,7 @@ const StoreCard = ({ store }: StoreCardProps) => {
         )}
       </div>
 
-      {/* Logo - Top Left - ALWAYS VISIBLE - RED BACKGROUND FOR TESTING */}
+      {/* Logo - Top Left - RED BACKGROUND FOR TESTING */}
       <div className="absolute top-3 left-3 z-20 w-12 h-12 rounded-full bg-red-500 border-2 border-white shadow-lg flex items-center justify-center overflow-hidden">
         {store.logo_url ? (
           <img
