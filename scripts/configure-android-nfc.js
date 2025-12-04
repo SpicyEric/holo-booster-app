@@ -206,6 +206,8 @@ kotlin.jvm.target.validation.mode=warning
 
 /**
  * Konfiguriert die Root build.gradle
+ * WICHTIG: Entfernt alle allprojects { repositories } Blöcke!
+ * Repositories werden NUR in settings.gradle definiert.
  */
 function configureRootBuildGradle() {
   console.log('\n📦 Konfiguriere Root build.gradle...');
@@ -217,6 +219,20 @@ function configureRootBuildGradle() {
 
   let buildGradle = fs.readFileSync(BUILD_GRADLE_PATH, 'utf8');
   
+  // ============================================
+  // KRITISCH: Entferne ALLE allprojects Blöcke!
+  // Mit FAIL_ON_PROJECT_REPOS in settings.gradle
+  // dürfen Repositories NUR dort definiert werden.
+  // ============================================
+  
+  // Entferne allprojects { ... } Block komplett
+  // Dieser Regex matched allprojects { repositories { ... } ... }
+  const allProjectsRegex = /\n*allprojects\s*\{[\s\S]*?\n\}/g;
+  if (allProjectsRegex.test(buildGradle)) {
+    buildGradle = buildGradle.replace(allProjectsRegex, '');
+    console.log('   ✅ allprojects Block entfernt (Repositories nur in settings.gradle!)');
+  }
+
   // Update Kotlin Version überall
   const kotlinPatterns = [
     /kotlinVersion\s*=\s*['"][\d.]+['"]/g,
@@ -249,14 +265,14 @@ function configureRootBuildGradle() {
     );
   }
 
-  // Füge allprojects Block hinzu um Kotlin für ALLE Subprojekte zu konfigurieren
-  if (!buildGradle.includes('// Force Kotlin version')) {
-    const allProjectsBlock = `
+  // Füge subprojects Block hinzu (OHNE Repositories!) um Tests zu deaktivieren
+  if (!buildGradle.includes('// Disable test tasks')) {
+    const subprojectsBlock = `
 
-// Force Kotlin version for all subprojects and disable test tasks for plugins
+// Disable test tasks for capacitor plugins to avoid Kotlin compilation issues
+// KEINE repositories hier - die sind in settings.gradle!
 subprojects {
     afterEvaluate { project ->
-        // Disable all androidTest tasks for capacitor plugins
         if (project.name.contains('capacitor') || project.name.contains('nfc') || project.name.contains('geolocation')) {
             project.tasks.matching { task ->
                 def taskName = task.name.toLowerCase()
@@ -264,29 +280,12 @@ subprojects {
             }.configureEach { task ->
                 task.enabled = false
             }
-            
-            // Clear test source sets if they exist
-            if (project.hasProperty('android')) {
-                project.android {
-                    testOptions {
-                        unitTests.all {
-                            enabled = false
-                        }
-                    }
-                }
-            }
         }
     }
 }
 `;
     
-    // Füge vor dem letzten schließenden Klammer ein
-    const lastBrace = buildGradle.lastIndexOf('}');
-    if (lastBrace > 0) {
-      buildGradle = buildGradle.slice(0, lastBrace + 1) + allProjectsBlock;
-    } else {
-      buildGradle += allProjectsBlock;
-    }
+    buildGradle += subprojectsBlock;
   }
   
   console.log(`   ✅ Kotlin → ${KOTLIN_VERSION}`);
