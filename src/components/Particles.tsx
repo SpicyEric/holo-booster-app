@@ -118,6 +118,7 @@ const Particles = ({
   const mouseRef = useRef({ x: 0, y: 0 });
   const scrollSpeedMultiplierRef = useRef(1);
   const scrollTimeoutRef = useRef<number | null>(null);
+  const lastTouchRef = useRef<{ x: number; y: number; time: number } | null>(null);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -175,11 +176,57 @@ const Particles = ({
       }, 200);
     };
 
+    const handleTouchStart = (e: TouchEvent) => {
+      if (e.touches.length > 0) {
+        lastTouchRef.current = {
+          x: e.touches[0].clientX,
+          y: e.touches[0].clientY,
+          time: performance.now()
+        };
+      }
+    };
+
+    const handleTouchMove = (e: TouchEvent) => {
+      if (e.touches.length > 0 && lastTouchRef.current) {
+        const currentX = e.touches[0].clientX;
+        const currentY = e.touches[0].clientY;
+        const currentTime = performance.now();
+        
+        const deltaX = currentX - lastTouchRef.current.x;
+        const deltaY = currentY - lastTouchRef.current.y;
+        const deltaTime = currentTime - lastTouchRef.current.time;
+        
+        if (deltaTime > 0) {
+          const velocity = Math.sqrt(deltaX * deltaX + deltaY * deltaY) / deltaTime;
+          // Scale velocity to multiplier (higher velocity = faster particles)
+          const multiplier = Math.min(1 + velocity * 15, 12);
+          scrollSpeedMultiplierRef.current = multiplier;
+          
+          if (scrollTimeoutRef.current !== null) {
+            clearTimeout(scrollTimeoutRef.current);
+          }
+          
+          scrollTimeoutRef.current = window.setTimeout(() => {
+            scrollSpeedMultiplierRef.current = 1;
+          }, 200);
+        }
+        
+        lastTouchRef.current = { x: currentX, y: currentY, time: currentTime };
+      }
+    };
+
+    const handleTouchEnd = () => {
+      lastTouchRef.current = null;
+    };
+
     if (moveParticlesOnHover) {
       container.addEventListener('mousemove', handleMouseMove);
     }
 
     window.addEventListener('wheel', handleScroll, { passive: true });
+    window.addEventListener('touchstart', handleTouchStart, { passive: true });
+    window.addEventListener('touchmove', handleTouchMove, { passive: true });
+    window.addEventListener('touchend', handleTouchEnd, { passive: true });
 
     const count = particleCount;
     const positions = new Float32Array(count * 3);
@@ -258,6 +305,9 @@ const Particles = ({
       return () => {
         window.removeEventListener('resize', resize);
         window.removeEventListener('wheel', handleScroll);
+        window.removeEventListener('touchstart', handleTouchStart);
+        window.removeEventListener('touchmove', handleTouchMove);
+        window.removeEventListener('touchend', handleTouchEnd);
         if (moveParticlesOnHover) {
           container.removeEventListener('mousemove', handleMouseMove);
         }
