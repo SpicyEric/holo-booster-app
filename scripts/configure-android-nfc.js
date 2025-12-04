@@ -21,6 +21,10 @@ const __dirname = path.dirname(__filename);
 // Pfade
 const ANDROID_PATH = path.join(__dirname, '..', 'android');
 const MANIFEST_PATH = path.join(ANDROID_PATH, 'app', 'src', 'main', 'AndroidManifest.xml');
+const BUILD_GRADLE_PATH = path.join(ANDROID_PATH, 'build.gradle');
+
+// Kotlin Version - kompatibel mit Capacitor 7.x
+const KOTLIN_VERSION = '1.9.10';
 
 // NFC Intent-Filter Konfiguration
 const NFC_INTENT_FILTERS = `
@@ -296,23 +300,70 @@ function configureAndroidManifest() {
 }
 
 /**
+ * Konfiguriert die Kotlin Version in build.gradle
+ */
+function configureKotlinVersion() {
+  console.log('\n📦 Konfiguriere Kotlin Version...');
+  
+  if (!fs.existsSync(BUILD_GRADLE_PATH)) {
+    console.error('   ❌ build.gradle nicht gefunden!');
+    return false;
+  }
+
+  let buildGradle = fs.readFileSync(BUILD_GRADLE_PATH, 'utf8');
+  
+  // Prüfe ob kotlinVersion bereits definiert ist
+  const kotlinVersionPattern = /kotlinVersion\s*=\s*['"][\d.]+['"]/;
+  const extBlockPattern = /ext\s*\{/;
+  
+  if (kotlinVersionPattern.test(buildGradle)) {
+    // Update existing version
+    buildGradle = buildGradle.replace(kotlinVersionPattern, `kotlinVersion = '${KOTLIN_VERSION}'`);
+    console.log(`   ✅ Kotlin Version aktualisiert auf ${KOTLIN_VERSION}`);
+  } else if (extBlockPattern.test(buildGradle)) {
+    // Add to existing ext block
+    buildGradle = buildGradle.replace(extBlockPattern, `ext {\n        kotlinVersion = '${KOTLIN_VERSION}'`);
+    console.log(`   ✅ Kotlin Version ${KOTLIN_VERSION} zum ext Block hinzugefügt`);
+  } else {
+    // Create ext block in buildscript
+    const buildscriptPattern = /buildscript\s*\{/;
+    if (buildscriptPattern.test(buildGradle)) {
+      buildGradle = buildGradle.replace(buildscriptPattern, `buildscript {\n    ext {\n        kotlinVersion = '${KOTLIN_VERSION}'\n    }`);
+      console.log(`   ✅ ext Block mit Kotlin Version ${KOTLIN_VERSION} erstellt`);
+    } else {
+      console.log('   ⚠️  Konnte Kotlin Version nicht konfigurieren - buildscript Block nicht gefunden');
+      return false;
+    }
+  }
+  
+  fs.writeFileSync(BUILD_GRADLE_PATH, buildGradle, 'utf8');
+  console.log('   ✅ build.gradle aktualisiert');
+  return true;
+}
+
+/**
  * Hauptfunktion
  */
 function main() {
-  console.log('🔧 Eloyo Android Konfiguration (NFC + Geolocation)');
-  console.log('==================================================\n');
+  console.log('🔧 Eloyo Android Konfiguration (Kotlin + NFC + Geolocation)');
+  console.log('============================================================\n');
 
   // Prüfe Android Plattform
   checkAndroidPlatform();
+
+  // Konfiguriere Kotlin Version
+  const kotlinOk = configureKotlinVersion();
 
   // Konfiguriere Dateien
   const techFilterOk = createNfcTechFilter();
   const manifestOk = configureAndroidManifest();
 
   // Zusammenfassung
-  console.log('\n==================================================');
-  if (techFilterOk && manifestOk) {
+  console.log('\n============================================================');
+  if (kotlinOk && techFilterOk && manifestOk) {
     console.log('✅ Android Konfiguration abgeschlossen!\n');
+    console.log('Kotlin:');
+    console.log(`• Version ${KOTLIN_VERSION} konfiguriert\n`);
     console.log('NFC Features:');
     console.log('• Die App öffnet sich automatisch bei NFC-Tag Scans');
     console.log('• NDEF, Tech, und Tag Discovery aktiviert\n');
@@ -321,9 +372,8 @@ function main() {
     console.log('• ACCESS_FINE_LOCATION aktiviert');
     console.log('• App fragt nach Standort-Berechtigung\n');
     console.log('Nächste Schritte:');
-    console.log('1. npx cap sync android');
-    console.log('2. npx cap run android');
-    console.log('3. Teste NFC und Standort-Features\n');
+    console.log('1. npx cap run android');
+    console.log('2. Teste NFC und Standort-Features\n');
   } else {
     console.log('⚠️  Konfiguration mit Fehlern abgeschlossen');
     console.log('   Überprüfe die Dateien manuell.\n');

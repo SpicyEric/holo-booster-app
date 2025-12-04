@@ -15,8 +15,12 @@
  * npm run configure:ios:nfc
  */
 
-const fs = require('fs');
-const path = require('path');
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Pfade
 const IOS_APP_PATH = path.join(__dirname, '..', 'ios', 'App', 'App');
