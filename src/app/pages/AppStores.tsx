@@ -158,12 +158,17 @@ export default function AppStores() {
         </TabsList>
 
         <TabsContent value="list" className="mt-4 space-y-3">
+          {/* DEBUG: Force rebuild - v2 */}
           {stores.length === 0 ? (
             <Card className="p-6 text-center">
               <p className="text-muted-foreground">Keine Stores gefunden</p>
             </Card>
           ) : (
-            stores.map((store) => <StoreCard key={store.id} store={store} />)
+            <div className="space-y-3">
+              {stores.map((store) => (
+                <StoreCard key={store.id} store={store} />
+              ))}
+            </div>
           )}
         </TabsContent>
 
