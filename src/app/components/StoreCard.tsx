@@ -24,8 +24,8 @@ const StoreCard = ({ store }: StoreCardProps) => {
   return (
     <button
       onClick={() => navigate(`/app/merchant/${store.id}`)}
-      className="w-full rounded-xl overflow-hidden shadow-md hover:shadow-lg transition-shadow text-left relative border-4 border-red-500"
-      style={{ aspectRatio: '1.55 / 1' }}
+      className="w-full rounded-xl overflow-hidden shadow-md hover:shadow-lg transition-shadow text-left relative"
+      style={{ aspectRatio: '1.55 / 1', border: '8px solid red', backgroundColor: 'yellow' }}
     >
       {/* Background - Cover Image or Gradient */}
       <div className="absolute inset-0">
