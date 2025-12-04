@@ -22,9 +22,13 @@ const __dirname = path.dirname(__filename);
 const ANDROID_PATH = path.join(__dirname, '..', 'android');
 const MANIFEST_PATH = path.join(ANDROID_PATH, 'app', 'src', 'main', 'AndroidManifest.xml');
 const BUILD_GRADLE_PATH = path.join(ANDROID_PATH, 'build.gradle');
+const APP_BUILD_GRADLE_PATH = path.join(ANDROID_PATH, 'app', 'build.gradle');
+const GRADLE_WRAPPER_PATH = path.join(ANDROID_PATH, 'gradle', 'wrapper', 'gradle-wrapper.properties');
 
-// Kotlin Version - kompatibel mit Capacitor 7.x
-const KOTLIN_VERSION = '1.9.10';
+// Versionen - kompatibel mit Capacitor 7.x
+const KOTLIN_VERSION = '1.9.24';
+const AGP_VERSION = '8.7.2';
+const GRADLE_VERSION = '8.9';
 
 // NFC Intent-Filter Konfiguration
 const NFC_INTENT_FILTERS = `
@@ -300,10 +304,38 @@ function configureAndroidManifest() {
 }
 
 /**
- * Konfiguriert die Kotlin Version in build.gradle
+ * Konfiguriert Gradle Wrapper Version
  */
-function configureKotlinVersion() {
-  console.log('\n📦 Konfiguriere Kotlin Version...');
+function configureGradleWrapper() {
+  console.log('\n📦 Konfiguriere Gradle Wrapper...');
+  
+  if (!fs.existsSync(GRADLE_WRAPPER_PATH)) {
+    console.log('   ⚠️  gradle-wrapper.properties nicht gefunden');
+    return true; // Nicht kritisch
+  }
+
+  let wrapperProps = fs.readFileSync(GRADLE_WRAPPER_PATH, 'utf8');
+  
+  // Update Gradle Version
+  const gradleUrlPattern = /distributionUrl=.*gradle-[\d.]+-.*\.zip/;
+  const newUrl = `distributionUrl=https\\://services.gradle.org/distributions/gradle-${GRADLE_VERSION}-bin.zip`;
+  
+  if (gradleUrlPattern.test(wrapperProps)) {
+    wrapperProps = wrapperProps.replace(gradleUrlPattern, newUrl);
+    console.log(`   ✅ Gradle Version aktualisiert auf ${GRADLE_VERSION}`);
+  } else {
+    console.log('   ⚠️  Konnte Gradle URL nicht finden');
+  }
+  
+  fs.writeFileSync(GRADLE_WRAPPER_PATH, wrapperProps, 'utf8');
+  return true;
+}
+
+/**
+ * Konfiguriert die Kotlin und AGP Versionen in build.gradle
+ */
+function configureGradleVersions() {
+  console.log('\n📦 Konfiguriere Kotlin und AGP Versionen...');
   
   if (!fs.existsSync(BUILD_GRADLE_PATH)) {
     console.error('   ❌ build.gradle nicht gefunden!');
@@ -312,28 +344,30 @@ function configureKotlinVersion() {
 
   let buildGradle = fs.readFileSync(BUILD_GRADLE_PATH, 'utf8');
   
-  // Prüfe ob kotlinVersion bereits definiert ist
+  // Update Kotlin Version
   const kotlinVersionPattern = /kotlinVersion\s*=\s*['"][\d.]+['"]/;
-  const extBlockPattern = /ext\s*\{/;
-  
   if (kotlinVersionPattern.test(buildGradle)) {
-    // Update existing version
     buildGradle = buildGradle.replace(kotlinVersionPattern, `kotlinVersion = '${KOTLIN_VERSION}'`);
-    console.log(`   ✅ Kotlin Version aktualisiert auf ${KOTLIN_VERSION}`);
-  } else if (extBlockPattern.test(buildGradle)) {
-    // Add to existing ext block
-    buildGradle = buildGradle.replace(extBlockPattern, `ext {\n        kotlinVersion = '${KOTLIN_VERSION}'`);
-    console.log(`   ✅ Kotlin Version ${KOTLIN_VERSION} zum ext Block hinzugefügt`);
+    console.log(`   ✅ Kotlin Version → ${KOTLIN_VERSION}`);
   } else {
-    // Create ext block in buildscript
-    const buildscriptPattern = /buildscript\s*\{/;
-    if (buildscriptPattern.test(buildGradle)) {
-      buildGradle = buildGradle.replace(buildscriptPattern, `buildscript {\n    ext {\n        kotlinVersion = '${KOTLIN_VERSION}'\n    }`);
-      console.log(`   ✅ ext Block mit Kotlin Version ${KOTLIN_VERSION} erstellt`);
-    } else {
-      console.log('   ⚠️  Konnte Kotlin Version nicht konfigurieren - buildscript Block nicht gefunden');
-      return false;
+    // Add kotlinVersion to ext block
+    const extBlockPattern = /ext\s*\{/;
+    if (extBlockPattern.test(buildGradle)) {
+      buildGradle = buildGradle.replace(extBlockPattern, `ext {\n        kotlinVersion = '${KOTLIN_VERSION}'`);
+      console.log(`   ✅ Kotlin Version ${KOTLIN_VERSION} hinzugefügt`);
     }
+  }
+  
+  // Update AGP Version
+  const agpPattern = /classpath\s*['"]com\.android\.tools\.build:gradle:[\d.]+['"]/g;
+  if (agpPattern.test(buildGradle)) {
+    buildGradle = buildGradle.replace(agpPattern, `classpath 'com.android.tools.build:gradle:${AGP_VERSION}'`);
+    console.log(`   ✅ AGP Version → ${AGP_VERSION}`);
+  }
+  
+  // Ensure Java 17 compatibility
+  if (!buildGradle.includes('JavaVersion.VERSION_17')) {
+    console.log('   ℹ️  Java Version wird in app/build.gradle konfiguriert');
   }
   
   fs.writeFileSync(BUILD_GRADLE_PATH, buildGradle, 'utf8');
@@ -342,38 +376,73 @@ function configureKotlinVersion() {
 }
 
 /**
+ * Konfiguriert app/build.gradle für Java 17
+ */
+function configureAppBuildGradle() {
+  console.log('\n📦 Konfiguriere app/build.gradle...');
+  
+  if (!fs.existsSync(APP_BUILD_GRADLE_PATH)) {
+    console.log('   ⚠️  app/build.gradle nicht gefunden');
+    return true;
+  }
+
+  let appBuildGradle = fs.readFileSync(APP_BUILD_GRADLE_PATH, 'utf8');
+  
+  // Update Java Version to 17
+  const javaVersionPattern = /JavaVersion\.VERSION_\d+/g;
+  if (javaVersionPattern.test(appBuildGradle)) {
+    appBuildGradle = appBuildGradle.replace(javaVersionPattern, 'JavaVersion.VERSION_17');
+    console.log('   ✅ Java Version → 17');
+  }
+  
+  // Update sourceCompatibility/targetCompatibility
+  const sourceCompatPattern = /sourceCompatibility\s+JavaVersion\.VERSION_\d+/g;
+  const targetCompatPattern = /targetCompatibility\s+JavaVersion\.VERSION_\d+/g;
+  
+  appBuildGradle = appBuildGradle.replace(sourceCompatPattern, 'sourceCompatibility JavaVersion.VERSION_17');
+  appBuildGradle = appBuildGradle.replace(targetCompatPattern, 'targetCompatibility JavaVersion.VERSION_17');
+  
+  fs.writeFileSync(APP_BUILD_GRADLE_PATH, appBuildGradle, 'utf8');
+  console.log('   ✅ app/build.gradle aktualisiert');
+  return true;
+}
+
+/**
  * Hauptfunktion
  */
 function main() {
-  console.log('🔧 Eloyo Android Konfiguration (Kotlin + NFC + Geolocation)');
-  console.log('============================================================\n');
+  console.log('🔧 Eloyo Android Konfiguration');
+  console.log('================================');
+  console.log(`Gradle: ${GRADLE_VERSION} | AGP: ${AGP_VERSION} | Kotlin: ${KOTLIN_VERSION}`);
+  console.log('================================\n');
 
   // Prüfe Android Plattform
   checkAndroidPlatform();
 
-  // Konfiguriere Kotlin Version
-  const kotlinOk = configureKotlinVersion();
+  // Konfiguriere Gradle/Kotlin/AGP Versionen
+  const gradleWrapperOk = configureGradleWrapper();
+  const gradleVersionsOk = configureGradleVersions();
+  const appGradleOk = configureAppBuildGradle();
 
-  // Konfiguriere Dateien
+  // Konfiguriere NFC/Geolocation
   const techFilterOk = createNfcTechFilter();
   const manifestOk = configureAndroidManifest();
 
   // Zusammenfassung
-  console.log('\n============================================================');
-  if (kotlinOk && techFilterOk && manifestOk) {
+  console.log('\n================================');
+  const allOk = gradleWrapperOk && gradleVersionsOk && appGradleOk && techFilterOk && manifestOk;
+  
+  if (allOk) {
     console.log('✅ Android Konfiguration abgeschlossen!\n');
-    console.log('Kotlin:');
-    console.log(`• Version ${KOTLIN_VERSION} konfiguriert\n`);
-    console.log('NFC Features:');
-    console.log('• Die App öffnet sich automatisch bei NFC-Tag Scans');
-    console.log('• NDEF, Tech, und Tag Discovery aktiviert\n');
-    console.log('Geolocation Features:');
-    console.log('• ACCESS_COARSE_LOCATION aktiviert');
-    console.log('• ACCESS_FINE_LOCATION aktiviert');
-    console.log('• App fragt nach Standort-Berechtigung\n');
+    console.log('Versionen:');
+    console.log(`• Gradle ${GRADLE_VERSION}`);
+    console.log(`• AGP ${AGP_VERSION}`);
+    console.log(`• Kotlin ${KOTLIN_VERSION}`);
+    console.log('• Java 17\n');
+    console.log('NFC & Geolocation: Aktiviert\n');
     console.log('Nächste Schritte:');
-    console.log('1. npx cap run android');
-    console.log('2. Teste NFC und Standort-Features\n');
+    console.log('1. In Android Studio: File → Invalidate Caches → Restart');
+    console.log('2. npx cap run android\n');
   } else {
     console.log('⚠️  Konfiguration mit Fehlern abgeschlossen');
     console.log('   Überprüfe die Dateien manuell.\n');
