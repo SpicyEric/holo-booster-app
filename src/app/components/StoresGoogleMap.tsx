@@ -50,17 +50,8 @@ export function StoresGoogleMap({ userLocation, stores }: StoresGoogleMapProps) 
   // Filter stores with valid coordinates (not 0,0)
   const validStores = stores.filter(store => store.lat !== 0 && store.lng !== 0);
 
-  // Calculate center - prefer stores center if available, else user location
-  const calculateCenter = useCallback(() => {
-    if (validStores.length > 0) {
-      const avgLat = validStores.reduce((sum, s) => sum + s.lat, 0) / validStores.length;
-      const avgLng = validStores.reduce((sum, s) => sum + s.lng, 0) / validStores.length;
-      return { lat: avgLat, lng: avgLng };
-    }
-    return { lat: userLocation[0], lng: userLocation[1] };
-  }, [validStores, userLocation]);
-
-  const center = calculateCenter();
+  // Always center on user location
+  const center = { lat: userLocation[0], lng: userLocation[1] };
 
   const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || 'AIzaSyBZMmrGWon1J1LJDeZ2HgKMF6sd9D2jJ6Q';
 
@@ -161,6 +152,9 @@ export function StoresGoogleMap({ userLocation, stores }: StoresGoogleMapProps) 
             mapTypeControl: false,
             fullscreenControl: false,
             styles: mapStyles,
+            gestureHandling: 'greedy',
+            draggable: true,
+            scrollwheel: true,
           }}
         >
           {/* User location marker */}
