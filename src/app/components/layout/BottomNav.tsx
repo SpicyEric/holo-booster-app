@@ -63,9 +63,10 @@ export const BottomNav = () => {
           <Button
             size="icon"
             onClick={handleCenterButtonClick}
-            className="h-16 w-16 rounded-full shadow-lg bg-gradient-to-br from-primary to-secondary hover:shadow-xl transition-all"
+            className="h-18 w-18 rounded-full shadow-lg bg-gradient-to-br from-primary to-secondary hover:shadow-xl transition-all"
+            style={{ height: '72px', width: '72px' }}
           >
-            <Stamp className="h-9 w-9" strokeWidth={2.5} />
+            <Stamp className="h-11 w-11" strokeWidth={2.5} />
           </Button>
         </div>
 
