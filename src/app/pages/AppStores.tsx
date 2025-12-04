@@ -139,10 +139,11 @@ export default function AppStores() {
     return R * c;
   };
 
+  // Store card with 1.55:1 aspect ratio - logo top-left, distance top-right, name bottom-left
   const StoreCard = ({ store }: { store: Store }) => (
     <button
       onClick={() => navigate(`/app/merchant/${store.id}`)}
-      className="w-full rounded-xl overflow-hidden shadow-md hover:shadow-lg transition-shadow text-left relative aspect-[1.55/1]"
+      className="w-full rounded-xl overflow-hidden shadow-md hover:shadow-lg transition-shadow text-left relative aspect-[1.55]"
     >
       {/* Background - Cover Image or Gradient */}
       <div className="absolute inset-0">
