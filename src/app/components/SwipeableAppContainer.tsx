@@ -495,27 +495,27 @@ const AppStoresContent = () => {
             <Card className="p-6"><p className="text-muted-foreground text-center">Lädt...</p></Card>
           ) : filteredMerchants.length > 0 ? (
             <div className="space-y-3">
-              {/* TEST v1 - Yellow cards with red border */}
               {filteredMerchants.map((merchant) => (
                 <button
                   key={merchant.id}
                   onClick={() => navigate(`/app/merchant/${merchant.id}`)}
-                  className="w-full rounded-xl overflow-hidden shadow-md text-left relative"
-                  style={{ aspectRatio: '1.55 / 1', border: '8px solid red', backgroundColor: 'yellow' }}
+                  className="w-full rounded-xl overflow-hidden shadow-md hover:shadow-lg transition-shadow text-left relative"
+                  style={{ aspectRatio: '1.55 / 1' }}
                 >
+                  {/* Background - Cover Image or Gradient */}
                   <div className="absolute inset-0">
                     {merchant.cover_image_url ? (
                       <img src={merchant.cover_image_url} alt={merchant.company_name || merchant.name} className="w-full h-full object-cover" />
                     ) : (
-                      <div className="w-full h-full bg-gradient-to-br from-purple-500 to-blue-500" />
+                      <div className="w-full h-full bg-gradient-to-br from-primary to-secondary" />
                     )}
                   </div>
                   {/* Logo - Top Left */}
-                  <div className="absolute top-3 left-3 z-20 w-12 h-12 rounded-full bg-red-500 border-2 border-white shadow-lg flex items-center justify-center overflow-hidden">
+                  <div className="absolute top-3 left-3 z-20 w-12 h-12 rounded-full bg-background border-2 border-white shadow-lg flex items-center justify-center overflow-hidden">
                     {merchant.logo_url ? (
                       <img src={merchant.logo_url} alt="Logo" className="w-full h-full object-cover" />
                     ) : (
-                      <span className="text-lg font-bold text-white">{(merchant.company_name || merchant.name || '?').charAt(0).toUpperCase()}</span>
+                      <span className="text-lg font-bold text-primary">{(merchant.company_name || merchant.name || '?').charAt(0).toUpperCase()}</span>
                     )}
                   </div>
                   {/* Distance Badge - Top Right */}
@@ -526,7 +526,7 @@ const AppStoresContent = () => {
                       </span>
                     </div>
                   )}
-                  {/* Gradient Overlay */}
+                  {/* Gradient Overlay for Text */}
                   <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/70 via-black/40 to-transparent" />
                   {/* Name and Category - Bottom */}
                   <div className="absolute bottom-3 left-3 right-3 z-10">
