@@ -8,8 +8,7 @@ import { StoresGoogleMap } from '@/app/components/StoresGoogleMap';
 import { Card } from '@/components/ui/card';
 import { getCurrentLocation, GeolocationError } from '@/app/services/geolocationService';
 import { Button } from '@/components/ui/button';
-import MerchantCard from '@/app/components/MerchantCard';
-
+// INLINE CARD TEST - v1
 interface Store {
   id: string;
   name: string;
@@ -166,7 +165,39 @@ export default function AppStores() {
           ) : (
             <div className="space-y-3">
               {stores.map((store) => (
-                <MerchantCard key={store.id} store={store} />
+                <button
+                  key={store.id}
+                  onClick={() => window.location.href = `/app/merchant/${store.id}`}
+                  className="w-full rounded-xl overflow-hidden shadow-md text-left relative"
+                  style={{ aspectRatio: '1.55 / 1', border: '8px solid red', backgroundColor: 'yellow' }}
+                >
+                  <div className="absolute inset-0">
+                    {store.cover_image_url ? (
+                      <img src={store.cover_image_url} alt={store.name} className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full bg-gradient-to-br from-purple-500 to-blue-500" />
+                    )}
+                  </div>
+                  <div className="absolute top-3 left-3 z-20 w-12 h-12 rounded-full bg-red-500 border-2 border-white shadow-lg flex items-center justify-center overflow-hidden">
+                    {store.logo_url ? (
+                      <img src={store.logo_url} alt={`${store.name} Logo`} className="w-full h-full object-cover" />
+                    ) : (
+                      <span className="text-lg font-bold text-white">{store.name?.charAt(0)?.toUpperCase() || '?'}</span>
+                    )}
+                  </div>
+                  {store.distance !== undefined && (
+                    <div className="absolute top-3 right-3 z-20">
+                      <span className="bg-white/95 backdrop-blur-sm text-gray-800 text-xs font-medium px-2 py-1 rounded-full shadow-sm">
+                        {store.distance < 1 ? `${Math.round(store.distance * 1000)}m` : `${store.distance.toFixed(1)}km`}
+                      </span>
+                    </div>
+                  )}
+                  <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/70 via-black/40 to-transparent" />
+                  <div className="absolute bottom-3 left-3 right-3 z-10">
+                    <h3 className="text-white font-semibold text-base truncate drop-shadow-md">{store.name}</h3>
+                    {store.category && <p className="text-white/80 text-sm truncate drop-shadow-md">{store.category}</p>}
+                  </div>
+                </button>
               ))}
             </div>
           )}
