@@ -6,6 +6,7 @@
  * Dieses Skript aktualisiert automatisch:
  * - AndroidManifest.xml mit NFC Intent-Filtern
  * - AndroidManifest.xml mit Geolocation-Berechtigungen
+ * - Patcht NFC-Plugin für Kotlin-Kompatibilität
  * 
  * Verwendung:
  * node scripts/configure-android-nfc.js
@@ -19,18 +20,22 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Pfade
-const ANDROID_PATH = path.join(__dirname, '..', 'android');
+const PROJECT_ROOT = path.join(__dirname, '..');
+const ANDROID_PATH = path.join(PROJECT_ROOT, 'android');
+const NODE_MODULES_PATH = path.join(PROJECT_ROOT, 'node_modules');
 const MANIFEST_PATH = path.join(ANDROID_PATH, 'app', 'src', 'main', 'AndroidManifest.xml');
 const BUILD_GRADLE_PATH = path.join(ANDROID_PATH, 'build.gradle');
 const APP_BUILD_GRADLE_PATH = path.join(ANDROID_PATH, 'app', 'build.gradle');
 const GRADLE_WRAPPER_PATH = path.join(ANDROID_PATH, 'gradle', 'wrapper', 'gradle-wrapper.properties');
-
-// Versionen - kompatibel mit Java 21 (Gradle 8.5+ erforderlich!)
-const KOTLIN_VERSION = '1.9.22';
-const AGP_VERSION = '8.3.2';
-const GRADLE_VERSION = '8.5';
 const SETTINGS_GRADLE_PATH = path.join(ANDROID_PATH, 'settings.gradle');
 const GRADLE_PROPERTIES_PATH = path.join(ANDROID_PATH, 'gradle.properties');
+
+// ============================================
+// WICHTIG: Alle Versionen müssen zusammenpassen!
+// ============================================
+const KOTLIN_VERSION = '1.9.23';  // Neueste stabile Version
+const AGP_VERSION = '8.2.2';      // Kompatibel mit Gradle 8.6
+const GRADLE_VERSION = '8.6';     // Unterstützt Java 17-21
 
 // NFC Intent-Filter Konfiguration
 const NFC_INTENT_FILTERS = `
@@ -313,14 +318,14 @@ function configureGradleWrapper() {
   
   if (!fs.existsSync(GRADLE_WRAPPER_PATH)) {
     console.log('   ⚠️  gradle-wrapper.properties nicht gefunden');
-    return true; // Nicht kritisch
+    return true;
   }
 
   let wrapperProps = fs.readFileSync(GRADLE_WRAPPER_PATH, 'utf8');
   
-  // Update Gradle Version
+  // Update Gradle Version - use -all for better IDE support
   const gradleUrlPattern = /distributionUrl=.*gradle-[\d.]+-.*\.zip/;
-  const newUrl = `distributionUrl=https\\://services.gradle.org/distributions/gradle-${GRADLE_VERSION}-bin.zip`;
+  const newUrl = `distributionUrl=https\\://services.gradle.org/distributions/gradle-${GRADLE_VERSION}-all.zip`;
   
   if (gradleUrlPattern.test(wrapperProps)) {
     wrapperProps = wrapperProps.replace(gradleUrlPattern, newUrl);
@@ -334,10 +339,10 @@ function configureGradleWrapper() {
 }
 
 /**
- * Konfiguriert die Kotlin und AGP Versionen in build.gradle
+ * Konfiguriert die Kotlin und AGP Versionen in build.gradle (Root)
  */
 function configureGradleVersions() {
-  console.log('\n📦 Konfiguriere Kotlin und AGP Versionen...');
+  console.log('\n📦 Konfiguriere Root build.gradle...');
   
   if (!fs.existsSync(BUILD_GRADLE_PATH)) {
     console.error('   ❌ build.gradle nicht gefunden!');
@@ -346,34 +351,42 @@ function configureGradleVersions() {
 
   let buildGradle = fs.readFileSync(BUILD_GRADLE_PATH, 'utf8');
   
-  // Update Kotlin Version
-  const kotlinVersionPattern = /kotlinVersion\s*=\s*['"][\d.]+['"]/;
-  if (kotlinVersionPattern.test(buildGradle)) {
-    buildGradle = buildGradle.replace(kotlinVersionPattern, `kotlinVersion = '${KOTLIN_VERSION}'`);
-    console.log(`   ✅ Kotlin Version → ${KOTLIN_VERSION}`);
-  } else {
-    // Add kotlinVersion to ext block
+  // Update alle Kotlin Versionen (verschiedene Patterns)
+  const kotlinPatterns = [
+    /kotlinVersion\s*=\s*['"][\d.]+['"]/g,
+    /kotlin_version\s*=\s*['"][\d.]+['"]/g,
+    /ext\.kotlinVersion\s*=\s*['"][\d.]+['"]/g,
+    /ext\.kotlin_version\s*=\s*['"][\d.]+['"]/g,
+  ];
+  
+  for (const pattern of kotlinPatterns) {
+    if (pattern.test(buildGradle)) {
+      buildGradle = buildGradle.replace(pattern, `kotlinVersion = '${KOTLIN_VERSION}'`);
+    }
+  }
+  
+  // Update Kotlin Gradle Plugin in classpath
+  const kotlinPluginPattern = /classpath\s*['"](org\.jetbrains\.kotlin:kotlin-gradle-plugin):[\d.]+['"]/g;
+  buildGradle = buildGradle.replace(kotlinPluginPattern, `classpath '$1:${KOTLIN_VERSION}'`);
+  
+  // Stellen sicher, dass kotlinVersion im ext Block ist
+  if (!buildGradle.includes('kotlinVersion')) {
     const extBlockPattern = /ext\s*\{/;
     if (extBlockPattern.test(buildGradle)) {
       buildGradle = buildGradle.replace(extBlockPattern, `ext {\n        kotlinVersion = '${KOTLIN_VERSION}'`);
-      console.log(`   ✅ Kotlin Version ${KOTLIN_VERSION} hinzugefügt`);
+      console.log(`   ✅ Kotlin Version ${KOTLIN_VERSION} zu ext Block hinzugefügt`);
     }
+  } else {
+    console.log(`   ✅ Kotlin Version → ${KOTLIN_VERSION}`);
   }
   
   // Update AGP Version
   const agpPattern = /classpath\s*['"]com\.android\.tools\.build:gradle:[\d.]+['"]/g;
-  if (agpPattern.test(buildGradle)) {
-    buildGradle = buildGradle.replace(agpPattern, `classpath 'com.android.tools.build:gradle:${AGP_VERSION}'`);
-    console.log(`   ✅ AGP Version → ${AGP_VERSION}`);
-  }
-  
-  // Ensure Java 17 compatibility
-  if (!buildGradle.includes('JavaVersion.VERSION_17')) {
-    console.log('   ℹ️  Java Version wird in app/build.gradle konfiguriert');
-  }
+  buildGradle = buildGradle.replace(agpPattern, `classpath 'com.android.tools.build:gradle:${AGP_VERSION}'`);
+  console.log(`   ✅ AGP Version → ${AGP_VERSION}`);
   
   fs.writeFileSync(BUILD_GRADLE_PATH, buildGradle, 'utf8');
-  console.log('   ✅ build.gradle aktualisiert');
+  console.log('   ✅ Root build.gradle aktualisiert');
   return true;
 }
 
@@ -392,17 +405,8 @@ function configureAppBuildGradle() {
   
   // Update Java Version to 17
   const javaVersionPattern = /JavaVersion\.VERSION_\d+/g;
-  if (javaVersionPattern.test(appBuildGradle)) {
-    appBuildGradle = appBuildGradle.replace(javaVersionPattern, 'JavaVersion.VERSION_17');
-    console.log('   ✅ Java Version → 17');
-  }
-  
-  // Update sourceCompatibility/targetCompatibility
-  const sourceCompatPattern = /sourceCompatibility\s+JavaVersion\.VERSION_\d+/g;
-  const targetCompatPattern = /targetCompatibility\s+JavaVersion\.VERSION_\d+/g;
-  
-  appBuildGradle = appBuildGradle.replace(sourceCompatPattern, 'sourceCompatibility JavaVersion.VERSION_17');
-  appBuildGradle = appBuildGradle.replace(targetCompatPattern, 'targetCompatibility JavaVersion.VERSION_17');
+  appBuildGradle = appBuildGradle.replace(javaVersionPattern, 'JavaVersion.VERSION_17');
+  console.log('   ✅ Java Version → 17');
   
   fs.writeFileSync(APP_BUILD_GRADLE_PATH, appBuildGradle, 'utf8');
   console.log('   ✅ app/build.gradle aktualisiert');
@@ -422,7 +426,7 @@ function configureGradleProperties() {
 
   let propsContent = fs.readFileSync(GRADLE_PROPERTIES_PATH, 'utf8');
   
-  // Entferne explizite Java Home falls vorhanden (lässt Android Studio entscheiden)
+  // Entferne explizite Java Home (lässt Android Studio entscheiden)
   propsContent = propsContent.replace(/org\.gradle\.java\.home=.*/g, '');
   
   // Füge wichtige Properties hinzu falls nicht vorhanden
@@ -449,10 +453,95 @@ function configureGradleProperties() {
 }
 
 /**
- * Deaktiviert androidTest Tasks für NFC Plugin um Kotlin-Kompilierungsfehler zu vermeiden
+ * KRITISCH: Patcht alle NFC Plugin build.gradle Dateien im node_modules
+ * Das ist der Hauptfix für den Kotlin-Versionskonflikt!
  */
-function disableNfcAndroidTests() {
-  console.log('\n🔧 Deaktiviere androidTest für NFC Plugin...');
+function patchNfcPluginBuildGradle() {
+  console.log('\n🔧 Patche NFC Plugin build.gradle Dateien...');
+  
+  // Alle möglichen NFC Plugin Pfade
+  const nfcPluginPaths = [
+    path.join(NODE_MODULES_PATH, '@exxili', 'capacitor-nfc', 'android', 'build.gradle'),
+    path.join(NODE_MODULES_PATH, 'capacitor-nfc', 'android', 'build.gradle'),
+    path.join(NODE_MODULES_PATH, '@capacitor-community', 'nfc', 'android', 'build.gradle'),
+    path.join(NODE_MODULES_PATH, '@niceugenius', 'capacitor-nfc', 'android', 'build.gradle'),
+  ];
+
+  let patchedCount = 0;
+
+  for (const pluginPath of nfcPluginPaths) {
+    if (fs.existsSync(pluginPath)) {
+      console.log(`   📝 Gefunden: ${path.relative(PROJECT_ROOT, pluginPath)}`);
+      
+      let content = fs.readFileSync(pluginPath, 'utf8');
+      let modified = false;
+
+      // 1. Ersetze alle alten Kotlin Versionen
+      const kotlinVersionPatterns = [
+        /kotlin_version\s*=\s*['"][\d.]+['"]/g,
+        /kotlinVersion\s*=\s*['"][\d.]+['"]/g,
+        /ext\.kotlin_version\s*=\s*['"][\d.]+['"]/g,
+      ];
+      
+      for (const pattern of kotlinVersionPatterns) {
+        if (pattern.test(content)) {
+          content = content.replace(pattern, `kotlin_version = '${KOTLIN_VERSION}'`);
+          modified = true;
+        }
+      }
+
+      // 2. Ersetze Kotlin Plugin Versionen in classpath
+      const kotlinPluginPattern = /classpath\s*['"]org\.jetbrains\.kotlin:kotlin-gradle-plugin:[\d.]+['"]/g;
+      if (kotlinPluginPattern.test(content)) {
+        content = content.replace(kotlinPluginPattern, `classpath 'org.jetbrains.kotlin:kotlin-gradle-plugin:${KOTLIN_VERSION}'`);
+        modified = true;
+      }
+
+      // 3. Update kotlin-stdlib
+      const stdlibPattern = /implementation\s*['"]org\.jetbrains\.kotlin:kotlin-stdlib(-jdk\d*)?:[\d.]+['"]/g;
+      if (stdlibPattern.test(content)) {
+        content = content.replace(stdlibPattern, `implementation 'org.jetbrains.kotlin:kotlin-stdlib:${KOTLIN_VERSION}'`);
+        modified = true;
+      }
+
+      // 4. Füge afterEvaluate Block hinzu um Tests zu deaktivieren
+      if (!content.includes('// Disable androidTest')) {
+        const afterEvaluateBlock = `
+
+// Disable androidTest tasks to avoid Kotlin compilation issues
+afterEvaluate {
+    tasks.matching { it.name.toLowerCase().contains('androidtest') }.configureEach {
+        enabled = false
+    }
+}
+`;
+        content += afterEvaluateBlock;
+        modified = true;
+      }
+
+      if (modified) {
+        fs.writeFileSync(pluginPath, content, 'utf8');
+        console.log(`   ✅ Gepatcht: Kotlin → ${KOTLIN_VERSION}`);
+        patchedCount++;
+      } else {
+        console.log(`   ⏭️  Bereits aktuell`);
+      }
+    }
+  }
+
+  if (patchedCount === 0) {
+    console.log('   ⚠️  Keine NFC Plugin build.gradle gefunden');
+    console.log('   → NFC Plugin möglicherweise nicht installiert?');
+  }
+
+  return true;
+}
+
+/**
+ * Fügt Kotlin Version Override in settings.gradle hinzu
+ */
+function configureSettingsGradle() {
+  console.log('\n🔧 Konfiguriere settings.gradle...');
   
   if (!fs.existsSync(SETTINGS_GRADLE_PATH)) {
     console.log('   ⚠️  settings.gradle nicht gefunden');
@@ -462,48 +551,50 @@ function disableNfcAndroidTests() {
   let settingsContent = fs.readFileSync(SETTINGS_GRADLE_PATH, 'utf8');
   
   // Check if already configured
-  if (settingsContent.includes('Disable androidTest for capacitor-nfc')) {
-    console.log('   ⏭️  androidTest Deaktivierung bereits konfiguriert');
+  if (settingsContent.includes('Force Kotlin version')) {
+    console.log('   ⏭️  Kotlin Override bereits konfiguriert');
     return true;
   }
 
-  // Add gradle hook to disable androidTest tasks for NFC plugin - more aggressive approach
-  const disableTestsBlock = `
+  // Füge Plugin Block hinzu, der Kotlin Version für alle Subprojekte forciert
+  const kotlinOverrideBlock = `
 
-// Disable androidTest for capacitor-nfc to avoid Kotlin compilation issues
+// Force Kotlin version for all subprojects (including NFC plugin)
 gradle.beforeProject { project ->
-    if (project.name.contains('capacitor-nfc') || project.name.contains('nfc') || project.name.contains('exxili')) {
-        project.afterEvaluate {
-            // Disable all test-related tasks
+    project.buildscript {
+        repositories {
+            google()
+            mavenCentral()
+        }
+    }
+    
+    project.afterEvaluate {
+        // Force kotlin version in all plugins
+        project.plugins.withId('org.jetbrains.kotlin.android') {
+            project.tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {
+                kotlinOptions {
+                    jvmTarget = '17'
+                }
+            }
+        }
+        
+        // Disable all androidTest tasks for NFC-related projects
+        if (project.name.toLowerCase().contains('nfc') || 
+            project.name.toLowerCase().contains('exxili') ||
+            project.name.toLowerCase().contains('capacitor-nfc')) {
             project.tasks.matching { task ->
-                task.name.toLowerCase().contains('test') || 
-                task.name.toLowerCase().contains('androidtest') ||
-                task.name.toLowerCase().contains('unittest')
+                task.name.toLowerCase().contains('test')
             }.configureEach { task ->
                 task.enabled = false
-            }
-            
-            // Remove test source sets if possible
-            try {
-                if (project.hasProperty('android')) {
-                    project.android.sourceSets.each { sourceSet ->
-                        if (sourceSet.name.contains('test') || sourceSet.name.contains('Test')) {
-                            sourceSet.java.srcDirs = []
-                            sourceSet.kotlin.srcDirs = []
-                        }
-                    }
-                }
-            } catch (Exception e) {
-                // Ignore if not applicable
             }
         }
     }
 }
 `;
 
-  settingsContent += disableTestsBlock;
+  settingsContent += kotlinOverrideBlock;
   fs.writeFileSync(SETTINGS_GRADLE_PATH, settingsContent, 'utf8');
-  console.log('   ✅ androidTest Tasks für NFC Plugin deaktiviert');
+  console.log('   ✅ Kotlin Version Override hinzugefügt');
   return true;
 }
 
@@ -511,47 +602,56 @@ gradle.beforeProject { project ->
  * Hauptfunktion
  */
 function main() {
-  console.log('🔧 Eloyo Android Konfiguration');
-  console.log('================================');
-  console.log(`Gradle: ${GRADLE_VERSION} | AGP: ${AGP_VERSION} | Kotlin: ${KOTLIN_VERSION}`);
-  console.log('Kompatibel mit Java 17-21');
-  console.log('================================\n');
+  console.log('╔═══════════════════════════════════════════════════╗');
+  console.log('║        🔧 Eloyo Android Konfiguration              ║');
+  console.log('╠═══════════════════════════════════════════════════╣');
+  console.log(`║  Gradle:  ${GRADLE_VERSION.padEnd(10)} (min für Java 17-21)      ║`);
+  console.log(`║  AGP:     ${AGP_VERSION.padEnd(10)} (Android Gradle Plugin)    ║`);
+  console.log(`║  Kotlin:  ${KOTLIN_VERSION.padEnd(10)} (neueste stabile)         ║`);
+  console.log(`║  Java:    17         (Ziel-Version)               ║`);
+  console.log('╚═══════════════════════════════════════════════════╝\n');
 
   // Prüfe Android Plattform
   checkAndroidPlatform();
 
-  // Konfiguriere Gradle/Kotlin/AGP Versionen
+  // === SCHRITT 1: Gradle/Kotlin/AGP Versionen ===
+  console.log('\n═══ SCHRITT 1: Gradle Konfiguration ═══');
   const gradleWrapperOk = configureGradleWrapper();
   const gradleVersionsOk = configureGradleVersions();
   const gradlePropsOk = configureGradleProperties();
   const appGradleOk = configureAppBuildGradle();
-  
-  // Deaktiviere problematische androidTest Tasks
-  const nfcTestsOk = disableNfcAndroidTests();
+  const settingsOk = configureSettingsGradle();
 
-  // Konfiguriere NFC/Geolocation
+  // === SCHRITT 2: NFC Plugin patchen ===
+  console.log('\n═══ SCHRITT 2: NFC Plugin Patch ═══');
+  const nfcPatchOk = patchNfcPluginBuildGradle();
+
+  // === SCHRITT 3: Manifest & Tech Filter ===
+  console.log('\n═══ SCHRITT 3: Android Manifest ═══');
   const techFilterOk = createNfcTechFilter();
   const manifestOk = configureAndroidManifest();
 
   // Zusammenfassung
-  console.log('\n================================');
-  const allOk = gradleWrapperOk && gradleVersionsOk && gradlePropsOk && appGradleOk && nfcTestsOk && techFilterOk && manifestOk;
+  console.log('\n╔═══════════════════════════════════════════════════╗');
+  const allOk = gradleWrapperOk && gradleVersionsOk && gradlePropsOk && 
+                appGradleOk && settingsOk && nfcPatchOk && techFilterOk && manifestOk;
   
   if (allOk) {
-    console.log('✅ Android Konfiguration abgeschlossen!\n');
-    console.log('Versionen:');
-    console.log(`• Gradle ${GRADLE_VERSION}`);
-    console.log(`• AGP ${AGP_VERSION}`);
-    console.log(`• Kotlin ${KOTLIN_VERSION}`);
-    console.log('• Java 17+ (kompatibel bis Java 21)\n');
-    console.log('NFC & Geolocation: Aktiviert\n');
-    console.log('Nächste Schritte:');
-    console.log('1. In Android Studio: File → Sync Project with Gradle Files');
-    console.log('2. Falls Fehler: File → Invalidate Caches → Restart');
-    console.log('3. npx cap run android\n');
+    console.log('║  ✅ Android Konfiguration ERFOLGREICH!             ║');
+    console.log('╠═══════════════════════════════════════════════════╣');
+    console.log('║  Nächste Schritte:                                 ║');
+    console.log('║                                                    ║');
+    console.log('║  1. cd android                                     ║');
+    console.log('║  2. ./gradlew clean                                ║');
+    console.log('║  3. In Android Studio:                             ║');
+    console.log('║     File → Invalidate Caches → Restart             ║');
+    console.log('║  4. File → Sync Project with Gradle Files          ║');
+    console.log('║  5. Build → Make Project                           ║');
+    console.log('╚═══════════════════════════════════════════════════╝\n');
   } else {
-    console.log('⚠️  Konfiguration mit Fehlern abgeschlossen');
-    console.log('   Überprüfe die Dateien manuell.\n');
+    console.log('║  ⚠️  Konfiguration mit Warnungen abgeschlossen      ║');
+    console.log('║  Überprüfe die Dateien manuell.                    ║');
+    console.log('╚═══════════════════════════════════════════════════╝\n');
   }
 }
 
