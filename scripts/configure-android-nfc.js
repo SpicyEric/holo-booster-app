@@ -1,14 +1,13 @@
 #!/usr/bin/env node
 
 /**
- * Automatisches Android Konfigurationsskript
+ * Automatisches Android Konfigurationsskript - KOMPLETT ÜBERARBEITET
  * 
- * Konfiguriert:
- * - Gradle Wrapper, AGP, Kotlin Versionen
- * - settings.gradle (SAUBER ohne Property-Zugriffe)
- * - gradle.properties (alle org.gradle.* Properties)
- * - NFC & Geolocation Plugin Patches
- * - AndroidManifest.xml
+ * BEHEBT:
+ * - "Could not get unknown property 'org'" in settings.gradle
+ * - "Build was configured to prefer settings repositories" Konflikte
+ * - flatDir Repository Fehler
+ * - Kotlin/AGP Versionskonflikte
  * 
  * Verwendung:
  * node scripts/configure-android-nfc.js
@@ -78,21 +77,17 @@ function configureGradleWrapper() {
 
 /**
  * KRITISCH: Erstellt eine SAUBERE settings.gradle
- * KEINE org.xxx Properties - nur Module-Definitionen!
+ * - KEINE org.xxx Properties
+ * - KEINE gradle.beforeProject Blöcke
+ * - NUR: pluginManagement, dependencyResolutionManagement, includes
  */
 function configureSettingsGradle() {
   console.log('\n🔧 Erstelle saubere settings.gradle...');
   
-  // Lese aktuelle settings.gradle um includes zu extrahieren
-  let existingContent = '';
-  if (fs.existsSync(SETTINGS_GRADLE_PATH)) {
-    existingContent = fs.readFileSync(SETTINGS_GRADLE_PATH, 'utf8');
-  }
-
   // Ermittle welche Capacitor Plugins vorhanden sind
   const capacitorPlugins = [];
   
-  // Standard Capacitor Plugins
+  // Standard Capacitor Android
   const capacitorAndroidPath = path.join(NODE_MODULES_PATH, '@capacitor', 'android');
   if (fs.existsSync(capacitorAndroidPath)) {
     capacitorPlugins.push({
@@ -110,7 +105,7 @@ function configureSettingsGradle() {
     });
   }
 
-  // NFC Plugins (verschiedene mögliche Pakete)
+  // NFC Plugins
   const nfcPaths = [
     { name: 'capacitor-nfc', base: '@exxili/capacitor-nfc' },
     { name: 'capacitor-nfc', base: 'capacitor-nfc' },
@@ -124,7 +119,7 @@ function configureSettingsGradle() {
         name: nfc.name,
         path: `../node_modules/${nfc.base}/android`
       });
-      break; // Nur eines hinzufügen
+      break;
     }
   }
 
@@ -137,9 +132,15 @@ function configureSettingsGradle() {
     });
   }
 
-  // Erstelle saubere settings.gradle - KEINE org.xxx Referenzen!
-  const cleanSettings = `// SAUBERE settings.gradle - generiert von configure-android-nfc.js
-// WICHTIG: Alle org.gradle.* Properties gehören in gradle.properties!
+  // =====================================================
+  // SAUBERE settings.gradle
+  // KEINE org.xxx, KEINE gradle.beforeProject, KEINE ext
+  // =====================================================
+  const cleanSettings = `// settings.gradle - SAUBER generiert von configure-android-nfc.js
+// WICHTIG: 
+// - Alle org.gradle.* Properties gehören in gradle.properties!
+// - Alle Repositories werden HIER zentral verwaltet (FAIL_ON_PROJECT_REPOS)
+// - Keine Repositories in build.gradle Dateien!
 
 pluginManagement {
     repositories {
@@ -169,7 +170,9 @@ project(':${plugin.name}').projectDir = new File('${plugin.path}')`).join('\n\n'
 `;
 
   fs.writeFileSync(SETTINGS_GRADLE_PATH, cleanSettings, 'utf8');
-  console.log('   ✅ Saubere settings.gradle erstellt (keine org.xxx Properties!)');
+  console.log('   ✅ Saubere settings.gradle erstellt');
+  console.log('   ✅ Repositories nur in dependencyResolutionManagement');
+  console.log('   ✅ Keine org.xxx Properties (gehören in gradle.properties)');
   return true;
 }
 
@@ -179,9 +182,8 @@ project(':${plugin.name}').projectDir = new File('${plugin.path}')`).join('\n\n'
 function configureGradleProperties() {
   console.log('\n🔧 Konfiguriere gradle.properties...');
   
-  // Komplette saubere gradle.properties
   const cleanProperties = `# gradle.properties - generiert von configure-android-nfc.js
-# ALLE org.gradle.* Properties gehören HIER hin!
+# ALLE org.gradle.* Properties gehören HIER hin, NICHT in settings.gradle!
 
 # JVM/Gradle Einstellungen
 org.gradle.jvmargs=-Xmx4096m -Dfile.encoding=UTF-8
@@ -205,9 +207,80 @@ kotlin.jvm.target.validation.mode=warning
 }
 
 /**
+ * Entfernt alle repositories {} Blöcke aus einer Gradle-Datei
+ * AUSSER die im buildscript {} Block
+ */
+function removeRepositoriesBlocks(content, filename) {
+  let modified = false;
+  
+  // 1. Entferne allprojects { repositories { ... } } komplett
+  // Dieser Block darf bei FAIL_ON_PROJECT_REPOS nicht existieren
+  const allProjectsRegex = /\n*allprojects\s*\{[\s\S]*?\n\}\n*/g;
+  if (allProjectsRegex.test(content)) {
+    content = content.replace(allProjectsRegex, '\n');
+    console.log(`   ✅ ${filename}: allprojects Block entfernt`);
+    modified = true;
+  }
+  
+  // 2. Entferne standalone repositories {} Blöcke (außerhalb von buildscript)
+  // Wir müssen vorsichtig sein, buildscript { repositories {} } zu behalten
+  
+  // Finde buildscript Block und merke Position
+  const buildscriptMatch = content.match(/buildscript\s*\{/);
+  if (buildscriptMatch) {
+    // Finde das Ende des buildscript Blocks
+    const buildscriptStart = buildscriptMatch.index;
+    let braceCount = 0;
+    let buildscriptEnd = buildscriptStart;
+    let inBuildscript = false;
+    
+    for (let i = buildscriptStart; i < content.length; i++) {
+      if (content[i] === '{') {
+        if (!inBuildscript) inBuildscript = true;
+        braceCount++;
+      } else if (content[i] === '}') {
+        braceCount--;
+        if (braceCount === 0 && inBuildscript) {
+          buildscriptEnd = i;
+          break;
+        }
+      }
+    }
+    
+    // Jetzt entferne repositories außerhalb von buildscript
+    const beforeBuildscript = content.slice(0, buildscriptStart);
+    const buildscriptBlock = content.slice(buildscriptStart, buildscriptEnd + 1);
+    const afterBuildscript = content.slice(buildscriptEnd + 1);
+    
+    // Entferne repositories {} aus afterBuildscript (außer in subprojects/allprojects die wir schon entfernt haben)
+    const standaloneReposRegex = /\n*repositories\s*\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}\n*/g;
+    const cleanedAfter = afterBuildscript.replace(standaloneReposRegex, (match) => {
+      // Prüfe ob es ein flatDir oder normales repo ist
+      if (match.includes('google()') || match.includes('mavenCentral()') || match.includes('flatDir')) {
+        console.log(`   ✅ ${filename}: Standalone repositories Block entfernt`);
+        modified = true;
+        return '\n';
+      }
+      return match;
+    });
+    
+    content = beforeBuildscript + buildscriptBlock + cleanedAfter;
+  } else {
+    // Kein buildscript Block - entferne alle repositories Blöcke
+    const reposRegex = /\n*repositories\s*\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}\n*/g;
+    if (reposRegex.test(content)) {
+      content = content.replace(reposRegex, '\n');
+      console.log(`   ✅ ${filename}: repositories Blöcke entfernt`);
+      modified = true;
+    }
+  }
+  
+  return { content, modified };
+}
+
+/**
  * Konfiguriert die Root build.gradle
- * WICHTIG: Entfernt alle allprojects { repositories } Blöcke!
- * Repositories werden NUR in settings.gradle definiert.
+ * KRITISCH: Entfernt ALLE repositories außerhalb von buildscript!
  */
 function configureRootBuildGradle() {
   console.log('\n📦 Konfiguriere Root build.gradle...');
@@ -219,19 +292,9 @@ function configureRootBuildGradle() {
 
   let buildGradle = fs.readFileSync(BUILD_GRADLE_PATH, 'utf8');
   
-  // ============================================
-  // KRITISCH: Entferne ALLE allprojects Blöcke!
-  // Mit FAIL_ON_PROJECT_REPOS in settings.gradle
-  // dürfen Repositories NUR dort definiert werden.
-  // ============================================
-  
-  // Entferne allprojects { ... } Block komplett
-  // Dieser Regex matched allprojects { repositories { ... } ... }
-  const allProjectsRegex = /\n*allprojects\s*\{[\s\S]*?\n\}/g;
-  if (allProjectsRegex.test(buildGradle)) {
-    buildGradle = buildGradle.replace(allProjectsRegex, '');
-    console.log('   ✅ allprojects Block entfernt (Repositories nur in settings.gradle!)');
-  }
+  // Entferne alle unerlaubten repositories Blöcke
+  const result = removeRepositoriesBlocks(buildGradle, 'build.gradle');
+  buildGradle = result.content;
 
   // Update Kotlin Version überall
   const kotlinPatterns = [
@@ -265,12 +328,12 @@ function configureRootBuildGradle() {
     );
   }
 
-  // Füge subprojects Block hinzu (OHNE Repositories!) um Tests zu deaktivieren
-  if (!buildGradle.includes('// Disable test tasks')) {
+  // Füge subprojects Block hinzu um Tests zu deaktivieren (OHNE repositories!)
+  if (!buildGradle.includes('// Disable test tasks for plugins')) {
     const subprojectsBlock = `
 
-// Disable test tasks for capacitor plugins to avoid Kotlin compilation issues
-// KEINE repositories hier - die sind in settings.gradle!
+// Disable test tasks for plugins to avoid Kotlin compilation issues
+// KEINE repositories hier - alle Repos sind in settings.gradle!
 subprojects {
     afterEvaluate { project ->
         if (project.name.contains('capacitor') || project.name.contains('nfc') || project.name.contains('geolocation')) {
@@ -297,6 +360,7 @@ subprojects {
 
 /**
  * Konfiguriert app/build.gradle
+ * KRITISCH: Entfernt ALLE repositories Blöcke inkl. flatDir!
  */
 function configureAppBuildGradle() {
   console.log('\n📦 Konfiguriere app/build.gradle...');
@@ -308,18 +372,44 @@ function configureAppBuildGradle() {
 
   let appBuildGradle = fs.readFileSync(APP_BUILD_GRADLE_PATH, 'utf8');
   
+  // =====================================================
+  // KRITISCH: Entferne ALLE repositories Blöcke!
+  // Mit FAIL_ON_PROJECT_REPOS dürfen sie hier nicht sein!
+  // =====================================================
+  
+  // Entferne repositories { ... } Block komplett (inkl. flatDir)
+  const reposRegex = /\n*repositories\s*\{[\s\S]*?\n\}\n*/g;
+  if (reposRegex.test(appBuildGradle)) {
+    appBuildGradle = appBuildGradle.replace(reposRegex, '\n');
+    console.log('   ✅ repositories Block entfernt (inkl. flatDir)');
+  }
+  
+  // Entferne auch einzelne flatDir Definitionen falls außerhalb von repositories
+  appBuildGradle = appBuildGradle.replace(/\n*flatDir\s*\{[^}]*\}\n*/g, '\n');
+  
   // Update Java Version to 17
   appBuildGradle = appBuildGradle.replace(/JavaVersion\.VERSION_\d+/g, 'JavaVersion.VERSION_17');
   console.log('   ✅ Java Version → 17');
+  
+  // Stelle sicher, dass namespace gesetzt ist (AGP 8 Requirement)
+  if (!appBuildGradle.includes('namespace')) {
+    // Finde android { Block und füge namespace hinzu
+    appBuildGradle = appBuildGradle.replace(
+      /android\s*\{/,
+      `android {\n    namespace "app.lovable.holo_booster_app"`
+    );
+    console.log('   ✅ namespace hinzugefügt (AGP 8 Requirement)');
+  }
   
   fs.writeFileSync(APP_BUILD_GRADLE_PATH, appBuildGradle, 'utf8');
   return true;
 }
 
 /**
- * Patcht NFC Plugin build.gradle Dateien
+ * Patcht Plugin build.gradle Dateien
+ * Entfernt repositories und updated Kotlin Versionen
  */
-function patchNfcPluginBuildGradle() {
+function patchPluginBuildGradle() {
   console.log('\n🔧 Patche Plugin build.gradle Dateien...');
   
   const pluginPaths = [
@@ -328,6 +418,7 @@ function patchNfcPluginBuildGradle() {
     path.join(NODE_MODULES_PATH, '@capacitor-community', 'nfc', 'android', 'build.gradle'),
     path.join(NODE_MODULES_PATH, '@capacitor', 'geolocation', 'android', 'build.gradle'),
     path.join(NODE_MODULES_PATH, '@capacitor', 'app', 'android', 'build.gradle'),
+    path.join(NODE_MODULES_PATH, '@capacitor', 'android', 'capacitor', 'build.gradle'),
   ];
 
   for (const pluginPath of pluginPaths) {
@@ -336,6 +427,11 @@ function patchNfcPluginBuildGradle() {
       
       let content = fs.readFileSync(pluginPath, 'utf8');
       let modified = false;
+
+      // KRITISCH: Entferne alle repositories Blöcke aus Plugins!
+      const reposResult = removeRepositoriesBlocks(content, path.basename(pluginPath));
+      content = reposResult.content;
+      if (reposResult.modified) modified = true;
 
       // Update alle Kotlin Versionen
       const kotlinPatterns = [
@@ -510,12 +606,18 @@ function configureAndroidManifest() {
  * Hauptfunktion
  */
 function main() {
-  console.log('╔═══════════════════════════════════════════════════╗');
-  console.log('║        🔧 Eloyo Android Konfiguration              ║');
-  console.log('╠═══════════════════════════════════════════════════╣');
-  console.log(`║  Gradle:  ${GRADLE_VERSION}           Kotlin: ${KOTLIN_VERSION}           ║`);
-  console.log(`║  AGP:     ${AGP_VERSION}        Java: 17               ║`);
-  console.log('╚═══════════════════════════════════════════════════╝\n');
+  console.log('╔═══════════════════════════════════════════════════════════╗');
+  console.log('║        🔧 Eloyo Android Konfiguration - KOMPLETT          ║');
+  console.log('╠═══════════════════════════════════════════════════════════╣');
+  console.log(`║  Gradle:  ${GRADLE_VERSION}           Kotlin: ${KOTLIN_VERSION}                   ║`);
+  console.log(`║  AGP:     ${AGP_VERSION}        Java: 17                       ║`);
+  console.log('╠═══════════════════════════════════════════════════════════╣');
+  console.log('║  BEHEBT:                                                   ║');
+  console.log('║  • "Could not get unknown property org"                   ║');
+  console.log('║  • "prefer settings repositories" Fehler                  ║');
+  console.log('║  • flatDir Repository Konflikte                           ║');
+  console.log('║  • Kotlin/AGP Versionskonflikte                           ║');
+  console.log('╚═══════════════════════════════════════════════════════════╝\n');
 
   checkAndroidPlatform();
 
@@ -523,24 +625,25 @@ function main() {
   configureGradleWrapper();
   configureSettingsGradle();    // SAUBER - keine org.xxx!
   configureGradleProperties();  // Alle org.xxx Properties hier!
-  configureRootBuildGradle();
-  configureAppBuildGradle();
+  configureRootBuildGradle();   // Entfernt allprojects/repositories
+  configureAppBuildGradle();    // Entfernt flatDir/repositories
 
   console.log('\n═══ SCHRITT 2: Plugin Patches ═══');
-  patchNfcPluginBuildGradle();
+  patchPluginBuildGradle();     // Entfernt repositories aus Plugins
 
   console.log('\n═══ SCHRITT 3: Android Manifest ═══');
   createNfcTechFilter();
   configureAndroidManifest();
 
-  console.log('\n╔═══════════════════════════════════════════════════╗');
-  console.log('║  ✅ KONFIGURATION ABGESCHLOSSEN!                   ║');
-  console.log('╠═══════════════════════════════════════════════════╣');
-  console.log('║  Nächste Schritte:                                 ║');
-  console.log('║  1. npx cap sync android                           ║');
-  console.log('║  2. Android Studio: File → Sync Project            ║');
-  console.log('║  3. Build → Make Project                           ║');
-  console.log('╚═══════════════════════════════════════════════════╝\n');
+  console.log('\n╔═══════════════════════════════════════════════════════════╗');
+  console.log('║  ✅ KONFIGURATION ABGESCHLOSSEN!                          ║');
+  console.log('╠═══════════════════════════════════════════════════════════╣');
+  console.log('║  Nächste Schritte:                                        ║');
+  console.log('║  1. npx cap sync android                                  ║');
+  console.log('║  2. Android Studio öffnen                                 ║');
+  console.log('║  3. File → Sync Project with Gradle Files                 ║');
+  console.log('║  4. Build → Make Project oder ./gradlew assembleDebug     ║');
+  console.log('╚═══════════════════════════════════════════════════════════╝\n');
 }
 
 main();
