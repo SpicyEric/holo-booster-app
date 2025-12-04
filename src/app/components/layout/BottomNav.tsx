@@ -58,14 +58,14 @@ export const BottomNav = () => {
         {/* Messages */}
         <NavLink item={navItems[1]} />
 
-        {/* Central Stamp Button */}
+        {/* Central Stamp Button - bigger icon */}
         <div className="flex flex-col items-center justify-center -mt-8">
           <Button
             size="icon"
             onClick={handleCenterButtonClick}
             className="h-16 w-16 rounded-full shadow-lg bg-gradient-to-br from-primary to-secondary hover:shadow-xl transition-all"
           >
-            <Stamp className="h-10 w-10" />
+            <Stamp className="h-9 w-9" strokeWidth={2.5} />
           </Button>
         </div>
 

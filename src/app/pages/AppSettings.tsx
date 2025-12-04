@@ -15,11 +15,21 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { useAuth } from '@/hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Eye, EyeOff, AlertTriangle } from 'lucide-react';
+import { format } from 'date-fns';
+import { de } from 'date-fns/locale';
 
 export default function AppSettings() {
   const { user } = useAuth();
@@ -28,9 +38,17 @@ export default function AppSettings() {
   const [saving, setSaving] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [deleteTimer, setDeleteTimer] = useState(5);
+  const [canDelete, setCanDelete] = useState(false);
 
-  const [firstName, setFirstName] = useState('');
-  const [lastName, setLastName] = useState('');
+  // Password change state
+  const [passwordDialogOpen, setPasswordDialogOpen] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmNewPassword, setConfirmNewPassword] = useState('');
+  const [changingPassword, setChangingPassword] = useState(false);
+  const [showPasswords, setShowPasswords] = useState(false);
+
   const [birthDate, setBirthDate] = useState('');
   const [gender, setGender] = useState('');
 
@@ -41,13 +59,11 @@ export default function AppSettings() {
       try {
         const { data: profileData } = await supabase
           .from('profiles')
-          .select('first_name, last_name, birth_date, gender')
+          .select('birth_date, gender')
           .eq('user_id', user.id)
           .maybeSingle();
 
         if (profileData) {
-          setFirstName(profileData.first_name || '');
-          setLastName(profileData.last_name || '');
           setBirthDate(profileData.birth_date || '');
           setGender(profileData.gender || '');
         }
@@ -61,6 +77,26 @@ export default function AppSettings() {
     fetchData();
   }, [user]);
 
+  // Delete timer countdown
+  useEffect(() => {
+    if (deleteDialogOpen && deleteTimer > 0) {
+      const timer = setTimeout(() => {
+        setDeleteTimer(prev => prev - 1);
+      }, 1000);
+      return () => clearTimeout(timer);
+    } else if (deleteTimer === 0) {
+      setCanDelete(true);
+    }
+  }, [deleteDialogOpen, deleteTimer]);
+
+  // Reset timer when dialog closes
+  useEffect(() => {
+    if (!deleteDialogOpen) {
+      setDeleteTimer(5);
+      setCanDelete(false);
+    }
+  }, [deleteDialogOpen]);
+
   const handleSave = async () => {
     if (!user) return;
 
@@ -69,9 +105,6 @@ export default function AppSettings() {
       const { error } = await supabase
         .from('profiles')
         .update({
-          first_name: firstName,
-          last_name: lastName,
-          birth_date: birthDate || null,
           gender: gender || null,
         })
         .eq('user_id', user.id);
@@ -84,6 +117,37 @@ export default function AppSettings() {
       toast.error(`Fehler: ${error.message}`);
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleChangePassword = async () => {
+    if (newPassword.length < 6) {
+      toast.error('Neues Passwort muss mindestens 6 Zeichen haben');
+      return;
+    }
+    if (newPassword !== confirmNewPassword) {
+      toast.error('Passwörter stimmen nicht überein');
+      return;
+    }
+
+    setChangingPassword(true);
+    try {
+      const { error } = await supabase.auth.updateUser({
+        password: newPassword
+      });
+
+      if (error) throw error;
+
+      toast.success('Passwort erfolgreich geändert');
+      setPasswordDialogOpen(false);
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmNewPassword('');
+    } catch (error: any) {
+      console.error('Error changing password:', error);
+      toast.error(error.message || 'Fehler beim Ändern des Passworts');
+    } finally {
+      setChangingPassword(false);
     }
   };
 
@@ -110,9 +174,27 @@ export default function AppSettings() {
     }
   };
 
+  const formatBirthDate = (dateStr: string) => {
+    if (!dateStr) return 'Nicht angegeben';
+    try {
+      return format(new Date(dateStr), 'dd. MMMM yyyy', { locale: de });
+    } catch {
+      return dateStr;
+    }
+  };
+
+  const getGenderLabel = (g: string) => {
+    switch (g) {
+      case 'male': return 'Männlich';
+      case 'female': return 'Weiblich';
+      case 'unspecified': return 'Nicht angegeben';
+      default: return 'Nicht angegeben';
+    }
+  };
+
   if (loading) {
     return (
-      <MainLayout title="Einstellungen">
+      <MainLayout title="Mein Konto" showBack>
         <div className="flex items-center justify-center py-12">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
         </div>
@@ -121,40 +203,21 @@ export default function AppSettings() {
   }
 
   return (
-    <MainLayout title="Einstellungen">
+    <MainLayout title="Mein Konto" showBack>
       <div className="space-y-6">
         <Card>
           <CardHeader>
             <CardTitle>Persönliche Daten</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="firstName">Vorname</Label>
-                <Input
-                  id="firstName"
-                  value={firstName}
-                  onChange={(e) => setFirstName(e.target.value)}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="lastName">Nachname</Label>
-                <Input
-                  id="lastName"
-                  value={lastName}
-                  onChange={(e) => setLastName(e.target.value)}
-                />
-              </div>
-            </div>
-
             <div className="space-y-2">
-              <Label htmlFor="birthDate">Geburtsdatum</Label>
-              <Input
-                id="birthDate"
-                type="date"
-                value={birthDate}
-                onChange={(e) => setBirthDate(e.target.value)}
-              />
+              <Label>Geburtsdatum</Label>
+              <div className="p-3 rounded-md bg-muted text-muted-foreground">
+                {formatBirthDate(birthDate)}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Das Geburtsdatum kann nicht geändert werden
+              </p>
             </div>
 
             <div className="space-y-2">
@@ -166,7 +229,7 @@ export default function AppSettings() {
                 <SelectContent>
                   <SelectItem value="male">Männlich</SelectItem>
                   <SelectItem value="female">Weiblich</SelectItem>
-                  <SelectItem value="other">Divers</SelectItem>
+                  <SelectItem value="unspecified">Möchte ich nicht angeben</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -179,19 +242,20 @@ export default function AppSettings() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="email">E-Mail</Label>
-              <Input
-                id="email"
-                type="email"
-                value={user?.email || ''}
-                disabled
-              />
+              <Label>E-Mail</Label>
+              <div className="p-3 rounded-md bg-muted text-muted-foreground">
+                {user?.email || ''}
+              </div>
               <p className="text-xs text-muted-foreground">
-                E-Mail-Adresse kann aktuell nicht geändert werden
+                E-Mail-Adresse kann nicht geändert werden
               </p>
             </div>
 
-            <Button variant="outline" className="w-full">
+            <Button
+              variant="outline"
+              className="w-full"
+              onClick={() => setPasswordDialogOpen(true)}
+            >
               Passwort ändern
             </Button>
 
@@ -203,9 +267,6 @@ export default function AppSettings() {
               >
                 Konto löschen
               </Button>
-              <p className="text-xs text-muted-foreground mt-2 text-center">
-                Diese Aktion kann nicht rückgängig gemacht werden
-              </p>
             </div>
           </CardContent>
         </Card>
@@ -220,22 +281,97 @@ export default function AppSettings() {
         </Button>
       </div>
 
+      {/* Password Change Dialog */}
+      <Dialog open={passwordDialogOpen} onOpenChange={setPasswordDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Passwort ändern</DialogTitle>
+            <DialogDescription>
+              Gib dein neues Passwort ein
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Neues Passwort</Label>
+              <div className="relative">
+                <Input
+                  type={showPasswords ? 'text' : 'password'}
+                  placeholder="Mindestens 6 Zeichen"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  className="pr-10"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPasswords(!showPasswords)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+                >
+                  {showPasswords ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label>Passwort bestätigen</Label>
+              <Input
+                type={showPasswords ? 'text' : 'password'}
+                placeholder="Passwort wiederholen"
+                value={confirmNewPassword}
+                onChange={(e) => setConfirmNewPassword(e.target.value)}
+              />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setPasswordDialogOpen(false)}>
+              Abbrechen
+            </Button>
+            <Button onClick={handleChangePassword} disabled={changingPassword}>
+              {changingPassword && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Speichern
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Account Dialog with Timer */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Konto wirklich löschen?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Diese Aktion kann nicht rückgängig gemacht werden. Alle deine gesammelten Punkte und Daten werden unwiderruflich gelöscht.
+            <div className="flex items-center gap-3 mb-2">
+              <div className="h-12 w-12 rounded-full bg-destructive/10 flex items-center justify-center">
+                <AlertTriangle className="h-6 w-6 text-destructive" />
+              </div>
+              <AlertDialogTitle className="text-xl">Konto wirklich löschen?</AlertDialogTitle>
+            </div>
+            <AlertDialogDescription className="space-y-3 text-left">
+              <p className="font-medium text-foreground">
+                Achtung: Diese Aktion kann nicht rückgängig gemacht werden!
+              </p>
+              <ul className="list-disc list-inside space-y-1 text-sm">
+                <li>Alle deine gesammelten Punkte gehen unwiderruflich verloren</li>
+                <li>Deine persönlichen Daten werden gelöscht</li>
+                <li>Dein Konto kann nicht wiederhergestellt werden</li>
+              </ul>
+              <p className="text-sm text-muted-foreground">
+                Anonymisierte Nutzungsdaten bleiben für statistische Zwecke erhalten.
+              </p>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={deleting}>Abbrechen</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDeleteAccount}
-              disabled={deleting}
+              disabled={deleting || !canDelete}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              {deleting ? 'Wird gelöscht...' : 'Ja, Konto löschen'}
+              {deleting ? (
+                'Wird gelöscht...'
+              ) : !canDelete ? (
+                `Warten (${deleteTimer}s)`
+              ) : (
+                'Ja, Konto löschen'
+              )}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
