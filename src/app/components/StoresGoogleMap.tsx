@@ -136,6 +136,7 @@ export function StoresGoogleMap({ userLocation, stores }: StoresGoogleMapProps) 
   }
 
   return (
+    <div style={{ width: '100%', height: '100%', touchAction: 'none' }}>
     <LoadScript
       googleMapsApiKey={apiKey}
       onLoad={() => setIsLoaded(true)}
@@ -219,5 +220,6 @@ export function StoresGoogleMap({ userLocation, stores }: StoresGoogleMapProps) 
         </div>
       )}
     </LoadScript>
+    </div>
   );
 }

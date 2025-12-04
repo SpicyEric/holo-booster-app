@@ -130,7 +130,7 @@ export const SwipeableAppContainer = () => {
               </div>
             </div>
             
-            <div className="flex-[0_0_100%] min-w-0 h-full overflow-y-auto">
+            <div className="flex-[0_0_100%] min-w-0 h-full overflow-y-auto" style={{ touchAction: 'pan-y' }}>
               <div className="container mx-auto px-4 py-6 max-w-2xl relative z-10">
                 <AppStoresContent />
               </div>
@@ -526,7 +526,16 @@ const AppStoresContent = () => {
       )}
 
       {activeTab === 'map' && (
-        <div className="h-[calc(100vh-280px)] rounded-xl overflow-hidden">
+        <div 
+          className="h-[calc(100vh-280px)] rounded-xl overflow-hidden"
+          style={{ touchAction: 'none' }}
+          onTouchStart={(e) => e.stopPropagation()}
+          onTouchMove={(e) => e.stopPropagation()}
+          onTouchEnd={(e) => e.stopPropagation()}
+          onPointerDown={(e) => e.stopPropagation()}
+          onPointerMove={(e) => e.stopPropagation()}
+          onPointerUp={(e) => e.stopPropagation()}
+        >
           {locationError ? (
             <Card className="p-6 text-center h-full flex flex-col items-center justify-center">
               <div className="mx-auto w-16 h-16 rounded-full bg-destructive/10 flex items-center justify-center mb-4">
@@ -536,7 +545,9 @@ const AppStoresContent = () => {
               <Button onClick={loadUserLocation} variant="outline">Erneut versuchen</Button>
             </Card>
           ) : userLocation ? (
-            <StoresGoogleMap stores={storesForMap} userLocation={[userLocation.lat, userLocation.lng]} />
+            <div style={{ touchAction: 'auto', width: '100%', height: '100%' }}>
+              <StoresGoogleMap stores={storesForMap} userLocation={[userLocation.lat, userLocation.lng]} />
+            </div>
           ) : (
             <Card className="p-6 text-center h-full flex flex-col items-center justify-center">
               <div className="mx-auto w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4">
