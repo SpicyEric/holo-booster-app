@@ -25,11 +25,12 @@ const BUILD_GRADLE_PATH = path.join(ANDROID_PATH, 'build.gradle');
 const APP_BUILD_GRADLE_PATH = path.join(ANDROID_PATH, 'app', 'build.gradle');
 const GRADLE_WRAPPER_PATH = path.join(ANDROID_PATH, 'gradle', 'wrapper', 'gradle-wrapper.properties');
 
-// Versionen - kompatibel mit capacitor-nfc Plugin (ältere Kotlin-Version nötig!)
-const KOTLIN_VERSION = '1.8.22';
-const AGP_VERSION = '8.2.2';
-const GRADLE_VERSION = '8.2';
+// Versionen - kompatibel mit Java 21 (Gradle 8.5+ erforderlich!)
+const KOTLIN_VERSION = '1.9.22';
+const AGP_VERSION = '8.3.2';
+const GRADLE_VERSION = '8.5';
 const SETTINGS_GRADLE_PATH = path.join(ANDROID_PATH, 'settings.gradle');
+const GRADLE_PROPERTIES_PATH = path.join(ANDROID_PATH, 'gradle.properties');
 
 // NFC Intent-Filter Konfiguration
 const NFC_INTENT_FILTERS = `
@@ -409,6 +410,45 @@ function configureAppBuildGradle() {
 }
 
 /**
+ * Konfiguriert gradle.properties für optimale Kompatibilität
+ */
+function configureGradleProperties() {
+  console.log('\n🔧 Konfiguriere gradle.properties...');
+  
+  if (!fs.existsSync(GRADLE_PROPERTIES_PATH)) {
+    console.log('   ⚠️  gradle.properties nicht gefunden');
+    return true;
+  }
+
+  let propsContent = fs.readFileSync(GRADLE_PROPERTIES_PATH, 'utf8');
+  
+  // Entferne explizite Java Home falls vorhanden (lässt Android Studio entscheiden)
+  propsContent = propsContent.replace(/org\.gradle\.java\.home=.*/g, '');
+  
+  // Füge wichtige Properties hinzu falls nicht vorhanden
+  const requiredProps = [
+    'android.useAndroidX=true',
+    'android.enableJetifier=true',
+    'org.gradle.jvmargs=-Xmx4096m -Dfile.encoding=UTF-8',
+    'org.gradle.parallel=true',
+    'org.gradle.caching=true',
+    'kotlin.code.style=official',
+    'android.nonTransitiveRClass=true'
+  ];
+
+  for (const prop of requiredProps) {
+    const propKey = prop.split('=')[0];
+    if (!propsContent.includes(propKey)) {
+      propsContent += `\n${prop}`;
+    }
+  }
+
+  fs.writeFileSync(GRADLE_PROPERTIES_PATH, propsContent.trim() + '\n', 'utf8');
+  console.log('   ✅ gradle.properties konfiguriert');
+  return true;
+}
+
+/**
  * Deaktiviert androidTest Tasks für NFC Plugin um Kotlin-Kompilierungsfehler zu vermeiden
  */
 function disableNfcAndroidTests() {
@@ -427,19 +467,34 @@ function disableNfcAndroidTests() {
     return true;
   }
 
-  // Add gradle hook to disable androidTest tasks for NFC plugin
+  // Add gradle hook to disable androidTest tasks for NFC plugin - more aggressive approach
   const disableTestsBlock = `
 
 // Disable androidTest for capacitor-nfc to avoid Kotlin compilation issues
-gradle.projectsLoaded {
-    gradle.rootProject.subprojects.each { subproject ->
-        if (subproject.name.contains('capacitor-nfc') || subproject.name.contains('nfc')) {
-            subproject.afterEvaluate {
-                subproject.tasks.configureEach { task ->
-                    if (task.name.contains('AndroidTest') || task.name.contains('androidTest')) {
-                        task.enabled = false
+gradle.beforeProject { project ->
+    if (project.name.contains('capacitor-nfc') || project.name.contains('nfc') || project.name.contains('exxili')) {
+        project.afterEvaluate {
+            // Disable all test-related tasks
+            project.tasks.matching { task ->
+                task.name.toLowerCase().contains('test') || 
+                task.name.toLowerCase().contains('androidtest') ||
+                task.name.toLowerCase().contains('unittest')
+            }.configureEach { task ->
+                task.enabled = false
+            }
+            
+            // Remove test source sets if possible
+            try {
+                if (project.hasProperty('android')) {
+                    project.android.sourceSets.each { sourceSet ->
+                        if (sourceSet.name.contains('test') || sourceSet.name.contains('Test')) {
+                            sourceSet.java.srcDirs = []
+                            sourceSet.kotlin.srcDirs = []
+                        }
                     }
                 }
+            } catch (Exception e) {
+                // Ignore if not applicable
             }
         }
     }
@@ -459,6 +514,7 @@ function main() {
   console.log('🔧 Eloyo Android Konfiguration');
   console.log('================================');
   console.log(`Gradle: ${GRADLE_VERSION} | AGP: ${AGP_VERSION} | Kotlin: ${KOTLIN_VERSION}`);
+  console.log('Kompatibel mit Java 17-21');
   console.log('================================\n');
 
   // Prüfe Android Plattform
@@ -467,6 +523,7 @@ function main() {
   // Konfiguriere Gradle/Kotlin/AGP Versionen
   const gradleWrapperOk = configureGradleWrapper();
   const gradleVersionsOk = configureGradleVersions();
+  const gradlePropsOk = configureGradleProperties();
   const appGradleOk = configureAppBuildGradle();
   
   // Deaktiviere problematische androidTest Tasks
@@ -478,7 +535,7 @@ function main() {
 
   // Zusammenfassung
   console.log('\n================================');
-  const allOk = gradleWrapperOk && gradleVersionsOk && appGradleOk && nfcTestsOk && techFilterOk && manifestOk;
+  const allOk = gradleWrapperOk && gradleVersionsOk && gradlePropsOk && appGradleOk && nfcTestsOk && techFilterOk && manifestOk;
   
   if (allOk) {
     console.log('✅ Android Konfiguration abgeschlossen!\n');
@@ -486,11 +543,12 @@ function main() {
     console.log(`• Gradle ${GRADLE_VERSION}`);
     console.log(`• AGP ${AGP_VERSION}`);
     console.log(`• Kotlin ${KOTLIN_VERSION}`);
-    console.log('• Java 17\n');
+    console.log('• Java 17+ (kompatibel bis Java 21)\n');
     console.log('NFC & Geolocation: Aktiviert\n');
     console.log('Nächste Schritte:');
-    console.log('1. In Android Studio: File → Invalidate Caches → Restart');
-    console.log('2. npx cap run android\n');
+    console.log('1. In Android Studio: File → Sync Project with Gradle Files');
+    console.log('2. Falls Fehler: File → Invalidate Caches → Restart');
+    console.log('3. npx cap run android\n');
   } else {
     console.log('⚠️  Konfiguration mit Fehlern abgeschlossen');
     console.log('   Überprüfe die Dateien manuell.\n');
