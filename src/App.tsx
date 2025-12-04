@@ -41,16 +41,12 @@ import DesignVariants from "./pages/DesignVariants";
 
 // App (End Customer) imports
 import { AppProtectedRoute } from "./components/AppProtectedRoute";
-import AppHome from "./app/pages/AppHome";
-import AppRewards from "./app/pages/AppRewards";
+import SwipeableAppContainer from "./app/components/SwipeableAppContainer";
 import AppHistory from "./app/pages/AppHistory";
-import AppProfile from "./app/pages/AppProfile";
 import AppSettings from "./app/pages/AppSettings";
 import AppAuth from "./app/pages/AppAuth";
 import AppMerchantDetail from "./app/pages/AppMerchantDetail";
 import AppScan from "./app/pages/AppScan";
-import AppMessages from "./app/pages/AppMessages";
-import AppStores from "./app/pages/AppStores";
 import AppSuggestShop from "./app/pages/AppSuggestShop";
 import Leads from "./pages/admin/Leads";
 
@@ -109,17 +105,16 @@ const App = () => (
           {/* Partner Dashboard */}
           <Route path="/partner" element={<PartnerDashboard />} />
           
-          {/* ===== APP ROUTES (End Customer) ===== */}
+          {/* ===== APP ROUTES (End Customer) - Swipeable main pages ===== */}
           <Route path="/app/auth" element={<AppAuth />} />
-          <Route path="/app" element={<AppProtectedRoute><AppHome /></AppProtectedRoute>} />
-          <Route path="/app/messages" element={<AppProtectedRoute><AppMessages /></AppProtectedRoute>} />
-          <Route path="/app/stores" element={<AppProtectedRoute><AppStores /></AppProtectedRoute>} />
-          <Route path="/app/rewards" element={<AppProtectedRoute><AppRewards /></AppProtectedRoute>} />
+          <Route path="/app" element={<AppProtectedRoute><SwipeableAppContainer /></AppProtectedRoute>} />
+          <Route path="/app/messages" element={<AppProtectedRoute><SwipeableAppContainer /></AppProtectedRoute>} />
+          <Route path="/app/stores" element={<AppProtectedRoute><SwipeableAppContainer /></AppProtectedRoute>} />
+          <Route path="/app/profile" element={<AppProtectedRoute><SwipeableAppContainer /></AppProtectedRoute>} />
+          {/* Non-swipeable detail pages */}
           <Route path="/app/history" element={<AppProtectedRoute><AppHistory /></AppProtectedRoute>} />
-          <Route path="/app/profile" element={<AppProtectedRoute><AppProfile /></AppProtectedRoute>} />
           <Route path="/app/settings" element={<AppProtectedRoute><AppSettings /></AppProtectedRoute>} />
           <Route path="/app/scan" element={<AppProtectedRoute><AppScan /></AppProtectedRoute>} />
-          <Route path="/app/suggest-shop" element={<AppProtectedRoute><AppSuggestShop /></AppProtectedRoute>} />
           <Route path="/app/merchant/:id" element={<AppProtectedRoute><AppMerchantDetail /></AppProtectedRoute>} />
           
           {/* Scan Route */}
