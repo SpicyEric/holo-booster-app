@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
 import useEmblaCarousel from 'embla-carousel-react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Store, Gift, MessageSquare, Mail, Bell, MapPin, Search, User, History, LogOut, Shield, FileText, HelpCircle, ChevronRight, Sparkles } from 'lucide-react';
+import { Store, Gift, MessageSquare, Mail, Bell, MapPin, Search, User, History, LogOut, Shield, FileText, HelpCircle, ChevronRight, Sparkles, AlertCircle } from 'lucide-react';
+import { StoresGoogleMap } from '@/app/components/StoresGoogleMap';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
@@ -377,6 +378,8 @@ const AppStoresContent = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [activeTab, setActiveTab] = useState<'list' | 'map'>('list');
+  const [locationError, setLocationError] = useState<string | null>(null);
 
   useEffect(() => {
     loadMerchants();
@@ -385,10 +388,12 @@ const AppStoresContent = () => {
 
   const loadUserLocation = async () => {
     try {
+      setLocationError(null);
       const location = await getCurrentLocation();
       if (location) setUserLocation({ lat: location.latitude, lng: location.longitude });
-    } catch (err) {
-      console.log('[Stores] Location not available');
+    } catch (err: any) {
+      console.log('[Stores] Location not available:', err);
+      setLocationError(err?.message || 'Standort nicht verfügbar');
     }
   };
 
@@ -397,7 +402,7 @@ const AppStoresContent = () => {
     try {
       const { data } = await supabase
         .from('customers')
-        .select('id, name, company_name, logo_url, cover_image_url, industry, latitude, longitude, city')
+        .select('id, name, company_name, logo_url, cover_image_url, industry, latitude, longitude, city, street, house_number, postal_code')
         .eq('active', true);
       if (data) setMerchants(data);
     } catch (err) {
@@ -426,43 +431,96 @@ const AppStoresContent = () => {
     return a.distance !== null ? -1 : b.distance !== null ? 1 : 0;
   });
 
+  // Prepare stores for map
+  const storesForMap = filteredMerchants.map(m => ({
+    id: m.id,
+    name: m.company_name || m.name,
+    lat: m.latitude || 0,
+    lng: m.longitude || 0,
+    logo_url: m.logo_url,
+    distance: m.distance,
+  })).filter(s => s.lat !== 0 && s.lng !== 0);
+
   return (
     <div className="space-y-4">
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <Input placeholder="Geschäft suchen..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="pl-10" />
+      {/* Tabs */}
+      <div className="flex rounded-lg bg-muted p-1">
+        <button
+          onClick={() => setActiveTab('list')}
+          className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${activeTab === 'list' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
+        >
+          Liste
+        </button>
+        <button
+          onClick={() => setActiveTab('map')}
+          className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${activeTab === 'map' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
+        >
+          Karte
+        </button>
       </div>
 
-      {loading ? (
-        <Card className="p-6"><p className="text-muted-foreground text-center">Lädt...</p></Card>
-      ) : filteredMerchants.length > 0 ? (
-        <div className="space-y-3">
-          {filteredMerchants.map((merchant) => (
-            <Card key={merchant.id} className="overflow-hidden cursor-pointer hover:shadow-lg transition-shadow" onClick={() => navigate(`/app/merchant/${merchant.id}`)}>
-              <div className="relative h-24">
-                {merchant.cover_image_url ? (
-                  <img src={merchant.cover_image_url} alt="" className="w-full h-full object-cover" />
-                ) : (
-                  <div className="w-full h-full bg-gradient-to-br from-primary/20 to-secondary/20" />
-                )}
-                <div className="absolute inset-0 bg-black/40" />
-                {merchant.distance !== null && (
-                  <div className="absolute top-2 right-2 px-2 py-1 bg-background/90 rounded-full text-xs font-medium">{merchant.distance.toFixed(1)} km</div>
-                )}
-                <div className="absolute bottom-0 left-0 right-0 p-3 text-white">
-                  <h3 className="font-semibold">{merchant.company_name || merchant.name}</h3>
-                  <p className="text-xs text-white/80">{merchant.industry || 'Geschäft'}</p>
-                </div>
-              </div>
+      {activeTab === 'list' && (
+        <>
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input placeholder="Geschäft suchen..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="pl-10" />
+          </div>
+
+          {loading ? (
+            <Card className="p-6"><p className="text-muted-foreground text-center">Lädt...</p></Card>
+          ) : filteredMerchants.length > 0 ? (
+            <div className="space-y-3">
+              {filteredMerchants.map((merchant) => (
+                <Card key={merchant.id} className="overflow-hidden cursor-pointer hover:shadow-lg transition-shadow" onClick={() => navigate(`/app/merchant/${merchant.id}`)}>
+                  <div className="relative h-24">
+                    {merchant.cover_image_url ? (
+                      <img src={merchant.cover_image_url} alt="" className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full bg-gradient-to-br from-primary/20 to-secondary/20" />
+                    )}
+                    <div className="absolute inset-0 bg-black/40" />
+                    {merchant.distance !== null && (
+                      <div className="absolute top-2 right-2 px-2 py-1 bg-background/90 rounded-full text-xs font-medium">{merchant.distance.toFixed(1)} km</div>
+                    )}
+                    <div className="absolute bottom-0 left-0 right-0 p-3 text-white">
+                      <h3 className="font-semibold">{merchant.company_name || merchant.name}</h3>
+                      <p className="text-xs text-white/80">{merchant.industry || 'Geschäft'}</p>
+                    </div>
+                  </div>
+                </Card>
+              ))}
+            </div>
+          ) : (
+            <Card className="p-8 text-center">
+              <MapPin className="h-12 w-12 text-muted-foreground/50 mx-auto mb-4" />
+              <h3 className="font-semibold text-foreground mb-2">Keine Geschäfte gefunden</h3>
+              <p className="text-sm text-muted-foreground">Versuche eine andere Suche.</p>
             </Card>
-          ))}
+          )}
+        </>
+      )}
+
+      {activeTab === 'map' && (
+        <div className="h-[calc(100vh-280px)] rounded-xl overflow-hidden">
+          {locationError ? (
+            <Card className="p-6 text-center h-full flex flex-col items-center justify-center">
+              <div className="mx-auto w-16 h-16 rounded-full bg-destructive/10 flex items-center justify-center mb-4">
+                <MapPin className="h-8 w-8 text-destructive" />
+              </div>
+              <p className="text-muted-foreground mb-4">{locationError}</p>
+              <Button onClick={loadUserLocation} variant="outline">Erneut versuchen</Button>
+            </Card>
+          ) : userLocation ? (
+            <StoresGoogleMap stores={storesForMap} userLocation={[userLocation.lat, userLocation.lng]} />
+          ) : (
+            <Card className="p-6 text-center h-full flex flex-col items-center justify-center">
+              <div className="mx-auto w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4">
+                <MapPin className="h-8 w-8 text-muted-foreground" />
+              </div>
+              <p className="text-muted-foreground">Lade Standort...</p>
+            </Card>
+          )}
         </div>
-      ) : (
-        <Card className="p-8 text-center">
-          <MapPin className="h-12 w-12 text-muted-foreground/50 mx-auto mb-4" />
-          <h3 className="font-semibold text-foreground mb-2">Keine Geschäfte gefunden</h3>
-          <p className="text-sm text-muted-foreground">Versuche eine andere Suche.</p>
-        </Card>
       )}
     </div>
   );
@@ -470,7 +528,6 @@ const AppStoresContent = () => {
 
 // Profile Content
 const AppProfileContent = () => {
-  const { user } = useAuth();
   const navigate = useNavigate();
 
   const handleLogout = async () => {
@@ -484,38 +541,29 @@ const AppProfileContent = () => {
   };
 
   const menuItems = [
-    { icon: History, label: 'Transaktionen', description: 'Deine Punkte-Historie', action: () => navigate('/app/history') },
-    { icon: Store, label: 'Shops', description: 'Geschäfte in deiner Nähe', action: () => navigate('/app/stores') },
-    { icon: Sparkles, label: 'Shop vorschlagen', description: 'Deinen Lieblingsladen empfehlen', action: () => navigate('/app/suggest-shop') },
-    { icon: User, label: 'Kontoeinstellungen', description: 'Profil und Passwort', action: () => navigate('/app/settings') },
+    { icon: User, label: 'Kontoeinstellungen', action: () => navigate('/app/settings') },
+    { icon: Sparkles, label: 'Shop vorschlagen', action: () => navigate('/app/suggest-shop') },
+    { icon: Store, label: 'Meine Stempelkarten', action: () => navigate('/app/stores') },
+    { icon: History, label: 'Transaktionen', action: () => navigate('/app/history') },
   ];
 
   return (
     <div className="space-y-6">
-      <Card className="p-6">
-        <div className="flex items-center gap-4">
-          <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center"><User className="h-8 w-8 text-primary" /></div>
-          <div>
-            <h2 className="text-xl font-bold text-foreground">{user?.email?.split('@')[0] || 'Benutzer'}</h2>
-            <p className="text-sm text-muted-foreground">{user?.email}</p>
-          </div>
-        </div>
-      </Card>
-
-      <div className="space-y-2">
+      {/* 2x2 Grid Menu Items */}
+      <div className="grid grid-cols-2 gap-3">
         {menuItems.map((item) => {
           const Icon = item.icon;
           return (
-            <Card key={item.label} className="p-4 cursor-pointer hover:shadow-md transition-shadow" onClick={item.action}>
-              <div className="flex items-center gap-4">
-                <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center"><Icon className="h-5 w-5 text-primary" /></div>
-                <div className="flex-1">
-                  <h3 className="font-medium text-foreground">{item.label}</h3>
-                  <p className="text-sm text-muted-foreground">{item.description}</p>
-                </div>
-                <ChevronRight className="h-5 w-5 text-muted-foreground" />
+            <button
+              key={item.label}
+              onClick={item.action}
+              className="aspect-square bg-card rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow flex flex-col items-center justify-center gap-3"
+            >
+              <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center">
+                <Icon className="h-7 w-7 text-primary" />
               </div>
-            </Card>
+              <span className="text-sm font-medium text-foreground text-center">{item.label}</span>
+            </button>
           );
         })}
       </div>
