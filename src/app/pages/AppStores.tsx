@@ -142,7 +142,7 @@ export default function AppStores() {
   const StoreCard = ({ store }: { store: Store }) => (
     <button
       onClick={() => navigate(`/app/merchant/${store.id}`)}
-      className="w-full rounded-xl overflow-hidden shadow-md hover:shadow-lg transition-shadow text-left relative h-28"
+      className="w-full rounded-xl overflow-hidden shadow-md hover:shadow-lg transition-shadow text-left relative aspect-[1.55/1]"
     >
       {/* Background - Cover Image or Gradient */}
       <div className="absolute inset-0">
@@ -156,12 +156,12 @@ export default function AppStores() {
           <div className="w-full h-full bg-gradient-to-br from-primary/80 to-secondary/80" />
         )}
         {/* Dark overlay */}
-        <div className="absolute inset-0 bg-black/60" />
+        <div className="absolute inset-0 bg-black/50" />
       </div>
       
-      {/* Content */}
-      <div className="relative z-10 p-4 h-full flex items-center gap-3">
-        <div className="w-14 h-14 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center overflow-hidden flex-shrink-0 border border-white/30">
+      {/* Logo - Top Left */}
+      <div className="absolute top-3 left-3 z-10">
+        <div className="w-12 h-12 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center overflow-hidden border border-white/30">
           {store.logo_url ? (
             <img
               src={store.logo_url}
@@ -174,23 +174,25 @@ export default function AppStores() {
             </span>
           )}
         </div>
-        <div className="flex-1 min-w-0">
-          <h3 className="font-semibold text-white flex items-center gap-2 truncate">
-            {store.name}
-            {store.points && store.points > 0 && (
-              <Heart className="h-4 w-4 fill-pink-400 text-pink-400 flex-shrink-0" />
-            )}
-          </h3>
-          {store.category && (
-            <p className="text-sm text-white/70 capitalize">{store.category}</p>
-          )}
+      </div>
+
+      {/* Distance Badge - Top Right */}
+      {store.distance !== undefined && (
+        <div className="absolute top-3 right-3 z-10 bg-white/90 backdrop-blur-sm rounded-full px-2.5 py-1">
+          <span className="text-xs font-semibold text-primary">{store.distance} km</span>
         </div>
-        
-        {/* Distance Badge - Top Right */}
-        {store.distance !== undefined && (
-          <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm rounded-full px-2.5 py-1">
-            <span className="text-xs font-semibold text-primary">{store.distance} km</span>
-          </div>
+      )}
+      
+      {/* Name & Category - Bottom Left */}
+      <div className="absolute bottom-0 left-0 right-0 z-10 p-4 bg-gradient-to-t from-black/70 to-transparent">
+        <h3 className="font-semibold text-white flex items-center gap-2">
+          {store.name}
+          {store.points && store.points > 0 && (
+            <Heart className="h-4 w-4 fill-pink-400 text-pink-400 flex-shrink-0" />
+          )}
+        </h3>
+        {store.category && (
+          <p className="text-sm text-white/70 capitalize">{store.category}</p>
         )}
       </div>
     </button>
