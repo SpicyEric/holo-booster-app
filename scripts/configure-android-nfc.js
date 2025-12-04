@@ -24,9 +24,9 @@ const ANDROID_PATH = path.join(PROJECT_ROOT, 'android');
 const NODE_MODULES_PATH = path.join(PROJECT_ROOT, 'node_modules');
 
 // Compatible versions
-const KOTLIN_VERSION = '1.8.22';
+const KOTLIN_VERSION = '1.9.22';
 const AGP_VERSION = '8.2.2';
-const GRADLE_VERSION = '8.2';
+const GRADLE_VERSION = '8.5';
 
 console.log('🔧 Configuring Android project for Capacitor...\n');
 
