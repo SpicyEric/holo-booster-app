@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 interface Store {
   id: string;
   name: string;
-  category: string;
+  category: string | null;
   logo_url: string | null;
   cover_image_url: string | null;
   lat: number | null;
@@ -19,6 +19,8 @@ interface StoreCardProps {
 
 const StoreCard = ({ store }: StoreCardProps) => {
   const navigate = useNavigate();
+
+  console.log('StoreCard rendering:', store.name, 'logo_url:', store.logo_url);
 
   return (
     <button
@@ -39,8 +41,8 @@ const StoreCard = ({ store }: StoreCardProps) => {
         )}
       </div>
 
-      {/* Logo - Top Left */}
-      <div className="absolute top-3 left-3 z-10">
+      {/* Logo - Top Left - ALWAYS VISIBLE */}
+      <div className="absolute top-3 left-3 z-20">
         {store.logo_url ? (
           <img
             src={store.logo_url}
@@ -58,7 +60,7 @@ const StoreCard = ({ store }: StoreCardProps) => {
 
       {/* Distance Badge - Top Right */}
       {store.distance !== undefined && (
-        <div className="absolute top-3 right-3 z-10">
+        <div className="absolute top-3 right-3 z-20">
           <span className="bg-white/95 backdrop-blur-sm text-gray-800 text-xs font-medium px-2 py-1 rounded-full shadow-sm">
             {store.distance < 1 
               ? `${Math.round(store.distance * 1000)}m` 
@@ -75,9 +77,11 @@ const StoreCard = ({ store }: StoreCardProps) => {
         <h3 className="text-white font-semibold text-base truncate drop-shadow-md">
           {store.name}
         </h3>
-        <p className="text-white/80 text-sm truncate drop-shadow-md">
-          {store.category}
-        </p>
+        {store.category && (
+          <p className="text-white/80 text-sm truncate drop-shadow-md">
+            {store.category}
+          </p>
+        )}
       </div>
     </button>
   );
