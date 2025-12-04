@@ -25,10 +25,11 @@ const BUILD_GRADLE_PATH = path.join(ANDROID_PATH, 'build.gradle');
 const APP_BUILD_GRADLE_PATH = path.join(ANDROID_PATH, 'app', 'build.gradle');
 const GRADLE_WRAPPER_PATH = path.join(ANDROID_PATH, 'gradle', 'wrapper', 'gradle-wrapper.properties');
 
-// Versionen - kompatibel mit Capacitor 7.x
-const KOTLIN_VERSION = '1.9.24';
-const AGP_VERSION = '8.7.2';
-const GRADLE_VERSION = '8.9';
+// Versionen - kompatibel mit capacitor-nfc Plugin (ältere Kotlin-Version nötig!)
+const KOTLIN_VERSION = '1.8.22';
+const AGP_VERSION = '8.2.2';
+const GRADLE_VERSION = '8.2';
+const SETTINGS_GRADLE_PATH = path.join(ANDROID_PATH, 'settings.gradle');
 
 // NFC Intent-Filter Konfiguration
 const NFC_INTENT_FILTERS = `
@@ -408,6 +409,50 @@ function configureAppBuildGradle() {
 }
 
 /**
+ * Deaktiviert androidTest Tasks für NFC Plugin um Kotlin-Kompilierungsfehler zu vermeiden
+ */
+function disableNfcAndroidTests() {
+  console.log('\n🔧 Deaktiviere androidTest für NFC Plugin...');
+  
+  if (!fs.existsSync(SETTINGS_GRADLE_PATH)) {
+    console.log('   ⚠️  settings.gradle nicht gefunden');
+    return true;
+  }
+
+  let settingsContent = fs.readFileSync(SETTINGS_GRADLE_PATH, 'utf8');
+  
+  // Check if already configured
+  if (settingsContent.includes('Disable androidTest for capacitor-nfc')) {
+    console.log('   ⏭️  androidTest Deaktivierung bereits konfiguriert');
+    return true;
+  }
+
+  // Add gradle hook to disable androidTest tasks for NFC plugin
+  const disableTestsBlock = `
+
+// Disable androidTest for capacitor-nfc to avoid Kotlin compilation issues
+gradle.projectsLoaded {
+    gradle.rootProject.subprojects.each { subproject ->
+        if (subproject.name.contains('capacitor-nfc') || subproject.name.contains('nfc')) {
+            subproject.afterEvaluate {
+                subproject.tasks.configureEach { task ->
+                    if (task.name.contains('AndroidTest') || task.name.contains('androidTest')) {
+                        task.enabled = false
+                    }
+                }
+            }
+        }
+    }
+}
+`;
+
+  settingsContent += disableTestsBlock;
+  fs.writeFileSync(SETTINGS_GRADLE_PATH, settingsContent, 'utf8');
+  console.log('   ✅ androidTest Tasks für NFC Plugin deaktiviert');
+  return true;
+}
+
+/**
  * Hauptfunktion
  */
 function main() {
@@ -423,6 +468,9 @@ function main() {
   const gradleWrapperOk = configureGradleWrapper();
   const gradleVersionsOk = configureGradleVersions();
   const appGradleOk = configureAppBuildGradle();
+  
+  // Deaktiviere problematische androidTest Tasks
+  const nfcTestsOk = disableNfcAndroidTests();
 
   // Konfiguriere NFC/Geolocation
   const techFilterOk = createNfcTechFilter();
@@ -430,7 +478,7 @@ function main() {
 
   // Zusammenfassung
   console.log('\n================================');
-  const allOk = gradleWrapperOk && gradleVersionsOk && appGradleOk && techFilterOk && manifestOk;
+  const allOk = gradleWrapperOk && gradleVersionsOk && appGradleOk && nfcTestsOk && techFilterOk && manifestOk;
   
   if (allOk) {
     console.log('✅ Android Konfiguration abgeschlossen!\n');
