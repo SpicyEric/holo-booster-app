@@ -1,14 +1,14 @@
 import { useEffect, useState } from 'react';
 import { MainLayout } from '@/app/components/layout/MainLayout';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Heart, MapPin, AlertCircle } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { MapPin, AlertCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { StoresGoogleMap } from '@/app/components/StoresGoogleMap';
 import { Card } from '@/components/ui/card';
 import { getCurrentLocation, GeolocationError } from '@/app/services/geolocationService';
 import { Button } from '@/components/ui/button';
+import StoreCard from '@/app/components/StoreCard';
 
 interface Store {
   id: string;
@@ -30,7 +30,6 @@ export default function AppStores() {
   const [stores, setStores] = useState<Store[]>([]);
   const [loading, setLoading] = useState(true);
   const [locationError, setLocationError] = useState<string | null>(null);
-  const navigate = useNavigate();
 
   const fetchUserLocation = async () => {
     try {
@@ -139,65 +138,6 @@ export default function AppStores() {
     return R * c;
   };
 
-  // Store card with 1.55:1 aspect ratio - logo top-left, distance top-right, name bottom-left
-  const StoreCard = ({ store }: { store: Store }) => (
-    <button
-      onClick={() => navigate(`/app/merchant/${store.id}`)}
-      className="w-full rounded-xl overflow-hidden shadow-md hover:shadow-lg transition-shadow text-left relative aspect-[1.55]"
-    >
-      {/* Background - Cover Image or Gradient */}
-      <div className="absolute inset-0">
-        {store.cover_image_url ? (
-          <img
-            src={store.cover_image_url}
-            alt=""
-            className="w-full h-full object-cover"
-          />
-        ) : (
-          <div className="w-full h-full bg-gradient-to-br from-primary/80 to-secondary/80" />
-        )}
-        {/* Dark overlay */}
-        <div className="absolute inset-0 bg-black/50" />
-      </div>
-      
-      {/* Logo - Top Left */}
-      <div className="absolute top-3 left-3 z-10">
-        <div className="w-12 h-12 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center overflow-hidden border border-white/30">
-          {store.logo_url ? (
-            <img
-              src={store.logo_url}
-              alt={store.name}
-              className="w-full h-full object-cover"
-            />
-          ) : (
-            <span className="text-lg font-bold text-white">
-              {store.name.charAt(0)}
-            </span>
-          )}
-        </div>
-      </div>
-
-      {/* Distance Badge - Top Right */}
-      {store.distance !== undefined && (
-        <div className="absolute top-3 right-3 z-10 bg-white/90 backdrop-blur-sm rounded-full px-2.5 py-1">
-          <span className="text-xs font-semibold text-primary">{store.distance} km</span>
-        </div>
-      )}
-      
-      {/* Name & Category - Bottom Left */}
-      <div className="absolute bottom-0 left-0 right-0 z-10 p-4 bg-gradient-to-t from-black/70 to-transparent">
-        <h3 className="font-semibold text-white flex items-center gap-2">
-          {store.name}
-          {store.points && store.points > 0 && (
-            <Heart className="h-4 w-4 fill-pink-400 text-pink-400 flex-shrink-0" />
-          )}
-        </h3>
-        {store.category && (
-          <p className="text-sm text-white/70 capitalize">{store.category}</p>
-        )}
-      </div>
-    </button>
-  );
 
   if (loading) {
     return (
