@@ -154,18 +154,22 @@ export const AppMerchantDetail = () => {
 
   return (
     <div className="min-h-screen bg-background pb-24">
-      {/* Cover Image */}
-      <div className="relative h-48">
-        {merchant.cover_image_url ? (
-          <img
-            src={merchant.cover_image_url}
-            alt={merchant.name}
-            className="w-full h-full object-cover"
-          />
-        ) : (
-          <div className="w-full h-full bg-gradient-to-br from-primary to-secondary" />
-        )}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+      {/* Cover Image with soft fade */}
+      <div className="relative">
+        <div className="h-56">
+          {merchant.cover_image_url ? (
+            <img
+              src={merchant.cover_image_url}
+              alt={merchant.name}
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <div className="w-full h-full bg-gradient-to-br from-primary to-secondary" />
+          )}
+        </div>
+        
+        {/* Soft gradient fade to white */}
+        <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-background via-background/80 to-transparent" />
         
         {/* Back Button */}
         <Button
@@ -183,26 +187,17 @@ export const AppMerchantDetail = () => {
           <span className="text-sm text-muted-foreground ml-1">Punkte</span>
         </div>
 
-        {/* Logo & Name */}
-        <div className="absolute bottom-4 left-4 right-4 flex items-end gap-3">
-          {merchant.logo_url && (
-            <img
-              src={merchant.logo_url}
-              alt=""
-              className="w-16 h-16 rounded-xl object-cover border-2 border-white shadow-lg"
-            />
+        {/* Merchant Name in the fade area */}
+        <div className="absolute bottom-4 left-4 right-4">
+          <h1 className="text-2xl font-bold text-foreground">
+            {merchant.company_name || merchant.name}
+          </h1>
+          {address && (
+            <p className="text-sm text-muted-foreground flex items-center gap-1 mt-1">
+              <MapPin className="h-3 w-3" />
+              {merchant.city}
+            </p>
           )}
-          <div className="flex-1 text-white">
-            <h1 className="text-xl font-bold drop-shadow-lg">
-              {merchant.company_name || merchant.name}
-            </h1>
-            {address && (
-              <p className="text-sm opacity-90 flex items-center gap-1">
-                <MapPin className="h-3 w-3" />
-                {merchant.city}
-              </p>
-            )}
-          </div>
         </div>
       </div>
 
