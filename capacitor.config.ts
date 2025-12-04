@@ -28,6 +28,11 @@ const config: CapacitorConfig = {
     CapacitorNfc: {
       // NFC Foreground Dispatch
     },
+    // Geolocation Plugin Configuration
+    Geolocation: {
+      // iOS: NSLocationWhenInUseUsageDescription wird in Info.plist gesetzt
+      // Android: Permissions sind in AndroidManifest.xml
+    },
   },
   // Deep Link URL Schemes
   // Diese müssen auch in den nativen Projekten konfiguriert werden
