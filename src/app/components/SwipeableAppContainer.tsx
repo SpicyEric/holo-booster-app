@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState, createContext, useContext } from 'react';
 import useEmblaCarousel from 'embla-carousel-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Store, Gift, MessageSquare, Mail, Bell, MapPin, Search, User, History, LogOut, Shield, FileText, HelpCircle, ChevronRight, Sparkles, AlertCircle } from 'lucide-react';
@@ -13,6 +13,13 @@ import { BottomNav } from './layout/BottomNav';
 import Particles from '@/components/Particles';
 import { getCurrentLocation } from '@/app/services/geolocationService';
 import { toast } from 'sonner';
+
+// Context to control swipe behavior
+const SwipeControlContext = createContext<{
+  setSwipeEnabled: (enabled: boolean) => void;
+}>({ setSwipeEnabled: () => {} });
+
+export const useSwipeControl = () => useContext(SwipeControlContext);
 
 // Map route paths to carousel indices
 const ROUTE_TO_INDEX: Record<string, number> = {
@@ -40,12 +47,21 @@ export const SwipeableAppContainer = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [swipeEnabled, setSwipeEnabled] = useState(true);
   
   const [emblaRef, emblaApi] = useEmblaCarousel({
     loop: false,
     skipSnaps: false,
     dragFree: false,
+    watchDrag: swipeEnabled,
   });
+
+  // Re-initialize embla when swipe enabled state changes
+  useEffect(() => {
+    if (emblaApi) {
+      emblaApi.reInit({ watchDrag: swipeEnabled });
+    }
+  }, [emblaApi, swipeEnabled]);
 
   // Sync carousel with current route on mount and route changes
   useEffect(() => {
@@ -83,52 +99,54 @@ export const SwipeableAppContainer = () => {
   }, [emblaApi]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background to-muted/30 pb-20 pt-14 overflow-hidden">
-      <Particles
-        particleColors={['#6366F1', '#8B5CF6', '#A855F7']}
-        particleCount={400}
-        particleSpread={10}
-        speed={0.03}
-        particleBaseSize={120}
-        sizeRandomness={1.8}
-        moveParticlesOnHover={true}
-        alphaParticles={true}
-        disableRotation={false}
-        cameraDistance={20}
-      />
-      
-      <TopBar title={INDEX_TO_TITLE[currentIndex]} />
-      
-      <div className="overflow-hidden h-[calc(100vh-136px)]" ref={emblaRef}>
-        <div className="flex h-full">
-          <div className="flex-[0_0_100%] min-w-0 h-full overflow-y-auto">
-            <div className="container mx-auto px-4 py-6 max-w-2xl relative z-10">
-              <AppHomeContent />
+    <SwipeControlContext.Provider value={{ setSwipeEnabled }}>
+      <div className="min-h-screen bg-gradient-to-b from-background to-muted/30 pb-20 pt-14 overflow-hidden">
+        <Particles
+          particleColors={['#6366F1', '#8B5CF6', '#A855F7']}
+          particleCount={400}
+          particleSpread={10}
+          speed={0.03}
+          particleBaseSize={120}
+          sizeRandomness={1.8}
+          moveParticlesOnHover={true}
+          alphaParticles={true}
+          disableRotation={false}
+          cameraDistance={20}
+        />
+        
+        <TopBar title={INDEX_TO_TITLE[currentIndex]} />
+        
+        <div className="overflow-hidden h-[calc(100vh-136px)]" ref={emblaRef}>
+          <div className="flex h-full">
+            <div className="flex-[0_0_100%] min-w-0 h-full overflow-y-auto">
+              <div className="container mx-auto px-4 py-6 max-w-2xl relative z-10">
+                <AppHomeContent />
+              </div>
             </div>
-          </div>
-          
-          <div className="flex-[0_0_100%] min-w-0 h-full overflow-y-auto">
-            <div className="container mx-auto px-4 py-6 max-w-2xl relative z-10">
-              <AppMessagesContent />
+            
+            <div className="flex-[0_0_100%] min-w-0 h-full overflow-y-auto">
+              <div className="container mx-auto px-4 py-6 max-w-2xl relative z-10">
+                <AppMessagesContent />
+              </div>
             </div>
-          </div>
-          
-          <div className="flex-[0_0_100%] min-w-0 h-full overflow-y-auto">
-            <div className="container mx-auto px-4 py-6 max-w-2xl relative z-10">
-              <AppStoresContent />
+            
+            <div className="flex-[0_0_100%] min-w-0 h-full overflow-y-auto">
+              <div className="container mx-auto px-4 py-6 max-w-2xl relative z-10">
+                <AppStoresContent />
+              </div>
             </div>
-          </div>
-          
-          <div className="flex-[0_0_100%] min-w-0 h-full overflow-y-auto">
-            <div className="container mx-auto px-4 py-6 max-w-2xl relative z-10">
-              <AppProfileContent />
+            
+            <div className="flex-[0_0_100%] min-w-0 h-full overflow-y-auto">
+              <div className="container mx-auto px-4 py-6 max-w-2xl relative z-10">
+                <AppProfileContent />
+              </div>
             </div>
           </div>
         </div>
+        
+        <BottomNav onNavigate={scrollToIndex} currentIndex={currentIndex} />
       </div>
-      
-      <BottomNav onNavigate={scrollToIndex} currentIndex={currentIndex} />
-    </div>
+    </SwipeControlContext.Provider>
   );
 };
 
@@ -374,12 +392,19 @@ const AppMessagesContent = () => {
 // Stores Content
 const AppStoresContent = () => {
   const navigate = useNavigate();
+  const { setSwipeEnabled } = useSwipeControl();
   const [merchants, setMerchants] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [activeTab, setActiveTab] = useState<'list' | 'map'>('list');
   const [locationError, setLocationError] = useState<string | null>(null);
+
+  // Enable/disable swipe based on active tab
+  useEffect(() => {
+    setSwipeEnabled(activeTab === 'list');
+    return () => setSwipeEnabled(true); // Re-enable on unmount
+  }, [activeTab, setSwipeEnabled]);
 
   useEffect(() => {
     loadMerchants();
