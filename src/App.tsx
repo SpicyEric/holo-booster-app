@@ -51,6 +51,8 @@ import AppMerchantDetail from "./app/pages/AppMerchantDetail";
 import AppScan from "./app/pages/AppScan";
 import AppMessages from "./app/pages/AppMessages";
 import AppStores from "./app/pages/AppStores";
+import AppSuggestShop from "./app/pages/AppSuggestShop";
+import Leads from "./pages/admin/Leads";
 
 const queryClient = new QueryClient();
 
@@ -82,6 +84,7 @@ const App = () => (
             <Route path="customers/:id" element={<CustomerDetail />} />
             <Route path="accounts" element={<Accounts />} />
             <Route path="orders" element={<Orders />} />
+            <Route path="leads" element={<Leads />} />
             <Route path="stats" element={<Stats />} />
             <Route path="checkout" element={<Checkout />} />
             <Route path="boxes" element={<BoxManagement />} />
@@ -116,6 +119,7 @@ const App = () => (
           <Route path="/app/profile" element={<AppProtectedRoute><AppProfile /></AppProtectedRoute>} />
           <Route path="/app/settings" element={<AppProtectedRoute><AppSettings /></AppProtectedRoute>} />
           <Route path="/app/scan" element={<AppProtectedRoute><AppScan /></AppProtectedRoute>} />
+          <Route path="/app/suggest-shop" element={<AppProtectedRoute><AppSuggestShop /></AppProtectedRoute>} />
           <Route path="/app/merchant/:id" element={<AppProtectedRoute><AppMerchantDetail /></AppProtectedRoute>} />
           
           {/* Scan Route */}

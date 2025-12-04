@@ -47,20 +47,45 @@ export const AppAuth = () => {
 
   const isAgeValid = getAge() >= 14;
 
-  // Poll for email verification
+  // Poll for email verification - refresh session to get updated user data
   useEffect(() => {
     if (step !== 'verification' || !pendingUserId) return;
 
-    const interval = setInterval(async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user?.email_confirmed_at) {
+    const checkVerification = async () => {
+      try {
+        // Refresh the session to get updated user data from server
+        const { data: { session }, error } = await supabase.auth.refreshSession();
+        
+        if (session?.user?.email_confirmed_at) {
+          toast.success('E-Mail bestätigt! Willkommen bei Eloyo!');
+          navigate('/app');
+          return true;
+        }
+      } catch (error) {
+        console.error('Verification check error:', error);
+      }
+      return false;
+    };
+
+    // Check immediately on mount
+    checkVerification();
+
+    // Then poll every 3 seconds
+    const interval = setInterval(checkVerification, 3000);
+
+    // Also listen for auth state changes (when user clicks link and gets redirected back)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_IN' && session?.user?.email_confirmed_at) {
         clearInterval(interval);
         toast.success('E-Mail bestätigt! Willkommen bei Eloyo!');
         navigate('/app');
       }
-    }, 2000);
+    });
 
-    return () => clearInterval(interval);
+    return () => {
+      clearInterval(interval);
+      subscription.unsubscribe();
+    };
   }, [step, pendingUserId, navigate]);
 
   const handleLogin = async (e: React.FormEvent) => {
