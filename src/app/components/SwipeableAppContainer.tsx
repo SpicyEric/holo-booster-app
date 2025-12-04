@@ -511,11 +511,11 @@ const AppStoresContent = () => {
                     )}
                   </div>
                   {/* Logo - Top Left */}
-                  <div className="absolute top-3 left-3 z-20 w-12 h-12 rounded-full bg-background border-2 border-white shadow-lg flex items-center justify-center overflow-hidden">
+                  <div className="absolute top-3 left-3 z-20 w-16 h-16 rounded-full bg-background border-2 border-white shadow-lg flex items-center justify-center overflow-hidden">
                     {merchant.logo_url ? (
                       <img src={merchant.logo_url} alt="Logo" className="w-full h-full object-cover" />
                     ) : (
-                      <span className="text-lg font-bold text-primary">{(merchant.company_name || merchant.name || '?').charAt(0).toUpperCase()}</span>
+                      <span className="text-xl font-bold text-primary">{(merchant.company_name || merchant.name || '?').charAt(0).toUpperCase()}</span>
                     )}
                   </div>
                   {/* Distance Badge - Top Right */}
