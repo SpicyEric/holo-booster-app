@@ -1580,6 +1580,51 @@ export type Database = {
           },
         ]
       }
+      shop_suggestions: {
+        Row: {
+          admin_notes: string | null
+          city: string | null
+          contact_person: string | null
+          created_at: string
+          house_number: string | null
+          id: string
+          postal_code: string | null
+          shop_name: string
+          status: string
+          street: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          admin_notes?: string | null
+          city?: string | null
+          contact_person?: string | null
+          created_at?: string
+          house_number?: string | null
+          id?: string
+          postal_code?: string | null
+          shop_name: string
+          status?: string
+          street?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          admin_notes?: string | null
+          city?: string | null
+          contact_person?: string | null
+          created_at?: string
+          house_number?: string | null
+          id?: string
+          postal_code?: string | null
+          shop_name?: string
+          status?: string
+          street?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       stamp_cards: {
         Row: {
           background_color: string | null

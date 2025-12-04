@@ -1,7 +1,5 @@
 import { MainLayout } from '@/app/components/layout/MainLayout';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   Receipt,
   User,
@@ -13,53 +11,11 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { signOut } from '@/lib/auth';
-import { useState, useEffect } from 'react';
-import { useToast } from "@/hooks/use-toast";
-import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
 export default function AppProfile() {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const [userProfile, setUserProfile] = useState({
-    firstName: '',
-    lastName: '',
-    totalPoints: 0,
-  });
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchProfileData = async () => {
-      if (!user) return;
-
-      try {
-        const { data: profileData, error: profileError } = await supabase
-          .from('profiles')
-          .select('first_name, last_name')
-          .eq('user_id', user.id)
-          .maybeSingle();
-
-        const { data: stampCardsData, error: stampCardsError } = await supabase
-          .from('user_stamp_cards')
-          .select('current_points')
-          .eq('user_id', user.id);
-
-        const totalPoints = stampCardsData?.reduce((sum, card) => sum + (card.current_points || 0), 0) || 0;
-
-        setUserProfile({
-          firstName: profileData?.first_name || '',
-          lastName: profileData?.last_name || '',
-          totalPoints,
-        });
-      } catch (error) {
-        console.error('Error fetching profile data:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchProfileData();
-  }, [user]);
 
   const handleLogout = async () => {
     const { error } = await signOut();
@@ -88,55 +44,19 @@ export default function AppProfile() {
       icon: Lightbulb,
       label: 'Shop vorschlagen',
       description: 'Neues Geschäft vorschlagen',
-      action: () => navigate('/kontakt'),
+      action: () => navigate('/app/suggest-shop'),
     },
     {
       icon: User,
-      label: 'Profil bearbeiten',
+      label: 'Mein Konto',
       description: 'Account verwalten',
       action: () => navigate('/app/settings'),
     },
   ];
 
-  if (loading) {
-    return (
-      <MainLayout title="Profil">
-        <div className="flex items-center justify-center py-12">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-        </div>
-      </MainLayout>
-    );
-  }
-
   return (
     <MainLayout title="Profil">
       <div className="space-y-6">
-        <Card className="p-6 bg-gradient-to-br from-primary to-secondary text-primary-foreground">
-          <div className="flex items-center gap-4">
-            <Avatar className="h-20 w-20 border-4 border-primary-foreground/20">
-              <AvatarFallback className="bg-primary-foreground/20 text-2xl">
-                {userProfile.firstName?.[0]}{userProfile.lastName?.[0]}
-              </AvatarFallback>
-            </Avatar>
-            <div className="flex-1">
-              <h2 className="text-2xl font-bold">
-                {userProfile.firstName} {userProfile.lastName}
-              </h2>
-              <p className="text-primary-foreground/80 text-sm">
-                {user?.email}
-              </p>
-            </div>
-          </div>
-          <div className="mt-6 pt-6 border-t border-primary-foreground/20">
-            <div className="flex items-center justify-between">
-              <span className="text-primary-foreground/80">Deine Stempelpunkte</span>
-              <span className="text-3xl font-bold">
-                {userProfile.totalPoints}
-              </span>
-            </div>
-          </div>
-        </Card>
-
         <div className="grid grid-cols-2 gap-3">
           {menuItems.map((item) => (
             <button
