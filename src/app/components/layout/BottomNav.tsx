@@ -7,45 +7,64 @@ interface NavItem {
   icon: LucideIcon;
   label: string;
   path: string;
+  index: number;
 }
 
-export const BottomNav = () => {
+interface BottomNavProps {
+  onNavigate?: (index: number) => void;
+  currentIndex?: number;
+}
+
+export const BottomNav = ({ onNavigate, currentIndex }: BottomNavProps) => {
   const location = useLocation();
   const navigate = useNavigate();
 
   const navItems: NavItem[] = [
-    { icon: Home, label: 'Start', path: '/app' },
-    { icon: MessageSquare, label: 'Nachrichten', path: '/app/messages' },
-    { icon: Store, label: 'Stores', path: '/app/stores' },
-    { icon: Settings, label: 'Einstellungen', path: '/app/profile' },
+    { icon: Home, label: 'Start', path: '/app', index: 0 },
+    { icon: MessageSquare, label: 'Nachrichten', path: '/app/messages', index: 1 },
+    { icon: Store, label: 'Stores', path: '/app/stores', index: 2 },
+    { icon: Settings, label: 'Einstellungen', path: '/app/profile', index: 3 },
   ];
 
   const handleCenterButtonClick = () => {
     navigate('/app/scan');
   };
 
-  const isActive = (path: string) => {
-    if (path === '/app') {
-      return location.pathname === '/app';
+  const handleNavClick = (item: NavItem) => {
+    if (onNavigate) {
+      onNavigate(item.index);
+    } else {
+      navigate(item.path);
     }
-    return location.pathname.startsWith(path);
   };
 
-  const NavLink = ({ item }: { item: NavItem }) => {
+  const isActive = (item: NavItem) => {
+    if (currentIndex !== undefined) {
+      return currentIndex === item.index;
+    }
+    if (item.path === '/app') {
+      return location.pathname === '/app';
+    }
+    return location.pathname.startsWith(item.path);
+  };
+
+  const NavButton = ({ item }: { item: NavItem }) => {
     const Icon = item.icon;
+    const active = isActive(item);
+    
     return (
-      <Link
-        to={item.path}
+      <button
+        onClick={() => handleNavClick(item)}
         className={cn(
           "flex flex-col items-center justify-center flex-1 h-full transition-colors",
-          isActive(item.path)
+          active
             ? "text-primary"
             : "text-muted-foreground hover:text-foreground"
         )}
       >
         <Icon className="h-6 w-6" />
         <span className="text-xs mt-1">{item.label}</span>
-      </Link>
+      </button>
     );
   };
 
@@ -53,12 +72,12 @@ export const BottomNav = () => {
     <nav className="fixed bottom-0 left-0 right-0 z-50 bg-background border-t border-border shadow-lg safe-area-pb">
       <div className="flex items-center justify-around h-16 px-2">
         {/* Home */}
-        <NavLink item={navItems[0]} />
+        <NavButton item={navItems[0]} />
 
         {/* Messages */}
-        <NavLink item={navItems[1]} />
+        <NavButton item={navItems[1]} />
 
-        {/* Central Stamp Button - bigger icon */}
+        {/* Central Stamp Button */}
         <div className="flex flex-col items-center justify-center -mt-8">
           <Button
             size="icon"
@@ -71,10 +90,10 @@ export const BottomNav = () => {
         </div>
 
         {/* Stores */}
-        <NavLink item={navItems[2]} />
+        <NavButton item={navItems[2]} />
 
         {/* Settings/Profile */}
-        <NavLink item={navItems[3]} />
+        <NavButton item={navItems[3]} />
       </div>
     </nav>
   );
