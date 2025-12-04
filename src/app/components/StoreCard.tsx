@@ -17,15 +17,14 @@ interface StoreCardProps {
   store: Store;
 }
 
+// VERSION 2 - Mit Logo oben links
 const StoreCard = ({ store }: StoreCardProps) => {
   const navigate = useNavigate();
-
-  console.log('StoreCard rendering:', store.name, 'logo_url:', store.logo_url);
 
   return (
     <button
       onClick={() => navigate(`/app/merchant/${store.id}`)}
-      className="w-full rounded-xl overflow-hidden shadow-md hover:shadow-lg transition-shadow text-left relative"
+      className="w-full rounded-xl overflow-hidden shadow-md hover:shadow-lg transition-shadow text-left relative border-4 border-red-500"
       style={{ aspectRatio: '1.55 / 1' }}
     >
       {/* Background - Cover Image or Gradient */}
@@ -37,24 +36,22 @@ const StoreCard = ({ store }: StoreCardProps) => {
             className="w-full h-full object-cover"
           />
         ) : (
-          <div className="w-full h-full bg-gradient-to-br from-primary/20 to-primary/40" />
+          <div className="w-full h-full bg-gradient-to-br from-purple-500 to-blue-500" />
         )}
       </div>
 
-      {/* Logo - Top Left - ALWAYS VISIBLE */}
-      <div className="absolute top-3 left-3 z-20">
+      {/* Logo - Top Left - ALWAYS VISIBLE - RED BACKGROUND FOR TESTING */}
+      <div className="absolute top-3 left-3 z-20 w-12 h-12 rounded-full bg-red-500 border-2 border-white shadow-lg flex items-center justify-center overflow-hidden">
         {store.logo_url ? (
           <img
             src={store.logo_url}
             alt={`${store.name} Logo`}
-            className="w-12 h-12 rounded-full object-cover border-2 border-white shadow-md bg-white"
+            className="w-full h-full object-cover"
           />
         ) : (
-          <div className="w-12 h-12 rounded-full bg-white border-2 border-white shadow-md flex items-center justify-center">
-            <span className="text-lg font-bold text-primary">
-              {store.name.charAt(0).toUpperCase()}
-            </span>
-          </div>
+          <span className="text-lg font-bold text-white">
+            {store.name?.charAt(0)?.toUpperCase() || '?'}
+          </span>
         )}
       </div>
 
