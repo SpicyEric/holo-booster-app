@@ -129,7 +129,7 @@ const Nachrichten = () => {
 
       const { data: msgData } = await supabase
         .from('app_messages')
-        .select('*')
+        .select('id, title, body, show_in_storefront, sent_at')
         .eq('merchant_customer_id', assignment.customer_id)
         .order('sent_at', { ascending: false });
 
@@ -140,10 +140,10 @@ const Nachrichten = () => {
           body: msg.body,
           show_in_storefront: msg.show_in_storefront,
           sent_at: msg.sent_at,
-          segment: (msg.segment as Segment) || { type: 'all' as const },
-          offer_id: msg.offer_id || null,
-          is_sent: msg.is_sent || false,
-          recipient_count: msg.recipient_count || 0
+          segment: { type: 'all' as const },
+          offer_id: null,
+          is_sent: true,
+          recipient_count: 0
         }));
         setMessages(typedMessages);
       }
@@ -253,9 +253,7 @@ const Nachrichten = () => {
           .update({
             title: messageForm.title,
             body: messageForm.body,
-            show_in_storefront: messageForm.show_in_storefront,
-            segment: segment as unknown as Json,
-            offer_id: offerId || editingMessage.offer_id
+            show_in_storefront: messageForm.show_in_storefront
           })
           .eq('id', editingMessage.id);
         if (error) throw error;
@@ -269,11 +267,7 @@ const Nachrichten = () => {
             title: messageForm.title,
             body: messageForm.body,
             show_in_storefront: messageForm.show_in_storefront,
-            sent_at: new Date().toISOString(),
-            segment: segment as unknown as Json,
-            offer_id: offerId,
-            is_sent: true,
-            recipient_count: estimatedRecipients || 0
+            sent_at: new Date().toISOString()
           });
         if (error) throw error;
         toast.success('Nachricht gesendet!');
