@@ -27,7 +27,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import PhoneFrame from "@/components/PhoneFrame";
-import StampCardPreview from "@/components/StampCardPreview";
+import MerchantPreviewLive from "@/components/merchant/MerchantPreviewLive";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -674,17 +674,27 @@ const MeinGeschaeft = () => {
           <div className="lg:col-span-1 order-2 lg:order-1">
             <div className="sticky top-24">
               <PhoneFrame title="Live-Vorschau">
-                <StampCardPreview 
+                <MerchantPreviewLive 
                   data={{
                     name: formData.name || "Geschäftsname",
-                    points: 25,
-                    coverImage: formData.cover_image_url,
-                    address: [formData.street, formData.house_number, formData.postal_code, formData.city].filter(Boolean).join(" "),
+                    description: formData.description,
+                    logo_url: formData.logo_url,
+                    cover_image_url: formData.cover_image_url,
+                    street: formData.street,
+                    house_number: formData.house_number,
+                    postal_code: formData.postal_code,
+                    city: formData.city,
                     phone: formData.phone,
                     website: formData.website,
                     instagram: formData.instagram,
-                    openingHours: formatOpeningHoursPreview(formData.opening_hours),
+                    facebook: formData.facebook,
+                    twitter: formData.twitter,
+                    opening_hours: formData.opening_hours,
                   }}
+                  rewards={rewards}
+                  activeTab={activeTab === 'info' ? 'info' : 'rewards'}
+                  onTabChange={(tab) => setActiveTab(tab === 'info' ? 'info' : 'praemien')}
+                  userPoints={25}
                 />
               </PhoneFrame>
             </div>
