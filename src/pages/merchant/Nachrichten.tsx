@@ -6,7 +6,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
-import { Loader2, Plus, MessageSquare, Gift, Trash2, Edit2, Send, Users, Clock, UserPlus, Mail, Sparkles, Save } from 'lucide-react';
+import { Loader2, Plus, MessageSquare, Gift, Trash2, Edit2, Send, Users, Clock, UserPlus, Zap, Cake, Save } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import {
@@ -78,6 +78,14 @@ const Nachrichten = () => {
   const [saving, setSaving] = useState(false);
   const [estimatingRecipients, setEstimatingRecipients] = useState(false);
   const [estimatedRecipients, setEstimatedRecipients] = useState<number | null>(null);
+
+  // Automations state
+  const [welcomeEnabled, setWelcomeEnabled] = useState(false);
+  const [welcomeMessage, setWelcomeMessage] = useState('Herzlich willkommen in unserem Bonusprogramm! Sammle Stempel und sichere dir tolle Prämien.');
+  const [birthdayEnabled, setBirthdayEnabled] = useState(false);
+  const [birthdayMessage, setBirthdayMessage] = useState('Alles Gute zum Geburtstag! Als kleines Geschenk schenken wir dir Bonus-Punkte.');
+  const [birthdayBonusPoints, setBirthdayBonusPoints] = useState(50);
+  const [savingAutomations, setSavingAutomations] = useState(false);
 
   const [messageForm, setMessageForm] = useState({
     title: '',
@@ -541,6 +549,124 @@ const Nachrichten = () => {
                 ))}
               </div>
             )}
+          </CardContent>
+        </Card>
+
+        {/* Automatisierungen */}
+        <Card className="rounded-2xl shadow-sm border-0 bg-gray-50/80">
+          <CardHeader className="pb-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-purple-100 flex items-center justify-center">
+                <Zap className="h-5 w-5 text-purple-600" />
+              </div>
+              <div>
+                <CardTitle className="text-lg font-semibold text-gray-900">Automatisierungen</CardTitle>
+                <CardDescription className="text-gray-500">
+                  Automatische Nachrichten an Ihre Kunden
+                </CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {/* Willkommensnachricht */}
+            <div className={`p-4 rounded-xl border-2 transition-colors ${welcomeEnabled ? 'bg-green-50/50 border-green-200' : 'bg-white border-gray-100'}`}>
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-3">
+                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${welcomeEnabled ? 'bg-green-500' : 'bg-gray-200'}`}>
+                    <Gift className={`h-4 w-4 ${welcomeEnabled ? 'text-white' : 'text-gray-500'}`} />
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-gray-900">Willkommensnachricht</h4>
+                    <p className="text-xs text-gray-500">Wird gesendet, wenn ein Kunde zum ersten Mal stempelt</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className={`text-xs font-medium ${welcomeEnabled ? 'text-green-600' : 'text-gray-400'}`}>
+                    {welcomeEnabled ? 'Aktiv' : 'Inaktiv'}
+                  </span>
+                  <Switch
+                    checked={welcomeEnabled}
+                    onCheckedChange={setWelcomeEnabled}
+                    className="scale-125 data-[state=checked]:bg-green-500"
+                  />
+                </div>
+              </div>
+              {welcomeEnabled && (
+                <div className="mt-3">
+                  <Label className="text-xs text-gray-600">Nachricht</Label>
+                  <Textarea
+                    value={welcomeMessage}
+                    onChange={(e) => setWelcomeMessage(e.target.value)}
+                    className="mt-1 rounded-xl text-sm"
+                    rows={2}
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* Geburtstagsgrüße */}
+            <div className={`p-4 rounded-xl border-2 transition-colors ${birthdayEnabled ? 'bg-pink-50/50 border-pink-200' : 'bg-white border-gray-100'}`}>
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-3">
+                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${birthdayEnabled ? 'bg-pink-500' : 'bg-gray-200'}`}>
+                    <Cake className={`h-4 w-4 ${birthdayEnabled ? 'text-white' : 'text-gray-500'}`} />
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-gray-900">Geburtstagsgrüße</h4>
+                    <p className="text-xs text-gray-500">Wird automatisch am Geburtstag des Kunden gesendet</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className={`text-xs font-medium ${birthdayEnabled ? 'text-pink-600' : 'text-gray-400'}`}>
+                    {birthdayEnabled ? 'Aktiv' : 'Inaktiv'}
+                  </span>
+                  <Switch
+                    checked={birthdayEnabled}
+                    onCheckedChange={setBirthdayEnabled}
+                    className="scale-125 data-[state=checked]:bg-pink-500"
+                  />
+                </div>
+              </div>
+              {birthdayEnabled && (
+                <div className="mt-3 space-y-3">
+                  <div>
+                    <Label className="text-xs text-gray-600">Nachricht</Label>
+                    <Textarea
+                      value={birthdayMessage}
+                      onChange={(e) => setBirthdayMessage(e.target.value)}
+                      className="mt-1 rounded-xl text-sm"
+                      rows={2}
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-xs text-gray-600">Bonuspunkte als Geschenk</Label>
+                    <Input
+                      type="number"
+                      min={0}
+                      value={birthdayBonusPoints}
+                      onChange={(e) => setBirthdayBonusPoints(parseInt(e.target.value) || 0)}
+                      className="mt-1 rounded-xl w-32"
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <Button 
+              onClick={() => {
+                setSavingAutomations(true);
+                setTimeout(() => {
+                  setSavingAutomations(false);
+                  // Toast would go here when backend is implemented
+                }, 500);
+              }} 
+              disabled={savingAutomations}
+              variant="outline"
+              className="rounded-xl"
+            >
+              {savingAutomations ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
+              Automatisierungen speichern
+            </Button>
           </CardContent>
         </Card>
 
