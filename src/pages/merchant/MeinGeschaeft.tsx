@@ -94,15 +94,8 @@ interface CustomerBox {
   assigned_at: string;
 }
 
-const defaultOpeningHours: OpeningHours = {
-  monday: { open: "09:00", close: "18:00", closed: false },
-  tuesday: { open: "09:00", close: "18:00", closed: false },
-  wednesday: { open: "09:00", close: "18:00", closed: false },
-  thursday: { open: "09:00", close: "18:00", closed: false },
-  friday: { open: "09:00", close: "18:00", closed: false },
-  saturday: { open: "10:00", close: "16:00", closed: false },
-  sunday: { open: "00:00", close: "00:00", closed: true },
-};
+// Empty opening hours by default - merchant must explicitly set them
+const defaultOpeningHours: OpeningHours = {};
 
 const formatOpeningHoursPreview = (hours: OpeningHours): string => {
   const dayNames: Record<string, string> = {
@@ -126,6 +119,7 @@ const MeinGeschaeft = () => {
   const [uploadingCover, setUploadingCover] = useState(false);
   const [customerId, setCustomerId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState("praemien");
+  const [scrollTarget, setScrollTarget] = useState<'description' | 'hours' | 'contact' | 'bottom' | null>(null);
   
   // Business Info
   const [formData, setFormData] = useState({
@@ -291,13 +285,16 @@ const MeinGeschaeft = () => {
   };
 
   const handleOpeningHoursChange = (day: string, field: "open" | "close" | "closed", value: string | boolean) => {
-    setFormData(prev => ({
-      ...prev,
-      opening_hours: {
-        ...prev.opening_hours,
-        [day]: { ...prev.opening_hours[day], [field]: value },
-      },
-    }));
+    setFormData(prev => {
+      const currentDayHours = prev.opening_hours[day] || { open: "09:00", close: "18:00", closed: false };
+      return {
+        ...prev,
+        opening_hours: {
+          ...prev.opening_hours,
+          [day]: { ...currentDayHours, [field]: value },
+        },
+      };
+    });
   };
 
   const handleImageUpload = async (file: File, type: "logo" | "cover") => {
@@ -696,8 +693,17 @@ const MeinGeschaeft = () => {
                   activeTab={activeTab === 'info' ? 'info' : 'rewards'}
                   onTabChange={(tab) => setActiveTab(tab === 'info' ? 'info' : 'praemien')}
                   userPoints={25}
+                  scrollTarget={scrollTarget}
                 />
               </PhoneFrame>
+              
+              {/* Global Save Button below phone */}
+              {activeTab === 'info' && (
+                <Button onClick={handleSaveInfo} disabled={saving} className="w-full rounded-xl mt-4" size="lg">
+                  {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
+                  Änderungen speichern
+                </Button>
+              )}
             </div>
           </div>
 
@@ -988,44 +994,69 @@ const MeinGeschaeft = () => {
                       <Label>Telefon</Label>
                       <div className="relative">
                         <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                        <Input value={formData.phone} onChange={(e) => handleInputChange("phone", e.target.value)} placeholder="+49 123 456789" className="pl-10 rounded-xl" />
+                        <Input 
+                          value={formData.phone} 
+                          onChange={(e) => handleInputChange("phone", e.target.value)} 
+                          onFocus={() => setScrollTarget('contact')}
+                          placeholder="+49 123 456789" 
+                          className="pl-10 rounded-xl" 
+                        />
                       </div>
                     </div>
                     <div>
                       <Label>Website</Label>
                       <div className="relative">
                         <Globe className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                        <Input value={formData.website} onChange={(e) => handleInputChange("website", e.target.value)} placeholder="https://..." className="pl-10 rounded-xl" />
+                        <Input 
+                          value={formData.website} 
+                          onChange={(e) => handleInputChange("website", e.target.value)} 
+                          onFocus={() => setScrollTarget('contact')}
+                          placeholder="https://..." 
+                          className="pl-10 rounded-xl" 
+                        />
                       </div>
                     </div>
                     <div>
                       <Label>Instagram</Label>
                       <div className="relative">
                         <Instagram className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                        <Input value={formData.instagram} onChange={(e) => handleInputChange("instagram", e.target.value)} placeholder="https://instagram.com/..." className="pl-10 rounded-xl" />
+                        <Input 
+                          value={formData.instagram} 
+                          onChange={(e) => handleInputChange("instagram", e.target.value)} 
+                          onFocus={() => setScrollTarget('contact')}
+                          placeholder="https://instagram.com/..." 
+                          className="pl-10 rounded-xl" 
+                        />
                       </div>
                     </div>
                     <div>
                       <Label>Facebook</Label>
                       <div className="relative">
                         <Facebook className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                        <Input value={formData.facebook} onChange={(e) => handleInputChange("facebook", e.target.value)} placeholder="https://facebook.com/..." className="pl-10 rounded-xl" />
+                        <Input 
+                          value={formData.facebook} 
+                          onChange={(e) => handleInputChange("facebook", e.target.value)} 
+                          onFocus={() => setScrollTarget('contact')}
+                          placeholder="https://facebook.com/..." 
+                          className="pl-10 rounded-xl" 
+                        />
                       </div>
                     </div>
                     <div>
                       <Label>X (Twitter)</Label>
                       <div className="relative">
                         <Twitter className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                        <Input value={formData.twitter} onChange={(e) => handleInputChange("twitter", e.target.value)} placeholder="https://x.com/..." className="pl-10 rounded-xl" />
+                        <Input 
+                          value={formData.twitter} 
+                          onChange={(e) => handleInputChange("twitter", e.target.value)} 
+                          onFocus={() => setScrollTarget('contact')}
+                          placeholder="https://x.com/..." 
+                          className="pl-10 rounded-xl" 
+                        />
                       </div>
                     </div>
                   </div>
                 </Card>
-
-                <Button onClick={handleSaveInfo} disabled={saving} className="w-full rounded-xl" size="lg">
-                  {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
-                  Änderungen speichern
-                </Button>
               </TabsContent>
 
               {/* Neukundenprämie Tab */}

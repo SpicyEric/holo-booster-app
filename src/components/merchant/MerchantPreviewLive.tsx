@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { MapPin, Phone, Globe, Instagram, Clock, Gift, Sparkles, Info as InfoIcon, ArrowLeft, Facebook, Twitter } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { MapPin, Phone, Globe, Instagram, Clock, Gift, ArrowLeft, Facebook, Twitter } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
@@ -40,26 +40,35 @@ interface MerchantPreviewLiveProps {
   activeTab?: 'rewards' | 'info';
   onTabChange?: (tab: 'rewards' | 'info') => void;
   userPoints?: number;
+  scrollTarget?: 'description' | 'hours' | 'contact' | 'bottom' | null;
 }
 
-/**
- * MerchantPreviewLive - Exact replica of the app's merchant detail view
- * 
- * This component mirrors AppMerchantDetail exactly for accurate live preview
- * in the merchant dashboard. It uses passed data instead of fetching from DB.
- */
 const MerchantPreviewLive = ({ 
   data, 
   rewards, 
   activeTab = 'rewards',
   onTabChange,
-  userPoints = 25
+  userPoints = 25,
+  scrollTarget
 }: MerchantPreviewLiveProps) => {
   const [tab, setTab] = useState<'rewards' | 'info'>(activeTab);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const contactRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setTab(activeTab);
   }, [activeTab]);
+
+  // Auto-scroll when scrollTarget changes
+  useEffect(() => {
+    if (!scrollTarget || !scrollContainerRef.current) return;
+    
+    setTimeout(() => {
+      if (scrollTarget === 'bottom' || scrollTarget === 'contact') {
+        scrollContainerRef.current?.scrollTo({ top: scrollContainerRef.current.scrollHeight, behavior: 'smooth' });
+      }
+    }, 100);
+  }, [scrollTarget, data.phone, data.website, data.instagram, data.facebook, data.twitter]);
 
   const handleTabChange = (newTab: string) => {
     const t = newTab as 'rewards' | 'info';
@@ -68,9 +77,9 @@ const MerchantPreviewLive = ({
   };
 
   const formatOpeningHours = (hours?: OpeningHours) => {
-    if (!hours || typeof hours !== 'object') return null;
+    if (!hours || typeof hours !== 'object' || Object.keys(hours).length === 0) return null;
     
-    // Check if any opening hours are actually configured (not all closed or empty)
+    // Check if any opening hours are actually configured
     const hasConfiguredHours = Object.values(hours).some(h => 
       h && !h.closed && h.open && h.close && h.open !== '00:00' && h.close !== '00:00'
     );
@@ -89,14 +98,17 @@ const MerchantPreviewLive = ({
     });
   };
 
-  // Format description with bold and line breaks
+  // Format description with bold, italic and line breaks
   const formatDescription = (text: string) => {
     if (!text) return null;
-    // Convert **text** to bold spans
-    const parts = text.split(/(\*\*[^*]+\*\*)/g);
+    // Convert **text** to bold and _text_ to italic
+    const parts = text.split(/(\*\*[^*]+\*\*|_[^_]+_)/g);
     return parts.map((part, i) => {
       if (part.startsWith('**') && part.endsWith('**')) {
         return <strong key={i}>{part.slice(2, -2)}</strong>;
+      }
+      if (part.startsWith('_') && part.endsWith('_')) {
+        return <em key={i}>{part.slice(1, -1)}</em>;
       }
       return <span key={i}>{part}</span>;
     });
@@ -108,8 +120,8 @@ const MerchantPreviewLive = ({
 
   return (
     <div className="h-full flex flex-col bg-background overflow-hidden">
-      {/* Cover Image with soft fade - Exact replica of AppMerchantDetail */}
-      <div className="relative">
+      {/* Cover Image */}
+      <div className="relative flex-shrink-0">
         <div className="h-44">
           {data.cover_image_url ? (
             <img
@@ -122,10 +134,8 @@ const MerchantPreviewLive = ({
           )}
         </div>
         
-        {/* Soft gradient fade to white */}
         <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-background via-background/80 to-transparent" />
         
-        {/* Back Button */}
         <Button
           variant="ghost"
           size="icon"
@@ -134,13 +144,11 @@ const MerchantPreviewLive = ({
           <ArrowLeft className="h-4 w-4" />
         </Button>
 
-        {/* Points Badge */}
         <div className="absolute top-3 right-3 bg-white/90 rounded-full px-2 py-1">
           <span className="font-bold text-primary text-xs">{userPoints}</span>
           <span className="text-[10px] text-muted-foreground ml-1">Punkte</span>
         </div>
 
-        {/* Merchant Name in the fade area */}
         <div className="absolute bottom-2 left-3 right-3">
           <h1 className="text-lg font-bold text-foreground leading-tight">
             {data.name || 'Geschäftsname'}
@@ -154,14 +162,14 @@ const MerchantPreviewLive = ({
         </div>
       </div>
 
-      {/* Tabs - Only Prämien and Info (no Angebote) */}
-      <Tabs value={tab} onValueChange={handleTabChange} className="flex-1 flex flex-col">
-        <TabsList className="w-full grid grid-cols-2 mx-3 mt-2" style={{ width: 'calc(100% - 24px)' }}>
+      {/* Tabs */}
+      <Tabs value={tab} onValueChange={handleTabChange} className="flex-1 flex flex-col min-h-0">
+        <TabsList className="w-full grid grid-cols-2 mx-3 mt-2 flex-shrink-0" style={{ width: 'calc(100% - 24px)' }}>
           <TabsTrigger value="rewards" className="text-xs py-1.5">Prämien</TabsTrigger>
           <TabsTrigger value="info" className="text-xs py-1.5">Info</TabsTrigger>
         </TabsList>
 
-        <div className="flex-1 overflow-y-auto">
+        <div ref={scrollContainerRef} className="flex-1 overflow-y-auto min-h-0">
           <TabsContent value="rewards" className="mt-2 px-3 pb-3 space-y-2">
             {rewards.length === 0 ? (
               <Card>
@@ -208,7 +216,6 @@ const MerchantPreviewLive = ({
               </Card>
             )}
 
-            {/* Opening Hours */}
             {openingHours && (
               <Card>
                 <CardContent className="p-3">
@@ -228,8 +235,7 @@ const MerchantPreviewLive = ({
               </Card>
             )}
 
-            {/* Contact */}
-            <Card>
+            <Card ref={contactRef}>
               <CardContent className="p-3 space-y-2">
                 {address && (
                   <div className="flex items-center gap-2 text-[10px]">
