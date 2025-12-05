@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Capacitor } from "@capacitor/core";
 import { supabase } from "@/integrations/supabase/client";
 
 const Index = () => {
@@ -9,19 +8,27 @@ const Index = () => {
 
   useEffect(() => {
     const handleRouting = async () => {
-      const isNative = Capacitor.isNativePlatform();
-      
-      if (isNative) {
-        // Native App: Check auth status and route to /app or /app/auth
-        const { data: { session } } = await supabase.auth.getSession();
+      try {
+        // Dynamically import Capacitor to avoid build errors
+        const { Capacitor } = await import("@capacitor/core");
+        const isNative = Capacitor.isNativePlatform();
         
-        if (session) {
-          navigate('/app', { replace: true });
+        if (isNative) {
+          // Native App: Check auth status and route to /app or /app/auth
+          const { data: { session } } = await supabase.auth.getSession();
+          
+          if (session) {
+            navigate('/app', { replace: true });
+          } else {
+            navigate('/app/auth', { replace: true });
+          }
         } else {
-          navigate('/app/auth', { replace: true });
+          // Web: Redirect to website landing page
+          navigate('/home', { replace: true });
         }
-      } else {
-        // Web: Redirect to website landing page
+      } catch (error) {
+        // Fallback: if Capacitor fails to load, assume web
+        console.log('Capacitor not available, assuming web environment');
         navigate('/home', { replace: true });
       }
       

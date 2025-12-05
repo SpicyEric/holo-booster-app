@@ -24,7 +24,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Json } from '@/integrations/supabase/types';
 
 interface Segment {
   type: 'all' | 'last_stamped_days' | 'not_stamped_days' | 'stamped_between';
