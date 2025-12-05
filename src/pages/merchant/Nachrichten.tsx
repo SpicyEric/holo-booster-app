@@ -6,7 +6,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
-import { Loader2, Plus, MessageSquare, Gift, Trash2, Edit2, Send, Users, Clock, UserPlus } from 'lucide-react';
+import { Loader2, Plus, MessageSquare, Gift, Trash2, Edit2, Send, Users, Clock, UserPlus, Mail, Sparkles, Save } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import {
