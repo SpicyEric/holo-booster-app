@@ -390,18 +390,26 @@ const MeinGeschaeft = () => {
 
   // Reward image upload handler
   const handleRewardImageUpload = async (file: File) => {
-    if (!customerId) return;
+    if (!customerId) {
+      toast.error("Kein Kunde zugewiesen");
+      return;
+    }
     
     setUploadingRewardImage(true);
     try {
       const fileExt = file.name.split('.').pop();
       const fileName = `${customerId}/reward_${Date.now()}.${fileExt}`;
       
+      console.log("Uploading reward image:", fileName);
+      
       const { error: uploadError } = await supabase.storage
         .from("customer-assets")
         .upload(fileName, file, { upsert: true });
       
-      if (uploadError) throw uploadError;
+      if (uploadError) {
+        console.error("Upload error:", uploadError);
+        throw uploadError;
+      }
       
       const { data: { publicUrl } } = supabase.storage
         .from("customer-assets")
@@ -410,7 +418,8 @@ const MeinGeschaeft = () => {
       setRewardForm(prev => ({ ...prev, image_url: publicUrl }));
       toast.success("Bild hochgeladen");
     } catch (error: any) {
-      toast.error("Fehler beim Hochladen");
+      console.error("Reward image upload error:", error);
+      toast.error(`Fehler beim Hochladen: ${error?.message || 'Unbekannter Fehler'}`);
     } finally {
       setUploadingRewardImage(false);
     }
