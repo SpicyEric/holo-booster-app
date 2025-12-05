@@ -27,13 +27,14 @@ const RichTextEditor = ({ value, onChange, placeholder, rows = 3 }: RichTextEdit
   const insertAtCursor = (text: string) => {
     const textarea = textareaRef.current;
     if (!textarea) {
-      onChange(value + text);
+      onChange((value || '') + text);
       return;
     }
 
     const start = textarea.selectionStart;
     const end = textarea.selectionEnd;
-    const newValue = value.substring(0, start) + text + value.substring(end);
+    const currentValue = value || '';
+    const newValue = currentValue.substring(0, start) + text + currentValue.substring(end);
     onChange(newValue);
 
     setTimeout(() => {
@@ -48,10 +49,11 @@ const RichTextEditor = ({ value, onChange, placeholder, rows = 3 }: RichTextEdit
 
     const start = textarea.selectionStart;
     const end = textarea.selectionEnd;
-    const selectedText = value.substring(start, end);
+    const currentValue = value || '';
+    const selectedText = currentValue.substring(start, end);
 
     if (selectedText) {
-      const newValue = value.substring(0, start) + prefix + selectedText + suffix + value.substring(end);
+      const newValue = currentValue.substring(0, start) + prefix + selectedText + suffix + currentValue.substring(end);
       onChange(newValue);
       setTimeout(() => {
         textarea.focus();
@@ -59,7 +61,7 @@ const RichTextEditor = ({ value, onChange, placeholder, rows = 3 }: RichTextEdit
       }, 0);
     } else {
       const placeholderText = prefix === '**' ? 'fetter Text' : 'kursiver Text';
-      const newValue = value.substring(0, start) + prefix + placeholderText + suffix + value.substring(end);
+      const newValue = currentValue.substring(0, start) + prefix + placeholderText + suffix + currentValue.substring(end);
       onChange(newValue);
       setTimeout(() => {
         textarea.focus();
@@ -148,7 +150,7 @@ const RichTextEditor = ({ value, onChange, placeholder, rows = 3 }: RichTextEdit
       {/* Textarea */}
       <Textarea
         ref={textareaRef}
-        value={value}
+        value={value || ''}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         rows={rows}
