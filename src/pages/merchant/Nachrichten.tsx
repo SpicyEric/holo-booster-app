@@ -407,72 +407,9 @@ const Nachrichten = () => {
       <div className="max-w-4xl mx-auto p-6 sm:p-8 space-y-8">
         {/* Header */}
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Nachrichten & Angebote</h1>
+          <h1 className="text-2xl font-bold text-gray-900">Nachrichten</h1>
           <p className="text-gray-500 mt-1">Erreichen Sie Ihre Kunden gezielt</p>
         </div>
-
-        {/* Neukundenangebot */}
-        <Card className="rounded-2xl shadow-sm border-0 bg-primary/5">
-          <CardHeader className="flex flex-row items-center justify-between pb-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-                <UserPlus className="h-5 w-5 text-primary" />
-              </div>
-              <div>
-                <CardTitle className="text-lg font-semibold text-gray-900">Neukundenangebot</CardTitle>
-                <CardDescription className="text-gray-500">
-                  Locken Sie neue Kunden an, die noch nie bei Ihnen waren
-                </CardDescription>
-              </div>
-            </div>
-            <Button 
-              variant={newCustomerOffer ? "outline" : "default"}
-              onClick={() => setShowNewCustomerOfferDialog(true)}
-              className="rounded-xl"
-            >
-              {newCustomerOffer ? (
-                <>
-                  <Edit2 className="h-4 w-4 mr-2" />
-                  Bearbeiten
-                </>
-              ) : (
-                <>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Erstellen
-                </>
-              )}
-            </Button>
-          </CardHeader>
-          <CardContent>
-            {newCustomerOffer ? (
-              <div className="flex items-center justify-between p-4 bg-white rounded-xl border border-gray-100">
-                <div>
-                  <div className="flex items-center gap-2 mb-1">
-                    <p className="font-semibold text-gray-900">{newCustomerOffer.title}</p>
-                    <Badge variant={newCustomerOffer.is_active ? "default" : "secondary"} className="rounded-full">
-                      {newCustomerOffer.is_active ? 'Aktiv' : 'Inaktiv'}
-                    </Badge>
-                  </div>
-                  {newCustomerOffer.description && (
-                    <p className="text-sm text-gray-500">{newCustomerOffer.description}</p>
-                  )}
-                  {(newCustomerOffer.bonus_stamps ?? 0) > 0 && (
-                    <p className="text-sm text-primary mt-1 font-medium">
-                      +{newCustomerOffer.bonus_stamps} Bonus-Punkte für Neukunden
-                    </p>
-                  )}
-                </div>
-                <Button variant="ghost" size="sm" onClick={handleDeleteNewCustomerOffer} className="rounded-lg">
-                  <Trash2 className="h-4 w-4 text-destructive" />
-                </Button>
-              </div>
-            ) : (
-              <p className="text-gray-500 text-center py-6">
-                Kein Neukundenangebot aktiv. Erstellen Sie eines, um neue Kunden anzulocken!
-              </p>
-            )}
-          </CardContent>
-        </Card>
 
         {/* Nachrichten */}
         <Card className="rounded-2xl shadow-sm border-0 bg-gray-50/80">

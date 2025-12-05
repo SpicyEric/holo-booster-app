@@ -148,7 +148,9 @@ const MeinGeschaeft = () => {
     title: "",
     description: "",
     points_required: 10,
+    image_url: "",
   });
+  const [uploadingRewardImage, setUploadingRewardImage] = useState(false);
 
   // New Customer Offer
   const [newCustomerOffer, setNewCustomerOffer] = useState<NewCustomerOffer | null>(null);
@@ -386,6 +388,34 @@ const MeinGeschaeft = () => {
     }
   };
 
+  // Reward image upload handler
+  const handleRewardImageUpload = async (file: File) => {
+    if (!customerId) return;
+    
+    setUploadingRewardImage(true);
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${customerId}/reward_${Date.now()}.${fileExt}`;
+      
+      const { error: uploadError } = await supabase.storage
+        .from("customer-assets")
+        .upload(fileName, file, { upsert: true });
+      
+      if (uploadError) throw uploadError;
+      
+      const { data: { publicUrl } } = supabase.storage
+        .from("customer-assets")
+        .getPublicUrl(fileName);
+      
+      setRewardForm(prev => ({ ...prev, image_url: publicUrl }));
+      toast.success("Bild hochgeladen");
+    } catch (error: any) {
+      toast.error("Fehler beim Hochladen");
+    } finally {
+      setUploadingRewardImage(false);
+    }
+  };
+
   // Rewards handlers
   const handleSaveReward = async () => {
     if (!customerId || !rewardForm.title) {
@@ -402,6 +432,7 @@ const MeinGeschaeft = () => {
             title: rewardForm.title,
             description: rewardForm.description || null,
             points_required: rewardForm.points_required,
+            image_url: rewardForm.image_url || null,
           })
           .eq("id", editingReward.id);
         if (error) throw error;
@@ -414,6 +445,7 @@ const MeinGeschaeft = () => {
             title: rewardForm.title,
             description: rewardForm.description || null,
             points_required: rewardForm.points_required,
+            image_url: rewardForm.image_url || null,
             is_active: true,
           });
         if (error) throw error;
@@ -421,7 +453,7 @@ const MeinGeschaeft = () => {
       }
       setShowRewardDialog(false);
       setEditingReward(null);
-      setRewardForm({ title: "", description: "", points_required: 10 });
+      setRewardForm({ title: "", description: "", points_required: 10, image_url: "" });
       loadData();
     } catch (error) {
       toast.error("Fehler beim Speichern");
@@ -738,7 +770,7 @@ const MeinGeschaeft = () => {
                         <CardDescription className="text-gray-500">Prämien für Ihre Kunden</CardDescription>
                       </div>
                     </div>
-                    <Button onClick={() => { setEditingReward(null); setRewardForm({ title: "", description: "", points_required: 10 }); setShowRewardDialog(true); }} className="rounded-xl">
+                    <Button onClick={() => { setEditingReward(null); setRewardForm({ title: "", description: "", points_required: 10, image_url: "" }); setShowRewardDialog(true); }} className="rounded-xl">
                       <Plus className="h-4 w-4 mr-2" />
                       Neue Prämie
                     </Button>
@@ -750,13 +782,22 @@ const MeinGeschaeft = () => {
                       <div className="space-y-3">
                         {rewards.map((reward) => (
                           <div key={reward.id} className="flex items-center justify-between p-4 bg-white rounded-xl border border-gray-100">
-                            <div>
-                              <p className="font-semibold text-gray-900">{reward.title}</p>
-                              {reward.description && <p className="text-sm text-gray-500">{reward.description}</p>}
-                              <Badge variant="secondary" className="rounded-full mt-1">{reward.points_required} Punkte</Badge>
+                            <div className="flex items-center gap-3">
+                              {reward.image_url ? (
+                                <img src={reward.image_url} alt={reward.title} className="w-12 h-12 rounded-xl object-cover" />
+                              ) : (
+                                <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
+                                  <Gift className="h-6 w-6 text-primary" />
+                                </div>
+                              )}
+                              <div>
+                                <p className="font-semibold text-gray-900">{reward.title}</p>
+                                {reward.description && <p className="text-sm text-gray-500">{reward.description}</p>}
+                                <Badge variant="secondary" className="rounded-full mt-1">{reward.points_required} Punkte</Badge>
+                              </div>
                             </div>
                             <div className="flex items-center gap-2">
-                              <Button variant="ghost" size="sm" onClick={() => { setEditingReward(reward); setRewardForm({ title: reward.title, description: reward.description || "", points_required: reward.points_required }); setShowRewardDialog(true); }} className="rounded-lg">
+                              <Button variant="ghost" size="sm" onClick={() => { setEditingReward(reward); setRewardForm({ title: reward.title, description: reward.description || "", points_required: reward.points_required, image_url: reward.image_url || "" }); setShowRewardDialog(true); }} className="rounded-lg">
                                 <Edit2 className="h-4 w-4" />
                               </Button>
                               <Button variant="ghost" size="sm" onClick={() => handleDeleteReward(reward.id)} className="rounded-lg">
@@ -1126,6 +1167,33 @@ const MeinGeschaeft = () => {
               <div>
                 <Label>Benötigte Punkte</Label>
                 <Input type="number" min={1} value={rewardForm.points_required} onChange={(e) => setRewardForm(f => ({ ...f, points_required: parseInt(e.target.value) || 10 }))} className="rounded-xl w-32" />
+              </div>
+              <div>
+                <Label>Bild (optional)</Label>
+                <div className="flex items-center gap-3 mt-1">
+                  {rewardForm.image_url ? (
+                    <div className="flex items-center gap-3">
+                      <img src={rewardForm.image_url} alt="Prämie" className="w-16 h-16 rounded-xl object-cover" />
+                      <div className="flex flex-col gap-1">
+                        <label className="cursor-pointer text-sm text-primary hover:underline">
+                          <input type="file" accept="image/*" className="hidden" onChange={(e) => { const file = e.target.files?.[0]; if (file) handleRewardImageUpload(file); }} />
+                          {uploadingRewardImage ? "Hochladen..." : "Ändern"}
+                        </label>
+                        <button type="button" onClick={() => setRewardForm(f => ({ ...f, image_url: "" }))} className="text-sm text-destructive hover:underline text-left">
+                          Entfernen
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="border-2 border-dashed border-gray-200 rounded-xl p-4 text-center hover:border-primary/50 transition-colors flex-1">
+                      <label className="cursor-pointer block">
+                        <input type="file" accept="image/*" className="hidden" onChange={(e) => { const file = e.target.files?.[0]; if (file) handleRewardImageUpload(file); }} />
+                        <Gift className="w-6 h-6 mx-auto text-gray-400 mb-1" />
+                        <span className="text-sm text-gray-500">{uploadingRewardImage ? "Hochladen..." : "Bild hochladen"}</span>
+                      </label>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
             <DialogFooter>
