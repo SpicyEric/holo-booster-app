@@ -32,6 +32,7 @@ import MeinKonto from "./pages/merchant/MeinKonto";
 import Stempel from "./pages/merchant/Stempel";
 import Zahlungen from "./pages/merchant/Zahlungen";
 import Nachrichten from "./pages/merchant/Nachrichten";
+import Automatisierungen from "./pages/merchant/Automatisierungen";
 import PartnerDashboard from "./pages/partner/Dashboard";
 import Scan from "./pages/Scan";
 import NotFound from "./pages/NotFound";
@@ -97,6 +98,7 @@ const App = () => (
             <Route path="google-bewertungen" element={<GoogleBewertungen />} />
             <Route path="zahlungen" element={<Zahlungen />} />
             <Route path="nachrichten" element={<Nachrichten />} />
+            <Route path="automatisierungen" element={<Automatisierungen />} />
             <Route path="konto" element={<MeinKonto />} />
             {/* Legacy redirect */}
             <Route path="stempelkarte" element={<Stempelkarte />} />

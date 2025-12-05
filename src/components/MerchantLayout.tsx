@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { signOut } from "@/lib/auth";
 import { useNavigate, useLocation, Outlet } from "react-router-dom";
 import { toast } from "sonner";
-import { LogOut, Home, Building2, Star, CreditCard, MessageSquare, User, Menu, Stamp } from "lucide-react";
+import { LogOut, Home, Building2, Star, CreditCard, MessageSquare, User, Menu, Stamp, Sparkles } from "lucide-react";
 import eloyoLogo from '@/assets/eloyo-logo.png';
 import Particles from "@/components/Particles";
 import {
@@ -35,6 +35,7 @@ const MerchantLayout = () => {
     { path: '/kunde/google-bewertungen', label: 'Google-Bewertungen', icon: Star },
     { path: '/kunde/zahlungen', label: 'Zahlungen', icon: CreditCard },
     { path: '/kunde/nachrichten', label: 'Nachrichten & Angebote', icon: MessageSquare },
+    { path: '/kunde/automatisierungen', label: 'Automatisierungen', icon: Sparkles },
     { path: '/kunde/konto', label: 'Mein Konto', icon: User },
   ];
 
