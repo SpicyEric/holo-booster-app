@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Store, Gift, MessageSquare, MapPin } from 'lucide-react';
+import { Store, Gift, MessageSquare } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
@@ -8,7 +8,6 @@ import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { MainLayout } from '@/app/components/layout/MainLayout';
 import { NewCustomerOfferDialog } from '@/app/components/NewCustomerOfferDialog';
-import confetti from 'canvas-confetti';
 
 interface UserStampCard {
   id: string;
@@ -60,8 +59,6 @@ export const AppHome = () => {
   // Dialog states
   const [selectedOffer, setSelectedOffer] = useState<NewCustomerOffer | null>(null);
   const [offerDialogOpen, setOfferDialogOpen] = useState(false);
-  const [isRedeeming, setIsRedeeming] = useState(false);
-  const [redemptionSuccess, setRedemptionSuccess] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -150,23 +147,14 @@ export const AppHome = () => {
 
   const handleOfferClick = (offer: NewCustomerOffer) => {
     setSelectedOffer(offer);
-    setIsRedeeming(false);
-    setRedemptionSuccess(false);
     setOfferDialogOpen(true);
   };
 
-  const handleStartRedemption = () => {
-    setIsRedeeming(true);
-  };
-
   const handleRedemptionComplete = () => {
-    setRedemptionSuccess(true);
-    // Remove the offer from the list
+    // Remove the offer from the list and reload data
     if (selectedOffer) {
       setNewCustomerOffers(prev => prev.filter(o => o.id !== selectedOffer.id));
     }
-    confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
-    // Reload data to update stamp cards
     loadData();
   };
 
@@ -332,10 +320,10 @@ export const AppHome = () => {
       </div>
 
       {/* New Customer Offer Dialog */}
-      {selectedOffer && (
+      {selectedOffer && selectedOffer.customer && (
         <NewCustomerOfferDialog
           offer={selectedOffer}
-          merchant={selectedOffer.customer ? {
+          merchant={{
             name: selectedOffer.customer.name,
             company_name: selectedOffer.customer.company_name,
             logo_url: selectedOffer.customer.logo_url,
@@ -345,19 +333,10 @@ export const AppHome = () => {
             city: selectedOffer.customer.city,
             latitude: selectedOffer.customer.latitude,
             longitude: selectedOffer.customer.longitude,
-          } : null}
-          open={offerDialogOpen}
-          onOpenChange={(open) => {
-            setOfferDialogOpen(open);
-            if (!open) {
-              setIsRedeeming(false);
-              setRedemptionSuccess(false);
-            }
           }}
+          open={offerDialogOpen}
+          onOpenChange={setOfferDialogOpen}
           onRedemptionComplete={handleRedemptionComplete}
-          isRedeeming={isRedeeming}
-          redemptionSuccess={redemptionSuccess}
-          onStartRedemption={handleStartRedemption}
         />
       )}
     </MainLayout>

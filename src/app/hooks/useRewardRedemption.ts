@@ -1,0 +1,248 @@
+import { useState, useCallback } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { nfcService, NfcReadResult } from '@/app/services/nfcService';
+import { toast } from 'sonner';
+
+interface UseRewardRedemptionProps {
+  userId: string | undefined;
+  merchantId: string;
+  onSuccess: (pointsChange: number) => void;
+}
+
+interface RedemptionState {
+  isRedeeming: boolean;
+  isScanning: boolean;
+  redemptionSuccess: boolean;
+  error: string | null;
+}
+
+export const useRewardRedemption = ({ userId, merchantId, onSuccess }: UseRewardRedemptionProps) => {
+  const [state, setState] = useState<RedemptionState>({
+    isRedeeming: false,
+    isScanning: false,
+    redemptionSuccess: false,
+    error: null,
+  });
+
+  const validateNfcChip = async (chipData: string): Promise<boolean> => {
+    // chipData format: "BOXID:farbe" (e.g., "T3K8M-N2P5R-W7Y9Q:grün")
+    const parts = chipData.split(':');
+    if (parts.length !== 2) {
+      return false;
+    }
+
+    const [boxId, color] = parts;
+
+    // Check if this NFC chip belongs to the correct merchant
+    const { data: nfcChip, error } = await supabase
+      .from('nfc_chips')
+      .select('merchant_customer_id, is_active')
+      .eq('chip_uid', chipData)
+      .maybeSingle();
+
+    if (error || !nfcChip) {
+      // Try looking up by box_id pattern
+      const { data: box } = await supabase
+        .from('boxes')
+        .select('id')
+        .eq('box_id', boxId)
+        .maybeSingle();
+
+      if (box) {
+        const { data: customerBox } = await supabase
+          .from('customer_boxes')
+          .select('customer_id')
+          .eq('box_id', box.id)
+          .maybeSingle();
+
+        if (customerBox && customerBox.customer_id === merchantId) {
+          return true;
+        }
+      }
+      return false;
+    }
+
+    return nfcChip.merchant_customer_id === merchantId && nfcChip.is_active;
+  };
+
+  const redeemReward = async (rewardId: string, pointsRequired: number): Promise<boolean> => {
+    if (!userId) return false;
+
+    try {
+      // Get or create loyalty account
+      let { data: loyaltyAccount } = await supabase
+        .from('loyalty_accounts')
+        .select('id, current_points_balance')
+        .eq('user_id', userId)
+        .eq('merchant_customer_id', merchantId)
+        .maybeSingle();
+
+      if (!loyaltyAccount) {
+        return false; // No loyalty account means no points
+      }
+
+      if ((loyaltyAccount.current_points_balance || 0) < pointsRequired) {
+        setState(prev => ({ ...prev, error: 'Nicht genügend Punkte' }));
+        return false;
+      }
+
+      // Deduct points
+      const newBalance = (loyaltyAccount.current_points_balance || 0) - pointsRequired;
+      await supabase
+        .from('loyalty_accounts')
+        .update({ current_points_balance: newBalance })
+        .eq('id', loyaltyAccount.id);
+
+      // Also update user_stamp_cards for consistency
+      await supabase
+        .from('user_stamp_cards')
+        .update({ current_points: newBalance })
+        .eq('user_id', userId)
+        .eq('merchant_customer_id', merchantId);
+
+      // Record the redemption
+      await supabase
+        .from('reward_redemptions')
+        .insert({
+          user_id: userId,
+          reward_id: rewardId,
+          loyalty_account_id: loyaltyAccount.id,
+          merchant_customer_id: merchantId,
+          points_spent: pointsRequired,
+          status: 'completed',
+        });
+
+      // Record transaction
+      await supabase
+        .from('point_transactions')
+        .insert({
+          loyalty_account_id: loyaltyAccount.id,
+          merchant_customer_id: merchantId,
+          points_change: -pointsRequired,
+          transaction_type: 'redemption',
+          description: 'Prämie eingelöst',
+        });
+
+      return true;
+    } catch (error) {
+      console.error('Error redeeming reward:', error);
+      setState(prev => ({ ...prev, error: 'Fehler beim Einlösen' }));
+      return false;
+    }
+  };
+
+  const startRedemption = useCallback(async (rewardId: string, pointsRequired: number) => {
+    setState({
+      isRedeeming: true,
+      isScanning: true,
+      redemptionSuccess: false,
+      error: null,
+    });
+
+    const nfcSupported = await nfcService.isSupported();
+    
+    if (!nfcSupported) {
+      // For web preview/testing, simulate successful scan after 3 seconds
+      if (!nfcService.isNativeApp()) {
+        toast.info('NFC nicht verfügbar - Simuliere Scan für Test...');
+        setTimeout(async () => {
+          const success = await redeemReward(rewardId, pointsRequired);
+          if (success) {
+            setState({
+              isRedeeming: true,
+              isScanning: false,
+              redemptionSuccess: true,
+              error: null,
+            });
+            onSuccess(-pointsRequired);
+          } else {
+            setState(prev => ({
+              ...prev,
+              isScanning: false,
+              error: prev.error || 'Einlösung fehlgeschlagen',
+            }));
+          }
+        }, 2000);
+        return;
+      }
+      
+      setState({
+        isRedeeming: false,
+        isScanning: false,
+        redemptionSuccess: false,
+        error: 'NFC wird auf diesem Gerät nicht unterstützt',
+      });
+      return;
+    }
+
+    // Start NFC scan
+    await nfcService.startScan(async (result: NfcReadResult) => {
+      if (!result.success) {
+        setState(prev => ({
+          ...prev,
+          isScanning: false,
+          error: result.error || 'NFC Scan fehlgeschlagen',
+        }));
+        return;
+      }
+
+      // Validate the NFC chip belongs to the correct merchant
+      const isValid = await validateNfcChip(result.chipData);
+      
+      if (!isValid) {
+        setState(prev => ({
+          ...prev,
+          isScanning: false,
+          error: 'Dieser Stempel gehört nicht zu diesem Geschäft',
+        }));
+        toast.error('Falscher Stempel! Bitte verwende den Stempel von diesem Geschäft.');
+        return;
+      }
+
+      // Process the redemption
+      const success = await redeemReward(rewardId, pointsRequired);
+      
+      if (success) {
+        setState({
+          isRedeeming: true,
+          isScanning: false,
+          redemptionSuccess: true,
+          error: null,
+        });
+        onSuccess(-pointsRequired);
+      } else {
+        setState(prev => ({
+          ...prev,
+          isScanning: false,
+          error: prev.error || 'Einlösung fehlgeschlagen',
+        }));
+      }
+    });
+  }, [userId, merchantId, onSuccess]);
+
+  const cancelRedemption = useCallback(() => {
+    nfcService.stopScan();
+    setState({
+      isRedeeming: false,
+      isScanning: false,
+      redemptionSuccess: false,
+      error: null,
+    });
+  }, []);
+
+  const reset = useCallback(() => {
+    setState({
+      isRedeeming: false,
+      isScanning: false,
+      redemptionSuccess: false,
+      error: null,
+    });
+  }, []);
+
+  return {
+    ...state,
+    startRedemption,
+    cancelRedemption,
+    reset,
+  };
+};
