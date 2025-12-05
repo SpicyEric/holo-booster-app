@@ -70,6 +70,13 @@ const MerchantPreviewLive = ({
   const formatOpeningHours = (hours?: OpeningHours) => {
     if (!hours || typeof hours !== 'object') return null;
     
+    // Check if any opening hours are actually configured (not all closed or empty)
+    const hasConfiguredHours = Object.values(hours).some(h => 
+      h && !h.closed && h.open && h.close && h.open !== '00:00' && h.close !== '00:00'
+    );
+    
+    if (!hasConfiguredHours) return null;
+    
     const days = ['Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag', 'Sonntag'];
     const dayKeys = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
     
@@ -79,6 +86,19 @@ const MerchantPreviewLive = ({
         return { day: days[i], time: 'Geschlossen' };
       }
       return { day: days[i], time: `${dayHours.open} - ${dayHours.close}` };
+    });
+  };
+
+  // Format description with bold and line breaks
+  const formatDescription = (text: string) => {
+    if (!text) return null;
+    // Convert **text** to bold spans
+    const parts = text.split(/(\*\*[^*]+\*\*)/g);
+    return parts.map((part, i) => {
+      if (part.startsWith('**') && part.endsWith('**')) {
+        return <strong key={i}>{part.slice(2, -2)}</strong>;
+      }
+      return <span key={i}>{part}</span>;
     });
   };
 
@@ -181,7 +201,9 @@ const MerchantPreviewLive = ({
             {data.description && (
               <Card>
                 <CardContent className="p-3">
-                  <p className="text-[10px] text-muted-foreground">{data.description}</p>
+                  <p className="text-[10px] text-muted-foreground whitespace-pre-wrap">
+                    {formatDescription(data.description)}
+                  </p>
                 </CardContent>
               </Card>
             )}

@@ -28,6 +28,7 @@ import {
 } from "@/components/ui/dialog";
 import PhoneFrame from "@/components/PhoneFrame";
 import MerchantPreviewLive from "@/components/merchant/MerchantPreviewLive";
+import RichTextEditor from "@/components/merchant/RichTextEditor";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -910,7 +911,12 @@ const MeinGeschaeft = () => {
                     </div>
                     <div>
                       <Label>Beschreibung</Label>
-                      <Textarea value={formData.description} onChange={(e) => handleInputChange("description", e.target.value)} placeholder="Erzähle etwas über dein Geschäft..." rows={3} className="rounded-xl" />
+                      <RichTextEditor
+                        value={formData.description}
+                        onChange={(value) => handleInputChange("description", value)}
+                        placeholder="Erzähle etwas über dein Geschäft..."
+                        rows={4}
+                      />
                     </div>
                   </div>
                 </Card>
