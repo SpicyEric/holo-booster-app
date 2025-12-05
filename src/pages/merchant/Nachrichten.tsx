@@ -119,7 +119,6 @@ const Nachrichten = () => {
 
       setCustomerId(assignment.customer_id);
 
-      // Load messages
       const { data: msgData } = await supabase
         .from('app_messages')
         .select('*')
@@ -141,7 +140,6 @@ const Nachrichten = () => {
         setMessages(typedMessages);
       }
 
-      // Load offers for attachment
       const { data: offerData } = await supabase
         .from('offers')
         .select('id, title, description')
@@ -152,7 +150,6 @@ const Nachrichten = () => {
         setOffers(offerData);
       }
 
-      // Load new customer offer
       const { data: ncoData } = await supabase
         .from('new_customer_offers')
         .select('*')
@@ -180,7 +177,6 @@ const Nachrichten = () => {
     
     setEstimatingRecipients(true);
     try {
-      // Call edge function to estimate recipients
       const { data, error } = await supabase.functions.invoke('estimate-campaign', {
         body: {
           segment: {
@@ -220,7 +216,6 @@ const Nachrichten = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
-      // Create offer if attached
       let offerId: string | null = null;
       if (messageForm.attach_offer && messageForm.offer_title) {
         const { data: offerData, error: offerError } = await supabase
@@ -230,7 +225,7 @@ const Nachrichten = () => {
             title: messageForm.offer_title,
             description: messageForm.offer_description || null,
             is_active: true,
-            show_in_storefront: false // Only visible via message
+            show_in_storefront: false
           })
           .select('id')
           .single();
@@ -311,7 +306,6 @@ const Nachrichten = () => {
     setSaving(true);
     try {
       if (newCustomerOffer) {
-        // Update existing
         const { error } = await supabase
           .from('new_customer_offers')
           .update({
@@ -324,7 +318,6 @@ const Nachrichten = () => {
         if (error) throw error;
         toast.success('Neukundenangebot aktualisiert');
       } else {
-        // Create new
         const { error } = await supabase
           .from('new_customer_offers')
           .insert({
@@ -402,335 +395,355 @@ const Nachrichten = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
+      <div className="min-h-screen bg-white flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
   }
 
   return (
-    <div className="max-w-4xl mx-auto p-6 space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold">Nachrichten & Angebote</h1>
-        <p className="text-muted-foreground">Erreichen Sie Ihre Kunden gezielt</p>
-      </div>
+    <div className="min-h-screen bg-white">
+      <div className="max-w-4xl mx-auto p-6 sm:p-8 space-y-8">
+        {/* Header */}
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Nachrichten & Angebote</h1>
+          <p className="text-gray-500 mt-1">Erreichen Sie Ihre Kunden gezielt</p>
+        </div>
 
-      {/* Neukundenangebot */}
-      <Card className="border-2 border-dashed border-primary/30 bg-primary/5">
-        <CardHeader className="flex flex-row items-center justify-between">
-          <div>
-            <CardTitle className="flex items-center gap-2">
-              <UserPlus className="h-5 w-5 text-primary" />
-              Neukundenangebot
-            </CardTitle>
-            <CardDescription>
-              Locken Sie neue Kunden an, die noch nie bei Ihnen waren
-            </CardDescription>
-          </div>
-          <Button 
-            variant={newCustomerOffer ? "outline" : "default"}
-            onClick={() => setShowNewCustomerOfferDialog(true)}
-          >
-            {newCustomerOffer ? (
-              <>
-                <Edit2 className="h-4 w-4 mr-2" />
-                Bearbeiten
-              </>
-            ) : (
-              <>
-                <Plus className="h-4 w-4 mr-2" />
-                Erstellen
-              </>
-            )}
-          </Button>
-        </CardHeader>
-        <CardContent>
-          {newCustomerOffer ? (
-            <div className="flex items-center justify-between p-4 bg-background rounded-lg border">
+        {/* Neukundenangebot */}
+        <Card className="rounded-2xl shadow-sm border-0 bg-primary/5">
+          <CardHeader className="flex flex-row items-center justify-between pb-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                <UserPlus className="h-5 w-5 text-primary" />
+              </div>
               <div>
-                <div className="flex items-center gap-2 mb-1">
-                  <p className="font-semibold">{newCustomerOffer.title}</p>
-                  <Badge variant={newCustomerOffer.is_active ? "default" : "secondary"}>
-                    {newCustomerOffer.is_active ? 'Aktiv' : 'Inaktiv'}
-                  </Badge>
-                </div>
-                {newCustomerOffer.description && (
-                  <p className="text-sm text-muted-foreground">{newCustomerOffer.description}</p>
-                )}
-                {(newCustomerOffer.bonus_stamps ?? 0) > 0 && (
-                  <p className="text-sm text-primary mt-1">
-                    +{newCustomerOffer.bonus_stamps} Bonus-Punkte für Neukunden
-                  </p>
-                )}
+                <CardTitle className="text-lg font-semibold text-gray-900">Neukundenangebot</CardTitle>
+                <CardDescription className="text-gray-500">
+                  Locken Sie neue Kunden an, die noch nie bei Ihnen waren
+                </CardDescription>
               </div>
-              <Button variant="ghost" size="sm" onClick={handleDeleteNewCustomerOffer}>
-                <Trash2 className="h-4 w-4 text-destructive" />
-              </Button>
             </div>
-          ) : (
-            <p className="text-muted-foreground text-center py-4">
-              Kein Neukundenangebot aktiv. Erstellen Sie eines, um neue Kunden anzulocken!
-            </p>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Nachrichten */}
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <div>
-            <CardTitle className="flex items-center gap-2">
-              <MessageSquare className="h-5 w-5" />
-              Nachrichten
-            </CardTitle>
-            <CardDescription>
-              Senden Sie gezielte Nachrichten an Ihre Kunden
-            </CardDescription>
-          </div>
-          <Button onClick={() => { 
-            setEditingMessage(null); 
-            resetMessageForm();
-            setShowMessageDialog(true); 
-          }}>
-            <Plus className="h-4 w-4 mr-2" />
-            Neue Nachricht
-          </Button>
-        </CardHeader>
-        <CardContent>
-          {messages.length === 0 ? (
-            <p className="text-muted-foreground text-center py-4">Noch keine Nachrichten gesendet</p>
-          ) : (
-            <div className="space-y-3">
-              {messages.map((msg) => (
-                <div key={msg.id} className="flex items-center justify-between p-4 border rounded-lg">
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2">
-                      <p className="font-medium">{msg.title}</p>
-                      {msg.offer_id && <Badge variant="outline"><Gift className="h-3 w-3 mr-1" />Mit Angebot</Badge>}
-                    </div>
-                    <p className="text-sm text-muted-foreground line-clamp-1">{msg.body}</p>
-                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                      <Badge variant="secondary" className="text-xs">
-                        <Users className="h-3 w-3 mr-1" />
-                        {getSegmentLabel(msg.segment)}
-                      </Badge>
-                      {msg.recipient_count !== null && msg.recipient_count > 0 && (
-                        <span>{msg.recipient_count} Empfänger</span>
-                      )}
-                      {msg.sent_at && (
-                        <span className="flex items-center gap-1">
-                          <Clock className="h-3 w-3" />
-                          {new Date(msg.sent_at).toLocaleDateString('de-DE')}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Button variant="ghost" size="sm" onClick={() => openEditMessage(msg)}>
-                      <Edit2 className="h-4 w-4" />
-                    </Button>
-                    <Button variant="ghost" size="sm" onClick={() => handleDeleteMessage(msg.id)}>
-                      <Trash2 className="h-4 w-4 text-destructive" />
-                    </Button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Message Dialog */}
-      <Dialog open={showMessageDialog} onOpenChange={setShowMessageDialog}>
-        <DialogContent className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle>{editingMessage ? 'Nachricht bearbeiten' : 'Neue Nachricht'}</DialogTitle>
-            <DialogDescription>
-              Erreichen Sie Ihre Kunden mit einer gezielten Nachricht
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2">
-            {/* Empfänger-Auswahl */}
-            <div className="p-4 bg-muted/50 rounded-lg space-y-3">
-              <Label className="font-semibold">Empfänger auswählen</Label>
-              <Select 
-                value={messageForm.segment_type}
-                onValueChange={(value: Segment['type']) => setMessageForm({ ...messageForm, segment_type: value })}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {SEGMENT_OPTIONS.map(opt => (
-                    <SelectItem key={opt.value} value={opt.value}>
-                      <div>
-                        <p className="font-medium">{opt.label}</p>
-                        <p className="text-xs text-muted-foreground">{opt.description}</p>
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-
-              {messageForm.segment_type !== 'all' && (
-                <div>
-                  <Label>Zeitraum (Tage)</Label>
-                  <Input
-                    type="number"
-                    min={1}
-                    value={messageForm.segment_value}
-                    onChange={(e) => setMessageForm({ ...messageForm, segment_value: parseInt(e.target.value) || 30 })}
-                    placeholder="z.B. 30"
-                  />
-                </div>
+            <Button 
+              variant={newCustomerOffer ? "outline" : "default"}
+              onClick={() => setShowNewCustomerOfferDialog(true)}
+              className="rounded-xl"
+            >
+              {newCustomerOffer ? (
+                <>
+                  <Edit2 className="h-4 w-4 mr-2" />
+                  Bearbeiten
+                </>
+              ) : (
+                <>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Erstellen
+                </>
               )}
+            </Button>
+          </CardHeader>
+          <CardContent>
+            {newCustomerOffer ? (
+              <div className="flex items-center justify-between p-4 bg-white rounded-xl border border-gray-100">
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <p className="font-semibold text-gray-900">{newCustomerOffer.title}</p>
+                    <Badge variant={newCustomerOffer.is_active ? "default" : "secondary"} className="rounded-full">
+                      {newCustomerOffer.is_active ? 'Aktiv' : 'Inaktiv'}
+                    </Badge>
+                  </div>
+                  {newCustomerOffer.description && (
+                    <p className="text-sm text-gray-500">{newCustomerOffer.description}</p>
+                  )}
+                  {(newCustomerOffer.bonus_stamps ?? 0) > 0 && (
+                    <p className="text-sm text-primary mt-1 font-medium">
+                      +{newCustomerOffer.bonus_stamps} Bonus-Punkte für Neukunden
+                    </p>
+                  )}
+                </div>
+                <Button variant="ghost" size="sm" onClick={handleDeleteNewCustomerOffer} className="rounded-lg">
+                  <Trash2 className="h-4 w-4 text-destructive" />
+                </Button>
+              </div>
+            ) : (
+              <p className="text-gray-500 text-center py-6">
+                Kein Neukundenangebot aktiv. Erstellen Sie eines, um neue Kunden anzulocken!
+              </p>
+            )}
+          </CardContent>
+        </Card>
 
-              <div className="flex items-center gap-2 text-sm">
-                <Users className="h-4 w-4 text-primary" />
-                {estimatingRecipients ? (
-                  <span className="text-muted-foreground">Berechne...</span>
-                ) : estimatedRecipients !== null ? (
-                  <span className="font-medium">~{estimatedRecipients} Empfänger</span>
-                ) : (
-                  <span className="text-muted-foreground">Empfänger werden berechnet</span>
-                )}
+        {/* Nachrichten */}
+        <Card className="rounded-2xl shadow-sm border-0 bg-gray-50/80">
+          <CardHeader className="flex flex-row items-center justify-between pb-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center">
+                <MessageSquare className="h-5 w-5 text-blue-600" />
+              </div>
+              <div>
+                <CardTitle className="text-lg font-semibold text-gray-900">Nachrichten</CardTitle>
+                <CardDescription className="text-gray-500">
+                  Senden Sie gezielte Nachrichten an Ihre Kunden
+                </CardDescription>
               </div>
             </div>
+            <Button onClick={() => { 
+              setEditingMessage(null); 
+              resetMessageForm();
+              setShowMessageDialog(true); 
+            }} className="rounded-xl">
+              <Plus className="h-4 w-4 mr-2" />
+              Neue Nachricht
+            </Button>
+          </CardHeader>
+          <CardContent>
+            {messages.length === 0 ? (
+              <p className="text-gray-500 text-center py-8">Noch keine Nachrichten gesendet</p>
+            ) : (
+              <div className="space-y-3">
+                {messages.map((msg) => (
+                  <div key={msg.id} className="flex items-center justify-between p-4 bg-white rounded-xl border border-gray-100">
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <p className="font-semibold text-gray-900">{msg.title}</p>
+                        {msg.offer_id && (
+                          <Badge variant="outline" className="rounded-full">
+                            <Gift className="h-3 w-3 mr-1" />Mit Angebot
+                          </Badge>
+                        )}
+                      </div>
+                      <p className="text-sm text-gray-500 line-clamp-1">{msg.body}</p>
+                      <div className="flex items-center gap-2 text-xs text-gray-500">
+                        <Badge variant="secondary" className="text-xs rounded-full">
+                          <Users className="h-3 w-3 mr-1" />
+                          {getSegmentLabel(msg.segment)}
+                        </Badge>
+                        {msg.recipient_count !== null && msg.recipient_count > 0 && (
+                          <span>{msg.recipient_count} Empfänger</span>
+                        )}
+                        {msg.sent_at && (
+                          <span className="flex items-center gap-1">
+                            <Clock className="h-3 w-3" />
+                            {new Date(msg.sent_at).toLocaleDateString('de-DE')}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <Button variant="ghost" size="sm" onClick={() => openEditMessage(msg)} className="rounded-lg">
+                        <Edit2 className="h-4 w-4" />
+                      </Button>
+                      <Button variant="ghost" size="sm" onClick={() => handleDeleteMessage(msg.id)} className="rounded-lg">
+                        <Trash2 className="h-4 w-4 text-destructive" />
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
-            <div>
-              <Label>Titel</Label>
-              <Input
-                value={messageForm.title}
-                onChange={(e) => setMessageForm({ ...messageForm, title: e.target.value })}
-                placeholder="z.B. Wir vermissen Sie!"
-              />
-            </div>
+        {/* Message Dialog */}
+        <Dialog open={showMessageDialog} onOpenChange={setShowMessageDialog}>
+          <DialogContent className="max-w-lg rounded-2xl">
+            <DialogHeader>
+              <DialogTitle>{editingMessage ? 'Nachricht bearbeiten' : 'Neue Nachricht'}</DialogTitle>
+              <DialogDescription>
+                Erreichen Sie Ihre Kunden mit einer gezielten Nachricht
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2">
+              {/* Empfänger-Auswahl */}
+              <div className="p-4 bg-gray-50 rounded-xl space-y-3">
+                <Label className="font-semibold text-gray-700">Empfänger auswählen</Label>
+                <Select 
+                  value={messageForm.segment_type}
+                  onValueChange={(value: Segment['type']) => setMessageForm({ ...messageForm, segment_type: value })}
+                >
+                  <SelectTrigger className="rounded-xl">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {SEGMENT_OPTIONS.map(opt => (
+                      <SelectItem key={opt.value} value={opt.value}>
+                        <div>
+                          <p className="font-medium">{opt.label}</p>
+                          <p className="text-xs text-gray-500">{opt.description}</p>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
 
-            <div>
-              <Label>Nachricht</Label>
-              <Textarea
-                value={messageForm.body}
-                onChange={(e) => setMessageForm({ ...messageForm, body: e.target.value })}
-                placeholder="Ihre Nachricht an die Kunden..."
-                rows={4}
-              />
-            </div>
+                {messageForm.segment_type !== 'all' && (
+                  <div>
+                    <Label className="text-gray-700">Zeitraum (Tage)</Label>
+                    <Input
+                      type="number"
+                      min={1}
+                      value={messageForm.segment_value}
+                      onChange={(e) => setMessageForm({ ...messageForm, segment_value: parseInt(e.target.value) || 30 })}
+                      placeholder="z.B. 30"
+                      className="rounded-xl"
+                    />
+                  </div>
+                )}
 
-            {/* Angebot anhängen */}
-            <div className="p-4 border rounded-lg space-y-3">
-              <div className="flex items-center justify-between">
-                <div>
-                  <Label className="font-semibold">Angebot anhängen</Label>
-                  <p className="text-xs text-muted-foreground">Optional: Exklusives Angebot für Empfänger</p>
+                <div className="flex items-center gap-2 text-sm">
+                  <Users className="h-4 w-4 text-primary" />
+                  {estimatingRecipients ? (
+                    <span className="text-gray-500">Berechne...</span>
+                  ) : estimatedRecipients !== null ? (
+                    <span className="font-semibold text-gray-900">~{estimatedRecipients} Empfänger</span>
+                  ) : (
+                    <span className="text-gray-500">Empfänger werden berechnet</span>
+                  )}
                 </div>
-                <Switch
-                  checked={messageForm.attach_offer}
-                  onCheckedChange={(checked) => setMessageForm({ ...messageForm, attach_offer: checked })}
+              </div>
+
+              <div>
+                <Label className="text-gray-700">Titel</Label>
+                <Input
+                  value={messageForm.title}
+                  onChange={(e) => setMessageForm({ ...messageForm, title: e.target.value })}
+                  placeholder="z.B. Wir vermissen Sie!"
+                  className="rounded-xl mt-1"
                 />
               </div>
 
-              {messageForm.attach_offer && (
-                <div className="space-y-3 pt-2 border-t">
+              <div>
+                <Label className="text-gray-700">Nachricht</Label>
+                <Textarea
+                  value={messageForm.body}
+                  onChange={(e) => setMessageForm({ ...messageForm, body: e.target.value })}
+                  placeholder="Ihre Nachricht an die Kunden..."
+                  rows={4}
+                  className="rounded-xl mt-1"
+                />
+              </div>
+
+              {/* Angebot anhängen */}
+              <div className="p-4 bg-gray-50 rounded-xl space-y-3">
+                <div className="flex items-center justify-between">
                   <div>
-                    <Label>Angebots-Titel</Label>
-                    <Input
-                      value={messageForm.offer_title}
-                      onChange={(e) => setMessageForm({ ...messageForm, offer_title: e.target.value })}
-                      placeholder="z.B. 20% Rabatt auf alles"
-                    />
+                    <Label className="font-semibold text-gray-700">Angebot anhängen</Label>
+                    <p className="text-xs text-gray-500">Optional: Exklusives Angebot für Empfänger</p>
                   </div>
-                  <div>
-                    <Label>Beschreibung (optional)</Label>
-                    <Textarea
-                      value={messageForm.offer_description}
-                      onChange={(e) => setMessageForm({ ...messageForm, offer_description: e.target.value })}
-                      placeholder="Details zum Angebot..."
-                      rows={2}
-                    />
-                  </div>
+                  <Switch
+                    checked={messageForm.attach_offer}
+                    onCheckedChange={(checked) => setMessageForm({ ...messageForm, attach_offer: checked })}
+                  />
                 </div>
-              )}
-            </div>
 
-            <div className="flex items-center justify-between">
-              <Label>In App dauerhaft anzeigen</Label>
-              <Switch
-                checked={messageForm.show_in_storefront}
-                onCheckedChange={(checked) => setMessageForm({ ...messageForm, show_in_storefront: checked })}
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowMessageDialog(false)}>Abbrechen</Button>
-            <Button onClick={handleSaveMessage} disabled={saving}>
-              {saving ? (
-                <Loader2 className="h-4 w-4 animate-spin mr-2" />
-              ) : (
-                <Send className="h-4 w-4 mr-2" />
-              )}
-              {editingMessage ? 'Speichern' : 'Nachricht senden'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+                {messageForm.attach_offer && (
+                  <div className="space-y-3 pt-3 border-t border-gray-200">
+                    <div>
+                      <Label className="text-gray-700">Angebots-Titel</Label>
+                      <Input
+                        value={messageForm.offer_title}
+                        onChange={(e) => setMessageForm({ ...messageForm, offer_title: e.target.value })}
+                        placeholder="z.B. 20% Rabatt auf alles"
+                        className="rounded-xl mt-1"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-gray-700">Beschreibung (optional)</Label>
+                      <Textarea
+                        value={messageForm.offer_description}
+                        onChange={(e) => setMessageForm({ ...messageForm, offer_description: e.target.value })}
+                        placeholder="Details zum Angebot..."
+                        rows={2}
+                        className="rounded-xl mt-1"
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
 
-      {/* New Customer Offer Dialog */}
-      <Dialog open={showNewCustomerOfferDialog} onOpenChange={setShowNewCustomerOfferDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{newCustomerOffer ? 'Neukundenangebot bearbeiten' : 'Neukundenangebot erstellen'}</DialogTitle>
-            <DialogDescription>
-              Dieses Angebot sehen nur Kunden, die noch nie bei Ihnen Punkte gesammelt haben
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <Label>Titel *</Label>
-              <Input
-                value={newCustomerOfferForm.title}
-                onChange={(e) => setNewCustomerOfferForm({ ...newCustomerOfferForm, title: e.target.value })}
-                placeholder="z.B. Gratis Kaffee für Neukunden"
-              />
+              <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
+                <Label className="text-gray-700">In App dauerhaft anzeigen</Label>
+                <Switch
+                  checked={messageForm.show_in_storefront}
+                  onCheckedChange={(checked) => setMessageForm({ ...messageForm, show_in_storefront: checked })}
+                />
+              </div>
             </div>
-            <div>
-              <Label>Beschreibung (optional)</Label>
-              <Textarea
-                value={newCustomerOfferForm.description}
-                onChange={(e) => setNewCustomerOfferForm({ ...newCustomerOfferForm, description: e.target.value })}
-                placeholder="z.B. Bei Ihrem ersten Besuch erhalten Sie..."
-                rows={3}
-              />
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setShowMessageDialog(false)} className="rounded-xl">Abbrechen</Button>
+              <Button onClick={handleSaveMessage} disabled={saving} className="rounded-xl">
+                {saving ? (
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                ) : (
+                  <Send className="h-4 w-4 mr-2" />
+                )}
+                {editingMessage ? 'Speichern' : 'Nachricht senden'}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* New Customer Offer Dialog */}
+        <Dialog open={showNewCustomerOfferDialog} onOpenChange={setShowNewCustomerOfferDialog}>
+          <DialogContent className="rounded-2xl">
+            <DialogHeader>
+              <DialogTitle>{newCustomerOffer ? 'Neukundenangebot bearbeiten' : 'Neukundenangebot erstellen'}</DialogTitle>
+              <DialogDescription>
+                Dieses Angebot sehen nur Kunden, die noch nie bei Ihnen Punkte gesammelt haben
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <Label className="text-gray-700">Titel *</Label>
+                <Input
+                  value={newCustomerOfferForm.title}
+                  onChange={(e) => setNewCustomerOfferForm({ ...newCustomerOfferForm, title: e.target.value })}
+                  placeholder="z.B. Gratis Kaffee für Neukunden"
+                  className="rounded-xl mt-1"
+                />
+              </div>
+              <div>
+                <Label className="text-gray-700">Beschreibung (optional)</Label>
+                <Textarea
+                  value={newCustomerOfferForm.description}
+                  onChange={(e) => setNewCustomerOfferForm({ ...newCustomerOfferForm, description: e.target.value })}
+                  placeholder="z.B. Bei Ihrem ersten Besuch erhalten Sie..."
+                  rows={3}
+                  className="rounded-xl mt-1"
+                />
+              </div>
+              <div>
+                <Label className="text-gray-700">Bonus-Punkte für Neukunden</Label>
+                <Input
+                  type="number"
+                  min={0}
+                  value={newCustomerOfferForm.bonus_stamps}
+                  onChange={(e) => setNewCustomerOfferForm({ ...newCustomerOfferForm, bonus_stamps: parseInt(e.target.value) || 0 })}
+                  placeholder="0"
+                  className="rounded-xl mt-1"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Optional: Zusätzliche Punkte beim ersten Stempeln
+                </p>
+              </div>
+              <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
+                <Label className="text-gray-700">Angebot aktiv</Label>
+                <Switch
+                  checked={newCustomerOfferForm.is_active}
+                  onCheckedChange={(checked) => setNewCustomerOfferForm({ ...newCustomerOfferForm, is_active: checked })}
+                />
+              </div>
             </div>
-            <div>
-              <Label>Bonus-Punkte für Neukunden</Label>
-              <Input
-                type="number"
-                min={0}
-                value={newCustomerOfferForm.bonus_stamps}
-                onChange={(e) => setNewCustomerOfferForm({ ...newCustomerOfferForm, bonus_stamps: parseInt(e.target.value) || 0 })}
-                placeholder="0"
-              />
-              <p className="text-xs text-muted-foreground mt-1">
-                Optional: Zusätzliche Punkte beim ersten Stempeln
-              </p>
-            </div>
-            <div className="flex items-center justify-between">
-              <Label>Angebot aktiv</Label>
-              <Switch
-                checked={newCustomerOfferForm.is_active}
-                onCheckedChange={(checked) => setNewCustomerOfferForm({ ...newCustomerOfferForm, is_active: checked })}
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowNewCustomerOfferDialog(false)}>Abbrechen</Button>
-            <Button onClick={handleSaveNewCustomerOffer} disabled={saving}>
-              {saving && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
-              Speichern
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setShowNewCustomerOfferDialog(false)} className="rounded-xl">Abbrechen</Button>
+              <Button onClick={handleSaveNewCustomerOffer} disabled={saving} className="rounded-xl">
+                {saving && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
+                Speichern
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </div>
     </div>
   );
 };

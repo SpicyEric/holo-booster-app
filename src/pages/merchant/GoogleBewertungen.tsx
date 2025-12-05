@@ -21,7 +21,6 @@ const GoogleBewertungen = () => {
       if (!user?.id) return;
       
       try {
-        // Find customer via customer_users link
         const { data: linkData } = await supabase
           .from("customer_users")
           .select("customer_id")
@@ -31,7 +30,6 @@ const GoogleBewertungen = () => {
         if (linkData?.customer_id) {
           setCustomerId(linkData.customer_id);
           
-          // Load customer data
           const { data: customerData, error } = await supabase
             .from("customers")
             .select("id, google_review_url")
@@ -95,129 +93,132 @@ const GoogleBewertungen = () => {
 
   if (loading) {
     return (
-      <div className="max-w-4xl mx-auto p-6 sm:p-8">
-        <div className="flex items-center justify-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-        </div>
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
       </div>
     );
   }
 
   return (
-    <div className="max-w-4xl mx-auto p-6 sm:p-8">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">Google-Bewertungen</h1>
-        <p className="text-muted-foreground">
-          Verwalte deinen Google-Bewertungslink und erhalte mehr Bewertungen von deinen Kunden.
-        </p>
-      </div>
+    <div className="min-h-screen bg-white">
+      <div className="max-w-4xl mx-auto p-6 sm:p-8">
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-2xl font-bold text-gray-900">Google-Bewertungen</h1>
+          <p className="text-gray-500 mt-1">
+            Verwalte deinen Google-Bewertungslink und erhalte mehr Bewertungen von deinen Kunden.
+          </p>
+        </div>
 
-      <div className="grid gap-6">
-        {/* Google Review Link Card */}
-        <Card className="p-6 border-amber-200 bg-amber-50/50">
-          <div className="flex items-start gap-4">
-            <div className="w-12 h-12 rounded-xl bg-amber-100 flex items-center justify-center flex-shrink-0">
-              <Star className="w-6 h-6 text-amber-600 fill-amber-500" />
-            </div>
-            <div className="flex-1">
-              <h3 className="text-lg font-semibold text-amber-800 mb-2">
-                Dein Google-Bewertungslink
-              </h3>
-              <p className="text-sm text-amber-700 mb-4">
-                Dieser Link wird nach dem Stempeln angezeigt, damit Kunden dich direkt bei Google bewerten können. 
-                Mehr Bewertungen bedeuten mehr Sichtbarkeit!
-              </p>
-              
-              <div className="space-y-4">
-                <div>
-                  <Label htmlFor="google_review_url">Google Bewertungslink</Label>
-                  <div className="flex gap-2 mt-1">
-                    <div className="relative flex-1">
-                      <Star className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-amber-500" />
-                      <Input
-                        id="google_review_url"
-                        value={googleReviewUrl}
-                        onChange={(e) => setGoogleReviewUrl(e.target.value)}
-                        placeholder="https://g.page/r/..."
-                        className="pl-10 bg-white"
-                      />
-                    </div>
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      onClick={copyToClipboard}
-                      disabled={!googleReviewUrl}
-                    >
-                      {copied ? (
-                        <CheckCircle2 className="w-4 h-4 text-green-600" />
-                      ) : (
-                        <Copy className="w-4 h-4" />
-                      )}
-                    </Button>
-                  </div>
-                </div>
+        <div className="grid gap-6">
+          {/* Google Review Link Card */}
+          <Card className="p-6 rounded-2xl shadow-sm border-0 bg-amber-50/80">
+            <div className="flex items-start gap-4">
+              <div className="w-12 h-12 rounded-xl bg-amber-100 flex items-center justify-center flex-shrink-0">
+                <Star className="w-6 h-6 text-amber-600 fill-amber-500" />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-lg font-semibold text-amber-900 mb-2">
+                  Dein Google-Bewertungslink
+                </h3>
+                <p className="text-sm text-amber-700 mb-4">
+                  Dieser Link wird nach dem Stempeln angezeigt, damit Kunden dich direkt bei Google bewerten können. 
+                  Mehr Bewertungen bedeuten mehr Sichtbarkeit!
+                </p>
                 
-                <div className="flex gap-2">
-                  <Button onClick={handleSave} disabled={saving}>
-                    {saving ? "Speichern..." : "Speichern"}
-                  </Button>
-                  {googleReviewUrl && (
-                    <Button 
-                      variant="outline" 
-                      onClick={() => window.open(googleReviewUrl, '_blank')}
-                    >
-                      <ExternalLink className="w-4 h-4 mr-2" />
-                      Link testen
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="google_review_url" className="text-amber-800">Google Bewertungslink</Label>
+                    <div className="flex gap-2 mt-1">
+                      <div className="relative flex-1">
+                        <Star className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-amber-500" />
+                        <Input
+                          id="google_review_url"
+                          value={googleReviewUrl}
+                          onChange={(e) => setGoogleReviewUrl(e.target.value)}
+                          placeholder="https://g.page/r/..."
+                          className="pl-10 bg-white rounded-xl border-amber-200 focus:border-amber-400 focus:ring-amber-400"
+                        />
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={copyToClipboard}
+                        disabled={!googleReviewUrl}
+                        className="rounded-xl border-amber-200 hover:bg-amber-100"
+                      >
+                        {copied ? (
+                          <CheckCircle2 className="w-4 h-4 text-green-600" />
+                        ) : (
+                          <Copy className="w-4 h-4" />
+                        )}
+                      </Button>
+                    </div>
+                  </div>
+                  
+                  <div className="flex gap-2">
+                    <Button onClick={handleSave} disabled={saving} className="rounded-xl">
+                      {saving ? "Speichern..." : "Speichern"}
                     </Button>
-                  )}
+                    {googleReviewUrl && (
+                      <Button 
+                        variant="outline" 
+                        onClick={() => window.open(googleReviewUrl, '_blank')}
+                        className="rounded-xl"
+                      >
+                        <ExternalLink className="w-4 h-4 mr-2" />
+                        Link testen
+                      </Button>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-        </Card>
+          </Card>
 
-        {/* How to get Google Review Link */}
-        <Card className="p-6">
-          <h3 className="text-lg font-semibold mb-4">So findest du deinen Google-Bewertungslink</h3>
-          <ol className="list-decimal list-inside space-y-3 text-muted-foreground">
-            <li>
-              Öffne <a 
-                href="https://business.google.com" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="text-primary hover:underline"
-              >
-                Google Business Profile
-              </a>
-            </li>
-            <li>Wähle dein Geschäft aus</li>
-            <li>Klicke auf "Kunden" → "Bewertungen"</li>
-            <li>Klicke auf "Teilen" oder "Weitere Bewertungen erhalten"</li>
-            <li>Kopiere den Link und füge ihn hier ein</li>
-          </ol>
-        </Card>
+          {/* How to get Google Review Link */}
+          <Card className="p-6 rounded-2xl shadow-sm border-0 bg-gray-50/80">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">So findest du deinen Google-Bewertungslink</h3>
+            <ol className="list-decimal list-inside space-y-3 text-gray-600">
+              <li>
+                Öffne <a 
+                  href="https://business.google.com" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-primary hover:underline font-medium"
+                >
+                  Google Business Profile
+                </a>
+              </li>
+              <li>Wähle dein Geschäft aus</li>
+              <li>Klicke auf "Kunden" → "Bewertungen"</li>
+              <li>Klicke auf "Teilen" oder "Weitere Bewertungen erhalten"</li>
+              <li>Kopiere den Link und füge ihn hier ein</li>
+            </ol>
+          </Card>
 
-        {/* Stats Card (Placeholder) */}
-        <Card className="p-6">
-          <h3 className="text-lg font-semibold mb-4">Bewertungs-Statistiken</h3>
-          <p className="text-muted-foreground text-sm">
-            Hier werden bald deine Bewertungs-Statistiken angezeigt, z.B. wie viele Kunden nach dem Stempeln eine Bewertung abgegeben haben.
-          </p>
-          <div className="mt-4 grid grid-cols-3 gap-4">
-            <div className="text-center p-4 bg-muted/50 rounded-lg">
-              <div className="text-2xl font-bold">-</div>
-              <div className="text-xs text-muted-foreground">Anfragen gesendet</div>
+          {/* Stats Card (Placeholder) */}
+          <Card className="p-6 rounded-2xl shadow-sm border-0 bg-gray-50/80">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Bewertungs-Statistiken</h3>
+            <p className="text-gray-500 text-sm">
+              Hier werden bald deine Bewertungs-Statistiken angezeigt, z.B. wie viele Kunden nach dem Stempeln eine Bewertung abgegeben haben.
+            </p>
+            <div className="mt-4 grid grid-cols-3 gap-4">
+              <div className="text-center p-4 bg-white rounded-xl">
+                <div className="text-2xl font-bold text-gray-900">-</div>
+                <div className="text-xs text-gray-500 mt-1">Anfragen gesendet</div>
+              </div>
+              <div className="text-center p-4 bg-white rounded-xl">
+                <div className="text-2xl font-bold text-gray-900">-</div>
+                <div className="text-xs text-gray-500 mt-1">Bewertungen erhalten</div>
+              </div>
+              <div className="text-center p-4 bg-white rounded-xl">
+                <div className="text-2xl font-bold text-gray-900">-%</div>
+                <div className="text-xs text-gray-500 mt-1">Conversion Rate</div>
+              </div>
             </div>
-            <div className="text-center p-4 bg-muted/50 rounded-lg">
-              <div className="text-2xl font-bold">-</div>
-              <div className="text-xs text-muted-foreground">Bewertungen erhalten</div>
-            </div>
-            <div className="text-center p-4 bg-muted/50 rounded-lg">
-              <div className="text-2xl font-bold">-%</div>
-              <div className="text-xs text-muted-foreground">Conversion Rate</div>
-            </div>
-          </div>
-        </Card>
+          </Card>
+        </div>
       </div>
     </div>
   );

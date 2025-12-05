@@ -76,7 +76,6 @@ const Zahlungen = () => {
 
       setCustomerId(assignment.customer_id);
 
-      // Load customer status
       const { data: customer } = await supabase
         .from('customers')
         .select('status, stripe_subscription_id')
@@ -87,7 +86,6 @@ const Zahlungen = () => {
         setCustomerStatus(customer.status);
       }
 
-      // Load invoices
       const { data: invoiceData } = await supabase
         .from('invoices')
         .select('*')
@@ -98,7 +96,6 @@ const Zahlungen = () => {
         setInvoices(invoiceData);
       }
 
-      // Load subscription info
       if (customer?.stripe_subscription_id) {
         try {
           const { data: subInfo } = await supabase.functions.invoke('get-subscription-info');
@@ -184,165 +181,179 @@ const Zahlungen = () => {
       'uncollectible': { variant: 'destructive', label: 'Nicht einziehbar' },
     };
     const config = statusConfig[status || ''] || { variant: 'outline', label: status || '-' };
-    return <Badge variant={config.variant}>{config.label}</Badge>;
+    return <Badge variant={config.variant} className="rounded-full">{config.label}</Badge>;
   };
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
+      <div className="min-h-screen bg-white flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
   }
 
   return (
-    <div className="max-w-4xl mx-auto p-6 space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold">Zahlungen</h1>
-        <p className="text-muted-foreground">Verwalten Sie Ihr Abonnement und Rechnungen</p>
-      </div>
+    <div className="min-h-screen bg-white">
+      <div className="max-w-4xl mx-auto p-6 sm:p-8 space-y-8">
+        {/* Header */}
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Zahlungen</h1>
+          <p className="text-gray-500 mt-1">Verwalten Sie Ihr Abonnement und Rechnungen</p>
+        </div>
 
-      {/* Subscription */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <CreditCard className="h-5 w-5" />
-            Abonnement
-          </CardTitle>
-          <CardDescription>Ihr aktueller Tarif und Zahlungsstatus</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex items-center justify-between p-4 border rounded-lg">
-            <div>
-              <p className="font-medium">Eloyo Abo</p>
-              <p className="text-sm text-muted-foreground">
-                {subscription?.current_period_end 
-                  ? `Nächste Zahlung: ${formatDate(subscription.current_period_end)}`
-                  : 'Keine aktive Subscription'}
-              </p>
+        {/* Subscription */}
+        <Card className="rounded-2xl shadow-sm border-0 bg-gray-50/80">
+          <CardHeader className="pb-4">
+            <CardTitle className="flex items-center gap-3 text-lg font-semibold text-gray-900">
+              <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                <CreditCard className="h-5 w-5 text-primary" />
+              </div>
+              Abonnement
+            </CardTitle>
+            <CardDescription className="text-gray-500">Ihr aktueller Tarif und Zahlungsstatus</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center justify-between p-4 bg-white rounded-xl border border-gray-100">
+              <div>
+                <p className="font-semibold text-gray-900">Eloyo Abo</p>
+                <p className="text-sm text-gray-500">
+                  {subscription?.current_period_end 
+                    ? `Nächste Zahlung: ${formatDate(subscription.current_period_end)}`
+                    : 'Keine aktive Subscription'}
+                </p>
+              </div>
+              <Badge 
+                variant={customerStatus === 'active' ? 'default' : 'secondary'}
+                className="rounded-full"
+              >
+                {customerStatus === 'active' ? 'Aktiv' : customerStatus === 'paused' ? 'Pausiert' : customerStatus || 'Unbekannt'}
+              </Badge>
             </div>
-            <Badge variant={customerStatus === 'active' ? 'default' : 'secondary'}>
-              {customerStatus === 'active' ? 'Aktiv' : customerStatus === 'paused' ? 'Pausiert' : customerStatus || 'Unbekannt'}
-            </Badge>
-          </div>
 
-          <div className="flex flex-wrap gap-2">
-            <Button variant="outline" onClick={openCustomerPortal}>
-              <ExternalLink className="h-4 w-4 mr-2" />
-              Zahlungsmethode ändern
-            </Button>
-            
-            {customerStatus === 'active' && (
-              <>
-                <Button variant="outline" onClick={() => setShowPauseDialog(true)}>
-                  <Pause className="h-4 w-4 mr-2" />
-                  Pausieren
-                </Button>
-                <Button variant="outline" className="text-destructive" onClick={() => setShowCancelDialog(true)}>
-                  <XCircle className="h-4 w-4 mr-2" />
-                  Kündigen
-                </Button>
-              </>
-            )}
-          </div>
-        </CardContent>
-      </Card>
+            <div className="flex flex-wrap gap-3">
+              <Button variant="outline" onClick={openCustomerPortal} className="rounded-xl">
+                <ExternalLink className="h-4 w-4 mr-2" />
+                Zahlungsmethode ändern
+              </Button>
+              
+              {customerStatus === 'active' && (
+                <>
+                  <Button variant="outline" onClick={() => setShowPauseDialog(true)} className="rounded-xl">
+                    <Pause className="h-4 w-4 mr-2" />
+                    Pausieren
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    className="text-destructive hover:text-destructive rounded-xl" 
+                    onClick={() => setShowCancelDialog(true)}
+                  >
+                    <XCircle className="h-4 w-4 mr-2" />
+                    Kündigen
+                  </Button>
+                </>
+              )}
+            </div>
+          </CardContent>
+        </Card>
 
-      {/* Invoices */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <FileText className="h-5 w-5" />
-            Rechnungen
-          </CardTitle>
-          <CardDescription>Alle Ihre Rechnungen zum Download</CardDescription>
-        </CardHeader>
-        <CardContent>
-          {invoices.length === 0 ? (
-            <p className="text-muted-foreground text-center py-4">Noch keine Rechnungen vorhanden</p>
-          ) : (
-            <div className="space-y-2">
-              {invoices.map((invoice) => (
-                <div key={invoice.id} className="flex items-center justify-between p-3 border rounded-lg">
-                  <div className="flex items-center gap-4">
-                    <FileText className="h-5 w-5 text-muted-foreground" />
-                    <div>
-                      <p className="font-medium">{formatDate(invoice.issued_at)}</p>
-                      <p className="text-sm text-muted-foreground">
-                        {invoice.invoice_type === 'subscription' ? 'Abo' : 'Einmalig'}
-                      </p>
+        {/* Invoices */}
+        <Card className="rounded-2xl shadow-sm border-0 bg-gray-50/80">
+          <CardHeader className="pb-4">
+            <CardTitle className="flex items-center gap-3 text-lg font-semibold text-gray-900">
+              <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center">
+                <FileText className="h-5 w-5 text-blue-600" />
+              </div>
+              Rechnungen
+            </CardTitle>
+            <CardDescription className="text-gray-500">Alle Ihre Rechnungen zum Download</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {invoices.length === 0 ? (
+              <p className="text-gray-500 text-center py-8">Noch keine Rechnungen vorhanden</p>
+            ) : (
+              <div className="space-y-3">
+                {invoices.map((invoice) => (
+                  <div key={invoice.id} className="flex items-center justify-between p-4 bg-white rounded-xl border border-gray-100">
+                    <div className="flex items-center gap-4">
+                      <FileText className="h-5 w-5 text-gray-400" />
+                      <div>
+                        <p className="font-medium text-gray-900">{formatDate(invoice.issued_at)}</p>
+                        <p className="text-sm text-gray-500">
+                          {invoice.invoice_type === 'subscription' ? 'Abo' : 'Einmalig'}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-4">
+                      <span className="font-semibold text-gray-900">
+                        {formatAmount(invoice.total_amount_cents, invoice.currency)}
+                      </span>
+                      {getStatusBadge(invoice.status)}
+                      {invoice.pdf_url && (
+                        <Button variant="ghost" size="sm" asChild className="rounded-lg">
+                          <a href={invoice.pdf_url} target="_blank" rel="noopener noreferrer">
+                            <Download className="h-4 w-4" />
+                          </a>
+                        </Button>
+                      )}
                     </div>
                   </div>
-                  <div className="flex items-center gap-4">
-                    <span className="font-medium">
-                      {formatAmount(invoice.total_amount_cents, invoice.currency)}
-                    </span>
-                    {getStatusBadge(invoice.status)}
-                    {invoice.pdf_url && (
-                      <Button variant="ghost" size="sm" asChild>
-                        <a href={invoice.pdf_url} target="_blank" rel="noopener noreferrer">
-                          <Download className="h-4 w-4" />
-                        </a>
-                      </Button>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
-      {/* Pause Dialog */}
-      <AlertDialog open={showPauseDialog} onOpenChange={setShowPauseDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Abo pausieren</AlertDialogTitle>
-            <AlertDialogDescription>
-              Wie lange möchten Sie Ihr Abo pausieren?
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <Select value={pauseMonths} onValueChange={setPauseMonths}>
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="1">1 Monat</SelectItem>
-              <SelectItem value="2">2 Monate</SelectItem>
-            </SelectContent>
-          </Select>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Abbrechen</AlertDialogCancel>
-            <AlertDialogAction onClick={handlePauseSubscription} disabled={processingAction}>
-              {processingAction && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
-              Pausieren
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+        {/* Pause Dialog */}
+        <AlertDialog open={showPauseDialog} onOpenChange={setShowPauseDialog}>
+          <AlertDialogContent className="rounded-2xl">
+            <AlertDialogHeader>
+              <AlertDialogTitle>Abo pausieren</AlertDialogTitle>
+              <AlertDialogDescription>
+                Wie lange möchten Sie Ihr Abo pausieren?
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <Select value={pauseMonths} onValueChange={setPauseMonths}>
+              <SelectTrigger className="rounded-xl">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="1">1 Monat</SelectItem>
+                <SelectItem value="2">2 Monate</SelectItem>
+              </SelectContent>
+            </Select>
+            <AlertDialogFooter>
+              <AlertDialogCancel className="rounded-xl">Abbrechen</AlertDialogCancel>
+              <AlertDialogAction onClick={handlePauseSubscription} disabled={processingAction} className="rounded-xl">
+                {processingAction && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
+                Pausieren
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
 
-      {/* Cancel Dialog */}
-      <AlertDialog open={showCancelDialog} onOpenChange={setShowCancelDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Abo kündigen</AlertDialogTitle>
-            <AlertDialogDescription>
-              Möchten Sie Ihr Abo wirklich kündigen? Es bleibt bis zum Ende der aktuellen Laufzeit aktiv.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Abbrechen</AlertDialogCancel>
-            <AlertDialogAction 
-              onClick={handleCancelSubscription} 
-              disabled={processingAction}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              {processingAction && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
-              Kündigen
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+        {/* Cancel Dialog */}
+        <AlertDialog open={showCancelDialog} onOpenChange={setShowCancelDialog}>
+          <AlertDialogContent className="rounded-2xl">
+            <AlertDialogHeader>
+              <AlertDialogTitle>Abo kündigen</AlertDialogTitle>
+              <AlertDialogDescription>
+                Möchten Sie Ihr Abo wirklich kündigen? Es bleibt bis zum Ende der aktuellen Laufzeit aktiv.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel className="rounded-xl">Abbrechen</AlertDialogCancel>
+              <AlertDialogAction 
+                onClick={handleCancelSubscription} 
+                disabled={processingAction}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90 rounded-xl"
+              >
+                {processingAction && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
+                Kündigen
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </div>
     </div>
   );
 };
