@@ -26,13 +26,10 @@ import BoxManagement from "./pages/admin/BoxManagement";
 import Settings from "./pages/admin/Settings";
 import MerchantLayout from "./components/MerchantLayout";
 import KundeDashboard from "./pages/merchant/KundeDashboard";
-import Stempelkarte from "./pages/merchant/Stempelkarte";
+import MeinGeschaeft from "./pages/merchant/MeinGeschaeft";
 import GoogleBewertungen from "./pages/merchant/GoogleBewertungen";
 import MeinKonto from "./pages/merchant/MeinKonto";
-import Stempel from "./pages/merchant/Stempel";
-import Zahlungen from "./pages/merchant/Zahlungen";
 import Nachrichten from "./pages/merchant/Nachrichten";
-import Automatisierungen from "./pages/merchant/Automatisierungen";
 import PartnerDashboard from "./pages/partner/Dashboard";
 import Scan from "./pages/Scan";
 import NotFound from "./pages/NotFound";
@@ -93,15 +90,10 @@ const App = () => (
           {/* Händler Dashboard (role: merchant) */}
           <Route path="/kunde" element={<MerchantLayout />}>
             <Route index element={<KundeDashboard />} />
-            <Route path="geschaeftsinformationen" element={<Stempelkarte />} />
-            <Route path="stempel" element={<Stempel />} />
+            <Route path="mein-geschaeft" element={<MeinGeschaeft />} />
             <Route path="google-bewertungen" element={<GoogleBewertungen />} />
-            <Route path="zahlungen" element={<Zahlungen />} />
             <Route path="nachrichten" element={<Nachrichten />} />
-            <Route path="automatisierungen" element={<Automatisierungen />} />
             <Route path="konto" element={<MeinKonto />} />
-            {/* Legacy redirect */}
-            <Route path="stempelkarte" element={<Stempelkarte />} />
           </Route>
           
           {/* Partner Dashboard */}
