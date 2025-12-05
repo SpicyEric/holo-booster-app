@@ -79,6 +79,81 @@ interface Transaction {
 
 type DateRange = 7 | 14 | 30 | 90;
 
+// Demo-Daten für "Frise Gut Klaus" (ID: e8e3db26-fd15-455a-ad47-50ed25081e3c)
+const DEMO_MERCHANT_ID = "e8e3db26-fd15-455a-ad47-50ed25081e3c";
+
+const DEMO_STATS: DashboardStats = {
+  totalContacts: 2400,
+  totalStamps: 93000,
+  totalRedemptions: 800,
+  networkEffect: 600,
+  newContacts7Days: 47
+};
+
+const generateDemoHourlyData = (): HourlyData[] => {
+  // Realistische Verteilung für einen Friseur (Peaks: 10-12 Uhr und 14-18 Uhr)
+  const hourlyPattern = [
+    2, 3, 1, 0, 0, 0, 8, 45, 120, 280, 350, 380, // 0-11 Uhr
+    320, 290, 340, 410, 450, 420, 280, 150, 80, 35, 15, 5 // 12-23 Uhr
+  ];
+  return hourlyPattern.map((count, hour) => ({
+    hour: `${hour}:00`,
+    count
+  }));
+};
+
+const generateDemoGrowthData = (days: number): GrowthData[] => {
+  const data: GrowthData[] = [];
+  let baseTotal = 2400 - Math.floor(days * 6.5); // Rückrechnung basierend auf ~47/Woche
+  
+  for (let i = 0; i < days; i++) {
+    const date = new Date();
+    date.setDate(date.getDate() - (days - 1 - i));
+    const dailyGrowth = Math.floor(4 + Math.random() * 8); // 4-12 neue Kontakte pro Tag
+    baseTotal += dailyGrowth;
+    data.push({
+      date: date.toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit" }),
+      total: baseTotal
+    });
+  }
+  return data;
+};
+
+const DEMO_GENDER_DATA: GenderData[] = [
+  { gender: "Männlich", count: 1560, percentage: 65 },
+  { gender: "Weiblich", count: 840, percentage: 35 }
+];
+
+const DEMO_AGE_DATA: AgeData[] = [
+  { age: "14-17", count: 96 },
+  { age: "18-24", count: 384 },
+  { age: "25-34", count: 720 },
+  { age: "35-44", count: 576 },
+  { age: "45-54", count: 384 },
+  { age: "55-64", count: 168 },
+  { age: "65+", count: 72 }
+];
+
+const DEMO_SEGMENTS: CustomerSegment[] = [
+  { name: "Neu", label: "1 Besuch", count: 480, percentage: 20, color: "#22C55E", bgColor: "bg-green-100" },
+  { name: "Selten", label: "5+ Besuche", count: 720, percentage: 30, color: "#A855F7", bgColor: "bg-purple-100" },
+  { name: "Treu", label: "15+ Besuche", count: 840, percentage: 35, color: "#3B82F6", bgColor: "bg-blue-100" },
+  { name: "VIP", label: "25+ Besuche", count: 360, percentage: 15, color: "#F97316", bgColor: "bg-orange-100" }
+];
+
+const DEMO_TRANSACTIONS: Transaction[] = [
+  { id: "1", created_at: new Date(Date.now() - 1000 * 60 * 5).toISOString(), points_change: 10, transaction_type: "nfc_stamp", description: "NFC Stempel: grün" },
+  { id: "2", created_at: new Date(Date.now() - 1000 * 60 * 23).toISOString(), points_change: 20, transaction_type: "nfc_stamp", description: "NFC Stempel: blau" },
+  { id: "3", created_at: new Date(Date.now() - 1000 * 60 * 45).toISOString(), points_change: -50, transaction_type: "redemption", description: "Prämie eingelöst: Gratis Haarschnitt" },
+  { id: "4", created_at: new Date(Date.now() - 1000 * 60 * 67).toISOString(), points_change: 10, transaction_type: "nfc_stamp", description: "NFC Stempel: grün" },
+  { id: "5", created_at: new Date(Date.now() - 1000 * 60 * 89).toISOString(), points_change: 30, transaction_type: "nfc_stamp", description: "NFC Stempel: rot" },
+  { id: "6", created_at: new Date(Date.now() - 1000 * 60 * 120).toISOString(), points_change: 10, transaction_type: "nfc_stamp", description: "NFC Stempel: grün" },
+  { id: "7", created_at: new Date(Date.now() - 1000 * 60 * 180).toISOString(), points_change: -100, transaction_type: "redemption", description: "Prämie eingelöst: Gratis Bartpflege" },
+  { id: "8", created_at: new Date(Date.now() - 1000 * 60 * 210).toISOString(), points_change: 20, transaction_type: "nfc_stamp", description: "NFC Stempel: blau" },
+  { id: "9", created_at: new Date(Date.now() - 1000 * 60 * 240).toISOString(), points_change: 10, transaction_type: "nfc_stamp", description: "NFC Stempel: grün" },
+  { id: "10", created_at: new Date(Date.now() - 1000 * 60 * 280).toISOString(), points_change: 5, transaction_type: "google_review", description: "Google Bewertung Bonus" }
+];
+
 const DateRangeSelector = ({ value, onChange }: { value: DateRange; onChange: (v: DateRange) => void }) => (
   <div className="flex gap-1">
     {([7, 14, 30, 90] as DateRange[]).map((days) => (
@@ -129,13 +204,21 @@ export default function KundeDashboard() {
 
   useEffect(() => {
     if (customer?.id) {
-      loadHourlyData(customer.id);
+      if (customer.id === DEMO_MERCHANT_ID) {
+        setHourlyData(generateDemoHourlyData());
+      } else {
+        loadHourlyData(customer.id);
+      }
     }
   }, [customer?.id, hourlyRange]);
 
   useEffect(() => {
     if (customer?.id) {
-      loadGrowthData(customer.id);
+      if (customer.id === DEMO_MERCHANT_ID) {
+        setGrowthData(generateDemoGrowthData(growthRange));
+      } else {
+        loadGrowthData(customer.id);
+      }
     }
   }, [customer?.id, growthRange]);
 
@@ -164,15 +247,28 @@ export default function KundeDashboard() {
       } catch (e) {}
 
       if (customerData?.id) {
-        await Promise.all([
-          loadDashboardStats(customerData.id),
-          loadHourlyData(customerData.id),
-          loadGrowthData(customerData.id),
-          loadGenderData(customerData.id),
-          loadAgeData(customerData.id),
-          loadCustomerSegments(customerData.id),
-          loadRecentTransactions(customerData.id)
-        ]);
+        // Check if this is the demo merchant
+        if (customerData.id === DEMO_MERCHANT_ID) {
+          // Use demo data
+          setStats(DEMO_STATS);
+          setHourlyData(generateDemoHourlyData());
+          setGrowthData(generateDemoGrowthData(growthRange));
+          setGenderData(DEMO_GENDER_DATA);
+          setAgeData(DEMO_AGE_DATA);
+          setSegments(DEMO_SEGMENTS);
+          setTransactions(DEMO_TRANSACTIONS);
+        } else {
+          // Load real data for other merchants
+          await Promise.all([
+            loadDashboardStats(customerData.id),
+            loadHourlyData(customerData.id),
+            loadGrowthData(customerData.id),
+            loadGenderData(customerData.id),
+            loadAgeData(customerData.id),
+            loadCustomerSegments(customerData.id),
+            loadRecentTransactions(customerData.id)
+          ]);
+        }
       } else {
         setStats({ totalContacts: 0, totalStamps: 0, totalRedemptions: 0, networkEffect: 0, newContacts7Days: 0 });
       }
