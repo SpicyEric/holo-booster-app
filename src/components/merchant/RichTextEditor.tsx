@@ -2,13 +2,15 @@ import { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Bold, Smile } from 'lucide-react';
+import { Bold, Italic, Smile } from 'lucide-react';
 
-const EMOJIS = [
-  '😀', '😊', '🎉', '❤️', '👍', '🌟', '✨', '🔥', '💯', '🎁',
-  '☕', '🍕', '🍔', '🥗', '🍰', '🎂', '🍦', '🥐', '🍪', '🥤',
-  '💇', '💅', '🏠', '🛒', '📦', '🚀', '💰', '🎯', '📱', '💼'
-];
+const EMOJI_CATEGORIES = {
+  'Beliebt': ['😀', '😊', '🎉', '❤️', '👍', '🌟', '✨', '🔥', '💯', '🎁', '👋', '🙏', '💪', '🥳', '😍'],
+  'Essen & Trinken': ['☕', '🍕', '🍔', '🥗', '🍰', '🎂', '🍦', '🥐', '🍪', '🥤', '🍺', '🍷', '🍣', '🍜', '🍩'],
+  'Geschäft': ['💇', '💅', '🏠', '🛒', '📦', '🚀', '💰', '🎯', '📱', '💼', '🏪', '🛍️', '💳', '🎀', '🏆'],
+  'Natur': ['🌸', '🌺', '🌻', '🌷', '🌹', '🍀', '🌈', '☀️', '🌙', '⭐', '🌊', '🌿', '🍃', '🌴', '🌵'],
+  'Symbole': ['✅', '❌', '⚡', '💫', '🔔', '📍', '🎵', '💎', '🔑', '📌', '✏️', '📝', '💡', '🎨', '🎪']
+};
 
 interface RichTextEditorProps {
   value: string;
@@ -20,6 +22,7 @@ interface RichTextEditorProps {
 const RichTextEditor = ({ value, onChange, placeholder, rows = 3 }: RichTextEditorProps) => {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [showEmoji, setShowEmoji] = useState(false);
+  const [emojiCategory, setEmojiCategory] = useState<keyof typeof EMOJI_CATEGORIES>('Beliebt');
 
   const insertAtCursor = (text: string) => {
     const textarea = textareaRef.current;
@@ -33,7 +36,6 @@ const RichTextEditor = ({ value, onChange, placeholder, rows = 3 }: RichTextEdit
     const newValue = value.substring(0, start) + text + value.substring(end);
     onChange(newValue);
 
-    // Restore cursor position after insert
     setTimeout(() => {
       textarea.focus();
       textarea.setSelectionRange(start + text.length, start + text.length);
@@ -55,12 +57,20 @@ const RichTextEditor = ({ value, onChange, placeholder, rows = 3 }: RichTextEdit
         textarea.focus();
         textarea.setSelectionRange(start + prefix.length, end + prefix.length);
       }, 0);
+    } else {
+      // Insert placeholder if nothing selected
+      const placeholder = prefix === '**' ? 'fetter Text' : 'kursiver Text';
+      const newValue = value.substring(0, start) + prefix + placeholder + suffix + value.substring(end);
+      onChange(newValue);
+      setTimeout(() => {
+        textarea.focus();
+        textarea.setSelectionRange(start + prefix.length, start + prefix.length + placeholder.length);
+      }, 0);
     }
   };
 
-  const handleBold = () => {
-    wrapSelection('**', '**');
-  };
+  const handleBold = () => wrapSelection('**', '**');
+  const handleItalic = () => wrapSelection('_', '_');
 
   const handleEmojiSelect = (emoji: string) => {
     insertAtCursor(emoji);
@@ -68,38 +78,64 @@ const RichTextEditor = ({ value, onChange, placeholder, rows = 3 }: RichTextEdit
   };
 
   return (
-    <div className="space-y-2">
-      <div className="flex items-center gap-1 p-1 bg-gray-100 rounded-t-xl border border-b-0 border-gray-200">
+    <div className="space-y-0">
+      <div className="flex items-center gap-1 p-1.5 bg-gray-100 rounded-t-xl border border-b-0 border-gray-200">
         <Button
           type="button"
           variant="ghost"
           size="sm"
           onClick={handleBold}
-          className="h-7 px-2 text-xs rounded-lg hover:bg-gray-200"
+          className="h-8 px-3 text-xs rounded-lg hover:bg-gray-200 font-bold"
           title="Fett (Text markieren)"
         >
-          <Bold className="h-3.5 w-3.5" />
+          <Bold className="h-4 w-4" />
         </Button>
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          onClick={handleItalic}
+          className="h-8 px-3 text-xs rounded-lg hover:bg-gray-200 italic"
+          title="Kursiv (Text markieren)"
+        >
+          <Italic className="h-4 w-4" />
+        </Button>
+        <div className="w-px h-5 bg-gray-300 mx-1" />
         <Popover open={showEmoji} onOpenChange={setShowEmoji}>
           <PopoverTrigger asChild>
             <Button
               type="button"
               variant="ghost"
               size="sm"
-              className="h-7 px-2 text-xs rounded-lg hover:bg-gray-200"
+              className="h-8 px-3 text-xs rounded-lg hover:bg-gray-200"
               title="Emoji einfügen"
             >
-              <Smile className="h-3.5 w-3.5" />
+              <Smile className="h-4 w-4 mr-1" />
+              Emoji
             </Button>
           </PopoverTrigger>
-          <PopoverContent className="w-64 p-2" align="start">
-            <div className="grid grid-cols-10 gap-1">
-              {EMOJIS.map((emoji) => (
+          <PopoverContent className="w-80 p-3" align="start">
+            <div className="flex gap-1 mb-2 flex-wrap">
+              {Object.keys(EMOJI_CATEGORIES).map((cat) => (
+                <Button
+                  key={cat}
+                  type="button"
+                  variant={emojiCategory === cat ? "default" : "ghost"}
+                  size="sm"
+                  onClick={() => setEmojiCategory(cat as keyof typeof EMOJI_CATEGORIES)}
+                  className="h-6 text-xs px-2"
+                >
+                  {cat}
+                </Button>
+              ))}
+            </div>
+            <div className="grid grid-cols-8 gap-1">
+              {EMOJI_CATEGORIES[emojiCategory].map((emoji, i) => (
                 <button
-                  key={emoji}
+                  key={`${emoji}-${i}`}
                   type="button"
                   onClick={() => handleEmojiSelect(emoji)}
-                  className="text-lg hover:bg-gray-100 rounded p-1 transition-colors"
+                  className="text-xl hover:bg-gray-100 rounded p-1.5 transition-colors"
                 >
                   {emoji}
                 </button>
@@ -114,10 +150,10 @@ const RichTextEditor = ({ value, onChange, placeholder, rows = 3 }: RichTextEdit
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         rows={rows}
-        className="rounded-t-none rounded-b-xl border-t-0"
+        className="rounded-t-none rounded-b-xl border-t-0 resize-none"
       />
-      <p className="text-xs text-muted-foreground">
-        Tipp: Text markieren und Fett-Button klicken für **fett**. Zeilenumbrüche werden übernommen.
+      <p className="text-xs text-muted-foreground mt-1.5">
+        💡 Text markieren → Fett/Kursiv klicken. Zeilenumbrüche werden übernommen.
       </p>
     </div>
   );
