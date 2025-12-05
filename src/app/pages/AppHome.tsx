@@ -1,11 +1,14 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Store, Gift, MessageSquare } from 'lucide-react';
+import { Store, Gift, MessageSquare, MapPin } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { MainLayout } from '@/app/components/layout/MainLayout';
+import { NewCustomerOfferDialog } from '@/app/components/NewCustomerOfferDialog';
+import confetti from 'canvas-confetti';
 
 interface UserStampCard {
   id: string;
@@ -33,9 +36,17 @@ interface NewCustomerOffer {
   description: string | null;
   bonus_stamps: number;
   customer?: {
+    id: string;
     name: string;
+    company_name: string | null;
     logo_url: string | null;
     industry: string | null;
+    street: string | null;
+    house_number: string | null;
+    postal_code: string | null;
+    city: string | null;
+    latitude: number | null;
+    longitude: number | null;
   };
 }
 
@@ -45,6 +56,12 @@ export const AppHome = () => {
   const [stampCards, setStampCards] = useState<UserStampCard[]>([]);
   const [newCustomerOffers, setNewCustomerOffers] = useState<NewCustomerOffer[]>([]);
   const [loading, setLoading] = useState(true);
+  
+  // Dialog states
+  const [selectedOffer, setSelectedOffer] = useState<NewCustomerOffer | null>(null);
+  const [offerDialogOpen, setOfferDialogOpen] = useState(false);
+  const [isRedeeming, setIsRedeeming] = useState(false);
+  const [redemptionSuccess, setRedemptionSuccess] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -66,15 +83,17 @@ export const AppHome = () => {
         `)
         .eq('user_id', user?.id);
 
+      let stampedMerchantIds: string[] = [];
+
       if (!cardsError && cards && cards.length > 0) {
-        const merchantIds = cards.map(c => c.merchant_customer_id);
+        stampedMerchantIds = cards.map(c => c.merchant_customer_id);
         const stampCardIds = cards.map(c => c.stamp_card_id).filter(Boolean);
 
         // Fetch customers data
         const { data: customersData } = await supabase
           .from('customers')
           .select('id, name, company_name, logo_url, cover_image_url, industry')
-          .in('id', merchantIds);
+          .in('id', stampedMerchantIds);
 
         // Fetch stamp card designs
         const { data: stampCardsData } = stampCardIds.length > 0 
@@ -93,31 +112,62 @@ export const AppHome = () => {
         setStampCards(formatted);
       }
 
-      // Load new customer offers
+      // Load new customer offers - only for merchants where user hasn't stamped yet
       const { data: offersData } = await supabase
         .from('new_customer_offers')
         .select('id, merchant_customer_id, title, description, bonus_stamps')
         .eq('is_active', true);
 
       if (offersData && offersData.length > 0) {
-        const offerMerchantIds = offersData.map(o => o.merchant_customer_id);
-        const { data: offerCustomersData } = await supabase
-          .from('customers')
-          .select('id, name, logo_url, industry')
-          .in('id', offerMerchantIds);
+        // Filter out offers for merchants where user already has stamps
+        const filteredOffers = offersData.filter(
+          offer => !stampedMerchantIds.includes(offer.merchant_customer_id)
+        );
 
-        const formattedOffers = offersData.map(offer => ({
-          ...offer,
-          customer: offerCustomersData?.find(c => c.id === offer.merchant_customer_id),
-        }));
+        if (filteredOffers.length > 0) {
+          const offerMerchantIds = filteredOffers.map(o => o.merchant_customer_id);
+          const { data: offerCustomersData } = await supabase
+            .from('customers')
+            .select('id, name, company_name, logo_url, industry, street, house_number, postal_code, city, latitude, longitude')
+            .in('id', offerMerchantIds);
 
-        setNewCustomerOffers(formattedOffers);
+          const formattedOffers = filteredOffers.map(offer => ({
+            ...offer,
+            customer: offerCustomersData?.find(c => c.id === offer.merchant_customer_id),
+          }));
+
+          setNewCustomerOffers(formattedOffers);
+        } else {
+          setNewCustomerOffers([]);
+        }
       }
     } catch (err) {
       console.error('[AppHome] Error loading data:', err);
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleOfferClick = (offer: NewCustomerOffer) => {
+    setSelectedOffer(offer);
+    setIsRedeeming(false);
+    setRedemptionSuccess(false);
+    setOfferDialogOpen(true);
+  };
+
+  const handleStartRedemption = () => {
+    setIsRedeeming(true);
+  };
+
+  const handleRedemptionComplete = () => {
+    setRedemptionSuccess(true);
+    // Remove the offer from the list
+    if (selectedOffer) {
+      setNewCustomerOffers(prev => prev.filter(o => o.id !== selectedOffer.id));
+    }
+    confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+    // Reload data to update stamp cards
+    loadData();
   };
 
   return (
@@ -203,19 +253,15 @@ export const AppHome = () => {
         </div>
 
         {/* Neukundenprämien Section */}
-        <div>
-          <h2 className="text-2xl font-bold text-foreground mb-4">Neukundenprämien</h2>
-          {loading ? (
-            <Card className="p-6">
-              <p className="text-muted-foreground text-center">Lädt...</p>
-            </Card>
-          ) : newCustomerOffers.length > 0 ? (
+        {newCustomerOffers.length > 0 && (
+          <div>
+            <h2 className="text-2xl font-bold text-foreground mb-4">Neukundenprämien</h2>
             <div className="space-y-3">
               {newCustomerOffers.map((offer) => (
                 <Card
                   key={offer.id}
-                  className="p-4 hover:shadow-lg transition-shadow cursor-pointer"
-                  onClick={() => navigate(`/app/merchant/${offer.merchant_customer_id}`)}
+                  className="p-4 hover:shadow-lg transition-shadow cursor-pointer border-2 border-primary/20"
+                  onClick={() => handleOfferClick(offer)}
                 >
                   <div className="flex items-center gap-4">
                     {offer.customer?.logo_url ? (
@@ -230,23 +276,23 @@ export const AppHome = () => {
                       </div>
                     )}
                     <div className="flex-1">
-                      <h3 className="font-semibold text-foreground">{offer.customer?.name || 'Unbekannt'}</h3>
+                      <h3 className="font-semibold text-foreground">
+                        {offer.customer?.company_name || offer.customer?.name || 'Unbekannt'}
+                      </h3>
                       <p className="text-sm text-muted-foreground mb-1">{offer.title}</p>
-                      <div className="inline-flex items-center gap-1 px-2 py-1 bg-accent/10 text-accent rounded-full text-xs font-medium">
-                        <Gift className="h-3 w-3" />
-                        +{offer.bonus_stamps} Bonus-Stempel
+                      <div className="flex items-center gap-2">
+                        <Badge variant="secondary" className="text-xs">
+                          <Gift className="h-3 w-3 mr-1" />
+                          +{offer.bonus_stamps} Bonus-Punkte
+                        </Badge>
                       </div>
                     </div>
                   </div>
                 </Card>
               ))}
             </div>
-          ) : (
-            <Card className="p-6 text-center">
-              <p className="text-muted-foreground">Derzeit keine Neukundenprämien verfügbar</p>
-            </Card>
-          )}
-        </div>
+          </div>
+        )}
 
         {/* Support Section */}
         <div>
@@ -269,7 +315,7 @@ export const AppHome = () => {
 
             <Card className="p-4 hover:shadow-md transition-shadow">
               <button
-                onClick={() => navigate('/app/stores')}
+                onClick={() => navigate('/app/suggest-shop')}
                 className="w-full text-center"
               >
                 <div className="mx-auto w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-3">
@@ -284,6 +330,36 @@ export const AppHome = () => {
           </div>
         </div>
       </div>
+
+      {/* New Customer Offer Dialog */}
+      {selectedOffer && (
+        <NewCustomerOfferDialog
+          offer={selectedOffer}
+          merchant={selectedOffer.customer ? {
+            name: selectedOffer.customer.name,
+            company_name: selectedOffer.customer.company_name,
+            logo_url: selectedOffer.customer.logo_url,
+            street: selectedOffer.customer.street,
+            house_number: selectedOffer.customer.house_number,
+            postal_code: selectedOffer.customer.postal_code,
+            city: selectedOffer.customer.city,
+            latitude: selectedOffer.customer.latitude,
+            longitude: selectedOffer.customer.longitude,
+          } : null}
+          open={offerDialogOpen}
+          onOpenChange={(open) => {
+            setOfferDialogOpen(open);
+            if (!open) {
+              setIsRedeeming(false);
+              setRedemptionSuccess(false);
+            }
+          }}
+          onRedemptionComplete={handleRedemptionComplete}
+          isRedeeming={isRedeeming}
+          redemptionSuccess={redemptionSuccess}
+          onStartRedemption={handleStartRedemption}
+        />
+      )}
     </MainLayout>
   );
 };
