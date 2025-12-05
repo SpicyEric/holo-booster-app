@@ -124,10 +124,16 @@ export default function Automatisierungen() {
                   </CardDescription>
                 </div>
               </div>
-              <Switch
-                checked={settings.welcome_enabled}
-                onCheckedChange={(checked) => setSettings({ ...settings, welcome_enabled: checked })}
-              />
+              <div className="flex items-center gap-2">
+                <span className={`text-xs font-medium ${settings.welcome_enabled ? 'text-green-600' : 'text-gray-400'}`}>
+                  {settings.welcome_enabled ? 'Aktiv' : 'Inaktiv'}
+                </span>
+                <Switch
+                  checked={settings.welcome_enabled}
+                  onCheckedChange={(checked) => setSettings({ ...settings, welcome_enabled: checked })}
+                  className="data-[state=checked]:bg-green-500 data-[state=unchecked]:bg-gray-300 scale-125"
+                />
+              </div>
             </div>
           </CardHeader>
           {settings.welcome_enabled && (
@@ -177,10 +183,16 @@ export default function Automatisierungen() {
                   </CardDescription>
                 </div>
               </div>
-              <Switch
-                checked={settings.birthday_enabled}
-                onCheckedChange={(checked) => setSettings({ ...settings, birthday_enabled: checked })}
-              />
+              <div className="flex items-center gap-2">
+                <span className={`text-xs font-medium ${settings.birthday_enabled ? 'text-pink-600' : 'text-gray-400'}`}>
+                  {settings.birthday_enabled ? 'Aktiv' : 'Inaktiv'}
+                </span>
+                <Switch
+                  checked={settings.birthday_enabled}
+                  onCheckedChange={(checked) => setSettings({ ...settings, birthday_enabled: checked })}
+                  className="data-[state=checked]:bg-pink-500 data-[state=unchecked]:bg-gray-300 scale-125"
+                />
+              </div>
             </div>
           </CardHeader>
           {settings.birthday_enabled && (
