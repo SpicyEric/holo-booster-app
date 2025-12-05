@@ -5,7 +5,6 @@ import { useNavigate, useLocation, Outlet } from "react-router-dom";
 import { toast } from "sonner";
 import { LogOut, Home, Building2, Star, CreditCard, MessageSquare, User, Menu, Stamp, Sparkles } from "lucide-react";
 import eloyoLogo from '@/assets/eloyo-logo.png';
-import Particles from "@/components/Particles";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -48,27 +47,15 @@ const MerchantLayout = () => {
 
   return (
     <ProtectedRoute allowedRoles={['merchant', 'admin']}>
-      <div className="min-h-screen bg-background">
-        <Particles 
-          particleColors={['#8B5CF6', '#3B82F6', '#8B5CF6']}
-          particleCount={100}
-          particleSpread={8}
-          speed={0.05}
-          particleBaseSize={100}
-          sizeRandomness={1.5}
-          moveParticlesOnHover={true}
-          alphaParticles={true}
-          disableRotation={false}
-          cameraDistance={20}
-        />
-        
-        {/* Header with dropdown navigation */}
-        <div className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-10">
-          <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
+      {/* Pure white background - no particles */}
+      <div className="min-h-screen bg-white">
+        {/* Clean header */}
+        <div className="border-b border-gray-100 bg-white sticky top-0 z-10">
+          <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
             <img 
               src={eloyoLogo} 
               alt="Eloyo Logo" 
-              className="h-9 w-auto cursor-pointer" 
+              className="h-8 w-auto cursor-pointer" 
               onClick={() => navigate('/kunde')}
             />
             
@@ -76,26 +63,33 @@ const MerchantLayout = () => {
             <div className="flex items-center gap-2">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="outline" className="gap-2">
+                  <Button 
+                    variant="outline" 
+                    className="gap-2 border-gray-200 hover:bg-gray-50 text-gray-700"
+                  >
                     <Menu className="h-4 w-4" />
                     Menü
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56 bg-card border shadow-lg">
+                <DropdownMenuContent align="end" className="w-56 bg-white border border-gray-100 shadow-lg rounded-xl">
                   {navItems.map((item) => (
                     <DropdownMenuItem
                       key={item.path}
                       onClick={() => navigate(item.path)}
-                      className={`cursor-pointer ${isActive(item.path) ? 'bg-primary/10 text-primary font-medium' : ''}`}
+                      className={`cursor-pointer rounded-lg mx-1 ${
+                        isActive(item.path) 
+                          ? 'bg-primary/10 text-primary font-medium' 
+                          : 'text-gray-700 hover:bg-gray-50'
+                      }`}
                     >
                       <item.icon className="h-4 w-4 mr-2" />
                       {item.label}
                     </DropdownMenuItem>
                   ))}
-                  <DropdownMenuSeparator />
+                  <DropdownMenuSeparator className="bg-gray-100" />
                   <DropdownMenuItem
                     onClick={handleLogout}
-                    className="cursor-pointer text-destructive focus:text-destructive"
+                    className="cursor-pointer text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg mx-1"
                   >
                     <LogOut className="h-4 w-4 mr-2" />
                     Logout
@@ -106,7 +100,7 @@ const MerchantLayout = () => {
           </div>
         </div>
 
-        <main className="relative z-10">
+        <main>
           <Outlet />
         </main>
       </div>
