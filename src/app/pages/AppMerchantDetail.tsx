@@ -12,7 +12,6 @@ import { toast } from 'sonner';
 import { BottomNav } from '@/app/components/layout/BottomNav';
 import { RewardRedemptionDialog } from '@/app/components/RewardRedemptionDialog';
 import { NewCustomerOfferDialog } from '@/app/components/NewCustomerOfferDialog';
-import confetti from 'canvas-confetti';
 
 interface Merchant {
   id: string;
@@ -64,12 +63,7 @@ export const AppMerchantDetail = () => {
   // Dialog states
   const [selectedReward, setSelectedReward] = useState<Reward | null>(null);
   const [rewardDialogOpen, setRewardDialogOpen] = useState(false);
-  const [isRedeeming, setIsRedeeming] = useState(false);
-  const [redemptionSuccess, setRedemptionSuccess] = useState(false);
-  
   const [newCustomerOfferDialogOpen, setNewCustomerOfferDialogOpen] = useState(false);
-  const [isRedeemingNewOffer, setIsRedeemingNewOffer] = useState(false);
-  const [newOfferRedemptionSuccess, setNewOfferRedemptionSuccess] = useState(false);
 
   useEffect(() => {
     if (id) {
@@ -111,7 +105,7 @@ export const AppMerchantDetail = () => {
 
         if (stampCard) {
           setUserPoints(stampCard.current_points || 0);
-          setHasEverStamped(true); // If record exists, they've stamped before
+          setHasEverStamped(true);
         } else {
           setUserPoints(0);
           setHasEverStamped(false);
@@ -157,46 +151,21 @@ export const AppMerchantDetail = () => {
 
   const handleRewardClick = (reward: Reward) => {
     setSelectedReward(reward);
-    setIsRedeeming(false);
-    setRedemptionSuccess(false);
     setRewardDialogOpen(true);
   };
 
-  const handleStartRedemption = () => {
-    setIsRedeeming(true);
-    // In real app, this would listen for NFC scan
-    // For now, simulate with timeout
-    // The actual NFC scan would trigger handleRedemptionComplete
-  };
-
-  const handleRedemptionComplete = async (rewardId: string, pointsSpent: number) => {
-    try {
-      // Deduct points and record redemption
-      // This would be handled by the NFC scan flow in production
-      setRedemptionSuccess(true);
-      setUserPoints(prev => prev - pointsSpent);
-      confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
-    } catch (err) {
-      console.error('Redemption error:', err);
-      toast.error('Fehler beim Einlösen');
-    }
-  };
-
   const handleNewCustomerOfferClick = () => {
-    setIsRedeemingNewOffer(false);
-    setNewOfferRedemptionSuccess(false);
     setNewCustomerOfferDialogOpen(true);
   };
 
-  const handleStartNewOfferRedemption = () => {
-    setIsRedeemingNewOffer(true);
+  const handlePointsUpdated = (newPoints: number) => {
+    setUserPoints(newPoints);
   };
 
-  const handleNewOfferRedemptionComplete = () => {
-    setNewOfferRedemptionSuccess(true);
+  const handleNewCustomerOfferRedeemed = () => {
     setHasEverStamped(true);
     setNewCustomerOffer(null);
-    confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+    loadMerchant(); // Reload to get updated points
   };
 
   if (loading) {
@@ -430,41 +399,28 @@ export const AppMerchantDetail = () => {
       </Tabs>
 
       {/* Reward Redemption Dialog */}
-      <RewardRedemptionDialog
-        reward={selectedReward}
-        open={rewardDialogOpen}
-        onOpenChange={(open) => {
-          setRewardDialogOpen(open);
-          if (!open) {
-            setIsRedeeming(false);
-            setRedemptionSuccess(false);
-          }
-        }}
-        userPoints={userPoints}
-        merchantName={merchantName}
-        onRedemptionComplete={handleRedemptionComplete}
-        isRedeeming={isRedeeming}
-        redemptionSuccess={redemptionSuccess}
-        onStartRedemption={handleStartRedemption}
-      />
+      {selectedReward && id && (
+        <RewardRedemptionDialog
+          reward={selectedReward}
+          open={rewardDialogOpen}
+          onOpenChange={setRewardDialogOpen}
+          userPoints={userPoints}
+          merchantId={id}
+          merchantName={merchantName}
+          onPointsUpdated={handlePointsUpdated}
+        />
+      )}
 
       {/* New Customer Offer Dialog */}
-      <NewCustomerOfferDialog
-        offer={newCustomerOffer}
-        merchant={merchant}
-        open={newCustomerOfferDialogOpen}
-        onOpenChange={(open) => {
-          setNewCustomerOfferDialogOpen(open);
-          if (!open) {
-            setIsRedeemingNewOffer(false);
-            setNewOfferRedemptionSuccess(false);
-          }
-        }}
-        onRedemptionComplete={handleNewOfferRedemptionComplete}
-        isRedeeming={isRedeemingNewOffer}
-        redemptionSuccess={newOfferRedemptionSuccess}
-        onStartRedemption={handleStartNewOfferRedemption}
-      />
+      {newCustomerOffer && merchant && (
+        <NewCustomerOfferDialog
+          offer={newCustomerOffer}
+          merchant={merchant}
+          open={newCustomerOfferDialogOpen}
+          onOpenChange={setNewCustomerOfferDialogOpen}
+          onRedemptionComplete={handleNewCustomerOfferRedeemed}
+        />
+      )}
 
       <BottomNav />
     </div>

@@ -9,7 +9,6 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { MainLayout } from '@/app/components/layout/MainLayout';
 import { RewardRedemptionDialog } from '@/app/components/RewardRedemptionDialog';
-import confetti from 'canvas-confetti';
 
 interface Reward {
   id: string;
@@ -40,8 +39,6 @@ export const AppRewards = () => {
   // Dialog states
   const [selectedReward, setSelectedReward] = useState<Reward | null>(null);
   const [rewardDialogOpen, setRewardDialogOpen] = useState(false);
-  const [isRedeeming, setIsRedeeming] = useState(false);
-  const [redemptionSuccess, setRedemptionSuccess] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -95,27 +92,17 @@ export const AppRewards = () => {
 
   const handleRewardClick = (reward: Reward) => {
     setSelectedReward(reward);
-    setIsRedeeming(false);
-    setRedemptionSuccess(false);
     setRewardDialogOpen(true);
   };
 
-  const handleStartRedemption = () => {
-    setIsRedeeming(true);
-  };
-
-  const handleRedemptionComplete = async (rewardId: string, pointsSpent: number) => {
-    if (!selectedReward) return;
-    
-    setRedemptionSuccess(true);
-    // Update local points
-    setUserPoints(prev => {
-      const newMap = new Map(prev);
-      const currentPoints = newMap.get(selectedReward.merchant_customer_id) || 0;
-      newMap.set(selectedReward.merchant_customer_id, currentPoints - pointsSpent);
-      return newMap;
-    });
-    confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+  const handlePointsUpdated = (newPoints: number) => {
+    if (selectedReward) {
+      setUserPoints(prev => {
+        const newMap = new Map(prev);
+        newMap.set(selectedReward.merchant_customer_id, newPoints);
+        return newMap;
+      });
+    }
   };
 
   if (loading) {
@@ -230,19 +217,11 @@ export const AppRewards = () => {
         <RewardRedemptionDialog
           reward={selectedReward}
           open={rewardDialogOpen}
-          onOpenChange={(open) => {
-            setRewardDialogOpen(open);
-            if (!open) {
-              setIsRedeeming(false);
-              setRedemptionSuccess(false);
-            }
-          }}
+          onOpenChange={setRewardDialogOpen}
           userPoints={getUserPointsForMerchant(selectedReward.merchant_customer_id)}
+          merchantId={selectedReward.merchant_customer_id}
           merchantName={selectedReward.customer.company_name || selectedReward.customer.name}
-          onRedemptionComplete={handleRedemptionComplete}
-          isRedeeming={isRedeeming}
-          redemptionSuccess={redemptionSuccess}
-          onStartRedemption={handleStartRedemption}
+          onPointsUpdated={handlePointsUpdated}
         />
       )}
     </MainLayout>
