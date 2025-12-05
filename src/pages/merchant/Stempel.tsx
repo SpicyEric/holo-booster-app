@@ -43,7 +43,6 @@ const Stempel = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      // Get merchant assignment
       const { data: assignment } = await supabase
         .from('merchant_assignments')
         .select('customer_id')
@@ -57,7 +56,6 @@ const Stempel = () => {
 
       setCustomerId(assignment.customer_id);
 
-      // Load NFC chips
       const { data: chips } = await supabase
         .from('nfc_chips')
         .select('*')
@@ -68,7 +66,6 @@ const Stempel = () => {
         setNfcChips(chips);
       }
 
-      // Load customer boxes with the actual box code
       const { data: boxes } = await supabase
         .from('customer_boxes')
         .select(`
@@ -89,12 +86,10 @@ const Stempel = () => {
         }));
         setCustomerBoxes(mappedBoxes);
 
-        // Auto-create stamps if boxes exist but no chips
         if (boxes.length > 0 && (!chips || chips.length === 0)) {
           const firstBox = boxes[0] as any;
           const preset = firstBox.boxes?.stamp_preset || 'standard_3';
           await createDefaultStamps(preset, assignment.customer_id);
-          // Reload chips after creation
           const { data: newChips } = await supabase
             .from('nfc_chips')
             .select('*')
@@ -149,9 +144,7 @@ const Stempel = () => {
   };
 
   const formatBoxIdInput = (value: string) => {
-    // Remove all non-alphanumeric characters and convert to uppercase
     const clean = value.replace(/[^A-Za-z0-9]/g, '').toUpperCase();
-    // Insert dashes every 5 characters
     const parts = [];
     for (let i = 0; i < clean.length && i < 15; i += 5) {
       parts.push(clean.slice(i, i + 5));
@@ -164,7 +157,6 @@ const Stempel = () => {
   };
 
   const createDefaultStamps = async (boxPreset: string, merchantCustomerId: string) => {
-    // Define stamp configurations based on preset
     const stampConfigs: { stamp_name: string; stamp_color: string; points_value: number }[] = [];
     
     if (boxPreset === 'standard_3') {
@@ -183,10 +175,9 @@ const Stempel = () => {
       );
     }
 
-    // Create NFC chips for each stamp
     for (let i = 0; i < stampConfigs.length; i++) {
       const config = stampConfigs[i];
-      const chipUid = `${merchantCustomerId.substring(0, 8)}-${i + 1}`; // Generate unique chip UID
+      const chipUid = `${merchantCustomerId.substring(0, 8)}-${i + 1}`;
       
       await supabase
         .from('nfc_chips')
@@ -205,7 +196,6 @@ const Stempel = () => {
   const handleAddBox = async () => {
     if (!customerId || !newBoxId.trim()) return;
 
-    // Validate format XXXXX-XXXXX-XXXXX
     const boxIdPattern = /^[A-Za-z0-9]{5}-[A-Za-z0-9]{5}-[A-Za-z0-9]{5}$/;
     if (!boxIdPattern.test(newBoxId.trim())) {
       toast.error('Ungültiges Format. Bitte verwenden Sie: XXXXX-XXXXX-XXXXX');
@@ -214,7 +204,6 @@ const Stempel = () => {
 
     setAddingBox(true);
     try {
-      // Check if box exists in registry and get its preset
       const { data: boxData, error: boxError } = await supabase
         .from('boxes')
         .select('id, box_id, stamp_preset')
@@ -232,7 +221,6 @@ const Stempel = () => {
         return;
       }
 
-      // Check if already assigned to this customer
       const { data: ownAssignment } = await supabase
         .from('customer_boxes')
         .select('id')
@@ -245,7 +233,6 @@ const Stempel = () => {
         return;
       }
 
-      // Check if assigned to another customer (use admin policy via count)
       const { count: otherCount } = await supabase
         .from('customer_boxes')
         .select('id', { count: 'exact', head: true })
@@ -256,7 +243,6 @@ const Stempel = () => {
         return;
       }
 
-      // Assign box to customer
       const { error: insertError } = await supabase
         .from('customer_boxes')
         .insert({
@@ -270,7 +256,6 @@ const Stempel = () => {
         return;
       }
 
-      // Create default stamps based on box preset
       await createDefaultStamps(boxData.stamp_preset || 'standard_3', customerId);
 
       toast.success('Box-ID erfolgreich hinzugefügt! Stempel wurden automatisch erstellt.');
@@ -302,7 +287,7 @@ const Stempel = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
+      <div className="min-h-screen bg-white flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
@@ -310,139 +295,157 @@ const Stempel = () => {
 
   if (!customerId) {
     return (
-      <div className="max-w-4xl mx-auto p-6">
-        <Card>
-          <CardContent className="p-6 text-center text-muted-foreground">
-            Kein Händlerprofil gefunden.
-          </CardContent>
-        </Card>
+      <div className="min-h-screen bg-white p-6 sm:p-8">
+        <div className="max-w-4xl mx-auto">
+          <Card className="rounded-2xl shadow-sm border-0 bg-gray-50">
+            <CardContent className="p-8 text-center text-muted-foreground">
+              Kein Händlerprofil gefunden.
+            </CardContent>
+          </Card>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="max-w-4xl mx-auto p-6 space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold">Stempelverwaltung</h1>
-        <p className="text-muted-foreground">Verwalten Sie Ihre NFC-Stempel und Box-IDs</p>
-      </div>
+    <div className="min-h-screen bg-white">
+      <div className="max-w-4xl mx-auto p-6 sm:p-8 space-y-8">
+        {/* Header */}
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Stempelverwaltung</h1>
+          <p className="text-gray-500 mt-1">Verwalten Sie Ihre NFC-Stempel und Box-IDs</p>
+        </div>
 
-      {/* Box IDs - First since it's the main action */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Package className="h-5 w-5" />
-            Box-IDs
-          </CardTitle>
-          <CardDescription>
-            Die Box-ID finden Sie auf der Innenseite des Deckels Ihrer Starterbox
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {customerBoxes.length > 0 && (
-            <div className="space-y-2">
-              <Label className="text-sm font-medium">Verknüpfte Boxen</Label>
-              {customerBoxes.map((box) => (
-                <div key={box.id} className="flex items-center justify-between p-3 border rounded-lg bg-muted/50">
-                  <code className="font-mono text-sm font-semibold">{box.box_code}</code>
-                  <span className="text-xs text-muted-foreground">
-                    Hinzugefügt: {new Date(box.assigned_at).toLocaleDateString('de-DE')}
-                  </span>
-                </div>
-              ))}
-            </div>
-          )}
-
-          <div className="space-y-2">
-            <Label className="text-sm font-medium">Neue Box-ID hinzufügen</Label>
-            <div className="flex gap-2">
-              <Input
-                value={newBoxId}
-                onChange={handleBoxIdInputChange}
-                placeholder="XXXXX-XXXXX-XXXXX"
-                className="font-mono"
-                maxLength={17}
-              />
-              <Button onClick={handleAddBox} disabled={addingBox || !newBoxId.trim()}>
-                {addingBox ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
-              </Button>
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Format: XXXXX-XXXXX-XXXXX (15 Zeichen mit Bindestrichen)
-            </p>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* NFC Chips / Stamps */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
-              <span className="text-lg">🔖</span>
-            </div>
-            Stempelfarben & Punkte
-          </CardTitle>
-          <CardDescription>
-            Konfigurieren Sie, wie viele Punkte jede Stempelfarbe vergibt
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {nfcChips.length === 0 ? (
-            <p className="text-muted-foreground text-center py-4">
-              Noch keine Stempel konfiguriert. Stempel werden automatisch hinzugefügt, wenn Sie eine Box-ID verknüpfen.
-            </p>
-          ) : (
-            <>
-              {nfcChips.map((chip) => (
-                <div key={chip.id} className="flex items-center gap-4 p-4 border rounded-lg">
-                  <div className={`h-10 w-10 rounded-full ${getColorBadge(chip.stamp_color)}`} />
-                  
-                  <div className="flex-1 grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <div>
-                      <Label className="text-xs">Name</Label>
-                      <Input
-                        value={chip.stamp_name || ''}
-                        onChange={(e) => handleChipChange(chip.id, 'stamp_name', e.target.value)}
-                        placeholder="z.B. Standard"
-                        className="h-9"
-                      />
-                    </div>
-                    <div>
-                      <Label className="text-xs">Farbe</Label>
-                      <Input
-                        value={chip.stamp_color || ''}
-                        onChange={(e) => handleChipChange(chip.id, 'stamp_color', e.target.value)}
-                        placeholder="z.B. grün"
-                        className="h-9"
-                      />
-                    </div>
-                    <div>
-                      <Label className="text-xs">Punkte</Label>
-                      <Input
-                        type="number"
-                        min="1"
-                        value={chip.points_value || 1}
-                        onChange={(e) => handleChipChange(chip.id, 'points_value', parseInt(e.target.value) || 1)}
-                        className="h-9"
-                      />
-                    </div>
+        {/* Box IDs */}
+        <Card className="rounded-2xl shadow-sm border-0 bg-gray-50/80">
+          <CardHeader className="pb-4">
+            <CardTitle className="flex items-center gap-3 text-lg font-semibold text-gray-900">
+              <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                <Package className="h-5 w-5 text-primary" />
+              </div>
+              Box-IDs
+            </CardTitle>
+            <CardDescription className="text-gray-500">
+              Die Box-ID finden Sie auf der Innenseite des Deckels Ihrer Starterbox
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {customerBoxes.length > 0 && (
+              <div className="space-y-3">
+                <Label className="text-sm font-medium text-gray-700">Verknüpfte Boxen</Label>
+                {customerBoxes.map((box) => (
+                  <div key={box.id} className="flex items-center justify-between p-4 bg-white rounded-xl border border-gray-100">
+                    <code className="font-mono text-sm font-semibold text-gray-900">{box.box_code}</code>
+                    <span className="text-xs text-gray-500">
+                      Hinzugefügt: {new Date(box.assigned_at).toLocaleDateString('de-DE')}
+                    </span>
                   </div>
-                  
-                  <Badge variant={chip.is_active ? "default" : "secondary"}>
-                    {chip.is_active ? 'Aktiv' : 'Inaktiv'}
-                  </Badge>
-                </div>
-              ))}
-              
-              <Button onClick={handleSaveChips} disabled={saving} className="w-full sm:w-auto">
-                {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
-                Stempel speichern
-              </Button>
-            </>
-          )}
-        </CardContent>
-      </Card>
+                ))}
+              </div>
+            )}
+
+            <div className="space-y-3">
+              <Label className="text-sm font-medium text-gray-700">Neue Box-ID hinzufügen</Label>
+              <div className="flex gap-3">
+                <Input
+                  value={newBoxId}
+                  onChange={handleBoxIdInputChange}
+                  placeholder="XXXXX-XXXXX-XXXXX"
+                  className="font-mono rounded-xl border-gray-200 focus:border-primary focus:ring-primary"
+                  maxLength={17}
+                />
+                <Button 
+                  onClick={handleAddBox} 
+                  disabled={addingBox || !newBoxId.trim()}
+                  className="rounded-xl px-4"
+                >
+                  {addingBox ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
+                </Button>
+              </div>
+              <p className="text-xs text-gray-500">
+                Format: XXXXX-XXXXX-XXXXX (15 Zeichen mit Bindestrichen)
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* NFC Chips / Stamps */}
+        <Card className="rounded-2xl shadow-sm border-0 bg-gray-50/80">
+          <CardHeader className="pb-4">
+            <CardTitle className="flex items-center gap-3 text-lg font-semibold text-gray-900">
+              <div className="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center">
+                <span className="text-lg">🔖</span>
+              </div>
+              Stempelfarben & Punkte
+            </CardTitle>
+            <CardDescription className="text-gray-500">
+              Konfigurieren Sie, wie viele Punkte jede Stempelfarbe vergibt
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {nfcChips.length === 0 ? (
+              <p className="text-gray-500 text-center py-8">
+                Noch keine Stempel konfiguriert. Stempel werden automatisch hinzugefügt, wenn Sie eine Box-ID verknüpfen.
+              </p>
+            ) : (
+              <>
+                {nfcChips.map((chip) => (
+                  <div key={chip.id} className="flex items-center gap-4 p-4 bg-white rounded-xl border border-gray-100">
+                    <div className={`h-10 w-10 rounded-full ${getColorBadge(chip.stamp_color)} shadow-sm`} />
+                    
+                    <div className="flex-1 grid grid-cols-1 sm:grid-cols-3 gap-4">
+                      <div>
+                        <Label className="text-xs text-gray-500">Name</Label>
+                        <Input
+                          value={chip.stamp_name || ''}
+                          onChange={(e) => handleChipChange(chip.id, 'stamp_name', e.target.value)}
+                          placeholder="z.B. Standard"
+                          className="h-9 rounded-lg border-gray-200"
+                        />
+                      </div>
+                      <div>
+                        <Label className="text-xs text-gray-500">Farbe</Label>
+                        <Input
+                          value={chip.stamp_color || ''}
+                          onChange={(e) => handleChipChange(chip.id, 'stamp_color', e.target.value)}
+                          placeholder="z.B. grün"
+                          className="h-9 rounded-lg border-gray-200"
+                        />
+                      </div>
+                      <div>
+                        <Label className="text-xs text-gray-500">Punkte</Label>
+                        <Input
+                          type="number"
+                          min="1"
+                          value={chip.points_value || 1}
+                          onChange={(e) => handleChipChange(chip.id, 'points_value', parseInt(e.target.value) || 1)}
+                          className="h-9 rounded-lg border-gray-200"
+                        />
+                      </div>
+                    </div>
+                    
+                    <Badge 
+                      variant={chip.is_active ? "default" : "secondary"}
+                      className="rounded-full"
+                    >
+                      {chip.is_active ? 'Aktiv' : 'Inaktiv'}
+                    </Badge>
+                  </div>
+                ))}
+                
+                <Button 
+                  onClick={handleSaveChips} 
+                  disabled={saving} 
+                  className="w-full sm:w-auto rounded-xl"
+                >
+                  {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
+                  Stempel speichern
+                </Button>
+              </>
+            )}
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 };

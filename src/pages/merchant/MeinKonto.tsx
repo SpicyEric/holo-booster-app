@@ -42,15 +42,12 @@ export default function MeinKonto() {
   const [loading, setLoading] = useState(true);
   const [customer, setCustomer] = useState<Customer | null>(null);
   
-  // Dialogs
   const [showPasswordDialog, setShowPasswordDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   
-  // Loading states
   const [changingPassword, setChangingPassword] = useState(false);
   const [deleting, setDeleting] = useState(false);
   
-  // Form states
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [deleteConfirmed, setDeleteConfirmed] = useState(false);
@@ -78,7 +75,6 @@ export default function MeinKonto() {
         .single();
 
       if (!customerUser) {
-        // Try merchant_assignments
         const { data: assignment } = await supabase
           .from("merchant_assignments")
           .select("customer_id")
@@ -147,14 +143,12 @@ export default function MeinKonto() {
 
     setDeleting(true);
     try {
-      // Cancel subscription first if active
       try {
         await supabase.functions.invoke("cancel-subscription");
       } catch (e) {
         // Ignore if no subscription
       }
 
-      // Sign out and show message
       await supabase.auth.signOut();
       toast.success("Löschungsanfrage wurde übermittelt. Ihr Account wird in Kürze gelöscht.");
       navigate("/");
@@ -168,165 +162,177 @@ export default function MeinKonto() {
 
   if (authLoading || loading) {
     return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <Loader2 className="h-8 w-8 animate-spin" />
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
   }
 
   return (
-    <div className="max-w-2xl mx-auto px-6 py-8 space-y-6">
-      <div className="space-y-2">
-        <h1 className="text-2xl font-bold">Mein Konto</h1>
-        <p className="text-muted-foreground">
-          Verwalten Sie Ihre Kontodaten und Sicherheitseinstellungen
-        </p>
-      </div>
+    <div className="min-h-screen bg-white">
+      <div className="max-w-2xl mx-auto px-6 py-8 space-y-8">
+        {/* Header */}
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Mein Konto</h1>
+          <p className="text-gray-500 mt-1">
+            Verwalten Sie Ihre Kontodaten und Sicherheitseinstellungen
+          </p>
+        </div>
 
-      {/* Account Info */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <User className="h-5 w-5" />
-            Kontoinformationen
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <Label className="text-muted-foreground text-sm">Geschäftsname</Label>
-              <p className="font-medium">{customer?.name || "-"}</p>
+        {/* Account Info */}
+        <Card className="rounded-2xl shadow-sm border-0 bg-gray-50/80">
+          <CardHeader className="pb-4">
+            <CardTitle className="flex items-center gap-3 text-lg font-semibold text-gray-900">
+              <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                <User className="h-5 w-5 text-primary" />
+              </div>
+              Kontoinformationen
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="p-4 bg-white rounded-xl">
+                <Label className="text-xs text-gray-500">Geschäftsname</Label>
+                <p className="font-semibold text-gray-900 mt-1">{customer?.name || "-"}</p>
+              </div>
+              <div className="p-4 bg-white rounded-xl">
+                <Label className="text-xs text-gray-500">Kundennummer</Label>
+                <p className="font-semibold text-gray-900 mt-1">{customer?.customer_number || "-"}</p>
+              </div>
             </div>
-            <div>
-              <Label className="text-muted-foreground text-sm">Kundennummer</Label>
-              <p className="font-medium">{customer?.customer_number || "-"}</p>
+            <div className="flex items-center gap-3 p-4 bg-white rounded-xl">
+              <Mail className="h-5 w-5 text-gray-400" />
+              <span className="text-gray-700">{user?.email}</span>
             </div>
-          </div>
-          <div className="flex items-center gap-2 p-3 bg-muted/50 rounded-lg">
-            <Mail className="h-4 w-4 text-muted-foreground" />
-            <span className="text-sm">{user?.email}</span>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
 
-      {/* Password */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <KeyRound className="h-5 w-5" />
-            Passwort
-          </CardTitle>
-          <CardDescription>
-            Ändern Sie Ihr Anmeldepasswort
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Button variant="outline" onClick={() => setShowPasswordDialog(true)}>
-            Passwort ändern
-          </Button>
-        </CardContent>
-      </Card>
-
-      {/* Delete Account */}
-      <Card className="border-destructive/50">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-destructive">
-            <Trash2 className="h-5 w-5" />
-            Account löschen
-          </CardTitle>
-          <CardDescription>
-            Löschen Sie Ihren Account und alle damit verbundenen Daten dauerhaft.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Button 
-            variant="destructive" 
-            onClick={() => setShowDeleteDialog(true)}
-          >
-            Account löschen
-          </Button>
-        </CardContent>
-      </Card>
-
-      {/* Password Dialog */}
-      <Dialog open={showPasswordDialog} onOpenChange={setShowPasswordDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Passwort ändern</DialogTitle>
-            <DialogDescription>
-              Geben Sie ein neues Passwort ein (mindestens 6 Zeichen)
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <Label>Neues Passwort</Label>
-              <Input
-                type="password"
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                placeholder="••••••••"
-              />
-            </div>
-            <div>
-              <Label>Passwort bestätigen</Label>
-              <Input
-                type="password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                placeholder="••••••••"
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowPasswordDialog(false)}>
-              Abbrechen
+        {/* Password */}
+        <Card className="rounded-2xl shadow-sm border-0 bg-gray-50/80">
+          <CardHeader className="pb-4">
+            <CardTitle className="flex items-center gap-3 text-lg font-semibold text-gray-900">
+              <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center">
+                <KeyRound className="h-5 w-5 text-blue-600" />
+              </div>
+              Passwort
+            </CardTitle>
+            <CardDescription className="text-gray-500">
+              Ändern Sie Ihr Anmeldepasswort
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button variant="outline" onClick={() => setShowPasswordDialog(true)} className="rounded-xl">
+              Passwort ändern
             </Button>
-            <Button onClick={changePassword} disabled={changingPassword}>
-              {changingPassword && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
-              Speichern
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          </CardContent>
+        </Card>
 
-      {/* Delete Dialog */}
-      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Account löschen?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Diese Aktion kann nicht rückgängig gemacht werden. Alle Ihre Daten 
-              werden dauerhaft gelöscht. Ein aktives Abonnement wird automatisch gekündigt.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <div className="flex items-center space-x-2 py-4">
-            <Checkbox
-              id="delete-confirm"
-              checked={deleteConfirmed}
-              onCheckedChange={(checked) => setDeleteConfirmed(checked as boolean)}
-            />
-            <label
-              htmlFor="delete-confirm"
-              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-            >
-              Ich verstehe, dass diese Aktion nicht rückgängig gemacht werden kann
-            </label>
-          </div>
-          <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setDeleteConfirmed(false)}>
-              Abbrechen
-            </AlertDialogCancel>
-            <AlertDialogAction
-              onClick={deleteAccount}
-              disabled={!deleteConfirmed || deleting}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              {deleting && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
+        {/* Delete Account */}
+        <Card className="rounded-2xl shadow-sm border-0 bg-red-50/50">
+          <CardHeader className="pb-4">
+            <CardTitle className="flex items-center gap-3 text-lg font-semibold text-red-700">
+              <div className="w-10 h-10 rounded-xl bg-red-100 flex items-center justify-center">
+                <Trash2 className="h-5 w-5 text-red-600" />
+              </div>
               Account löschen
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+            </CardTitle>
+            <CardDescription className="text-red-600/80">
+              Löschen Sie Ihren Account und alle damit verbundenen Daten dauerhaft.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button 
+              variant="destructive" 
+              onClick={() => setShowDeleteDialog(true)}
+              className="rounded-xl"
+            >
+              Account löschen
+            </Button>
+          </CardContent>
+        </Card>
+
+        {/* Password Dialog */}
+        <Dialog open={showPasswordDialog} onOpenChange={setShowPasswordDialog}>
+          <DialogContent className="rounded-2xl">
+            <DialogHeader>
+              <DialogTitle>Passwort ändern</DialogTitle>
+              <DialogDescription>
+                Geben Sie ein neues Passwort ein (mindestens 6 Zeichen)
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <Label className="text-gray-700">Neues Passwort</Label>
+                <Input
+                  type="password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  placeholder="••••••••"
+                  className="rounded-xl mt-1"
+                />
+              </div>
+              <div>
+                <Label className="text-gray-700">Passwort bestätigen</Label>
+                <Input
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder="••••••••"
+                  className="rounded-xl mt-1"
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setShowPasswordDialog(false)} className="rounded-xl">
+                Abbrechen
+              </Button>
+              <Button onClick={changePassword} disabled={changingPassword} className="rounded-xl">
+                {changingPassword && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
+                Speichern
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Delete Dialog */}
+        <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+          <AlertDialogContent className="rounded-2xl">
+            <AlertDialogHeader>
+              <AlertDialogTitle>Account löschen?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Diese Aktion kann nicht rückgängig gemacht werden. Alle Ihre Daten 
+                werden dauerhaft gelöscht. Ein aktives Abonnement wird automatisch gekündigt.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <div className="flex items-center space-x-3 py-4">
+              <Checkbox
+                id="delete-confirm"
+                checked={deleteConfirmed}
+                onCheckedChange={(checked) => setDeleteConfirmed(checked as boolean)}
+              />
+              <label
+                htmlFor="delete-confirm"
+                className="text-sm font-medium leading-none"
+              >
+                Ich verstehe, dass diese Aktion nicht rückgängig gemacht werden kann
+              </label>
+            </div>
+            <AlertDialogFooter>
+              <AlertDialogCancel onClick={() => setDeleteConfirmed(false)} className="rounded-xl">
+                Abbrechen
+              </AlertDialogCancel>
+              <AlertDialogAction
+                onClick={deleteAccount}
+                disabled={!deleteConfirmed || deleting}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90 rounded-xl"
+              >
+                {deleting && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
+                Account löschen
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </div>
     </div>
   );
 }

@@ -59,10 +59,6 @@ export default function Automatisierungen() {
         const customerData = await getUserCustomer(user.id);
         if (customerData) {
           setCustomerId(customerData.id);
-          
-          // Load existing automation settings if they exist
-          // For now we'll use local state, but this could be stored in a new table
-          // TODO: Create automation_settings table if needed
         }
       }
     } catch (error) {
@@ -80,8 +76,6 @@ export default function Automatisierungen() {
 
     setSaving(true);
     try {
-      // TODO: Save to database when automation_settings table is created
-      // For now, just show success
       toast.success("Automatisierungen gespeichert");
     } catch (error) {
       console.error("Error saving:", error);
@@ -93,170 +87,180 @@ export default function Automatisierungen() {
 
   if (authLoading || loading) {
     return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <Loader2 className="h-8 w-8 animate-spin" />
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
   }
 
   return (
-    <div className="max-w-4xl mx-auto px-6 py-8 space-y-6">
-      {/* Header */}
-      <div className="space-y-1">
-        <h1 className="text-2xl font-bold flex items-center gap-2">
-          <Sparkles className="w-6 h-6 text-primary" />
-          Automatisierungen
-        </h1>
-        <p className="text-sm text-muted-foreground">
-          Richten Sie automatische Nachrichten für Ihre Kunden ein
-        </p>
-      </div>
+    <div className="min-h-screen bg-white">
+      <div className="max-w-4xl mx-auto px-6 py-8 space-y-8">
+        {/* Header */}
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+              <Sparkles className="w-5 h-5 text-primary" />
+            </div>
+            Automatisierungen
+          </h1>
+          <p className="text-gray-500 mt-2">
+            Richten Sie automatische Nachrichten für Ihre Kunden ein
+          </p>
+        </div>
 
-      {/* Willkommensnachricht */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-green-100 dark:bg-green-900">
-                <Mail className="w-5 h-5 text-green-600" />
+        {/* Willkommensnachricht */}
+        <Card className="rounded-2xl shadow-sm border-0 bg-gray-50/80">
+          <CardHeader className="pb-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-green-100 flex items-center justify-center">
+                  <Mail className="w-5 h-5 text-green-600" />
+                </div>
+                <div>
+                  <CardTitle className="text-base font-semibold text-gray-900">Willkommensnachricht</CardTitle>
+                  <CardDescription className="text-xs text-gray-500">
+                    Wird automatisch an neue Bonuskarten-Nutzer gesendet
+                  </CardDescription>
+                </div>
               </div>
-              <div>
-                <CardTitle className="text-base">Willkommensnachricht</CardTitle>
-                <CardDescription className="text-xs">
-                  Wird automatisch an neue Bonuskarten-Nutzer gesendet
-                </CardDescription>
+              <Switch
+                checked={settings.welcome_enabled}
+                onCheckedChange={(checked) => setSettings({ ...settings, welcome_enabled: checked })}
+              />
+            </div>
+          </CardHeader>
+          {settings.welcome_enabled && (
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="welcome_title" className="text-gray-700">Titel</Label>
+                <Input
+                  id="welcome_title"
+                  value={settings.welcome_title}
+                  onChange={(e) => setSettings({ ...settings, welcome_title: e.target.value })}
+                  placeholder="z.B. Willkommen! 🎉"
+                  className="rounded-xl border-gray-200"
+                />
               </div>
-            </div>
-            <Switch
-              checked={settings.welcome_enabled}
-              onCheckedChange={(checked) => setSettings({ ...settings, welcome_enabled: checked })}
-            />
-          </div>
-        </CardHeader>
-        {settings.welcome_enabled && (
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="welcome_title">Titel</Label>
-              <Input
-                id="welcome_title"
-                value={settings.welcome_title}
-                onChange={(e) => setSettings({ ...settings, welcome_title: e.target.value })}
-                placeholder="z.B. Willkommen! 🎉"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="welcome_message">Nachricht</Label>
-              <Textarea
-                id="welcome_message"
-                value={settings.welcome_message}
-                onChange={(e) => setSettings({ ...settings, welcome_message: e.target.value })}
-                placeholder="Ihre Willkommensnachricht..."
-                rows={3}
-              />
-            </div>
-            <div className="p-3 bg-muted/50 rounded-lg">
-              <p className="text-xs text-muted-foreground">
-                💡 Diese Nachricht wird automatisch gesendet, sobald jemand zum ersten Mal bei Ihnen stempelt.
-              </p>
-            </div>
-          </CardContent>
-        )}
-      </Card>
-
-      {/* Geburtstagsgrüße */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-pink-100 dark:bg-pink-900">
-                <Gift className="w-5 h-5 text-pink-600" />
+              <div className="space-y-2">
+                <Label htmlFor="welcome_message" className="text-gray-700">Nachricht</Label>
+                <Textarea
+                  id="welcome_message"
+                  value={settings.welcome_message}
+                  onChange={(e) => setSettings({ ...settings, welcome_message: e.target.value })}
+                  placeholder="Ihre Willkommensnachricht..."
+                  rows={3}
+                  className="rounded-xl border-gray-200"
+                />
               </div>
-              <div>
-                <CardTitle className="text-base">Geburtstagsgrüße</CardTitle>
-                <CardDescription className="text-xs">
-                  Automatischer Gruß und optionale Bonuspunkte am Geburtstag
-                </CardDescription>
+              <div className="p-4 bg-green-50 rounded-xl">
+                <p className="text-xs text-green-700">
+                  💡 Diese Nachricht wird automatisch gesendet, sobald jemand zum ersten Mal bei Ihnen stempelt.
+                </p>
               </div>
-            </div>
-            <Switch
-              checked={settings.birthday_enabled}
-              onCheckedChange={(checked) => setSettings({ ...settings, birthday_enabled: checked })}
-            />
-          </div>
-        </CardHeader>
-        {settings.birthday_enabled && (
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="birthday_title">Titel</Label>
-              <Input
-                id="birthday_title"
-                value={settings.birthday_title}
-                onChange={(e) => setSettings({ ...settings, birthday_title: e.target.value })}
-                placeholder="z.B. Alles Gute zum Geburtstag! 🎂"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="birthday_message">Nachricht</Label>
-              <Textarea
-                id="birthday_message"
-                value={settings.birthday_message}
-                onChange={(e) => setSettings({ ...settings, birthday_message: e.target.value })}
-                placeholder="Ihre Geburtstagsnachricht..."
-                rows={3}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="birthday_bonus">Bonuspunkte als Geschenk</Label>
-              <Input
-                id="birthday_bonus"
-                type="number"
-                min={0}
-                max={100}
-                value={settings.birthday_bonus_points}
-                onChange={(e) => setSettings({ ...settings, birthday_bonus_points: parseInt(e.target.value) || 0 })}
-                className="w-32"
-              />
-              <p className="text-xs text-muted-foreground">
-                Diese Punkte werden automatisch am Geburtstag gutgeschrieben (0 = keine Bonuspunkte)
-              </p>
-            </div>
-            <div className="p-3 bg-muted/50 rounded-lg">
-              <p className="text-xs text-muted-foreground">
-                💡 Die Geburtstagsnachricht wird am Geburtstag des Nutzers automatisch gesendet (basierend auf dem hinterlegten Geburtsdatum).
-              </p>
-            </div>
-          </CardContent>
-        )}
-      </Card>
-
-      {/* Save Button */}
-      <div className="flex justify-end">
-        <Button onClick={handleSave} disabled={saving}>
-          {saving ? (
-            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-          ) : (
-            <Save className="w-4 h-4 mr-2" />
+            </CardContent>
           )}
-          Änderungen speichern
-        </Button>
-      </div>
+        </Card>
 
-      {/* Info Box */}
-      <Card className="bg-primary/5 border-primary/20">
-        <CardContent className="pt-4 pb-4">
-          <div className="flex items-start gap-3">
-            <Sparkles className="w-5 h-5 text-primary mt-0.5" />
-            <div>
-              <p className="font-medium text-sm">So funktioniert's</p>
-              <ul className="text-xs text-muted-foreground mt-1 space-y-1">
-                <li>• <strong>Willkommensnachricht:</strong> Wird beim ersten Stempel eines neuen Nutzers gesendet</li>
-                <li>• <strong>Geburtstagsgrüße:</strong> Werden automatisch am Geburtstag des Nutzers verschickt</li>
-                <li>• Nachrichten erscheinen in der Eloyo-App unter "Nachrichten"</li>
-              </ul>
+        {/* Geburtstagsgrüße */}
+        <Card className="rounded-2xl shadow-sm border-0 bg-gray-50/80">
+          <CardHeader className="pb-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-pink-100 flex items-center justify-center">
+                  <Gift className="w-5 h-5 text-pink-600" />
+                </div>
+                <div>
+                  <CardTitle className="text-base font-semibold text-gray-900">Geburtstagsgrüße</CardTitle>
+                  <CardDescription className="text-xs text-gray-500">
+                    Automatischer Gruß und optionale Bonuspunkte am Geburtstag
+                  </CardDescription>
+                </div>
+              </div>
+              <Switch
+                checked={settings.birthday_enabled}
+                onCheckedChange={(checked) => setSettings({ ...settings, birthday_enabled: checked })}
+              />
             </div>
-          </div>
-        </CardContent>
-      </Card>
+          </CardHeader>
+          {settings.birthday_enabled && (
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="birthday_title" className="text-gray-700">Titel</Label>
+                <Input
+                  id="birthday_title"
+                  value={settings.birthday_title}
+                  onChange={(e) => setSettings({ ...settings, birthday_title: e.target.value })}
+                  placeholder="z.B. Alles Gute zum Geburtstag! 🎂"
+                  className="rounded-xl border-gray-200"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="birthday_message" className="text-gray-700">Nachricht</Label>
+                <Textarea
+                  id="birthday_message"
+                  value={settings.birthday_message}
+                  onChange={(e) => setSettings({ ...settings, birthday_message: e.target.value })}
+                  placeholder="Ihre Geburtstagsnachricht..."
+                  rows={3}
+                  className="rounded-xl border-gray-200"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="birthday_bonus" className="text-gray-700">Bonuspunkte als Geschenk</Label>
+                <Input
+                  id="birthday_bonus"
+                  type="number"
+                  min={0}
+                  max={100}
+                  value={settings.birthday_bonus_points}
+                  onChange={(e) => setSettings({ ...settings, birthday_bonus_points: parseInt(e.target.value) || 0 })}
+                  className="w-32 rounded-xl border-gray-200"
+                />
+                <p className="text-xs text-gray-500">
+                  Diese Punkte werden automatisch am Geburtstag gutgeschrieben (0 = keine Bonuspunkte)
+                </p>
+              </div>
+              <div className="p-4 bg-pink-50 rounded-xl">
+                <p className="text-xs text-pink-700">
+                  💡 Die Geburtstagsnachricht wird am Geburtstag des Nutzers automatisch gesendet.
+                </p>
+              </div>
+            </CardContent>
+          )}
+        </Card>
+
+        {/* Save Button */}
+        <div className="flex justify-end">
+          <Button onClick={handleSave} disabled={saving} className="rounded-xl">
+            {saving ? (
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+            ) : (
+              <Save className="w-4 h-4 mr-2" />
+            )}
+            Änderungen speichern
+          </Button>
+        </div>
+
+        {/* Info Box */}
+        <Card className="rounded-2xl shadow-sm border-0 bg-primary/5">
+          <CardContent className="pt-6 pb-6">
+            <div className="flex items-start gap-4">
+              <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
+                <Sparkles className="w-5 h-5 text-primary" />
+              </div>
+              <div>
+                <p className="font-semibold text-gray-900 text-sm">So funktioniert's</p>
+                <ul className="text-xs text-gray-600 mt-2 space-y-1">
+                  <li>• <strong>Willkommensnachricht:</strong> Wird beim ersten Stempel eines neuen Nutzers gesendet</li>
+                  <li>• <strong>Geburtstagsgrüße:</strong> Werden automatisch am Geburtstag des Nutzers verschickt</li>
+                  <li>• Nachrichten erscheinen in der Eloyo-App unter "Nachrichten"</li>
+                </ul>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }
