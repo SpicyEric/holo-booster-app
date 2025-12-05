@@ -8,6 +8,8 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { MainLayout } from '@/app/components/layout/MainLayout';
+import { RewardRedemptionDialog } from '@/app/components/RewardRedemptionDialog';
+import confetti from 'canvas-confetti';
 
 interface Reward {
   id: string;
@@ -34,6 +36,12 @@ export const AppRewards = () => {
   const [rewards, setRewards] = useState<Reward[]>([]);
   const [userPoints, setUserPoints] = useState<Map<string, number>>(new Map());
   const [loading, setLoading] = useState(true);
+  
+  // Dialog states
+  const [selectedReward, setSelectedReward] = useState<Reward | null>(null);
+  const [rewardDialogOpen, setRewardDialogOpen] = useState(false);
+  const [isRedeeming, setIsRedeeming] = useState(false);
+  const [redemptionSuccess, setRedemptionSuccess] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -79,6 +87,35 @@ export const AppRewards = () => {
   const canRedeem = (reward: Reward) => {
     const points = userPoints.get(reward.merchant_customer_id) || 0;
     return points >= reward.points_required;
+  };
+
+  const getUserPointsForMerchant = (merchantId: string) => {
+    return userPoints.get(merchantId) || 0;
+  };
+
+  const handleRewardClick = (reward: Reward) => {
+    setSelectedReward(reward);
+    setIsRedeeming(false);
+    setRedemptionSuccess(false);
+    setRewardDialogOpen(true);
+  };
+
+  const handleStartRedemption = () => {
+    setIsRedeeming(true);
+  };
+
+  const handleRedemptionComplete = async (rewardId: string, pointsSpent: number) => {
+    if (!selectedReward) return;
+    
+    setRedemptionSuccess(true);
+    // Update local points
+    setUserPoints(prev => {
+      const newMap = new Map(prev);
+      const currentPoints = newMap.get(selectedReward.merchant_customer_id) || 0;
+      newMap.set(selectedReward.merchant_customer_id, currentPoints - pointsSpent);
+      return newMap;
+    });
+    confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
   };
 
   if (loading) {
@@ -148,24 +185,37 @@ export const AppRewards = () => {
                 {rewards.map((reward) => (
                   <div 
                     key={reward.id}
-                    className={`flex items-center justify-between p-3 rounded-lg border ${
+                    className={`flex items-center justify-between p-3 rounded-lg border cursor-pointer ${
                       canRedeem(reward) 
-                        ? 'bg-primary/5 border-primary cursor-pointer hover:bg-primary/10' 
-                        : 'bg-muted/50 border-border'
+                        ? 'bg-primary/5 border-primary hover:bg-primary/10' 
+                        : 'bg-muted/50 border-border hover:bg-muted'
                     }`}
-                    onClick={() => canRedeem(reward) && navigate(`/app/merchant/${merchantId}?reward=${reward.id}`)}
+                    onClick={() => handleRewardClick(reward)}
                   >
-                    <div className="flex-1">
-                      <p className="font-medium">{reward.title}</p>
-                      {reward.description && (
-                        <p className="text-sm text-muted-foreground line-clamp-1">{reward.description}</p>
+                    <div className="flex items-center gap-3 flex-1">
+                      {reward.image_url ? (
+                        <img 
+                          src={reward.image_url} 
+                          alt={reward.title}
+                          className="w-10 h-10 rounded-lg object-cover"
+                        />
+                      ) : (
+                        <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                          <Gift className="h-5 w-5 text-primary" />
+                        </div>
                       )}
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium">{reward.title}</p>
+                        {reward.description && (
+                          <p className="text-sm text-muted-foreground line-clamp-1">{reward.description}</p>
+                        )}
+                      </div>
                     </div>
                     <div className="flex items-center gap-2">
                       <Badge variant={canRedeem(reward) ? 'default' : 'outline'}>
                         {reward.points_required} Punkte
                       </Badge>
-                      {canRedeem(reward) && <ChevronRight className="h-4 w-4 text-primary" />}
+                      <ChevronRight className="h-4 w-4 text-muted-foreground" />
                     </div>
                   </div>
                 ))}
@@ -174,6 +224,27 @@ export const AppRewards = () => {
           ))
         )}
       </div>
+
+      {/* Reward Redemption Dialog */}
+      {selectedReward && (
+        <RewardRedemptionDialog
+          reward={selectedReward}
+          open={rewardDialogOpen}
+          onOpenChange={(open) => {
+            setRewardDialogOpen(open);
+            if (!open) {
+              setIsRedeeming(false);
+              setRedemptionSuccess(false);
+            }
+          }}
+          userPoints={getUserPointsForMerchant(selectedReward.merchant_customer_id)}
+          merchantName={selectedReward.customer.company_name || selectedReward.customer.name}
+          onRedemptionComplete={handleRedemptionComplete}
+          isRedeeming={isRedeeming}
+          redemptionSuccess={redemptionSuccess}
+          onStartRedemption={handleStartRedemption}
+        />
+      )}
     </MainLayout>
   );
 };

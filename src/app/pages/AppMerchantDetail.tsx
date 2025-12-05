@@ -10,6 +10,9 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
 import { BottomNav } from '@/app/components/layout/BottomNav';
+import { RewardRedemptionDialog } from '@/app/components/RewardRedemptionDialog';
+import { NewCustomerOfferDialog } from '@/app/components/NewCustomerOfferDialog';
+import confetti from 'canvas-confetti';
 
 interface Merchant {
   id: string;
@@ -27,6 +30,8 @@ interface Merchant {
   instagram: string | null;
   opening_hours: any;
   google_review_url: string | null;
+  latitude: number | null;
+  longitude: number | null;
 }
 
 interface Reward {
@@ -37,11 +42,12 @@ interface Reward {
   image_url: string | null;
 }
 
-interface Offer {
+interface NewCustomerOffer {
   id: string;
   title: string;
   description: string | null;
-  valid_until: string | null;
+  bonus_stamps: number;
+  merchant_customer_id: string;
 }
 
 export const AppMerchantDetail = () => {
@@ -50,9 +56,20 @@ export const AppMerchantDetail = () => {
   const navigate = useNavigate();
   const [merchant, setMerchant] = useState<Merchant | null>(null);
   const [rewards, setRewards] = useState<Reward[]>([]);
-  const [offers, setOffers] = useState<Offer[]>([]);
+  const [newCustomerOffer, setNewCustomerOffer] = useState<NewCustomerOffer | null>(null);
   const [userPoints, setUserPoints] = useState(0);
+  const [hasEverStamped, setHasEverStamped] = useState(false);
   const [loading, setLoading] = useState(true);
+  
+  // Dialog states
+  const [selectedReward, setSelectedReward] = useState<Reward | null>(null);
+  const [rewardDialogOpen, setRewardDialogOpen] = useState(false);
+  const [isRedeeming, setIsRedeeming] = useState(false);
+  const [redemptionSuccess, setRedemptionSuccess] = useState(false);
+  
+  const [newCustomerOfferDialogOpen, setNewCustomerOfferDialogOpen] = useState(false);
+  const [isRedeemingNewOffer, setIsRedeemingNewOffer] = useState(false);
+  const [newOfferRedemptionSuccess, setNewOfferRedemptionSuccess] = useState(false);
 
   useEffect(() => {
     if (id) {
@@ -83,17 +100,7 @@ export const AppMerchantDetail = () => {
 
       if (rewardsData) setRewards(rewardsData);
 
-      // Load offers
-      const { data: offersData } = await supabase
-        .from('offers')
-        .select('*')
-        .eq('merchant_customer_id', id)
-        .eq('is_active', true)
-        .eq('show_in_storefront', true);
-
-      if (offersData) setOffers(offersData);
-
-      // Load user points for this merchant
+      // Load user points and check if ever stamped
       if (user) {
         const { data: stampCard } = await supabase
           .from('user_stamp_cards')
@@ -103,7 +110,25 @@ export const AppMerchantDetail = () => {
           .maybeSingle();
 
         if (stampCard) {
-          setUserPoints(stampCard.current_points);
+          setUserPoints(stampCard.current_points || 0);
+          setHasEverStamped(true); // If record exists, they've stamped before
+        } else {
+          setUserPoints(0);
+          setHasEverStamped(false);
+        }
+
+        // Load new customer offer if user hasn't stamped yet
+        if (!stampCard) {
+          const { data: offerData } = await supabase
+            .from('new_customer_offers')
+            .select('*')
+            .eq('merchant_customer_id', id)
+            .eq('is_active', true)
+            .maybeSingle();
+
+          if (offerData) {
+            setNewCustomerOffer(offerData);
+          }
         }
       }
     } catch (err) {
@@ -130,6 +155,50 @@ export const AppMerchantDetail = () => {
     });
   };
 
+  const handleRewardClick = (reward: Reward) => {
+    setSelectedReward(reward);
+    setIsRedeeming(false);
+    setRedemptionSuccess(false);
+    setRewardDialogOpen(true);
+  };
+
+  const handleStartRedemption = () => {
+    setIsRedeeming(true);
+    // In real app, this would listen for NFC scan
+    // For now, simulate with timeout
+    // The actual NFC scan would trigger handleRedemptionComplete
+  };
+
+  const handleRedemptionComplete = async (rewardId: string, pointsSpent: number) => {
+    try {
+      // Deduct points and record redemption
+      // This would be handled by the NFC scan flow in production
+      setRedemptionSuccess(true);
+      setUserPoints(prev => prev - pointsSpent);
+      confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+    } catch (err) {
+      console.error('Redemption error:', err);
+      toast.error('Fehler beim Einlösen');
+    }
+  };
+
+  const handleNewCustomerOfferClick = () => {
+    setIsRedeemingNewOffer(false);
+    setNewOfferRedemptionSuccess(false);
+    setNewCustomerOfferDialogOpen(true);
+  };
+
+  const handleStartNewOfferRedemption = () => {
+    setIsRedeemingNewOffer(true);
+  };
+
+  const handleNewOfferRedemptionComplete = () => {
+    setNewOfferRedemptionSuccess(true);
+    setHasEverStamped(true);
+    setNewCustomerOffer(null);
+    confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen">
@@ -151,6 +220,7 @@ export const AppMerchantDetail = () => {
     .join(', ');
 
   const openingHours = formatOpeningHours(merchant.opening_hours);
+  const merchantName = merchant.company_name || merchant.name;
 
   return (
     <div className="min-h-screen bg-background pb-24">
@@ -190,7 +260,7 @@ export const AppMerchantDetail = () => {
         {/* Merchant Name in the fade area */}
         <div className="absolute bottom-4 left-4 right-4">
           <h1 className="text-2xl font-bold text-foreground">
-            {merchant.company_name || merchant.name}
+            {merchantName}
           </h1>
           {address && (
             <p className="text-sm text-muted-foreground flex items-center gap-1 mt-1">
@@ -201,16 +271,43 @@ export const AppMerchantDetail = () => {
         </div>
       </div>
 
-      {/* Tabs */}
+      {/* Tabs - Only Prämien and Info */}
       <Tabs defaultValue="rewards" className="p-4">
-        <TabsList className="w-full grid grid-cols-3">
+        <TabsList className="w-full grid grid-cols-2">
           <TabsTrigger value="rewards">Prämien</TabsTrigger>
           <TabsTrigger value="info">Info</TabsTrigger>
-          <TabsTrigger value="offers">Angebote</TabsTrigger>
         </TabsList>
 
         <TabsContent value="rewards" className="mt-4 space-y-3">
-          {rewards.length === 0 ? (
+          {/* New Customer Offer - shown at top if available */}
+          {newCustomerOffer && !hasEverStamped && (
+            <Card 
+              className="border-2 border-primary bg-primary/5 cursor-pointer hover:shadow-lg transition-shadow"
+              onClick={handleNewCustomerOfferClick}
+            >
+              <CardContent className="p-4 flex items-center gap-4">
+                <div className="w-12 h-12 rounded-lg bg-primary flex items-center justify-center">
+                  <Sparkles className="h-6 w-6 text-primary-foreground" />
+                </div>
+                <div className="flex-1">
+                  <Badge variant="default" className="mb-1 text-xs">Neukundenprämie</Badge>
+                  <h3 className="font-medium">{newCustomerOffer.title}</h3>
+                  {newCustomerOffer.description && (
+                    <p className="text-sm text-muted-foreground line-clamp-1">
+                      {newCustomerOffer.description}
+                    </p>
+                  )}
+                </div>
+                <Badge variant="secondary">
+                  <Gift className="h-3 w-3 mr-1" />
+                  +{newCustomerOffer.bonus_stamps}
+                </Badge>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Regular Rewards */}
+          {rewards.length === 0 && !newCustomerOffer ? (
             <Card>
               <CardContent className="p-6 text-center text-muted-foreground">
                 <Gift className="h-8 w-8 mx-auto mb-2 opacity-50" />
@@ -221,11 +318,23 @@ export const AppMerchantDetail = () => {
             rewards.map((reward) => {
               const canRedeem = userPoints >= reward.points_required;
               return (
-                <Card key={reward.id} className={canRedeem ? 'border-primary' : ''}>
+                <Card 
+                  key={reward.id} 
+                  className={`cursor-pointer hover:shadow-lg transition-shadow ${canRedeem ? 'border-primary' : ''}`}
+                  onClick={() => handleRewardClick(reward)}
+                >
                   <CardContent className="p-4 flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center">
-                      <Gift className="h-6 w-6 text-primary" />
-                    </div>
+                    {reward.image_url ? (
+                      <img 
+                        src={reward.image_url} 
+                        alt={reward.title}
+                        className="w-12 h-12 rounded-lg object-cover"
+                      />
+                    ) : (
+                      <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center">
+                        <Gift className="h-6 w-6 text-primary" />
+                      </div>
+                    )}
                     <div className="flex-1">
                       <h3 className="font-medium">{reward.title}</h3>
                       {reward.description && (
@@ -248,7 +357,7 @@ export const AppMerchantDetail = () => {
           {merchant.description && (
             <Card>
               <CardContent className="p-4">
-                <p className="text-sm">{merchant.description}</p>
+                <p className="text-sm whitespace-pre-wrap">{merchant.description}</p>
               </CardContent>
             </Card>
           )}
@@ -318,34 +427,44 @@ export const AppMerchantDetail = () => {
             </CardContent>
           </Card>
         </TabsContent>
-
-        <TabsContent value="offers" className="mt-4 space-y-3">
-          {offers.length === 0 ? (
-            <Card>
-              <CardContent className="p-6 text-center text-muted-foreground">
-                <Sparkles className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                Keine Angebote verfügbar
-              </CardContent>
-            </Card>
-          ) : (
-            offers.map((offer) => (
-              <Card key={offer.id}>
-                <CardContent className="p-4">
-                  <h3 className="font-medium">{offer.title}</h3>
-                  {offer.description && (
-                    <p className="text-sm text-muted-foreground mt-1">{offer.description}</p>
-                  )}
-                  {offer.valid_until && (
-                    <Badge variant="outline" className="mt-2">
-                      Gültig bis {new Date(offer.valid_until).toLocaleDateString('de-DE')}
-                    </Badge>
-                  )}
-                </CardContent>
-              </Card>
-            ))
-          )}
-        </TabsContent>
       </Tabs>
+
+      {/* Reward Redemption Dialog */}
+      <RewardRedemptionDialog
+        reward={selectedReward}
+        open={rewardDialogOpen}
+        onOpenChange={(open) => {
+          setRewardDialogOpen(open);
+          if (!open) {
+            setIsRedeeming(false);
+            setRedemptionSuccess(false);
+          }
+        }}
+        userPoints={userPoints}
+        merchantName={merchantName}
+        onRedemptionComplete={handleRedemptionComplete}
+        isRedeeming={isRedeeming}
+        redemptionSuccess={redemptionSuccess}
+        onStartRedemption={handleStartRedemption}
+      />
+
+      {/* New Customer Offer Dialog */}
+      <NewCustomerOfferDialog
+        offer={newCustomerOffer}
+        merchant={merchant}
+        open={newCustomerOfferDialogOpen}
+        onOpenChange={(open) => {
+          setNewCustomerOfferDialogOpen(open);
+          if (!open) {
+            setIsRedeemingNewOffer(false);
+            setNewOfferRedemptionSuccess(false);
+          }
+        }}
+        onRedemptionComplete={handleNewOfferRedemptionComplete}
+        isRedeeming={isRedeemingNewOffer}
+        redemptionSuccess={newOfferRedemptionSuccess}
+        onStartRedemption={handleStartNewOfferRedemption}
+      />
 
       <BottomNav />
     </div>
