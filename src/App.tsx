@@ -110,7 +110,6 @@ const App = () => (
           <Route path="/app/settings" element={<AppProtectedRoute><AppSettings /></AppProtectedRoute>} />
           <Route path="/app/scan" element={<AppProtectedRoute><AppScan /></AppProtectedRoute>} />
           <Route path="/app/merchant/:id" element={<AppProtectedRoute><AppMerchantDetail /></AppProtectedRoute>} />
-          <Route path="/app/suggest-shop" element={<AppProtectedRoute><AppSuggestShop /></AppProtectedRoute>} />
           
           {/* Scan Route */}
           <Route path="/s/:cid" element={<Scan />} />
