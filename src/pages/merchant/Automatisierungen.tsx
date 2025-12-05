@@ -36,7 +36,7 @@ export default function Automatisierungen() {
     birthday_enabled: false,
     birthday_title: "Alles Gute zum Geburtstag! 🎂",
     birthday_message: "Wir wünschen dir alles Gute zum Geburtstag! Als kleines Geschenk schenken wir dir Bonuspunkte.",
-    birthday_bonus_points: 5
+    birthday_bonus_points: 50
   });
 
   useEffect(() => {
