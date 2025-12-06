@@ -1,18 +1,15 @@
 #!/usr/bin/env node
 
 /**
- * Automatisches iOS Konfigurationsskript
+ * iOS NFC + Geolocation Configuration Script
  * 
- * Dieses Skript aktualisiert automatisch:
- * - Info.plist mit NFC-Berechtigungen
- * - Info.plist mit Geolocation-Berechtigungen
- * - App.entitlements mit NFC-Capabilities
+ * This script automatically configures:
+ * - Info.plist with NFC and Geolocation permissions
+ * - App.entitlements with NFC capabilities
  * 
- * Verwendung:
- * node scripts/configure-ios-nfc.js
+ * Compatible with Capacitor 5+ and iOS 16/17
  * 
- * Oder als npm script:
- * npm run configure:ios:nfc
+ * Usage: node scripts/configure-ios-nfc.js
  */
 
 import fs from 'fs';
@@ -22,12 +19,12 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Pfade
+// Paths
 const IOS_APP_PATH = path.join(__dirname, '..', 'ios', 'App', 'App');
 const INFO_PLIST_PATH = path.join(IOS_APP_PATH, 'Info.plist');
 const ENTITLEMENTS_PATH = path.join(IOS_APP_PATH, 'App.entitlements');
 
-// NFC Konfiguration
+// NFC Configuration
 const NFC_CONFIG = {
   NFCReaderUsageDescription: 'Diese App nutzt NFC um Treuepunkte bei teilnehmenden Händlern zu sammeln.',
   iso7816SelectIdentifiers: ['D276000085010100'],
@@ -35,26 +32,26 @@ const NFC_CONFIG = {
   readerSessionFormats: ['NDEF', 'TAG'],
 };
 
-// Geolocation Konfiguration
+// Geolocation Configuration
 const LOCATION_CONFIG = {
   NSLocationWhenInUseUsageDescription: 'Eloyo benötigt deinen Standort um Stores in deiner Nähe zu finden.',
   NSLocationAlwaysAndWhenInUseUsageDescription: 'Eloyo benötigt deinen Standort um Stores in deiner Nähe zu finden und dich über Angebote in der Nähe zu informieren.',
 };
 
 /**
- * Prüft ob iOS Plattform existiert
+ * Check if iOS platform exists
  */
 function checkiOSPlatform() {
   if (!fs.existsSync(IOS_APP_PATH)) {
-    console.error('❌ iOS Plattform nicht gefunden!');
-    console.log('   Führe zuerst aus: npx cap add ios');
+    console.error('❌ iOS platform not found!');
+    console.log('   Run first: npx cap add ios');
     process.exit(1);
   }
-  console.log('✅ iOS Plattform gefunden');
+  console.log('✅ iOS platform found');
 }
 
 /**
- * Liest eine Plist-Datei als String
+ * Read a plist file as string
  */
 function readPlist(filePath) {
   if (!fs.existsSync(filePath)) {
@@ -64,30 +61,30 @@ function readPlist(filePath) {
 }
 
 /**
- * Schreibt eine Plist-Datei
+ * Write a plist file
  */
 function writePlist(filePath, content) {
   fs.writeFileSync(filePath, content, 'utf8');
 }
 
 /**
- * Fügt einen Key-Value Eintrag zur Plist hinzu (falls nicht vorhanden)
+ * Add a key-value entry to plist (if not present)
  */
 function addPlistEntry(plistContent, key, value) {
-  // Prüfen ob Key bereits existiert
+  // Check if key already exists
   if (plistContent.includes(`<key>${key}</key>`)) {
-    console.log(`   ⏭️  ${key} bereits vorhanden`);
+    console.log(`   ⏭️  ${key} already present`);
     return plistContent;
   }
 
-  // Position vor </dict> finden (letztes Vorkommen)
+  // Find position before </dict> (last occurrence)
   const insertPosition = plistContent.lastIndexOf('</dict>');
   if (insertPosition === -1) {
-    console.error(`   ❌ Konnte Position für ${key} nicht finden`);
+    console.error(`   ❌ Could not find position for ${key}`);
     return plistContent;
   }
 
-  // Neuen Eintrag erstellen
+  // Create new entry
   let newEntry = `\t<key>${key}</key>\n`;
   
   if (typeof value === 'string') {
@@ -100,21 +97,21 @@ function addPlistEntry(plistContent, key, value) {
     newEntry += `\t</array>\n`;
   }
 
-  // Eintrag einfügen
+  // Insert entry
   const newContent = 
     plistContent.slice(0, insertPosition) + 
     newEntry + 
     plistContent.slice(insertPosition);
 
-  console.log(`   ✅ ${key} hinzugefügt`);
+  console.log(`   ✅ ${key} added`);
   return newContent;
 }
 
 /**
- * Konfiguriert Info.plist - NFC
+ * Configure Info.plist - NFC
  */
 function configureNfcInPlist(plist) {
-  console.log('\n📡 Konfiguriere NFC in Info.plist...');
+  console.log('\n📡 Configuring NFC in Info.plist...');
 
   // NFC Reader Usage Description
   plist = addPlistEntry(plist, 'NFCReaderUsageDescription', NFC_CONFIG.NFCReaderUsageDescription);
@@ -137,10 +134,10 @@ function configureNfcInPlist(plist) {
 }
 
 /**
- * Konfiguriert Info.plist - Geolocation
+ * Configure Info.plist - Geolocation
  */
 function configureGeolocationInPlist(plist) {
-  console.log('\n📍 Konfiguriere Geolocation in Info.plist...');
+  console.log('\n📍 Configuring Geolocation in Info.plist...');
 
   // When In Use Description
   plist = addPlistEntry(
@@ -149,7 +146,7 @@ function configureGeolocationInPlist(plist) {
     LOCATION_CONFIG.NSLocationWhenInUseUsageDescription
   );
 
-  // Always and When In Use Description (für Hintergrund-Updates wenn gewünscht)
+  // Always and When In Use Description
   plist = addPlistEntry(
     plist, 
     'NSLocationAlwaysAndWhenInUseUsageDescription', 
@@ -160,39 +157,39 @@ function configureGeolocationInPlist(plist) {
 }
 
 /**
- * Konfiguriert Info.plist
+ * Configure Info.plist
  */
 function configureInfoPlist() {
-  console.log('\n📝 Konfiguriere Info.plist...');
+  console.log('\n📝 Configuring Info.plist...');
   
   let plist = readPlist(INFO_PLIST_PATH);
   if (!plist) {
-    console.error('❌ Info.plist nicht gefunden!');
+    console.error('❌ Info.plist not found!');
     return false;
   }
 
-  // NFC Konfiguration
+  // NFC Configuration
   plist = configureNfcInPlist(plist);
   
-  // Geolocation Konfiguration
+  // Geolocation Configuration
   plist = configureGeolocationInPlist(plist);
 
   writePlist(INFO_PLIST_PATH, plist);
-  console.log('✅ Info.plist aktualisiert');
+  console.log('✅ Info.plist updated');
   return true;
 }
 
 /**
- * Konfiguriert App.entitlements
+ * Configure App.entitlements
  */
 function configureEntitlements() {
-  console.log('\n📝 Konfiguriere App.entitlements...');
+  console.log('\n📝 Configuring App.entitlements...');
   
   let entitlements = readPlist(ENTITLEMENTS_PATH);
   
-  // Falls Datei nicht existiert, erstelle sie
+  // Create file if it doesn't exist
   if (!entitlements) {
-    console.log('   📄 Erstelle neue App.entitlements Datei...');
+    console.log('   📄 Creating new App.entitlements file...');
     entitlements = `<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
@@ -210,47 +207,51 @@ function configureEntitlements() {
   );
 
   writePlist(ENTITLEMENTS_PATH, entitlements);
-  console.log('✅ App.entitlements aktualisiert');
+  console.log('✅ App.entitlements updated');
   return true;
 }
 
 /**
- * Hauptfunktion
+ * Main function
  */
 function main() {
-  console.log('🔧 Eloyo iOS Konfiguration (NFC + Geolocation)');
-  console.log('===============================================\n');
+  console.log('━'.repeat(60));
+  console.log('  iOS NFC + Geolocation Configuration Script');
+  console.log('  Capacitor 5+ compatible');
+  console.log('━'.repeat(60));
+  console.log('');
 
-  // Prüfe iOS Plattform
+  // Check iOS platform
   checkiOSPlatform();
 
-  // Konfiguriere Dateien
+  // Configure files
   const infoPlistOk = configureInfoPlist();
   const entitlementsOk = configureEntitlements();
 
-  // Zusammenfassung
-  console.log('\n===============================================');
+  // Summary
+  console.log('\n' + '━'.repeat(60));
   if (infoPlistOk && entitlementsOk) {
-    console.log('✅ iOS Konfiguration abgeschlossen!\n');
+    console.log('  ✅ iOS configuration complete!\n');
     console.log('NFC Features:');
-    console.log('• NFCReaderUsageDescription gesetzt');
-    console.log('• ISO7816 Select Identifiers konfiguriert');
-    console.log('• NFC Reader Session Formats aktiviert\n');
+    console.log('  • NFCReaderUsageDescription set');
+    console.log('  • ISO7816 Select Identifiers configured');
+    console.log('  • NFC Reader Session Formats enabled\n');
     console.log('Geolocation Features:');
-    console.log('• NSLocationWhenInUseUsageDescription gesetzt');
-    console.log('• NSLocationAlwaysAndWhenInUseUsageDescription gesetzt');
-    console.log('• App fragt nach Standort-Berechtigung\n');
-    console.log('Nächste Schritte:');
-    console.log('1. Öffne Xcode: npx cap open ios');
-    console.log('2. Gehe zu Signing & Capabilities');
-    console.log('3. Füge "Near Field Communication Tag Reading" hinzu');
-    console.log('4. Stelle sicher, dass dein Provisioning Profile NFC unterstützt');
-    console.log('5. Baue und teste auf einem echten Gerät (iPhone 7+)\n');
+    console.log('  • NSLocationWhenInUseUsageDescription set');
+    console.log('  • NSLocationAlwaysAndWhenInUseUsageDescription set\n');
+    console.log('📋 Next steps:');
+    console.log('  1. npx cap sync ios');
+    console.log('  2. npx cap open ios');
+    console.log('  3. In Xcode: Signing & Capabilities');
+    console.log('  4. Add "Near Field Communication Tag Reading" capability');
+    console.log('  5. Ensure Provisioning Profile supports NFC');
+    console.log('  6. Build and test on real device (iPhone 7+)\n');
   } else {
-    console.log('⚠️  Konfiguration mit Fehlern abgeschlossen');
-    console.log('   Überprüfe die Dateien manuell.\n');
+    console.log('  ⚠️  Configuration completed with errors');
+    console.log('     Check files manually.\n');
   }
+  console.log('━'.repeat(60));
 }
 
-// Skript ausführen
+// Run script
 main();

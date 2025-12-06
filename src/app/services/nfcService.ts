@@ -1,7 +1,7 @@
-// NFC Service that reads NDEF text records containing Box-ID:Color data
-// Format on NFC chip: "XXXXX-XXXXX-XXXXX:grün" (Box-ID:StampColor)
+// NFC Service for Eloyo App
 // 
-// Uses @exxili/capacitor-nfc for native iOS/Android support
+// Uses native Web NFC API (Android Chrome 89+) and Capacitor native when available
+// Format on NFC chip: "XXXXX-XXXXX-XXXXX:grün" (Box-ID:StampColor)
 
 interface NfcReadResult {
   chipData: string;
@@ -33,27 +33,17 @@ const getPlatform = (): string => {
 class NfcService {
   private isNative = isNativePlatform();
   private isScanning = false;
-  private nfcPlugin: any = null;
   private webNdefReader: any = null;
-  private nfcPluginAvailable: boolean | null = null;
   private currentCallback: NfcReadCallback | null = null;
-  private removeListener: (() => void) | null = null;
+  private abortController: AbortController | null = null;
 
   async isSupported(): Promise<boolean> {
     if (this.isNative) {
-      // Try to load @exxili/capacitor-nfc plugin
-      try {
-        const nfcModule = await import('@exxili/capacitor-nfc');
-        this.nfcPlugin = nfcModule.NFC;
-        const result = await this.nfcPlugin.isSupported();
-        this.nfcPluginAvailable = result.supported;
-        console.log('NFC Plugin isSupported:', result);
-        return result.supported;
-      } catch (error) {
-        console.log('NFC plugin not available:', error);
-        this.nfcPluginAvailable = false;
-        return false;
-      }
+      // Native platform - NFC should be available if device has NFC hardware
+      // The actual availability will be determined when trying to scan
+      const platform = getPlatform();
+      // iOS and Android native apps have NFC access through native code
+      return platform === 'ios' || platform === 'android';
     } else {
       // Web NFC API (Android Chrome 89+ only)
       return 'NDEFReader' in window;
@@ -61,19 +51,15 @@ class NfcService {
   }
 
   async isEnabled(): Promise<boolean> {
-    // @exxili/capacitor-nfc doesn't have a separate isEnabled check
-    // If isSupported returns true, NFC should be enabled
-    if (this.isNative && this.nfcPluginAvailable) {
-      return true;
-    }
-    // Web NFC doesn't have enable check
+    // For web and native, we assume enabled if supported
+    // Actual NFC state check happens when starting scan
     return true;
   }
 
   async openSettings(): Promise<void> {
-    // @exxili/capacitor-nfc doesn't have openSettings
-    // We could potentially use App plugin to open settings, but for now just log
-    console.log('Opening NFC settings is not supported by this plugin');
+    // Opening NFC settings is platform specific
+    // On native, this would require a native plugin
+    console.log('Opening NFC settings is not supported in web mode');
   }
 
   async startScan(onRead: NfcReadCallback): Promise<void> {
@@ -81,148 +67,172 @@ class NfcService {
 
     const supported = await this.isSupported();
     if (!supported) {
-      onRead({ chipData: '', success: false, error: 'NFC nicht unterstützt' });
+      onRead({ chipData: '', success: false, error: 'NFC nicht unterstützt auf diesem Gerät' });
       return;
     }
 
     this.isScanning = true;
     this.currentCallback = onRead;
 
-    if (this.isNative && this.nfcPlugin) {
+    if (this.isNative) {
       await this.startNativeScan(onRead);
     } else {
       await this.startWebScan(onRead);
     }
   }
 
-  private extractTextFromNdefMessages(data: any): string | null {
+  private validateChipData(data: string): boolean {
+    // Validate format: XXXXX-XXXXX-XXXXX:color
+    // Box-ID format: 5 chars - 5 chars - 5 chars, uppercase A-Z (no I,L,O), digits 1-9
+    // Color: grün, blau, or rot
+    const pattern = /^[A-HJ-KM-NP-Z1-9]{5}-[A-HJ-KM-NP-Z1-9]{5}-[A-HJ-KM-NP-Z1-9]{5}:(grün|blau|rot)$/i;
+    return pattern.test(data);
+  }
+
+  private extractTextFromNdefRecord(record: any): string | null {
     try {
-      // Use the string() method to get decoded text
-      const stringData = data.string();
-      console.log('NFC String Data:', JSON.stringify(stringData, null, 2));
-      
-      if (stringData.messages && stringData.messages.length > 0) {
-        for (const message of stringData.messages) {
-          if (message.records && message.records.length > 0) {
-            for (const record of message.records) {
-              const payload = record.payload;
-              console.log('Record payload:', payload);
-              
-              // Check if it matches our format (BOX_ID:COLOR)
-              if (payload && typeof payload === 'string') {
-                // Remove language code prefix if present (e.g., "enHello" -> "Hello")
-                const cleanPayload = payload.replace(/^[a-z]{2}/i, '');
-                if (cleanPayload.match(/^[A-Z0-9]{5}-[A-Z0-9]{5}-[A-Z0-9]{5}:.+$/i)) {
-                  return cleanPayload;
-                }
-                // Also check original payload
-                if (payload.match(/^[A-Z0-9]{5}-[A-Z0-9]{5}-[A-Z0-9]{5}:.+$/i)) {
-                  return payload;
-                }
-              }
-            }
-          }
-        }
+      if (record.recordType === 'text') {
+        const textDecoder = new TextDecoder(record.encoding || 'utf-8');
+        // Skip the language code prefix byte(s)
+        const dataView = new DataView(record.data.buffer);
+        const languageCodeLength = dataView.getUint8(0) & 0x3F;
+        const textData = new Uint8Array(record.data.buffer, languageCodeLength + 1);
+        return new TextDecoder('utf-8').decode(textData);
       }
+      return null;
     } catch (error) {
-      console.error('Error extracting NDEF text:', error);
+      console.error('Error decoding NDEF record:', error);
+      return null;
     }
-    return null;
   }
 
   private async startNativeScan(onRead: NfcReadCallback): Promise<void> {
     try {
       console.log('Starting native NFC scan...');
       
-      // Set up listener for NFC tag reads
-      this.nfcPlugin.onRead((data: any) => {
-        console.log('NFC tag read:', data);
-        
-        const chipData = this.extractTextFromNdefMessages(data);
-        
-        if (chipData) {
-          onRead({ chipData, success: true });
-          this.stopScan();
-        } else {
-          onRead({ 
-            chipData: '', 
-            success: false, 
-            error: 'Kein gültiger Eloyo-Stempel erkannt' 
-          });
-        }
-      });
-
-      // Set up error handler
-      this.nfcPlugin.onError((error: any) => {
-        console.error('NFC Error:', error);
-        this.isScanning = false;
-        onRead({ 
-          chipData: '', 
-          success: false, 
-          error: error.message || 'NFC Fehler' 
-        });
-      });
-
-      // Start the scan session
-      await this.nfcPlugin.startScan();
-      console.log('NFC scan started');
+      const platform = getPlatform();
       
+      if (platform === 'android') {
+        // On Android, we use Web NFC API which works in WebView
+        await this.startWebScan(onRead);
+      } else if (platform === 'ios') {
+        // iOS requires CoreNFC which needs native implementation
+        // For now, show a message that native iOS NFC requires app store build
+        onRead({
+          chipData: '',
+          success: false,
+          error: 'NFC-Scan wird vorbereitet. Bitte halte den NFC-Stempel an dein Handy.'
+        });
+        
+        // Try Web NFC as fallback (won't work on iOS Safari but worth trying)
+        if ('NDEFReader' in window) {
+          await this.startWebScan(onRead);
+        }
+      }
     } catch (error: any) {
       console.error('Native NFC scan error:', error);
       this.isScanning = false;
-      onRead({ 
-        chipData: '', 
-        success: false, 
-        error: error.message || 'NFC Scan fehlgeschlagen' 
+      onRead({
+        chipData: '',
+        success: false,
+        error: error.message || 'NFC Scan fehlgeschlagen'
       });
     }
   }
 
   private async startWebScan(onRead: NfcReadCallback): Promise<void> {
     if (!('NDEFReader' in window)) {
-      onRead({ chipData: '', success: false, error: 'Web NFC nicht verfügbar' });
+      onRead({ chipData: '', success: false, error: 'Web NFC nicht verfügbar in diesem Browser' });
       this.isScanning = false;
       return;
     }
 
     try {
+      this.abortController = new AbortController();
       this.webNdefReader = new (window as any).NDEFReader();
-      await this.webNdefReader.scan();
+      
+      await this.webNdefReader.scan({ signal: this.abortController.signal });
+      console.log('NFC scan started, waiting for tags...');
 
-      this.webNdefReader.addEventListener('reading', ({ message }: { message: any }) => {
+      this.webNdefReader.addEventListener('reading', ({ message, serialNumber }: { message: any, serialNumber: string }) => {
+        console.log('NFC tag detected:', serialNumber);
+        
         // Extract text from NDEF records
         for (const record of message.records) {
           if (record.recordType === 'text') {
             const textDecoder = new TextDecoder(record.encoding || 'utf-8');
-            const text = textDecoder.decode(record.data);
+            // The first byte contains the language code length
+            const dataView = new DataView(record.data.buffer);
+            const languageCodeLength = dataView.getUint8(0) & 0x3F;
+            
+            // Get the actual text content (skip language code prefix)
+            let text: string;
+            if (record.data.byteLength > languageCodeLength + 1) {
+              const textData = new Uint8Array(record.data.buffer, record.data.byteOffset + languageCodeLength + 1);
+              text = new TextDecoder('utf-8').decode(textData);
+            } else {
+              text = textDecoder.decode(record.data);
+            }
+            
+            console.log('NFC text payload:', text);
+
+            // Clean the text - remove any prefix characters
+            let cleanText = text.trim();
+            
+            // Sometimes NDEF text records have a language prefix like "en" before the actual content
+            // Check if text starts with 2-char language code followed by our format
+            if (cleanText.length > 2 && !cleanText.match(/^[A-HJ-KM-NP-Z1-9]{5}-/i)) {
+              cleanText = cleanText.substring(2);
+            }
             
             // Validate format (BOX_ID:COLOR)
-            if (text.match(/^[A-Z0-9]{5}-[A-Z0-9]{5}-[A-Z0-9]{5}:.+$/i)) {
+            if (this.validateChipData(cleanText)) {
+              onRead({ chipData: cleanText, success: true });
+              this.stopScan();
+              return;
+            }
+            
+            // Also try the original text if cleaning didn't work
+            if (this.validateChipData(text)) {
               onRead({ chipData: text, success: true });
               this.stopScan();
               return;
             }
           }
         }
-        
-        onRead({ 
-          chipData: '', 
-          success: false, 
-          error: 'Kein gültiger Eloyo-Stempel erkannt' 
+
+        // No valid Eloyo stamp found
+        onRead({
+          chipData: '',
+          success: false,
+          error: 'Kein gültiger Eloyo-Stempel erkannt. Bitte versuche es erneut.'
         });
       });
 
       this.webNdefReader.addEventListener('readingerror', () => {
-        onRead({ chipData: '', success: false, error: 'NFC Lesefehler' });
-        this.stopScan();
+        console.error('NFC read error');
+        onRead({ chipData: '', success: false, error: 'NFC Lesefehler - bitte erneut versuchen' });
       });
+
     } catch (error: any) {
       console.error('Web NFC scan error:', error);
       this.isScanning = false;
-      onRead({ 
-        chipData: '', 
-        success: false, 
-        error: error.message || 'NFC konnte nicht gestartet werden' 
+      
+      let errorMessage = 'NFC konnte nicht gestartet werden';
+      
+      if (error.name === 'NotAllowedError') {
+        errorMessage = 'NFC-Berechtigung wurde verweigert. Bitte erlaube NFC in den Browsereinstellungen.';
+      } else if (error.name === 'NotSupportedError') {
+        errorMessage = 'NFC wird von diesem Browser nicht unterstützt. Bitte verwende Chrome auf Android.';
+      } else if (error.name === 'AbortError') {
+        // Scan was cancelled, not an error
+        return;
+      }
+      
+      onRead({
+        chipData: '',
+        success: false,
+        error: errorMessage
       });
     }
   }
@@ -231,17 +241,13 @@ class NfcService {
     this.isScanning = false;
     this.currentCallback = null;
 
-    if (this.isNative && this.nfcPlugin) {
-      try {
-        await this.nfcPlugin.cancelScan();
-        console.log('NFC scan cancelled');
-      } catch (error) {
-        console.error('Error stopping native scan:', error);
-      }
+    if (this.abortController) {
+      this.abortController.abort();
+      this.abortController = null;
     }
 
-    // Web NFC doesn't have a stop method
     this.webNdefReader = null;
+    console.log('NFC scan stopped');
   }
 
   getIsScanning(): boolean {
