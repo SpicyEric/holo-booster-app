@@ -29,16 +29,10 @@ export default function AppProfile() {
 
   const menuItems = [
     {
-      icon: Receipt,
-      label: 'Transaktionen',
-      description: 'Alle Punktebewegungen',
-      action: () => navigate('/app/history'),
-    },
-    {
-      icon: Store,
-      label: 'Meine Shops',
-      description: 'Geschäfte anzeigen',
-      action: () => navigate('/app/stores'),
+      icon: User,
+      label: 'Kontoeinstellungen',
+      description: 'Account verwalten',
+      action: () => navigate('/app/settings'),
     },
     {
       icon: Lightbulb,
@@ -47,10 +41,16 @@ export default function AppProfile() {
       action: () => navigate('/app/suggest-shop'),
     },
     {
-      icon: User,
-      label: 'Mein Konto',
-      description: 'Account verwalten',
-      action: () => navigate('/app/settings'),
+      icon: Store,
+      label: 'Meine Stempelkarten',
+      description: 'Deine Punkte',
+      action: () => navigate('/app/my-cards'),
+    },
+    {
+      icon: Receipt,
+      label: 'Transaktionen',
+      description: 'Alle Punktebewegungen',
+      action: () => navigate('/app/history'),
     },
   ];
 
@@ -84,21 +84,14 @@ export default function AppProfile() {
             <ChevronRight className="h-5 w-5 text-muted-foreground" />
           </button>
           <button
-            onClick={() => {}}
-            className="w-full text-left py-3 flex items-center justify-between hover:text-primary transition-colors"
-          >
-            <span className="text-foreground">FAQ</span>
-            <ChevronRight className="h-5 w-5 text-muted-foreground" />
-          </button>
-          <button
-            onClick={() => navigate('/datenschutz')}
+            onClick={() => navigate('/app/terms')}
             className="w-full text-left py-3 flex items-center justify-between hover:text-primary transition-colors"
           >
             <span className="text-foreground">Nutzungsbedingungen</span>
             <ChevronRight className="h-5 w-5 text-muted-foreground" />
           </button>
           <button
-            onClick={() => navigate('/datenschutz')}
+            onClick={() => navigate('/app/privacy')}
             className="w-full text-left py-3 flex items-center justify-between hover:text-primary transition-colors"
           >
             <span className="text-foreground">Datenschutz</span>

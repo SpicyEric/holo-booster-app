@@ -15,6 +15,8 @@ import { getCurrentLocation } from '@/app/services/geolocationService';
 import { toast } from 'sonner';
 import { usePushNotifications } from '@/app/hooks/usePushNotifications';
 import { useMessageNotifications } from '@/app/hooks/useMessageNotifications';
+import { useBackButton } from '@/app/hooks/useBackButton';
+import { ExitAppDialog } from '@/app/components/ExitAppDialog';
 
 // Context to control swipe behavior
 const SwipeControlContext = createContext<{
@@ -56,6 +58,9 @@ export const SwipeableAppContainer = () => {
   
   // Listen for new messages and trigger push notifications
   useMessageNotifications();
+  
+  // Handle back button on native platforms
+  const { showExitDialog, confirmExit, cancelExit } = useBackButton();
   
   const [emblaRef, emblaApi] = useEmblaCarousel({
     loop: false,
@@ -153,6 +158,13 @@ export const SwipeableAppContainer = () => {
         </div>
         
         <BottomNav onNavigate={scrollToIndex} currentIndex={currentIndex} />
+        
+        {/* Exit App Dialog for Android back button */}
+        <ExitAppDialog 
+          open={showExitDialog} 
+          onConfirm={confirmExit} 
+          onCancel={cancelExit} 
+        />
       </div>
     </SwipeControlContext.Provider>
   );
@@ -608,7 +620,7 @@ const AppProfileContent = () => {
   const menuItems = [
     { icon: User, label: 'Kontoeinstellungen', action: () => navigate('/app/settings') },
     { icon: Sparkles, label: 'Shop vorschlagen', action: () => navigate('/app/suggest-shop') },
-    { icon: Store, label: 'Meine Stempelkarten', action: () => navigate('/app/stores') },
+    { icon: Store, label: 'Meine Stempelkarten', action: () => navigate('/app/my-cards') },
     { icon: History, label: 'Transaktionen', action: () => navigate('/app/history') },
   ];
 
@@ -638,8 +650,8 @@ const AppProfileContent = () => {
         <div className="space-y-2">
           {[
             { icon: HelpCircle, label: 'Kontakt & Hilfe', href: 'mailto:support@eloyo.de' },
-            { icon: FileText, label: 'Nutzungsbedingungen', href: '/datenschutz' },
-            { icon: Shield, label: 'Datenschutz', href: '/datenschutz' },
+            { icon: FileText, label: 'Nutzungsbedingungen', href: '/app/terms' },
+            { icon: Shield, label: 'Datenschutz', href: '/app/privacy' },
           ].map((item) => {
             const Icon = item.icon;
             return (
