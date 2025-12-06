@@ -47,6 +47,8 @@ export const RewardRedemptionDialog = ({
   } = useRewardRedemption({
     userId: user?.id,
     merchantId,
+    merchantName,
+    rewardTitle: reward?.title || '',
     onSuccess: (pointsChange) => {
       onPointsUpdated(userPoints + pointsChange);
       confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });

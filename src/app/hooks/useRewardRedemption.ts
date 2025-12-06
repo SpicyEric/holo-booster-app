@@ -1,11 +1,14 @@
 import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { nfcService, NfcReadResult } from '@/app/services/nfcService';
+import { pushNotificationService } from '@/app/services/pushNotificationService';
 import { toast } from 'sonner';
 
 interface UseRewardRedemptionProps {
   userId: string | undefined;
   merchantId: string;
+  merchantName: string;
+  rewardTitle: string;
   onSuccess: (pointsChange: number) => void;
 }
 
@@ -16,7 +19,7 @@ interface RedemptionState {
   error: string | null;
 }
 
-export const useRewardRedemption = ({ userId, merchantId, onSuccess }: UseRewardRedemptionProps) => {
+export const useRewardRedemption = ({ userId, merchantId, merchantName, rewardTitle, onSuccess }: UseRewardRedemptionProps) => {
   const [state, setState] = useState<RedemptionState>({
     isRedeeming: false,
     isScanning: false,
@@ -122,6 +125,9 @@ export const useRewardRedemption = ({ userId, merchantId, onSuccess }: UseReward
           transaction_type: 'redemption',
           description: 'Prämie eingelöst',
         });
+
+      // Send push notification
+      pushNotificationService.notifyRewardRedeemed(rewardTitle, pointsRequired, merchantName);
 
       return true;
     } catch (error) {

@@ -13,6 +13,7 @@ import { BottomNav } from './layout/BottomNav';
 import Particles from '@/components/Particles';
 import { getCurrentLocation } from '@/app/services/geolocationService';
 import { toast } from 'sonner';
+import { usePushNotifications } from '@/app/hooks/usePushNotifications';
 
 // Context to control swipe behavior
 const SwipeControlContext = createContext<{
@@ -48,6 +49,9 @@ export const SwipeableAppContainer = () => {
   const navigate = useNavigate();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [swipeEnabled, setSwipeEnabled] = useState(true);
+  
+  // Initialize push notifications
+  usePushNotifications();
   
   const [emblaRef, emblaApi] = useEmblaCarousel({
     loop: false,
