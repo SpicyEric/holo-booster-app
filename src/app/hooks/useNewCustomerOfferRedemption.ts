@@ -1,11 +1,13 @@
 import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { nfcService, NfcReadResult } from '@/app/services/nfcService';
+import { pushNotificationService } from '@/app/services/pushNotificationService';
 import { toast } from 'sonner';
 
 interface UseNewCustomerOfferRedemptionProps {
   userId: string | undefined;
   merchantId: string;
+  merchantName: string;
   bonusStamps: number;
   onSuccess: () => void;
 }
@@ -20,6 +22,7 @@ interface RedemptionState {
 export const useNewCustomerOfferRedemption = ({ 
   userId, 
   merchantId, 
+  merchantName,
   bonusStamps,
   onSuccess 
 }: UseNewCustomerOfferRedemptionProps) => {
@@ -131,6 +134,9 @@ export const useNewCustomerOfferRedemption = ({
           transaction_type: 'new_customer_bonus',
           description: 'Neukundenprämie eingelöst',
         });
+
+      // Send push notification
+      pushNotificationService.notifyNewCustomerOfferRedeemed(bonusStamps, merchantName);
 
       return true;
     } catch (error) {

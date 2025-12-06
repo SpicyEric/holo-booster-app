@@ -33,6 +33,15 @@ const config: CapacitorConfig = {
       // iOS: NSLocationWhenInUseUsageDescription wird in Info.plist gesetzt
       // Android: Permissions sind in AndroidManifest.xml
     },
+    // Push Notifications Configuration
+    PushNotifications: {
+      presentationOptions: ['badge', 'sound', 'alert'],
+    },
+    // Local Notifications Configuration
+    LocalNotifications: {
+      smallIcon: 'ic_stat_icon_config_sample',
+      iconColor: '#488AFF',
+    },
   },
   // Deep Link URL Schemes
   // Diese müssen auch in den nativen Projekten konfiguriert werden

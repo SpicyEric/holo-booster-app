@@ -55,6 +55,7 @@ export const NewCustomerOfferDialog = ({
   } = useNewCustomerOfferRedemption({
     userId: user?.id,
     merchantId: offer?.merchant_customer_id || '',
+    merchantName: merchant?.company_name || merchant?.name || '',
     bonusStamps: offer?.bonus_stamps || 0,
     onSuccess: () => {
       onRedemptionComplete();
