@@ -14,6 +14,7 @@ import Particles from '@/components/Particles';
 import { getCurrentLocation } from '@/app/services/geolocationService';
 import { toast } from 'sonner';
 import { usePushNotifications } from '@/app/hooks/usePushNotifications';
+import { useMessageNotifications } from '@/app/hooks/useMessageNotifications';
 
 // Context to control swipe behavior
 const SwipeControlContext = createContext<{
@@ -52,6 +53,9 @@ export const SwipeableAppContainer = () => {
   
   // Initialize push notifications
   usePushNotifications();
+  
+  // Listen for new messages and trigger push notifications
+  useMessageNotifications();
   
   const [emblaRef, emblaApi] = useEmblaCarousel({
     loop: false,
