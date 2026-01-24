@@ -22,7 +22,7 @@ npm run build
 # 5. Android-Plattform hinzufügen (NUR beim ersten Mal!)
 npx cap add android
 
-# 6. Android für NFC konfigurieren (Gradle, SDK-Versionen, Permissions)
+# 6. Android für NFC konfigurieren (setzt Gradle 8.9, SDK-Versionen, Permissions)
 node scripts/configure-android-nfc.js
 
 # 7. Web-Build in Android-Projekt synchronisieren
@@ -49,10 +49,13 @@ npm install
 # 4. Web-App neu bauen
 npm run build
 
-# 5. Android-Projekt aktualisieren
+# 5. NFC-Konfiguration erneut ausführen (wichtig bei Gradle-Updates!)
+node scripts/configure-android-nfc.js
+
+# 6. Android-Projekt aktualisieren
 npx cap sync android
 
-# 6. Android Studio öffnen und Build starten
+# 7. Android Studio öffnen und Build starten
 npx cap open android
 ```
 
@@ -101,13 +104,29 @@ npx cap open android
 
 ## ⚠️ Fehlerbehebung
 
+### Problem: "Minimum supported Gradle version is 8.9"
+**Ursache:** Das Android-Projekt hat eine alte Gradle-Version.
+**Lösung:** NFC-Skript erneut ausführen (setzt automatisch Gradle 8.9):
+```bash
+node scripts/configure-android-nfc.js
+npx cap sync android
+```
+Falls das nicht hilft, Android-Ordner komplett neu erstellen:
+```bash
+rmdir /s /q android
+npx cap add android
+node scripts/configure-android-nfc.js
+npx cap sync android
+npx cap open android
+```
+
 ### Problem: "could not determine executable to run"
 **Lösung:** Capacitor CLI fehlt. Führe aus:
 ```bash
 npm install
 ```
 
-### Problem: "Gradle version incompatible" oder Build-Fehler
+### Problem: "Gradle version incompatible" oder andere Build-Fehler
 **Lösung:** Android-Ordner komplett neu erstellen:
 ```bash
 rmdir /s /q android
@@ -148,7 +167,7 @@ holo-booster-app/
 ├── public/                 # Statische Assets
 ├── supabase/              # Edge Functions (Backend)
 ├── scripts/               # Build-Skripte
-│   └── configure-android-nfc.js  # Android NFC-Konfiguration
+│   └── configure-android-nfc.js  # Android NFC + Gradle 8.9 Konfiguration
 ├── android/               # (generiert) Android Studio Projekt
 ├── capacitor.config.ts    # Capacitor-Konfiguration
 └── package.json           # Node-Abhängigkeiten
@@ -164,6 +183,7 @@ holo-booster-app/
 | Backend | Supabase (Lovable Cloud) |
 | Mobile | Capacitor 7 |
 | NFC | @capawesome-team/capacitor-nfc (Premium) |
+| Gradle | 8.9 (automatisch gesetzt durch configure-android-nfc.js) |
 
 ---
 
@@ -173,6 +193,7 @@ holo-booster-app/
 - **App Name:** Eloyo
 - **Minimum Android:** API 24 (Android 7.0)
 - **Target Android:** API 34 (Android 14)
+- **Gradle Version:** 8.9 (wird automatisch gesetzt)
 
 ---
 
