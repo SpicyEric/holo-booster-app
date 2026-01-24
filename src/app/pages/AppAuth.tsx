@@ -2,10 +2,23 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Eye, EyeOff, ArrowRight, ArrowLeft, Check, Mail, RefreshCw } from 'lucide-react';
+import { Capacitor } from '@capacitor/core';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
+
+// Helper to determine where to navigate after auth
+const getPostAuthRoute = () => {
+  const isNative = Capacitor.isNativePlatform();
+  const permissionsCompleted = localStorage.getItem('eloyo_permissions_completed') === 'true';
+  
+  // On native, go to permissions if not completed
+  if (isNative && !permissionsCompleted) {
+    return '/app/permissions';
+  }
+  return '/app';
+};
 
 type RegistrationStep = 'password' | 'confirmPassword' | 'birthDate' | 'gender' | 'email' | 'verification';
 
@@ -58,7 +71,7 @@ export const AppAuth = () => {
         
         if (session?.user?.email_confirmed_at) {
           toast.success('E-Mail bestätigt! Willkommen bei Eloyo!');
-          navigate('/app');
+          navigate(getPostAuthRoute());
           return true;
         }
       } catch (error) {
@@ -78,7 +91,7 @@ export const AppAuth = () => {
       if (event === 'SIGNED_IN' && session?.user?.email_confirmed_at) {
         clearInterval(interval);
         toast.success('E-Mail bestätigt! Willkommen bei Eloyo!');
-        navigate('/app');
+        navigate(getPostAuthRoute());
       }
     });
 
@@ -122,7 +135,7 @@ export const AppAuth = () => {
       }
 
       toast.success('Willkommen zurück!');
-      navigate('/app');
+      navigate(getPostAuthRoute());
     } catch (error: any) {
       console.error('Login error:', error);
       toast.error(error.message || 'Anmeldung fehlgeschlagen');

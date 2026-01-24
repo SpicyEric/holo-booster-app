@@ -43,6 +43,7 @@ import SwipeableAppContainer from "./app/components/SwipeableAppContainer";
 import AppHistory from "./app/pages/AppHistory";
 import AppSettings from "./app/pages/AppSettings";
 import AppAuth from "./app/pages/AppAuth";
+import { AppPermissions } from "./app/pages/AppPermissions";
 import AppMerchantDetail from "./app/pages/AppMerchantDetail";
 import AppScan from "./app/pages/AppScan";
 import AppSuggestShop from "./app/pages/AppSuggestShop";
@@ -104,6 +105,7 @@ const App = () => (
           
           {/* ===== APP ROUTES (End Customer) - Swipeable main pages ===== */}
           <Route path="/app/auth" element={<AppAuth />} />
+          <Route path="/app/permissions" element={<AppProtectedRoute><AppPermissions /></AppProtectedRoute>} />
           <Route path="/app" element={<AppProtectedRoute><SwipeableAppContainer /></AppProtectedRoute>} />
           <Route path="/app/messages" element={<AppProtectedRoute><SwipeableAppContainer /></AppProtectedRoute>} />
           <Route path="/app/stores" element={<AppProtectedRoute><SwipeableAppContainer /></AppProtectedRoute>} />
