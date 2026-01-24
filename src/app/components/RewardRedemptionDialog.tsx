@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/hooks/useAuth';
 import { useRewardRedemption } from '@/app/hooks/useRewardRedemption';
+import { NfcPermissionDialog } from '@/app/components/NfcPermissionDialog';
 import confetti from 'canvas-confetti';
 
 interface Reward {
@@ -41,9 +42,13 @@ export const RewardRedemptionDialog = ({
     isScanning,
     redemptionSuccess,
     error,
+    showPermissionDialog,
+    permissionDialogType,
     startRedemption,
     cancelRedemption,
     reset,
+    retryAfterPermission,
+    closePermissionDialog,
   } = useRewardRedemption({
     userId: user?.id,
     merchantId,
@@ -237,6 +242,14 @@ export const RewardRedemptionDialog = ({
           )}
         </div>
       </DialogContent>
+
+      {/* NFC Permission Fallback Dialog */}
+      <NfcPermissionDialog
+        open={showPermissionDialog}
+        onOpenChange={closePermissionDialog}
+        onRetry={retryAfterPermission}
+        type={permissionDialogType}
+      />
     </Dialog>
   );
 };
