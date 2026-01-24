@@ -1,83 +1,40 @@
-# Eloyo - Lokaler Entwicklungs- und Android-Build-Workflow
+# Eloyo - Android App Build-Anleitung
 
-## Repository-Informationen
+## 🎯 Schnellstart (Kopier-fertige Befehle)
 
-**GitHub Repository URL (HTTPS):**
-```
-https://github.com/[DEIN-GITHUB-USERNAME]/holo-booster-app.git
-```
+### Erstinstallation (einmalig)
 
-> **Hinweis:** Du findest die exakte URL in Lovable unter **Settings → GitHub**. Falls noch nicht verbunden, klicke dort auf "Connect to GitHub" und dann "Create Repository".
-
----
-
-## Voraussetzungen (einmalig installieren)
-
-### 1. Git für Windows installieren
-Download: https://git-scm.com/download/win
-- Installiere mit Standardeinstellungen
-- Nach Installation: CMD/PowerShell neu öffnen
-
-### 2. Node.js installieren
-Download: https://nodejs.org/ (LTS-Version empfohlen, z.B. 20.x)
-- Installiere mit Standardeinstellungen
-
-### 3. Android Studio installieren
-Download: https://developer.android.com/studio
-- Installiere mit Standard-SDK
-- Öffne SDK Manager und installiere:
-  - Android SDK Platform 34
-  - Android SDK Build-Tools 34
-  - Android SDK Command-line Tools
-
-### 4. Java JDK 17 installieren (WICHTIG: Version 17, NICHT 21!)
-Download: https://adoptium.net/temurin/releases/?version=17
-- Wähle: Windows x64, JDK, .msi
-- Nach Installation: Setze JAVA_HOME Umgebungsvariable auf JDK-17-Pfad
-
----
-
-## Erstinstallation (einmalig)
-
-Öffne **CMD** oder **PowerShell** und führe folgende Befehle aus:
+Öffne **CMD** oder **PowerShell** und führe diese Befehle **nacheinander** aus:
 
 ```bash
-# 1. Repository klonen (URL aus Lovable Settings → GitHub kopieren!)
-git clone https://github.com/[DEIN-USERNAME]/holo-booster-app.git
+# 1. Repository klonen (ersetze URL mit deiner aus Lovable Settings → GitHub)
+git clone https://github.com/DEIN-USERNAME/holo-booster-app.git
 
 # 2. In das Projektverzeichnis wechseln
 cd holo-booster-app
 
-# 3. Node-Abhängigkeiten installieren
+# 3. Alle Node-Abhängigkeiten installieren
 npm install
 
 # 4. Web-App bauen (erzeugt /dist Ordner)
 npm run build
 
-# 5. Android-Plattform hinzufügen
+# 5. Android-Plattform hinzufügen (NUR beim ersten Mal!)
 npx cap add android
 
-# 6. Android-Projekt konfigurieren (Gradle/Kotlin-Versionen etc.)
+# 6. Android für NFC konfigurieren (Gradle, SDK-Versionen, Permissions)
 node scripts/configure-android-nfc.js
 
-# 7. Web-Build nach Android synchronisieren
+# 7. Web-Build in Android-Projekt synchronisieren
 npx cap sync android
 
 # 8. Android Studio öffnen
 npx cap open android
 ```
 
-### In Android Studio:
-1. Warte bis Gradle-Sync abgeschlossen ist
-2. Falls Fehler: **File → Sync Project with Gradle Files**
-3. **Build → Make Project** oder **Run → Run 'app'**
-4. Wähle dein verbundenes Android-Gerät oder Emulator
-
 ---
 
-## Spätere Updates (regelmäßig)
-
-Wenn du neue Änderungen aus Lovable holen willst:
+### Updates holen (nach Änderungen in Lovable)
 
 ```bash
 # 1. In das Projektverzeichnis wechseln
@@ -86,7 +43,7 @@ cd holo-booster-app
 # 2. Neueste Änderungen von GitHub holen
 git pull
 
-# 3. Falls neue Abhängigkeiten hinzugefügt wurden
+# 3. Abhängigkeiten aktualisieren (falls neue Packages)
 npm install
 
 # 4. Web-App neu bauen
@@ -95,51 +52,82 @@ npm run build
 # 5. Android-Projekt aktualisieren
 npx cap sync android
 
-# 6. (Optional) Gradle-Konfiguration neu anwenden falls Probleme auftreten
-node scripts/configure-android-nfc.js
-
-# 7. Android Studio öffnen und Build starten
+# 6. Android Studio öffnen und Build starten
 npx cap open android
 ```
 
 ---
 
-## Schnellreferenz: Alle Befehle
+## 📋 Voraussetzungen (einmalig installieren)
 
-| Aktion | Befehl |
-|--------|--------|
-| Repository klonen | `git clone <URL>` |
-| Abhängigkeiten installieren | `npm install` |
-| Web-App bauen | `npm run build` |
-| Android-Plattform hinzufügen | `npx cap add android` |
-| Android konfigurieren | `node scripts/configure-android-nfc.js` |
-| Android synchronisieren | `npx cap sync android` |
-| Android Studio öffnen | `npx cap open android` |
-| Updates holen | `git pull` |
+### 1. Git für Windows
+- Download: https://git-scm.com/download/win
+- Installiere mit Standardeinstellungen
+- Nach Installation: CMD/PowerShell **neu öffnen**
+
+### 2. Node.js (LTS-Version)
+- Download: https://nodejs.org/
+- Empfohlen: Version 20.x LTS
+- Installiere mit Standardeinstellungen
+
+### 3. Java JDK 17 (WICHTIG: Version 17, NICHT 21!)
+- Download: https://adoptium.net/temurin/releases/?version=17
+- Wähle: **Windows x64**, **JDK**, **.msi**
+- Nach Installation: JAVA_HOME Umgebungsvariable setzen:
+  1. Windows-Suche → "Umgebungsvariablen"
+  2. "Umgebungsvariablen" klicken
+  3. Unter "Systemvariablen" → "Neu"
+  4. Name: `JAVA_HOME`
+  5. Wert: `C:\Program Files\Eclipse Adoptium\jdk-17.0.x` (dein Pfad)
+
+### 4. Android Studio
+- Download: https://developer.android.com/studio
+- Nach Installation SDK Manager öffnen und installieren:
+  - ✅ Android SDK Platform 34
+  - ✅ Android SDK Build-Tools 34
+  - ✅ Android SDK Command-line Tools
 
 ---
 
-## Fehlerbehebung
+## 🔧 In Android Studio (nach `npx cap open android`)
 
-### "Gradle version incompatible" Fehler
+1. **Warte** bis Gradle-Sync abgeschlossen ist (kann 1-5 Min dauern)
+2. Falls Fehler erscheinen: **File → Sync Project with Gradle Files**
+3. **Build → Make Project** oder **Run → Run 'app'**
+4. Wähle dein verbundenes Android-Gerät oder Emulator
+5. APK wird gebaut und auf Gerät installiert
+
+---
+
+## ⚠️ Fehlerbehebung
+
+### Problem: "could not determine executable to run"
+**Lösung:** Capacitor CLI fehlt. Führe aus:
 ```bash
-# Android-Ordner löschen und neu erstellen
+npm install
+```
+
+### Problem: "Gradle version incompatible" oder Build-Fehler
+**Lösung:** Android-Ordner komplett neu erstellen:
+```bash
 rmdir /s /q android
 npx cap add android
 node scripts/configure-android-nfc.js
 npx cap sync android
+npx cap open android
 ```
 
-### "git is not recognized" Fehler
-Git für Windows installieren: https://git-scm.com/download/win
-Dann CMD/PowerShell neu öffnen.
+### Problem: "JAVA_HOME not set" oder Java-Fehler
+**Lösung:**
+1. Prüfe ob JDK **17** installiert ist (NICHT 21!)
+2. Setze JAVA_HOME wie oben beschrieben
+3. CMD **komplett schließen** und neu öffnen
 
-### "JAVA_HOME not set" oder Java-Version-Fehler
-1. JDK 17 installieren (NICHT Version 21!)
-2. Umgebungsvariable JAVA_HOME setzen auf z.B. `C:\Program Files\Eclipse Adoptium\jdk-17.0.x`
-3. CMD neu öffnen
+### Problem: "git is not recognized"
+**Lösung:** Git installieren: https://git-scm.com/download/win, dann CMD neu öffnen.
 
-### Build funktioniert nicht nach git pull
+### Problem: Build funktioniert nicht nach git pull
+**Lösung:** Vollständige Neu-Synchronisation:
 ```bash
 npm install
 npm run build
@@ -149,7 +137,7 @@ npx cap sync android
 
 ---
 
-## Projektstruktur
+## 📁 Projektstruktur
 
 ```
 holo-booster-app/
@@ -158,27 +146,38 @@ holo-booster-app/
 │   ├── pages/             # Web-Seiten
 │   └── components/        # UI-Komponenten
 ├── public/                 # Statische Assets
-├── supabase/              # Edge Functions
-├── scripts/               # Build-Skripte (Android-Konfiguration)
-├── android/               # (generiert) Android-Projekt
+├── supabase/              # Edge Functions (Backend)
+├── scripts/               # Build-Skripte
+│   └── configure-android-nfc.js  # Android NFC-Konfiguration
+├── android/               # (generiert) Android Studio Projekt
 ├── capacitor.config.ts    # Capacitor-Konfiguration
-├── package.json           # Node-Abhängigkeiten
-└── vite.config.ts         # Vite Build-Konfiguration
+└── package.json           # Node-Abhängigkeiten
 ```
 
-> **Hinweis:** Der `android/` Ordner wird durch `npx cap add android` generiert und muss nach Problemen komplett neu erstellt werden.
+---
+
+## 🛠 Technologie-Stack
+
+| Bereich | Technologie |
+|---------|-------------|
+| Frontend | React 18, TypeScript, Vite, Tailwind CSS |
+| Backend | Supabase (Lovable Cloud) |
+| Mobile | Capacitor 7 |
+| NFC | @capawesome-team/capacitor-nfc (Premium) |
 
 ---
 
-## Technologie-Stack
+## 📱 App-Infos
 
-- **Frontend:** React 18, TypeScript, Vite, Tailwind CSS
-- **Backend:** Supabase (Lovable Cloud)
-- **Mobile:** Capacitor 7
-- **NFC:** @exxili/capacitor-nfc
+- **Package ID:** `com.eloyo.app`
+- **App Name:** Eloyo
+- **Minimum Android:** API 24 (Android 7.0)
+- **Target Android:** API 34 (Android 14)
 
 ---
 
-## Support
+## 🔗 Nützliche Links
 
-Bei Fragen zum Lovable-Projekt: https://docs.lovable.dev/
+- Lovable Docs: https://docs.lovable.dev/
+- Capacitor Docs: https://capacitorjs.com/docs
+- Android Studio: https://developer.android.com/studio
