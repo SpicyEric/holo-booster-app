@@ -41,7 +41,10 @@ const ANDROID_PATH = path.join(PROJECT_ROOT, 'android');
 // ============================================================================
 // VERSION CONSTANTS - Capacitor 5+ and AGP 8 compatible
 // ============================================================================
-const GRADLE_VERSION = '8.5';
+// NOTE: Recent Android Gradle Plugin versions require Gradle 8.9+.
+// If this is lower, Android Studio will fail with:
+// "Minimum supported Gradle version is 8.9. Current version is X.Y"
+const GRADLE_VERSION = '8.9';
 const COMPILE_SDK = 34;
 const MIN_SDK = 24;
 const TARGET_SDK = 34;
