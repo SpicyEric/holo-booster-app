@@ -1,4 +1,3 @@
-import { Geolocation, PermissionStatus } from '@capacitor/geolocation';
 import { Capacitor } from '@capacitor/core';
 
 export interface LocationResult {
@@ -11,11 +10,42 @@ export interface GeolocationError {
   message: string;
 }
 
+// Dynamically import Geolocation to avoid plugin registration issues
+let GeolocationPlugin: any = null;
+
+async function getGeolocationPlugin() {
+  if (GeolocationPlugin) return GeolocationPlugin;
+  
+  try {
+    const module = await import('@capacitor/geolocation');
+    GeolocationPlugin = module.Geolocation;
+    return GeolocationPlugin;
+  } catch (error) {
+    console.error('Failed to load Geolocation plugin:', error);
+    return null;
+  }
+}
+
 /**
  * Request location permissions - required for native apps
  */
-export async function requestLocationPermission(): Promise<PermissionStatus> {
+export async function requestLocationPermission(): Promise<{ location: string }> {
+  const isNative = Capacitor.isNativePlatform();
+  
+  if (!isNative) {
+    // Web: Check if geolocation is available
+    if ('geolocation' in navigator) {
+      return { location: 'granted' };
+    }
+    return { location: 'denied' };
+  }
+  
   try {
+    const Geolocation = await getGeolocationPlugin();
+    if (!Geolocation) {
+      throw new Error('Geolocation plugin not available');
+    }
+    
     const permission = await Geolocation.requestPermissions();
     console.log('Location permission result:', permission);
     return permission;
@@ -28,8 +58,23 @@ export async function requestLocationPermission(): Promise<PermissionStatus> {
 /**
  * Check current location permission status
  */
-export async function checkLocationPermission(): Promise<PermissionStatus> {
+export async function checkLocationPermission(): Promise<{ location: string }> {
+  const isNative = Capacitor.isNativePlatform();
+  
+  if (!isNative) {
+    // Web doesn't need explicit permission check
+    if ('geolocation' in navigator) {
+      return { location: 'prompt' };
+    }
+    return { location: 'denied' };
+  }
+  
   try {
+    const Geolocation = await getGeolocationPlugin();
+    if (!Geolocation) {
+      throw new Error('Geolocation plugin not available');
+    }
+    
     const permission = await Geolocation.checkPermissions();
     console.log('Current location permission:', permission);
     return permission;
@@ -48,22 +93,70 @@ export async function getCurrentLocation(): Promise<LocationResult> {
   console.log('Getting location, isNative:', isNative);
 
   try {
-    // On native platforms, ensure we have permission first
-    if (isNative) {
-      const permStatus = await Geolocation.checkPermissions();
-      console.log('Permission status:', permStatus);
-      
-      if (permStatus.location !== 'granted') {
-        console.log('Requesting location permission...');
-        const newPermission = await Geolocation.requestPermissions();
-        console.log('New permission status:', newPermission);
-        
-        if (newPermission.location !== 'granted') {
-          throw { 
-            code: 'PERMISSION_DENIED', 
-            message: 'Standortberechtigung wurde verweigert' 
-          };
+    // On web, use browser geolocation API directly
+    if (!isNative) {
+      return new Promise((resolve, reject) => {
+        if (!('geolocation' in navigator)) {
+          reject({ 
+            code: 'POSITION_UNAVAILABLE', 
+            message: 'Geolocation wird nicht unterstützt' 
+          });
+          return;
         }
+        
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            resolve({
+              latitude: position.coords.latitude,
+              longitude: position.coords.longitude,
+            });
+          },
+          (error) => {
+            if (error.code === 1) {
+              reject({ 
+                code: 'PERMISSION_DENIED', 
+                message: 'Bitte erlaube den Zugriff auf deinen Standort' 
+              });
+            } else if (error.code === 2) {
+              reject({ 
+                code: 'POSITION_UNAVAILABLE', 
+                message: 'Standort konnte nicht ermittelt werden' 
+              });
+            } else {
+              reject({ 
+                code: 'TIMEOUT', 
+                message: 'Standortabfrage hat zu lange gedauert' 
+              });
+            }
+          },
+          { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
+        );
+      });
+    }
+
+    // Native: Use Capacitor plugin
+    const Geolocation = await getGeolocationPlugin();
+    if (!Geolocation) {
+      throw { 
+        code: 'PLUGIN_NOT_AVAILABLE', 
+        message: 'Standort-Plugin ist nicht verfügbar. Bitte App neu installieren.' 
+      };
+    }
+
+    // Ensure we have permission first
+    const permStatus = await Geolocation.checkPermissions();
+    console.log('Permission status:', permStatus);
+    
+    if (permStatus.location !== 'granted') {
+      console.log('Requesting location permission...');
+      const newPermission = await Geolocation.requestPermissions();
+      console.log('New permission status:', newPermission);
+      
+      if (newPermission.location !== 'granted') {
+        throw { 
+          code: 'PERMISSION_DENIED', 
+          message: 'Standortberechtigung wurde verweigert' 
+        };
       }
     }
 
@@ -83,18 +176,26 @@ export async function getCurrentLocation(): Promise<LocationResult> {
   } catch (error: any) {
     console.error('Geolocation error:', error);
     
+    // Check for plugin not implemented error
+    if (error.message?.includes('not implemented') || error.code === 'UNIMPLEMENTED') {
+      throw { 
+        code: 'PLUGIN_NOT_AVAILABLE', 
+        message: 'Standort-Plugin ist nicht verfügbar. Bitte führe "npx cap sync" aus und baue die App neu.' 
+      };
+    }
+    
     // Provide meaningful error messages
     if (error.code === 1 || error.code === 'PERMISSION_DENIED') {
       throw { 
         code: 'PERMISSION_DENIED', 
         message: 'Bitte erlaube den Zugriff auf deinen Standort in den Einstellungen' 
       };
-    } else if (error.code === 2) {
+    } else if (error.code === 2 || error.code === 'POSITION_UNAVAILABLE') {
       throw { 
         code: 'POSITION_UNAVAILABLE', 
         message: 'Standort konnte nicht ermittelt werden' 
       };
-    } else if (error.code === 3) {
+    } else if (error.code === 3 || error.code === 'TIMEOUT') {
       throw { 
         code: 'TIMEOUT', 
         message: 'Standortabfrage hat zu lange gedauert' 
@@ -102,7 +203,7 @@ export async function getCurrentLocation(): Promise<LocationResult> {
     }
     
     throw { 
-      code: 'UNKNOWN', 
+      code: error.code || 'UNKNOWN', 
       message: error.message || 'Unbekannter Fehler bei der Standortermittlung' 
     };
   }
@@ -116,9 +217,14 @@ export async function watchLocation(
   errorCallback?: (error: GeolocationError) => void
 ): Promise<string> {
   try {
+    const Geolocation = await getGeolocationPlugin();
+    if (!Geolocation) {
+      throw new Error('Geolocation plugin not available');
+    }
+    
     const watchId = await Geolocation.watchPosition(
       { enableHighAccuracy: true },
-      (position, err) => {
+      (position: any, err: any) => {
         if (err) {
           console.error('Watch position error:', err);
           errorCallback?.({ code: 'WATCH_ERROR', message: err.message });
@@ -146,6 +252,9 @@ export async function watchLocation(
  */
 export async function clearLocationWatch(watchId: string): Promise<void> {
   try {
+    const Geolocation = await getGeolocationPlugin();
+    if (!Geolocation) return;
+    
     await Geolocation.clearWatch({ id: watchId });
   } catch (error) {
     console.error('Error clearing location watch:', error);
