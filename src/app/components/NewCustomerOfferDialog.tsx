@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/hooks/useAuth';
 import { useNewCustomerOfferRedemption } from '@/app/hooks/useNewCustomerOfferRedemption';
+import { NfcPermissionDialog } from '@/app/components/NfcPermissionDialog';
 import confetti from 'canvas-confetti';
 
 interface NewCustomerOffer {
@@ -49,9 +50,13 @@ export const NewCustomerOfferDialog = ({
     isScanning,
     redemptionSuccess,
     error,
+    showPermissionDialog,
+    permissionDialogType,
     startRedemption,
     cancelRedemption,
     reset,
+    retryAfterPermission,
+    closePermissionDialog,
   } = useNewCustomerOfferRedemption({
     userId: user?.id,
     merchantId: offer?.merchant_customer_id || '',
@@ -252,6 +257,14 @@ export const NewCustomerOfferDialog = ({
           </div>
         </div>
       </DialogContent>
+
+      {/* NFC Permission Fallback Dialog */}
+      <NfcPermissionDialog
+        open={showPermissionDialog}
+        onOpenChange={closePermissionDialog}
+        onRetry={retryAfterPermission}
+        type={permissionDialogType}
+      />
     </Dialog>
   );
 };

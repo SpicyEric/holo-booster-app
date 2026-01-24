@@ -10,6 +10,7 @@ import { toast } from 'sonner';
 import confetti from 'canvas-confetti';
 import { MainLayout } from '@/app/components/layout/MainLayout';
 import { nfcService, type NfcReadResult } from '@/app/services/nfcService';
+import { NfcPermissionDialog } from '@/app/components/NfcPermissionDialog';
 
 type ScanResult = {
   success: boolean;
@@ -28,6 +29,8 @@ export const AppScan = () => {
   const [nfcSupported, setNfcSupported] = useState(false);
   const [nfcEnabled, setNfcEnabled] = useState(true);
   const [checkingNfc, setCheckingNfc] = useState(true);
+  const [showPermissionDialog, setShowPermissionDialog] = useState(false);
+  const [permissionDialogType, setPermissionDialogType] = useState<'disabled' | 'permission_denied'>('disabled');
 
   // Check for NFC support on mount
   useEffect(() => {
@@ -148,13 +151,41 @@ export const AppScan = () => {
     const enabled = await nfcService.isEnabled();
     if (!enabled) {
       setNfcEnabled(false);
-      toast.error('Bitte aktiviere NFC in den Einstellungen');
+      setPermissionDialogType('disabled');
+      setShowPermissionDialog(true);
       return;
     }
 
     setScanning(true);
     setResult(null);
-    await nfcService.startScan(handleNfcRead);
+    
+    try {
+      await nfcService.startScan(handleNfcRead);
+    } catch (error: any) {
+      console.error('NFC scan start error:', error);
+      // Check if it's a permission error
+      if (error.message?.toLowerCase().includes('permission') || 
+          error.message?.toLowerCase().includes('denied') ||
+          error.message?.toLowerCase().includes('berechtigung')) {
+        setPermissionDialogType('permission_denied');
+        setShowPermissionDialog(true);
+        setScanning(false);
+      } else {
+        toast.error(error.message || 'NFC Scan konnte nicht gestartet werden');
+        setScanning(false);
+      }
+    }
+  };
+
+  const handlePermissionRetry = async () => {
+    setShowPermissionDialog(false);
+    // Re-check NFC status
+    const enabled = await nfcService.isEnabled();
+    setNfcEnabled(enabled);
+    if (enabled) {
+      // Try starting scan again
+      startNFCScan();
+    }
   };
 
   const handleOpenNfcSettings = async () => {
@@ -390,6 +421,14 @@ export const AppScan = () => {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* NFC Permission Fallback Dialog */}
+      <NfcPermissionDialog
+        open={showPermissionDialog}
+        onOpenChange={setShowPermissionDialog}
+        onRetry={handlePermissionRetry}
+        type={permissionDialogType}
+      />
     </MainLayout>
   );
 };

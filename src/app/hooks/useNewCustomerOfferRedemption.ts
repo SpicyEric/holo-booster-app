@@ -17,6 +17,8 @@ interface RedemptionState {
   isScanning: boolean;
   redemptionSuccess: boolean;
   error: string | null;
+  showPermissionDialog: boolean;
+  permissionDialogType: 'disabled' | 'permission_denied';
 }
 
 export const useNewCustomerOfferRedemption = ({ 
@@ -31,6 +33,8 @@ export const useNewCustomerOfferRedemption = ({
     isScanning: false,
     redemptionSuccess: false,
     error: null,
+    showPermissionDialog: false,
+    permissionDialogType: 'disabled',
   });
 
   const validateNfcChip = async (chipData: string): Promise<boolean> => {
@@ -152,6 +156,8 @@ export const useNewCustomerOfferRedemption = ({
       isScanning: true,
       redemptionSuccess: false,
       error: null,
+      showPermissionDialog: false,
+      permissionDialogType: 'disabled',
     });
 
     const nfcSupported = await nfcService.isSupported();
@@ -168,6 +174,8 @@ export const useNewCustomerOfferRedemption = ({
               isScanning: false,
               redemptionSuccess: true,
               error: null,
+              showPermissionDialog: false,
+              permissionDialogType: 'disabled',
             });
             onSuccess();
           } else {
@@ -186,54 +194,113 @@ export const useNewCustomerOfferRedemption = ({
         isScanning: false,
         redemptionSuccess: false,
         error: 'NFC wird auf diesem Gerät nicht unterstützt',
+        showPermissionDialog: false,
+        permissionDialogType: 'disabled',
       });
       return;
     }
 
+    // Check if NFC is enabled
+    const nfcEnabled = await nfcService.isEnabled();
+    if (!nfcEnabled) {
+      setState(prev => ({
+        ...prev,
+        isScanning: false,
+        showPermissionDialog: true,
+        permissionDialogType: 'disabled',
+      }));
+      return;
+    }
+
     // Start NFC scan
-    await nfcService.startScan(async (result: NfcReadResult) => {
-      if (!result.success) {
+    try {
+      await nfcService.startScan(async (result: NfcReadResult) => {
+        if (!result.success) {
+          // Check if it's a permission error
+          if (result.error?.toLowerCase().includes('permission') || 
+              result.error?.toLowerCase().includes('berechtigung')) {
+            setState(prev => ({
+              ...prev,
+              isScanning: false,
+              showPermissionDialog: true,
+              permissionDialogType: 'permission_denied',
+            }));
+            return;
+          }
+          
+          setState(prev => ({
+            ...prev,
+            isScanning: false,
+            error: result.error || 'NFC Scan fehlgeschlagen',
+          }));
+          return;
+        }
+
+        // Validate the NFC chip belongs to the correct merchant
+        const isValid = await validateNfcChip(result.chipData);
+        
+        if (!isValid) {
+          setState(prev => ({
+            ...prev,
+            isScanning: false,
+            error: 'Dieser Stempel gehört nicht zu diesem Geschäft',
+          }));
+          toast.error('Falscher Stempel! Bitte verwende den Stempel von diesem Geschäft.');
+          return;
+        }
+
+        // Process the new customer offer
+        const success = await processNewCustomerOffer();
+        
+        if (success) {
+          setState({
+            isRedeeming: true,
+            isScanning: false,
+            redemptionSuccess: true,
+            error: null,
+            showPermissionDialog: false,
+            permissionDialogType: 'disabled',
+          });
+          onSuccess();
+        } else {
+          setState(prev => ({
+            ...prev,
+            isScanning: false,
+            error: prev.error || 'Einlösung fehlgeschlagen',
+          }));
+        }
+      });
+    } catch (error: any) {
+      console.error('NFC scan start error:', error);
+      if (error.message?.toLowerCase().includes('permission') || 
+          error.message?.toLowerCase().includes('berechtigung')) {
         setState(prev => ({
           ...prev,
           isScanning: false,
-          error: result.error || 'NFC Scan fehlgeschlagen',
+          showPermissionDialog: true,
+          permissionDialogType: 'permission_denied',
         }));
-        return;
-      }
-
-      // Validate the NFC chip belongs to the correct merchant
-      const isValid = await validateNfcChip(result.chipData);
-      
-      if (!isValid) {
-        setState(prev => ({
-          ...prev,
-          isScanning: false,
-          error: 'Dieser Stempel gehört nicht zu diesem Geschäft',
-        }));
-        toast.error('Falscher Stempel! Bitte verwende den Stempel von diesem Geschäft.');
-        return;
-      }
-
-      // Process the new customer offer
-      const success = await processNewCustomerOffer();
-      
-      if (success) {
-        setState({
-          isRedeeming: true,
-          isScanning: false,
-          redemptionSuccess: true,
-          error: null,
-        });
-        onSuccess();
       } else {
         setState(prev => ({
           ...prev,
           isScanning: false,
-          error: prev.error || 'Einlösung fehlgeschlagen',
+          error: error.message || 'NFC Scan konnte nicht gestartet werden',
         }));
       }
-    });
+    }
   }, [userId, merchantId, bonusStamps, onSuccess]);
+
+  const retryAfterPermission = useCallback(async () => {
+    setState(prev => ({ ...prev, showPermissionDialog: false }));
+    const enabled = await nfcService.isEnabled();
+    if (enabled) {
+      startRedemption();
+    }
+  }, [startRedemption]);
+
+  const closePermissionDialog = useCallback(() => {
+    setState(prev => ({ ...prev, showPermissionDialog: false }));
+  }, []);
 
   const cancelRedemption = useCallback(() => {
     nfcService.stopScan();
@@ -242,6 +309,8 @@ export const useNewCustomerOfferRedemption = ({
       isScanning: false,
       redemptionSuccess: false,
       error: null,
+      showPermissionDialog: false,
+      permissionDialogType: 'disabled',
     });
   }, []);
 
@@ -251,6 +320,8 @@ export const useNewCustomerOfferRedemption = ({
       isScanning: false,
       redemptionSuccess: false,
       error: null,
+      showPermissionDialog: false,
+      permissionDialogType: 'disabled',
     });
   }, []);
 
@@ -259,5 +330,7 @@ export const useNewCustomerOfferRedemption = ({
     startRedemption,
     cancelRedemption,
     reset,
+    retryAfterPermission,
+    closePermissionDialog,
   };
 };
