@@ -141,8 +141,20 @@ export const AppScan = () => {
     if (nfcResult.success && nfcResult.chipData) {
       handleChipScan(nfcResult.chipData);
     } else if (nfcResult.error) {
-      toast.error(nfcResult.error);
-      setScanning(false);
+      // Check if it's a permission-related error
+      const errorLower = nfcResult.error.toLowerCase();
+      if (errorLower.includes('permission') || 
+          errorLower.includes('denied') ||
+          errorLower.includes('berechtigung') ||
+          errorLower.includes('disabled') ||
+          errorLower.includes('deaktiviert')) {
+        setPermissionDialogType('disabled');
+        setShowPermissionDialog(true);
+        setScanning(false);
+      } else {
+        toast.error(nfcResult.error);
+        setScanning(false);
+      }
     }
   }, [handleChipScan]);
 

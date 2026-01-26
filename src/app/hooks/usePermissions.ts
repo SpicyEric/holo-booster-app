@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Capacitor } from '@capacitor/core';
-import { Geolocation } from '@capacitor/geolocation';
 import { nfcService } from '@/app/services/nfcService';
+import { checkLocationPermission, requestLocationPermission, openAppSettings } from '@/app/services/geolocationService';
 
 export interface PermissionState {
   location: 'unknown' | 'granted' | 'denied' | 'prompt';
@@ -12,6 +12,7 @@ export interface PermissionActions {
   requestLocation: () => Promise<boolean>;
   checkNfc: () => Promise<boolean>;
   openNfcSettings: () => Promise<void>;
+  openLocationSettings: () => Promise<void>;
   checkAllPermissions: () => Promise<PermissionState>;
 }
 
@@ -23,11 +24,11 @@ export function usePermissions() {
   const [isLoading, setIsLoading] = useState(true);
   const isNative = Capacitor.isNativePlatform();
 
-  const checkLocationPermission = useCallback(async (): Promise<'granted' | 'denied' | 'prompt'> => {
+  const checkLocationPermissionStatus = useCallback(async (): Promise<'granted' | 'denied' | 'prompt'> => {
     if (!isNative) return 'granted'; // Web doesn't need explicit permission check
     
     try {
-      const status = await Geolocation.checkPermissions();
+      const status = await checkLocationPermission();
       console.log('Location permission status:', status);
       
       if (status.location === 'granted') return 'granted';
@@ -39,7 +40,7 @@ export function usePermissions() {
     }
   }, [isNative]);
 
-  const requestLocationPermission = useCallback(async (): Promise<boolean> => {
+  const requestLocationPermissionAction = useCallback(async (): Promise<boolean> => {
     if (!isNative) {
       setPermissions(prev => ({ ...prev, location: 'granted' }));
       return true;
@@ -47,7 +48,7 @@ export function usePermissions() {
 
     try {
       console.log('Requesting location permission...');
-      const result = await Geolocation.requestPermissions();
+      const result = await requestLocationPermission();
       console.log('Location permission result:', result);
       
       const granted = result.location === 'granted';
@@ -59,6 +60,14 @@ export function usePermissions() {
       return false;
     }
   }, [isNative]);
+
+  const openLocationSettings = useCallback(async () => {
+    try {
+      await openAppSettings();
+    } catch (error) {
+      console.error('Error opening app settings:', error);
+    }
+  }, []);
 
   const checkNfcStatus = useCallback(async (): Promise<'supported' | 'unsupported' | 'disabled'> => {
     try {
@@ -90,7 +99,7 @@ export function usePermissions() {
     setIsLoading(true);
     
     const [locationStatus, nfcStatus] = await Promise.all([
-      checkLocationPermission(),
+      checkLocationPermissionStatus(),
       checkNfcStatus(),
     ]);
     
@@ -103,7 +112,7 @@ export function usePermissions() {
     setIsLoading(false);
     
     return newState;
-  }, [checkLocationPermission, checkNfcStatus]);
+  }, [checkLocationPermissionStatus, checkNfcStatus]);
 
   // Initial check on mount
   useEffect(() => {
@@ -114,13 +123,14 @@ export function usePermissions() {
     permissions,
     isLoading,
     isNative,
-    requestLocation: requestLocationPermission,
+    requestLocation: requestLocationPermissionAction,
     checkNfc: async () => {
       const status = await checkNfcStatus();
       setPermissions(prev => ({ ...prev, nfc: status }));
       return status === 'supported';
     },
     openNfcSettings,
+    openLocationSettings,
     checkAllPermissions,
   };
 }
