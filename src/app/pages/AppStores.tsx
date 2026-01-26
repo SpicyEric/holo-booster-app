@@ -1,14 +1,22 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { MainLayout } from '@/app/components/layout/MainLayout';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { MapPin, AlertCircle } from 'lucide-react';
+import { MapPin, AlertCircle, Settings } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { StoresGoogleMap } from '@/app/components/StoresGoogleMap';
 import { Card } from '@/components/ui/card';
-import { getCurrentLocation, GeolocationError } from '@/app/services/geolocationService';
+import { 
+  getCurrentLocation, 
+  GeolocationError, 
+  checkLocationPermission, 
+  requestLocationPermission,
+  openAppSettings 
+} from '@/app/services/geolocationService';
 import { Button } from '@/components/ui/button';
-// INLINE CARD TEST - v1
+import { LocationPermissionDialog } from '@/app/components/LocationPermissionDialog';
+import { Capacitor } from '@capacitor/core';
+
 interface Store {
   id: string;
   name: string;
@@ -29,24 +37,82 @@ export default function AppStores() {
   const [stores, setStores] = useState<Store[]>([]);
   const [loading, setLoading] = useState(true);
   const [locationError, setLocationError] = useState<string | null>(null);
+  const [locationLoading, setLocationLoading] = useState(false);
+  const [showLocationDialog, setShowLocationDialog] = useState(false);
+  const [permissionChecked, setPermissionChecked] = useState(false);
 
-  const fetchUserLocation = async () => {
+  const isNative = Capacitor.isNativePlatform();
+
+  const fetchUserLocation = useCallback(async () => {
+    setLocationLoading(true);
+    setLocationError(null);
+    
     try {
-      setLocationError(null);
+      // On native: First check permission status
+      if (isNative) {
+        const permStatus = await checkLocationPermission();
+        console.log('Location permission status:', permStatus);
+        
+        if (permStatus.location === 'denied') {
+          // Permission was previously denied - show dialog to open settings
+          setShowLocationDialog(true);
+          setLocationLoading(false);
+          setPermissionChecked(true);
+          return;
+        }
+        
+        if (permStatus.location === 'prompt' || permStatus.location !== 'granted') {
+          // First time or not granted - request permission (triggers native popup)
+          console.log('Requesting location permission...');
+          const result = await requestLocationPermission();
+          console.log('Permission request result:', result);
+          
+          if (result.location !== 'granted') {
+            // User denied the native prompt
+            setShowLocationDialog(true);
+            setLocationLoading(false);
+            setPermissionChecked(true);
+            return;
+          }
+        }
+      }
+      
+      // Permission granted (or web) - get location
       const location = await getCurrentLocation();
       console.log('User location received:', location);
       setUserLocation([location.latitude, location.longitude]);
+      setPermissionChecked(true);
     } catch (error) {
       const geoError = error as GeolocationError;
       console.error('Location error:', geoError);
-      setLocationError(geoError.message);
-      // Don't set fallback - let user see error and retry
+      
+      // Check if it's a permission error
+      if (geoError.code === 'PERMISSION_DENIED') {
+        setShowLocationDialog(true);
+      } else {
+        setLocationError(geoError.message);
+      }
+      setPermissionChecked(true);
+    } finally {
+      setLocationLoading(false);
     }
-  };
+  }, [isNative]);
+
+  const handleLocationRetry = useCallback(async () => {
+    setShowLocationDialog(false);
+    // Small delay to let dialog close
+    setTimeout(() => {
+      fetchUserLocation();
+    }, 300);
+  }, [fetchUserLocation]);
+
+  const handleOpenLocationSettings = useCallback(async () => {
+    await openAppSettings();
+  }, []);
 
   useEffect(() => {
     fetchUserLocation();
-  }, []);
+  }, [fetchUserLocation]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -218,6 +284,29 @@ export default function AppStores() {
             <div className="h-[calc(100vh-16rem)] rounded-xl overflow-hidden">
               <StoresGoogleMap stores={stores} userLocation={userLocation} />
             </div>
+          ) : locationLoading ? (
+            <Card className="p-6 text-center">
+              <div className="mx-auto w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+              </div>
+              <p className="text-muted-foreground">Lade Standort...</p>
+            </Card>
+          ) : permissionChecked && !userLocation ? (
+            <Card className="p-6 text-center">
+              <div className="mx-auto w-16 h-16 rounded-full bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center mb-4">
+                <MapPin className="h-8 w-8 text-orange-600" />
+              </div>
+              <h3 className="font-semibold mb-2">Standortzugriff benötigt</h3>
+              <p className="text-muted-foreground text-sm mb-4">
+                Um die Karte anzuzeigen, benötigen wir Zugriff auf deinen Standort.
+              </p>
+              <div className="flex flex-col gap-2">
+                <Button onClick={() => setShowLocationDialog(true)}>
+                  <MapPin className="mr-2 h-4 w-4" />
+                  Standort erlauben
+                </Button>
+              </div>
+            </Card>
           ) : (
             <Card className="p-6 text-center">
               <div className="mx-auto w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4">
@@ -228,6 +317,14 @@ export default function AppStores() {
           )}
         </TabsContent>
       </Tabs>
+
+      {/* Location Permission Dialog */}
+      <LocationPermissionDialog
+        open={showLocationDialog}
+        onOpenChange={setShowLocationDialog}
+        onRetry={handleLocationRetry}
+        onOpenSettings={handleOpenLocationSettings}
+      />
     </MainLayout>
   );
 }

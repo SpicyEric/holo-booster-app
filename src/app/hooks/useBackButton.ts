@@ -86,10 +86,22 @@ export const useBackButton = () => {
     };
 
     // Register back button listener
-    const listener = App.addListener('backButton', handleBackButton);
+    let listenerHandle: any = null;
+    
+    const setupListener = async () => {
+      try {
+        listenerHandle = await App.addListener('backButton', handleBackButton);
+      } catch (error) {
+        console.error('Failed to add back button listener:', error);
+      }
+    };
+    
+    setupListener();
 
     return () => {
-      listener.then(l => l.remove());
+      if (listenerHandle && typeof listenerHandle.remove === 'function') {
+        listenerHandle.remove();
+      }
     };
   }, [navigate, location.pathname]);
 
