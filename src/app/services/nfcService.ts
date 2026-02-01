@@ -1,6 +1,6 @@
 // NFC Service for Eloyo App
 // 
-// Uses @capawesome-team/capacitor-nfc (Premium Plugin) for native Android/iOS NFC
+// Uses @exxili/capacitor-nfc (Free Community Plugin) for native Android/iOS NFC
 // Format on NFC chip: "XXXXX-XXXXX-XXXXX:grün" (Box-ID:StampColor)
 
 import { Capacitor } from '@capacitor/core';
@@ -14,23 +14,19 @@ interface NfcReadResult {
 type NfcReadCallback = (result: NfcReadResult) => void;
 
 // Dynamic import for NFC plugin (only available on native)
-// Uses @capawesome-team/capacitor-nfc which must be installed via npm
-// with .npmrc configured for the private registry
 let NfcPluginInstance: any = null;
 
 const loadNfcPlugin = async (): Promise<any> => {
   if (NfcPluginInstance) return NfcPluginInstance;
   
   try {
-    // Dynamic import with string literal to avoid TypeScript checking
-    // The plugin is installed locally via npm with .npmrc configured for private registry
-    const pluginName = '@capawesome-team/capacitor-nfc';
-    const module = await Function('modulePath', 'return import(modulePath)')(pluginName);
-    NfcPluginInstance = module.Nfc;
-    console.log('[NFC] Capawesome Premium Plugin loaded successfully');
+    // Use @exxili/capacitor-nfc - free community plugin
+    const module = await import('@exxili/capacitor-nfc');
+    NfcPluginInstance = module.NFC;
+    console.log('[NFC] Exxili Community Plugin loaded successfully');
     return NfcPluginInstance;
   } catch (error) {
-    console.log('[NFC] Premium plugin not available, will use Web NFC fallback:', error);
+    console.log('[NFC] Plugin not available, will use Web NFC fallback:', error);
     return null;
   }
 };
@@ -71,6 +67,7 @@ class NfcService {
         const nfc = await loadNfcPlugin();
         if (nfc) {
           const result = await nfc.isSupported();
+          console.log('[NFC] isSupported result:', result);
           return result.isSupported;
         }
       } catch (error) {
@@ -94,6 +91,7 @@ class NfcService {
         const nfc = await loadNfcPlugin();
         if (nfc) {
           const result = await nfc.isEnabled();
+          console.log('[NFC] isEnabled result:', result);
           return result.isEnabled;
         }
       } catch (error) {
@@ -122,21 +120,11 @@ class NfcService {
       const { NativeSettings, AndroidSettings, IOSSettings } = await import('capacitor-native-settings');
       await NativeSettings.open({
         optionAndroid: AndroidSettings.NfcSettings,
-        optionIOS: IOSSettings.App, // iOS doesn't have NFC settings, use App settings as fallback
+        optionIOS: IOSSettings.App,
       });
       console.log('[NFC] Opened NFC settings via NativeSettings');
     } catch (error) {
       console.log('[NFC] Could not open NFC settings:', error);
-      
-      // Fallback: Try plugin's built-in openSettings
-      try {
-        const nfc = await loadNfcPlugin();
-        if (nfc) {
-          await nfc.openSettings();
-        }
-      } catch (fallbackError) {
-        console.log('[NFC] Fallback openSettings also failed:', fallbackError);
-      }
     }
   }
 
@@ -174,7 +162,7 @@ class NfcService {
   }
 
   /**
-   * Start native NFC scan using Capawesome Premium Plugin
+   * Start native NFC scan using Exxili Community Plugin
    */
   private async startNativeScan(onRead: NfcReadCallback): Promise<void> {
     try {
@@ -201,32 +189,30 @@ class NfcService {
 
       // Android: Check if NFC is enabled
       if (platform === 'android') {
-        const enabledResult = await nfc.isEnabled();
-        if (!enabledResult.isEnabled) {
-          this.isScanning = false;
-          onRead({
-            chipData: '',
-            success: false,
-            error: 'NFC ist deaktiviert. Bitte aktiviere NFC in den Android-Einstellungen.'
-          });
-          return;
+        try {
+          const enabledResult = await nfc.isEnabled();
+          if (!enabledResult.isEnabled) {
+            this.isScanning = false;
+            onRead({
+              chipData: '',
+              success: false,
+              error: 'NFC ist deaktiviert. Bitte aktiviere NFC in den Android-Einstellungen.'
+            });
+            return;
+          }
+        } catch (e) {
+          console.log('[NFC] isEnabled check error:', e);
         }
       }
 
-      // Add listener for NFC tag detection (Capawesome uses 'nfcTagScanned')
-      this.nfcListenerHandle = await nfc.addListener('nfcTagScanned', (event: any) => {
-        console.log('[NFC] Tag scanned:', event);
+      // Add listener for NFC tag detection (Exxili uses 'nfcTag')
+      this.nfcListenerHandle = await nfc.addListener('nfcTag', (event: any) => {
+        console.log('[NFC] Tag scanned:', JSON.stringify(event));
         this.processNfcTag(event, onRead);
       });
 
-      // Start scan session with iOS-specific alert message
-      const scanOptions: any = {};
-      
-      if (platform === 'ios') {
-        scanOptions.alertMessage = 'Halte den NFC-Stempel an dein iPhone';
-      }
-
-      await nfc.startScanSession(scanOptions);
+      // Start scan session
+      await nfc.startScan();
       console.log('[NFC] Native scan session started');
 
     } catch (error: any) {
@@ -258,18 +244,22 @@ class NfcService {
    */
   private processNfcTag(event: any, onRead: NfcReadCallback): void {
     try {
-      // Capawesome plugin structure: event.nfcTag.message.records
-      const nfcTag = event.nfcTag || event;
-      const message = nfcTag.message;
+      console.log('[NFC] Processing tag event:', JSON.stringify(event));
       
-      if (message && message.records && message.records.length > 0) {
-        for (const record of message.records) {
-          // Process Text Records (TNF=1, RTD="T")
-          if (record.type === 'T' || record.tnf === 1) {
+      // Exxili plugin structure: event.messages[].records[]
+      const messages = event.messages || event.ndefMessages || [];
+      
+      for (const message of messages) {
+        const records = message.records || [];
+        
+        for (const record of records) {
+          // Process Text Records
+          if (record.type === 'text' || record.tnf === 1) {
             let text = '';
             
-            if (record.payload) {
-              // Decode NDEF text payload
+            if (record.text) {
+              text = record.text;
+            } else if (record.payload) {
               text = this.decodeNdefTextPayload(record.payload);
             }
             
@@ -280,10 +270,7 @@ class NfcService {
             
             // Remove language prefix if present (e.g., "en" or "de")
             if (cleanText.length > 2 && !cleanText.match(/^[A-HJ-KM-NP-Z1-9]{5}-/i)) {
-              cleanText = cleanText.substring(cleanText.indexOf('-') > 0 ? 0 : 2);
-              if (!cleanText.match(/^[A-HJ-KM-NP-Z1-9]{5}-/i)) {
-                cleanText = text.trim().substring(2);
-              }
+              cleanText = cleanText.substring(2);
             }
             
             // Validate against Eloyo format
@@ -325,9 +312,6 @@ class NfcService {
 
   /**
    * Decode NDEF Text Record payload
-   * First byte: Status byte (bit 7 = encoding, bits 5-0 = language code length)
-   * Following bytes: Language code
-   * Remaining bytes: Text content
    */
   private decodeNdefTextPayload(payload: number[] | Uint8Array | string): string {
     try {
@@ -351,13 +335,11 @@ class NfcService {
       const textStartIndex = 1 + languageCodeLength;
       
       if (textStartIndex >= bytes.length) {
-        // Malformed payload, try decoding everything
         const decoder = new TextDecoder('utf-8');
         return decoder.decode(bytes);
       }
       
       const textBytes = bytes.slice(textStartIndex);
-      
       const decoder = new TextDecoder(isUtf16 ? 'utf-16be' : 'utf-8');
       return decoder.decode(textBytes);
       
@@ -481,7 +463,7 @@ class NfcService {
     try {
       const nfc = await loadNfcPlugin();
       if (nfc) {
-        await nfc.stopScanSession();
+        await nfc.stopScan();
         console.log('[NFC] Native scan session stopped');
       }
     } catch (error) {
@@ -499,30 +481,45 @@ class NfcService {
   }
 
   /**
-   * Check if currently scanning
+   * Get current scan status
    */
-  getIsScanning(): boolean {
+  isScanActive(): boolean {
     return this.isScanning;
   }
 
   /**
-   * Check if running in native app
+   * Parse chip data from scanned NFC tag
+   * Returns { boxId, color } or null if invalid
    */
-  isNativeApp(): boolean {
-    return this.isNative;
+  parseChipData(chipData: string): { boxId: string; color: string } | null {
+    if (!this.validateChipData(chipData)) {
+      return null;
+    }
+    
+    const [boxId, color] = chipData.split(':');
+    return { boxId, color };
   }
 
   /**
-   * Get platform information
+   * Check if running on native platform (Android/iOS)
    */
-  getPlatformInfo(): { isNative: boolean; platform: string } {
+  isNativeApp(): boolean {
+    return isNativePlatform();
+  }
+
+  /**
+   * Get platform information for debugging
+   */
+  getPlatformInfo(): { platform: string; isNative: boolean } {
     return {
-      isNative: this.isNative,
       platform: getPlatform(),
+      isNative: isNativePlatform()
     };
   }
 }
 
-// Singleton instance
+// Export singleton instance
 export const nfcService = new NfcService();
-export type { NfcReadResult };
+
+// Export types
+export type { NfcReadResult, NfcReadCallback };
