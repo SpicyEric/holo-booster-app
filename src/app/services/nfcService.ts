@@ -206,7 +206,7 @@ class NfcService {
       }
 
       const platform = getPlatform();
-      void platform; // reserved for potential platform-specific behavior
+      console.log('[NFC] Setting up NFC listeners on platform:', platform);
 
       // Add listener for NFC tag detection (Exxili uses 'nfcTag')
       this.nfcListenerHandle = await nfc.addListener('nfcTag', (event: any) => {
@@ -222,9 +222,14 @@ class NfcService {
         void this.stopScan();
       });
 
-      // Start scan session
-      await nfc.startScan();
-      console.log('[NFC] Native scan session started');
+      // IMPORTANT: startScan() is iOS ONLY according to @exxili/capacitor-nfc docs
+      // On Android, devices are always in reading mode once listeners are attached
+      if (platform === 'ios') {
+        await nfc.startScan();
+        console.log('[NFC] iOS scan session started');
+      } else {
+        console.log('[NFC] Android NFC listeners active - ready to scan');
+      }
 
     } catch (error: any) {
       console.error('[NFC] Native scan error:', error);
@@ -232,13 +237,16 @@ class NfcService {
       
       let errorMessage = 'NFC konnte nicht gestartet werden';
       
-      if (error.message?.includes('permission') || error.message?.includes('Permission')) {
+      // Parse error message for user-friendly feedback
+      const errMsg = error?.message?.toLowerCase() || '';
+      
+      if (errMsg.includes('permission') || errMsg.includes('denied')) {
         errorMessage = 'NFC-Berechtigung wird benötigt. Bitte aktiviere NFC in den Einstellungen.';
-      } else if (error.message?.includes('disabled') || error.message?.includes('Disabled')) {
+      } else if (errMsg.includes('disabled') || errMsg.includes('not enabled')) {
         errorMessage = 'NFC ist deaktiviert. Bitte aktiviere NFC in den Android-Einstellungen.';
-      } else if (error.message?.includes('unavailable') || error.message?.includes('Unavailable')) {
+      } else if (errMsg.includes('unavailable') || errMsg.includes('not supported')) {
         errorMessage = 'NFC ist auf diesem Gerät nicht verfügbar.';
-      } else if (error.message?.includes('canceled') || error.message?.includes('Canceled')) {
+      } else if (errMsg.includes('canceled') || errMsg.includes('cancelled')) {
         errorMessage = 'NFC-Scan wurde abgebrochen.';
       }
       
