@@ -37,6 +37,7 @@ const __dirname = path.dirname(__filename);
 
 const PROJECT_ROOT = path.join(__dirname, '..');
 const ANDROID_PATH = path.join(PROJECT_ROOT, 'android');
+const NODE_MODULES_PATH = path.join(PROJECT_ROOT, 'node_modules');
 
 // ============================================================================
 // VERSION CONSTANTS - Capacitor 5+ and AGP 8 compatible
@@ -296,6 +297,74 @@ function patchPluginBuildGradleFiles() {
   }
 }
 
+// =========================================================================
+// 5c. PATCH CAPACITOR PLUGIN GRADLE FILES IN NODE_MODULES
+// (Capacitor Android projects often reference plugins directly from
+// node_modules via settings.gradle projectDir mappings.)
+// =========================================================================
+function patchNodeModulesCapacitorPlugins() {
+  console.log('\n📦 Patching node_modules Capacitor plugin Gradle files (enforce Java/Kotlin 17)...');
+
+  const pluginAndroidDirs = [
+    path.join(NODE_MODULES_PATH, '@capacitor', 'geolocation', 'android'),
+    path.join(NODE_MODULES_PATH, '@capacitor', 'push-notifications', 'android'),
+    path.join(NODE_MODULES_PATH, '@capacitor', 'local-notifications', 'android'),
+    path.join(NODE_MODULES_PATH, '@capacitor', 'app', 'android'),
+    // NFC plugin used in this repo
+    path.join(NODE_MODULES_PATH, '@exxili', 'capacitor-nfc', 'android')
+  ];
+
+  const filesToPatch = [];
+  for (const dir of pluginAndroidDirs) {
+    if (!fs.existsSync(dir)) continue;
+    const candidates = [
+      path.join(dir, 'build.gradle'),
+      path.join(dir, 'build.gradle.kts'),
+      path.join(dir, 'capacitor.build.gradle'),
+      path.join(dir, 'capacitor.build.gradle.kts')
+    ];
+    for (const f of candidates) {
+      if (fs.existsSync(f)) filesToPatch.push(f);
+    }
+  }
+
+  if (filesToPatch.length === 0) {
+    console.log('   ✅ No node_modules plugin Gradle files found to patch');
+    return;
+  }
+
+  let patchedCount = 0;
+  for (const filePath of filesToPatch) {
+    try {
+      let content = fs.readFileSync(filePath, 'utf8');
+      const original = content;
+
+      // Enforce Java/Kotlin 17 toolchains where plugins request 21
+      content = content.replace(/VERSION_21/g, 'VERSION_17');
+      content = content.replace(/JavaLanguageVersion\.of\(21\)/g, 'JavaLanguageVersion.of(17)');
+      content = content.replace(/jvmToolchain\(21\)/g, 'jvmToolchain(17)');
+      content = content.replace(/kotlin\s*\{([\s\S]*?)jvmToolchain\(21\)([\s\S]*?)\}/g, (m) => m.replace(/jvmToolchain\(21\)/g, 'jvmToolchain(17)'));
+      content = content.replace(/jvmTarget\s*=\s*['\"]21['\"]/g, 'jvmTarget = "17"');
+      content = content.replace(/kotlinOptions\.jvmTarget\s*=\s*['\"]21['\"]/g, 'kotlinOptions.jvmTarget = "17"');
+      content = content.replace(/kotlinOptions\s*\{([\s\S]*?)jvmTarget\s*=\s*['\"]21['\"]([\s\S]*?)\}/g, (m) => m.replace(/['\"]21['\"]/g, '"17"'));
+
+      if (content !== original) {
+        fs.writeFileSync(filePath, content, 'utf8');
+        patchedCount++;
+        console.log(`   ✅ Patched: ${filePath.replace(PROJECT_ROOT, '.')}`);
+      }
+    } catch (e) {
+      console.log(`   ⚠️ Could not patch: ${filePath}`);
+    }
+  }
+
+  if (patchedCount > 0) {
+    console.log(`   ✅ Patched ${patchedCount} node_modules plugin Gradle file(s) to Java/Kotlin 17`);
+  } else {
+    console.log('   ✅ node_modules plugin Gradle files already compatible');
+  }
+}
+
 // ============================================================================
 // 6. CREATE NFC TECH FILTER
 // ============================================================================
@@ -465,6 +534,9 @@ function main() {
 
     // Step 4b: Patch plugin build.gradle files (e.g. capacitor-geolocation)
     patchPluginBuildGradleFiles();
+
+    // Step 4c: Patch plugin Gradle files in node_modules (where Capacitor often points projectDir)
+    patchNodeModulesCapacitorPlugins();
     
     // Step 5: Configure NFC
     createNfcTechFilter();
