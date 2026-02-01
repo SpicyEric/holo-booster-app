@@ -355,7 +355,9 @@ function patchNodeModulesCapacitorPlugins() {
   // Patch only known Capacitor-related packages to keep this fast and safe.
   const roots = [
     path.join(NODE_MODULES_PATH, '@capacitor'),
-    path.join(NODE_MODULES_PATH, '@exxili')
+    path.join(NODE_MODULES_PATH, '@exxili'),
+    // Third-party Capacitor plugin (direct dependency)
+    path.join(NODE_MODULES_PATH, 'capacitor-native-settings')
   ];
 
   const filesToPatch = [];
