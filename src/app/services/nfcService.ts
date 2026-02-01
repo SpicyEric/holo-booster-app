@@ -57,6 +57,23 @@ const loadNfcPlugin = async (): Promise<ExxiliNfcPlugin | null> => {
   const platform = getPlatform();
   if (platform !== 'android' && platform !== 'ios') return null;
 
+  // Avoid triggering "plugin is not implemented" promise rejections when the
+  // native build has not registered the plugin (e.g. missing MainActivity registration).
+  // This also prevents unhandled rejections during app startup.
+  try {
+    const isAvailableFn = (Capacitor as any).isPluginAvailable as undefined | ((name: string) => boolean);
+    if (typeof isAvailableFn === 'function' && !isAvailableFn('NFC')) {
+      const available = Object.keys((Capacitor as any).Plugins ?? {});
+      console.log(
+        '[NFC] Plugin not available in native runtime. Available plugins:',
+        available.length ? available.join(', ') : '(none)'
+      );
+      return null;
+    }
+  } catch {
+    // ignore
+  }
+
   try {
     NfcPluginInstance = registerPlugin<ExxiliNfcPlugin>('NFC');
     console.log('[NFC] Capacitor NFC plugin proxy registered');

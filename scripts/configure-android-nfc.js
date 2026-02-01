@@ -557,6 +557,104 @@ function configureAndroidManifest() {
 }
 
 // ============================================================================
+// 8. REGISTER EXXILI NFC PLUGIN IN MAINACTIVITY (Android)
+// ============================================================================
+// The @exxili/capacitor-nfc plugin sometimes does not get auto-registered in
+// certain Capacitor/Gradle setups, causing runtime errors:
+//   Error: "NFC" plugin is not implemented on android
+// The plugin itself includes an example MainActivity that calls:
+//   registerPlugin(NFCPlugin::class.java)
+// We patch the app's MainActivity to include this registration.
+function patchMainActivityRegisterNfcPlugin() {
+  console.log('\n📦 Ensuring NFC plugin is registered in MainActivity...');
+
+  const javaRoot = path.join(ANDROID_PATH, 'app', 'src', 'main', 'java');
+  if (!fs.existsSync(javaRoot)) {
+    console.log('   ⚠️ MainActivity source folder not found (run npx cap sync android first)');
+    return;
+  }
+
+  /** Find MainActivity.java / MainActivity.kt */
+  const mainActivityFiles = [];
+  const walk = (dir) => {
+    const entries = fs.readdirSync(dir, { withFileTypes: true });
+    for (const entry of entries) {
+      const full = path.join(dir, entry.name);
+      if (entry.isDirectory()) {
+        walk(full);
+        continue;
+      }
+      if (entry.isFile() && (entry.name === 'MainActivity.java' || entry.name === 'MainActivity.kt')) {
+        mainActivityFiles.push(full);
+      }
+    }
+  };
+
+  walk(javaRoot);
+
+  if (mainActivityFiles.length === 0) {
+    console.log('   ⚠️ MainActivity.java/kt not found under android/app/src/main/java');
+    return;
+  }
+
+  const mainActivityPath = mainActivityFiles[0];
+  let content = fs.readFileSync(mainActivityPath, 'utf8');
+  const original = content;
+
+  const alreadyRegistered =
+    content.includes('com.exxili.capacitornfc.NFCPlugin') &&
+    content.includes('registerPlugin');
+
+  if (alreadyRegistered) {
+    console.log('   ✅ NFC plugin already registered in MainActivity');
+    return;
+  }
+
+  const isKotlin = mainActivityPath.endsWith('.kt');
+
+  if (isKotlin) {
+    // If onCreate exists, inject registerPlugin after super.onCreate
+    if (/override\s+fun\s+onCreate\s*\(/.test(content)) {
+      if (!content.includes('registerPlugin(com.exxili.capacitornfc.NFCPlugin::class.java)')) {
+        content = content.replace(
+          /super\.onCreate\(savedInstanceState\)\s*/,
+          (m) => `${m}\n        registerPlugin(com.exxili.capacitornfc.NFCPlugin::class.java)\n`
+        );
+      }
+    } else {
+      // Insert full onCreate override before the class closing brace
+      content = content.replace(
+        /\}\s*$/,
+        `\n\n    override fun onCreate(savedInstanceState: android.os.Bundle?) {\n        super.onCreate(savedInstanceState)\n        registerPlugin(com.exxili.capacitornfc.NFCPlugin::class.java)\n    }\n}\n`
+      );
+    }
+  } else {
+    // Java
+    if (/void\s+onCreate\s*\(/.test(content)) {
+      if (!content.includes('registerPlugin(com.exxili.capacitornfc.NFCPlugin.class)')) {
+        content = content.replace(
+          /super\.onCreate\(savedInstanceState\);\s*/,
+          (m) => `${m}\n        registerPlugin(com.exxili.capacitornfc.NFCPlugin.class);\n`
+        );
+      }
+    } else {
+      // Insert full onCreate override before the class closing brace
+      content = content.replace(
+        /\}\s*$/,
+        `\n\n    @Override\n    public void onCreate(android.os.Bundle savedInstanceState) {\n        super.onCreate(savedInstanceState);\n        registerPlugin(com.exxili.capacitornfc.NFCPlugin.class);\n    }\n}\n`
+      );
+    }
+  }
+
+  if (content !== original) {
+    fs.writeFileSync(mainActivityPath, content, 'utf8');
+    console.log(`   ✅ Patched MainActivity to register NFC plugin: ${mainActivityPath.replace(PROJECT_ROOT, '.')}`);
+  } else {
+    console.log('   ✅ MainActivity already compatible');
+  }
+}
+
+// ============================================================================
 // MAIN EXECUTION
 // ============================================================================
 function main() {
@@ -588,6 +686,9 @@ function main() {
     // Step 5: Configure NFC
     createNfcTechFilter();
     configureAndroidManifest();
+
+    // Step 6: Ensure NFC plugin is registered in MainActivity
+    patchMainActivityRegisterNfcPlugin();
     
     console.log('\n' + '━'.repeat(60));
     console.log('  ✅ Android NFC configuration complete!');
