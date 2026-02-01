@@ -54,6 +54,8 @@ function enforceJava17(content) {
   // Kotlin targets
   out = out.replace(/kotlinOptions\.jvmTarget\s*=\s*['\"]21['\"]/g, 'kotlinOptions.jvmTarget = "17"');
   out = out.replace(/\bjvmTarget\s*=\s*['\"]21['\"]/g, 'jvmTarget = "17"');
+  // Kotlin DSL enum form
+  out = out.replace(/\bJVM_21\b/g, 'JVM_17');
 
   // Java compile options (Groovy and Kotlin DSL)
   out = out.replace(/\bsourceCompatibility\s*=\s*21\b/g, 'sourceCompatibility = 17');
@@ -63,7 +65,27 @@ function enforceJava17(content) {
 
   // Sometimes plugins set release explicitly
   out = out.replace(/options\.release\s*=\s*21\b/g, 'options.release = 17');
+  out = out.replace(/options\.release\.set\(\s*21\s*\)/g, 'options.release.set(17)');
+  out = out.replace(/\brelease\.set\(\s*21\s*\)/g, 'release.set(17)');
   out = out.replace(/--release\s+21\b/g, '--release 17');
+
+  // Common Gradle compilerArgs patterns (Groovy/Kotlin DSL)
+  // e.g. options.compilerArgs += ["--release", "21"]
+  out = out.replace(
+    /(['\"])--release\1\s*,\s*(['\"])21\2/g,
+    (_m, q1, q2) => `${q1}--release${q1}, ${q2}17${q2}`
+  );
+  // e.g. "--release",21
+  out = out.replace(/(['\"])--release\1\s*,\s*21\b/g, '$1--release$1, 17');
+  // e.g. listOf("--release", "21") (handles minor formatting variants)
+  out = out.replace(
+    /(['\"])--release\1\s*[,)]\s*(['\"])21\2/g,
+    (_m, q1, q2) => `${q1}--release${q1}, ${q2}17${q2}`
+  );
+
+  // Fallback for -source/-target flags if they appear in compiler args
+  out = out.replace(/-source\s+21\b/g, '-source 17');
+  out = out.replace(/-target\s+21\b/g, '-target 17');
 
   return out;
 }
