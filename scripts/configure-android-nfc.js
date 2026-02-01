@@ -274,47 +274,9 @@ function patchAppBuildGradle() {
     modified = true;
   }
 
-  // Ensure the Exxili NFC Android module is on the app compile classpath.
-  // Without this dependency, manual registration in MainActivity will not compile
-  // and Capacitor may not load the plugin at runtime.
-  const exxiliDepGroovy = "implementation project(':exxili-capacitor-nfc')";
-  const exxiliDepKotlin = 'implementation(project(":exxili-capacitor-nfc"))';
-
-  const hasExxiliDep =
-    content.includes("project(':exxili-capacitor-nfc')") ||
-    content.includes('project(\":exxili-capacitor-nfc\")');
-
-  if (!hasExxiliDep) {
-    // Prefer inserting right after capacitor-android dependency if present
-    const capacitorAndroidGroovy = "implementation project(':capacitor-android')";
-    const capacitorAndroidKotlin = 'implementation(project(":capacitor-android"))';
-
-    if (content.includes(capacitorAndroidGroovy)) {
-      content = content.replace(
-        capacitorAndroidGroovy,
-        `${capacitorAndroidGroovy}\n    ${exxiliDepGroovy}`
-      );
-      console.log('   ✅ Added Exxili NFC Gradle dependency to app/build.gradle');
-      modified = true;
-    } else if (content.includes(capacitorAndroidKotlin)) {
-      content = content.replace(
-        capacitorAndroidKotlin,
-        `${capacitorAndroidKotlin}\n    ${exxiliDepKotlin}`
-      );
-      console.log('   ✅ Added Exxili NFC Gradle dependency to app/build.gradle');
-      modified = true;
-    } else if (/\bdependencies\s*\{/.test(content)) {
-      // Fallback: first dependencies block
-      content = content.replace(
-        /\bdependencies\s*\{/, 
-        (m) => `${m}\n    ${exxiliDepGroovy}`
-      );
-      console.log('   ✅ Added Exxili NFC Gradle dependency to app/build.gradle');
-      modified = true;
-    } else {
-      console.log('   ⚠️ Could not find dependencies block to add Exxili NFC module dependency');
-    }
-  }
+  // NOTE: Capawesome NFC plugin auto-registers via Capacitor's plugin autoloading.
+  // No manual dependency injection is needed for @capawesome-team/capacitor-nfc.
+  // This section has been simplified compared to the old @exxili plugin setup.
   
   if (modified) {
     fs.writeFileSync(appBuildPath, content, 'utf8');
@@ -608,131 +570,11 @@ function configureAndroidManifest() {
 //   registerPlugin(NFCPlugin::class.java)
 // We patch the app's MainActivity to include this registration.
 function patchMainActivityRegisterNfcPlugin() {
-  console.log('\n📦 Ensuring NFC plugin is registered in MainActivity...');
-
-  const javaRoot = path.join(ANDROID_PATH, 'app', 'src', 'main', 'java');
-  if (!fs.existsSync(javaRoot)) {
-    console.log('   ⚠️ MainActivity source folder not found (run npx cap sync android first)');
-    return;
-  }
-
-  /** Find MainActivity.java / MainActivity.kt */
-  const mainActivityFiles = [];
-  const walk = (dir) => {
-    const entries = fs.readdirSync(dir, { withFileTypes: true });
-    for (const entry of entries) {
-      const full = path.join(dir, entry.name);
-      if (entry.isDirectory()) {
-        walk(full);
-        continue;
-      }
-      if (entry.isFile() && (entry.name === 'MainActivity.java' || entry.name === 'MainActivity.kt')) {
-        mainActivityFiles.push(full);
-      }
-    }
-  };
-
-  walk(javaRoot);
-
-  if (mainActivityFiles.length === 0) {
-    console.log('   ⚠️ MainActivity.java/kt not found under android/app/src/main/java');
-    return;
-  }
-
-  const mainActivityPath = mainActivityFiles[0];
-  let content = fs.readFileSync(mainActivityPath, 'utf8');
-  const original = content;
-
-  const alreadyRegistered =
-    (content.includes('registerPlugin(com.exxili.capacitornfc.NFCPlugin') ||
-      content.includes('registerPlugin(NFCPlugin') ||
-      content.includes('registerPlugin(com.exxili.capacitornfc.NFCPlugin::class.java)') ||
-      content.includes('registerPlugin(NFCPlugin::class.java)'));
-
-  if (alreadyRegistered) {
-    console.log('   ✅ NFC plugin already registered in MainActivity');
-    return;
-  }
-
-  const isKotlin = mainActivityPath.endsWith('.kt');
-
-  if (isKotlin) {
-    // Ensure import exists
-    if (!content.includes('import com.exxili.capacitornfc.NFCPlugin')) {
-      content = content.replace(
-        /import\s+com\.getcapacitor\.[^\n]+\n/, 
-        (m) => `${m}import com.exxili.capacitornfc.NFCPlugin\n`
-      );
-    }
-
-    // Normalize any previously inserted fully-qualified registration
-    content = content.replace(
-      /registerPlugin\(com\.exxili\.capacitornfc\.NFCPlugin::class\.java\)/g,
-      'registerPlugin(NFCPlugin::class.java)'
-    );
-
-    // If onCreate exists, inject registerPlugin after super.onCreate
-    if (/override\s+fun\s+onCreate\s*\(/.test(content)) {
-      if (!content.includes('registerPlugin(NFCPlugin::class.java)')) {
-        content = content.replace(
-          /super\.onCreate\(savedInstanceState\)\s*/,
-          (m) => `${m}\n        registerPlugin(NFCPlugin::class.java)\n`
-        );
-      }
-    } else {
-      // Insert full onCreate override before the class closing brace
-      content = content.replace(
-        /\}\s*$/,
-        `\n\n    override fun onCreate(savedInstanceState: android.os.Bundle?) {\n        super.onCreate(savedInstanceState)\n        registerPlugin(NFCPlugin::class.java)\n    }\n}\n`
-      );
-    }
-  } else {
-    // Java
-    // Ensure import exists
-    if (!content.includes('import com.exxili.capacitornfc.NFCPlugin;')) {
-      // Insert after BridgeActivity import if possible
-      if (content.includes('import com.getcapacitor.BridgeActivity;')) {
-        content = content.replace(
-          'import com.getcapacitor.BridgeActivity;\n',
-          'import com.getcapacitor.BridgeActivity;\nimport com.exxili.capacitornfc.NFCPlugin;\n'
-        );
-      } else {
-        // Fallback: insert after package declaration
-        content = content.replace(
-          /^(package\s+[^;]+;\s*\n)/,
-          `$1\nimport com.exxili.capacitornfc.NFCPlugin;\n`
-        );
-      }
-    }
-
-    // Normalize any previously inserted fully-qualified registration
-    content = content.replace(
-      /registerPlugin\(com\.exxili\.capacitornfc\.NFCPlugin\.class\);/g,
-      'registerPlugin(NFCPlugin.class);'
-    );
-
-    if (/void\s+onCreate\s*\(/.test(content)) {
-      if (!content.includes('registerPlugin(NFCPlugin.class);')) {
-        content = content.replace(
-          /super\.onCreate\(savedInstanceState\);\s*/,
-          (m) => `${m}\n        registerPlugin(NFCPlugin.class);\n`
-        );
-      }
-    } else {
-      // Insert full onCreate override before the class closing brace
-      content = content.replace(
-        /\}\s*$/,
-        `\n\n    @Override\n    public void onCreate(android.os.Bundle savedInstanceState) {\n        super.onCreate(savedInstanceState);\n        registerPlugin(NFCPlugin.class);\n    }\n}\n`
-      );
-    }
-  }
-
-  if (content !== original) {
-    fs.writeFileSync(mainActivityPath, content, 'utf8');
-    console.log(`   ✅ Patched MainActivity to register NFC plugin: ${mainActivityPath.replace(PROJECT_ROOT, '.')}`);
-  } else {
-    console.log('   ✅ MainActivity already compatible');
-  }
+  // NOTE: The @capawesome-team/capacitor-nfc plugin auto-registers via Capacitor's
+  // standard plugin loading mechanism. No manual MainActivity patching is required.
+  // This function is kept as a no-op for backward compatibility with the build process.
+  console.log('\n📦 Checking NFC plugin registration...');
+  console.log('   ✅ Capawesome NFC plugin auto-registers (no manual patching needed)');
 }
 
 // ============================================================================
