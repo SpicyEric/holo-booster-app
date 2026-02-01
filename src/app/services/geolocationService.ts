@@ -29,7 +29,7 @@ async function getGeolocationPlugin() {
 
 /**
  * Open app settings so user can enable location permission
- * Works on Android and iOS native apps
+ * Uses capacitor-native-settings for reliable settings navigation
  */
 export async function openAppSettings(): Promise<void> {
   const isNative = Capacitor.isNativePlatform();
@@ -40,20 +40,23 @@ export async function openAppSettings(): Promise<void> {
   }
   
   try {
-    // On Android, this opens the app's settings page
-    // On iOS, this opens Settings app to the app's settings
+    // Use capacitor-native-settings for reliable settings navigation
+    const { NativeSettings, AndroidSettings, IOSSettings } = await import('capacitor-native-settings');
+    
     if (Capacitor.getPlatform() === 'android') {
-      // Use Android Intent to open app settings
-      const { App: AndroidApp } = await import('@capacitor/app');
-      // Unfortunately Capacitor App doesn't have openSettings, 
-      // so we use a workaround with NFC settings which opens system settings
-      // For location, we'll show instructions to user
-      console.log('Opening Android settings...');
-      // Android doesn't have a direct API to open app settings from Capacitor
-      // The user will need to navigate manually, or we can use a custom plugin
+      // Open the app's detail settings page where user can enable location
+      await NativeSettings.open({
+        optionAndroid: AndroidSettings.ApplicationDetails,
+        optionIOS: IOSSettings.App,
+      });
+      console.log('Opened Android app settings via NativeSettings');
     } else if (Capacitor.getPlatform() === 'ios') {
-      // iOS: Can open Settings app, but not directly to app settings
-      console.log('iOS: User needs to open Settings manually');
+      // Open iOS app settings
+      await NativeSettings.open({
+        optionAndroid: AndroidSettings.ApplicationDetails,
+        optionIOS: IOSSettings.App,
+      });
+      console.log('Opened iOS app settings via NativeSettings');
     }
   } catch (error) {
     console.error('Error opening app settings:', error);

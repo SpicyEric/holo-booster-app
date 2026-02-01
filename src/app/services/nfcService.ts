@@ -107,6 +107,7 @@ class NfcService {
 
   /**
    * Open device NFC settings (Android only)
+   * Uses capacitor-native-settings for reliable settings navigation
    */
   async openSettings(): Promise<void> {
     const platform = getPlatform();
@@ -117,12 +118,25 @@ class NfcService {
     }
     
     try {
-      const nfc = await loadNfcPlugin();
-      if (nfc) {
-        await nfc.openSettings();
-      }
+      // Use capacitor-native-settings for reliable settings navigation
+      const { NativeSettings, AndroidSettings, IOSSettings } = await import('capacitor-native-settings');
+      await NativeSettings.open({
+        optionAndroid: AndroidSettings.NfcSettings,
+        optionIOS: IOSSettings.App, // iOS doesn't have NFC settings, use App settings as fallback
+      });
+      console.log('[NFC] Opened NFC settings via NativeSettings');
     } catch (error) {
-      console.log('[NFC] Could not open settings:', error);
+      console.log('[NFC] Could not open NFC settings:', error);
+      
+      // Fallback: Try plugin's built-in openSettings
+      try {
+        const nfc = await loadNfcPlugin();
+        if (nfc) {
+          await nfc.openSettings();
+        }
+      } catch (fallbackError) {
+        console.log('[NFC] Fallback openSettings also failed:', fallbackError);
+      }
     }
   }
 
