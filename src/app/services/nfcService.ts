@@ -3,7 +3,7 @@
 // Uses @exxili/capacitor-nfc (Free Community Plugin) for native Android/iOS NFC
 // Format on NFC chip: "XXXXX-XXXXX-XXXXX:grün" (Box-ID:StampColor)
 
-import { Capacitor } from '@capacitor/core';
+import { Capacitor, registerPlugin } from '@capacitor/core';
 
 interface NfcReadResult {
   chipData: string;
@@ -12,24 +12,6 @@ interface NfcReadResult {
 }
 
 type NfcReadCallback = (result: NfcReadResult) => void;
-
-// Dynamic import for NFC plugin (only available on native)
-let NfcPluginInstance: any = null;
-
-const loadNfcPlugin = async (): Promise<any> => {
-  if (NfcPluginInstance) return NfcPluginInstance;
-  
-  try {
-    // Use @exxili/capacitor-nfc - free community plugin
-    const module = await import('@exxili/capacitor-nfc');
-    NfcPluginInstance = module.NFC;
-    console.log('[NFC] Exxili Community Plugin loaded successfully');
-    return NfcPluginInstance;
-  } catch (error) {
-    console.log('[NFC] Plugin not available, will use Web NFC fallback:', error);
-    return null;
-  }
-};
 
 // Check if running in Capacitor native context
 const isNativePlatform = (): boolean => {
@@ -45,6 +27,43 @@ const getPlatform = (): string => {
     return Capacitor.getPlatform() || 'web';
   } catch {
     return 'web';
+  }
+};
+
+type ExxiliNfcPlugin = {
+  isSupported: () => Promise<any>;
+  startScan: () => Promise<void>;
+  cancelScan?: () => Promise<void>;
+  stopScan?: () => Promise<void>;
+  addListener: (
+    eventName: string,
+    listenerFunc: (data: any) => void
+  ) => Promise<{ remove: () => Promise<void> | void }>;
+  removeAllListeners?: (eventName?: string) => Promise<void>;
+  // Some builds expose this, but it's not guaranteed
+  isEnabled?: () => Promise<any>;
+};
+
+// IMPORTANT:
+// Do NOT import { NFC } from '@exxili/capacitor-nfc' here.
+// That package runs a top-level addListener() on import, which can create
+// an unhandled rejection during app startup. We register a Capacitor proxy
+// directly instead.
+let NfcPluginInstance: ExxiliNfcPlugin | null = null;
+
+const loadNfcPlugin = async (): Promise<ExxiliNfcPlugin | null> => {
+  if (NfcPluginInstance) return NfcPluginInstance;
+
+  const platform = getPlatform();
+  if (platform !== 'android' && platform !== 'ios') return null;
+
+  try {
+    NfcPluginInstance = registerPlugin<ExxiliNfcPlugin>('NFC');
+    console.log('[NFC] Capacitor NFC plugin proxy registered');
+    return NfcPluginInstance;
+  } catch (error) {
+    console.log('[NFC] Could not register NFC plugin proxy:', error);
+    return null;
   }
 };
 
@@ -86,8 +105,12 @@ class NfcService {
         }
       } catch (error) {
         console.log('[NFC] isSupported check failed:', error);
+        // If the plugin is missing in the native build, do not pretend NFC works.
+        const msg = String((error as any)?.message || error);
+        if (msg.toLowerCase().includes('not implemented')) return false;
       }
-      return true; // Assume supported on native if plugin loads
+      // If we are native but cannot load the plugin, NFC scan won't work.
+      return false;
     } else {
       // Web browser: Check for Web NFC API
       return 'NDEFReader' in window;
@@ -101,22 +124,10 @@ class NfcService {
     const platform = getPlatform();
     
     if (platform === 'android') {
-      try {
-        const nfc = await loadNfcPlugin();
-        if (nfc) {
-          // @exxili/capacitor-nfc does not officially expose isEnabled().
-          // If present (some builds expose it), use it. Otherwise return true
-          // and let startScan() / nfcError handle the real state.
-          if (typeof nfc.isEnabled === 'function') {
-            const result = await nfc.isEnabled();
-            console.log('[NFC] isEnabled result:', result);
-            const enabled = this.pickBoolean(result, ['enabled', 'isEnabled']);
-            if (enabled !== undefined) return enabled;
-          }
-        }
-      } catch (error) {
-        console.log('[NFC] isEnabled check failed:', error);
-      }
+      // @exxili/capacitor-nfc does not provide a reliable API to check
+      // whether NFC is currently enabled on Android.
+      // We treat it as enabled and rely on tag events (or the user) instead.
+      return true;
     }
     
     // iOS always returns true (NFC cannot be disabled system-wide)
@@ -332,12 +343,31 @@ class NfcService {
    */
   private decodeNdefTextPayload(payload: number[] | Uint8Array | string): string {
     try {
-      // Handle string payload (already decoded)
+      let bytes: Uint8Array;
+
       if (typeof payload === 'string') {
-        return payload;
+        // Android plugin sends Base64 for record.payload. Detect and decode.
+        const looksLikeBase64 =
+          payload.length % 4 === 0 &&
+          /^[A-Za-z0-9+/]+=*$/.test(payload) &&
+          !payload.includes('-') &&
+          !payload.includes(':');
+
+        if (!looksLikeBase64) return payload;
+
+        const atobFn = (globalThis as any).atob as undefined | ((s: string) => string);
+        if (!atobFn) return payload;
+
+        try {
+          const bin = atobFn(payload);
+          bytes = new Uint8Array(bin.length);
+          for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+        } catch {
+          return payload;
+        }
+      } else {
+        bytes = payload instanceof Uint8Array ? payload : new Uint8Array(payload);
       }
-      
-      const bytes = payload instanceof Uint8Array ? payload : new Uint8Array(payload);
       
       if (bytes.length === 0) {
         return '';
