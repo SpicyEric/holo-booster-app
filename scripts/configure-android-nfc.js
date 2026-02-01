@@ -39,6 +39,35 @@ const PROJECT_ROOT = path.join(__dirname, '..');
 const ANDROID_PATH = path.join(PROJECT_ROOT, 'android');
 const NODE_MODULES_PATH = path.join(PROJECT_ROOT, 'node_modules');
 
+// =========================================================================
+// COMMON PATCH HELPERS
+// =========================================================================
+function enforceJava17(content) {
+  let out = content;
+
+  // Most common constants / toolchains
+  out = out.replace(/VERSION_21/g, 'VERSION_17');
+  out = out.replace(/JavaLanguageVersion\.of\(\s*21\s*\)/g, 'JavaLanguageVersion.of(17)');
+  out = out.replace(/JavaVersion\.toVersion\(\s*21\s*\)/g, 'JavaVersion.toVersion(17)');
+  out = out.replace(/jvmToolchain\(\s*21\s*\)/g, 'jvmToolchain(17)');
+
+  // Kotlin targets
+  out = out.replace(/kotlinOptions\.jvmTarget\s*=\s*['\"]21['\"]/g, 'kotlinOptions.jvmTarget = "17"');
+  out = out.replace(/\bjvmTarget\s*=\s*['\"]21['\"]/g, 'jvmTarget = "17"');
+
+  // Java compile options (Groovy and Kotlin DSL)
+  out = out.replace(/\bsourceCompatibility\s*=\s*21\b/g, 'sourceCompatibility = 17');
+  out = out.replace(/\btargetCompatibility\s*=\s*21\b/g, 'targetCompatibility = 17');
+  out = out.replace(/\bsourceCompatibility\s+21\b/g, 'sourceCompatibility 17');
+  out = out.replace(/\btargetCompatibility\s+21\b/g, 'targetCompatibility 17');
+
+  // Sometimes plugins set release explicitly
+  out = out.replace(/options\.release\s*=\s*21\b/g, 'options.release = 17');
+  out = out.replace(/--release\s+21\b/g, '--release 17');
+
+  return out;
+}
+
 // ============================================================================
 // VERSION CONSTANTS - Capacitor 5+ and AGP 8 compatible
 // ============================================================================
@@ -274,12 +303,8 @@ function patchPluginBuildGradleFiles() {
       let content = fs.readFileSync(filePath, 'utf8');
       const original = content;
 
-      // Enforce Java 17 across plugins and tasks
-      content = content.replace(/VERSION_21/g, 'VERSION_17');
-      content = content.replace(/JavaLanguageVersion\.of\(21\)/g, 'JavaLanguageVersion.of(17)');
-      content = content.replace(/jvmToolchain\(21\)/g, 'jvmToolchain(17)');
-      content = content.replace(/jvmTarget\s*=\s*['\"]21['\"]/g, 'jvmTarget = "17"');
-      content = content.replace(/kotlinOptions\.jvmTarget\s*=\s*['\"]21['\"]/g, 'kotlinOptions.jvmTarget = "17"');
+      // Enforce Java/Kotlin 17 across plugins and tasks
+      content = enforceJava17(content);
 
       if (content !== original) {
         fs.writeFileSync(filePath, content, 'utf8');
@@ -305,28 +330,33 @@ function patchPluginBuildGradleFiles() {
 function patchNodeModulesCapacitorPlugins() {
   console.log('\n📦 Patching node_modules Capacitor plugin Gradle files (enforce Java/Kotlin 17)...');
 
-  const pluginAndroidDirs = [
-    path.join(NODE_MODULES_PATH, '@capacitor', 'geolocation', 'android'),
-    path.join(NODE_MODULES_PATH, '@capacitor', 'push-notifications', 'android'),
-    path.join(NODE_MODULES_PATH, '@capacitor', 'local-notifications', 'android'),
-    path.join(NODE_MODULES_PATH, '@capacitor', 'app', 'android'),
-    // NFC plugin used in this repo
-    path.join(NODE_MODULES_PATH, '@exxili', 'capacitor-nfc', 'android')
+  // Patch only known Capacitor-related packages to keep this fast and safe.
+  const roots = [
+    path.join(NODE_MODULES_PATH, '@capacitor'),
+    path.join(NODE_MODULES_PATH, '@exxili')
   ];
 
   const filesToPatch = [];
-  for (const dir of pluginAndroidDirs) {
-    if (!fs.existsSync(dir)) continue;
-    const candidates = [
-      path.join(dir, 'build.gradle'),
-      path.join(dir, 'build.gradle.kts'),
-      path.join(dir, 'capacitor.build.gradle'),
-      path.join(dir, 'capacitor.build.gradle.kts')
-    ];
-    for (const f of candidates) {
-      if (fs.existsSync(f)) filesToPatch.push(f);
+  const walk = (dir) => {
+    if (!fs.existsSync(dir)) return;
+    const entries = fs.readdirSync(dir, { withFileTypes: true });
+    for (const entry of entries) {
+      const full = path.join(dir, entry.name);
+      if (entry.isDirectory()) {
+        if (entry.name === 'node_modules' || entry.name === 'build' || entry.name === '.gradle') continue;
+        walk(full);
+        continue;
+      }
+      if (entry.isFile() && (entry.name === 'build.gradle' || entry.name === 'build.gradle.kts')) {
+        // Focus on Android-related gradle files
+        const normalized = full.replace(/\\/g, '/');
+        if (!normalized.includes('/android/')) continue;
+        filesToPatch.push(full);
+      }
     }
-  }
+  };
+
+  for (const root of roots) walk(root);
 
   if (filesToPatch.length === 0) {
     console.log('   ✅ No node_modules plugin Gradle files found to patch');
@@ -339,14 +369,7 @@ function patchNodeModulesCapacitorPlugins() {
       let content = fs.readFileSync(filePath, 'utf8');
       const original = content;
 
-      // Enforce Java/Kotlin 17 toolchains where plugins request 21
-      content = content.replace(/VERSION_21/g, 'VERSION_17');
-      content = content.replace(/JavaLanguageVersion\.of\(21\)/g, 'JavaLanguageVersion.of(17)');
-      content = content.replace(/jvmToolchain\(21\)/g, 'jvmToolchain(17)');
-      content = content.replace(/kotlin\s*\{([\s\S]*?)jvmToolchain\(21\)([\s\S]*?)\}/g, (m) => m.replace(/jvmToolchain\(21\)/g, 'jvmToolchain(17)'));
-      content = content.replace(/jvmTarget\s*=\s*['\"]21['\"]/g, 'jvmTarget = "17"');
-      content = content.replace(/kotlinOptions\.jvmTarget\s*=\s*['\"]21['\"]/g, 'kotlinOptions.jvmTarget = "17"');
-      content = content.replace(/kotlinOptions\s*\{([\s\S]*?)jvmTarget\s*=\s*['\"]21['\"]([\s\S]*?)\}/g, (m) => m.replace(/['\"]21['\"]/g, '"17"'));
+      content = enforceJava17(content);
 
       if (content !== original) {
         fs.writeFileSync(filePath, content, 'utf8');
