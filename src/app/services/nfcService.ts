@@ -1,9 +1,9 @@
 // NFC Service for Eloyo App
 // 
-// Uses @exxili/capacitor-nfc (Free Community Plugin) for native Android/iOS NFC
+// Uses @capawesome-team/capacitor-nfc (Premium Plugin) for native Android/iOS NFC
 // Format on NFC chip: "XXXXX-XXXXX-XXXXX:grün" (Box-ID:StampColor)
 
-import { Capacitor, registerPlugin } from '@capacitor/core';
+import { Capacitor } from '@capacitor/core';
 
 interface NfcReadResult {
   chipData: string;
@@ -30,56 +30,22 @@ const getPlatform = (): string => {
   }
 };
 
-type ExxiliNfcPlugin = {
-  isSupported: () => Promise<any>;
-  startScan: () => Promise<void>;
-  cancelScan?: () => Promise<void>;
-  stopScan?: () => Promise<void>;
-  addListener: (
-    eventName: string,
-    listenerFunc: (data: any) => void
-  ) => Promise<{ remove: () => Promise<void> | void }>;
-  removeAllListeners?: (eventName?: string) => Promise<void>;
-  // Some builds expose this, but it's not guaranteed
-  isEnabled?: () => Promise<any>;
-};
+// Lazy load the Capawesome NFC plugin
+let CapawesomeNfc: any = null;
 
-// IMPORTANT:
-// Do NOT import { NFC } from '@exxili/capacitor-nfc' here.
-// That package runs a top-level addListener() on import, which can create
-// an unhandled rejection during app startup. We register a Capacitor proxy
-// directly instead.
-let NfcPluginInstance: ExxiliNfcPlugin | null = null;
-
-const loadNfcPlugin = async (): Promise<ExxiliNfcPlugin | null> => {
-  if (NfcPluginInstance) return NfcPluginInstance;
-
+const loadCapawesomeNfc = async () => {
+  if (CapawesomeNfc) return CapawesomeNfc;
+  
   const platform = getPlatform();
   if (platform !== 'android' && platform !== 'ios') return null;
-
-  // Avoid triggering "plugin is not implemented" promise rejections when the
-  // native build has not registered the plugin (e.g. missing MainActivity registration).
-  // This also prevents unhandled rejections during app startup.
+  
   try {
-    const isAvailableFn = (Capacitor as any).isPluginAvailable as undefined | ((name: string) => boolean);
-    if (typeof isAvailableFn === 'function' && !isAvailableFn('NFC')) {
-      const available = Object.keys((Capacitor as any).Plugins ?? {});
-      console.log(
-        '[NFC] Plugin not available in native runtime. Available plugins:',
-        available.length ? available.join(', ') : '(none)'
-      );
-      return null;
-    }
-  } catch {
-    // ignore
-  }
-
-  try {
-    NfcPluginInstance = registerPlugin<ExxiliNfcPlugin>('NFC');
-    console.log('[NFC] Capacitor NFC plugin proxy registered');
-    return NfcPluginInstance;
+    const module = await import('@capawesome-team/capacitor-nfc');
+    CapawesomeNfc = module.Nfc;
+    console.log('[NFC] Capawesome NFC plugin loaded');
+    return CapawesomeNfc;
   } catch (error) {
-    console.log('[NFC] Could not register NFC plugin proxy:', error);
+    console.log('[NFC] Could not load Capawesome NFC plugin:', error);
     return null;
   }
 };
@@ -91,17 +57,6 @@ class NfcService {
   private currentCallback: NfcReadCallback | null = null;
   private abortController: AbortController | null = null;
   private nfcListenerHandle: any = null;
-  private nfcErrorListenerHandle: any = null;
-
-  private pickBoolean(result: any, keys: string[]): boolean | undefined {
-    if (typeof result === 'boolean') return result;
-    if (result && typeof result === 'object') {
-      for (const k of keys) {
-        if (typeof result[k] === 'boolean') return result[k];
-      }
-    }
-    return undefined;
-  }
 
   /**
    * Check if NFC hardware is supported on this device
@@ -111,22 +66,15 @@ class NfcService {
     
     if (platform === 'android' || platform === 'ios') {
       try {
-        const nfc = await loadNfcPlugin();
+        const nfc = await loadCapawesomeNfc();
         if (nfc) {
-          const result = await nfc.isSupported();
-          console.log('[NFC] isSupported result:', result);
-          const supported = this.pickBoolean(result, ['supported', 'isSupported']);
-          if (supported !== undefined) return supported;
-          // If typings / native bridge differs, assume supported when plugin loads.
-          return true;
+          const result = await nfc.isAvailable();
+          console.log('[NFC] isAvailable result:', result);
+          return result?.isAvailable === true;
         }
       } catch (error) {
-        console.log('[NFC] isSupported check failed:', error);
-        // If the plugin is missing in the native build, do not pretend NFC works.
-        const msg = String((error as any)?.message || error);
-        if (msg.toLowerCase().includes('not implemented')) return false;
+        console.log('[NFC] isAvailable check failed:', error);
       }
-      // If we are native but cannot load the plugin, NFC scan won't work.
       return false;
     } else {
       // Web browser: Check for Web NFC API
@@ -141,10 +89,17 @@ class NfcService {
     const platform = getPlatform();
     
     if (platform === 'android') {
-      // @exxili/capacitor-nfc does not provide a reliable API to check
-      // whether NFC is currently enabled on Android.
-      // We treat it as enabled and rely on tag events (or the user) instead.
-      return true;
+      try {
+        const nfc = await loadCapawesomeNfc();
+        if (nfc) {
+          const result = await nfc.isEnabled();
+          console.log('[NFC] isEnabled result:', result);
+          return result?.isEnabled === true;
+        }
+      } catch (error) {
+        console.log('[NFC] isEnabled check failed:', error);
+      }
+      return false;
     }
     
     // iOS always returns true (NFC cannot be disabled system-wide)
@@ -153,7 +108,6 @@ class NfcService {
 
   /**
    * Open device NFC settings (Android only)
-   * Uses capacitor-native-settings for reliable settings navigation
    */
   async openSettings(): Promise<void> {
     const platform = getPlatform();
@@ -164,7 +118,18 @@ class NfcService {
     }
     
     try {
-      // Use capacitor-native-settings for reliable settings navigation
+      const nfc = await loadCapawesomeNfc();
+      if (nfc && typeof nfc.openSettings === 'function') {
+        await nfc.openSettings();
+        console.log('[NFC] Opened NFC settings via Capawesome');
+        return;
+      }
+    } catch (error) {
+      console.log('[NFC] Capawesome openSettings failed, using fallback:', error);
+    }
+    
+    // Fallback to capacitor-native-settings
+    try {
       const { NativeSettings, AndroidSettings, IOSSettings } = await import('capacitor-native-settings');
       await NativeSettings.open({
         optionAndroid: AndroidSettings.NfcSettings,
@@ -210,11 +175,11 @@ class NfcService {
   }
 
   /**
-   * Start native NFC scan using Exxili Community Plugin
+   * Start native NFC scan using Capawesome Premium Plugin
    */
   private async startNativeScan(onRead: NfcReadCallback): Promise<void> {
     try {
-      const nfc = await loadNfcPlugin();
+      const nfc = await loadCapawesomeNfc();
       
       if (!nfc) {
         console.log('[NFC] Plugin not available, trying Web NFC fallback');
@@ -233,31 +198,20 @@ class NfcService {
         return;
       }
 
-      const platform = getPlatform();
-      console.log('[NFC] Setting up NFC listeners on platform:', platform);
+      console.log('[NFC] Setting up Capawesome NFC listener');
 
-      // Add listener for NFC tag detection (Exxili uses 'nfcTag')
-      this.nfcListenerHandle = await nfc.addListener('nfcTag', (event: any) => {
+      // Add listener for NFC tag detection
+      this.nfcListenerHandle = await nfc.addListener('nfcTagScanned', (event: any) => {
         console.log('[NFC] Tag scanned:', JSON.stringify(event));
-        this.processNfcTag(event, onRead);
+        this.processNfcTag(event.nfcTag, onRead);
       });
 
-      // Listen for NFC errors (e.g., NFC disabled, permission problems)
-      this.nfcErrorListenerHandle = await nfc.addListener('nfcError', (err: any) => {
-        const message = err?.error || err?.message || 'NFC Fehler';
-        console.log('[NFC] Error event:', message);
-        onRead({ chipData: '', success: false, error: message });
-        void this.stopScan();
+      // Start the scan session
+      await nfc.startScanSession({
+        alertMessage: 'Halte dein Handy an den NFC-Stempel' // iOS only
       });
-
-      // IMPORTANT: startScan() is iOS ONLY according to @exxili/capacitor-nfc docs
-      // On Android, devices are always in reading mode once listeners are attached
-      if (platform === 'ios') {
-        await nfc.startScan();
-        console.log('[NFC] iOS scan session started');
-      } else {
-        console.log('[NFC] Android NFC listeners active - ready to scan');
-      }
+      
+      console.log('[NFC] Scan session started');
 
     } catch (error: any) {
       console.error('[NFC] Native scan error:', error);
@@ -274,7 +228,7 @@ class NfcService {
         errorMessage = 'NFC ist deaktiviert. Bitte aktiviere NFC in den Android-Einstellungen.';
       } else if (errMsg.includes('unavailable') || errMsg.includes('not supported')) {
         errorMessage = 'NFC ist auf diesem Gerät nicht verfügbar.';
-      } else if (errMsg.includes('canceled') || errMsg.includes('cancelled')) {
+      } else if (errMsg.includes('canceled') || errMsg.includes('cancelled') || errMsg.includes('session invalidated')) {
         errorMessage = 'NFC-Scan wurde abgebrochen.';
       }
       
@@ -289,50 +243,53 @@ class NfcService {
   /**
    * Process scanned NFC tag and extract NDEF text payload
    */
-  private processNfcTag(event: any, onRead: NfcReadCallback): void {
+  private processNfcTag(nfcTag: any, onRead: NfcReadCallback): void {
     try {
-      console.log('[NFC] Processing tag event:', JSON.stringify(event));
+      console.log('[NFC] Processing tag:', JSON.stringify(nfcTag));
       
-      // Exxili plugin structure: event.messages[].records[]
-      const messages = event.messages || event.ndefMessages || [];
+      // Capawesome structure: nfcTag.message.records[]
+      const message = nfcTag?.message;
+      const records = message?.records || [];
       
-      for (const message of messages) {
-        const records = message.records || [];
+      for (const record of records) {
+        // Check for Text Record (TNF = 1, type = "T")
+        const tnf = record?.tnf;
+        const type = record?.type;
         
-        for (const record of records) {
-          // Process Text Records
-          const type = String(record?.type ?? '').toLowerCase();
-          const isTextRecord = type === 'text' || type === 't' || type.includes('text');
-
-          if (isTextRecord) {
-            const payload = (record as any)?.payload ?? (record as any)?.text;
-            const text = this.decodeNdefTextPayload(payload);
-            
-            console.log('[NFC] Text payload:', text);
-            
-            // Clean and validate the text
-            let cleanText = text.trim();
-            
-            // Remove language prefix if present (e.g., "en" or "de")
-            if (cleanText.length > 2 && !cleanText.match(/^[A-HJ-KM-NP-Z1-9]{5}-/i)) {
-              cleanText = cleanText.substring(2);
-            }
-            
-            // Validate against Eloyo format
-            if (this.validateChipData(cleanText)) {
-              console.log('[NFC] Valid Eloyo chip data:', cleanText);
-              onRead({ chipData: cleanText, success: true });
-              this.stopScan();
-              return;
-            }
-            
-            // Try original text without cleaning
-            if (this.validateChipData(text)) {
-              console.log('[NFC] Valid Eloyo chip data (raw):', text);
-              onRead({ chipData: text, success: true });
-              this.stopScan();
-              return;
-            }
+        // Text record: TNF 1 (Well Known) and type [84] = 'T'
+        const isTextRecord = 
+          tnf === 1 && 
+          Array.isArray(type) && 
+          type.length === 1 && 
+          type[0] === 84; // 'T' = 84 in ASCII
+        
+        if (isTextRecord && record.payload) {
+          const text = this.decodeNdefTextPayload(record.payload);
+          
+          console.log('[NFC] Text payload:', text);
+          
+          // Clean and validate the text
+          let cleanText = text.trim();
+          
+          // Remove language prefix if present (e.g., "en" or "de")
+          if (cleanText.length > 2 && !cleanText.match(/^[A-HJ-KM-NP-Z1-9]{5}-/i)) {
+            cleanText = cleanText.substring(2);
+          }
+          
+          // Validate against Eloyo format
+          if (this.validateChipData(cleanText)) {
+            console.log('[NFC] Valid Eloyo chip data:', cleanText);
+            onRead({ chipData: cleanText, success: true });
+            this.stopScan();
+            return;
+          }
+          
+          // Try original text without cleaning
+          if (this.validateChipData(text)) {
+            console.log('[NFC] Valid Eloyo chip data (raw):', text);
+            onRead({ chipData: text, success: true });
+            this.stopScan();
+            return;
           }
         }
       }
@@ -356,39 +313,15 @@ class NfcService {
   }
 
   /**
-   * Decode NDEF Text Record payload
+   * Decode NDEF Text Record payload (number array)
    */
-  private decodeNdefTextPayload(payload: number[] | Uint8Array | string): string {
+  private decodeNdefTextPayload(payload: number[]): string {
     try {
-      let bytes: Uint8Array;
-
-      if (typeof payload === 'string') {
-        // Android plugin sends Base64 for record.payload. Detect and decode.
-        const looksLikeBase64 =
-          payload.length % 4 === 0 &&
-          /^[A-Za-z0-9+/]+=*$/.test(payload) &&
-          !payload.includes('-') &&
-          !payload.includes(':');
-
-        if (!looksLikeBase64) return payload;
-
-        const atobFn = (globalThis as any).atob as undefined | ((s: string) => string);
-        if (!atobFn) return payload;
-
-        try {
-          const bin = atobFn(payload);
-          bytes = new Uint8Array(bin.length);
-          for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
-        } catch {
-          return payload;
-        }
-      } else {
-        bytes = payload instanceof Uint8Array ? payload : new Uint8Array(payload);
-      }
-      
-      if (bytes.length === 0) {
+      if (!Array.isArray(payload) || payload.length === 0) {
         return '';
       }
+      
+      const bytes = new Uint8Array(payload);
       
       // First byte contains status and language code length
       const statusByte = bytes[0];
@@ -514,7 +447,7 @@ class NfcService {
     this.isScanning = false;
     this.currentCallback = null;
 
-    // Stop native scan
+    // Remove Capawesome listener
     if (this.nfcListenerHandle) {
       try {
         await this.nfcListenerHandle.remove();
@@ -524,31 +457,15 @@ class NfcService {
       this.nfcListenerHandle = null;
     }
 
-    if (this.nfcErrorListenerHandle) {
-      try {
-        await this.nfcErrorListenerHandle.remove();
-      } catch (error) {
-        console.log('[NFC] Error removing error listener:', error);
-      }
-      this.nfcErrorListenerHandle = null;
-    }
-
+    // Stop Capawesome scan session
     try {
-      const nfc = await loadNfcPlugin();
+      const nfc = await loadCapawesomeNfc();
       if (nfc) {
-        // Different plugins expose different stop APIs
-        if (typeof nfc.stopScan === 'function') {
-          await nfc.stopScan();
-        } else if (typeof nfc.cancelScan === 'function') {
-          await nfc.cancelScan();
-        } else if (typeof nfc.removeAllListeners === 'function') {
-          await nfc.removeAllListeners('nfcTag');
-          await nfc.removeAllListeners('nfcError');
-        }
-        console.log('[NFC] Native scan session stop requested');
+        await nfc.stopScanSession();
+        console.log('[NFC] Scan session stopped');
       }
     } catch (error) {
-      console.log('[NFC] Error stopping native scan:', error);
+      console.log('[NFC] Error stopping scan session:', error);
     }
 
     // Stop web scan
