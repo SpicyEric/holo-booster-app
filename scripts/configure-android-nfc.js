@@ -570,10 +570,93 @@ function configureAndroidManifest() {
 //   registerPlugin(NFCPlugin::class.java)
 // We patch the app's MainActivity to include this registration.
 function patchMainActivityRegisterNfcPlugin() {
-  // NOTE: The @capawesome-team/capacitor-nfc plugin auto-registers via Capacitor's
-  // standard plugin loading mechanism. No manual MainActivity patching is required.
-  // This function is kept as a no-op for backward compatibility with the build process.
-  console.log('\n📦 Checking NFC plugin registration...');
+  // NOTE:
+  // - The @capawesome-team/capacitor-nfc plugin auto-registers via Capacitor's
+  //   standard plugin loading mechanism (no manual registerPlugin needed).
+  // - However, older builds of this repo injected a manual registration for the
+  //   previous @exxili/capacitor-nfc plugin. After switching plugins, that leftover
+  //   line causes a hard compile error:
+  //     package com.exxili.capacitornfc does not exist
+  //   So we proactively REMOVE any Exxili registration from MainActivity.
+
+  console.log('\n📦 Cleaning MainActivity NFC registration...');
+
+  const javaRoot = path.join(ANDROID_PATH, 'app', 'src', 'main', 'java');
+  if (!fs.existsSync(javaRoot)) {
+    console.log('   ✅ No android/app/src/main/java found (skip MainActivity cleanup)');
+    return;
+  }
+
+  const mainActivityFiles = [];
+  const walk = (dir) => {
+    const entries = fs.readdirSync(dir, { withFileTypes: true });
+    for (const entry of entries) {
+      const full = path.join(dir, entry.name);
+      if (entry.isDirectory()) {
+        walk(full);
+        continue;
+      }
+      if (
+        entry.isFile() &&
+        (entry.name === 'MainActivity.java' || entry.name === 'MainActivity.kt')
+      ) {
+        mainActivityFiles.push(full);
+      }
+    }
+  };
+
+  walk(javaRoot);
+
+  if (mainActivityFiles.length === 0) {
+    console.log('   ✅ No MainActivity file found (skip cleanup)');
+    return;
+  }
+
+  let cleaned = 0;
+
+  for (const filePath of mainActivityFiles) {
+    try {
+      let content = fs.readFileSync(filePath, 'utf8');
+      const original = content;
+
+      // Remove explicit imports for Exxili plugin
+      content = content.replace(/^\s*import\s+com\.exxili\.capacitornfc\.[^;\n]+;\s*\n/gm, '');
+      content = content.replace(/^\s*import\s+com\.exxili\.capacitornfc\.[^\n]+\s*\n/gm, '');
+
+      // Remove Java-style manual registration lines
+      content = content.replace(
+        /^\s*registerPlugin\(\s*com\.exxili\.capacitornfc\.[^)]*\)\s*;\s*\n/gm,
+        ''
+      );
+      content = content.replace(
+        /^\s*registerPlugin\(\s*NFCPlugin\.class\s*\)\s*;\s*\n/gm,
+        ''
+      );
+
+      // Remove Kotlin-style manual registration lines
+      content = content.replace(
+        /^\s*registerPlugin\(\s*com\.exxili\.capacitornfc\.[^)]*\)\s*\n/gm,
+        ''
+      );
+      content = content.replace(
+        /^\s*registerPlugin\(\s*NFCPlugin::class\.java\s*\)\s*\n/gm,
+        ''
+      );
+
+      if (content !== original) {
+        fs.writeFileSync(filePath, content, 'utf8');
+        cleaned++;
+        console.log(`   ✅ Removed Exxili NFC registration from: ${filePath.replace(PROJECT_ROOT, '.')}`);
+      }
+    } catch (e) {
+      console.log(`   ⚠️ Could not clean MainActivity: ${filePath}`);
+    }
+  }
+
+  if (cleaned === 0) {
+    console.log('   ✅ No Exxili NFC registration found (nothing to clean)');
+  }
+
   console.log('   ✅ Capawesome NFC plugin auto-registers (no manual patching needed)');
 }
 
