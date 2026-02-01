@@ -55,6 +55,17 @@ class NfcService {
   private currentCallback: NfcReadCallback | null = null;
   private abortController: AbortController | null = null;
   private nfcListenerHandle: any = null;
+  private nfcErrorListenerHandle: any = null;
+
+  private pickBoolean(result: any, keys: string[]): boolean | undefined {
+    if (typeof result === 'boolean') return result;
+    if (result && typeof result === 'object') {
+      for (const k of keys) {
+        if (typeof result[k] === 'boolean') return result[k];
+      }
+    }
+    return undefined;
+  }
 
   /**
    * Check if NFC hardware is supported on this device
@@ -68,7 +79,10 @@ class NfcService {
         if (nfc) {
           const result = await nfc.isSupported();
           console.log('[NFC] isSupported result:', result);
-          return result.isSupported;
+          const supported = this.pickBoolean(result, ['supported', 'isSupported']);
+          if (supported !== undefined) return supported;
+          // If typings / native bridge differs, assume supported when plugin loads.
+          return true;
         }
       } catch (error) {
         console.log('[NFC] isSupported check failed:', error);
@@ -90,9 +104,15 @@ class NfcService {
       try {
         const nfc = await loadNfcPlugin();
         if (nfc) {
-          const result = await nfc.isEnabled();
-          console.log('[NFC] isEnabled result:', result);
-          return result.isEnabled;
+          // @exxili/capacitor-nfc does not officially expose isEnabled().
+          // If present (some builds expose it), use it. Otherwise return true
+          // and let startScan() / nfcError handle the real state.
+          if (typeof nfc.isEnabled === 'function') {
+            const result = await nfc.isEnabled();
+            console.log('[NFC] isEnabled result:', result);
+            const enabled = this.pickBoolean(result, ['enabled', 'isEnabled']);
+            if (enabled !== undefined) return enabled;
+          }
         }
       } catch (error) {
         console.log('[NFC] isEnabled check failed:', error);
@@ -186,29 +206,20 @@ class NfcService {
       }
 
       const platform = getPlatform();
-
-      // Android: Check if NFC is enabled
-      if (platform === 'android') {
-        try {
-          const enabledResult = await nfc.isEnabled();
-          if (!enabledResult.isEnabled) {
-            this.isScanning = false;
-            onRead({
-              chipData: '',
-              success: false,
-              error: 'NFC ist deaktiviert. Bitte aktiviere NFC in den Android-Einstellungen.'
-            });
-            return;
-          }
-        } catch (e) {
-          console.log('[NFC] isEnabled check error:', e);
-        }
-      }
+      void platform; // reserved for potential platform-specific behavior
 
       // Add listener for NFC tag detection (Exxili uses 'nfcTag')
       this.nfcListenerHandle = await nfc.addListener('nfcTag', (event: any) => {
         console.log('[NFC] Tag scanned:', JSON.stringify(event));
         this.processNfcTag(event, onRead);
+      });
+
+      // Listen for NFC errors (e.g., NFC disabled, permission problems)
+      this.nfcErrorListenerHandle = await nfc.addListener('nfcError', (err: any) => {
+        const message = err?.error || err?.message || 'NFC Fehler';
+        console.log('[NFC] Error event:', message);
+        onRead({ chipData: '', success: false, error: message });
+        void this.stopScan();
       });
 
       // Start scan session
@@ -254,14 +265,12 @@ class NfcService {
         
         for (const record of records) {
           // Process Text Records
-          if (record.type === 'text' || record.tnf === 1) {
-            let text = '';
-            
-            if (record.text) {
-              text = record.text;
-            } else if (record.payload) {
-              text = this.decodeNdefTextPayload(record.payload);
-            }
+          const type = String(record?.type ?? '').toLowerCase();
+          const isTextRecord = type === 'text' || type === 't' || type.includes('text');
+
+          if (isTextRecord) {
+            const payload = (record as any)?.payload ?? (record as any)?.text;
+            const text = this.decodeNdefTextPayload(payload);
             
             console.log('[NFC] Text payload:', text);
             
@@ -460,11 +469,28 @@ class NfcService {
       this.nfcListenerHandle = null;
     }
 
+    if (this.nfcErrorListenerHandle) {
+      try {
+        await this.nfcErrorListenerHandle.remove();
+      } catch (error) {
+        console.log('[NFC] Error removing error listener:', error);
+      }
+      this.nfcErrorListenerHandle = null;
+    }
+
     try {
       const nfc = await loadNfcPlugin();
       if (nfc) {
-        await nfc.stopScan();
-        console.log('[NFC] Native scan session stopped');
+        // Different plugins expose different stop APIs
+        if (typeof nfc.stopScan === 'function') {
+          await nfc.stopScan();
+        } else if (typeof nfc.cancelScan === 'function') {
+          await nfc.cancelScan();
+        } else if (typeof nfc.removeAllListeners === 'function') {
+          await nfc.removeAllListeners('nfcTag');
+          await nfc.removeAllListeners('nfcError');
+        }
+        console.log('[NFC] Native scan session stop requested');
       }
     } catch (error) {
       console.log('[NFC] Error stopping native scan:', error);
