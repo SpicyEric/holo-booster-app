@@ -273,6 +273,48 @@ function patchAppBuildGradle() {
     console.log('   ✅ Enforced Java version → 17');
     modified = true;
   }
+
+  // Ensure the Exxili NFC Android module is on the app compile classpath.
+  // Without this dependency, manual registration in MainActivity will not compile
+  // and Capacitor may not load the plugin at runtime.
+  const exxiliDepGroovy = "implementation project(':exxili-capacitor-nfc')";
+  const exxiliDepKotlin = 'implementation(project(":exxili-capacitor-nfc"))';
+
+  const hasExxiliDep =
+    content.includes("project(':exxili-capacitor-nfc')") ||
+    content.includes('project(\":exxili-capacitor-nfc\")');
+
+  if (!hasExxiliDep) {
+    // Prefer inserting right after capacitor-android dependency if present
+    const capacitorAndroidGroovy = "implementation project(':capacitor-android')";
+    const capacitorAndroidKotlin = 'implementation(project(":capacitor-android"))';
+
+    if (content.includes(capacitorAndroidGroovy)) {
+      content = content.replace(
+        capacitorAndroidGroovy,
+        `${capacitorAndroidGroovy}\n    ${exxiliDepGroovy}`
+      );
+      console.log('   ✅ Added Exxili NFC Gradle dependency to app/build.gradle');
+      modified = true;
+    } else if (content.includes(capacitorAndroidKotlin)) {
+      content = content.replace(
+        capacitorAndroidKotlin,
+        `${capacitorAndroidKotlin}\n    ${exxiliDepKotlin}`
+      );
+      console.log('   ✅ Added Exxili NFC Gradle dependency to app/build.gradle');
+      modified = true;
+    } else if (/\bdependencies\s*\{/.test(content)) {
+      // Fallback: first dependencies block
+      content = content.replace(
+        /\bdependencies\s*\{/, 
+        (m) => `${m}\n    ${exxiliDepGroovy}`
+      );
+      console.log('   ✅ Added Exxili NFC Gradle dependency to app/build.gradle');
+      modified = true;
+    } else {
+      console.log('   ⚠️ Could not find dependencies block to add Exxili NFC module dependency');
+    }
+  }
   
   if (modified) {
     fs.writeFileSync(appBuildPath, content, 'utf8');
@@ -602,8 +644,10 @@ function patchMainActivityRegisterNfcPlugin() {
   const original = content;
 
   const alreadyRegistered =
-    content.includes('com.exxili.capacitornfc.NFCPlugin') &&
-    content.includes('registerPlugin');
+    (content.includes('registerPlugin(com.exxili.capacitornfc.NFCPlugin') ||
+      content.includes('registerPlugin(NFCPlugin') ||
+      content.includes('registerPlugin(com.exxili.capacitornfc.NFCPlugin::class.java)') ||
+      content.includes('registerPlugin(NFCPlugin::class.java)'));
 
   if (alreadyRegistered) {
     console.log('   ✅ NFC plugin already registered in MainActivity');
@@ -613,35 +657,72 @@ function patchMainActivityRegisterNfcPlugin() {
   const isKotlin = mainActivityPath.endsWith('.kt');
 
   if (isKotlin) {
+    // Ensure import exists
+    if (!content.includes('import com.exxili.capacitornfc.NFCPlugin')) {
+      content = content.replace(
+        /import\s+com\.getcapacitor\.[^\n]+\n/, 
+        (m) => `${m}import com.exxili.capacitornfc.NFCPlugin\n`
+      );
+    }
+
+    // Normalize any previously inserted fully-qualified registration
+    content = content.replace(
+      /registerPlugin\(com\.exxili\.capacitornfc\.NFCPlugin::class\.java\)/g,
+      'registerPlugin(NFCPlugin::class.java)'
+    );
+
     // If onCreate exists, inject registerPlugin after super.onCreate
     if (/override\s+fun\s+onCreate\s*\(/.test(content)) {
-      if (!content.includes('registerPlugin(com.exxili.capacitornfc.NFCPlugin::class.java)')) {
+      if (!content.includes('registerPlugin(NFCPlugin::class.java)')) {
         content = content.replace(
           /super\.onCreate\(savedInstanceState\)\s*/,
-          (m) => `${m}\n        registerPlugin(com.exxili.capacitornfc.NFCPlugin::class.java)\n`
+          (m) => `${m}\n        registerPlugin(NFCPlugin::class.java)\n`
         );
       }
     } else {
       // Insert full onCreate override before the class closing brace
       content = content.replace(
         /\}\s*$/,
-        `\n\n    override fun onCreate(savedInstanceState: android.os.Bundle?) {\n        super.onCreate(savedInstanceState)\n        registerPlugin(com.exxili.capacitornfc.NFCPlugin::class.java)\n    }\n}\n`
+        `\n\n    override fun onCreate(savedInstanceState: android.os.Bundle?) {\n        super.onCreate(savedInstanceState)\n        registerPlugin(NFCPlugin::class.java)\n    }\n}\n`
       );
     }
   } else {
     // Java
+    // Ensure import exists
+    if (!content.includes('import com.exxili.capacitornfc.NFCPlugin;')) {
+      // Insert after BridgeActivity import if possible
+      if (content.includes('import com.getcapacitor.BridgeActivity;')) {
+        content = content.replace(
+          'import com.getcapacitor.BridgeActivity;\n',
+          'import com.getcapacitor.BridgeActivity;\nimport com.exxili.capacitornfc.NFCPlugin;\n'
+        );
+      } else {
+        // Fallback: insert after package declaration
+        content = content.replace(
+          /^(package\s+[^;]+;\s*\n)/,
+          `$1\nimport com.exxili.capacitornfc.NFCPlugin;\n`
+        );
+      }
+    }
+
+    // Normalize any previously inserted fully-qualified registration
+    content = content.replace(
+      /registerPlugin\(com\.exxili\.capacitornfc\.NFCPlugin\.class\);/g,
+      'registerPlugin(NFCPlugin.class);'
+    );
+
     if (/void\s+onCreate\s*\(/.test(content)) {
-      if (!content.includes('registerPlugin(com.exxili.capacitornfc.NFCPlugin.class)')) {
+      if (!content.includes('registerPlugin(NFCPlugin.class);')) {
         content = content.replace(
           /super\.onCreate\(savedInstanceState\);\s*/,
-          (m) => `${m}\n        registerPlugin(com.exxili.capacitornfc.NFCPlugin.class);\n`
+          (m) => `${m}\n        registerPlugin(NFCPlugin.class);\n`
         );
       }
     } else {
       // Insert full onCreate override before the class closing brace
       content = content.replace(
         /\}\s*$/,
-        `\n\n    @Override\n    public void onCreate(android.os.Bundle savedInstanceState) {\n        super.onCreate(savedInstanceState);\n        registerPlugin(com.exxili.capacitornfc.NFCPlugin.class);\n    }\n}\n`
+        `\n\n    @Override\n    public void onCreate(android.os.Bundle savedInstanceState) {\n        super.onCreate(savedInstanceState);\n        registerPlugin(NFCPlugin.class);\n    }\n}\n`
       );
     }
   }
