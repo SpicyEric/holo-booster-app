@@ -209,10 +209,16 @@ function patchAppBuildGradle() {
   }
   
   // Ensure Java 17 compatibility
-  if (content.includes('VERSION_11') || content.includes('VERSION_1_8')) {
+  // Some newer templates/plugins may use Java 21. We standardize on 17.
+  if (
+    content.includes('VERSION_21') ||
+    content.includes('VERSION_11') ||
+    content.includes('VERSION_1_8')
+  ) {
+    content = content.replace(/VERSION_21/g, 'VERSION_17');
     content = content.replace(/VERSION_11/g, 'VERSION_17');
     content = content.replace(/VERSION_1_8/g, 'VERSION_17');
-    console.log('   ✅ Updated Java version → 17');
+    console.log('   ✅ Enforced Java version → 17');
     modified = true;
   }
   
@@ -220,6 +226,73 @@ function patchAppBuildGradle() {
     fs.writeFileSync(appBuildPath, content, 'utf8');
   } else {
     console.log('   ✅ app/build.gradle already correctly configured');
+  }
+}
+
+// =========================================================================
+// 5b. PATCH PLUGIN BUILD.GRADLE FILES (e.g. capacitor-geolocation)
+// =========================================================================
+function patchPluginBuildGradleFiles() {
+  console.log('\n📦 Patching plugin build.gradle files (enforce Java/Kotlin 17)...');
+
+  /**
+   * Recursively find Gradle build files inside android/ (excluding android/app/build.gradle)
+   */
+  const buildFiles = [];
+  const walk = (dir) => {
+    if (!fs.existsSync(dir)) return;
+    const entries = fs.readdirSync(dir, { withFileTypes: true });
+    for (const entry of entries) {
+      const full = path.join(dir, entry.name);
+      if (entry.isDirectory()) {
+        // Skip build output to keep it fast
+        if (entry.name === 'build' || entry.name === '.gradle') continue;
+        walk(full);
+        continue;
+      }
+      if (entry.isFile() && (entry.name === 'build.gradle' || entry.name === 'build.gradle.kts')) {
+        // We'll skip app/build.gradle because it's handled above
+        const normalized = full.replace(/\\/g, '/');
+        if (normalized.endsWith('/android/app/build.gradle')) continue;
+        buildFiles.push(full);
+      }
+    }
+  };
+
+  walk(ANDROID_PATH);
+
+  if (buildFiles.length === 0) {
+    console.log('   ✅ No plugin build files found');
+    return;
+  }
+
+  let patchedCount = 0;
+
+  for (const filePath of buildFiles) {
+    try {
+      let content = fs.readFileSync(filePath, 'utf8');
+      const original = content;
+
+      // Enforce Java 17 across plugins and tasks
+      content = content.replace(/VERSION_21/g, 'VERSION_17');
+      content = content.replace(/JavaLanguageVersion\.of\(21\)/g, 'JavaLanguageVersion.of(17)');
+      content = content.replace(/jvmToolchain\(21\)/g, 'jvmToolchain(17)');
+      content = content.replace(/jvmTarget\s*=\s*['\"]21['\"]/g, 'jvmTarget = "17"');
+      content = content.replace(/kotlinOptions\.jvmTarget\s*=\s*['\"]21['\"]/g, 'kotlinOptions.jvmTarget = "17"');
+
+      if (content !== original) {
+        fs.writeFileSync(filePath, content, 'utf8');
+        patchedCount++;
+      }
+    } catch (e) {
+      console.log(`   ⚠️ Could not patch: ${filePath}`);
+    }
+  }
+
+  if (patchedCount > 0) {
+    console.log(`   ✅ Patched ${patchedCount} plugin Gradle file(s) to Java/Kotlin 17`);
+  } else {
+    console.log('   ✅ Plugin Gradle files already compatible');
   }
 }
 
@@ -389,6 +462,9 @@ function main() {
     
     // Step 4: Patch app/build.gradle
     patchAppBuildGradle();
+
+    // Step 4b: Patch plugin build.gradle files (e.g. capacitor-geolocation)
+    patchPluginBuildGradleFiles();
     
     // Step 5: Configure NFC
     createNfcTechFilter();
