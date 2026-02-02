@@ -4,8 +4,9 @@
 // Format on NFC chip: "XXXXX-XXXXX-XXXXX:grün" (Box-ID:StampColor)
 
 import { Capacitor } from '@capacitor/core';
+import { Nfc } from '@capawesome-team/capacitor-nfc';
 
-interface NfcReadResult {
+export interface NfcReadResult {
   chipData: string;
   success: boolean;
   error?: string;
@@ -30,26 +31,6 @@ const getPlatform = (): string => {
   }
 };
 
-// Lazy load the Capawesome NFC plugin
-let CapawesomeNfc: any = null;
-
-const loadCapawesomeNfc = async () => {
-  if (CapawesomeNfc) return CapawesomeNfc;
-  
-  const platform = getPlatform();
-  if (platform !== 'android' && platform !== 'ios') return null;
-  
-  try {
-    const module = await import('@capawesome-team/capacitor-nfc');
-    CapawesomeNfc = module.Nfc;
-    console.log('[NFC] Capawesome NFC plugin loaded');
-    return CapawesomeNfc;
-  } catch (error) {
-    console.log('[NFC] Could not load Capawesome NFC plugin:', error);
-    return null;
-  }
-};
-
 class NfcService {
   private isNative = isNativePlatform();
   private isScanning = false;
@@ -59,23 +40,28 @@ class NfcService {
   private nfcListenerHandle: any = null;
 
   /**
+   * Check if this is running in native app context
+   */
+  isNativeApp(): boolean {
+    return this.isNative;
+  }
+
+  /**
    * Check if NFC hardware is supported on this device
    */
   async isSupported(): Promise<boolean> {
     const platform = getPlatform();
+    console.log('[NFC] Checking support on platform:', platform);
     
     if (platform === 'android' || platform === 'ios') {
       try {
-        const nfc = await loadCapawesomeNfc();
-        if (nfc) {
-          const result = await nfc.isAvailable();
-          console.log('[NFC] isAvailable result:', result);
-          return result?.isAvailable === true;
-        }
+        const result = await Nfc.isSupported();
+        console.log('[NFC] isSupported result:', result);
+        return result?.isSupported === true;
       } catch (error) {
-        console.log('[NFC] isAvailable check failed:', error);
+        console.log('[NFC] isSupported check failed:', error);
+        return false;
       }
-      return false;
     } else {
       // Web browser: Check for Web NFC API
       return 'NDEFReader' in window;
@@ -90,16 +76,13 @@ class NfcService {
     
     if (platform === 'android') {
       try {
-        const nfc = await loadCapawesomeNfc();
-        if (nfc) {
-          const result = await nfc.isEnabled();
-          console.log('[NFC] isEnabled result:', result);
-          return result?.isEnabled === true;
-        }
+        const result = await Nfc.isEnabled();
+        console.log('[NFC] isEnabled result:', result);
+        return result?.isEnabled === true;
       } catch (error) {
         console.log('[NFC] isEnabled check failed:', error);
+        return false;
       }
-      return false;
     }
     
     // iOS always returns true (NFC cannot be disabled system-wide)
@@ -118,9 +101,8 @@ class NfcService {
     }
     
     try {
-      const nfc = await loadCapawesomeNfc();
-      if (nfc && typeof nfc.openSettings === 'function') {
-        await nfc.openSettings();
+      if (typeof Nfc.openSettings === 'function') {
+        await Nfc.openSettings();
         console.log('[NFC] Opened NFC settings via Capawesome');
         return;
       }
@@ -179,35 +161,16 @@ class NfcService {
    */
   private async startNativeScan(onRead: NfcReadCallback): Promise<void> {
     try {
-      const nfc = await loadCapawesomeNfc();
-      
-      if (!nfc) {
-        console.log('[NFC] Plugin not available, trying Web NFC fallback');
-        
-        if ('NDEFReader' in window) {
-          await this.startWebScan(onRead);
-          return;
-        }
-        
-        this.isScanning = false;
-        onRead({
-          chipData: '',
-          success: false,
-          error: 'NFC ist auf diesem Gerät nicht verfügbar.'
-        });
-        return;
-      }
-
       console.log('[NFC] Setting up Capawesome NFC listener');
 
       // Add listener for NFC tag detection
-      this.nfcListenerHandle = await nfc.addListener('nfcTagScanned', (event: any) => {
+      this.nfcListenerHandle = await Nfc.addListener('nfcTagScanned', (event: any) => {
         console.log('[NFC] Tag scanned:', JSON.stringify(event));
         this.processNfcTag(event.nfcTag, onRead);
       });
 
       // Start the scan session
-      await nfc.startScanSession({
+      await Nfc.startScanSession({
         alertMessage: 'Halte dein Handy an den NFC-Stempel' // iOS only
       });
       
@@ -459,11 +422,8 @@ class NfcService {
 
     // Stop Capawesome scan session
     try {
-      const nfc = await loadCapawesomeNfc();
-      if (nfc) {
-        await nfc.stopScanSession();
-        console.log('[NFC] Scan session stopped');
-      }
+      await Nfc.stopScanSession();
+      console.log('[NFC] Scan session stopped');
     } catch (error) {
       console.log('[NFC] Error stopping scan session:', error);
     }
@@ -497,27 +457,8 @@ class NfcService {
     const [boxId, color] = chipData.split(':');
     return { boxId, color };
   }
-
-  /**
-   * Check if running on native platform (Android/iOS)
-   */
-  isNativeApp(): boolean {
-    return isNativePlatform();
-  }
-
-  /**
-   * Get platform information for debugging
-   */
-  getPlatformInfo(): { platform: string; isNative: boolean } {
-    return {
-      platform: getPlatform(),
-      isNative: isNativePlatform()
-    };
-  }
 }
 
-// Export singleton instance
+// Export singleton and types
 export const nfcService = new NfcService();
-
-// Export types
-export type { NfcReadResult, NfcReadCallback };
+export type { NfcReadCallback };
