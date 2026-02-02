@@ -374,9 +374,7 @@ export const AppScan = () => {
             </p>
             {nfcService.isNativeApp() && (
               <p className="text-xs text-muted-foreground text-center">
-                {nfcService.getPlatformInfo().platform === 'ios' 
-                  ? 'Halte das iPhone oben an den Stempel' 
-                  : 'Halte die Rückseite deines Handys an den Stempel'}
+                Halte die Rückseite deines Handys an den Stempel
               </p>
             )}
 
