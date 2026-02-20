@@ -258,18 +258,37 @@ const Nachrichten = () => {
         if (error) throw error;
         toast.success('Nachricht aktualisiert');
       } else {
+        // Fetch all users with loyalty accounts for this merchant
+        const { data: loyaltyAccounts, error: laError } = await supabase
+          .from('loyalty_accounts')
+          .select('user_id')
+          .eq('merchant_customer_id', customerId);
+
+        if (laError) throw laError;
+
+        const recipientUserIds = loyaltyAccounts?.map(la => la.user_id) || [];
+
+        if (recipientUserIds.length === 0) {
+          toast.error('Keine Kunden gefunden, an die gesendet werden kann');
+          setSaving(false);
+          return;
+        }
+
+        // Insert one message per recipient
+        const messagesToInsert = recipientUserIds.map(uid => ({
+          merchant_customer_id: customerId,
+          user_id: uid,
+          title: messageForm.title,
+          body: messageForm.body,
+          show_in_storefront: messageForm.show_in_storefront,
+          sent_at: new Date().toISOString()
+        }));
+
         const { error } = await supabase
           .from('app_messages')
-          .insert({
-            merchant_customer_id: customerId,
-            user_id: user.id,
-            title: messageForm.title,
-            body: messageForm.body,
-            show_in_storefront: messageForm.show_in_storefront,
-            sent_at: new Date().toISOString()
-          });
+          .insert(messagesToInsert);
         if (error) throw error;
-        toast.success('Nachricht gesendet!');
+        toast.success(`Nachricht an ${recipientUserIds.length} Kunden gesendet!`);
       }
 
       setShowMessageDialog(false);
