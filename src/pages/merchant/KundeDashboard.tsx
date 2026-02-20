@@ -308,24 +308,12 @@ export default function KundeDashboard() {
         .select("*", { count: "exact", head: true })
         .eq("merchant_customer_id", customerId);
 
-      // Network Effect: Users who have loyalty accounts at OTHER merchants too
-      const { data: loyaltyAccounts } = await supabase
-        .from("loyalty_accounts")
-        .select("user_id")
-        .eq("merchant_customer_id", customerId);
-
-      let networkEffect = 0;
-      if (loyaltyAccounts && loyaltyAccounts.length > 0) {
-        const userIds = loyaltyAccounts.map(acc => acc.user_id);
-        const { data: otherAccounts } = await supabase
-          .from("loyalty_accounts")
-          .select("user_id")
-          .neq("merchant_customer_id", customerId)
-          .in("user_id", userIds);
-        
-        const uniqueNetworkUsers = new Set(otherAccounts?.map(acc => acc.user_id) || []);
-        networkEffect = uniqueNetworkUsers.size;
-      }
+      // Network Effect: Count redeemed new customer offers (Neukundenaktionen)
+      const { count: networkEffect } = await supabase
+        .from("point_transactions")
+        .select("*", { count: "exact", head: true })
+        .eq("merchant_customer_id", customerId)
+        .eq("transaction_type", "new_customer_bonus");
 
       const sevenDaysAgo = new Date();
       sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
