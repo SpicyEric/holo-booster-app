@@ -835,6 +835,47 @@ export type Database = {
           },
         ]
       }
+      lead_activities: {
+        Row: {
+          activity_type: string
+          created_at: string
+          id: string
+          lead_id: string
+          new_value: string | null
+          note: string | null
+          old_value: string | null
+          partner_user_id: string
+        }
+        Insert: {
+          activity_type: string
+          created_at?: string
+          id?: string
+          lead_id: string
+          new_value?: string | null
+          note?: string | null
+          old_value?: string | null
+          partner_user_id: string
+        }
+        Update: {
+          activity_type?: string
+          created_at?: string
+          id?: string
+          lead_id?: string
+          new_value?: string | null
+          note?: string | null
+          old_value?: string | null
+          partner_user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lead_activities_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "sales_leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       loyalty_accounts: {
         Row: {
           created_at: string | null
@@ -1538,6 +1579,74 @@ export type Database = {
           {
             foreignKeyName: "rewards_merchant_customer_id_fkey"
             columns: ["merchant_customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sales_leads: {
+        Row: {
+          city: string | null
+          contact_person: string | null
+          converted_customer_id: string | null
+          created_at: string
+          email: string | null
+          house_number: string | null
+          id: string
+          industry: string | null
+          notes: string | null
+          partner_user_id: string
+          phone: string | null
+          postal_code: string | null
+          priority: string | null
+          shop_name: string
+          status: string
+          street: string | null
+          updated_at: string
+        }
+        Insert: {
+          city?: string | null
+          contact_person?: string | null
+          converted_customer_id?: string | null
+          created_at?: string
+          email?: string | null
+          house_number?: string | null
+          id?: string
+          industry?: string | null
+          notes?: string | null
+          partner_user_id: string
+          phone?: string | null
+          postal_code?: string | null
+          priority?: string | null
+          shop_name: string
+          status?: string
+          street?: string | null
+          updated_at?: string
+        }
+        Update: {
+          city?: string | null
+          contact_person?: string | null
+          converted_customer_id?: string | null
+          created_at?: string
+          email?: string | null
+          house_number?: string | null
+          id?: string
+          industry?: string | null
+          notes?: string | null
+          partner_user_id?: string
+          phone?: string | null
+          postal_code?: string | null
+          priority?: string | null
+          shop_name?: string
+          status?: string
+          street?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sales_leads_converted_customer_id_fkey"
+            columns: ["converted_customer_id"]
             isOneToOne: false
             referencedRelation: "customers"
             referencedColumns: ["id"]
