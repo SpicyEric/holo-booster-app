@@ -4,8 +4,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { Slider } from "@/components/ui/slider";
 import { toast } from "sonner";
-import { Star, ExternalLink, Copy, CheckCircle2, Bot, Loader2 } from "lucide-react";
+import { Star, ExternalLink, Copy, CheckCircle2, Bot, Loader2, Gift } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -14,6 +15,7 @@ const GoogleBewertungen = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [savingAutoReply, setSavingAutoReply] = useState(false);
+  const [savingReviewPoints, setSavingReviewPoints] = useState(false);
   const [googleReviewUrl, setGoogleReviewUrl] = useState("");
   const [customerId, setCustomerId] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
@@ -21,6 +23,10 @@ const GoogleBewertungen = () => {
   // Auto-Reply State
   const [autoReplyEnabled, setAutoReplyEnabled] = useState(false);
   const [autoReplyMinRating, setAutoReplyMinRating] = useState(4);
+  
+  // Review Points State
+  const [reviewPointsEnabled, setReviewPointsEnabled] = useState(false);
+  const [reviewPointsValue, setReviewPointsValue] = useState(5);
 
   useEffect(() => {
     const fetchCustomer = async () => {
@@ -38,7 +44,7 @@ const GoogleBewertungen = () => {
           
           const { data: customerData, error } = await supabase
             .from("customers")
-            .select("id, google_review_url, auto_reply_enabled, auto_reply_min_rating")
+            .select("id, google_review_url, auto_reply_enabled, auto_reply_min_rating, google_review_points_enabled, google_review_points_value")
             .eq("id", linkData.customer_id)
             .single();
           
@@ -51,6 +57,8 @@ const GoogleBewertungen = () => {
             setGoogleReviewUrl(customerData.google_review_url || "");
             setAutoReplyEnabled(customerData.auto_reply_enabled || false);
             setAutoReplyMinRating(customerData.auto_reply_min_rating || 4);
+            setReviewPointsEnabled(customerData.google_review_points_enabled || false);
+            setReviewPointsValue(customerData.google_review_points_value || 5);
           }
         }
       } catch (err) {
@@ -115,6 +123,34 @@ const GoogleBewertungen = () => {
       toast.error("Fehler beim Speichern");
     } finally {
       setSavingAutoReply(false);
+    }
+  };
+
+  const handleSaveReviewPoints = async () => {
+    if (!customerId) {
+      toast.error("Kein Kundenprofil gefunden");
+      return;
+    }
+    
+    setSavingReviewPoints(true);
+    try {
+      const { error } = await supabase
+        .from("customers")
+        .update({ 
+          google_review_points_enabled: reviewPointsEnabled,
+          google_review_points_value: reviewPointsValue,
+          updated_at: new Date().toISOString() 
+        })
+        .eq("id", customerId);
+      
+      if (error) throw error;
+      
+      toast.success("Bewertungs-Punkte Einstellungen gespeichert!");
+    } catch (error: any) {
+      console.error("Save error:", error);
+      toast.error("Fehler beim Speichern");
+    } finally {
+      setSavingReviewPoints(false);
     }
   };
 
@@ -271,6 +307,72 @@ const GoogleBewertungen = () => {
                   
                   <Button onClick={handleSaveAutoReply} disabled={savingAutoReply} className="rounded-xl">
                     {savingAutoReply ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Speichern...
+                      </>
+                    ) : (
+                      "Einstellungen speichern"
+                    )}
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </Card>
+
+          {/* Review Points Card */}
+          <Card className="p-6 rounded-2xl shadow-sm border-0 bg-green-50/80">
+            <div className="flex items-start gap-4">
+              <div className="w-12 h-12 rounded-xl bg-green-100 flex items-center justify-center flex-shrink-0">
+                <Gift className="w-6 h-6 text-green-600" />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-lg font-semibold text-green-900 mb-2">
+                  Punkte für Google-Bewertungen
+                </h3>
+                <p className="text-sm text-green-700 mb-4">
+                  Belohne Kunden mit Bonuspunkten, wenn sie eine Google-Bewertung hinterlassen. 
+                  Jeder Kunde kann den Bonus einmalig erhalten.
+                </p>
+                
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between p-4 bg-white rounded-xl">
+                    <div>
+                      <p className="font-medium text-gray-900">Bewertungs-Bonus aktivieren</p>
+                      <p className="text-sm text-gray-500">Kunden erhalten Punkte nach einer Google-Bewertung</p>
+                    </div>
+                    <Switch
+                      checked={reviewPointsEnabled}
+                      onCheckedChange={setReviewPointsEnabled}
+                    />
+                  </div>
+                  
+                  {reviewPointsEnabled && (
+                    <div className="p-4 bg-white rounded-xl space-y-3">
+                      <div>
+                        <Label className="text-gray-700">Punkte pro Bewertung</Label>
+                        <p className="text-sm text-gray-500 mb-3">
+                          Wie viele Bonuspunkte soll ein Kunde für eine Bewertung erhalten?
+                        </p>
+                        <div className="flex items-center gap-4">
+                          <Slider
+                            value={[reviewPointsValue]}
+                            onValueChange={(val) => setReviewPointsValue(val[0])}
+                            min={1}
+                            max={20}
+                            step={1}
+                            className="flex-1"
+                          />
+                          <span className="text-lg font-bold text-green-700 min-w-[3rem] text-center">
+                            {reviewPointsValue}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  
+                  <Button onClick={handleSaveReviewPoints} disabled={savingReviewPoints} className="rounded-xl">
+                    {savingReviewPoints ? (
                       <>
                         <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                         Speichern...
