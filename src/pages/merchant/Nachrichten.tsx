@@ -127,6 +127,21 @@ const Nachrichten = () => {
 
       setCustomerId(assignment.customer_id);
 
+      // Load automation settings from customer record
+      const { data: customerData } = await supabase
+        .from('customers')
+        .select('welcome_enabled, welcome_message, birthday_enabled, birthday_message, birthday_bonus_points')
+        .eq('id', assignment.customer_id)
+        .maybeSingle();
+
+      if (customerData) {
+        setWelcomeEnabled(customerData.welcome_enabled ?? false);
+        if (customerData.welcome_message) setWelcomeMessage(customerData.welcome_message);
+        setBirthdayEnabled(customerData.birthday_enabled ?? false);
+        if (customerData.birthday_message) setBirthdayMessage(customerData.birthday_message);
+        setBirthdayBonusPoints(customerData.birthday_bonus_points ?? 50);
+      }
+
       const { data: msgData } = await supabase
         .from('app_messages')
         .select('id, title, body, show_in_storefront, sent_at')
@@ -608,14 +623,30 @@ const Nachrichten = () => {
             </div>
 
             <Button 
-              onClick={() => {
+              onClick={async () => {
+                if (!customerId) return;
                 setSavingAutomations(true);
-                setTimeout(() => {
+                try {
+                  const { error } = await supabase
+                    .from('customers')
+                    .update({
+                      welcome_enabled: welcomeEnabled,
+                      welcome_message: welcomeMessage,
+                      birthday_enabled: birthdayEnabled,
+                      birthday_message: birthdayMessage,
+                      birthday_bonus_points: birthdayBonusPoints,
+                    })
+                    .eq('id', customerId);
+                  if (error) throw error;
+                  toast.success('Automatisierungen gespeichert');
+                } catch (err) {
+                  console.error('Error saving automations:', err);
+                  toast.error('Fehler beim Speichern');
+                } finally {
                   setSavingAutomations(false);
-                  // Toast would go here when backend is implemented
-                }, 500);
+                }
               }} 
-              disabled={savingAutomations}
+              disabled={savingAutomations || !customerId}
               variant="outline"
               className="rounded-xl"
             >

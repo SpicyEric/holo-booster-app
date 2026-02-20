@@ -42,3 +42,6 @@ verify_jwt = false
 [functions.geocode-address]
 verify_jwt = false
 
+[functions.birthday-cron]
+verify_jwt = false
+
