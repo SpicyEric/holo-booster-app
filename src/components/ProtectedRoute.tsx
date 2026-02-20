@@ -23,7 +23,7 @@ export const ProtectedRoute = ({ children, allowedRoles }: ProtectedRouteProps) 
             navigate('/admin');
             break;
           case 'merchant':
-            navigate('/kunde/stempelkarte');
+            navigate('/kunde');
             break;
           case 'partner':
             navigate('/partner/dashboard');
