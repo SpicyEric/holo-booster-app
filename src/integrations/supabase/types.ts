@@ -585,6 +585,8 @@ export type Database = {
           google_access_token: string | null
           google_business_name: string | null
           google_refresh_token: string | null
+          google_review_points_enabled: boolean | null
+          google_review_points_value: number | null
           google_review_url: string
           google_token_expires_at: string | null
           house_number: string | null
@@ -641,6 +643,8 @@ export type Database = {
           google_access_token?: string | null
           google_business_name?: string | null
           google_refresh_token?: string | null
+          google_review_points_enabled?: boolean | null
+          google_review_points_value?: number | null
           google_review_url: string
           google_token_expires_at?: string | null
           house_number?: string | null
@@ -697,6 +701,8 @@ export type Database = {
           google_access_token?: string | null
           google_business_name?: string | null
           google_refresh_token?: string | null
+          google_review_points_enabled?: boolean | null
+          google_review_points_value?: number | null
           google_review_url?: string
           google_token_expires_at?: string | null
           house_number?: string | null
