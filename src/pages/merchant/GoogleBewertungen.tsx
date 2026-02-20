@@ -248,72 +248,35 @@ const GoogleBewertungen = () => {
             </div>
           </Card>
 
-          {/* Auto-Reply Card */}
-          <Card className="p-6 rounded-2xl shadow-sm border-0 bg-blue-50/80">
+          {/* Auto-Reply Card - Coming Soon */}
+          <Card className="p-6 rounded-2xl shadow-sm border-0 bg-blue-50/40 relative overflow-hidden opacity-60 pointer-events-none select-none">
+            <div className="absolute top-3 right-3 z-10 bg-blue-600 text-white text-xs font-semibold px-3 py-1 rounded-full pointer-events-auto">
+              Demnächst verfügbar
+            </div>
             <div className="flex items-start gap-4">
               <div className="w-12 h-12 rounded-xl bg-blue-100 flex items-center justify-center flex-shrink-0">
-                <Bot className="w-6 h-6 text-blue-600" />
+                <Bot className="w-6 h-6 text-blue-400" />
               </div>
               <div className="flex-1">
-                <h3 className="text-lg font-semibold text-blue-900 mb-2">
+                <h3 className="text-lg font-semibold text-blue-900/60 mb-2">
                   Automatische Antworten
                 </h3>
-                <p className="text-sm text-blue-700 mb-4">
+                <p className="text-sm text-blue-700/60 mb-4">
                   Lassen Sie KI automatisch auf Google-Bewertungen antworten. 
                   Professionelle, personalisierte Antworten werden für Sie erstellt.
                 </p>
                 
                 <div className="space-y-4">
-                  <div className="flex items-center justify-between p-4 bg-white rounded-xl">
+                  <div className="flex items-center justify-between p-4 bg-white/60 rounded-xl">
                     <div>
-                      <p className="font-medium text-gray-900">Auto-Reply aktivieren</p>
-                      <p className="text-sm text-gray-500">KI beantwortet neue Bewertungen automatisch</p>
+                      <p className="font-medium text-gray-500">Auto-Reply aktivieren</p>
+                      <p className="text-sm text-gray-400">KI beantwortet neue Bewertungen automatisch</p>
                     </div>
-                    <Switch
-                      checked={autoReplyEnabled}
-                      onCheckedChange={setAutoReplyEnabled}
-                    />
+                    <Switch checked={false} disabled />
                   </div>
                   
-                  {autoReplyEnabled && (
-                    <div className="p-4 bg-white rounded-xl space-y-3">
-                      <div>
-                        <Label className="text-gray-700">Mindestbewertung für Auto-Reply</Label>
-                        <p className="text-sm text-gray-500 mb-2">
-                          Nur Bewertungen mit dieser Sternzahl oder höher werden automatisch beantwortet
-                        </p>
-                        <div className="flex items-center gap-2">
-                          {[1, 2, 3, 4, 5].map((rating) => (
-                            <button
-                              key={rating}
-                              type="button"
-                              onClick={() => setAutoReplyMinRating(rating)}
-                              className={`w-10 h-10 rounded-lg flex items-center justify-center transition-colors ${
-                                autoReplyMinRating <= rating 
-                                  ? 'bg-amber-100 text-amber-600' 
-                                  : 'bg-gray-100 text-gray-400'
-                              }`}
-                            >
-                              <Star className={`w-5 h-5 ${autoReplyMinRating <= rating ? 'fill-amber-500' : ''}`} />
-                            </button>
-                          ))}
-                          <span className="ml-2 text-sm text-gray-600">
-                            {autoReplyMinRating}+ Sterne
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                  
-                  <Button onClick={handleSaveAutoReply} disabled={savingAutoReply} className="rounded-xl">
-                    {savingAutoReply ? (
-                      <>
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        Speichern...
-                      </>
-                    ) : (
-                      "Einstellungen speichern"
-                    )}
+                  <Button disabled className="rounded-xl">
+                    Einstellungen speichern
                   </Button>
                 </div>
               </div>
