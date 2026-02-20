@@ -571,6 +571,9 @@ export type Database = {
           auto_reply_enabled: boolean | null
           auto_reply_min_rating: number | null
           billing_address: Json | null
+          birthday_bonus_points: number
+          birthday_enabled: boolean
+          birthday_message: string | null
           box_id: string | null
           city: string | null
           company_name: string | null
@@ -622,6 +625,8 @@ export type Database = {
           twitter: string | null
           updated_at: string
           website: string | null
+          welcome_enabled: boolean
+          welcome_message: string | null
         }
         Insert: {
           active?: boolean
@@ -629,6 +634,9 @@ export type Database = {
           auto_reply_enabled?: boolean | null
           auto_reply_min_rating?: number | null
           billing_address?: Json | null
+          birthday_bonus_points?: number
+          birthday_enabled?: boolean
+          birthday_message?: string | null
           box_id?: string | null
           city?: string | null
           company_name?: string | null
@@ -680,6 +688,8 @@ export type Database = {
           twitter?: string | null
           updated_at?: string
           website?: string | null
+          welcome_enabled?: boolean
+          welcome_message?: string | null
         }
         Update: {
           active?: boolean
@@ -687,6 +697,9 @@ export type Database = {
           auto_reply_enabled?: boolean | null
           auto_reply_min_rating?: number | null
           billing_address?: Json | null
+          birthday_bonus_points?: number
+          birthday_enabled?: boolean
+          birthday_message?: string | null
           box_id?: string | null
           city?: string | null
           company_name?: string | null
@@ -738,6 +751,8 @@ export type Database = {
           twitter?: string | null
           updated_at?: string
           website?: string | null
+          welcome_enabled?: boolean
+          welcome_message?: string | null
         }
         Relationships: []
       }
