@@ -51,7 +51,7 @@ export const getRoleDefaultPath = (role: UserRole | null): string => {
     case 'sales_partner':
       return '/partner/dashboard';
     case 'merchant':
-      return '/kunde/stempelkarte';
+      return '/kunde';
     case 'end_customer':
       return '/app';
     default:
