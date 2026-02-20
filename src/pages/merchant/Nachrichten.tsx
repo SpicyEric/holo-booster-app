@@ -77,6 +77,7 @@ const Nachrichten = () => {
   const [saving, setSaving] = useState(false);
   const [estimatingRecipients, setEstimatingRecipients] = useState(false);
   const [estimatedRecipients, setEstimatedRecipients] = useState<number | null>(null);
+  const [lastMessageSentAt, setLastMessageSentAt] = useState<Date | null>(null);
 
   // Automations state
   const [welcomeEnabled, setWelcomeEnabled] = useState(false);
@@ -145,6 +146,11 @@ const Nachrichten = () => {
           recipient_count: 0
         }));
         setMessages(typedMessages);
+
+        // Track last sent date for 7-day cooldown
+        if (msgData.length > 0 && msgData[0].sent_at) {
+          setLastMessageSentAt(new Date(msgData[0].sent_at));
+        }
       }
 
       const { data: offerData } = await supabase
@@ -744,17 +750,35 @@ const Nachrichten = () => {
                 />
               </div>
             </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setShowMessageDialog(false)} className="rounded-xl">Abbrechen</Button>
-              <Button onClick={handleSaveMessage} disabled={saving} className="rounded-xl">
-                {saving ? (
-                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                ) : (
-                  <Send className="h-4 w-4 mr-2" />
-                )}
-                {editingMessage ? 'Speichern' : 'Nachricht senden'}
-              </Button>
-            </DialogFooter>
+            {(() => {
+              const COOLDOWN_DAYS = 7;
+              const cooldownActive = !editingMessage && lastMessageSentAt && 
+                (Date.now() - lastMessageSentAt.getTime()) < COOLDOWN_DAYS * 24 * 60 * 60 * 1000;
+              const daysRemaining = cooldownActive && lastMessageSentAt
+                ? Math.ceil((COOLDOWN_DAYS * 24 * 60 * 60 * 1000 - (Date.now() - lastMessageSentAt.getTime())) / (24 * 60 * 60 * 1000))
+                : 0;
+
+              return (
+                <DialogFooter className="flex-col gap-2">
+                  {cooldownActive && (
+                    <p className="text-sm text-destructive w-full text-center">
+                      ⏳ Spamschutz: Nächste Nachricht in {daysRemaining} {daysRemaining === 1 ? 'Tag' : 'Tagen'} möglich
+                    </p>
+                  )}
+                  <div className="flex gap-2 w-full justify-end">
+                    <Button variant="outline" onClick={() => setShowMessageDialog(false)} className="rounded-xl">Abbrechen</Button>
+                    <Button onClick={handleSaveMessage} disabled={saving || !!cooldownActive} className="rounded-xl">
+                      {saving ? (
+                        <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                      ) : (
+                        <Send className="h-4 w-4 mr-2" />
+                      )}
+                      {editingMessage ? 'Speichern' : 'Nachricht senden'}
+                    </Button>
+                  </div>
+                </DialogFooter>
+              );
+            })()}
           </DialogContent>
         </Dialog>
 
