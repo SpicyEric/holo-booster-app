@@ -117,6 +117,24 @@ const Accounts = () => {
       }
       
       const profiles = profilesData || [];
+
+      // Fetch emails via Edge Function
+      const userIds = roles.map(r => r.user_id);
+      let emails: Record<string, string> = {};
+      if (userIds.length > 0) {
+        try {
+          const { data: emailData, error: emailError } = await supabase.functions.invoke('getUserEmails', {
+            body: { userIds },
+          });
+          if (emailError) {
+            console.error("Email fetch error:", emailError);
+          } else {
+            emails = emailData?.emails || {};
+          }
+        } catch (e) {
+          console.error("Email fetch failed:", e);
+        }
+      }
       
       const accountsData = roles.map(role => {
         const profile = profiles.find(p => p.user_id === role.user_id);
@@ -126,7 +144,7 @@ const Accounts = () => {
         
         return {
           id: role.user_id,
-          email: "", // Email not available from public tables
+          email: emails[role.user_id] || "",
           full_name: fullName,
           role: role.role as AppRole,
           created_at: role.created_at || profile?.created_at || "",
