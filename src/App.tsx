@@ -31,6 +31,7 @@ import GoogleBewertungen from "./pages/merchant/GoogleBewertungen";
 import MeinKonto from "./pages/merchant/MeinKonto";
 import Nachrichten from "./pages/merchant/Nachrichten";
 import PartnerDashboard from "./pages/partner/Dashboard";
+import MerchantSetup from "./pages/merchant/MerchantSetup";
 import Scan from "./pages/Scan";
 import NotFound from "./pages/NotFound";
 import CheckoutSuccess from "./pages/CheckoutSuccess";
@@ -92,6 +93,7 @@ const App = () => (
           <Route path="/admin/map" element={<CustomerMap />} />
           
           {/* Händler Dashboard (role: merchant) */}
+          <Route path="/kunde/setup" element={<MerchantSetup />} />
           <Route path="/kunde" element={<MerchantLayout />}>
             <Route index element={<KundeDashboard />} />
             <Route path="mein-geschaeft" element={<MeinGeschaeft />} />

@@ -9,7 +9,7 @@ export const getRoleDashboardPath = (role: UserRole): string => {
     case 'admin':
       return '/admin';
     case 'merchant':
-      return '/kunde/stempelkarte';
+      return '/kunde';
     case 'partner':
       return '/partner/dashboard';
     case 'end_customer':

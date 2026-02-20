@@ -230,6 +230,17 @@ export default function KundeDashboard() {
       if (user?.id) {
         customerData = await getUserCustomer(user.id);
         if (customerData) {
+          // Check if merchant needs onboarding (no Box-ID linked)
+          const { count: boxCount } = await supabase
+            .from("customer_boxes")
+            .select("id", { count: "exact", head: true })
+            .eq("customer_id", customerData.id);
+
+          if (!boxCount || boxCount === 0) {
+            navigate("/kunde/setup");
+            return;
+          }
+
           setCustomer({
             id: customerData.id,
             name: customerData.name,
