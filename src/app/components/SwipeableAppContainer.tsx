@@ -17,6 +17,7 @@ import { usePushNotifications } from '@/app/hooks/usePushNotifications';
 import { useMessageNotifications } from '@/app/hooks/useMessageNotifications';
 import { useBackButton } from '@/app/hooks/useBackButton';
 import { ExitAppDialog } from '@/app/components/ExitAppDialog';
+import { useStatusBar } from '@/app/hooks/useStatusBar';
 
 // Context to control swipe behavior
 const SwipeControlContext = createContext<{
@@ -61,6 +62,7 @@ export const SwipeableAppContainer = () => {
   
   // Handle back button on native platforms
   const { showExitDialog, confirmExit, cancelExit } = useBackButton();
+  useStatusBar();
   
   const [emblaRef, emblaApi] = useEmblaCarousel({
     loop: false,
