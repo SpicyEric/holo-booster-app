@@ -98,9 +98,20 @@ export function usePermissions() {
   const checkAllPermissions = useCallback(async (): Promise<PermissionState> => {
     setIsLoading(true);
     
+    // Add timeout to prevent hanging forever on native
+    const withTimeout = <T,>(promise: Promise<T>, fallback: T, ms = 5000): Promise<T> => {
+      return Promise.race([
+        promise,
+        new Promise<T>((resolve) => setTimeout(() => {
+          console.warn('[usePermissions] Permission check timed out, using fallback');
+          resolve(fallback);
+        }, ms)),
+      ]);
+    };
+    
     const [locationStatus, nfcStatus] = await Promise.all([
-      checkLocationPermissionStatus(),
-      checkNfcStatus(),
+      withTimeout(checkLocationPermissionStatus(), 'prompt' as const),
+      withTimeout(checkNfcStatus(), 'unsupported' as const),
     ]);
     
     const newState: PermissionState = {
@@ -108,6 +119,7 @@ export function usePermissions() {
       nfc: nfcStatus,
     };
     
+    console.log('[usePermissions] Check complete:', newState);
     setPermissions(newState);
     setIsLoading(false);
     
