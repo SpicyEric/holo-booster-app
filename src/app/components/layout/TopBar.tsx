@@ -11,7 +11,7 @@ export const TopBar = ({ title, showBack = false }: TopBarProps) => {
   const navigate = useNavigate();
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 bg-background border-b border-border h-14 flex items-center justify-between px-4 shadow-sm">
+    <header className="fixed top-0 left-0 right-0 z-50 bg-background border-b border-border flex items-center justify-between px-4 shadow-sm" style={{ paddingTop: 'env(safe-area-inset-top, 0px)', height: 'calc(3.5rem + env(safe-area-inset-top, 0px))' }}>
       <div className="flex items-center gap-2">
         {showBack && (
           <Button variant="ghost" size="icon" onClick={() => navigate(-1)} className="text-foreground -ml-2">

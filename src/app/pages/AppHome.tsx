@@ -73,12 +73,17 @@ export const AppHome = () => {
       const { data: accounts, error: accountsError } = await supabase
         .from('loyalty_accounts')
         .select('id, merchant_customer_id, current_points_balance')
-        .eq('user_id', user?.id)
+        .eq('user_id', user!.id)
         .gt('current_points_balance', 0);
+
+      console.log('[AppHome] loyalty_accounts query:', { accounts, accountsError, userId: user!.id });
 
       let stampedMerchantIds: string[] = [];
 
-      if (!accountsError && accounts && accounts.length > 0) {
+      if (accountsError) {
+        console.error('[AppHome] Error loading loyalty accounts:', accountsError);
+        setStampCards([]);
+      } else if (accounts && accounts.length > 0) {
         stampedMerchantIds = accounts.map(a => a.merchant_customer_id);
 
         // Fetch customers data
@@ -95,6 +100,8 @@ export const AppHome = () => {
         }));
 
         setStampCards(formatted);
+      } else {
+        setStampCards([]);
       }
 
       // Load new customer offers - only for merchants where user hasn't stamped yet

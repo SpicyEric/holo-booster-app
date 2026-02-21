@@ -16,7 +16,7 @@ export const MainLayout = ({ children, title, showBack = false }: MainLayoutProp
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background to-muted/30 pb-20 pt-14">
+    <div className="min-h-screen bg-gradient-to-b from-background to-muted/30 pb-20" style={{ paddingTop: 'calc(3.5rem + env(safe-area-inset-top, 0px))' }}>
       <Particles
         particleColors={['#6366F1', '#8B5CF6', '#A855F7']}
         particleCount={400}
