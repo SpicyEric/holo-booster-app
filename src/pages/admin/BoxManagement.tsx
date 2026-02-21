@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Plus, Trash2, Search, RefreshCw, Package, Check, X } from "lucide-react";
+import { Plus, Trash2, Search, RefreshCw, Package, Check, Nfc, Loader2, Shuffle, Shield } from "lucide-react";
 import { toast } from "sonner";
 import {
   Table,
@@ -23,12 +23,25 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 
 const STAMP_PRESETS = {
   standard_3: { label: "Standard (3 Stempel: Grün, Blau, Rot)", stamps: 3 },
   standard_5: { label: "Erweitert (5 Stempel)", stamps: 5 },
   custom: { label: "Individuell", stamps: 0 },
 };
+
+const STAMP_COLORS = [
+  { value: "grün", label: "Grün", colorClass: "bg-green-500" },
+  { value: "blau", label: "Blau", colorClass: "bg-blue-500" },
+  { value: "rot", label: "Rot", colorClass: "bg-red-500" },
+];
 
 interface Box {
   id: string;
@@ -41,6 +54,28 @@ interface Box {
     customer_name: string;
     assigned_at: string;
   } | null;
+}
+
+interface RegisteredStamp {
+  id: string;
+  stamp_color: string;
+  hardware_uid: string | null;
+  chip_uid: string;
+  points_value: number;
+}
+
+// Generate random Box-ID in format XXXXX-XXXXX-XXXXX
+const VALID_CHARS = 'ABCDEFGHJKMNPQRSTUVWXYZ123456789'; // No I, L, O, 0
+function generateBoxId(): string {
+  const parts: string[] = [];
+  for (let p = 0; p < 3; p++) {
+    let segment = '';
+    for (let i = 0; i < 5; i++) {
+      segment += VALID_CHARS.charAt(Math.floor(Math.random() * VALID_CHARS.length));
+    }
+    parts.push(segment);
+  }
+  return parts.join('-');
 }
 
 const BoxManagement = () => {
@@ -59,11 +94,22 @@ const BoxManagement = () => {
   // Delete state
   const [deleteBox, setDeleteBox] = useState<Box | null>(null);
 
+  // Stamp registration dialog
+  const [stampDialogOpen, setStampDialogOpen] = useState(false);
+  const [stampDialogBox, setStampDialogBox] = useState<Box | null>(null);
+  const [registeredStamps, setRegisteredStamps] = useState<RegisteredStamp[]>([]);
+  const [loadingStamps, setLoadingStamps] = useState(false);
+  const [scanningStampColor, setScanningStampColor] = useState<string | null>(null);
+  const [webNfcSupported, setWebNfcSupported] = useState(false);
+
+  useEffect(() => {
+    setWebNfcSupported('NDEFReader' in window);
+  }, []);
+
   const loadBoxes = async () => {
     try {
       setLoading(true);
       
-      // Load all boxes
       const { data: boxesData, error: boxesError } = await supabase
         .from("boxes")
         .select("*")
@@ -71,7 +117,6 @@ const BoxManagement = () => {
 
       if (boxesError) throw boxesError;
 
-      // Load customer_boxes assignments
       const { data: assignmentsData, error: assignmentsError } = await supabase
         .from("customer_boxes")
         .select(`
@@ -83,7 +128,6 @@ const BoxManagement = () => {
 
       if (assignmentsError) throw assignmentsError;
 
-      // Map assignments to boxes
       const boxesWithAssignments = (boxesData || []).map(box => {
         const assignment = assignmentsData?.find(a => a.box_id === box.id);
         return {
@@ -132,9 +176,7 @@ const BoxManagement = () => {
   }, [boxes, searchTerm, filterAssigned]);
 
   const formatBoxId = (value: string) => {
-    // Remove all non-alphanumeric characters
     const clean = value.replace(/[^A-Za-z0-9]/g, "").toUpperCase();
-    // Insert dashes every 5 characters
     const parts = [];
     for (let i = 0; i < clean.length && i < 15; i += 5) {
       parts.push(clean.slice(i, i + 5));
@@ -146,6 +188,10 @@ const BoxManagement = () => {
     setNewBoxId(formatBoxId(e.target.value));
   };
 
+  const handleGenerateBoxId = () => {
+    setNewBoxId(generateBoxId());
+  };
+
   const addBox = async () => {
     const cleanId = newBoxId.replace(/-/g, "");
     if (cleanId.length !== 15) {
@@ -155,7 +201,6 @@ const BoxManagement = () => {
 
     setAdding(true);
     try {
-      // Check if box_id already exists
       const { data: existing } = await supabase
         .from("boxes")
         .select("id")
@@ -217,6 +262,134 @@ const BoxManagement = () => {
     }
   };
 
+  // === Stamp Registration Logic ===
+
+  const openStampDialog = async (box: Box) => {
+    setStampDialogBox(box);
+    setStampDialogOpen(true);
+    await loadRegisteredStamps(box);
+  };
+
+  const loadRegisteredStamps = async (box: Box) => {
+    setLoadingStamps(true);
+    try {
+      // Find NFC chips that belong to this box (via merchant or by chip_uid containing box_id)
+      const { data, error } = await supabase
+        .from("nfc_chips")
+        .select("id, stamp_color, hardware_uid, chip_uid, points_value")
+        .eq("chip_uid", box.box_id);
+
+      if (error) throw error;
+      setRegisteredStamps(data || []);
+    } catch (error) {
+      console.error("Error loading stamps:", error);
+      setRegisteredStamps([]);
+    } finally {
+      setLoadingStamps(false);
+    }
+  };
+
+  const startStampRegistration = async (color: string) => {
+    if (!stampDialogBox) return;
+    if (!webNfcSupported) {
+      toast.error("Web NFC ist in diesem Browser nicht verfügbar. Bitte nutze Chrome auf einem Android-Gerät.");
+      return;
+    }
+
+    setScanningStampColor(color);
+    const boxId = stampDialogBox.box_id;
+    const ndefText = `${boxId}:${color}`;
+
+    try {
+      const ndef = new (window as any).NDEFReader();
+      const abortController = new AbortController();
+
+      // Timeout after 30 seconds
+      const timeout = setTimeout(() => {
+        abortController.abort();
+        setScanningStampColor(null);
+        toast.error("NFC-Scan Timeout. Bitte erneut versuchen.");
+      }, 30000);
+
+      await ndef.scan({ signal: abortController.signal });
+
+      ndef.addEventListener('reading', async ({ serialNumber }: { serialNumber: string }) => {
+        clearTimeout(timeout);
+        abortController.abort();
+
+        const hardwareUid = serialNumber || null;
+        console.log('[Admin NFC] Tag detected, serial:', hardwareUid);
+
+        // Write the NDEF text to the chip
+        try {
+          const writer = new (window as any).NDEFReader();
+          await writer.write({
+            records: [{ recordType: "text", data: ndefText, lang: "de" }]
+          });
+          console.log('[Admin NFC] Written to chip:', ndefText);
+          toast.success(`NFC-Chip beschrieben: ${ndefText}`);
+        } catch (writeError: any) {
+          console.error('[Admin NFC] Write failed:', writeError);
+          toast.error("Chip konnte nicht beschrieben werden. Hardware-UID wurde trotzdem gelesen.");
+        }
+
+        // Save to database
+        try {
+          // Check if stamp already exists for this box + color
+          const { data: existing } = await supabase
+            .from("nfc_chips")
+            .select("id")
+            .eq("chip_uid", boxId)
+            .eq("stamp_color", color)
+            .maybeSingle();
+
+          if (existing) {
+            // Update existing
+            await supabase
+              .from("nfc_chips")
+              .update({ hardware_uid: hardwareUid })
+              .eq("id", existing.id);
+          } else {
+            // Insert new
+            await supabase
+              .from("nfc_chips")
+              .insert({
+                chip_uid: boxId,
+                stamp_color: color,
+                stamp_name: color.charAt(0).toUpperCase() + color.slice(1),
+                hardware_uid: hardwareUid,
+                points_value: color === 'grün' ? 1 : color === 'blau' ? 2 : 3,
+                is_active: true,
+              });
+          }
+
+          toast.success(`Stempel "${color}" registriert${hardwareUid ? ' (UID: ' + hardwareUid + ')' : ''}`);
+          
+          // Reload stamps
+          if (stampDialogBox) {
+            await loadRegisteredStamps(stampDialogBox);
+          }
+        } catch (dbError: any) {
+          console.error('[Admin NFC] DB save error:', dbError);
+          toast.error("Fehler beim Speichern in der Datenbank");
+        }
+
+        setScanningStampColor(null);
+      }, { once: true });
+
+    } catch (error: any) {
+      console.error('[Admin NFC] Scan error:', error);
+      setScanningStampColor(null);
+      
+      if (error.name === 'AbortError') return;
+      if (error.name === 'NotAllowedError') {
+        toast.error("NFC-Berechtigung verweigert. Bitte erlaube NFC in den Browser-Einstellungen.");
+      } else {
+        toast.error("NFC-Fehler: " + (error.message || "Unbekannter Fehler"));
+      }
+    }
+  };
+
   const availableCount = boxes.filter(b => !b.assigned_customer).length;
   const assignedCount = boxes.filter(b => b.assigned_customer).length;
 
@@ -242,22 +415,33 @@ const BoxManagement = () => {
       {/* Add new box */}
       <Card>
         <CardHeader className="py-3">
-          <CardTitle className="text-sm">Neue Box-ID hinzufügen</CardTitle>
+          <CardTitle className="text-sm">Neue Box-ID erstellen</CardTitle>
           <CardDescription className="text-xs">
-            Format: XXXXX-XXXXX-XXXXX (15 Zeichen, automatisch formatiert)
+            Format: XXXXX-XXXXX-XXXXX – automatisch generieren oder manuell eingeben
           </CardDescription>
         </CardHeader>
         <CardContent className="py-3">
-          <div className="flex gap-2 items-end">
+          <div className="flex flex-wrap gap-2 items-end">
             <div className="space-y-1">
               <Label className="text-xs">Box-ID</Label>
-              <Input
-                placeholder="XXXXX-XXXXX-XXXXX"
-                value={newBoxId}
-                onChange={handleNewBoxIdChange}
-                className="font-mono w-48"
-                maxLength={17}
-              />
+              <div className="flex gap-1">
+                <Input
+                  placeholder="XXXXX-XXXXX-XXXXX"
+                  value={newBoxId}
+                  onChange={handleNewBoxIdChange}
+                  className="font-mono w-48"
+                  maxLength={17}
+                />
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={handleGenerateBoxId}
+                  title="Zufällig generieren"
+                  type="button"
+                >
+                  <Shuffle className="w-4 h-4" />
+                </Button>
+              </div>
             </div>
             <div className="space-y-1">
               <Label className="text-xs">Stempel-Konfiguration</Label>
@@ -272,7 +456,7 @@ const BoxManagement = () => {
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-1 flex-1">
+            <div className="space-y-1 flex-1 min-w-32">
               <Label className="text-xs">Notiz (optional)</Label>
               <Input
                 placeholder="z.B. Bestellung #123"
@@ -353,7 +537,7 @@ const BoxManagement = () => {
                 <TableHead className="h-8 text-xs font-semibold">Zugewiesen an</TableHead>
                 <TableHead className="h-8 text-xs font-semibold">Notiz</TableHead>
                 <TableHead className="h-8 text-xs font-semibold">Erstellt</TableHead>
-                <TableHead className="h-8 text-xs font-semibold w-16"></TableHead>
+                <TableHead className="h-8 text-xs font-semibold w-24"></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -398,16 +582,27 @@ const BoxManagement = () => {
                     {new Date(box.created_at).toLocaleDateString("de-DE")}
                   </TableCell>
                   <TableCell className="py-2">
-                    {!box.assigned_customer && (
+                    <div className="flex gap-1">
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-7 w-7 text-destructive hover:text-destructive"
-                        onClick={() => setDeleteBox(box)}
+                        className="h-7 w-7"
+                        title="Stempel registrieren"
+                        onClick={() => openStampDialog(box)}
                       >
-                        <Trash2 className="h-3 w-3" />
+                        <Nfc className="h-3 w-3" />
                       </Button>
-                    )}
+                      {!box.assigned_customer && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7 text-destructive hover:text-destructive"
+                          onClick={() => setDeleteBox(box)}
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
+                      )}
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}
@@ -415,6 +610,83 @@ const BoxManagement = () => {
           </Table>
         )}
       </div>
+
+      {/* Stamp Registration Dialog */}
+      <Dialog open={stampDialogOpen} onOpenChange={setStampDialogOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Nfc className="h-5 w-5" />
+              Stempel registrieren
+            </DialogTitle>
+            <DialogDescription>
+              Box: <span className="font-mono font-semibold">{stampDialogBox?.box_id}</span>
+              <br />
+              Halte jeden NFC-Chip an dein Handy, um ihn zu registrieren und automatisch zu beschreiben.
+            </DialogDescription>
+          </DialogHeader>
+
+          {!webNfcSupported && (
+            <div className="bg-destructive/10 text-destructive text-sm p-3 rounded-lg">
+              ⚠️ Web NFC ist in diesem Browser nicht verfügbar. Bitte öffne diese Seite in <strong>Chrome auf einem Android-Gerät</strong>.
+            </div>
+          )}
+
+          <div className="space-y-3">
+            {STAMP_COLORS.map((stampColor) => {
+              const registered = registeredStamps.find(s => s.stamp_color === stampColor.value);
+              const isScanning = scanningStampColor === stampColor.value;
+
+              return (
+                <div key={stampColor.value} className="flex items-center gap-3 p-3 border rounded-lg">
+                  <div className={`w-4 h-4 rounded-full ${stampColor.colorClass}`} />
+                  <div className="flex-1">
+                    <div className="font-medium text-sm">{stampColor.label}</div>
+                    {registered ? (
+                      <div className="text-xs text-muted-foreground">
+                        <span className="flex items-center gap-1">
+                          <Shield className="w-3 h-3 text-green-600" />
+                          {registered.hardware_uid 
+                            ? `UID: ${registered.hardware_uid}` 
+                            : 'Registriert (ohne Hardware-UID)'}
+                        </span>
+                      </div>
+                    ) : (
+                      <div className="text-xs text-muted-foreground">Nicht registriert</div>
+                    )}
+                  </div>
+                  <Button
+                    size="sm"
+                    variant={registered ? "outline" : "default"}
+                    disabled={isScanning || !webNfcSupported}
+                    onClick={() => startStampRegistration(stampColor.value)}
+                  >
+                    {isScanning ? (
+                      <>
+                        <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                        Scannen...
+                      </>
+                    ) : registered ? (
+                      'Erneut scannen'
+                    ) : (
+                      <>
+                        <Plus className="w-3 h-3 mr-1" />
+                        Registrieren
+                      </>
+                    )}
+                  </Button>
+                </div>
+              );
+            })}
+          </div>
+
+          {loadingStamps && (
+            <div className="flex items-center justify-center py-4">
+              <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
 
       {/* Delete Confirmation */}
       <ConfirmActionDialog
