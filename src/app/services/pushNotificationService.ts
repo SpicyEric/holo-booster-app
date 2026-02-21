@@ -29,16 +29,13 @@ class PushNotificationService {
         return;
       }
 
-      // Try to register for push notifications (requires Firebase/google-services.json)
-      // If Firebase is not configured, we skip remote push and only use local notifications
-      try {
-        await PushNotifications.register();
-        // Setup remote push listeners only if registration succeeds
-        this.setupListeners();
-      } catch (firebaseError) {
-        console.warn('Push registration skipped (Firebase not configured):', firebaseError);
-        console.log('Falling back to local notifications only');
-      }
+      // Skip remote push registration entirely - Firebase/google-services.json is not configured
+      // Calling PushNotifications.register() without Firebase causes a native FATAL crash
+      // that cannot be caught by JavaScript try-catch
+      // Remote push can be enabled later by adding google-services.json and uncommenting below
+      // await PushNotifications.register();
+      // this.setupListeners();
+      console.log('Remote push registration skipped (Firebase not configured). Using local notifications only.');
 
       // Initialize local notifications for local alerts (works without Firebase)
       await this.initializeLocalNotifications();
