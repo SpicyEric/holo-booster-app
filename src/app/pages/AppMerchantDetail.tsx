@@ -96,15 +96,15 @@ export const AppMerchantDetail = () => {
 
       // Load user points and check if ever stamped
       if (user) {
-        const { data: stampCard } = await supabase
-          .from('user_stamp_cards')
-          .select('current_points')
+        const { data: loyaltyAccount } = await supabase
+          .from('loyalty_accounts')
+          .select('current_points_balance')
           .eq('user_id', user.id)
           .eq('merchant_customer_id', id)
           .maybeSingle();
 
-        if (stampCard) {
-          setUserPoints(stampCard.current_points || 0);
+        if (loyaltyAccount) {
+          setUserPoints(loyaltyAccount.current_points_balance || 0);
           setHasEverStamped(true);
         } else {
           setUserPoints(0);
@@ -112,7 +112,7 @@ export const AppMerchantDetail = () => {
         }
 
         // Load new customer offer if user hasn't stamped yet
-        if (!stampCard) {
+        if (!loyaltyAccount) {
           const { data: offerData } = await supabase
             .from('new_customer_offers')
             .select('*')

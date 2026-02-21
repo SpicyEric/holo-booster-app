@@ -316,8 +316,8 @@ export const AppScan = () => {
                     <p className="text-muted-foreground">{result.error}</p>
                   </>
                 )}
-                <Button onClick={resetScan} className="mt-6 w-full">
-                  Erneut scannen
+                <Button onClick={() => navigate('/app')} className="mt-6 w-full">
+                  Weiter
                 </Button>
               </CardContent>
             </Card>

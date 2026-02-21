@@ -69,22 +69,17 @@ export const AppHome = () => {
   const loadData = async () => {
     setLoading(true);
     try {
-      // Load user's stamp cards
-      const { data: cards, error: cardsError } = await supabase
-        .from('user_stamp_cards')
-        .select(`
-          id,
-          merchant_customer_id,
-          current_points,
-          stamp_card_id
-        `)
-        .eq('user_id', user?.id);
+      // Load user's loyalty accounts (where points > 0)
+      const { data: accounts, error: accountsError } = await supabase
+        .from('loyalty_accounts')
+        .select('id, merchant_customer_id, current_points_balance')
+        .eq('user_id', user?.id)
+        .gt('current_points_balance', 0);
 
       let stampedMerchantIds: string[] = [];
 
-      if (!cardsError && cards && cards.length > 0) {
-        stampedMerchantIds = cards.map(c => c.merchant_customer_id);
-        const stampCardIds = cards.map(c => c.stamp_card_id).filter(Boolean);
+      if (!accountsError && accounts && accounts.length > 0) {
+        stampedMerchantIds = accounts.map(a => a.merchant_customer_id);
 
         // Fetch customers data
         const { data: customersData } = await supabase
@@ -92,18 +87,11 @@ export const AppHome = () => {
           .select('id, name, company_name, logo_url, cover_image_url, industry')
           .in('id', stampedMerchantIds);
 
-        // Fetch stamp card designs
-        const { data: stampCardsData } = stampCardIds.length > 0 
-          ? await supabase
-              .from('stamp_cards')
-              .select('id, stamp_count, background_color, stamp_type')
-              .in('id', stampCardIds)
-          : { data: [] };
-
-        const formatted = cards.map(card => ({
-          ...card,
-          customer: customersData?.find(c => c.id === card.merchant_customer_id),
-          stamp_card: stampCardsData?.find(sc => sc.id === card.stamp_card_id),
+        const formatted = accounts.map(account => ({
+          id: account.id,
+          merchant_customer_id: account.merchant_customer_id,
+          current_points: account.current_points_balance || 0,
+          customer: customersData?.find(c => c.id === account.merchant_customer_id),
         }));
 
         setStampCards(formatted);
