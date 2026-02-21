@@ -27,35 +27,38 @@ export default function AppMyCards() {
       if (!user) return;
 
       try {
-        // Fetch user's stamp cards with merchant info
-        const { data: userCards, error } = await supabase
-          .from('user_stamp_cards')
-          .select(`
-            id,
-            current_points,
-            merchant_customer_id,
-            customers:merchant_customer_id (
-              id,
-              name,
-              logo_url,
-              stamps_required,
-              stamp_reward_text
-            )
-          `)
+        // Fetch user's loyalty accounts with merchant info
+        const { data: accounts, error } = await supabase
+          .from('loyalty_accounts')
+          .select('id, merchant_customer_id, current_points_balance')
           .eq('user_id', user.id)
-          .gt('current_points', 0);
+          .gt('current_points_balance', 0);
 
         if (error) throw error;
 
-        const transformedCards: StampCard[] = (userCards || []).map((card: any) => ({
-          id: card.id,
-          merchantId: card.merchant_customer_id,
-          merchantName: card.customers?.name || 'Unbekannter Händler',
-          merchantLogo: card.customers?.logo_url,
-          currentPoints: card.current_points || 0,
-          stampsRequired: card.customers?.stamps_required,
-          rewardText: card.customers?.stamp_reward_text,
-        }));
+        // Fetch merchant details for all accounts
+        const merchantIds = (accounts || []).map(a => a.merchant_customer_id);
+        let customersData: any[] = [];
+        if (merchantIds.length > 0) {
+          const { data } = await supabase
+            .from('customers')
+            .select('id, name, logo_url, stamps_required, stamp_reward_text')
+            .in('id', merchantIds);
+          customersData = data || [];
+        }
+
+        const transformedCards: StampCard[] = (accounts || []).map((account: any) => {
+          const customer = customersData.find(c => c.id === account.merchant_customer_id);
+          return {
+            id: account.id,
+            merchantId: account.merchant_customer_id,
+            merchantName: customer?.name || 'Unbekannter Händler',
+            merchantLogo: customer?.logo_url,
+            currentPoints: account.current_points_balance || 0,
+            stampsRequired: customer?.stamps_required,
+            rewardText: customer?.stamp_reward_text,
+          };
+        });
 
         setCards(transformedCards);
       } catch (error) {
