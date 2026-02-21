@@ -566,31 +566,18 @@ function configureAndroidManifest() {
 }
 
 // ============================================================================
-// 8. REGISTER EXXILI NFC PLUGIN IN MAINACTIVITY (Android)
+// 8. CLEAN MAINACTIVITY – Remove manual NFC plugin registrations (Android)
 // ============================================================================
-// The @exxili/capacitor-nfc plugin sometimes does not get auto-registered in
-// certain Capacitor/Gradle setups, causing runtime errors:
-//   Error: "NFC" plugin is not implemented on android
-// The plugin itself includes an example MainActivity that calls:
-//   registerPlugin(NFCPlugin::class.java)
-// We patch the app's MainActivity to include this registration.
-function patchMainActivityRegisterNfcPlugin() {
-  // NOTE:
-  // - Older builds of this repo injected a manual registration for the previous
-  //   @exxili/capacitor-nfc plugin. After switching plugins, that leftover line
-  //   causes a hard compile error:
-  //     package com.exxili.capacitornfc does not exist
-  //   So we proactively REMOVE any Exxili registration from MainActivity.
-  // - Although Capawesome plugins should auto-register, we've seen Android builds
-  //   where the plugin ends up present in capacitor.plugins.json but still shows:
-  //     Error: "Nfc" plugin is not implemented on android
-  //   In that case, manual registration in MainActivity is a safe fallback.
-
-  console.log('\n📦 Ensuring MainActivity NFC registration...');
+// Capacitor 7 + Capawesome NFC v7 use automatic plugin loading.
+// Manual registerPlugin() calls cause compile errors because the app module
+// does not have a direct Gradle dependency on the plugin module.
+// This step removes ALL manual NFC plugin registrations (Exxili and Capawesome).
+function cleanMainActivityNfcRegistration() {
+  console.log('\n📦 Cleaning MainActivity from manual NFC registrations...');
 
   const javaRoot = path.join(ANDROID_PATH, 'app', 'src', 'main', 'java');
   if (!fs.existsSync(javaRoot)) {
-    console.log('   ✅ No android/app/src/main/java found (skip MainActivity cleanup)');
+    console.log('   ✅ No android/app/src/main/java found (skip)');
     return;
   }
 
@@ -615,176 +602,63 @@ function patchMainActivityRegisterNfcPlugin() {
   walk(javaRoot);
 
   if (mainActivityFiles.length === 0) {
-    console.log('   ✅ No MainActivity file found (skip cleanup)');
+    console.log('   ✅ No MainActivity file found (skip)');
     return;
   }
 
   let cleaned = 0;
-  let ensured = 0;
 
   for (const filePath of mainActivityFiles) {
     try {
       let content = fs.readFileSync(filePath, 'utf8');
       const original = content;
 
-      // Remove explicit imports for Exxili plugin
+      // Remove ALL NFC plugin imports (Exxili + Capawesome)
       content = content.replace(/^\s*import\s+com\.exxili\.capacitornfc\.[^;\n]+;\s*\n/gm, '');
       content = content.replace(/^\s*import\s+com\.exxili\.capacitornfc\.[^\n]+\s*\n/gm, '');
+      content = content.replace(/^\s*import\s+io\.capawesome\.capacitorjs\.plugins\.nfc\.NfcPlugin;\s*\n/gm, '');
+      content = content.replace(/^\s*import\s+io\.capawesome\.capacitorjs\.plugins\.nfc\.NfcPlugin\s*\n/gm, '');
 
-      // Remove Java-style manual registration lines
+      // Remove manual registerPlugin lines (all variants)
+      content = content.replace(/^\s*registerPlugin\(\s*com\.exxili\.capacitornfc\.[^)]*\)\s*;\s*\n/gm, '');
+      content = content.replace(/^\s*registerPlugin\(\s*NFCPlugin\.class\s*\)\s*;\s*\n/gm, '');
+      content = content.replace(/^\s*registerPlugin\(\s*NFCPlugin::class\.java\s*\)\s*\n/gm, '');
+      content = content.replace(/^\s*registerPlugin\(\s*NfcPlugin\.class\s*\)\s*;\s*\n/gm, '');
+      content = content.replace(/^\s*registerPlugin\(\s*NfcPlugin::class\.java\s*\)\s*\n/gm, '');
+
+      // Remove empty onCreate that was only added for NFC registration
+      // Java: @Override public void onCreate(Bundle savedInstanceState) { super.onCreate(savedInstanceState); }
       content = content.replace(
-        /^\s*registerPlugin\(\s*com\.exxili\.capacitornfc\.[^)]*\)\s*;\s*\n/gm,
-        ''
+        /\n\s*@Override\s*\n\s*public\s+void\s+onCreate\(\s*Bundle\s+savedInstanceState\s*\)\s*\{\s*\n\s*super\.onCreate\(\s*savedInstanceState\s*\)\s*;\s*\n\s*\}\s*\n/g,
+        '\n'
       );
+      // Kotlin: override fun onCreate(savedInstanceState: Bundle?) { super.onCreate(savedInstanceState) }
       content = content.replace(
-        /^\s*registerPlugin\(\s*NFCPlugin\.class\s*\)\s*;\s*\n/gm,
-        ''
+        /\n\s*override\s+fun\s+onCreate\(\s*savedInstanceState:\s*Bundle\?\s*\)\s*\{\s*\n\s*super\.onCreate\(\s*savedInstanceState\s*\)\s*\n\s*\}\s*\n/g,
+        '\n'
       );
 
-      // Remove Kotlin-style manual registration lines
-      content = content.replace(
-        /^\s*registerPlugin\(\s*com\.exxili\.capacitornfc\.[^)]*\)\s*\n/gm,
-        ''
-      );
-      content = content.replace(
-        /^\s*registerPlugin\(\s*NFCPlugin::class\.java\s*\)\s*\n/gm,
-        ''
-      );
-
-      const isJava = filePath.endsWith('.java');
-      const isKotlin = filePath.endsWith('.kt');
-
-      // -------------------------------------------------------------------
-      // Fallback: Ensure Capawesome NFC plugin registration exists
-      // -------------------------------------------------------------------
-      const hasCapawesomeRegistration =
-        content.includes('registerPlugin(NfcPlugin.class)') ||
-        content.includes('registerPlugin(NfcPlugin::class.java)') ||
-        content.includes('io.capawesome.capacitorjs.plugins.nfc.NfcPlugin');
-
-      if (!hasCapawesomeRegistration) {
-        if (isJava) {
-          // Ensure imports
-          if (!content.includes('import io.capawesome.capacitorjs.plugins.nfc.NfcPlugin;')) {
-            if (content.match(/^\s*import\s+.*;\s*$/m)) {
-              // Insert after the last import
-              content = content.replace(
-                /(^\s*import\s+.*;\s*$)(?![\s\S]*^\s*import\s+)/m,
-                `$1\nimport io.capawesome.capacitorjs.plugins.nfc.NfcPlugin;`
-              );
-            } else if (content.match(/^\s*package\s+.*;\s*$/m)) {
-              // Insert after package
-              content = content.replace(
-                /(^\s*package\s+.*;\s*$)/m,
-                `$1\n\nimport io.capawesome.capacitorjs.plugins.nfc.NfcPlugin;`
-              );
-            } else {
-              // Fallback: prepend
-              content = `import io.capawesome.capacitorjs.plugins.nfc.NfcPlugin;\n${content}`;
-            }
-          }
-
-          if (!content.includes('import android.os.Bundle;')) {
-            if (content.match(/^\s*import\s+.*;\s*$/m)) {
-              content = content.replace(
-                /(^\s*import\s+.*;\s*$)(?![\s\S]*^\s*import\s+)/m,
-                `$1\nimport android.os.Bundle;`
-              );
-            } else if (content.match(/^\s*package\s+.*;\s*$/m)) {
-              content = content.replace(
-                /(^\s*package\s+.*;\s*$)/m,
-                `$1\n\nimport android.os.Bundle;`
-              );
-            } else {
-              content = `import android.os.Bundle;\n${content}`;
-            }
-          }
-
-          // If onCreate exists, inject registration before super.onCreate
-          if (content.includes('void onCreate(') && content.includes('super.onCreate')) {
-            // Only inject once
-            content = content.replace(
-              /super\.onCreate\(\s*savedInstanceState\s*\)\s*;/,
-              'registerPlugin(NfcPlugin.class);\n    super.onCreate(savedInstanceState);'
-            );
-          } else {
-            // Add onCreate override before the final class closing brace
-            content = content.replace(
-              /\n}\s*$/,
-              `\n\n  @Override\n  public void onCreate(Bundle savedInstanceState) {\n    registerPlugin(NfcPlugin.class);\n    super.onCreate(savedInstanceState);\n  }\n}`
-            );
-          }
-        } else if (isKotlin) {
-          // Ensure imports
-          if (!content.includes('import io.capawesome.capacitorjs.plugins.nfc.NfcPlugin')) {
-            if (content.match(/^\s*import\s+.*\s*$/m)) {
-              content = content.replace(
-                /(^\s*import\s+.*\s*$)(?![\s\S]*^\s*import\s+)/m,
-                `$1\nimport io.capawesome.capacitorjs.plugins.nfc.NfcPlugin`
-              );
-            } else if (content.match(/^\s*package\s+.*\s*$/m)) {
-              content = content.replace(
-                /(^\s*package\s+.*\s*$)/m,
-                `$1\n\nimport io.capawesome.capacitorjs.plugins.nfc.NfcPlugin`
-              );
-            } else {
-              content = `import io.capawesome.capacitorjs.plugins.nfc.NfcPlugin\n${content}`;
-            }
-          }
-
-          if (!content.includes('import android.os.Bundle')) {
-            if (content.match(/^\s*import\s+.*\s*$/m)) {
-              content = content.replace(
-                /(^\s*import\s+.*\s*$)(?![\s\S]*^\s*import\s+)/m,
-                `$1\nimport android.os.Bundle`
-              );
-            } else if (content.match(/^\s*package\s+.*\s*$/m)) {
-              content = content.replace(
-                /(^\s*package\s+.*\s*$)/m,
-                `$1\n\nimport android.os.Bundle`
-              );
-            } else {
-              content = `import android.os.Bundle\n${content}`;
-            }
-          }
-
-          // If onCreate exists, inject registration before super.onCreate
-          if (content.includes('override fun onCreate') && content.includes('super.onCreate')) {
-            content = content.replace(
-              /super\.onCreate\(\s*savedInstanceState\s*\)/,
-              'registerPlugin(NfcPlugin::class.java)\n        super.onCreate(savedInstanceState)'
-            );
-          } else {
-            content = content.replace(
-              /\n}\s*$/,
-              `\n\n    override fun onCreate(savedInstanceState: Bundle?) {\n        registerPlugin(NfcPlugin::class.java)\n        super.onCreate(savedInstanceState)\n    }\n}`
-            );
-          }
-        }
+      // Remove orphaned android.os.Bundle import if onCreate is gone
+      if (!content.includes('onCreate') && !content.includes('Bundle')) {
+        content = content.replace(/^\s*import\s+android\.os\.Bundle;\s*\n/gm, '');
+        content = content.replace(/^\s*import\s+android\.os\.Bundle\s*\n/gm, '');
       }
 
-      const changed = content !== original;
+      // Clean up multiple blank lines
+      content = content.replace(/\n{3,}/g, '\n\n');
 
-      // Heuristic counters for logs
-      if (original !== content) {
-        const removedExxili = original.includes('com.exxili.capacitornfc') && !content.includes('com.exxili.capacitornfc');
-        const addedCapawesome = !original.includes('io.capawesome.capacitorjs.plugins.nfc.NfcPlugin') && content.includes('io.capawesome.capacitorjs.plugins.nfc.NfcPlugin');
-        if (removedExxili) cleaned++;
-        if (addedCapawesome) ensured++;
-      }
-
-      if (changed) {
+      if (content !== original) {
+        cleaned++;
         fs.writeFileSync(filePath, content, 'utf8');
-        console.log(`   ✅ Patched MainActivity: ${filePath.replace(PROJECT_ROOT, '.')}`);
+        console.log(`   ✅ Cleaned MainActivity: ${filePath.replace(PROJECT_ROOT, '.')}`);
       }
     } catch (e) {
       console.log(`   ⚠️ Could not clean MainActivity: ${filePath}`);
     }
   }
 
-  if (cleaned === 0) console.log('   ✅ No Exxili NFC registration found');
-  if (ensured === 0) console.log('   ✅ Capawesome NFC registration already present (or not needed)');
-  if (ensured > 0) console.log('   ✅ Added Capawesome NFC registration fallback');
+  if (cleaned === 0) console.log('   ✅ MainActivity already clean (no manual NFC registrations)');
+  console.log('   ℹ️  Capawesome NFC v7 uses Capacitor autoloading – no manual registration needed');
 }
 
 // ============================================================================
@@ -820,8 +694,8 @@ function main() {
     createNfcTechFilter();
     configureAndroidManifest();
 
-    // Step 6: Ensure NFC plugin is registered in MainActivity
-    patchMainActivityRegisterNfcPlugin();
+    // Step 6: Clean manual NFC registrations (Capacitor 7 uses autoloading)
+    cleanMainActivityNfcRegistration();
     
     console.log('\n' + '━'.repeat(60));
     console.log('  ✅ Android NFC configuration complete!');
