@@ -33,7 +33,6 @@ export const AppScan = () => {
   const [showPermissionDialog, setShowPermissionDialog] = useState(false);
   const [permissionDialogType, setPermissionDialogType] = useState<'disabled' | 'permission_denied'>('disabled');
 
-  // Check for NFC support on mount
   useEffect(() => {
     const checkNfcSupport = async () => {
       setCheckingNfc(true);
@@ -60,7 +59,6 @@ export const AppScan = () => {
     };
   }, []);
 
-  // Handle direct chip_data from URL (for Deep Link / NFC Intent)
   useEffect(() => {
     const chipData = searchParams.get('chip');
     if (chipData && user) {
@@ -68,7 +66,7 @@ export const AppScan = () => {
     }
   }, [searchParams, user]);
 
-  const handleChipScan = useCallback(async (chipData: string) => {
+  const handleChipScan = useCallback(async (chipData: string, hardwareUid?: string) => {
     if (!user) {
       toast.error('Bitte melde dich an');
       navigate('/app/auth');
@@ -82,6 +80,7 @@ export const AppScan = () => {
       const { data, error } = await supabase.rpc('award_points_via_nfc', {
         p_chip_data: chipData,
         p_user_id: user.id,
+        p_hardware_uid: hardwareUid || null,
       });
 
       if (error) throw error;
@@ -141,9 +140,9 @@ export const AppScan = () => {
 
   const handleNfcRead = useCallback((nfcResult: NfcReadResult) => {
     if (nfcResult.success && nfcResult.chipData) {
-      handleChipScan(nfcResult.chipData);
+      // Pass hardware UID along for security verification
+      handleChipScan(nfcResult.chipData, nfcResult.hardwareUid);
     } else if (nfcResult.error) {
-      // Check if it's a permission-related error
       const errorLower = nfcResult.error.toLowerCase();
       if (errorLower.includes('permission') || 
           errorLower.includes('denied') ||
@@ -161,7 +160,6 @@ export const AppScan = () => {
   }, [handleChipScan]);
 
   const startNFCScan = async () => {
-    // Check if NFC is enabled
     const enabled = await nfcService.isEnabled();
     if (!enabled) {
       setNfcEnabled(false);
@@ -177,7 +175,6 @@ export const AppScan = () => {
       await nfcService.startScan(handleNfcRead);
     } catch (error: any) {
       console.error('NFC scan start error:', error);
-      // Check if it's a permission error
       if (error.message?.toLowerCase().includes('permission') || 
           error.message?.toLowerCase().includes('denied') ||
           error.message?.toLowerCase().includes('berechtigung')) {
@@ -193,11 +190,9 @@ export const AppScan = () => {
 
   const handlePermissionRetry = async () => {
     setShowPermissionDialog(false);
-    // Re-check NFC status
     const enabled = await nfcService.isEnabled();
     setNfcEnabled(enabled);
     if (enabled) {
-      // Try starting scan again
       startNFCScan();
     }
   };
@@ -218,13 +213,7 @@ export const AppScan = () => {
     setScanning(false);
   };
 
-  const resetScan = () => {
-    nfcService.stopScan();
-    setResult(null);
-    setScanning(false);
-  };
-
-  // NFC not supported - show error state
+  // NFC not supported
   if (!checkingNfc && !nfcSupported) {
     return (
       <MainLayout title="Punkte sammeln">
@@ -248,7 +237,7 @@ export const AppScan = () => {
     );
   }
 
-  // NFC disabled - prompt to enable
+  // NFC disabled
   if (!checkingNfc && nfcSupported && !nfcEnabled) {
     return (
       <MainLayout title="Punkte sammeln">
@@ -332,7 +321,7 @@ export const AppScan = () => {
           </motion.div>
         )}
 
-        {/* NFC Scanning Modal/Pop-up */}
+        {/* NFC Scanning Modal */}
         {scanning && !result && (
           <motion.div
             key="scanning"
@@ -341,7 +330,6 @@ export const AppScan = () => {
             exit={{ opacity: 0 }}
             className="fixed inset-0 z-50 bg-background/95 backdrop-blur-sm flex flex-col items-center justify-center p-6"
           >
-            {/* Close button */}
             <Button
               variant="ghost"
               size="icon"
@@ -351,7 +339,6 @@ export const AppScan = () => {
               <X className="h-6 w-6" />
             </Button>
 
-            {/* NFC Animation */}
             <motion.div
               animate={{ 
                 scale: [1, 1.2, 1],
@@ -373,7 +360,6 @@ export const AppScan = () => {
               </motion.div>
             </motion.div>
 
-            {/* Instructions */}
             <h2 className="text-2xl font-bold mb-3 text-center">
               NFC-Stempel scannen
             </h2>
@@ -386,7 +372,6 @@ export const AppScan = () => {
               </p>
             )}
 
-            {/* Cancel button */}
             <Button 
               variant="outline" 
               onClick={cancelScan} 
@@ -397,7 +382,7 @@ export const AppScan = () => {
           </motion.div>
         )}
 
-        {/* Idle State - Start Scan Button */}
+        {/* Idle State */}
         {!scanning && !result && !checkingNfc && (
           <motion.div
             key="idle"
@@ -406,7 +391,6 @@ export const AppScan = () => {
             exit={{ opacity: 0, y: -20 }}
             className="flex flex-col items-center justify-center min-h-[60vh] px-4"
           >
-            {/* Main NFC Button */}
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
@@ -440,7 +424,6 @@ export const AppScan = () => {
         )}
       </AnimatePresence>
 
-      {/* NFC Permission Fallback Dialog */}
       <NfcPermissionDialog
         open={showPermissionDialog}
         onOpenChange={setShowPermissionDialog}
