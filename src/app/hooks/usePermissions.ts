@@ -72,17 +72,26 @@ export function usePermissions() {
   const checkNfcStatus = useCallback(async (): Promise<'supported' | 'unsupported' | 'disabled'> => {
     try {
       const isSupported = await nfcService.isSupported();
+      console.log('[usePermissions] NFC isSupported:', isSupported);
       if (!isSupported) return 'unsupported';
       
       // On Android, check if NFC is enabled
       if (Capacitor.getPlatform() === 'android') {
-        const isEnabled = await nfcService.isEnabled();
-        return isEnabled ? 'supported' : 'disabled';
+        try {
+          const isEnabled = await nfcService.isEnabled();
+          console.log('[usePermissions] NFC isEnabled:', isEnabled);
+          return isEnabled ? 'supported' : 'disabled';
+        } catch (e) {
+          console.log('[usePermissions] NFC isEnabled check failed, assuming supported');
+          return 'supported';
+        }
       }
       
       return 'supported';
     } catch (error) {
-      console.error('Error checking NFC status:', error);
+      console.error('[usePermissions] Error checking NFC status:', error);
+      // On native, assume supported - let actual scan fail gracefully
+      if (Capacitor.isNativePlatform()) return 'supported';
       return 'unsupported';
     }
   }, []);
