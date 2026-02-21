@@ -321,16 +321,18 @@ const BoxManagement = () => {
         const hardwareUid = serialNumber || null;
         console.log('[Admin NFC] Tag detected, serial:', hardwareUid);
 
-        // Write the NDEF text to the chip
+        // Write the NDEF text to the chip using the SAME reader instance
+        let writeSuccess = false;
         try {
-          const writer = new (window as any).NDEFReader();
-          await writer.write({
+          await ndef.write({
             records: [{ recordType: "text", data: ndefText, lang: "de" }]
           });
           console.log('[Admin NFC] Written to chip:', ndefText);
+          toast.success(`NFC-Chip beschrieben: ${ndefText}`);
+          writeSuccess = true;
         } catch (writeError: any) {
           console.error('[Admin NFC] Write failed:', writeError);
-          toast.error("Chip konnte nicht beschrieben werden. Hardware-UID wurde trotzdem gelesen.");
+          toast.error("Chip konnte nicht beschrieben werden. Halte den Stempel länger ans Handy und versuche es erneut.");
         }
 
         // Save to database
