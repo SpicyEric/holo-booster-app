@@ -1279,6 +1279,8 @@ export type Database = {
           avatar_url: string | null
           birth_date: string | null
           created_at: string
+          email_verification_token: string | null
+          email_verified: boolean | null
           first_name: string | null
           full_name: string | null
           gender: string | null
@@ -1291,6 +1293,8 @@ export type Database = {
           avatar_url?: string | null
           birth_date?: string | null
           created_at?: string
+          email_verification_token?: string | null
+          email_verified?: boolean | null
           first_name?: string | null
           full_name?: string | null
           gender?: string | null
@@ -1303,6 +1307,8 @@ export type Database = {
           avatar_url?: string | null
           birth_date?: string | null
           created_at?: string
+          email_verification_token?: string | null
+          email_verified?: boolean | null
           first_name?: string | null
           full_name?: string | null
           gender?: string | null
@@ -1965,6 +1971,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      verify_email_token: { Args: { p_token: string }; Returns: Json }
     }
     Enums: {
       app_role: "admin" | "partner" | "merchant" | "customer" | "end_customer"

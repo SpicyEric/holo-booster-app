@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Store, Gift, MessageSquare, TrendingUp, Trophy, ChevronRight, Loader2 } from 'lucide-react';
+import { Store, Gift, MessageSquare, TrendingUp, Trophy, ChevronRight, Loader2, MapPin } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
@@ -9,19 +9,8 @@ import { Badge } from '@/components/ui/badge';
 import { MainLayout } from '@/app/components/layout/MainLayout';
 import { NewCustomerOfferDialog } from '@/app/components/NewCustomerOfferDialog';
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
+  Dialog, DialogContent, DialogHeader, DialogTitle,
 } from '@/components/ui/dialog';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
 
 interface LoyaltyEntry {
   id: string;
@@ -43,6 +32,7 @@ interface NewCustomerOffer {
   title: string;
   description: string | null;
   bonus_stamps: number;
+  distance?: number;
   customer?: {
     id: string;
     name: string;
@@ -58,58 +48,104 @@ interface NewCustomerOffer {
   };
 }
 
+interface RedeemableReward {
+  id: string;
+  title: string;
+  points_required: number;
+  merchant_customer_id: string;
+  merchantName: string;
+  merchantLogo: string | null;
+  userPoints: number;
+}
+
+function haversineDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  const R = 6371;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a = Math.sin(dLat / 2) ** 2 + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
 export const AppHome = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [loyaltyEntries, setLoyaltyEntries] = useState<LoyaltyEntry[]>([]);
   const [newCustomerOffers, setNewCustomerOffers] = useState<NewCustomerOffer[]>([]);
+  const [redeemableRewards, setRedeemableRewards] = useState<RedeemableReward[]>([]);
   const [loading, setLoading] = useState(true);
-  const [pointsDialogOpen, setPointsDialogOpen] = useState(false);
+  const [rewardsDialogOpen, setRewardsDialogOpen] = useState(false);
+  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
 
-  // Dialog states
   const [selectedOffer, setSelectedOffer] = useState<NewCustomerOffer | null>(null);
   const [offerDialogOpen, setOfferDialogOpen] = useState(false);
 
+  // Get user location
   useEffect(() => {
-    if (user) {
-      loadData();
-    }
-  }, [user]);
+    navigator.geolocation?.getCurrentPosition(
+      (pos) => setUserLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+      () => console.log('[AppHome] Geolocation denied'),
+      { timeout: 5000, maximumAge: 60000 }
+    );
+  }, []);
+
+  useEffect(() => {
+    if (user) loadData();
+  }, [user, userLocation]);
 
   const loadData = async () => {
     setLoading(true);
     try {
-      // Load user's loyalty accounts (where points > 0)
-      const { data: accounts, error: accountsError } = await supabase
+      // Load loyalty accounts
+      const { data: accounts } = await supabase
         .from('loyalty_accounts')
         .select('id, merchant_customer_id, current_points_balance')
         .eq('user_id', user!.id)
         .gt('current_points_balance', 0);
 
       let stampedMerchantIds: string[] = [];
+      const pointsMap = new Map<string, number>();
 
-      if (accountsError) {
-        console.error('[AppHome] Error loading loyalty accounts:', accountsError);
-        setLoyaltyEntries([]);
-      } else if (accounts && accounts.length > 0) {
+      if (accounts && accounts.length > 0) {
         stampedMerchantIds = accounts.map(a => a.merchant_customer_id);
+        accounts.forEach(a => pointsMap.set(a.merchant_customer_id, a.current_points_balance || 0));
 
         const { data: customersData } = await supabase
           .from('customers')
           .select('id, name, company_name, logo_url, industry, stamps_required')
           .in('id', stampedMerchantIds);
 
-        // Load rewards to check which are redeemable
         const formatted = accounts.map(account => ({
           id: account.id,
           merchant_customer_id: account.merchant_customer_id,
           current_points: account.current_points_balance || 0,
           customer: customersData?.find(c => c.id === account.merchant_customer_id),
         }));
-
         setLoyaltyEntries(formatted);
+
+        // Load actual redeemable rewards
+        const { data: rewardsData } = await supabase
+          .from('rewards')
+          .select('id, title, points_required, merchant_customer_id')
+          .eq('is_active', true)
+          .in('merchant_customer_id', stampedMerchantIds);
+
+        if (rewardsData) {
+          const redeemable = rewardsData
+            .filter(r => (pointsMap.get(r.merchant_customer_id) || 0) >= r.points_required)
+            .map(r => {
+              const c = customersData?.find(c => c.id === r.merchant_customer_id);
+              return {
+                ...r,
+                merchantName: c?.company_name || c?.name || 'Unbekannt',
+                merchantLogo: c?.logo_url || null,
+                userPoints: pointsMap.get(r.merchant_customer_id) || 0,
+              };
+            });
+          setRedeemableRewards(redeemable);
+        }
       } else {
         setLoyaltyEntries([]);
+        setRedeemableRewards([]);
       }
 
       // Load new customer offers
@@ -130,10 +166,23 @@ export const AppHome = () => {
             .select('id, name, company_name, logo_url, industry, street, house_number, postal_code, city, latitude, longitude')
             .in('id', offerMerchantIds);
 
-          const formattedOffers = filteredOffers.map(offer => ({
-            ...offer,
-            customer: offerCustomersData?.find(c => c.id === offer.merchant_customer_id),
-          }));
+          let formattedOffers: NewCustomerOffer[] = filteredOffers.map(offer => {
+            const customer = offerCustomersData?.find(c => c.id === offer.merchant_customer_id);
+            let distance: number | undefined;
+            if (userLocation && customer?.latitude && customer?.longitude) {
+              distance = haversineDistance(userLocation.lat, userLocation.lng, customer.latitude, customer.longitude);
+            }
+            return { ...offer, customer, distance };
+          });
+
+          // Sort by distance if available, then limit to 5
+          formattedOffers.sort((a, b) => {
+            if (a.distance !== undefined && b.distance !== undefined) return a.distance - b.distance;
+            if (a.distance !== undefined) return -1;
+            if (b.distance !== undefined) return 1;
+            return 0;
+          });
+          formattedOffers = formattedOffers.slice(0, 5);
 
           setNewCustomerOffers(formattedOffers);
         } else {
@@ -159,21 +208,14 @@ export const AppHome = () => {
     loadData();
   };
 
-  // Stats
-  const totalStores = loyaltyEntries.length;
-  const totalPoints = loyaltyEntries.reduce((sum, e) => sum + e.current_points, 0);
-  const rewardsReady = loyaltyEntries.filter(e => {
-    const required = e.customer?.stamps_required;
-    return required && e.current_points >= required;
-  }).length;
-
   return (
     <MainLayout title="Start">
       <div className="space-y-6">
         {/* Neukundenprämien Section */}
         {newCustomerOffers.length > 0 && (
           <div>
-            <h2 className="text-2xl font-bold text-foreground mb-4">Neukundenprämien</h2>
+            <h2 className="text-2xl font-bold text-foreground">Neukundenprämien</h2>
+            <p className="text-sm text-muted-foreground mb-4">Angebote in deiner Nähe</p>
             <div className="space-y-3">
               {newCustomerOffers.map((offer) => (
                 <Card
@@ -183,11 +225,7 @@ export const AppHome = () => {
                 >
                   <div className="flex items-center gap-4">
                     {offer.customer?.logo_url ? (
-                      <img
-                        src={offer.customer.logo_url}
-                        alt={offer.customer.name}
-                        className="w-16 h-16 rounded-full object-cover"
-                      />
+                      <img src={offer.customer.logo_url} alt={offer.customer.name} className="w-16 h-16 rounded-full object-cover" />
                     ) : (
                       <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center text-2xl font-bold text-primary">
                         {offer.customer?.name?.charAt(0) || '?'}
@@ -203,6 +241,14 @@ export const AppHome = () => {
                           <Gift className="h-3 w-3 mr-1" />
                           +{offer.bonus_stamps} Bonus-Punkte
                         </Badge>
+                        {offer.distance !== undefined && (
+                          <span className="text-xs text-muted-foreground flex items-center gap-0.5">
+                            <MapPin className="h-3 w-3" />
+                            {offer.distance < 1
+                              ? `${Math.round(offer.distance * 1000)}m`
+                              : `${offer.distance.toFixed(1)}km`}
+                          </span>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -212,15 +258,49 @@ export const AppHome = () => {
           </div>
         )}
 
-        {/* Deine Punkte Mini-Dashboard */}
+        {/* Mini Dashboard */}
         <div>
-          <h2 className="text-2xl font-bold text-foreground mb-4">Deine Punkte</h2>
-
           {loading ? (
             <Card className="p-6 flex items-center justify-center">
               <Loader2 className="h-6 w-6 animate-spin text-primary" />
             </Card>
-          ) : totalStores === 0 ? (
+          ) : redeemableRewards.length > 0 ? (
+            <Card
+              className="p-5 cursor-pointer hover:shadow-lg transition-shadow border-2 border-green-200 bg-green-50/50 dark:bg-green-950/20"
+              onClick={() => setRewardsDialogOpen(true)}
+            >
+              <div className="flex items-center gap-4">
+                <div className="w-14 h-14 rounded-full bg-green-100 dark:bg-green-900 flex items-center justify-center">
+                  <Trophy className="h-7 w-7 text-green-600" />
+                </div>
+                <div className="flex-1">
+                  <div className="text-2xl font-bold text-green-700 dark:text-green-400">
+                    {redeemableRewards.length}
+                  </div>
+                  <div className="text-sm text-green-600 dark:text-green-500">
+                    {redeemableRewards.length === 1 ? 'Einlösbare Prämie' : 'Einlösbare Prämien'}
+                  </div>
+                </div>
+                <ChevronRight className="h-5 w-5 text-green-400" />
+              </div>
+            </Card>
+          ) : loyaltyEntries.length > 0 ? (
+            <Card className="p-5">
+              <div className="flex items-center gap-4">
+                <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center">
+                  <TrendingUp className="h-7 w-7 text-primary" />
+                </div>
+                <div className="flex-1">
+                  <div className="text-2xl font-bold text-primary">
+                    {loyaltyEntries.reduce((sum, e) => sum + e.current_points, 0)}
+                  </div>
+                  <div className="text-sm text-muted-foreground">
+                    Punkte bei {loyaltyEntries.length} {loyaltyEntries.length === 1 ? 'Laden' : 'Läden'}
+                  </div>
+                </div>
+              </div>
+            </Card>
+          ) : (
             <Card className="p-6 text-center">
               <div className="mx-auto w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center mb-3">
                 <TrendingUp className="h-7 w-7 text-primary" />
@@ -233,35 +313,6 @@ export const AppHome = () => {
                 Shops entdecken
               </Button>
             </Card>
-          ) : (
-            <Card className="p-5">
-              <div className="grid grid-cols-3 gap-3 mb-4">
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-primary">{totalStores}</div>
-                  <div className="text-xs text-muted-foreground">
-                    {totalStores === 1 ? 'Laden' : 'Läden'}
-                  </div>
-                </div>
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-primary">{totalPoints}</div>
-                  <div className="text-xs text-muted-foreground">Punkte</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-primary">{rewardsReady}</div>
-                  <div className="text-xs text-muted-foreground">
-                    {rewardsReady === 1 ? 'Prämie' : 'Prämien'}
-                  </div>
-                </div>
-              </div>
-              <Button
-                variant="outline"
-                className="w-full justify-between"
-                onClick={() => setPointsDialogOpen(true)}
-              >
-                Übersicht öffnen
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-            </Card>
           )}
         </div>
 
@@ -270,94 +321,63 @@ export const AppHome = () => {
           <h2 className="text-xl font-bold text-foreground mb-3">Support</h2>
           <div className="grid grid-cols-2 gap-3">
             <Card className="p-4 hover:shadow-md transition-shadow">
-              <button
-                onClick={() => window.open('https://wa.me/', '_blank')}
-                className="w-full text-center"
-              >
+              <button onClick={() => window.open('https://wa.me/', '_blank')} className="w-full text-center">
                 <div className="mx-auto w-16 h-16 rounded-full bg-green-500/10 flex items-center justify-center mb-3">
                   <MessageSquare className="h-8 w-8 text-green-500" />
                 </div>
                 <h3 className="font-semibold text-foreground mb-1">Hilfe benötigt?</h3>
-                <p className="text-xs text-muted-foreground">
-                  Schreib uns auf WhatsApp
-                </p>
+                <p className="text-xs text-muted-foreground">Schreib uns auf WhatsApp</p>
               </button>
             </Card>
-
             <Card className="p-4 hover:shadow-md transition-shadow">
-              <button
-                onClick={() => navigate('/app/suggest-shop')}
-                className="w-full text-center"
-              >
+              <button onClick={() => navigate('/app/suggest-shop')} className="w-full text-center">
                 <div className="mx-auto w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-3">
                   <Store className="h-8 w-8 text-primary" />
                 </div>
                 <h3 className="font-semibold text-foreground mb-1">Dir fehlt dein Lieblingsladen?</h3>
-                <p className="text-xs text-muted-foreground">
-                  Jetzt vorschlagen
-                </p>
+                <p className="text-xs text-muted-foreground">Jetzt vorschlagen</p>
               </button>
             </Card>
           </div>
         </div>
       </div>
 
-      {/* Points Detail Dialog */}
-      <Dialog open={pointsDialogOpen} onOpenChange={setPointsDialogOpen}>
+      {/* Redeemable Rewards Dialog */}
+      <Dialog open={rewardsDialogOpen} onOpenChange={setRewardsDialogOpen}>
         <DialogContent className="max-w-md max-h-[80vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Deine Punkte</DialogTitle>
+            <DialogTitle>Einlösbare Prämien</DialogTitle>
           </DialogHeader>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Geschäft</TableHead>
-                <TableHead className="text-right">Punkte</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {loyaltyEntries.map((entry) => (
-                <TableRow
-                  key={entry.id}
-                  className="cursor-pointer"
-                  onClick={() => {
-                    setPointsDialogOpen(false);
-                    navigate(`/app/merchant/${entry.merchant_customer_id}`);
-                  }}
-                >
-                  <TableCell>
-                    <div className="flex items-center gap-3">
-                      {entry.customer?.logo_url ? (
-                        <img
-                          src={entry.customer.logo_url}
-                          alt={entry.customer.name}
-                          className="w-8 h-8 rounded-full object-cover"
-                        />
-                      ) : (
-                        <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-xs font-bold text-primary">
-                          {(entry.customer?.name || '?').charAt(0)}
-                        </div>
-                      )}
-                      <div>
-                        <div className="font-medium text-sm">
-                          {entry.customer?.company_name || entry.customer?.name || 'Unbekannt'}
-                        </div>
-                        {entry.customer?.stamps_required && entry.current_points >= entry.customer.stamps_required && (
-                          <Badge variant="default" className="text-[10px] px-1.5 py-0 mt-0.5">
-                            <Trophy className="h-2.5 w-2.5 mr-0.5" />
-                            Prämie bereit
-                          </Badge>
-                        )}
-                      </div>
+          <div className="space-y-3">
+            {redeemableRewards.map((reward) => (
+              <Card
+                key={reward.id}
+                className="p-4 cursor-pointer hover:shadow-md transition-shadow"
+                onClick={() => {
+                  setRewardsDialogOpen(false);
+                  navigate(`/app/merchant/${reward.merchant_customer_id}`);
+                }}
+              >
+                <div className="flex items-center gap-3">
+                  {reward.merchantLogo ? (
+                    <img src={reward.merchantLogo} alt={reward.merchantName} className="w-10 h-10 rounded-full object-cover" />
+                  ) : (
+                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-sm font-bold text-primary">
+                      {reward.merchantName.charAt(0)}
                     </div>
-                  </TableCell>
-                  <TableCell className="text-right font-semibold text-primary">
-                    {entry.current_points}
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+                  )}
+                  <div className="flex-1">
+                    <p className="font-medium text-sm">{reward.title}</p>
+                    <p className="text-xs text-muted-foreground">{reward.merchantName}</p>
+                  </div>
+                  <Badge variant="default" className="text-xs">
+                    <Trophy className="h-3 w-3 mr-1" />
+                    Bereit
+                  </Badge>
+                </div>
+              </Card>
+            ))}
+          </div>
         </DialogContent>
       </Dialog>
 
