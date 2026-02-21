@@ -4,9 +4,9 @@
  * Safe Android runner for this repo.
  *
  * Why:
- * - `npx cap run android` performs a sync first, which can re-introduce Java 21
- *   settings in generated Android modules (e.g. `capacitor-cordova-android-plugins`).
- * - Our `configure-android-nfc.js` script patches ALL Gradle files back to Java 17.
+ * - `npx cap run android` performs a sync first, which can re-introduce Java
+ *   settings incompatible with Capacitor 7 in generated Android modules.
+ * - Our `configure-android-nfc.js` script enforces Java 21, Gradle 8.11.1, and SDK 35.
  *
  * This helper enforces the correct order:
  *   1) cap sync android
