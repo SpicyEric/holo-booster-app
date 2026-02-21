@@ -2,185 +2,158 @@
 
 ## Voraussetzungen
 
-1. Projekt auf GitHub exportieren
-2. Lokal klonen: `git clone <repo-url>`
-3. Dependencies installieren: `npm install`
+| Anforderung | Version |
+|-------------|---------|
+| Node.js | 20.x LTS |
+| Java JDK | **21** (Temurin) |
+| Capacitor | 7.x |
+| Gradle | 8.11.1 |
+| AGP | 8.7.2 |
+| Android SDK | compileSdk 35, targetSdk 35, minSdk 24 |
+| NFC Plugin | @capawesome-team/capacitor-nfc v7.3.0 |
 
-## Capacitor Setup
+## Erstinstallation
 
 ```bash
-# Capacitor CLI installieren (falls nicht vorhanden)
-npm install @capacitor/cli @capacitor/core
+# 1. Projekt klonen und Dependencies installieren
+git clone <repo-url>
+cd holo-booster-app
+npm install
 
-# NFC Plugin installieren
-npm install @capawesome-team/capacitor-nfc
-
-# iOS und Android Plattformen hinzufügen
-npx cap add ios
-npx cap add android
-
-# Projekt bauen und synchronisieren
+# 2. Web-App bauen
 npm run build
+
+# 3. Plattformen hinzufügen
+npx cap add android
+npx cap add ios   # optional, nur auf macOS
+
+# 4. Plattform-spezifische Konfiguration
+node scripts/configure-android-nfc.js   # Android: NFC, Gradle, JDK 21, SDK 35
+node scripts/configure-ios-nfc.js       # iOS: Info.plist, Entitlements
+
+# 5. Synchronisieren
 npx cap sync
 
-# ⭐ AUTOMATISCHE iOS NFC Konfiguration
-node scripts/configure-ios-nfc.js
+# 6. WICHTIG: Patches erneut anwenden (sync überschreibt manche Änderungen)
+node scripts/configure-android-nfc.js
+
+# 7. Öffnen
+npx cap open android   # oder: npx cap open ios
 ```
 
 ## Automatische Skripte
 
-Das Projekt enthält automatische Konfigurationsskripte:
+### `scripts/configure-android-nfc.js`
+Konfiguriert automatisch das gesamte Android-Projekt:
+- **Gradle Wrapper** → 8.11.1
+- **gradle.properties** → AndroidX, Jetifier, Build Config
+- **app/build.gradle** → compileSdk 35, targetSdk 35, Java 21
+- **Plugin Gradle-Dateien** → Java/Kotlin 21 erzwungen (node_modules + android/)
+- **AndroidManifest.xml** → NFC Permissions, Intent-Filter
+- **nfc_tech_filter.xml** → Alle NFC-Tag-Typen
+- **MainActivity.java/kt** → Capawesome NFC Plugin Registrierung
 
 ### `scripts/configure-ios-nfc.js`
 Konfiguriert automatisch alle iOS NFC-Berechtigungen:
-- Info.plist Einträge
-- App.entitlements
+- Info.plist Einträge (NFC + Geolocation)
+- App.entitlements (NFC Reader Session Formats)
 
+### `scripts/cap-run-android.js`
+Automatisierter Build+Run Workflow:
 ```bash
-# Manuell ausführen
-node scripts/configure-ios-nfc.js
-
-# Oder nach jedem cap sync
-npx cap sync && node scripts/capacitor-hooks.js
+node scripts/cap-run-android.js
+# Führt aus: cap sync → configure-android-nfc.js → cap run android --no-sync
 ```
 
 ### `scripts/capacitor-hooks.js`
-Post-Sync Hook für iOS und Android Konfiguration.
-
-## iOS-spezifische Konfiguration
-
-### 1. Info.plist Einträge
-
-Öffne `ios/App/App/Info.plist` und füge folgende Einträge hinzu:
-
-```xml
-<!-- NFC Berechtigung - Nutzer-Erklärung -->
-<key>NFCReaderUsageDescription</key>
-<string>Diese App nutzt NFC um Treuepunkte bei teilnehmenden Händlern zu sammeln.</string>
-
-<!-- ISO7816 Tag Identifiers (für kontaktlose Karten) -->
-<key>com.apple.developer.nfc.readersession.iso7816.select-identifiers</key>
-<array>
-    <string>D276000085010100</string>
-</array>
-
-<!-- FeliCa System Codes (für bestimmte NFC Tags) -->
-<key>com.apple.developer.nfc.readersession.felica.systemcodes</key>
-<array>
-    <string>0000</string>
-</array>
+Post-Sync Hook für beide Plattformen:
+```bash
+npx cap sync && node scripts/capacitor-hooks.js
 ```
-
-### 2. App Entitlements
-
-Öffne `ios/App/App/App.entitlements` und füge hinzu:
-
-```xml
-<key>com.apple.developer.nfc.readersession.formats</key>
-<array>
-    <string>NDEF</string>
-    <string>TAG</string>
-</array>
-```
-
-### 3. Xcode Capabilities
-
-1. Öffne das Projekt in Xcode: `npx cap open ios`
-2. Wähle das App-Target
-3. Gehe zu "Signing & Capabilities"
-4. Klicke auf "+ Capability"
-5. Füge "Near Field Communication Tag Reading" hinzu
-
-### 4. Apple Developer Account
-
-- Stelle sicher, dass dein Apple Developer Account NFC-Berechtigung hat
-- Das App Bundle ID muss mit dem Provisioning Profile übereinstimmen
 
 ## Android-spezifische Konfiguration
 
 ### Automatische Konfiguration (empfohlen)
 
 ```bash
-# Führt automatisch alle Android NFC Konfigurationen durch
 node scripts/configure-android-nfc.js
 ```
 
-Dieses Skript fügt automatisch hinzu:
-- NFC Berechtigungen in AndroidManifest.xml
-- Intent-Filter für automatisches Öffnen bei NFC-Scan
-- NFC Tech Filter für alle gängigen Tag-Typen
+### Was das Skript konfiguriert:
 
-### AndroidManifest.xml (manuell)
+1. **AndroidManifest.xml Permissions:**
+   - `android.permission.NFC`
+   - `android.permission.ACCESS_FINE_LOCATION`
+   - `android.permission.ACCESS_COARSE_LOCATION`
+   - `android.permission.POST_NOTIFICATIONS`
+   - `android.permission.VIBRATE`
 
-Falls manuell konfiguriert werden soll:
+2. **NFC Intent-Filter für Auto-Launch:**
+   ```xml
+   <intent-filter>
+       <action android:name="android.nfc.action.NDEF_DISCOVERED"/>
+       <category android:name="android.intent.category.DEFAULT"/>
+       <data android:mimeType="text/plain"/>
+   </intent-filter>
+   <intent-filter>
+       <action android:name="android.nfc.action.TECH_DISCOVERED"/>
+   </intent-filter>
+   <intent-filter>
+       <action android:name="android.nfc.action.TAG_DISCOVERED"/>
+       <category android:name="android.intent.category.DEFAULT"/>
+   </intent-filter>
+   ```
 
-```xml
-<uses-permission android:name="android.permission.NFC" />
-<uses-feature android:name="android.hardware.nfc" android:required="false" />
-```
+3. **NFC Tech Filter** (`android/app/src/main/res/xml/nfc_tech_filter.xml`)
 
-### Intent Filter für Auto-Launch
+4. **MainActivity NFC Registration** (Fallback für Plugin-Autoloading)
 
-Die App öffnet sich automatisch bei NFC-Scan:
+## iOS-spezifische Konfiguration
 
-```xml
-<!-- NDEF Discovery - Eloyo Tags -->
-<intent-filter>
-    <action android:name="android.nfc.action.NDEF_DISCOVERED"/>
-    <category android:name="android.intent.category.DEFAULT"/>
-    <data android:mimeType="application/vnd.eloyo.stamp"/>
-</intent-filter>
+### Automatisch (via configure-ios-nfc.js):
+- `NFCReaderUsageDescription` in Info.plist
+- ISO7816 Select Identifiers
+- FeliCa System Codes
+- NFC Reader Session Formats in App.entitlements
+- Location Usage Descriptions
 
-<!-- Tech Discovery - NFC-A/B Tags -->
-<intent-filter>
-    <action android:name="android.nfc.action.TECH_DISCOVERED"/>
-    <category android:name="android.intent.category.DEFAULT"/>
-</intent-filter>
+### Manuell in Xcode:
+1. Öffne: `npx cap open ios`
+2. Wähle App-Target → "Signing & Capabilities"
+3. "+" → "Near Field Communication Tag Reading"
+4. Stelle sicher, dass Provisioning Profile NFC unterstützt
 
-<!-- Tag Discovery - Fallback für alle Tags -->
-<intent-filter>
-    <action android:name="android.nfc.action.TAG_DISCOVERED"/>
-    <category android:name="android.intent.category.DEFAULT"/>
-</intent-filter>
-```
+## NFC Berechtigungs-Flow in der App
 
-### NFC Tech Filter
+### Android
+- **NFC hat kein natives Permission-Popup** – es ist ein System-Toggle (an/aus)
+- Beim App-Start und vor jedem Scan: `nfcService.isEnabled()` wird geprüft
+- Wenn NFC **deaktiviert**: `NfcPermissionDialog` erscheint sofort
+- Dialog bietet "Einstellungen öffnen" → öffnet NFC-Settings via `capacitor-native-settings`
 
-Erstelle `android/app/src/main/res/xml/nfc_tech_filter.xml` für erweiterte Tag-Unterstützung (wird automatisch durch das Skript erstellt).
-
-## App starten
-
-```bash
-# iOS Simulator/Gerät
-npx cap run ios
-
-# Android Emulator/Gerät
-npx cap run android
-```
+### iOS
+- NFC wird über `NFCReaderSession` angefragt
+- iOS zeigt automatisch ein natives Scan-Sheet
+- NFC kann auf iOS nicht systemweit deaktiviert werden
 
 ## Debugging
 
-### iOS NFC Debugging
-- NFC funktioniert nur auf echten Geräten (iPhone 7+)
-- Der iOS Simulator unterstützt kein NFC
-- Stelle sicher, dass NFC in den iPhone-Einstellungen aktiviert ist
-
 ### Android NFC Debugging
-- Android Emulator unterstützt NFC-Simulation
-- Teste auf echtem Gerät für beste Ergebnisse
-- Prüfe ob NFC in den Android-Einstellungen aktiviert ist
+- NFC auf Android Emulator: Begrenzt (empfohlen: echtes Gerät)
+- Prüfe NFC in Android-Einstellungen
+- Logcat Filter: `[NFC]` für App-Logs
+
+### iOS NFC Debugging
+- NFC nur auf echten Geräten (iPhone 7+)
+- iOS Simulator unterstützt kein NFC
 
 ## Häufige Fehler
 
-### "NFC nicht unterstützt"
-- iOS: Gerät muss iPhone 7 oder neuer sein
-- Android: Gerät benötigt NFC-Hardware
-
-### "NFC ist deaktiviert"
-- Nutzer muss NFC in den Geräteeinstellungen aktivieren
-- Die App bietet einen Button um Einstellungen zu öffnen
-
-### iOS Build-Fehler
-- Prüfe ob alle Info.plist Einträge korrekt sind
-- Stelle sicher, dass Entitlements konfiguriert sind
-- Überprüfe das Provisioning Profile
+| Fehler | Lösung |
+|--------|--------|
+| "NFC plugin is not implemented" | `node scripts/configure-android-nfc.js` (registriert Plugin in MainActivity) |
+| "Minimum Gradle version is 8.x" | `node scripts/configure-android-nfc.js` (setzt Gradle 8.11.1) |
+| "JAVA_HOME not set" | JDK 21 installieren, JAVA_HOME setzen, CMD neu öffnen |
+| "compileSdk version mismatch" | `node scripts/configure-android-nfc.js` (setzt SDK 35) |
+| "NFC nicht unterstützt" | Gerät hat keine NFC-Hardware |
+| "NFC ist deaktiviert" | NFC in Geräteeinstellungen aktivieren |

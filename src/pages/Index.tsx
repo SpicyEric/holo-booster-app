@@ -14,11 +14,18 @@ const Index = () => {
         const isNative = Capacitor.isNativePlatform();
         
         if (isNative) {
-          // Native App: Check auth status and route to /app or /app/auth
+          // Native App: Check auth status and route accordingly
           const { data: { session } } = await supabase.auth.getSession();
           
           if (session) {
-            navigate('/app', { replace: true });
+            // Check if permissions onboarding has been completed
+            const permissionsCompleted = localStorage.getItem('eloyo_permissions_completed');
+            if (!permissionsCompleted) {
+              // First time after login → show permissions onboarding
+              navigate('/app/permissions', { replace: true });
+            } else {
+              navigate('/app', { replace: true });
+            }
           } else {
             navigate('/app/auth', { replace: true });
           }
