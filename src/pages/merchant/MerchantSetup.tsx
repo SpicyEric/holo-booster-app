@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,7 +15,7 @@ import { toast } from "sonner";
 import { 
   Store, Upload, FileText, Clock, Share2, 
   CheckCircle2, ChevronRight, SkipForward, Loader2,
-  Package, ArrowLeft
+  Package, ArrowLeft, MapPin
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import RichTextEditor from "@/components/merchant/RichTextEditor";
@@ -48,7 +48,7 @@ const DAYS = [
   { key: "sunday", label: "Sonntag" },
 ];
 
-const TOTAL_STEPS = 6;
+const TOTAL_STEPS = 7;
 
 const stepMeta = [
   { icon: Package, title: "Box-ID verknüpfen", subtitle: "Verbinde deine Starterbox mit deinem Geschäft" },
@@ -56,6 +56,7 @@ const stepMeta = [
   { icon: Upload, title: "Titelbild hochladen", subtitle: "Wird auf deiner Stempelkarte angezeigt" },
   { icon: FileText, title: "Beschreibung", subtitle: "Erzähl deinen Kunden etwas über dein Geschäft" },
   { icon: Clock, title: "Öffnungszeiten", subtitle: "Wann können dich deine Kunden besuchen?" },
+  { icon: MapPin, title: "Adresse", subtitle: "Wo befindet sich dein Geschäft?" },
   { icon: Share2, title: "Kontakt & Social Media", subtitle: "Wie können dich Kunden erreichen?" },
 ];
 
@@ -81,6 +82,15 @@ export default function MerchantSetup() {
   const [website, setWebsite] = useState("");
   const [instagram, setInstagram] = useState("");
 
+  // Address state
+  const [street, setStreet] = useState("");
+  const [houseNumber, setHouseNumber] = useState("");
+  const [postalCode, setPostalCode] = useState("");
+  const [city, setCity] = useState("");
+  const [latitude, setLatitude] = useState<number | null>(null);
+  const [longitude, setLongitude] = useState<number | null>(null);
+  const [geocoding, setGeocoding] = useState(false);
+
   useEffect(() => {
     if (user?.id) loadCustomer();
   }, [user?.id]);
@@ -100,22 +110,19 @@ export default function MerchantSetup() {
 
       setCustomerId(assignment.customer_id);
 
-      // Check if Box-ID already linked
       const { count } = await supabase
         .from("customer_boxes")
         .select("id", { count: "exact", head: true })
         .eq("customer_id", assignment.customer_id);
 
       if (count && count > 0) {
-        // Already has a box → skip to step 1 (name)
         setBoxLinked(true);
         setStep(1);
       }
 
-      // Load existing customer data
       const { data: customer } = await supabase
         .from("customers")
-        .select("name, industry, cover_image_url, description, phone, website, instagram, opening_hours")
+        .select("name, industry, cover_image_url, description, phone, website, instagram, opening_hours, street, house_number, postal_code, city, latitude, longitude")
         .eq("id", assignment.customer_id)
         .single();
 
@@ -127,6 +134,12 @@ export default function MerchantSetup() {
         setPhone(customer.phone || "");
         setWebsite(customer.website || "");
         setInstagram(customer.instagram || "");
+        setStreet(customer.street || "");
+        setHouseNumber(customer.house_number || "");
+        setPostalCode(customer.postal_code || "");
+        setCity(customer.city || "");
+        setLatitude(customer.latitude || null);
+        setLongitude(customer.longitude || null);
         if (customer.opening_hours && typeof customer.opening_hours === "object") {
           setOpeningHours(customer.opening_hours as any);
         }
@@ -184,7 +197,6 @@ export default function MerchantSetup() {
         box_id: boxData.id,
       });
 
-      // Create default stamps
       const preset = boxData.stamp_preset || "standard_3";
       const configs = preset === "standard_5"
         ? [
@@ -240,11 +252,35 @@ export default function MerchantSetup() {
     }
   };
 
+  // Geocode address using the edge function
+  const geocodeAddress = useCallback(async (): Promise<{ lat: number; lng: number } | null> => {
+    if (!street || !postalCode || !city) return null;
+    setGeocoding(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("geocode-address", {
+        body: { street, houseNumber, postalCode, city },
+      });
+      if (error) throw error;
+      if (data?.lat && data?.lng) {
+        setLatitude(data.lat);
+        setLongitude(data.lng);
+        return { lat: data.lat, lng: data.lng };
+      } else {
+        toast.error("Adresse konnte nicht gefunden werden");
+        return null;
+      }
+    } catch {
+      toast.error("Geocoding fehlgeschlagen");
+      return null;
+    } finally {
+      setGeocoding(false);
+    }
+  }, [street, houseNumber, postalCode, city]);
+
   const saveProgress = async () => {
     if (!customerId) return;
     setSaving(true);
     try {
-      let coordinates = null;
       const updateData: Record<string, any> = {
         name: name || undefined,
         industry: industry || undefined,
@@ -254,17 +290,22 @@ export default function MerchantSetup() {
         website: website || undefined,
         instagram: instagram || undefined,
         opening_hours: Object.keys(openingHours).length > 0 ? openingHours : undefined,
+        street: street || undefined,
+        house_number: houseNumber || undefined,
+        postal_code: postalCode || undefined,
+        city: city || undefined,
+        latitude: latitude || undefined,
+        longitude: longitude || undefined,
         updated_at: new Date().toISOString(),
       };
 
-      // Remove undefined values
       Object.keys(updateData).forEach(key => {
         if (updateData[key] === undefined) delete updateData[key];
       });
 
       await supabase.from("customers").update(updateData).eq("id", customerId);
     } catch {
-      // Silent fail - we save on each step
+      // Silent fail
     } finally {
       setSaving(false);
     }
@@ -285,11 +326,24 @@ export default function MerchantSetup() {
   };
 
   const handleSkip = () => {
-    if (step === 0) return; // Can't skip box-id
+    if (step === 0 || step === 5) return; // Can't skip box-id or address
     goNext();
   };
 
   const handleNextWithSave = async () => {
+    if (step === 5) {
+      if (!street.trim() || !postalCode.trim() || !city.trim()) {
+        toast.error("Bitte fülle Straße, PLZ und Stadt aus");
+        return;
+      }
+      if (!latitude || !longitude) {
+        const result = await geocodeAddress();
+        if (!result) {
+          toast.error("Bitte klicke auf 'Adresse prüfen', um deinen Standort zu bestätigen");
+          return;
+        }
+      }
+    }
     await saveProgress();
     goNext();
   };
@@ -321,9 +375,15 @@ export default function MerchantSetup() {
   }
 
   const isLastStep = step === TOTAL_STEPS - 1;
+  const isAddressStep = step === 5;
+  const canSkip = step > 0 && !isLastStep && !isAddressStep;
   const meta = stepMeta[step];
   const Icon = meta.icon;
   const progress = ((step + 1) / TOTAL_STEPS) * 100;
+
+  const googleMapsEmbedUrl = latitude && longitude
+    ? `https://www.google.com/maps?q=${latitude},${longitude}&z=16&output=embed`
+    : null;
 
   return (
     <div className="min-h-screen bg-background">
@@ -335,7 +395,6 @@ export default function MerchantSetup() {
             Schritt {step + 1} von {TOTAL_STEPS}
           </span>
         </div>
-        {/* Progress bar */}
         <div className="h-1 bg-muted">
           <motion.div
             className="h-full bg-primary"
@@ -537,6 +596,94 @@ export default function MerchantSetup() {
 
               {step === 5 && (
                 <div className="space-y-4">
+                  <p className="text-sm text-muted-foreground">
+                    Deine Adresse wird benötigt, damit Kunden dein Geschäft in der App finden können. <strong>Pflichtfeld.</strong>
+                  </p>
+                  <div className="grid grid-cols-3 gap-3">
+                    <div className="col-span-2">
+                      <Label htmlFor="street">Straße *</Label>
+                      <Input
+                        id="street"
+                        placeholder="Hauptstraße"
+                        value={street}
+                        onChange={e => { setStreet(e.target.value); setLatitude(null); setLongitude(null); }}
+                        className="mt-1"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="houseNumber">Nr.</Label>
+                      <Input
+                        id="houseNumber"
+                        placeholder="12a"
+                        value={houseNumber}
+                        onChange={e => { setHouseNumber(e.target.value); setLatitude(null); setLongitude(null); }}
+                        className="mt-1"
+                      />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-3 gap-3">
+                    <div>
+                      <Label htmlFor="postalCode">PLZ *</Label>
+                      <Input
+                        id="postalCode"
+                        placeholder="10115"
+                        value={postalCode}
+                        onChange={e => { setPostalCode(e.target.value); setLatitude(null); setLongitude(null); }}
+                        className="mt-1"
+                        maxLength={5}
+                      />
+                    </div>
+                    <div className="col-span-2">
+                      <Label htmlFor="city">Stadt *</Label>
+                      <Input
+                        id="city"
+                        placeholder="Berlin"
+                        value={city}
+                        onChange={e => { setCity(e.target.value); setLatitude(null); setLongitude(null); }}
+                        className="mt-1"
+                      />
+                    </div>
+                  </div>
+
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={geocodeAddress}
+                    disabled={geocoding || !street.trim() || !postalCode.trim() || !city.trim()}
+                    className="w-full"
+                  >
+                    {geocoding ? (
+                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    ) : (
+                      <MapPin className="h-4 w-4 mr-2" />
+                    )}
+                    Adresse prüfen
+                  </Button>
+
+                  {latitude && longitude && (
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2 text-sm text-green-600">
+                        <CheckCircle2 className="h-4 w-4" />
+                        <span>Standort gefunden</span>
+                      </div>
+                      <div className="rounded-lg overflow-hidden border border-border h-48">
+                        <iframe
+                          title="Standort-Vorschau"
+                          width="100%"
+                          height="100%"
+                          style={{ border: 0 }}
+                          loading="lazy"
+                          referrerPolicy="no-referrer-when-downgrade"
+                          src={googleMapsEmbedUrl!}
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {step === 6 && (
+                <div className="space-y-4">
                   <div>
                     <Label htmlFor="phone">Telefonnummer</Label>
                     <Input id="phone" placeholder="+49 123 456789" value={phone} onChange={e => setPhone(e.target.value)} className="mt-1" />
@@ -566,7 +713,7 @@ export default function MerchantSetup() {
             )}
           </div>
           <div className="flex gap-2">
-            {step > 0 && !isLastStep && (
+            {canSkip && (
               <Button variant="outline" size="sm" onClick={handleSkip}>
                 <SkipForward className="h-4 w-4 mr-1" />
                 Überspringen
