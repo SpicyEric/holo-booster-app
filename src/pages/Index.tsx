@@ -18,14 +18,8 @@ const Index = () => {
           const { data: { session } } = await supabase.auth.getSession();
           
           if (session) {
-            // Check if permissions onboarding has been completed
-            const permissionsCompleted = localStorage.getItem('eloyo_permissions_completed');
-            if (!permissionsCompleted) {
-              // First time after login → show permissions onboarding
-              navigate('/app/permissions', { replace: true });
-            } else {
-              navigate('/app', { replace: true });
-            }
+            // Logged in → go straight to app (permissions are requested on-demand natively)
+            navigate('/app', { replace: true });
           } else {
             navigate('/app/auth', { replace: true });
           }

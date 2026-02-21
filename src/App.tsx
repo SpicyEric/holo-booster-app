@@ -48,7 +48,7 @@ import SwipeableAppContainer from "./app/components/SwipeableAppContainer";
 import AppHistory from "./app/pages/AppHistory";
 import AppSettings from "./app/pages/AppSettings";
 import AppAuth from "./app/pages/AppAuth";
-import { AppPermissions } from "./app/pages/AppPermissions";
+// AppPermissions removed - permissions are now requested natively on-demand
 import AppMerchantDetail from "./app/pages/AppMerchantDetail";
 import AppScan from "./app/pages/AppScan";
 import AppSuggestShop from "./app/pages/AppSuggestShop";
@@ -117,7 +117,8 @@ const App = () => (
           
           {/* ===== APP ROUTES (End Customer) - Swipeable main pages ===== */}
           <Route path="/app/auth" element={<AppAuth />} />
-          <Route path="/app/permissions" element={<AppProtectedRoute><AppPermissions /></AppProtectedRoute>} />
+          {/* Permissions are now handled natively on-demand, redirect to app */}
+          <Route path="/app/permissions" element={<Navigate to="/app" replace />} />
           <Route path="/app" element={<AppProtectedRoute><SwipeableAppContainer /></AppProtectedRoute>} />
           <Route path="/app/messages" element={<AppProtectedRoute><SwipeableAppContainer /></AppProtectedRoute>} />
           <Route path="/app/stores" element={<AppProtectedRoute><SwipeableAppContainer /></AppProtectedRoute>} />
