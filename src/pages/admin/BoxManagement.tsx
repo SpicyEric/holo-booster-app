@@ -313,9 +313,10 @@ const BoxManagement = () => {
 
       await ndef.scan({ signal: abortController.signal });
 
-      ndef.addEventListener('reading', async ({ serialNumber }: { serialNumber: string }) => {
+      const handleReading = async ({ serialNumber }: { serialNumber: string }) => {
         clearTimeout(timeout);
-        abortController.abort();
+        // Remove event listener immediately to prevent duplicate fires
+        ndef.removeEventListener('reading', handleReading);
 
         const hardwareUid = serialNumber || null;
         console.log('[Admin NFC] Tag detected, serial:', hardwareUid);
@@ -327,7 +328,6 @@ const BoxManagement = () => {
             records: [{ recordType: "text", data: ndefText, lang: "de" }]
           });
           console.log('[Admin NFC] Written to chip:', ndefText);
-          toast.success(`NFC-Chip beschrieben: ${ndefText}`);
         } catch (writeError: any) {
           console.error('[Admin NFC] Write failed:', writeError);
           toast.error("Chip konnte nicht beschrieben werden. Hardware-UID wurde trotzdem gelesen.");
@@ -344,13 +344,11 @@ const BoxManagement = () => {
             .maybeSingle();
 
           if (existing) {
-            // Update existing
             await supabase
               .from("nfc_chips")
               .update({ hardware_uid: hardwareUid })
               .eq("id", existing.id);
           } else {
-            // Insert new
             await supabase
               .from("nfc_chips")
               .insert({
@@ -363,19 +361,30 @@ const BoxManagement = () => {
               });
           }
 
-          toast.success(`Stempel "${color}" registriert${hardwareUid ? ' (UID: ' + hardwareUid + ')' : ''}`);
+          toast.success(`Stempel "${color}" registriert${hardwareUid ? ' – UID: ' + hardwareUid : ''}`);
           
-          // Reload stamps
-          if (stampDialogBox) {
-            await loadRegisteredStamps(stampDialogBox);
-          }
+          // Force immediate UI update by directly updating local state
+          setRegisteredStamps(prev => {
+            const filtered = prev.filter(s => s.stamp_color !== color);
+            return [...filtered, {
+              id: existing?.id || 'temp-' + Date.now(),
+              stamp_color: color,
+              hardware_uid: hardwareUid,
+              chip_uid: boxId,
+              points_value: color === 'grün' ? 1 : color === 'blau' ? 2 : 3,
+            }];
+          });
         } catch (dbError: any) {
           console.error('[Admin NFC] DB save error:', dbError);
           toast.error("Fehler beim Speichern in der Datenbank");
         }
 
         setScanningStampColor(null);
-      }, { once: true });
+        // Abort the scan session after successful read
+        try { abortController.abort(); } catch (_) {}
+      };
+
+      ndef.addEventListener('reading', handleReading);
 
     } catch (error: any) {
       console.error('[Admin NFC] Scan error:', error);

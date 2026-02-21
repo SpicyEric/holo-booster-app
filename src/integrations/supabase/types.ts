@@ -1949,16 +1949,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      award_points_via_nfc:
-        | { Args: { p_chip_data: string; p_user_id: string }; Returns: Json }
-        | {
-            Args: {
-              p_chip_data: string
-              p_hardware_uid?: string
-              p_user_id: string
-            }
-            Returns: Json
-          }
+      award_points_via_nfc: {
+        Args: {
+          p_chip_data: string
+          p_hardware_uid?: string
+          p_user_id: string
+        }
+        Returns: Json
+      }
       generate_customer_number: { Args: never; Returns: string }
       has_role: {
         Args: {
