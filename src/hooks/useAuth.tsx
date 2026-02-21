@@ -14,10 +14,15 @@ export const useAuth = () => {
     let isMounted = true;
 
     const resolveRole = async (userId: string, email?: string) => {
-      if (roleResolvingRef.current) return;
+      if (roleResolvingRef.current) {
+        console.log('[useAuth] resolveRole skipped - already resolving');
+        return;
+      }
       roleResolvingRef.current = true;
+      console.log('[useAuth] resolveRole START for', userId, email);
       try {
         const resolved = await deriveUserRole(userId, email);
+        console.log('[useAuth] resolveRole RESULT:', resolved);
         if (isMounted) {
           setRole(resolved);
         }
@@ -25,7 +30,10 @@ export const useAuth = () => {
         console.error('[useAuth] Role resolution failed:', err);
       } finally {
         roleResolvingRef.current = false;
-        if (isMounted) setLoading(false);
+        if (isMounted) {
+          console.log('[useAuth] Setting loading=false');
+          setLoading(false);
+        }
       }
     };
 
