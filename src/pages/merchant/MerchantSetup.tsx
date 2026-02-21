@@ -13,8 +13,8 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { 
-  Store, Upload, FileText, Clock, Share2, 
-  CheckCircle2, ChevronRight, SkipForward, Loader2,
+  Store, Upload, Clock, 
+  CheckCircle2, ChevronRight, Loader2,
   Package, ArrowLeft, MapPin
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -48,16 +48,12 @@ const DAYS = [
   { key: "sunday", label: "Sonntag" },
 ];
 
-const TOTAL_STEPS = 7;
+const TOTAL_STEPS = 3; // 0: Box-ID, 1: Name+Adresse, 2: Bild+Beschreibung+Öffnungszeiten
 
 const stepMeta = [
   { icon: Package, title: "Box-ID verknüpfen", subtitle: "Verbinde deine Starterbox mit deinem Geschäft" },
-  { icon: Store, title: "Geschäftsname & Branche", subtitle: "Wie heißt dein Geschäft?" },
-  { icon: Upload, title: "Titelbild hochladen", subtitle: "Wird auf deiner Stempelkarte angezeigt" },
-  { icon: FileText, title: "Beschreibung", subtitle: "Erzähl deinen Kunden etwas über dein Geschäft" },
-  { icon: Clock, title: "Öffnungszeiten", subtitle: "Wann können dich deine Kunden besuchen?" },
-  { icon: MapPin, title: "Adresse", subtitle: "Wo befindet sich dein Geschäft?" },
-  { icon: Share2, title: "Kontakt & Social Media", subtitle: "Wie können dich Kunden erreichen?" },
+  { icon: Store, title: "Name & Adresse", subtitle: "Geschäftsname, Branche und Standort" },
+  { icon: Upload, title: "Profil vervollständigen", subtitle: "Titelbild, Beschreibung und Öffnungszeiten" },
 ];
 
 export default function MerchantSetup() {
@@ -78,9 +74,6 @@ export default function MerchantSetup() {
   const [coverUrl, setCoverUrl] = useState("");
   const [description, setDescription] = useState("");
   const [openingHours, setOpeningHours] = useState<Record<string, { open: string; close: string; closed: boolean }>>({});
-  const [phone, setPhone] = useState("");
-  const [website, setWebsite] = useState("");
-  const [instagram, setInstagram] = useState("");
 
   // Address state
   const [street, setStreet] = useState("");
@@ -122,7 +115,7 @@ export default function MerchantSetup() {
 
       const { data: customer } = await supabase
         .from("customers")
-        .select("name, industry, cover_image_url, description, phone, website, instagram, opening_hours, street, house_number, postal_code, city, latitude, longitude")
+        .select("name, industry, cover_image_url, description, opening_hours, street, house_number, postal_code, city, latitude, longitude")
         .eq("id", assignment.customer_id)
         .single();
 
@@ -131,9 +124,6 @@ export default function MerchantSetup() {
         setIndustry(customer.industry || "");
         setCoverUrl(customer.cover_image_url || "");
         setDescription(customer.description || "");
-        setPhone(customer.phone || "");
-        setWebsite(customer.website || "");
-        setInstagram(customer.instagram || "");
         setStreet(customer.street || "");
         setHouseNumber(customer.house_number || "");
         setPostalCode(customer.postal_code || "");
@@ -252,7 +242,6 @@ export default function MerchantSetup() {
     }
   };
 
-  // Geocode address using the edge function
   const geocodeAddress = useCallback(async (): Promise<{ lat: number; lng: number } | null> => {
     if (!street || !postalCode || !city) return null;
     setGeocoding(true);
@@ -286,9 +275,6 @@ export default function MerchantSetup() {
         industry: industry || undefined,
         cover_image_url: coverUrl || undefined,
         description: description || undefined,
-        phone: phone || undefined,
-        website: website || undefined,
-        instagram: instagram || undefined,
         opening_hours: Object.keys(openingHours).length > 0 ? openingHours : undefined,
         street: street || undefined,
         house_number: houseNumber || undefined,
@@ -325,13 +311,13 @@ export default function MerchantSetup() {
     }
   };
 
-  const handleSkip = () => {
-    if (step === 0 || step === 5) return; // Can't skip box-id or address
-    goNext();
-  };
-
   const handleNextWithSave = async () => {
-    if (step === 5) {
+    // Step 1: Name + Address validation
+    if (step === 1) {
+      if (!name.trim()) {
+        toast.error("Bitte gib einen Geschäftsnamen ein");
+        return;
+      }
       if (!street.trim() || !postalCode.trim() || !city.trim()) {
         toast.error("Bitte fülle Straße, PLZ und Stadt aus");
         return;
@@ -375,8 +361,6 @@ export default function MerchantSetup() {
   }
 
   const isLastStep = step === TOTAL_STEPS - 1;
-  const isAddressStep = step === 5;
-  const canSkip = step > 0 && !isLastStep && !isAddressStep;
   const meta = stepMeta[step];
   const Icon = meta.icon;
   const progress = ((step + 1) / TOTAL_STEPS) * 100;
@@ -427,7 +411,8 @@ export default function MerchantSetup() {
             </div>
 
             {/* Step Content */}
-            <div className="bg-card border border-border rounded-xl p-6 min-h-[200px]">
+            <div className="bg-card border border-border rounded-xl p-6">
+              {/* Step 0: Box-ID */}
               {step === 0 && (
                 <div className="space-y-4">
                   <p className="text-sm text-muted-foreground">
@@ -455,8 +440,9 @@ export default function MerchantSetup() {
                 </div>
               )}
 
+              {/* Step 1: Name + Branche + Adresse */}
               {step === 1 && (
-                <div className="space-y-4">
+                <div className="space-y-5">
                   <div>
                     <Label htmlFor="name">Geschäftsname *</Label>
                     <Input
@@ -480,221 +466,216 @@ export default function MerchantSetup() {
                       </SelectContent>
                     </Select>
                   </div>
-                </div>
-              )}
 
-              {step === 2 && (
-                <div className="space-y-4">
-                  {coverUrl ? (
-                    <div className="relative rounded-lg overflow-hidden">
-                      <img src={coverUrl} alt="Titelbild" className="w-full h-48 object-cover" />
-                      <Button
-                        variant="secondary"
-                        size="sm"
-                        className="absolute bottom-3 right-3"
-                        onClick={() => setCoverUrl("")}
-                      >
-                        Ändern
-                      </Button>
+                  <div className="border-t border-border pt-5">
+                    <div className="flex items-center gap-2 mb-3">
+                      <MapPin className="h-4 w-4 text-primary" />
+                      <span className="text-sm font-medium text-foreground">Adresse (Pflicht)</span>
                     </div>
-                  ) : (
-                    <label className="flex flex-col items-center justify-center h-48 border-2 border-dashed border-border rounded-lg cursor-pointer hover:border-primary/50 transition-colors">
-                      {uploadingCover ? (
-                        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                    <p className="text-sm text-muted-foreground mb-3">
+                      Deine Adresse wird benötigt, damit Kunden dein Geschäft in der App finden können.
+                    </p>
+                    <div className="grid grid-cols-3 gap-3">
+                      <div className="col-span-2">
+                        <Label htmlFor="street">Straße *</Label>
+                        <Input
+                          id="street"
+                          placeholder="Hauptstraße"
+                          value={street}
+                          onChange={e => { setStreet(e.target.value); setLatitude(null); setLongitude(null); }}
+                          className="mt-1"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="houseNumber">Nr.</Label>
+                        <Input
+                          id="houseNumber"
+                          placeholder="12a"
+                          value={houseNumber}
+                          onChange={e => { setHouseNumber(e.target.value); setLatitude(null); setLongitude(null); }}
+                          className="mt-1"
+                        />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-3 gap-3 mt-3">
+                      <div>
+                        <Label htmlFor="postalCode">PLZ *</Label>
+                        <Input
+                          id="postalCode"
+                          placeholder="10115"
+                          value={postalCode}
+                          onChange={e => { setPostalCode(e.target.value); setLatitude(null); setLongitude(null); }}
+                          className="mt-1"
+                          maxLength={5}
+                        />
+                      </div>
+                      <div className="col-span-2">
+                        <Label htmlFor="city">Stadt *</Label>
+                        <Input
+                          id="city"
+                          placeholder="Berlin"
+                          value={city}
+                          onChange={e => { setCity(e.target.value); setLatitude(null); setLongitude(null); }}
+                          className="mt-1"
+                        />
+                      </div>
+                    </div>
+
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={geocodeAddress}
+                      disabled={geocoding || !street.trim() || !postalCode.trim() || !city.trim()}
+                      className="w-full mt-3"
+                    >
+                      {geocoding ? (
+                        <Loader2 className="h-4 w-4 animate-spin mr-2" />
                       ) : (
-                        <>
-                          <Upload className="h-8 w-8 text-muted-foreground mb-2" />
-                          <span className="text-sm text-muted-foreground">Bild auswählen</span>
-                          <span className="text-xs text-muted-foreground mt-1">Empfohlen: 1200 × 400px</span>
-                        </>
+                        <MapPin className="h-4 w-4 mr-2" />
                       )}
-                      <input
-                        type="file"
-                        accept="image/*"
-                        className="hidden"
-                        onChange={e => {
-                          const file = e.target.files?.[0];
-                          if (file) handleCoverUpload(file);
-                        }}
-                      />
-                    </label>
-                  )}
-                  <p className="text-xs text-muted-foreground">
-                    Das Titelbild erscheint ganz oben auf deinem Geschäftsprofil in der App.
-                  </p>
+                      Adresse prüfen
+                    </Button>
+
+                    {latitude && longitude && (
+                      <div className="space-y-2 mt-3">
+                        <div className="flex items-center gap-2 text-sm text-green-600">
+                          <CheckCircle2 className="h-4 w-4" />
+                          <span>Standort gefunden</span>
+                        </div>
+                        <div className="rounded-lg overflow-hidden border border-border h-48">
+                          <iframe
+                            title="Standort-Vorschau"
+                            width="100%"
+                            height="100%"
+                            style={{ border: 0 }}
+                            loading="lazy"
+                            referrerPolicy="no-referrer-when-downgrade"
+                            src={googleMapsEmbedUrl!}
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
 
-              {step === 3 && (
-                <div className="space-y-4">
-                  <p className="text-sm text-muted-foreground">
-                    Beschreibe dein Geschäft in ein paar Sätzen. Du kannst Emojis, Fettschrift und Kursivschrift verwenden.
-                  </p>
-                  <RichTextEditor
-                    value={description}
-                    onChange={setDescription}
-                    placeholder="Erzähl deinen Kunden etwas über dein Geschäft..."
-                  />
-                </div>
-              )}
-
-              {step === 4 && (
-                <div className="space-y-3">
-                  {DAYS.map(day => {
-                    const dayData = openingHours[day.key] || { open: "09:00", close: "18:00", closed: false };
-                    const isConfigured = !!openingHours[day.key];
-                    return (
-                      <div key={day.key} className="flex items-center gap-3">
-                        <div className="w-20 text-sm font-medium text-foreground">{day.label}</div>
-                        <Switch
-                          checked={isConfigured && !dayData.closed}
-                          onCheckedChange={(checked) => {
-                            setOpeningHours(prev => ({
-                              ...prev,
-                              [day.key]: checked
-                                ? { open: prev[day.key]?.open || "09:00", close: prev[day.key]?.close || "18:00", closed: false }
-                                : { ...dayData, closed: true },
-                            }));
+              {/* Step 2: Bild + Beschreibung + Öffnungszeiten */}
+              {step === 2 && (
+                <div className="space-y-6">
+                  {/* Titelbild */}
+                  <div>
+                    <div className="flex items-center gap-2 mb-3">
+                      <Upload className="h-4 w-4 text-primary" />
+                      <span className="text-sm font-medium text-foreground">Titelbild</span>
+                    </div>
+                    {coverUrl ? (
+                      <div className="relative rounded-lg overflow-hidden">
+                        <img src={coverUrl} alt="Titelbild" className="w-full h-40 object-cover" />
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          className="absolute bottom-3 right-3"
+                          onClick={() => setCoverUrl("")}
+                        >
+                          Ändern
+                        </Button>
+                      </div>
+                    ) : (
+                      <label className="flex flex-col items-center justify-center h-40 border-2 border-dashed border-border rounded-lg cursor-pointer hover:border-primary/50 transition-colors">
+                        {uploadingCover ? (
+                          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                        ) : (
+                          <>
+                            <Upload className="h-8 w-8 text-muted-foreground mb-2" />
+                            <span className="text-sm text-muted-foreground">Bild auswählen</span>
+                            <span className="text-xs text-muted-foreground mt-1">Empfohlen: 1200 × 400px</span>
+                          </>
+                        )}
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={e => {
+                            const file = e.target.files?.[0];
+                            if (file) handleCoverUpload(file);
                           }}
                         />
-                        {isConfigured && !dayData.closed ? (
-                          <div className="flex items-center gap-2">
-                            <Input
-                              type="time"
-                              value={dayData.open}
-                              onChange={e =>
-                                setOpeningHours(prev => ({
-                                  ...prev,
-                                  [day.key]: { ...dayData, open: e.target.value },
-                                }))
-                              }
-                              className="w-28 h-8 text-sm"
-                            />
-                            <span className="text-muted-foreground text-sm">–</span>
-                            <Input
-                              type="time"
-                              value={dayData.close}
-                              onChange={e =>
-                                setOpeningHours(prev => ({
-                                  ...prev,
-                                  [day.key]: { ...dayData, close: e.target.value },
-                                }))
-                              }
-                              className="w-28 h-8 text-sm"
-                            />
-                          </div>
-                        ) : (
-                          <span className="text-sm text-muted-foreground">
-                            {isConfigured ? "Geschlossen" : "Nicht angegeben"}
-                          </span>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-
-              {step === 5 && (
-                <div className="space-y-4">
-                  <p className="text-sm text-muted-foreground">
-                    Deine Adresse wird benötigt, damit Kunden dein Geschäft in der App finden können. <strong>Pflichtfeld.</strong>
-                  </p>
-                  <div className="grid grid-cols-3 gap-3">
-                    <div className="col-span-2">
-                      <Label htmlFor="street">Straße *</Label>
-                      <Input
-                        id="street"
-                        placeholder="Hauptstraße"
-                        value={street}
-                        onChange={e => { setStreet(e.target.value); setLatitude(null); setLongitude(null); }}
-                        className="mt-1"
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="houseNumber">Nr.</Label>
-                      <Input
-                        id="houseNumber"
-                        placeholder="12a"
-                        value={houseNumber}
-                        onChange={e => { setHouseNumber(e.target.value); setLatitude(null); setLongitude(null); }}
-                        className="mt-1"
-                      />
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-3 gap-3">
-                    <div>
-                      <Label htmlFor="postalCode">PLZ *</Label>
-                      <Input
-                        id="postalCode"
-                        placeholder="10115"
-                        value={postalCode}
-                        onChange={e => { setPostalCode(e.target.value); setLatitude(null); setLongitude(null); }}
-                        className="mt-1"
-                        maxLength={5}
-                      />
-                    </div>
-                    <div className="col-span-2">
-                      <Label htmlFor="city">Stadt *</Label>
-                      <Input
-                        id="city"
-                        placeholder="Berlin"
-                        value={city}
-                        onChange={e => { setCity(e.target.value); setLatitude(null); setLongitude(null); }}
-                        className="mt-1"
-                      />
-                    </div>
-                  </div>
-
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={geocodeAddress}
-                    disabled={geocoding || !street.trim() || !postalCode.trim() || !city.trim()}
-                    className="w-full"
-                  >
-                    {geocoding ? (
-                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                    ) : (
-                      <MapPin className="h-4 w-4 mr-2" />
+                      </label>
                     )}
-                    Adresse prüfen
-                  </Button>
+                  </div>
 
-                  {latitude && longitude && (
-                    <div className="space-y-2">
-                      <div className="flex items-center gap-2 text-sm text-green-600">
-                        <CheckCircle2 className="h-4 w-4" />
-                        <span>Standort gefunden</span>
-                      </div>
-                      <div className="rounded-lg overflow-hidden border border-border h-48">
-                        <iframe
-                          title="Standort-Vorschau"
-                          width="100%"
-                          height="100%"
-                          style={{ border: 0 }}
-                          loading="lazy"
-                          referrerPolicy="no-referrer-when-downgrade"
-                          src={googleMapsEmbedUrl!}
-                        />
-                      </div>
+                  {/* Beschreibung */}
+                  <div className="border-t border-border pt-5">
+                    <Label className="mb-2 block">Beschreibung</Label>
+                    <p className="text-sm text-muted-foreground mb-2">
+                      Beschreibe dein Geschäft in ein paar Sätzen.
+                    </p>
+                    <RichTextEditor
+                      value={description}
+                      onChange={setDescription}
+                      placeholder="Erzähl deinen Kunden etwas über dein Geschäft..."
+                    />
+                  </div>
+
+                  {/* Öffnungszeiten */}
+                  <div className="border-t border-border pt-5">
+                    <div className="flex items-center gap-2 mb-3">
+                      <Clock className="h-4 w-4 text-primary" />
+                      <span className="text-sm font-medium text-foreground">Öffnungszeiten</span>
                     </div>
-                  )}
-                </div>
-              )}
-
-              {step === 6 && (
-                <div className="space-y-4">
-                  <div>
-                    <Label htmlFor="phone">Telefonnummer</Label>
-                    <Input id="phone" placeholder="+49 123 456789" value={phone} onChange={e => setPhone(e.target.value)} className="mt-1" />
-                  </div>
-                  <div>
-                    <Label htmlFor="website">Website</Label>
-                    <Input id="website" placeholder="https://www.deingeschaeft.de" value={website} onChange={e => setWebsite(e.target.value)} className="mt-1" />
-                  </div>
-                  <div>
-                    <Label htmlFor="instagram">Instagram</Label>
-                    <Input id="instagram" placeholder="@deingeschaeft" value={instagram} onChange={e => setInstagram(e.target.value)} className="mt-1" />
+                    <div className="space-y-3">
+                      {DAYS.map(day => {
+                        const dayData = openingHours[day.key] || { open: "09:00", close: "18:00", closed: false };
+                        const isConfigured = !!openingHours[day.key];
+                        return (
+                          <div key={day.key} className="flex items-center gap-3">
+                            <div className="w-20 text-sm font-medium text-foreground">{day.label}</div>
+                            <Switch
+                              checked={isConfigured && !dayData.closed}
+                              onCheckedChange={(checked) => {
+                                setOpeningHours(prev => ({
+                                  ...prev,
+                                  [day.key]: checked
+                                    ? { open: prev[day.key]?.open || "09:00", close: prev[day.key]?.close || "18:00", closed: false }
+                                    : { ...dayData, closed: true },
+                                }));
+                              }}
+                            />
+                            {isConfigured && !dayData.closed ? (
+                              <div className="flex items-center gap-2">
+                                <Input
+                                  type="time"
+                                  value={dayData.open}
+                                  onChange={e =>
+                                    setOpeningHours(prev => ({
+                                      ...prev,
+                                      [day.key]: { ...dayData, open: e.target.value },
+                                    }))
+                                  }
+                                  className="w-28 h-8 text-sm"
+                                />
+                                <span className="text-muted-foreground text-sm">–</span>
+                                <Input
+                                  type="time"
+                                  value={dayData.close}
+                                  onChange={e =>
+                                    setOpeningHours(prev => ({
+                                      ...prev,
+                                      [day.key]: { ...dayData, close: e.target.value },
+                                    }))
+                                  }
+                                  className="w-28 h-8 text-sm"
+                                />
+                              </div>
+                            ) : (
+                              <span className="text-sm text-muted-foreground">
+                                {isConfigured ? "Geschlossen" : "Nicht angegeben"}
+                              </span>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
                   </div>
                 </div>
               )}
@@ -705,7 +686,7 @@ export default function MerchantSetup() {
         {/* Navigation */}
         <div className="flex items-center justify-between mt-6">
           <div>
-            {step > (boxLinked && step > 0 ? 1 : 0) && step > 0 && (
+            {step > (boxLinked ? 1 : 0) && step > 0 && (
               <Button variant="ghost" size="sm" onClick={goBack}>
                 <ArrowLeft className="h-4 w-4 mr-1" />
                 Zurück
@@ -713,12 +694,6 @@ export default function MerchantSetup() {
             )}
           </div>
           <div className="flex gap-2">
-            {canSkip && (
-              <Button variant="outline" size="sm" onClick={handleSkip}>
-                <SkipForward className="h-4 w-4 mr-1" />
-                Überspringen
-              </Button>
-            )}
             {step > 0 && (
               <Button onClick={isLastStep ? handleFinish : handleNextWithSave} disabled={saving}>
                 {saving && <Loader2 className="h-4 w-4 animate-spin mr-1" />}
