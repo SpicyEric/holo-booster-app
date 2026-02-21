@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Store, Gift, MessageSquare } from 'lucide-react';
+import { Store, Gift, MessageSquare, TrendingUp, Trophy, ChevronRight, Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
@@ -8,8 +8,22 @@ import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { MainLayout } from '@/app/components/layout/MainLayout';
 import { NewCustomerOfferDialog } from '@/app/components/NewCustomerOfferDialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 
-interface UserStampCard {
+interface LoyaltyEntry {
   id: string;
   merchant_customer_id: string;
   current_points: number;
@@ -18,13 +32,8 @@ interface UserStampCard {
     name: string;
     company_name: string | null;
     logo_url: string | null;
-    cover_image_url: string | null;
     industry: string | null;
-  };
-  stamp_card?: {
-    stamp_count: number;
-    background_color: string | null;
-    stamp_type: string | null;
+    stamps_required: number | null;
   };
 }
 
@@ -52,10 +61,11 @@ interface NewCustomerOffer {
 export const AppHome = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [stampCards, setStampCards] = useState<UserStampCard[]>([]);
+  const [loyaltyEntries, setLoyaltyEntries] = useState<LoyaltyEntry[]>([]);
   const [newCustomerOffers, setNewCustomerOffers] = useState<NewCustomerOffer[]>([]);
   const [loading, setLoading] = useState(true);
-  
+  const [pointsDialogOpen, setPointsDialogOpen] = useState(false);
+
   // Dialog states
   const [selectedOffer, setSelectedOffer] = useState<NewCustomerOffer | null>(null);
   const [offerDialogOpen, setOfferDialogOpen] = useState(false);
@@ -76,22 +86,20 @@ export const AppHome = () => {
         .eq('user_id', user!.id)
         .gt('current_points_balance', 0);
 
-      console.log('[AppHome] loyalty_accounts query:', { accounts, accountsError, userId: user!.id });
-
       let stampedMerchantIds: string[] = [];
 
       if (accountsError) {
         console.error('[AppHome] Error loading loyalty accounts:', accountsError);
-        setStampCards([]);
+        setLoyaltyEntries([]);
       } else if (accounts && accounts.length > 0) {
         stampedMerchantIds = accounts.map(a => a.merchant_customer_id);
 
-        // Fetch customers data
         const { data: customersData } = await supabase
           .from('customers')
-          .select('id, name, company_name, logo_url, cover_image_url, industry')
+          .select('id, name, company_name, logo_url, industry, stamps_required')
           .in('id', stampedMerchantIds);
 
+        // Load rewards to check which are redeemable
         const formatted = accounts.map(account => ({
           id: account.id,
           merchant_customer_id: account.merchant_customer_id,
@@ -99,19 +107,18 @@ export const AppHome = () => {
           customer: customersData?.find(c => c.id === account.merchant_customer_id),
         }));
 
-        setStampCards(formatted);
+        setLoyaltyEntries(formatted);
       } else {
-        setStampCards([]);
+        setLoyaltyEntries([]);
       }
 
-      // Load new customer offers - only for merchants where user hasn't stamped yet
+      // Load new customer offers
       const { data: offersData } = await supabase
         .from('new_customer_offers')
         .select('id, merchant_customer_id, title, description, bonus_stamps')
         .eq('is_active', true);
 
       if (offersData && offersData.length > 0) {
-        // Filter out offers for merchants where user already has stamps
         const filteredOffers = offersData.filter(
           offer => !stampedMerchantIds.includes(offer.merchant_customer_id)
         );
@@ -146,95 +153,23 @@ export const AppHome = () => {
   };
 
   const handleRedemptionComplete = () => {
-    // Remove the offer from the list and reload data
     if (selectedOffer) {
       setNewCustomerOffers(prev => prev.filter(o => o.id !== selectedOffer.id));
     }
     loadData();
   };
 
+  // Stats
+  const totalStores = loyaltyEntries.length;
+  const totalPoints = loyaltyEntries.reduce((sum, e) => sum + e.current_points, 0);
+  const rewardsReady = loyaltyEntries.filter(e => {
+    const required = e.customer?.stamps_required;
+    return required && e.current_points >= required;
+  }).length;
+
   return (
     <MainLayout title="Start">
       <div className="space-y-6">
-        {/* Stempelkarten Section */}
-        <div>
-          <h2 className="text-2xl font-bold text-foreground mb-4">Deine Stempelkarten</h2>
-
-          {loading ? (
-            <Card className="p-6">
-              <p className="text-muted-foreground text-center">Lädt...</p>
-            </Card>
-          ) : stampCards.length > 0 ? (
-            <div className="space-y-4">
-              {stampCards.map((card) => (
-                <Card
-                  key={card.id}
-                  className="p-4 hover:shadow-lg transition-shadow cursor-pointer"
-                  onClick={() => navigate(`/app/merchant/${card.merchant_customer_id}`)}
-                >
-                  <div className="flex items-center gap-4">
-                    {card.customer?.logo_url ? (
-                      <img
-                        src={card.customer.logo_url}
-                        alt={card.customer.name}
-                        className="w-16 h-16 rounded-full object-cover"
-                      />
-                    ) : (
-                      <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center text-2xl font-bold text-primary">
-                        {(card.customer?.company_name || card.customer?.name || '?').charAt(0)}
-                      </div>
-                    )}
-                    <div className="flex-1">
-                      <h3 className="font-semibold text-foreground">
-                        {card.customer?.company_name || card.customer?.name || 'Unbekannt'}
-                      </h3>
-                      <p className="text-sm text-muted-foreground">{card.customer?.industry || 'Geschäft'}</p>
-                      <div className="mt-2 inline-flex items-center gap-1 px-3 py-1 bg-primary/10 text-primary rounded-full text-sm font-medium">
-                        {card.current_points} Punkte
-                      </div>
-                    </div>
-                  </div>
-                </Card>
-              ))}
-            </div>
-          ) : (
-            <Card className="relative overflow-hidden bg-gradient-to-br from-primary to-secondary p-6 text-primary-foreground">
-              <h3 className="text-xl font-bold mb-2">Noch keine Stempelkarten</h3>
-              <p className="text-primary-foreground/90 mb-6">
-                Besuche umliegende Shops und sammle deine ersten Stempel.
-              </p>
-
-              {/* Card Stack Visualization */}
-              <div className="relative h-40 mb-4">
-                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-32 rotate-[-15deg]">
-                  <div className="w-full h-full rounded-2xl bg-gradient-to-br from-[hsl(240,85%,65%)] to-[hsl(240,85%,55%)] shadow-lg" />
-                </div>
-                <div className="absolute top-4 left-1/2 -translate-x-1/2 w-32 h-32">
-                  <div className="w-full h-full rounded-2xl bg-gradient-to-br from-[hsl(250,85%,65%)] to-[hsl(250,85%,55%)] shadow-lg" />
-                </div>
-                <div className="absolute top-8 left-1/2 -translate-x-1/2 w-32 h-32 rotate-[15deg]">
-                  <div className="w-full h-full rounded-2xl bg-gradient-to-br from-[hsl(260,75%,65%)] to-[hsl(260,75%,55%)] shadow-lg" />
-                </div>
-                <div className="absolute top-12 left-1/2 -translate-x-1/2 w-32 h-32 rotate-[25deg]">
-                  <div className="w-full h-full rounded-2xl bg-gradient-to-br from-[hsl(270,80%,70%)] to-[hsl(270,80%,60%)] shadow-lg" />
-                </div>
-              </div>
-
-              <div className="flex items-center justify-between pt-4 border-t border-primary-foreground/20">
-                <span className="text-sm text-primary-foreground/80">Geschäfte in deiner Nähe</span>
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  onClick={() => navigate('/app/stores')}
-                  className="bg-primary-foreground text-primary hover:bg-primary-foreground/90"
-                >
-                  Shops finden
-                </Button>
-              </div>
-            </Card>
-          )}
-        </div>
-
         {/* Neukundenprämien Section */}
         {newCustomerOffers.length > 0 && (
           <div>
@@ -277,6 +212,59 @@ export const AppHome = () => {
           </div>
         )}
 
+        {/* Deine Punkte Mini-Dashboard */}
+        <div>
+          <h2 className="text-2xl font-bold text-foreground mb-4">Deine Punkte</h2>
+
+          {loading ? (
+            <Card className="p-6 flex items-center justify-center">
+              <Loader2 className="h-6 w-6 animate-spin text-primary" />
+            </Card>
+          ) : totalStores === 0 ? (
+            <Card className="p-6 text-center">
+              <div className="mx-auto w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center mb-3">
+                <TrendingUp className="h-7 w-7 text-primary" />
+              </div>
+              <h3 className="font-semibold text-foreground mb-1">Noch keine Punkte</h3>
+              <p className="text-sm text-muted-foreground mb-4">
+                Besuche einen teilnehmenden Shop und scanne deinen ersten NFC-Stempel!
+              </p>
+              <Button variant="outline" size="sm" onClick={() => navigate('/app/stores')}>
+                Shops entdecken
+              </Button>
+            </Card>
+          ) : (
+            <Card className="p-5">
+              <div className="grid grid-cols-3 gap-3 mb-4">
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-primary">{totalStores}</div>
+                  <div className="text-xs text-muted-foreground">
+                    {totalStores === 1 ? 'Laden' : 'Läden'}
+                  </div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-primary">{totalPoints}</div>
+                  <div className="text-xs text-muted-foreground">Punkte</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-primary">{rewardsReady}</div>
+                  <div className="text-xs text-muted-foreground">
+                    {rewardsReady === 1 ? 'Prämie' : 'Prämien'}
+                  </div>
+                </div>
+              </div>
+              <Button
+                variant="outline"
+                className="w-full justify-between"
+                onClick={() => setPointsDialogOpen(true)}
+              >
+                Übersicht öffnen
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </Card>
+          )}
+        </div>
+
         {/* Support Section */}
         <div>
           <h2 className="text-xl font-bold text-foreground mb-3">Support</h2>
@@ -313,6 +301,65 @@ export const AppHome = () => {
           </div>
         </div>
       </div>
+
+      {/* Points Detail Dialog */}
+      <Dialog open={pointsDialogOpen} onOpenChange={setPointsDialogOpen}>
+        <DialogContent className="max-w-md max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Deine Punkte</DialogTitle>
+          </DialogHeader>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Geschäft</TableHead>
+                <TableHead className="text-right">Punkte</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {loyaltyEntries.map((entry) => (
+                <TableRow
+                  key={entry.id}
+                  className="cursor-pointer"
+                  onClick={() => {
+                    setPointsDialogOpen(false);
+                    navigate(`/app/merchant/${entry.merchant_customer_id}`);
+                  }}
+                >
+                  <TableCell>
+                    <div className="flex items-center gap-3">
+                      {entry.customer?.logo_url ? (
+                        <img
+                          src={entry.customer.logo_url}
+                          alt={entry.customer.name}
+                          className="w-8 h-8 rounded-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-xs font-bold text-primary">
+                          {(entry.customer?.name || '?').charAt(0)}
+                        </div>
+                      )}
+                      <div>
+                        <div className="font-medium text-sm">
+                          {entry.customer?.company_name || entry.customer?.name || 'Unbekannt'}
+                        </div>
+                        {entry.customer?.stamps_required && entry.current_points >= entry.customer.stamps_required && (
+                          <Badge variant="default" className="text-[10px] px-1.5 py-0 mt-0.5">
+                            <Trophy className="h-2.5 w-2.5 mr-0.5" />
+                            Prämie bereit
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+                  </TableCell>
+                  <TableCell className="text-right font-semibold text-primary">
+                    {entry.current_points}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </DialogContent>
+      </Dialog>
 
       {/* New Customer Offer Dialog */}
       {selectedOffer && selectedOffer.customer && (
