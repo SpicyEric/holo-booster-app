@@ -17,6 +17,7 @@ type ScanResult = {
   points?: number;
   totalPoints?: number;
   merchantName?: string;
+  merchantCustomerId?: string;
   error?: string;
 };
 
@@ -109,6 +110,7 @@ export const AppScan = () => {
           points: response.points_awarded,
           totalPoints: response.total_points,
           merchantName,
+          merchantCustomerId: response.merchant_customer_id,
         });
 
         confetti({
@@ -316,7 +318,13 @@ export const AppScan = () => {
                     <p className="text-muted-foreground">{result.error}</p>
                   </>
                 )}
-                <Button onClick={() => navigate('/app')} className="mt-6 w-full">
+                <Button onClick={() => {
+                  if (result.success && result.merchantCustomerId) {
+                    navigate(`/app/merchant/${result.merchantCustomerId}`);
+                  } else {
+                    navigate('/app');
+                  }
+                }} className="mt-6 w-full">
                   Weiter
                 </Button>
               </CardContent>
