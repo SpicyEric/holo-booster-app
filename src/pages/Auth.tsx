@@ -10,7 +10,7 @@ import { signIn, signOut, deriveUserRole, UserRole } from "@/lib/auth";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { z } from "zod";
-import { LogIn, LogOut } from "lucide-react";
+import { LogIn, LogOut, Eye, EyeOff, AlertTriangle } from "lucide-react";
 import { motion } from "framer-motion";
 import eloyoLogo from '@/assets/eloyo-logo.png';
 import { supabase } from "@/integrations/supabase/client";
@@ -26,9 +26,12 @@ const Auth = () => {
   
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [capsLockOn, setCapsLockOn] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [showNewPassword, setShowNewPassword] = useState(false);
   const [isResetMode, setIsResetMode] = useState(false);
   const location = useLocation();
   const navItems = [
@@ -39,7 +42,7 @@ const Auth = () => {
     { label: 'Login', href: '/auth' }
   ];
 
-  // Detect Supabase auth callbacks and enable password set mode
+  // Detect Supabase auth callbacks
   useEffect(() => {
     const hash = window.location.hash || location.hash || "";
     if (hash.includes("type=recovery") || hash.includes("type=signup")) {
@@ -54,15 +57,25 @@ const Auth = () => {
     }
   }, [user, role, loading, isResetMode, navigate]);
 
-  // Helper: Redirect basierend auf Rolle
+  // Caps Lock detection via keyboard events
+  useEffect(() => {
+    const handleKeyEvent = (e: KeyboardEvent) => {
+      if (e.getModifierState) {
+        setCapsLockOn(e.getModifierState('CapsLock'));
+      }
+    };
+    window.addEventListener('keydown', handleKeyEvent);
+    window.addEventListener('keyup', handleKeyEvent);
+    return () => {
+      window.removeEventListener('keydown', handleKeyEvent);
+      window.removeEventListener('keyup', handleKeyEvent);
+    };
+  }, []);
+
   const redirectByRole = (userRole: UserRole) => {
-    if (userRole === 'admin') {
-      navigate('/admin');
-    } else if (userRole === 'merchant') {
-      navigate('/kunde');
-    } else if (userRole === 'partner') {
-      navigate('/partner/dashboard');
-    }
+    if (userRole === 'admin') navigate('/admin');
+    else if (userRole === 'merchant') navigate('/kunde');
+    else if (userRole === 'partner') navigate('/partner/dashboard');
   };
 
   const handleSetPassword = async (e: React.FormEvent) => {
@@ -76,27 +89,20 @@ const Auth = () => {
       return;
     }
     setIsLoading(true);
-    
-    // Passwort über Lovable Cloud setzen
     const { error } = await supabase.auth.updateUser({ password: newPassword });
     if (error) {
       setIsLoading(false);
       toast.error("Passwort konnte nicht gesetzt werden: " + error.message);
       return;
     }
-    
     toast.success("Passwort erfolgreich gesetzt");
     const { data: userData } = await supabase.auth.getUser();
     const authedUser = userData?.user;
     if (authedUser) {
       const userRole = await deriveUserRole(authedUser.id, authedUser.email);
-      console.log('[handleSetPassword] Derived role:', userRole);
       setIsLoading(false);
-      if (userRole) {
-        redirectByRole(userRole);
-      } else {
-        toast.error("Ihr Konto ist noch nicht freigeschaltet. Bitte laden Sie die Seite in 30 Sekunden neu oder kontaktieren Sie den Support.");
-      }
+      if (userRole) redirectByRole(userRole);
+      else toast.error("Ihr Konto ist noch nicht freigeschaltet.");
     } else {
       setIsLoading(false);
       navigate('/auth');
@@ -105,34 +111,25 @@ const Auth = () => {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    
     const validation = loginSchema.safeParse({ email: loginEmail, password: loginPassword });
     if (!validation.success) {
       toast.error(validation.error.errors[0].message);
       return;
     }
-
     setIsLoading(true);
     const { data, error } = await signIn(loginEmail, loginPassword);
-    
     if (error) {
       setIsLoading(false);
-      if (error.message.includes('Invalid')) {
-        toast.error("Ungültige Anmeldedaten");
-      } else {
-        toast.error("Login fehlgeschlagen: " + error.message);
-      }
+      if (error.message.includes('Invalid')) toast.error("Ungültige Anmeldedaten");
+      else toast.error("Login fehlgeschlagen: " + error.message);
     } else if (data?.user) {
-      // Get user role and redirect to appropriate dashboard
       const userRole = await deriveUserRole(data.user.id, data.user.email);
-      console.log('[handleLogin] Derived role:', userRole);
       setIsLoading(false);
-      
       if (userRole) {
         toast.success("Erfolgreich angemeldet");
         redirectByRole(userRole);
       } else {
-        toast.error("Ihr Konto ist noch nicht freigeschaltet oder Sie haben keinen Zugang zur Website. Bei Fragen kontaktieren Sie den Support.");
+        toast.error("Ihr Konto ist noch nicht freigeschaltet.");
       }
     } else {
       setIsLoading(false);
@@ -186,21 +183,26 @@ const Auth = () => {
               <form onSubmit={handleSetPassword} className="space-y-4">
                 <div>
                   <Label htmlFor="new-password">Neues Passwort</Label>
-                  <Input
-                    id="new-password"
-                    type="password"
-                    placeholder="••••••••"
-                    value={newPassword}
-                    onChange={(e) => setNewPassword(e.target.value)}
-                    required
-                    className="mt-2"
-                  />
+                  <div className="relative mt-2">
+                    <Input
+                      id="new-password"
+                      type={showNewPassword ? "text" : "password"}
+                      placeholder="••••••••"
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      required
+                      className="pr-10"
+                    />
+                    <button type="button" onClick={() => setShowNewPassword(!showNewPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
+                      {showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                  </div>
                 </div>
                 <div>
                   <Label htmlFor="confirm-password">Passwort bestätigen</Label>
                   <Input
                     id="confirm-password"
-                    type="password"
+                    type={showNewPassword ? "text" : "password"}
                     placeholder="••••••••"
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
@@ -208,11 +210,13 @@ const Auth = () => {
                     className="mt-2"
                   />
                 </div>
-                <Button
-                  type="submit"
-                  className="w-full bg-foreground text-background hover:bg-foreground/90"
-                  disabled={isLoading}
-                >
+                {capsLockOn && (
+                  <div className="flex items-center gap-2 text-amber-600 bg-amber-50 border border-amber-200 rounded-lg p-3 text-sm">
+                    <AlertTriangle className="h-4 w-4 flex-shrink-0" />
+                    <span>Feststelltaste ist aktiviert</span>
+                  </div>
+                )}
+                <Button type="submit" className="w-full bg-foreground text-background hover:bg-foreground/90" disabled={isLoading}>
                   {isLoading ? 'Speichern...' : 'Passwort festlegen'}
                 </Button>
               </form>
@@ -254,15 +258,30 @@ const Auth = () => {
                 
                 <div>
                   <Label htmlFor="login-password">Passwort</Label>
-                  <Input
-                    id="login-password"
-                    type="password"
-                    placeholder="••••••••"
-                    value={loginPassword}
-                    onChange={(e) => setLoginPassword(e.target.value)}
-                    required
-                    className="mt-2"
-                  />
+                  <div className="relative mt-2">
+                    <Input
+                      id="login-password"
+                      type={showPassword ? "text" : "password"}
+                      placeholder="••••••••"
+                      value={loginPassword}
+                      onChange={(e) => setLoginPassword(e.target.value)}
+                      required
+                      className="pr-10"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    >
+                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                  </div>
+                  {capsLockOn && (
+                    <div className="flex items-center gap-2 text-amber-600 bg-amber-50 border border-amber-200 rounded-lg p-3 text-sm mt-2">
+                      <AlertTriangle className="h-4 w-4 flex-shrink-0" />
+                      <span>Feststelltaste ist aktiviert</span>
+                    </div>
+                  )}
                 </div>
     
                 <Button

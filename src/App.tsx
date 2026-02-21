@@ -55,6 +55,7 @@ import AppSuggestShop from "./app/pages/AppSuggestShop";
 import AppTerms from "./app/pages/AppTerms";
 import AppPrivacy from "./app/pages/AppPrivacy";
 import AppMyCards from "./app/pages/AppMyCards";
+import AppVerifyEmail from "./app/pages/AppVerifyEmail";
 import Leads from "./pages/admin/Leads";
 
 const queryClient = new QueryClient();
@@ -132,6 +133,7 @@ const App = () => (
           <Route path="/app/terms" element={<AppProtectedRoute><AppTerms /></AppProtectedRoute>} />
           <Route path="/app/privacy" element={<AppProtectedRoute><AppPrivacy /></AppProtectedRoute>} />
           <Route path="/app/my-cards" element={<AppProtectedRoute><AppMyCards /></AppProtectedRoute>} />
+          <Route path="/app/verify-email" element={<AppVerifyEmail />} />
           
           {/* Scan Route */}
           <Route path="/s/:cid" element={<Scan />} />
