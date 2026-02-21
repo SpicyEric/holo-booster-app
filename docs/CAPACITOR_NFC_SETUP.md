@@ -1,4 +1,4 @@
-# Capacitor NFC Setup für iOS & Android
+# Capacitor NFC Setup für iOS & Android (Capacitor 7)
 
 ## Voraussetzungen
 

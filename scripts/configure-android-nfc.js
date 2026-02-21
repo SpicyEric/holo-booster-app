@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 
 /**
- * Android NFC Configuration Script for Capacitor 5+ / AGP 8+
+ * Android NFC Configuration Script for Capacitor 7+ / AGP 8.7+
  * 
- * CLEAN SCRIPT - Fully compatible with modern Capacitor
+ * CLEAN SCRIPT - Fully compatible with Capacitor 7 (Java 21, Gradle 8.11.1, SDK 35)
  * 
  * This script ONLY:
  * - Patches android/app/build.gradle with correct SDK versions
@@ -42,50 +42,54 @@ const NODE_MODULES_PATH = path.join(PROJECT_ROOT, 'node_modules');
 // =========================================================================
 // COMMON PATCH HELPERS
 // =========================================================================
-function enforceJava17(content) {
+function enforceJava21(content) {
   let out = content;
 
-  // Most common constants / toolchains
-  out = out.replace(/VERSION_21/g, 'VERSION_17');
-  out = out.replace(/JavaLanguageVersion\.of\(\s*21\s*\)/g, 'JavaLanguageVersion.of(17)');
-  out = out.replace(/JavaVersion\.toVersion\(\s*21\s*\)/g, 'JavaVersion.toVersion(17)');
-  out = out.replace(/jvmToolchain\(\s*21\s*\)/g, 'jvmToolchain(17)');
+  // Upgrade Java 17 → 21 (Capacitor 7 requires JDK 21)
+  out = out.replace(/VERSION_17/g, 'VERSION_21');
+  out = out.replace(/VERSION_11/g, 'VERSION_21');
+  out = out.replace(/VERSION_1_8/g, 'VERSION_21');
+  out = out.replace(/JavaLanguageVersion\.of\(\s*17\s*\)/g, 'JavaLanguageVersion.of(21)');
+  out = out.replace(/JavaLanguageVersion\.of\(\s*11\s*\)/g, 'JavaLanguageVersion.of(21)');
+  out = out.replace(/JavaVersion\.toVersion\(\s*17\s*\)/g, 'JavaVersion.toVersion(21)');
+  out = out.replace(/jvmToolchain\(\s*17\s*\)/g, 'jvmToolchain(21)');
 
   // Kotlin targets
-  out = out.replace(/kotlinOptions\.jvmTarget\s*=\s*['\"]21['\"]/g, 'kotlinOptions.jvmTarget = "17"');
-  out = out.replace(/\bjvmTarget\s*=\s*['\"]21['\"]/g, 'jvmTarget = "17"');
+  out = out.replace(/kotlinOptions\.jvmTarget\s*=\s*['\"]17['\"]/g, 'kotlinOptions.jvmTarget = "21"');
+  out = out.replace(/\bjvmTarget\s*=\s*['\"]17['\"]/g, 'jvmTarget = "21"');
+  out = out.replace(/\bjvmTarget\s*=\s*['\"]11['\"]/g, 'jvmTarget = "21"');
   // Kotlin DSL enum form
-  out = out.replace(/\bJVM_21\b/g, 'JVM_17');
+  out = out.replace(/\bJVM_17\b/g, 'JVM_21');
+  out = out.replace(/\bJVM_11\b/g, 'JVM_21');
 
   // Java compile options (Groovy and Kotlin DSL)
-  out = out.replace(/\bsourceCompatibility\s*=\s*21\b/g, 'sourceCompatibility = 17');
-  out = out.replace(/\btargetCompatibility\s*=\s*21\b/g, 'targetCompatibility = 17');
-  out = out.replace(/\bsourceCompatibility\s+21\b/g, 'sourceCompatibility 17');
-  out = out.replace(/\btargetCompatibility\s+21\b/g, 'targetCompatibility 17');
+  out = out.replace(/\bsourceCompatibility\s*=\s*17\b/g, 'sourceCompatibility = 21');
+  out = out.replace(/\btargetCompatibility\s*=\s*17\b/g, 'targetCompatibility = 21');
+  out = out.replace(/\bsourceCompatibility\s+17\b/g, 'sourceCompatibility 21');
+  out = out.replace(/\btargetCompatibility\s+17\b/g, 'targetCompatibility 21');
+  out = out.replace(/\bsourceCompatibility\s*=\s*11\b/g, 'sourceCompatibility = 21');
+  out = out.replace(/\btargetCompatibility\s*=\s*11\b/g, 'targetCompatibility = 21');
 
   // Sometimes plugins set release explicitly
-  out = out.replace(/options\.release\s*=\s*21\b/g, 'options.release = 17');
-  out = out.replace(/options\.release\.set\(\s*21\s*\)/g, 'options.release.set(17)');
-  out = out.replace(/\brelease\.set\(\s*21\s*\)/g, 'release.set(17)');
-  out = out.replace(/--release\s+21\b/g, '--release 17');
+  out = out.replace(/options\.release\s*=\s*17\b/g, 'options.release = 21');
+  out = out.replace(/options\.release\.set\(\s*17\s*\)/g, 'options.release.set(21)');
+  out = out.replace(/\brelease\.set\(\s*17\s*\)/g, 'release.set(21)');
+  out = out.replace(/--release\s+17\b/g, '--release 21');
 
   // Common Gradle compilerArgs patterns (Groovy/Kotlin DSL)
-  // e.g. options.compilerArgs += ["--release", "21"]
   out = out.replace(
-    /(['\"])--release\1\s*,\s*(['\"])21\2/g,
-    (_m, q1, q2) => `${q1}--release${q1}, ${q2}17${q2}`
+    /(['\"])--release\1\s*,\s*(['\"])17\2/g,
+    (_m, q1, q2) => `${q1}--release${q1}, ${q2}21${q2}`
   );
-  // e.g. "--release",21
-  out = out.replace(/(['\"])--release\1\s*,\s*21\b/g, '$1--release$1, 17');
-  // e.g. listOf("--release", "21") (handles minor formatting variants)
+  out = out.replace(/(['\"])--release\1\s*,\s*17\b/g, '$1--release$1, 21');
   out = out.replace(
-    /(['\"])--release\1\s*[,)]\s*(['\"])21\2/g,
-    (_m, q1, q2) => `${q1}--release${q1}, ${q2}17${q2}`
+    /(['\"])--release\1\s*[,)]\s*(['\"])17\2/g,
+    (_m, q1, q2) => `${q1}--release${q1}, ${q2}21${q2}`
   );
 
-  // Fallback for -source/-target flags if they appear in compiler args
-  out = out.replace(/-source\s+21\b/g, '-source 17');
-  out = out.replace(/-target\s+21\b/g, '-target 17');
+  // Fallback for -source/-target flags
+  out = out.replace(/-source\s+17\b/g, '-source 21');
+  out = out.replace(/-target\s+17\b/g, '-target 21');
 
   return out;
 }
@@ -96,10 +100,11 @@ function enforceJava17(content) {
 // NOTE: Recent Android Gradle Plugin versions require Gradle 8.9+.
 // If this is lower, Android Studio will fail with:
 // "Minimum supported Gradle version is 8.9. Current version is X.Y"
-const GRADLE_VERSION = '8.9';
-const COMPILE_SDK = 34;
+const GRADLE_VERSION = '8.11.1';
+const COMPILE_SDK = 35;
 const MIN_SDK = 24;
-const TARGET_SDK = 34;
+const TARGET_SDK = 35;
+const AGP_VERSION = '8.7.2';
 
 console.log('🔧 Configuring Android project for NFC...\n');
 
@@ -260,17 +265,16 @@ function patchAppBuildGradle() {
     modified = true;
   }
   
-  // Ensure Java 17 compatibility
-  // Some newer templates/plugins may use Java 21. We standardize on 17.
+  // Ensure Java 21 compatibility (Capacitor 7 requirement)
   if (
-    content.includes('VERSION_21') ||
+    content.includes('VERSION_17') ||
     content.includes('VERSION_11') ||
     content.includes('VERSION_1_8')
   ) {
-    content = content.replace(/VERSION_21/g, 'VERSION_17');
-    content = content.replace(/VERSION_11/g, 'VERSION_17');
-    content = content.replace(/VERSION_1_8/g, 'VERSION_17');
-    console.log('   ✅ Enforced Java version → 17');
+    content = content.replace(/VERSION_17/g, 'VERSION_21');
+    content = content.replace(/VERSION_11/g, 'VERSION_21');
+    content = content.replace(/VERSION_1_8/g, 'VERSION_21');
+    console.log('   ✅ Enforced Java version → 21');
     modified = true;
   }
 
@@ -289,7 +293,7 @@ function patchAppBuildGradle() {
 // 5b. PATCH PLUGIN BUILD.GRADLE FILES (e.g. capacitor-geolocation)
 // =========================================================================
 function patchPluginBuildGradleFiles() {
-  console.log('\n📦 Patching plugin build.gradle files (enforce Java/Kotlin 17)...');
+  console.log('\n📦 Patching plugin build.gradle files (enforce Java/Kotlin 21)...');
 
   /**
    * Recursively find Gradle build files inside android/ (excluding android/app/build.gradle)
@@ -329,8 +333,8 @@ function patchPluginBuildGradleFiles() {
       let content = fs.readFileSync(filePath, 'utf8');
       const original = content;
 
-      // Enforce Java/Kotlin 17 across plugins and tasks
-      content = enforceJava17(content);
+      // Enforce Java/Kotlin 21 across plugins and tasks
+      content = enforceJava21(content);
 
       if (content !== original) {
         fs.writeFileSync(filePath, content, 'utf8');
@@ -342,7 +346,7 @@ function patchPluginBuildGradleFiles() {
   }
 
   if (patchedCount > 0) {
-    console.log(`   ✅ Patched ${patchedCount} plugin Gradle file(s) to Java/Kotlin 17`);
+    console.log(`   ✅ Patched ${patchedCount} plugin Gradle file(s) to Java/Kotlin 21`);
   } else {
     console.log('   ✅ Plugin Gradle files already compatible');
   }
@@ -354,7 +358,7 @@ function patchPluginBuildGradleFiles() {
 // node_modules via settings.gradle projectDir mappings.)
 // =========================================================================
 function patchNodeModulesCapacitorPlugins() {
-  console.log('\n📦 Patching node_modules Capacitor plugin Gradle files (enforce Java/Kotlin 17)...');
+  console.log('\n📦 Patching node_modules Capacitor plugin Gradle files (enforce Java/Kotlin 21)...');
 
   // Patch only known Capacitor-related packages to keep this fast and safe.
   const roots = [
@@ -398,7 +402,7 @@ function patchNodeModulesCapacitorPlugins() {
       let content = fs.readFileSync(filePath, 'utf8');
       const original = content;
 
-      content = enforceJava17(content);
+      content = enforceJava21(content);
 
       if (content !== original) {
         fs.writeFileSync(filePath, content, 'utf8');
@@ -411,7 +415,7 @@ function patchNodeModulesCapacitorPlugins() {
   }
 
   if (patchedCount > 0) {
-    console.log(`   ✅ Patched ${patchedCount} node_modules plugin Gradle file(s) to Java/Kotlin 17`);
+    console.log(`   ✅ Patched ${patchedCount} node_modules plugin Gradle file(s) to Java/Kotlin 21`);
   } else {
     console.log('   ✅ node_modules plugin Gradle files already compatible');
   }
