@@ -55,12 +55,22 @@ class NfcService {
     
     if (platform === 'android' || platform === 'ios') {
       try {
-        const result = await Nfc.isSupported();
+        // Race against timeout - if plugin bridge doesn't respond, assume supported on native
+        const result = await Promise.race([
+          Nfc.isSupported(),
+          new Promise<{ isSupported: boolean }>((resolve) => setTimeout(() => {
+            console.warn('[NFC] isSupported timed out, assuming supported on native platform');
+            resolve({ isSupported: true });
+          }, 3000)),
+        ]);
         console.log('[NFC] isSupported result:', result);
         return result?.isSupported === true;
       } catch (error) {
         console.log('[NFC] isSupported check failed:', error);
-        return false;
+        // On native platforms, assume NFC is supported if the check fails
+        // The actual scan will fail gracefully if NFC truly isn't available
+        console.log('[NFC] Assuming supported on native platform despite error');
+        return true;
       }
     } else {
       // Web browser: Check for Web NFC API
