@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
-import { UserRole, canAccessWeb, getRoleDefaultPath } from '@/lib/roles';
+import { UserRole, canAccessWeb, getRoleDefaultPath, normalizeRole } from '@/lib/roles';
 
 interface WebProtectedRouteProps {
   children: React.ReactNode;
@@ -17,14 +17,13 @@ export const WebProtectedRoute = ({ children, allowedRoles }: WebProtectedRouteP
   const { user, role, loading } = useAuth();
   const navigate = useNavigate();
 
+  const normalizedRole = role ? normalizeRole(role) : null;
+
   useEffect(() => {
     if (!loading) {
       if (!user) {
         navigate('/auth');
-      } else if (role) {
-        // Map legacy roles
-        const normalizedRole = role as UserRole;
-        
+      } else if (normalizedRole) {
         if (!canAccessWeb(normalizedRole)) {
           // App user trying to access web - redirect to app
           navigate('/app');
@@ -34,7 +33,7 @@ export const WebProtectedRoute = ({ children, allowedRoles }: WebProtectedRouteP
         }
       }
     }
-  }, [user, role, loading, allowedRoles, navigate]);
+  }, [user, normalizedRole, loading, allowedRoles, navigate]);
 
   if (loading) {
     return (
@@ -44,7 +43,7 @@ export const WebProtectedRoute = ({ children, allowedRoles }: WebProtectedRouteP
     );
   }
 
-  if (!user || !role || !allowedRoles.includes(role as UserRole)) {
+  if (!user || !normalizedRole || !allowedRoles.includes(normalizedRole)) {
     return null;
   }
 
