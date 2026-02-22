@@ -47,3 +47,6 @@ verify_jwt = false
 
 [functions.password-setup-redirect]
 verify_jwt = false
+
+[functions.send-app-verification-email]
+verify_jwt = false

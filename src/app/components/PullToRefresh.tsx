@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { Loader2 } from 'lucide-react';
 
 interface PullToRefreshProps {
@@ -25,60 +25,81 @@ export const PullToRefresh = ({ onRefresh, children, className = '' }: PullToRef
     return null;
   }, []);
 
-  const handleTouchStart = useCallback((e: React.TouchEvent) => {
-    if (refreshing) return;
-    const scrollParent = getScrollParent();
-    if (scrollParent && scrollParent.scrollTop > 5) return;
-    startY.current = e.touches[0].clientY;
-    isPulling.current = true;
-  }, [refreshing, getScrollParent]);
+  // Use refs for callbacks to avoid stale closures in event listeners
+  const refreshingRef = useRef(refreshing);
+  refreshingRef.current = refreshing;
+  const pullDistanceRef = useRef(pullDistance);
+  pullDistanceRef.current = pullDistance;
+  const onRefreshRef = useRef(onRefresh);
+  onRefreshRef.current = onRefresh;
 
-  const handleTouchMove = useCallback((e: React.TouchEvent) => {
-    if (!isPulling.current || refreshing) return;
-    const scrollParent = getScrollParent();
-    if (scrollParent && scrollParent.scrollTop > 5) {
-      isPulling.current = false;
-      setPullDistance(0);
-      return;
-    }
-    const currentY = e.touches[0].clientY;
-    const diff = currentY - startY.current;
-    if (diff > 0) {
-      // Prevent default scroll when pulling down from top
-      if (scrollParent && scrollParent.scrollTop <= 0) {
-        e.preventDefault();
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const handleTouchStart = (e: TouchEvent) => {
+      if (refreshingRef.current) return;
+      const scrollParent = getScrollParent();
+      if (scrollParent && scrollParent.scrollTop > 5) return;
+      startY.current = e.touches[0].clientY;
+      isPulling.current = true;
+    };
+
+    const handleTouchMove = (e: TouchEvent) => {
+      if (!isPulling.current || refreshingRef.current) return;
+      const scrollParent = getScrollParent();
+      if (scrollParent && scrollParent.scrollTop > 5) {
+        isPulling.current = false;
+        setPullDistance(0);
+        return;
       }
-      setPullDistance(Math.min(diff * 0.4, threshold * 1.5));
-    } else {
-      isPulling.current = false;
-      setPullDistance(0);
-    }
-  }, [refreshing, getScrollParent]);
-
-  const handleTouchEnd = useCallback(async () => {
-    if (!isPulling.current) return;
-    isPulling.current = false;
-    if (pullDistance >= threshold && !refreshing) {
-      setRefreshing(true);
-      setPullDistance(threshold * 0.5);
-      try {
-        await onRefresh();
-      } finally {
-        setRefreshing(false);
+      const currentY = e.touches[0].clientY;
+      const diff = currentY - startY.current;
+      if (diff > 0) {
+        // Prevent default scroll when pulling down from top
+        if (!scrollParent || scrollParent.scrollTop <= 0) {
+          e.preventDefault();
+        }
+        setPullDistance(Math.min(diff * 0.4, threshold * 1.5));
+      } else {
+        isPulling.current = false;
         setPullDistance(0);
       }
-    } else {
-      setPullDistance(0);
-    }
-  }, [pullDistance, refreshing, onRefresh]);
+    };
+
+    const handleTouchEnd = async () => {
+      if (!isPulling.current) return;
+      isPulling.current = false;
+      if (pullDistanceRef.current >= threshold && !refreshingRef.current) {
+        setRefreshing(true);
+        setPullDistance(threshold * 0.5);
+        try {
+          await onRefreshRef.current();
+        } finally {
+          setRefreshing(false);
+          setPullDistance(0);
+        }
+      } else {
+        setPullDistance(0);
+      }
+    };
+
+    // Use non-passive listeners so preventDefault works
+    container.addEventListener('touchstart', handleTouchStart, { passive: true });
+    container.addEventListener('touchmove', handleTouchMove, { passive: false });
+    container.addEventListener('touchend', handleTouchEnd, { passive: true });
+
+    return () => {
+      container.removeEventListener('touchstart', handleTouchStart);
+      container.removeEventListener('touchmove', handleTouchMove);
+      container.removeEventListener('touchend', handleTouchEnd);
+    };
+  }, [getScrollParent]);
 
   return (
     <div
       ref={containerRef}
       className={className}
-      onTouchStart={handleTouchStart}
-      onTouchMove={handleTouchMove}
-      onTouchEnd={handleTouchEnd}
     >
       {/* Pull indicator */}
       <div

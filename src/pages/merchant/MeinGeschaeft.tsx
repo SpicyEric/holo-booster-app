@@ -1142,9 +1142,7 @@ const MeinGeschaeft = () => {
                             </Badge>
                           </div>
                           {newCustomerOffer.description && <p className="text-sm text-gray-500">{newCustomerOffer.description}</p>}
-                          {(newCustomerOffer.bonus_stamps ?? 0) > 0 && (
-                            <p className="text-sm text-primary mt-1 font-medium">+{newCustomerOffer.bonus_stamps} Bonus-Punkte</p>
-                          )}
+              
                         </div>
                         <Button variant="ghost" size="sm" onClick={handleDeleteNco} className="rounded-lg">
                           <Trash2 className="h-4 w-4 text-destructive" />
@@ -1236,11 +1234,7 @@ const MeinGeschaeft = () => {
                 <Label>Beschreibung</Label>
                 <Textarea value={ncoForm.description} onChange={(e) => setNcoForm(f => ({ ...f, description: e.target.value }))} placeholder="Optional" className="rounded-xl" rows={2} />
               </div>
-              <div>
-                <Label>Bonus-Punkte</Label>
-                <Input type="number" min={0} value={ncoForm.bonus_stamps} onChange={(e) => setNcoForm(f => ({ ...f, bonus_stamps: parseInt(e.target.value) || 0 }))} className="rounded-xl w-32" />
-                <p className="text-xs text-gray-500 mt-1">Diese Punkte werden automatisch gutgeschrieben</p>
-              </div>
+              
               <div>
                 <Label>Bild (optional)</Label>
                 <p className="text-xs text-muted-foreground mb-2">Wird im Feed angezeigt. Ohne Bild wird das Titelbild verwendet.</p>

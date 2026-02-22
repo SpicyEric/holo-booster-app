@@ -261,22 +261,21 @@ export const AppHome = () => {
                   />
                 </div>
               ) : (
-                <div
-                  className="w-full aspect-square bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center cursor-pointer"
-                  onClick={() => navigate(`/app/merchant/${item.merchant_customer_id}`)}
-                >
-                  {item.type === 'offer' ? (
-                    <div className="text-center px-8">
-                      <Gift className="h-16 w-16 text-primary mx-auto mb-4" />
-                      <p className="text-2xl font-bold text-foreground">{item.title}</p>
-                      <p className="text-lg text-primary font-semibold mt-2">+{item.bonus_stamps} Bonus-Punkte</p>
-                    </div>
-                  ) : (
-                    <div className="w-24 h-24 rounded-full bg-primary/10 flex items-center justify-center">
-                      <span className="text-4xl font-bold text-primary">{item.merchant_name.charAt(0)}</span>
-                    </div>
-                  )}
-                </div>
+                  <div
+                    className="w-full aspect-square bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center cursor-pointer"
+                    onClick={() => navigate(`/app/merchant/${item.merchant_customer_id}`)}
+                  >
+                    {item.type === 'offer' ? (
+                      <div className="text-center px-8">
+                        <Gift className="h-16 w-16 text-primary mx-auto mb-4" />
+                        <p className="text-2xl font-bold text-foreground">{item.title}</p>
+                      </div>
+                    ) : (
+                      <div className="w-24 h-24 rounded-full bg-primary/10 flex items-center justify-center">
+                        <span className="text-4xl font-bold text-primary">{item.merchant_name.charAt(0)}</span>
+                      </div>
+                    )}
+                  </div>
               )}
 
               {/* Actions + text */}
@@ -300,9 +299,13 @@ export const AppHome = () => {
                   <div className="flex items-center gap-2 mb-2">
                     <span className="inline-flex items-center gap-1 px-3 py-1.5 bg-primary/10 text-primary rounded-full text-sm font-semibold">
                       <Gift className="h-4 w-4" />
-                      Neukundenprämie: +{item.bonus_stamps} Punkte
+                      Neukundenprämie
                     </span>
                   </div>
+                )}
+
+                {item.type === 'offer' && item.title && (
+                  <p className="text-sm font-semibold text-foreground mb-1">{item.title}</p>
                 )}
 
                 {(item.body || item.title) && (

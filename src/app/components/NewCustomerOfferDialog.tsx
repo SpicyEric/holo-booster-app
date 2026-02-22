@@ -112,9 +112,6 @@ export const NewCustomerOfferDialog = ({
             </p>
             <div className="bg-muted rounded-lg p-4 mb-4">
               <p className="font-semibold text-foreground">{offer.title}</p>
-              <p className="text-sm text-green-600 font-medium mt-1">
-                +{offer.bonus_stamps} Bonus-Punkte
-              </p>
             </div>
             <p className="text-sm text-muted-foreground mb-6">
               Zeige diesen Bildschirm dem Mitarbeiter, um deine Prämie zu erhalten.
@@ -177,7 +174,6 @@ export const NewCustomerOfferDialog = ({
                 Neukundenprämie:
               </p>
               <p className="font-semibold text-foreground">{offer.title}</p>
-              <p className="text-sm text-green-600 mt-1">+{offer.bonus_stamps} Bonus-Punkte</p>
             </div>
             <Button variant="outline" onClick={cancelRedemption} className="w-full">
               <X className="h-4 w-4 mr-2" />
@@ -217,10 +213,6 @@ export const NewCustomerOfferDialog = ({
           <div className="text-center">
             <h3 className="text-lg font-bold text-foreground">{merchantName}</h3>
             <p className="text-xl font-bold text-primary mt-2">{offer.title}</p>
-            <Badge variant="secondary" className="mt-2">
-              <Gift className="h-3 w-3 mr-1" />
-              +{offer.bonus_stamps} Bonus-Punkte
-            </Badge>
           </div>
 
           {/* Description */}
