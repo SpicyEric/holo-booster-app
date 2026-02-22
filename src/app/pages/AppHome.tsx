@@ -267,7 +267,7 @@ export const AppHome = () => {
           ) : redeemableRewards.length > 0 ? (
             <Card
               className="p-5 cursor-pointer hover:shadow-lg transition-shadow border-2 border-green-200 bg-green-50/50 dark:bg-green-950/20"
-              onClick={() => setRewardsDialogOpen(true)}
+              onClick={() => navigate('/app/rewards')}
             >
               <div className="flex items-center gap-4">
                 <div className="w-14 h-14 rounded-full bg-green-100 dark:bg-green-900 flex items-center justify-center">

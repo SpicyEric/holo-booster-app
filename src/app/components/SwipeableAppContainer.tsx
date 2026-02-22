@@ -29,22 +29,22 @@ export const useSwipeControl = () => useContext(SwipeControlContext);
 // Map route paths to carousel indices
 const ROUTE_TO_INDEX: Record<string, number> = {
   '/app': 0,
-  '/app/messages': 1,
-  '/app/stores': 2,
+  '/app/stores': 1,
+  '/app/messages': 2,
   '/app/profile': 3,
 };
 
 const INDEX_TO_ROUTE: Record<number, string> = {
   0: '/app',
-  1: '/app/messages',
-  2: '/app/stores',
+  1: '/app/stores',
+  2: '/app/messages',
   3: '/app/profile',
 };
 
 const INDEX_TO_TITLE: Record<number, string> = {
   0: 'Start',
-  1: 'Nachrichten',
-  2: 'Stores',
+  1: 'Stores',
+  2: 'Nachrichten',
   3: 'Einstellungen',
 };
 
@@ -139,15 +139,15 @@ export const SwipeableAppContainer = () => {
               </div>
             </div>
             
-            <div className="flex-[0_0_100%] min-w-0 h-full overflow-y-auto">
-              <div className="container mx-auto px-4 py-6 max-w-2xl relative z-10">
-                <AppMessagesContent />
-              </div>
-            </div>
-            
             <div className="flex-[0_0_100%] min-w-0 h-full overflow-y-auto" style={{ touchAction: 'pan-y' }}>
               <div className="container mx-auto px-4 py-6 max-w-2xl relative z-10">
                 <AppStoresContent />
+              </div>
+            </div>
+            
+            <div className="flex-[0_0_100%] min-w-0 h-full overflow-y-auto">
+              <div className="container mx-auto px-4 py-6 max-w-2xl relative z-10">
+                <AppMessagesContent />
               </div>
             </div>
             
@@ -336,7 +336,7 @@ const AppHomeContent = () => {
             <Loader2 className="h-6 w-6 animate-spin text-primary" />
           </Card>
         ) : redeemableRewards.length > 0 ? (
-          <Card className="p-5 cursor-pointer hover:shadow-lg transition-shadow border-2 border-green-200 bg-green-50/50 dark:bg-green-950/20">
+          <Card className="p-5 cursor-pointer hover:shadow-lg transition-shadow border-2 border-green-200 bg-green-50/50 dark:bg-green-950/20" onClick={() => navigate('/app/rewards')}>
             <div className="flex items-center gap-4">
               <div className="w-14 h-14 rounded-full bg-green-100 dark:bg-green-900 flex items-center justify-center">
                 <Trophy className="h-7 w-7 text-green-600" />

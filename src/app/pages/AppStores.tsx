@@ -260,7 +260,7 @@ export default function AppStores() {
                   )}
                   <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/70 via-black/40 to-transparent" />
                   <div className="absolute bottom-3 left-3 right-3 z-10">
-                    <h3 className="text-white font-semibold text-base truncate drop-shadow-md">{store.name}</h3>
+                    <h3 className="text-white font-semibold text-xl truncate drop-shadow-md">{store.name}</h3>
                     {store.category && <p className="text-white/80 text-sm truncate drop-shadow-md">{store.category}</p>}
                   </div>
                 </button>

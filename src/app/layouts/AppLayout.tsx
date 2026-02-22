@@ -1,5 +1,5 @@
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
-import { Home, Gift, Clock, User, Scan } from 'lucide-react';
+import { Home, Gift, User, Scan, Store } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 /**
@@ -12,6 +12,7 @@ export const AppLayout = () => {
 
   const navItems = [
     { path: '/app', icon: Home, label: 'Home' },
+    { path: '/app/stores', icon: Store, label: 'Stores' },
     { path: '/app/scan', icon: Scan, label: 'Scannen', highlight: true },
     { path: '/app/rewards', icon: Gift, label: 'Prämien' },
     { path: '/app/profile', icon: User, label: 'Profil' },

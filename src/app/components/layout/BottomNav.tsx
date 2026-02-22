@@ -54,8 +54,8 @@ export const BottomNav = ({ onNavigate, currentIndex }: BottomNavProps) => {
 
   const navItems: NavItem[] = [
     { icon: Home, label: 'Start', path: '/app', index: 0 },
-    { icon: MessageSquare, label: 'Nachrichten', path: '/app/messages', index: 1 },
-    { icon: Store, label: 'Stores', path: '/app/stores', index: 2 },
+    { icon: Store, label: 'Stores', path: '/app/stores', index: 1 },
+    { icon: MessageSquare, label: 'Nachrichten', path: '/app/messages', index: 2 },
     { icon: Settings, label: 'Einstellungen', path: '/app/profile', index: 3 },
   ];
 
