@@ -254,7 +254,7 @@ const AppHomeContent = () => {
 
       const { data: offersData } = await supabase
         .from('new_customer_offers')
-        .select('id, merchant_customer_id, title, description, bonus_stamps, created_at')
+        .select('id, merchant_customer_id, title, description, bonus_stamps, created_at, image_url')
         .eq('is_active', true);
 
       if (offersData && offersData.length > 0) {
@@ -275,7 +275,7 @@ const AppHomeContent = () => {
             items.push({
               type: 'offer', id: offer.id, merchant_customer_id: offer.merchant_customer_id,
               merchant_name: m?.company_name || m?.name || 'Unbekannt', merchant_logo: m?.logo_url || null,
-              image_url: m?.cover_image_url || null, body: offer.description, title: offer.title,
+              image_url: (offer as any).image_url || m?.cover_image_url || null, body: offer.description, title: offer.title,
               bonus_stamps: offer.bonus_stamps ?? 0, distance, created_at: offer.created_at || new Date().toISOString(),
               like_count: 0, liked_by_user: false,
             });
