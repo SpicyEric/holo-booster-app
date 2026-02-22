@@ -476,58 +476,13 @@ serve(async (req) => {
 
         console.log("[WEBHOOK] Invoice saved");
 
-        // Generate account access link
-        console.log("[WEBHOOK] Generating account access link for:", customer.email);
-        let resetLink: string | null = null;
+        // Generate password setup URL using the redirect function (never expires)
+        const passwordSetupUrl = customer.email
+          ? `${Deno.env.get("SUPABASE_URL")}/functions/v1/password-setup-redirect?cid=${encodeURIComponent(customer.id)}&email=${encodeURIComponent(customer.email)}`
+          : null;
+        const resetLink = passwordSetupUrl;
         
-        // Wait a moment for the auth user to be fully created
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        
-        try {
-          const { data: linkData, error: recoveryError } = await supabase.auth.admin.generateLink({
-            type: 'recovery',
-            email: customer.email,
-            options: {
-              redirectTo: 'https://eloyo.de/auth',
-            },
-          });
-
-          if (recoveryError) {
-            console.error('[WEBHOOK] Recovery link generation error:', recoveryError.message, recoveryError);
-          }
-
-          if (linkData?.properties?.action_link) {
-            resetLink = linkData.properties.action_link as string;
-            console.log("[WEBHOOK] Recovery link generated successfully");
-          } else {
-            console.log("[WEBHOOK] Recovery link not available, trying magiclink...");
-            // Fallback: generate a magic link
-            const { data: magicData, error: magicError } = await supabase.auth.admin.generateLink({
-              type: 'magiclink',
-              email: customer.email,
-              options: {
-                redirectTo: 'https://eloyo.de/auth',
-              },
-            });
-            if (magicError) {
-              console.error('[WEBHOOK] Magiclink generation error:', magicError.message, magicError);
-            }
-            if (magicData?.properties?.action_link) {
-              resetLink = magicData.properties.action_link as string;
-              console.log("[WEBHOOK] Magiclink generated successfully");
-            } else {
-              console.error('[WEBHOOK] Both recovery and magiclink failed to generate');
-            }
-          }
-        } catch (linkError) {
-          console.error("[WEBHOOK] Error generating account link:", linkError);
-        }
-        
-        // Log the resetLink status for debugging
-        if (!resetLink) {
-          console.error("[WEBHOOK] CRITICAL: resetLink is null - onboarding email cannot be sent!");
-          console.error("[WEBHOOK] This usually means the auth user was not created yet for:", customer.email);
-        }
+        console.log("[WEBHOOK] Password setup URL generated:", !!resetLink);
 
         // Extract Stripe data for onboarding email
         let productName = "Eloyo Abo";
