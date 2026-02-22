@@ -137,7 +137,7 @@ export const AppHome = () => {
               merchant_customer_id: offer.merchant_customer_id,
               merchant_name: m?.company_name || m?.name || 'Unbekannt',
               merchant_logo: m?.logo_url || null,
-              image_url: (offer as any).image_url || m?.cover_image_url || null,
+              image_url: offer.image_url || m?.cover_image_url || null,
               body: offer.description,
               title: offer.title,
               bonus_stamps: offer.bonus_stamps ?? 0,
