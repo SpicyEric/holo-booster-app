@@ -89,7 +89,7 @@ export const BottomNav = ({ onNavigate, currentIndex }: BottomNavProps) => {
   ];
 
   const handleCenterButtonClick = () => {
-    navigate('/app/scan');
+    navigate('/app/scan?autostart=true');
   };
 
   const handleNavClick = (item: NavItem) => {
@@ -142,7 +142,7 @@ export const BottomNav = ({ onNavigate, currentIndex }: BottomNavProps) => {
             className="h-18 w-18 rounded-full shadow-lg bg-gradient-to-br from-primary to-secondary hover:shadow-xl transition-all"
             style={{ height: '72px', width: '72px' }}
           >
-            <Stamp className="h-11 w-11" strokeWidth={2.5} />
+            <Stamp className="h-14 w-14" strokeWidth={2.5} />
           </Button>
         </div>
         <NavButton item={navItems[2]} />
