@@ -14,6 +14,7 @@ interface StampCard {
   currentPoints: number;
   stampsRequired?: number;
   rewardText?: string;
+  hasRedeemableReward: boolean;
 }
 
 export default function AppMyCards() {
@@ -47,16 +48,33 @@ export default function AppMyCards() {
           customersData = data || [];
         }
 
+        // Fetch actual rewards for these merchants
+        let rewardsData: any[] = [];
+        if (merchantIds.length > 0) {
+          const { data } = await supabase
+            .from('rewards')
+            .select('id, points_required, merchant_customer_id')
+            .eq('is_active', true)
+            .in('merchant_customer_id', merchantIds);
+          rewardsData = data || [];
+        }
+
         const transformedCards: StampCard[] = (accounts || []).map((account: any) => {
           const customer = customersData.find(c => c.id === account.merchant_customer_id);
+          const points = account.current_points_balance || 0;
+          // Check if any actual reward can be redeemed with current points
+          const hasRedeemableReward = rewardsData.some(
+            r => r.merchant_customer_id === account.merchant_customer_id && points >= r.points_required
+          );
           return {
             id: account.id,
             merchantId: account.merchant_customer_id,
             merchantName: customer?.name || 'Unbekannter Händler',
             merchantLogo: customer?.logo_url,
-            currentPoints: account.current_points_balance || 0,
+            currentPoints: points,
             stampsRequired: customer?.stamps_required,
             rewardText: customer?.stamp_reward_text,
+            hasRedeemableReward,
           };
         });
 
@@ -121,14 +139,10 @@ export default function AppMyCards() {
                       </span>
                       <span className="text-sm text-muted-foreground">Punkte</span>
                     </div>
-                    {card.stampsRequired && (
-                      <div className="flex items-center gap-1 mt-1 text-xs text-muted-foreground">
+                    {card.hasRedeemableReward && (
+                      <div className="flex items-center gap-1 mt-1 text-xs text-primary font-semibold animate-pulse">
                         <Gift className="h-3 w-3" />
-                        <span>
-                          {card.currentPoints >= card.stampsRequired
-                            ? 'Prämie verfügbar!'
-                            : `Noch ${card.stampsRequired - card.currentPoints} bis zur Prämie`}
-                        </span>
+                        <span>Prämie verfügbar!</span>
                       </div>
                     )}
                   </div>

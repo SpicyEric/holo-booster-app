@@ -842,20 +842,7 @@ const Nachrichten = () => {
                   className="rounded-xl mt-1"
                 />
               </div>
-              <div>
-                <Label className="text-gray-700">Bonus-Punkte für Neukunden</Label>
-                <Input
-                  type="number"
-                  min={0}
-                  value={newCustomerOfferForm.bonus_stamps}
-                  onChange={(e) => setNewCustomerOfferForm({ ...newCustomerOfferForm, bonus_stamps: parseInt(e.target.value) || 0 })}
-                  placeholder="0"
-                  className="rounded-xl mt-1"
-                />
-                <p className="text-xs text-gray-500 mt-1">
-                  Optional: Zusätzliche Punkte beim ersten Stempeln
-                </p>
-              </div>
+              
               <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
                 <Label className="text-gray-700">Angebot aktiv</Label>
                 <Switch
