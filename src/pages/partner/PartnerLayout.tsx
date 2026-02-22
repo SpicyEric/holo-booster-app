@@ -1,20 +1,26 @@
-import { Outlet, NavLink, useNavigate } from 'react-router-dom';
+import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { signOut } from '@/lib/auth';
 import { toast } from 'sonner';
-import { LogOut, LayoutDashboard, Users, PlusCircle, Euro } from 'lucide-react';
+import { LogOut, LayoutDashboard, Users, Euro, Menu, ShoppingCart } from 'lucide-react';
 import { WebProtectedRoute } from '@/components/WebProtectedRoute';
 import eloyoLogo from '@/assets/eloyo-logo.png';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
-const navItems = [
+const menuItems = [
   { to: '/partner/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { to: '/partner/leads', label: 'Meine Leads', icon: Users },
-  { to: '/partner/leads/new', label: 'Neuer Lead', icon: PlusCircle },
   { to: '/partner/provisionen', label: 'Provisionen', icon: Euro },
 ];
 
 export default function PartnerLayout() {
   const navigate = useNavigate();
+  const location = useLocation();
 
   const handleLogout = async () => {
     await signOut();
@@ -22,59 +28,58 @@ export default function PartnerLayout() {
     navigate('/auth');
   };
 
+  const currentPage = menuItems.find(item =>
+    location.pathname === item.to ||
+    (item.to === '/partner/dashboard' && location.pathname === '/partner/dashboard')
+  );
+
   return (
     <WebProtectedRoute allowedRoles={['partner', 'sales_partner', 'admin'] as any}>
       <div className="min-h-screen bg-background">
         {/* Top bar */}
-        <div className="border-b bg-card sticky top-0 z-10">
-          <div className="max-w-7xl mx-auto px-6 py-3 flex items-center justify-between">
-            <div className="flex items-center gap-6">
-              <img src={eloyoLogo} alt="Logo" className="h-8 w-auto" />
-              <nav className="hidden md:flex items-center gap-1">
-                {navItems.map((item) => (
-                  <NavLink
+        <header className="sticky top-0 z-40 w-full border-b bg-background">
+          <div className="flex h-16 items-center gap-4 px-6">
+            <img src={eloyoLogo} alt="Eloyo Logo" className="h-8 w-auto" />
+
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" className="gap-2">
+                  <Menu className="h-4 w-4" />
+                  <span className="hidden md:inline">{currentPage?.label || 'Navigation'}</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="w-56 bg-background">
+                {menuItems.map((item) => (
+                  <DropdownMenuItem
                     key={item.to}
-                    to={item.to}
-                    end={item.to === '/partner/dashboard'}
-                    className={({ isActive }) =>
-                      `flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                        isActive
-                          ? 'bg-primary/10 text-primary'
-                          : 'text-muted-foreground hover:text-foreground hover:bg-muted'
-                      }`
-                    }
+                    onClick={() => navigate(item.to)}
+                    className="cursor-pointer gap-2"
                   >
-                    <item.icon className="w-4 h-4" />
-                    {item.label}
-                  </NavLink>
+                    <item.icon className="h-4 w-4" />
+                    <span>{item.label}</span>
+                  </DropdownMenuItem>
                 ))}
-              </nav>
-            </div>
-            <Button onClick={handleLogout} variant="outline" size="sm">
-              <LogOut className="mr-2 w-4 h-4" />
-              Logout
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            <Button
+              onClick={() => navigate('/partner/checkout')}
+              size="sm"
+              className="gap-2"
+            >
+              <ShoppingCart className="h-4 w-4" />
+              <span className="hidden md:inline">Kunde abschließen</span>
+              <span className="md:hidden">Abschluss</span>
+            </Button>
+
+            <div className="flex-1" />
+
+            <Button variant="ghost" onClick={handleLogout} className="gap-2">
+              <LogOut className="h-4 w-4" />
+              <span className="hidden md:inline">Logout</span>
             </Button>
           </div>
-        </div>
-
-        {/* Mobile nav */}
-        <div className="md:hidden border-b bg-card px-4 py-2 flex gap-1 overflow-x-auto">
-          {navItems.map((item) => (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              end={item.to === '/partner/dashboard'}
-              className={({ isActive }) =>
-                `flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap ${
-                  isActive ? 'bg-primary/10 text-primary' : 'text-muted-foreground'
-                }`
-              }
-            >
-              <item.icon className="w-3.5 h-3.5" />
-              {item.label}
-            </NavLink>
-          ))}
-        </div>
+        </header>
 
         <div className="max-w-7xl mx-auto p-6">
           <Outlet />

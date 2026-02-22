@@ -891,6 +891,56 @@ export type Database = {
           },
         ]
       }
+      lead_scheduled_activities: {
+        Row: {
+          activity_type: string
+          completed_at: string | null
+          created_at: string
+          description: string | null
+          id: string
+          lead_id: string
+          partner_user_id: string
+          reminder_sent: boolean | null
+          scheduled_at: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          activity_type?: string
+          completed_at?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          lead_id: string
+          partner_user_id: string
+          reminder_sent?: boolean | null
+          scheduled_at: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          activity_type?: string
+          completed_at?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          lead_id?: string
+          partner_user_id?: string
+          reminder_sent?: boolean | null
+          scheduled_at?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lead_scheduled_activities_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "sales_leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       loyalty_accounts: {
         Row: {
           created_at: string | null
