@@ -27,9 +27,10 @@ export function useDeepLinkHandler() {
       const tagId = chip || nfcTag;
 
       if (tagId) {
-        // Direkt zur Scan-Seite mit Tag-ID navigieren
-        console.log('NFC Tag erkannt:', tagId);
-        navigate(`/app/scan?chip=${encodeURIComponent(tagId)}`);
+        // Navigate to scan page WITHOUT auto-awarding points
+        // User must actively press scan button to collect points
+        console.log('NFC Tag erkannt (background), navigating to scan page without auto-award:', tagId);
+        navigate('/app/scan');
         return;
       }
 

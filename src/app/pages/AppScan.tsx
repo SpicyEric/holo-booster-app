@@ -59,12 +59,13 @@ export const AppScan = () => {
     };
   }, []);
 
+  // Auto-start NFC scan when navigated with autostart param (from center button)
   useEffect(() => {
-    const chipData = searchParams.get('chip');
-    if (chipData && user) {
-      handleChipScan(chipData);
+    const autostart = searchParams.get('autostart');
+    if (autostart === 'true' && !checkingNfc && nfcSupported && nfcEnabled && !scanning && !result) {
+      startNFCScan();
     }
-  }, [searchParams, user]);
+  }, [searchParams, checkingNfc, nfcSupported, nfcEnabled]);
 
   const handleChipScan = useCallback(async (chipData: string, hardwareUid?: string) => {
     if (!user) {
