@@ -103,16 +103,12 @@ export const AppMerchantDetail = () => {
           .eq('merchant_customer_id', id)
           .maybeSingle();
 
-        if (loyaltyAccount) {
-          setUserPoints(loyaltyAccount.current_points_balance || 0);
-          setHasEverStamped(true);
-        } else {
-          setUserPoints(0);
-          setHasEverStamped(false);
-        }
+        const points = loyaltyAccount?.current_points_balance || 0;
+        setUserPoints(points);
+        setHasEverStamped(points > 0);
 
-        // Load new customer offer if user hasn't stamped yet
-        if (!loyaltyAccount) {
+        // Load new customer offer only if user has 0 points
+        if (points === 0) {
           const { data: offerData } = await supabase
             .from('new_customer_offers')
             .select('*')
