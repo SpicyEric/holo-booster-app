@@ -136,14 +136,13 @@ export const BottomNav = ({ onNavigate, currentIndex }: BottomNavProps) => {
         <NavButton item={navItems[0]} />
         <NavButton item={navItems[1]} />
         <div className="flex flex-col items-center justify-center -mt-8">
-          <Button
-            size="icon"
+          <button
             onClick={handleCenterButtonClick}
-            className="h-18 w-18 rounded-full shadow-lg bg-gradient-to-br from-primary to-secondary hover:shadow-xl transition-all"
+            className="flex items-center justify-center rounded-full shadow-lg bg-gradient-to-br from-primary to-secondary hover:shadow-xl transition-all text-white"
             style={{ height: '72px', width: '72px' }}
           >
-            <Stamp className="h-10 w-10" strokeWidth={2} style={{ width: '40px', height: '40px' }} />
-          </Button>
+            <Stamp size={38} strokeWidth={2.2} />
+          </button>
         </div>
         <NavButton item={navItems[2]} />
         <NavButton item={navItems[3]} />
