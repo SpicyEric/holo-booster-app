@@ -296,7 +296,24 @@ const Accounts = () => {
         .delete()
         .eq("user_id", selectedAccount.id);
 
-      toast.success("Account-Rolle erfolgreich entfernt");
+      // Delete profile
+      await supabase
+        .from("profiles")
+        .delete()
+        .eq("user_id", selectedAccount.id);
+
+      // Delete the actual auth user via edge function
+      const { data, error: deleteError } = await supabase.functions.invoke('deleteUserAccount', {
+        body: { userId: selectedAccount.id },
+      });
+
+      if (deleteError) {
+        console.error("Auth user deletion error:", deleteError);
+        toast.error("Rolle entfernt, aber Auth-User konnte nicht gelöscht werden");
+      } else {
+        toast.success("Account vollständig gelöscht");
+      }
+
       setDeleteDialogOpen(false);
       loadAccounts();
     } catch (error: any) {
