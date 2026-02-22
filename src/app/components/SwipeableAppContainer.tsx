@@ -425,12 +425,50 @@ const AppHomeContent = () => {
 // Messages Content
 const AppMessagesContent = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [messages, setMessages] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [emailVerified, setEmailVerified] = useState(true);
+  const [redeemableCount, setRedeemableCount] = useState(0);
 
   useEffect(() => {
-    if (user) loadMessages();
+    if (user) {
+      loadMessages();
+      checkVerification();
+      loadRedeemableRewards();
+      localStorage.setItem(`rewards_seen_${user.id}`, Date.now().toString());
+    }
   }, [user]);
+
+  const checkVerification = async () => {
+    if (!user) return;
+    const { data } = await supabase.from('profiles').select('email_verified').eq('user_id', user.id).maybeSingle();
+    setEmailVerified(data?.email_verified ?? true);
+  };
+
+  const loadRedeemableRewards = async () => {
+    if (!user) return;
+    try {
+      const { data: accounts } = await supabase
+        .from('loyalty_accounts')
+        .select('merchant_customer_id, current_points_balance')
+        .eq('user_id', user.id)
+        .gt('current_points_balance', 0);
+      if (!accounts || accounts.length === 0) { setRedeemableCount(0); return; }
+      const merchantIds = accounts.map(a => a.merchant_customer_id);
+      const pointsMap = new Map(accounts.map(a => [a.merchant_customer_id, a.current_points_balance || 0]));
+      const { data: rewards } = await supabase
+        .from('rewards')
+        .select('id, points_required, merchant_customer_id')
+        .eq('is_active', true)
+        .in('merchant_customer_id', merchantIds);
+      if (rewards) {
+        setRedeemableCount(rewards.filter(r => (pointsMap.get(r.merchant_customer_id) || 0) >= r.points_required).length);
+      }
+    } catch (err) {
+      console.error('[Messages] Error loading rewards:', err);
+    }
+  };
 
   const loadMessages = async () => {
     setLoading(true);
@@ -440,7 +478,6 @@ const AppMessagesContent = () => {
         .select('id, title, body, sent_at, read_at, merchant_customer_id')
         .eq('user_id', user?.id)
         .order('sent_at', { ascending: false });
-
       if (data) {
         const merchantIds = [...new Set(data.map(m => m.merchant_customer_id))];
         const { data: merchants } = await supabase.from('customers').select('id, name, logo_url').in('id', merchantIds);
@@ -456,8 +493,45 @@ const AppMessagesContent = () => {
   const formatDate = (dateStr: string) => new Date(dateStr).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: '2-digit' });
 
   return (
-    <div className="space-y-6">
-      
+    <div className="space-y-4">
+      {/* Email verification banner */}
+      {!emailVerified && (
+        <Card className="p-4 border-2 border-amber-400 bg-amber-50 dark:bg-amber-950/30">
+          <div className="flex items-start gap-3">
+            <div className="w-10 h-10 rounded-full bg-amber-100 dark:bg-amber-900 flex items-center justify-center flex-shrink-0">
+              <AlertCircle className="h-5 w-5 text-amber-600" />
+            </div>
+            <div className="flex-1">
+              <h3 className="font-semibold text-amber-800 dark:text-amber-200">E-Mail bestätigen</h3>
+              <p className="text-sm text-amber-700 dark:text-amber-300 mt-1">
+                Bitte bestätige deine E-Mail-Adresse, um Prämien einlösen zu können.
+              </p>
+            </div>
+          </div>
+        </Card>
+      )}
+
+      {/* Redeemable rewards card */}
+      {redeemableCount > 0 && (
+        <Card
+          className="p-4 cursor-pointer hover:shadow-lg transition-shadow border-2 border-green-200 bg-green-50/50 dark:bg-green-950/20"
+          onClick={() => navigate('/app/rewards')}
+        >
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-full bg-green-100 dark:bg-green-900 flex items-center justify-center">
+              <Trophy className="h-6 w-6 text-green-600" />
+            </div>
+            <div className="flex-1">
+              <div className="text-xl font-bold text-green-700 dark:text-green-400">{redeemableCount}</div>
+              <div className="text-sm text-green-600 dark:text-green-500">
+                {redeemableCount === 1 ? 'Einlösbare Prämie' : 'Einlösbare Prämien'}
+              </div>
+            </div>
+            <ChevronRight className="h-5 w-5 text-green-400" />
+          </div>
+        </Card>
+      )}
+
       {loading ? (
         <Card className="p-6"><p className="text-muted-foreground text-center">Lädt...</p></Card>
       ) : messages.length > 0 ? (
@@ -484,11 +558,13 @@ const AppMessagesContent = () => {
           ))}
         </div>
       ) : (
-        <Card className="p-8 text-center">
-          <Bell className="h-12 w-12 text-muted-foreground/50 mx-auto mb-4" />
-          <h3 className="font-semibold text-foreground mb-2">Keine Nachrichten</h3>
-          <p className="text-sm text-muted-foreground">Du hast noch keine Nachrichten erhalten.</p>
-        </Card>
+        !emailVerified || redeemableCount > 0 ? null : (
+          <Card className="p-8 text-center">
+            <Bell className="h-12 w-12 text-muted-foreground/50 mx-auto mb-4" />
+            <h3 className="font-semibold text-foreground mb-2">Keine Nachrichten</h3>
+            <p className="text-sm text-muted-foreground">Du hast noch keine Nachrichten erhalten.</p>
+          </Card>
+        )
       )}
     </div>
   );
