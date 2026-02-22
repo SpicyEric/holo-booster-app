@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState, createContext, useContext } from 'react';
 import useEmblaCarousel from 'embla-carousel-react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Store, Gift, MessageSquare, Mail, Bell, MapPin, Search, User, History, LogOut, Shield, FileText, HelpCircle, ChevronRight, Sparkles, AlertCircle } from 'lucide-react';
+import { Store, Gift, MessageSquare, Mail, Bell, MapPin, Search, User, History, LogOut, Shield, FileText, HelpCircle, ChevronRight, Sparkles, AlertCircle, TrendingUp, Trophy, Loader2 } from 'lucide-react';
 import { StoresGoogleMap } from '@/app/components/StoresGoogleMap';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -173,43 +173,81 @@ export const SwipeableAppContainer = () => {
 };
 
 // Home Content
+function haversineDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  const R = 6371;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a = Math.sin(dLat / 2) ** 2 + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
 const AppHomeContent = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [stampCards, setStampCards] = useState<any[]>([]);
+  const [loyaltyEntries, setLoyaltyEntries] = useState<any[]>([]);
   const [newCustomerOffers, setNewCustomerOffers] = useState<any[]>([]);
+  const [redeemableRewards, setRedeemableRewards] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
+
+  useEffect(() => {
+    navigator.geolocation?.getCurrentPosition(
+      (pos) => setUserLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+      () => console.log('[AppHome] Geolocation denied'),
+      { timeout: 5000, maximumAge: 60000 }
+    );
+  }, []);
 
   useEffect(() => {
     if (user) loadData();
-  }, [user]);
+  }, [user, userLocation]);
 
   const loadData = async () => {
     setLoading(true);
     try {
-      const { data: cards } = await supabase
-        .from('user_stamp_cards')
-        .select(`id, merchant_customer_id, current_points, stamp_card_id`)
-        .eq('user_id', user?.id);
+      const { data: accounts } = await supabase
+        .from('loyalty_accounts')
+        .select('id, merchant_customer_id, current_points_balance')
+        .eq('user_id', user!.id)
+        .gt('current_points_balance', 0);
 
-      if (cards && cards.length > 0) {
-        const merchantIds = cards.map(c => c.merchant_customer_id);
-        const stampCardIds = cards.map(c => c.stamp_card_id).filter(Boolean);
+      let stampedMerchantIds: string[] = [];
+      const pointsMap = new Map<string, number>();
+
+      if (accounts && accounts.length > 0) {
+        stampedMerchantIds = accounts.map(a => a.merchant_customer_id);
+        accounts.forEach(a => pointsMap.set(a.merchant_customer_id, a.current_points_balance || 0));
 
         const { data: customersData } = await supabase
           .from('customers')
-          .select('id, name, company_name, logo_url, cover_image_url, industry')
-          .in('id', merchantIds);
+          .select('id, name, company_name, logo_url, industry, stamps_required')
+          .in('id', stampedMerchantIds);
 
-        const { data: stampCardsData } = stampCardIds.length > 0 
-          ? await supabase.from('stamp_cards').select('id, stamp_count, background_color, stamp_type').in('id', stampCardIds)
-          : { data: [] };
-
-        setStampCards(cards.map(card => ({
-          ...card,
-          customer: customersData?.find(c => c.id === card.merchant_customer_id),
-          stamp_card: stampCardsData?.find(sc => sc.id === card.stamp_card_id),
+        setLoyaltyEntries(accounts.map(account => ({
+          id: account.id,
+          merchant_customer_id: account.merchant_customer_id,
+          current_points: account.current_points_balance || 0,
+          customer: customersData?.find(c => c.id === account.merchant_customer_id),
         })));
+
+        const { data: rewardsData } = await supabase
+          .from('rewards')
+          .select('id, title, points_required, merchant_customer_id')
+          .eq('is_active', true)
+          .in('merchant_customer_id', stampedMerchantIds);
+
+        if (rewardsData) {
+          const redeemable = rewardsData
+            .filter(r => (pointsMap.get(r.merchant_customer_id) || 0) >= r.points_required)
+            .map(r => {
+              const c = customersData?.find(c => c.id === r.merchant_customer_id);
+              return { ...r, merchantName: c?.company_name || c?.name || 'Unbekannt', merchantLogo: c?.logo_url || null, userPoints: pointsMap.get(r.merchant_customer_id) || 0 };
+            });
+          setRedeemableRewards(redeemable);
+        }
+      } else {
+        setLoyaltyEntries([]);
+        setRedeemableRewards([]);
       }
 
       const { data: offersData } = await supabase
@@ -218,16 +256,33 @@ const AppHomeContent = () => {
         .eq('is_active', true);
 
       if (offersData && offersData.length > 0) {
-        const offerMerchantIds = offersData.map(o => o.merchant_customer_id);
-        const { data: offerCustomersData } = await supabase
-          .from('customers')
-          .select('id, name, logo_url, industry')
-          .in('id', offerMerchantIds);
+        const filteredOffers = offersData.filter(offer => !stampedMerchantIds.includes(offer.merchant_customer_id));
+        if (filteredOffers.length > 0) {
+          const offerMerchantIds = filteredOffers.map(o => o.merchant_customer_id);
+          const { data: offerCustomersData } = await supabase
+            .from('customers')
+            .select('id, name, company_name, logo_url, industry, street, house_number, postal_code, city, latitude, longitude')
+            .in('id', offerMerchantIds);
 
-        setNewCustomerOffers(offersData.map(offer => ({
-          ...offer,
-          customer: offerCustomersData?.find(c => c.id === offer.merchant_customer_id),
-        })));
+          let formattedOffers = filteredOffers.map(offer => {
+            const customer = offerCustomersData?.find(c => c.id === offer.merchant_customer_id);
+            let distance: number | undefined;
+            if (userLocation && customer?.latitude && customer?.longitude) {
+              distance = haversineDistance(userLocation.lat, userLocation.lng, customer.latitude, customer.longitude);
+            }
+            return { ...offer, customer, distance };
+          });
+          formattedOffers.sort((a: any, b: any) => {
+            if (a.distance !== undefined && b.distance !== undefined) return a.distance - b.distance;
+            if (a.distance !== undefined) return -1;
+            if (b.distance !== undefined) return 1;
+            return 0;
+          });
+          formattedOffers = formattedOffers.slice(0, 5);
+          setNewCustomerOffers(formattedOffers);
+        } else {
+          setNewCustomerOffers([]);
+        }
       }
     } catch (err) {
       console.error('[AppHome] Error:', err);
@@ -238,62 +293,14 @@ const AppHomeContent = () => {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-bold text-foreground mb-4">Deine Stempelkarten</h2>
-        {loading ? (
-          <Card className="p-6"><p className="text-muted-foreground text-center">Lädt...</p></Card>
-        ) : stampCards.length > 0 ? (
-          <div className="space-y-4">
-            {stampCards.map((card) => (
-              <Card key={card.id} className="p-4 hover:shadow-lg transition-shadow cursor-pointer" onClick={() => navigate(`/app/merchant/${card.merchant_customer_id}`)}>
-                <div className="flex items-center gap-4">
-                  {card.customer?.logo_url ? (
-                    <img src={card.customer.logo_url} alt={card.customer.name} className="w-16 h-16 rounded-full object-cover" />
-                  ) : (
-                    <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center text-2xl font-bold text-primary">
-                      {(card.customer?.company_name || card.customer?.name || '?').charAt(0)}
-                    </div>
-                  )}
-                  <div className="flex-1">
-                    <h3 className="font-semibold text-foreground">{card.customer?.company_name || card.customer?.name || 'Unbekannt'}</h3>
-                    <p className="text-sm text-muted-foreground">{card.customer?.industry || 'Geschäft'}</p>
-                    <div className="mt-2 inline-flex items-center gap-1 px-3 py-1 bg-primary/10 text-primary rounded-full text-sm font-medium">
-                      {card.current_points} Punkte
-                    </div>
-                  </div>
-                </div>
-              </Card>
-            ))}
-          </div>
-        ) : (
-          <Card className="relative overflow-hidden bg-gradient-to-br from-primary to-secondary p-6 text-primary-foreground">
-            <h3 className="text-xl font-bold mb-2">Noch keine Stempelkarten</h3>
-            <p className="text-primary-foreground/90 mb-6">Besuche umliegende Shops und sammle deine ersten Stempel.</p>
-            <div className="relative h-40 mb-4">
-              {[{ rot: -15, top: 0 }, { rot: 0, top: 4 }, { rot: 15, top: 8 }, { rot: 25, top: 12 }].map((s, i) => (
-                <div key={i} className="absolute left-1/2 -translate-x-1/2 w-32 h-32" style={{ transform: `translateX(-50%) rotate(${s.rot}deg)`, top: `${s.top * 4}px` }}>
-                  <div className={`w-full h-full rounded-2xl bg-gradient-to-br from-[hsl(${240 + i * 10},${85 - i * 5}%,${65 + i * 5}%)] to-[hsl(${240 + i * 10},${85 - i * 5}%,${55 + i * 5}%)] shadow-lg`} />
-                </div>
-              ))}
-            </div>
-            <div className="flex items-center justify-between pt-4 border-t border-primary-foreground/20">
-              <span className="text-sm text-primary-foreground/80">Geschäfte in deiner Nähe</span>
-              <Button variant="secondary" size="sm" onClick={() => navigate('/app/stores')} className="bg-primary-foreground text-primary hover:bg-primary-foreground/90">
-                Shops finden
-              </Button>
-            </div>
-          </Card>
-        )}
-      </div>
-
-      <div>
-        <h2 className="text-2xl font-bold text-foreground mb-4">Neukundenprämien</h2>
-        {loading ? (
-          <Card className="p-6"><p className="text-muted-foreground text-center">Lädt...</p></Card>
-        ) : newCustomerOffers.length > 0 ? (
+      {/* Neukundenprämien Section - TOP */}
+      {newCustomerOffers.length > 0 && (
+        <div>
+          <h2 className="text-2xl font-bold text-foreground">Neukundenprämien</h2>
+          <p className="text-sm text-muted-foreground mb-4">Angebote in deiner Nähe</p>
           <div className="space-y-3">
-            {newCustomerOffers.map((offer) => (
-              <Card key={offer.id} className="p-4 hover:shadow-lg transition-shadow cursor-pointer" onClick={() => navigate(`/app/merchant/${offer.merchant_customer_id}`)}>
+            {newCustomerOffers.map((offer: any) => (
+              <Card key={offer.id} className="p-4 hover:shadow-lg transition-shadow cursor-pointer border-2 border-primary/20" onClick={() => navigate(`/app/merchant/${offer.merchant_customer_id}`)}>
                 <div className="flex items-center gap-4">
                   {offer.customer?.logo_url ? (
                     <img src={offer.customer.logo_url} alt={offer.customer.name} className="w-16 h-16 rounded-full object-cover" />
@@ -301,21 +308,71 @@ const AppHomeContent = () => {
                     <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center text-2xl font-bold text-primary">{offer.customer?.name?.charAt(0) || '?'}</div>
                   )}
                   <div className="flex-1">
-                    <h3 className="font-semibold text-foreground">{offer.customer?.name || 'Unbekannt'}</h3>
+                    <h3 className="font-semibold text-foreground">{offer.customer?.company_name || offer.customer?.name || 'Unbekannt'}</h3>
                     <p className="text-sm text-muted-foreground mb-1">{offer.title}</p>
-                    <div className="inline-flex items-center gap-1 px-2 py-1 bg-accent/10 text-accent rounded-full text-xs font-medium">
-                      <Gift className="h-3 w-3" />+{offer.bonus_stamps} Bonus-Stempel
+                    <div className="flex items-center gap-2">
+                      <span className="inline-flex items-center gap-1 px-2 py-1 bg-accent/10 text-accent rounded-full text-xs font-medium">
+                        <Gift className="h-3 w-3" />+{offer.bonus_stamps} Bonus-Punkte
+                      </span>
+                      {offer.distance !== undefined && (
+                        <span className="text-xs text-muted-foreground flex items-center gap-0.5">
+                          <MapPin className="h-3 w-3" />
+                          {offer.distance < 1 ? `${Math.round(offer.distance * 1000)}m` : `${offer.distance.toFixed(1)}km`}
+                        </span>
+                      )}
                     </div>
                   </div>
                 </div>
               </Card>
             ))}
           </div>
+        </div>
+      )}
+
+      {/* Mini Dashboard */}
+      <div>
+        {loading ? (
+          <Card className="p-6 flex items-center justify-center">
+            <Loader2 className="h-6 w-6 animate-spin text-primary" />
+          </Card>
+        ) : redeemableRewards.length > 0 ? (
+          <Card className="p-5 cursor-pointer hover:shadow-lg transition-shadow border-2 border-green-200 bg-green-50/50 dark:bg-green-950/20">
+            <div className="flex items-center gap-4">
+              <div className="w-14 h-14 rounded-full bg-green-100 dark:bg-green-900 flex items-center justify-center">
+                <Trophy className="h-7 w-7 text-green-600" />
+              </div>
+              <div className="flex-1">
+                <div className="text-2xl font-bold text-green-700 dark:text-green-400">{redeemableRewards.length}</div>
+                <div className="text-sm text-green-600 dark:text-green-500">{redeemableRewards.length === 1 ? 'Einlösbare Prämie' : 'Einlösbare Prämien'}</div>
+              </div>
+              <ChevronRight className="h-5 w-5 text-green-400" />
+            </div>
+          </Card>
+        ) : loyaltyEntries.length > 0 ? (
+          <Card className="p-5">
+            <div className="flex items-center gap-4">
+              <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center">
+                <TrendingUp className="h-7 w-7 text-primary" />
+              </div>
+              <div className="flex-1">
+                <div className="text-2xl font-bold text-primary">{loyaltyEntries.reduce((sum: number, e: any) => sum + e.current_points, 0)}</div>
+                <div className="text-sm text-muted-foreground">Punkte bei {loyaltyEntries.length} {loyaltyEntries.length === 1 ? 'Laden' : 'Läden'}</div>
+              </div>
+            </div>
+          </Card>
         ) : (
-          <Card className="p-6 text-center"><p className="text-muted-foreground">Derzeit keine Neukundenprämien verfügbar</p></Card>
+          <Card className="p-6 text-center">
+            <div className="mx-auto w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center mb-3">
+              <TrendingUp className="h-7 w-7 text-primary" />
+            </div>
+            <h3 className="font-semibold text-foreground mb-1">Noch keine Punkte</h3>
+            <p className="text-sm text-muted-foreground mb-4">Besuche einen teilnehmenden Shop und scanne deinen ersten NFC-Stempel!</p>
+            <Button variant="outline" size="sm" onClick={() => navigate('/app/stores')}>Shops entdecken</Button>
+          </Card>
         )}
       </div>
 
+      {/* Support */}
       <div>
         <h2 className="text-xl font-bold text-foreground mb-3">Support</h2>
         <div className="grid grid-cols-2 gap-3">
