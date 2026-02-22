@@ -33,8 +33,8 @@ import Nachrichten from "./pages/merchant/Nachrichten";
 import PartnerLayout from "./pages/partner/PartnerLayout";
 import PartnerDashboardHome from "./pages/partner/PartnerDashboardHome";
 import PartnerLeads from "./pages/partner/PartnerLeads";
-import PartnerNewLead from "./pages/partner/PartnerNewLead";
 import PartnerProvisionen from "./pages/partner/PartnerProvisionen";
+import PartnerCheckout from "./pages/partner/PartnerCheckout";
 import MerchantSetup from "./pages/merchant/MerchantSetup";
 import Scan from "./pages/Scan";
 import NotFound from "./pages/NotFound";
@@ -112,8 +112,8 @@ const App = () => (
             <Route index element={<Navigate to="/partner/dashboard" replace />} />
             <Route path="dashboard" element={<PartnerDashboardHome />} />
             <Route path="leads" element={<PartnerLeads />} />
-            <Route path="leads/new" element={<PartnerNewLead />} />
             <Route path="provisionen" element={<PartnerProvisionen />} />
+            <Route path="checkout" element={<PartnerCheckout />} />
           </Route>
           
           {/* ===== APP ROUTES (End Customer) - Swipeable main pages ===== */}
