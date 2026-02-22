@@ -771,6 +771,70 @@ export type Database = {
         }
         Relationships: []
       }
+      feed_post_likes: {
+        Row: {
+          created_at: string
+          feed_post_id: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          feed_post_id: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          feed_post_id?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "feed_post_likes_feed_post_id_fkey"
+            columns: ["feed_post_id"]
+            isOneToOne: false
+            referencedRelation: "feed_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      feed_posts: {
+        Row: {
+          body: string | null
+          created_at: string
+          id: string
+          image_url: string | null
+          merchant_customer_id: string
+          updated_at: string
+        }
+        Insert: {
+          body?: string | null
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          merchant_customer_id: string
+          updated_at?: string
+        }
+        Update: {
+          body?: string | null
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          merchant_customer_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "feed_posts_merchant_customer_id_fkey"
+            columns: ["merchant_customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       google_review_claims: {
         Row: {
           claimed_at: string | null

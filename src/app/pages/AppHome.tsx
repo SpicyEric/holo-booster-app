@@ -1,61 +1,24 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Store, Gift, MessageSquare, TrendingUp, Trophy, ChevronRight, Loader2, MapPin } from 'lucide-react';
+import { Gift, MapPin, Heart, Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { MainLayout } from '@/app/components/layout/MainLayout';
-import { NewCustomerOfferDialog } from '@/app/components/NewCustomerOfferDialog';
-import {
-  Dialog, DialogContent, DialogHeader, DialogTitle,
-} from '@/components/ui/dialog';
 
-interface LoyaltyEntry {
+interface FeedItem {
+  type: 'post' | 'offer';
   id: string;
   merchant_customer_id: string;
-  current_points: number;
-  customer?: {
-    id: string;
-    name: string;
-    company_name: string | null;
-    logo_url: string | null;
-    industry: string | null;
-    stamps_required: number | null;
-  };
-}
-
-interface NewCustomerOffer {
-  id: string;
-  merchant_customer_id: string;
-  title: string;
-  description: string | null;
-  bonus_stamps: number;
+  merchant_name: string;
+  merchant_logo: string | null;
+  image_url: string | null;
+  body: string | null;
+  title?: string;
+  bonus_stamps?: number;
   distance?: number;
-  customer?: {
-    id: string;
-    name: string;
-    company_name: string | null;
-    logo_url: string | null;
-    industry: string | null;
-    street: string | null;
-    house_number: string | null;
-    postal_code: string | null;
-    city: string | null;
-    latitude: number | null;
-    longitude: number | null;
-  };
-}
-
-interface RedeemableReward {
-  id: string;
-  title: string;
-  points_required: number;
-  merchant_customer_id: string;
-  merchantName: string;
-  merchantLogo: string | null;
-  userPoints: number;
+  created_at: string;
+  like_count: number;
+  liked_by_user: boolean;
 }
 
 function haversineDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
@@ -69,337 +32,289 @@ function haversineDistance(lat1: number, lon1: number, lat2: number, lon2: numbe
 export const AppHome = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [loyaltyEntries, setLoyaltyEntries] = useState<LoyaltyEntry[]>([]);
-  const [newCustomerOffers, setNewCustomerOffers] = useState<NewCustomerOffer[]>([]);
-  const [redeemableRewards, setRedeemableRewards] = useState<RedeemableReward[]>([]);
+  const [feedItems, setFeedItems] = useState<FeedItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [rewardsDialogOpen, setRewardsDialogOpen] = useState(false);
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
 
-  const [selectedOffer, setSelectedOffer] = useState<NewCustomerOffer | null>(null);
-  const [offerDialogOpen, setOfferDialogOpen] = useState(false);
-
-  // Get user location
   useEffect(() => {
     navigator.geolocation?.getCurrentPosition(
       (pos) => setUserLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
-      () => console.log('[AppHome] Geolocation denied'),
+      () => {},
       { timeout: 5000, maximumAge: 60000 }
     );
   }, []);
 
   useEffect(() => {
-    if (user) loadData();
+    if (user) loadFeed();
   }, [user, userLocation]);
 
-  const loadData = async () => {
+  const loadFeed = async () => {
     setLoading(true);
     try {
-      // Load loyalty accounts
+      const items: FeedItem[] = [];
+
+      // Get user's loyalty accounts to know which merchants they follow
       const { data: accounts } = await supabase
         .from('loyalty_accounts')
-        .select('id, merchant_customer_id, current_points_balance')
-        .eq('user_id', user!.id)
-        .gt('current_points_balance', 0);
+        .select('merchant_customer_id, current_points_balance')
+        .eq('user_id', user!.id);
 
-      let stampedMerchantIds: string[] = [];
-      const pointsMap = new Map<string, number>();
+      const stampedMerchantIds = accounts?.map(a => a.merchant_customer_id) || [];
+      const stampedSet = new Set(stampedMerchantIds);
 
-      if (accounts && accounts.length > 0) {
-        stampedMerchantIds = accounts.map(a => a.merchant_customer_id);
-        accounts.forEach(a => pointsMap.set(a.merchant_customer_id, a.current_points_balance || 0));
+      // Load feed posts from merchants where user has points
+      if (stampedMerchantIds.length > 0) {
+        const { data: posts } = await supabase
+          .from('feed_posts')
+          .select('id, merchant_customer_id, image_url, body, created_at')
+          .in('merchant_customer_id', stampedMerchantIds)
+          .order('created_at', { ascending: false })
+          .limit(50);
 
-        const { data: customersData } = await supabase
-          .from('customers')
-          .select('id, name, company_name, logo_url, industry, stamps_required')
-          .in('id', stampedMerchantIds);
+        if (posts && posts.length > 0) {
+          const postMerchantIds = [...new Set(posts.map(p => p.merchant_customer_id))];
+          const { data: merchants } = await supabase
+            .from('customers')
+            .select('id, name, company_name, logo_url')
+            .in('id', postMerchantIds);
 
-        const formatted = accounts.map(account => ({
-          id: account.id,
-          merchant_customer_id: account.merchant_customer_id,
-          current_points: account.current_points_balance || 0,
-          customer: customersData?.find(c => c.id === account.merchant_customer_id),
-        }));
-        setLoyaltyEntries(formatted);
+          // Get like counts and user likes
+          const postIds = posts.map(p => p.id);
+          const { data: allLikes } = await supabase
+            .from('feed_post_likes')
+            .select('feed_post_id, user_id')
+            .in('feed_post_id', postIds);
 
-        // Load actual redeemable rewards
-        const { data: rewardsData } = await supabase
-          .from('rewards')
-          .select('id, title, points_required, merchant_customer_id')
-          .eq('is_active', true)
-          .in('merchant_customer_id', stampedMerchantIds);
+          const likeCounts = new Map<string, number>();
+          const userLikes = new Set<string>();
+          allLikes?.forEach(l => {
+            likeCounts.set(l.feed_post_id, (likeCounts.get(l.feed_post_id) || 0) + 1);
+            if (l.user_id === user!.id) userLikes.add(l.feed_post_id);
+          });
 
-        if (rewardsData) {
-          const redeemable = rewardsData
-            .filter(r => (pointsMap.get(r.merchant_customer_id) || 0) >= r.points_required)
-            .map(r => {
-              const c = customersData?.find(c => c.id === r.merchant_customer_id);
-              return {
-                ...r,
-                merchantName: c?.company_name || c?.name || 'Unbekannt',
-                merchantLogo: c?.logo_url || null,
-                userPoints: pointsMap.get(r.merchant_customer_id) || 0,
-              };
+          posts.forEach(post => {
+            const m = merchants?.find(m => m.id === post.merchant_customer_id);
+            items.push({
+              type: 'post',
+              id: post.id,
+              merchant_customer_id: post.merchant_customer_id,
+              merchant_name: m?.company_name || m?.name || 'Unbekannt',
+              merchant_logo: m?.logo_url || null,
+              image_url: post.image_url,
+              body: post.body,
+              created_at: post.created_at,
+              like_count: likeCounts.get(post.id) || 0,
+              liked_by_user: userLikes.has(post.id),
             });
-          setRedeemableRewards(redeemable);
+          });
         }
-      } else {
-        setLoyaltyEntries([]);
-        setRedeemableRewards([]);
       }
 
-      // Load new customer offers
+      // Load new customer offers (for merchants where user has NO points)
       const { data: offersData } = await supabase
         .from('new_customer_offers')
-        .select('id, merchant_customer_id, title, description, bonus_stamps')
+        .select('id, merchant_customer_id, title, description, bonus_stamps, created_at')
         .eq('is_active', true);
 
       if (offersData && offersData.length > 0) {
-        const filteredOffers = offersData.filter(
-          offer => !stampedMerchantIds.includes(offer.merchant_customer_id)
-        );
-
+        const filteredOffers = offersData.filter(o => !stampedSet.has(o.merchant_customer_id));
         if (filteredOffers.length > 0) {
           const offerMerchantIds = filteredOffers.map(o => o.merchant_customer_id);
-          const { data: offerCustomersData } = await supabase
+          const { data: offerMerchants } = await supabase
             .from('customers')
-            .select('id, name, company_name, logo_url, industry, street, house_number, postal_code, city, latitude, longitude')
+            .select('id, name, company_name, logo_url, cover_image_url, latitude, longitude')
             .in('id', offerMerchantIds);
 
-          let formattedOffers: NewCustomerOffer[] = filteredOffers.map(offer => {
-            const customer = offerCustomersData?.find(c => c.id === offer.merchant_customer_id);
+          filteredOffers.forEach(offer => {
+            const m = offerMerchants?.find(c => c.id === offer.merchant_customer_id);
             let distance: number | undefined;
-            if (userLocation && customer?.latitude && customer?.longitude) {
-              distance = haversineDistance(userLocation.lat, userLocation.lng, customer.latitude, customer.longitude);
+            if (userLocation && m?.latitude && m?.longitude) {
+              distance = haversineDistance(userLocation.lat, userLocation.lng, m.latitude, m.longitude);
             }
-            return { ...offer, customer, distance };
+            items.push({
+              type: 'offer',
+              id: offer.id,
+              merchant_customer_id: offer.merchant_customer_id,
+              merchant_name: m?.company_name || m?.name || 'Unbekannt',
+              merchant_logo: m?.logo_url || null,
+              image_url: m?.cover_image_url || null,
+              body: offer.description,
+              title: offer.title,
+              bonus_stamps: offer.bonus_stamps ?? 0,
+              distance,
+              created_at: offer.created_at || new Date().toISOString(),
+              like_count: 0,
+              liked_by_user: false,
+            });
           });
-
-          // Sort by distance if available, then limit to 5
-          formattedOffers.sort((a, b) => {
-            if (a.distance !== undefined && b.distance !== undefined) return a.distance - b.distance;
-            if (a.distance !== undefined) return -1;
-            if (b.distance !== undefined) return 1;
-            return 0;
-          });
-          formattedOffers = formattedOffers.slice(0, 5);
-
-          setNewCustomerOffers(formattedOffers);
-        } else {
-          setNewCustomerOffers([]);
         }
       }
+
+      // Sort: offers by distance first, then all by date
+      items.sort((a, b) => {
+        // Offers with distance come first
+        if (a.type === 'offer' && b.type === 'offer') {
+          if (a.distance !== undefined && b.distance !== undefined) return a.distance - b.distance;
+          if (a.distance !== undefined) return -1;
+          if (b.distance !== undefined) return 1;
+        }
+        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      });
+
+      setFeedItems(items);
     } catch (err) {
-      console.error('[AppHome] Error loading data:', err);
+      console.error('[Feed] Error:', err);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleOfferClick = (offer: NewCustomerOffer) => {
-    setSelectedOffer(offer);
-    setOfferDialogOpen(true);
+  const toggleLike = async (item: FeedItem) => {
+    if (item.type !== 'post') return;
+
+    // Optimistic update
+    setFeedItems(prev => prev.map(fi =>
+      fi.id === item.id
+        ? { ...fi, liked_by_user: !fi.liked_by_user, like_count: fi.liked_by_user ? fi.like_count - 1 : fi.like_count + 1 }
+        : fi
+    ));
+
+    if (item.liked_by_user) {
+      await supabase
+        .from('feed_post_likes')
+        .delete()
+        .eq('feed_post_id', item.id)
+        .eq('user_id', user!.id);
+    } else {
+      await supabase
+        .from('feed_post_likes')
+        .insert({ feed_post_id: item.id, user_id: user!.id });
+    }
   };
 
-  const handleRedemptionComplete = () => {
-    if (selectedOffer) {
-      setNewCustomerOffers(prev => prev.filter(o => o.id !== selectedOffer.id));
-    }
-    loadData();
+  const formatTimeAgo = (dateStr: string) => {
+    const diff = Date.now() - new Date(dateStr).getTime();
+    const mins = Math.floor(diff / 60000);
+    if (mins < 60) return `vor ${mins}m`;
+    const hours = Math.floor(mins / 60);
+    if (hours < 24) return `vor ${hours}h`;
+    const days = Math.floor(hours / 24);
+    if (days < 7) return `vor ${days}T`;
+    return new Date(dateStr).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' });
   };
 
   return (
-    <MainLayout title="Start">
-      <div className="space-y-6">
-        {/* Neukundenprämien Section */}
-        {newCustomerOffers.length > 0 && (
-          <div>
-            <h2 className="text-2xl font-bold text-foreground">Neukundenprämien</h2>
-            <p className="text-sm text-muted-foreground mb-4">Angebote in deiner Nähe</p>
-            <div className="space-y-3">
-              {newCustomerOffers.map((offer) => (
-                <Card
-                  key={offer.id}
-                  className="p-4 hover:shadow-lg transition-shadow cursor-pointer border-2 border-primary/20"
-                  onClick={() => handleOfferClick(offer)}
-                >
-                  <div className="flex items-center gap-4">
-                    {offer.customer?.logo_url ? (
-                      <img src={offer.customer.logo_url} alt={offer.customer.name} className="w-16 h-16 rounded-full object-cover" />
-                    ) : (
-                      <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center text-2xl font-bold text-primary">
-                        {offer.customer?.name?.charAt(0) || '?'}
-                      </div>
-                    )}
-                    <div className="flex-1">
-                      <h3 className="font-semibold text-foreground">
-                        {offer.customer?.company_name || offer.customer?.name || 'Unbekannt'}
-                      </h3>
-                      <p className="text-sm text-muted-foreground mb-1">{offer.title}</p>
-                      <div className="flex items-center gap-2">
-                        <Badge variant="secondary" className="text-xs">
-                          <Gift className="h-3 w-3 mr-1" />
-                          +{offer.bonus_stamps} Bonus-Punkte
-                        </Badge>
-                        {offer.distance !== undefined && (
-                          <span className="text-xs text-muted-foreground flex items-center gap-0.5">
-                            <MapPin className="h-3 w-3" />
-                            {offer.distance < 1
-                              ? `${Math.round(offer.distance * 1000)}m`
-                              : `${offer.distance.toFixed(1)}km`}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </Card>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Mini Dashboard */}
-        <div>
-          {loading ? (
-            <Card className="p-6 flex items-center justify-center">
-              <Loader2 className="h-6 w-6 animate-spin text-primary" />
-            </Card>
-          ) : redeemableRewards.length > 0 ? (
-            <Card
-              className="p-5 cursor-pointer hover:shadow-lg transition-shadow border-2 border-green-200 bg-green-50/50 dark:bg-green-950/20"
-              onClick={() => navigate('/app/rewards')}
-            >
-              <div className="flex items-center gap-4">
-                <div className="w-14 h-14 rounded-full bg-green-100 dark:bg-green-900 flex items-center justify-center">
-                  <Trophy className="h-7 w-7 text-green-600" />
-                </div>
-                <div className="flex-1">
-                  <div className="text-2xl font-bold text-green-700 dark:text-green-400">
-                    {redeemableRewards.length}
-                  </div>
-                  <div className="text-sm text-green-600 dark:text-green-500">
-                    {redeemableRewards.length === 1 ? 'Einlösbare Prämie' : 'Einlösbare Prämien'}
-                  </div>
-                </div>
-                <ChevronRight className="h-5 w-5 text-green-400" />
-              </div>
-            </Card>
-          ) : loyaltyEntries.length > 0 ? (
-            <Card className="p-5">
-              <div className="flex items-center gap-4">
-                <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center">
-                  <TrendingUp className="h-7 w-7 text-primary" />
-                </div>
-                <div className="flex-1">
-                  <div className="text-2xl font-bold text-primary">
-                    {loyaltyEntries.reduce((sum, e) => sum + e.current_points, 0)}
-                  </div>
-                  <div className="text-sm text-muted-foreground">
-                    Punkte bei {loyaltyEntries.length} {loyaltyEntries.length === 1 ? 'Laden' : 'Läden'}
-                  </div>
-                </div>
-              </div>
-            </Card>
-          ) : (
-            <Card className="p-6 text-center">
-              <div className="mx-auto w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center mb-3">
-                <TrendingUp className="h-7 w-7 text-primary" />
-              </div>
-              <h3 className="font-semibold text-foreground mb-1">Noch keine Punkte</h3>
-              <p className="text-sm text-muted-foreground mb-4">
-                Besuche einen teilnehmenden Shop und scanne deinen ersten NFC-Stempel!
-              </p>
-              <Button variant="outline" size="sm" onClick={() => navigate('/app/stores')}>
-                Shops entdecken
-              </Button>
-            </Card>
-          )}
+    <MainLayout title="Feed">
+      {loading ? (
+        <div className="flex items-center justify-center py-20">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>
-
-        {/* Support Section */}
-        <div>
-          <h2 className="text-xl font-bold text-foreground mb-3">Support</h2>
-          <div className="grid grid-cols-2 gap-3">
-            <Card className="p-4 hover:shadow-md transition-shadow">
-              <button onClick={() => window.open('https://wa.me/', '_blank')} className="w-full text-center">
-                <div className="mx-auto w-16 h-16 rounded-full bg-green-500/10 flex items-center justify-center mb-3">
-                  <MessageSquare className="h-8 w-8 text-green-500" />
-                </div>
-                <h3 className="font-semibold text-foreground mb-1">Hilfe benötigt?</h3>
-                <p className="text-xs text-muted-foreground">Schreib uns auf WhatsApp</p>
-              </button>
-            </Card>
-            <Card className="p-4 hover:shadow-md transition-shadow">
-              <button onClick={() => navigate('/app/suggest-shop')} className="w-full text-center">
-                <div className="mx-auto w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-3">
-                  <Store className="h-8 w-8 text-primary" />
-                </div>
-                <h3 className="font-semibold text-foreground mb-1">Dir fehlt dein Lieblingsladen?</h3>
-                <p className="text-xs text-muted-foreground">Jetzt vorschlagen</p>
-              </button>
-            </Card>
+      ) : feedItems.length === 0 ? (
+        <div className="text-center py-16 px-4">
+          <div className="mx-auto w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
+            <Gift className="h-8 w-8 text-primary" />
           </div>
+          <h3 className="font-semibold text-foreground mb-2">Dein Feed ist noch leer</h3>
+          <p className="text-sm text-muted-foreground">
+            Besuche einen teilnehmenden Shop und scanne deinen ersten NFC-Stempel, um Posts zu sehen!
+          </p>
         </div>
-      </div>
-
-      {/* Redeemable Rewards Dialog */}
-      <Dialog open={rewardsDialogOpen} onOpenChange={setRewardsDialogOpen}>
-        <DialogContent className="max-w-md max-h-[80vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Einlösbare Prämien</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-3">
-            {redeemableRewards.map((reward) => (
-              <Card
-                key={reward.id}
-                className="p-4 cursor-pointer hover:shadow-md transition-shadow"
-                onClick={() => {
-                  setRewardsDialogOpen(false);
-                  navigate(`/app/merchant/${reward.merchant_customer_id}`);
-                }}
+      ) : (
+        <div className="-mx-4 space-y-6">
+          {feedItems.map((item) => (
+            <div key={`${item.type}-${item.id}`} className="bg-card">
+              {/* Header: profile pic + name */}
+              <div
+                className="flex items-center gap-3 px-4 py-3 cursor-pointer"
+                onClick={() => navigate(`/app/merchant/${item.merchant_customer_id}`)}
               >
-                <div className="flex items-center gap-3">
-                  {reward.merchantLogo ? (
-                    <img src={reward.merchantLogo} alt={reward.merchantName} className="w-10 h-10 rounded-full object-cover" />
+                {item.merchant_logo ? (
+                  <img src={item.merchant_logo} alt="" className="w-9 h-9 rounded-full object-cover" />
+                ) : (
+                  <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center text-sm font-bold text-primary">
+                    {item.merchant_name.charAt(0)}
+                  </div>
+                )}
+                <div className="flex-1 min-w-0">
+                  <span className="font-semibold text-sm text-foreground">{item.merchant_name}</span>
+                  {item.type === 'offer' && item.distance !== undefined && (
+                    <span className="text-xs text-muted-foreground ml-2">
+                      <MapPin className="h-3 w-3 inline -mt-0.5" />
+                      {item.distance < 1 ? ` ${Math.round(item.distance * 1000)}m` : ` ${item.distance.toFixed(1)}km`}
+                    </span>
+                  )}
+                </div>
+                <span className="text-xs text-muted-foreground">{formatTimeAgo(item.created_at)}</span>
+              </div>
+
+              {/* Image - full width, square aspect */}
+              {item.image_url ? (
+                <div
+                  className="w-full aspect-square bg-muted cursor-pointer"
+                  onClick={() => navigate(`/app/merchant/${item.merchant_customer_id}`)}
+                >
+                  <img
+                    src={item.image_url}
+                    alt=""
+                    className="w-full h-full object-cover"
+                    loading="lazy"
+                  />
+                </div>
+              ) : (
+                <div
+                  className="w-full aspect-square bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center cursor-pointer"
+                  onClick={() => navigate(`/app/merchant/${item.merchant_customer_id}`)}
+                >
+                  {item.type === 'offer' ? (
+                    <div className="text-center px-8">
+                      <Gift className="h-16 w-16 text-primary mx-auto mb-4" />
+                      <p className="text-2xl font-bold text-foreground">{item.title}</p>
+                      <p className="text-lg text-primary font-semibold mt-2">+{item.bonus_stamps} Bonus-Punkte</p>
+                    </div>
                   ) : (
-                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-sm font-bold text-primary">
-                      {reward.merchantName.charAt(0)}
+                    <div className="w-24 h-24 rounded-full bg-primary/10 flex items-center justify-center">
+                      <span className="text-4xl font-bold text-primary">{item.merchant_name.charAt(0)}</span>
                     </div>
                   )}
-                  <div className="flex-1">
-                    <p className="font-medium text-sm">{reward.title}</p>
-                    <p className="text-xs text-muted-foreground">{reward.merchantName}</p>
-                  </div>
-                  <Badge variant="default" className="text-xs">
-                    <Trophy className="h-3 w-3 mr-1" />
-                    Bereit
-                  </Badge>
                 </div>
-              </Card>
-            ))}
-          </div>
-        </DialogContent>
-      </Dialog>
+              )}
 
-      {/* New Customer Offer Dialog */}
-      {selectedOffer && selectedOffer.customer && (
-        <NewCustomerOfferDialog
-          offer={selectedOffer}
-          merchant={{
-            name: selectedOffer.customer.name,
-            company_name: selectedOffer.customer.company_name,
-            logo_url: selectedOffer.customer.logo_url,
-            street: selectedOffer.customer.street,
-            house_number: selectedOffer.customer.house_number,
-            postal_code: selectedOffer.customer.postal_code,
-            city: selectedOffer.customer.city,
-            latitude: selectedOffer.customer.latitude,
-            longitude: selectedOffer.customer.longitude,
-          }}
-          open={offerDialogOpen}
-          onOpenChange={setOfferDialogOpen}
-          onRedemptionComplete={handleRedemptionComplete}
-        />
+              {/* Actions + text */}
+              <div className="px-4 py-3">
+                {item.type === 'post' && (
+                  <div className="flex items-center gap-4 mb-2">
+                    <button onClick={() => toggleLike(item)} className="flex items-center gap-1.5">
+                      <Heart
+                        className={`h-6 w-6 transition-colors ${item.liked_by_user ? 'fill-red-500 text-red-500' : 'text-foreground'}`}
+                      />
+                    </button>
+                    {item.like_count > 0 && (
+                      <span className="text-sm font-semibold text-foreground">
+                        {item.like_count} {item.like_count === 1 ? 'Like' : 'Likes'}
+                      </span>
+                    )}
+                  </div>
+                )}
+
+                {item.type === 'offer' && (
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="inline-flex items-center gap-1 px-3 py-1.5 bg-primary/10 text-primary rounded-full text-sm font-semibold">
+                      <Gift className="h-4 w-4" />
+                      Neukundenprämie: +{item.bonus_stamps} Punkte
+                    </span>
+                  </div>
+                )}
+
+                {(item.body || item.title) && (
+                  <p className="text-sm text-foreground">
+                    <span className="font-semibold mr-1.5">{item.merchant_name}</span>
+                    {item.type === 'offer' ? (item.body || item.title) : item.body}
+                  </p>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
       )}
     </MainLayout>
   );

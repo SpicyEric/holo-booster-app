@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MessageSquare, ChevronRight, ShieldAlert, Send, Loader2 } from 'lucide-react';
+import { MessageSquare, ChevronRight, ShieldAlert, Send, Loader2, Trophy } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { Card } from '@/components/ui/card';
@@ -30,11 +30,15 @@ export const AppMessages = () => {
   const [emailVerified, setEmailVerified] = useState(true);
   const [resending, setResending] = useState(false);
   const [resendCooldown, setResendCooldown] = useState(0);
+  const [redeemableCount, setRedeemableCount] = useState(0);
 
   useEffect(() => {
     if (user) {
       loadMessages();
       checkVerification();
+      loadRedeemableRewards();
+      // Mark rewards as "seen" by saving timestamp
+      localStorage.setItem(`rewards_seen_${user.id}`, Date.now().toString());
     }
   }, [user]);
 
@@ -53,6 +57,38 @@ export const AppMessages = () => {
       .eq('user_id', user.id)
       .maybeSingle();
     setEmailVerified(data?.email_verified ?? true);
+  };
+
+  const loadRedeemableRewards = async () => {
+    if (!user) return;
+    try {
+      const { data: accounts } = await supabase
+        .from('loyalty_accounts')
+        .select('merchant_customer_id, current_points_balance')
+        .eq('user_id', user.id)
+        .gt('current_points_balance', 0);
+
+      if (!accounts || accounts.length === 0) {
+        setRedeemableCount(0);
+        return;
+      }
+
+      const merchantIds = accounts.map(a => a.merchant_customer_id);
+      const pointsMap = new Map(accounts.map(a => [a.merchant_customer_id, a.current_points_balance || 0]));
+
+      const { data: rewards } = await supabase
+        .from('rewards')
+        .select('id, points_required, merchant_customer_id')
+        .eq('is_active', true)
+        .in('merchant_customer_id', merchantIds);
+
+      if (rewards) {
+        const count = rewards.filter(r => (pointsMap.get(r.merchant_customer_id) || 0) >= r.points_required).length;
+        setRedeemableCount(count);
+      }
+    } catch (err) {
+      console.error('[Messages] Error loading rewards:', err);
+    }
   };
 
   const loadMessages = async () => {
@@ -138,6 +174,29 @@ export const AppMessages = () => {
           </Card>
         )}
 
+        {/* Pinned redeemable rewards card */}
+        {redeemableCount > 0 && (
+          <Card
+            className="p-4 cursor-pointer hover:shadow-lg transition-shadow border-2 border-green-200 bg-green-50/50 dark:bg-green-950/20"
+            onClick={() => navigate('/app/rewards')}
+          >
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-full bg-green-100 dark:bg-green-900 flex items-center justify-center">
+                <Trophy className="h-6 w-6 text-green-600" />
+              </div>
+              <div className="flex-1">
+                <div className="text-xl font-bold text-green-700 dark:text-green-400">
+                  {redeemableCount}
+                </div>
+                <div className="text-sm text-green-600 dark:text-green-500">
+                  {redeemableCount === 1 ? 'Einlösbare Prämie' : 'Einlösbare Prämien'}
+                </div>
+              </div>
+              <ChevronRight className="h-5 w-5 text-green-400" />
+            </div>
+          </Card>
+        )}
+
         {loading ? (
           <Card className="p-6">
             <p className="text-muted-foreground text-center">Lädt...</p>
@@ -177,7 +236,7 @@ export const AppMessages = () => {
             </Card>
           ))
         ) : (
-          !emailVerified ? null : (
+          !emailVerified ? null : redeemableCount > 0 ? null : (
             <Card className="p-8 text-center">
               <div className="mx-auto w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4">
                 <MessageSquare className="h-8 w-8 text-muted-foreground" />

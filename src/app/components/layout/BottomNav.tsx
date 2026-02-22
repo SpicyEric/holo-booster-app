@@ -24,7 +24,7 @@ export const BottomNav = ({ onNavigate, currentIndex }: BottomNavProps) => {
   const { user } = useAuth();
   const [messageBadge, setMessageBadge] = useState(false);
 
-  // Check for unread messages or unverified email
+  // Check for unread messages, unverified email, or unseen redeemable rewards
   useEffect(() => {
     if (!user) return;
 
@@ -43,17 +43,46 @@ export const BottomNav = ({ onNavigate, currentIndex }: BottomNavProps) => {
         .eq('user_id', user.id)
         .maybeSingle();
 
-      setMessageBadge((unreadCount || 0) > 0 || profile?.email_verified === false);
+      // Check for unseen redeemable rewards
+      let hasUnseenRewards = false;
+      const { data: accounts } = await supabase
+        .from('loyalty_accounts')
+        .select('merchant_customer_id, current_points_balance')
+        .eq('user_id', user.id)
+        .gt('current_points_balance', 0);
+
+      if (accounts && accounts.length > 0) {
+        const merchantIds = accounts.map(a => a.merchant_customer_id);
+        const pointsMap = new Map(accounts.map(a => [a.merchant_customer_id, a.current_points_balance || 0]));
+
+        const { data: rewards } = await supabase
+          .from('rewards')
+          .select('id, points_required, merchant_customer_id')
+          .eq('is_active', true)
+          .in('merchant_customer_id', merchantIds);
+
+        if (rewards) {
+          const redeemableCount = rewards.filter(r => (pointsMap.get(r.merchant_customer_id) || 0) >= r.points_required).length;
+          if (redeemableCount > 0) {
+            const lastSeen = localStorage.getItem(`rewards_seen_${user.id}`);
+            // If never seen or rewards changed since last seen
+            if (!lastSeen) {
+              hasUnseenRewards = true;
+            }
+          }
+        }
+      }
+
+      setMessageBadge((unreadCount || 0) > 0 || profile?.email_verified === false || hasUnseenRewards);
     };
 
     checkBadge();
-    // Recheck every 30 seconds
     const interval = setInterval(checkBadge, 30000);
     return () => clearInterval(interval);
   }, [user]);
 
   const navItems: NavItem[] = [
-    { icon: Home, label: 'Start', path: '/app', index: 0 },
+    { icon: Home, label: 'Feed', path: '/app', index: 0 },
     { icon: Store, label: 'Stores', path: '/app/stores', index: 1 },
     { icon: MessageSquare, label: 'Nachrichten', path: '/app/messages', index: 2 },
     { icon: Settings, label: 'Einstellungen', path: '/app/profile', index: 3 },

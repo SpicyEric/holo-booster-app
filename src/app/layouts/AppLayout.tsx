@@ -11,7 +11,7 @@ export const AppLayout = () => {
   const location = useLocation();
 
   const navItems = [
-    { path: '/app', icon: Home, label: 'Home' },
+    { path: '/app', icon: Home, label: 'Feed' },
     { path: '/app/stores', icon: Store, label: 'Stores' },
     { path: '/app/scan', icon: Scan, label: 'Scannen', highlight: true },
     { path: '/app/rewards', icon: Gift, label: 'Prämien' },
