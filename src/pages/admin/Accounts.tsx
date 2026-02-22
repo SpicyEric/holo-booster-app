@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { UserPlus, Trash2, Edit, RotateCcw, Search, Filter } from "lucide-react";
+import { UserPlus, Trash2, Edit, RotateCcw, Search, Filter, Mail } from "lucide-react";
 import { toast } from "sonner";
 import {
   Dialog,
@@ -263,16 +263,70 @@ const Accounts = () => {
     }
     
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/auth`,
+      // Find customer linked to this user to send proper onboarding email
+      // First find the user_id for this email
+      const account = accounts.find(a => a.email === email);
+      if (!account) {
+        toast.error("Account nicht gefunden");
+        return;
+      }
+
+      // Check if this is a merchant - if so, send onboarding email with wizard
+      if (account.role === 'merchant') {
+        // Find the customer linked to this merchant
+        const { data: customerUser } = await supabase
+          .from("customer_users")
+          .select("customer_id")
+          .eq("user_id", account.id)
+          .single();
+
+        if (customerUser) {
+          const { data: customer } = await supabase
+            .from("customers")
+            .select("id, name, company_name, email")
+            .eq("id", customerUser.customer_id)
+            .single();
+
+          if (customer) {
+            // Generate the password-setup-redirect URL (never expires)
+            const passwordSetupUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/password-setup-redirect?cid=${encodeURIComponent(customer.id)}&email=${encodeURIComponent(email)}`;
+
+            // Send onboarding email via edge function
+            const { error: sendError } = await supabase.functions.invoke('send-merchant-onboarding', {
+              body: {
+                to: email,
+                companyName: customer.company_name || customer.name,
+                contactName: customer.name,
+                passwordSetupUrl,
+                // Don't pass customerId to skip idempotency check (allow re-sending)
+              },
+            });
+
+            if (sendError) throw sendError;
+
+            // Reset the onboarding_email_sent_at so it can be tracked
+            await supabase
+              .from("customers")
+              .update({ onboarding_email_sent_at: new Date().toISOString() })
+              .eq("id", customer.id);
+
+            toast.success("Onboarding-E-Mail wurde erneut gesendet (mit Passwort-Setup & Wizard)");
+            return;
+          }
+        }
+      }
+
+      // Fallback for non-merchant accounts: use password-setup-redirect directly
+      // Generate recovery link via edge function
+      const { data, error } = await supabase.functions.invoke('sendPasswordReset', {
+        body: { email },
       });
 
       if (error) throw error;
-
       toast.success("Passwort-Reset-E-Mail wurde gesendet");
     } catch (error: any) {
-      console.error("Fehler beim Senden des Passwort-Resets:", error);
-      toast.error("Fehler beim Senden des Passwort-Resets");
+      console.error("Fehler beim Senden:", error);
+      toast.error("Fehler beim Senden der E-Mail");
     }
   };
 
@@ -521,9 +575,9 @@ const Accounts = () => {
                           variant="ghost"
                           size="sm"
                           onClick={() => handleSendPasswordReset(account.email)}
-                          title="Passwort zurücksetzen"
+                          title={account.role === 'merchant' ? "Onboarding-E-Mail erneut senden" : "Passwort zurücksetzen"}
                         >
-                          <RotateCcw className="h-4 w-4" />
+                          {account.role === 'merchant' ? <Mail className="h-4 w-4" /> : <RotateCcw className="h-4 w-4" />}
                         </Button>
                       )}
                     </div>
