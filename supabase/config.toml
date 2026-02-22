@@ -45,3 +45,5 @@ verify_jwt = false
 [functions.birthday-cron]
 verify_jwt = false
 
+[functions.password-setup-redirect]
+verify_jwt = false
