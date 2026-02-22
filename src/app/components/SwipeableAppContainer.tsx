@@ -1,7 +1,8 @@
-import { useCallback, useEffect, useState, createContext, useContext } from 'react';
+import { useCallback, useEffect, useState, createContext, useContext, useRef } from 'react';
 import useEmblaCarousel from 'embla-carousel-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Store, Gift, MessageSquare, Mail, Bell, MapPin, Search, User, History, LogOut, Shield, FileText, HelpCircle, ChevronRight, Sparkles, AlertCircle, TrendingUp, Trophy, Loader2, Heart } from 'lucide-react';
+import { PullToRefresh } from '@/app/components/PullToRefresh';
 import { StoresGoogleMap } from '@/app/components/StoresGoogleMap';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -187,6 +188,7 @@ const AppHomeContent = () => {
   const [feedItems, setFeedItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
+  
 
   useEffect(() => {
     navigator.geolocation?.getCurrentPosition(
@@ -325,29 +327,38 @@ const AppHomeContent = () => {
     return new Date(dateStr).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' });
   };
 
+  const handleRefresh = useCallback(async () => {
+    await loadFeed();
+  }, [user, userLocation]);
+
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-20">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
+      <PullToRefresh onRefresh={handleRefresh}>
+        <div className="flex items-center justify-center py-20">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      </PullToRefresh>
     );
   }
 
   if (feedItems.length === 0) {
     return (
-      <div className="text-center py-16 px-4">
-        <div className="mx-auto w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
-          <Gift className="h-8 w-8 text-primary" />
+      <PullToRefresh onRefresh={handleRefresh}>
+        <div className="text-center py-16 px-4">
+          <div className="mx-auto w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
+            <Gift className="h-8 w-8 text-primary" />
+          </div>
+          <h3 className="font-semibold text-foreground mb-2">Dein Feed ist noch leer</h3>
+          <p className="text-sm text-muted-foreground">
+            Besuche einen teilnehmenden Shop und scanne deinen ersten NFC-Stempel, um Posts zu sehen!
+          </p>
         </div>
-        <h3 className="font-semibold text-foreground mb-2">Dein Feed ist noch leer</h3>
-        <p className="text-sm text-muted-foreground">
-          Besuche einen teilnehmenden Shop und scanne deinen ersten NFC-Stempel, um Posts zu sehen!
-        </p>
-      </div>
+      </PullToRefresh>
     );
   }
 
   return (
+    <PullToRefresh onRefresh={handleRefresh}>
     <div className="-mx-4 space-y-6">
       {feedItems.map((item: any) => (
         <div key={`${item.type}-${item.id}`} className="bg-card">
@@ -419,6 +430,7 @@ const AppHomeContent = () => {
         </div>
       ))}
     </div>
+    </PullToRefresh>
   );
 };
 
@@ -492,7 +504,12 @@ const AppMessagesContent = () => {
 
   const formatDate = (dateStr: string) => new Date(dateStr).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: '2-digit' });
 
+  const handleRefresh = useCallback(async () => {
+    await Promise.all([loadMessages(), loadRedeemableRewards()]);
+  }, [user]);
+
   return (
+    <PullToRefresh onRefresh={handleRefresh}>
     <div className="space-y-4">
       {/* Email verification banner */}
       {!emailVerified && (
@@ -567,6 +584,7 @@ const AppMessagesContent = () => {
         )
       )}
     </div>
+    </PullToRefresh>
   );
 };
 
@@ -647,7 +665,12 @@ const AppStoresContent = () => {
     distance: m.distance,
   })).filter(s => s.lat !== 0 && s.lng !== 0);
 
+  const handleRefresh = useCallback(async () => {
+    await Promise.all([loadMerchants(), loadUserLocation()]);
+  }, []);
+
   return (
+    <PullToRefresh onRefresh={handleRefresh}>
     <div className="space-y-4">
       {/* Tabs */}
       <div className="flex rounded-lg bg-muted p-1">
@@ -761,6 +784,7 @@ const AppStoresContent = () => {
         </div>
       )}
     </div>
+    </PullToRefresh>
   );
 };
 
