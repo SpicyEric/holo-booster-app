@@ -8,42 +8,59 @@ interface PullToRefreshProps {
 }
 
 export const PullToRefresh = ({ onRefresh, children, className = '' }: PullToRefreshProps) => {
-  const [pulling, setPulling] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [pullDistance, setPullDistance] = useState(0);
   const startY = useRef(0);
+  const isPulling = useRef(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const threshold = 80;
 
+  const getScrollParent = useCallback(() => {
+    let el = containerRef.current?.parentElement;
+    while (el) {
+      const style = window.getComputedStyle(el);
+      if (style.overflowY === 'auto' || style.overflowY === 'scroll') return el;
+      el = el.parentElement;
+    }
+    return null;
+  }, []);
+
   const handleTouchStart = useCallback((e: React.TouchEvent) => {
     if (refreshing) return;
-    const scrollContainer = containerRef.current?.closest('.overflow-y-auto');
-    if (scrollContainer && scrollContainer.scrollTop > 0) return;
+    const scrollParent = getScrollParent();
+    if (scrollParent && scrollParent.scrollTop > 5) return;
     startY.current = e.touches[0].clientY;
-    setPulling(true);
-  }, [refreshing]);
+    isPulling.current = true;
+  }, [refreshing, getScrollParent]);
 
   const handleTouchMove = useCallback((e: React.TouchEvent) => {
-    if (!pulling || refreshing) return;
-    const scrollContainer = containerRef.current?.closest('.overflow-y-auto');
-    if (scrollContainer && scrollContainer.scrollTop > 0) {
-      setPulling(false);
+    if (!isPulling.current || refreshing) return;
+    const scrollParent = getScrollParent();
+    if (scrollParent && scrollParent.scrollTop > 5) {
+      isPulling.current = false;
       setPullDistance(0);
       return;
     }
     const currentY = e.touches[0].clientY;
     const diff = currentY - startY.current;
     if (diff > 0) {
-      setPullDistance(Math.min(diff * 0.5, threshold * 1.5));
+      // Prevent default scroll when pulling down from top
+      if (scrollParent && scrollParent.scrollTop <= 0) {
+        e.preventDefault();
+      }
+      setPullDistance(Math.min(diff * 0.4, threshold * 1.5));
+    } else {
+      isPulling.current = false;
+      setPullDistance(0);
     }
-  }, [pulling, refreshing]);
+  }, [refreshing, getScrollParent]);
 
   const handleTouchEnd = useCallback(async () => {
-    if (!pulling) return;
-    setPulling(false);
+    if (!isPulling.current) return;
+    isPulling.current = false;
     if (pullDistance >= threshold && !refreshing) {
       setRefreshing(true);
-      setPullDistance(threshold * 0.6);
+      setPullDistance(threshold * 0.5);
       try {
         await onRefresh();
       } finally {
@@ -53,7 +70,7 @@ export const PullToRefresh = ({ onRefresh, children, className = '' }: PullToRef
     } else {
       setPullDistance(0);
     }
-  }, [pulling, pullDistance, refreshing, onRefresh]);
+  }, [pullDistance, refreshing, onRefresh]);
 
   return (
     <div

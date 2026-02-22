@@ -134,25 +134,25 @@ export const SwipeableAppContainer = () => {
         
         <div className="overflow-hidden h-[calc(100vh-136px)]" ref={emblaRef}>
           <div className="flex h-full">
-            <div className="flex-[0_0_100%] min-w-0 h-full overflow-y-auto">
+            <div className="flex-[0_0_100%] min-w-0 h-full overflow-y-auto" style={{ overscrollBehavior: 'contain' }}>
               <div className="container mx-auto px-4 py-6 max-w-2xl relative z-10">
                 <AppHomeContent />
               </div>
             </div>
             
-            <div className="flex-[0_0_100%] min-w-0 h-full overflow-y-auto" style={{ touchAction: 'pan-y' }}>
+            <div className="flex-[0_0_100%] min-w-0 h-full overflow-y-auto" style={{ overscrollBehavior: 'contain', touchAction: 'pan-y' }}>
               <div className="container mx-auto px-4 py-6 max-w-2xl relative z-10">
                 <AppStoresContent />
               </div>
             </div>
             
-            <div className="flex-[0_0_100%] min-w-0 h-full overflow-y-auto">
+            <div className="flex-[0_0_100%] min-w-0 h-full overflow-y-auto" style={{ overscrollBehavior: 'contain' }}>
               <div className="container mx-auto px-4 py-6 max-w-2xl relative z-10">
                 <AppMessagesContent />
               </div>
             </div>
             
-            <div className="flex-[0_0_100%] min-w-0 h-full overflow-y-auto">
+            <div className="flex-[0_0_100%] min-w-0 h-full overflow-y-auto" style={{ overscrollBehavior: 'contain' }}>
               <div className="container mx-auto px-4 py-6 max-w-2xl relative z-10">
                 <AppProfileContent />
               </div>
@@ -455,7 +455,7 @@ const AppMessagesContent = () => {
   const checkVerification = async () => {
     if (!user) return;
     const { data } = await supabase.from('profiles').select('email_verified').eq('user_id', user.id).maybeSingle();
-    setEmailVerified(data?.email_verified ?? true);
+    setEmailVerified(data?.email_verified === true);
   };
 
   const loadRedeemableRewards = async () => {
