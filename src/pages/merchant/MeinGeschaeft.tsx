@@ -16,7 +16,7 @@ import {
 import { toast } from "sonner";
 import { 
   Upload, Save, MapPin, Phone, Globe, Instagram, Facebook, Twitter,
-  Clock, Store, Gift, Info, UserPlus, Plus, Trash2, Edit2, Loader2, Package
+  Clock, Store, Gift, Info, UserPlus, Plus, Trash2, Edit2, Loader2, Package, ImageIcon
 } from "lucide-react";
 import {
   Dialog,
@@ -160,7 +160,9 @@ const MeinGeschaeft = () => {
     description: "",
     bonus_stamps: 0,
     is_active: true,
+    image_url: "",
   });
+  const [uploadingNcoImage, setUploadingNcoImage] = useState(false);
 
   // Stamps
   const [nfcChips, setNfcChips] = useState<NfcChip[]>([]);
@@ -244,6 +246,7 @@ const MeinGeschaeft = () => {
           description: ncoData.description || "",
           bonus_stamps: ncoData.bonus_stamps || 0,
           is_active: ncoData.is_active ?? true,
+          image_url: ncoData.image_url || "",
         });
       }
 
@@ -499,6 +502,7 @@ const MeinGeschaeft = () => {
             description: ncoForm.description || null,
             bonus_stamps: ncoForm.bonus_stamps,
             is_active: ncoForm.is_active,
+            image_url: ncoForm.image_url || null,
           })
           .eq("id", newCustomerOffer.id);
         if (error) throw error;
@@ -512,6 +516,7 @@ const MeinGeschaeft = () => {
             description: ncoForm.description || null,
             bonus_stamps: ncoForm.bonus_stamps,
             is_active: ncoForm.is_active,
+            image_url: ncoForm.image_url || null,
           });
         if (error) throw error;
         toast.success("Neukundenprämie erstellt");
@@ -532,7 +537,7 @@ const MeinGeschaeft = () => {
       if (error) throw error;
       toast.success("Neukundenprämie gelöscht");
       setNewCustomerOffer(null);
-      setNcoForm({ title: "", description: "", bonus_stamps: 0, is_active: true });
+      setNcoForm({ title: "", description: "", bonus_stamps: 0, is_active: true, image_url: "" });
     } catch {
       toast.error("Fehler beim Löschen");
     }
@@ -1235,6 +1240,64 @@ const MeinGeschaeft = () => {
                 <Label>Bonus-Punkte</Label>
                 <Input type="number" min={0} value={ncoForm.bonus_stamps} onChange={(e) => setNcoForm(f => ({ ...f, bonus_stamps: parseInt(e.target.value) || 0 }))} className="rounded-xl w-32" />
                 <p className="text-xs text-gray-500 mt-1">Diese Punkte werden automatisch gutgeschrieben</p>
+              </div>
+              <div>
+                <Label>Bild (optional)</Label>
+                <p className="text-xs text-muted-foreground mb-2">Wird im Feed angezeigt. Ohne Bild wird das Titelbild verwendet.</p>
+                {ncoForm.image_url ? (
+                  <div className="flex items-center gap-3">
+                    <img src={ncoForm.image_url} alt="Vorschau" className="w-20 h-20 rounded-xl object-cover" />
+                    <div className="flex flex-col gap-1">
+                      <label className="cursor-pointer text-sm text-primary hover:underline">
+                        <input type="file" accept="image/*" className="hidden" onChange={async (e) => {
+                          const file = e.target.files?.[0];
+                          if (!file || !customerId) return;
+                          setUploadingNcoImage(true);
+                          try {
+                            const fileExt = file.name.split('.').pop();
+                            const fileName = `${customerId}/nco_${Date.now()}.${fileExt}`;
+                            const { error: uploadError } = await supabase.storage.from("customer-assets").upload(fileName, file, { upsert: true });
+                            if (uploadError) throw uploadError;
+                            const { data: { publicUrl } } = supabase.storage.from("customer-assets").getPublicUrl(fileName);
+                            setNcoForm(f => ({ ...f, image_url: publicUrl }));
+                            toast.success("Bild hochgeladen");
+                          } catch (err: any) {
+                            toast.error(`Fehler: ${err?.message || 'Unbekannt'}`);
+                          } finally {
+                            setUploadingNcoImage(false);
+                          }
+                        }} />
+                        {uploadingNcoImage ? "Hochladen..." : "Ändern"}
+                      </label>
+                      <button type="button" onClick={() => setNcoForm(f => ({ ...f, image_url: "" }))} className="text-sm text-destructive hover:underline text-left">Entfernen</button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="border-2 border-dashed border-muted rounded-xl p-4 text-center hover:border-primary/50 transition-colors">
+                    <label className="cursor-pointer block">
+                      <input type="file" accept="image/*" className="hidden" onChange={async (e) => {
+                        const file = e.target.files?.[0];
+                        if (!file || !customerId) return;
+                        setUploadingNcoImage(true);
+                        try {
+                          const fileExt = file.name.split('.').pop();
+                          const fileName = `${customerId}/nco_${Date.now()}.${fileExt}`;
+                          const { error: uploadError } = await supabase.storage.from("customer-assets").upload(fileName, file, { upsert: true });
+                          if (uploadError) throw uploadError;
+                          const { data: { publicUrl } } = supabase.storage.from("customer-assets").getPublicUrl(fileName);
+                          setNcoForm(f => ({ ...f, image_url: publicUrl }));
+                          toast.success("Bild hochgeladen");
+                        } catch (err: any) {
+                          toast.error(`Fehler: ${err?.message || 'Unbekannt'}`);
+                        } finally {
+                          setUploadingNcoImage(false);
+                        }
+                      }} />
+                      <ImageIcon className="w-6 h-6 mx-auto text-muted-foreground mb-1" />
+                      <span className="text-sm text-muted-foreground">{uploadingNcoImage ? "Hochladen..." : "Bild hochladen"}</span>
+                    </label>
+                  </div>
+                )}
               </div>
             </div>
             <DialogFooter>
