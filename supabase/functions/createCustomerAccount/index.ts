@@ -114,6 +114,20 @@ serve(async (req) => {
       console.log("[CREATE-CUSTOMER-ACCOUNT] Role 'merchant' assigned successfully");
     }
 
+    // Remove auto-created end_customer role (created by handle_new_user_role trigger)
+    // Merchants should NOT also have the end_customer role
+    const { error: deleteRoleError } = await supabaseAdmin
+      .from("user_roles")
+      .delete()
+      .eq("user_id", userId)
+      .eq("role", "end_customer");
+
+    if (deleteRoleError) {
+      console.error("[CREATE-CUSTOMER-ACCOUNT] Error removing end_customer role:", deleteRoleError);
+    } else {
+      console.log("[CREATE-CUSTOMER-ACCOUNT] Removed end_customer role (if existed)");
+    }
+
     // Also create merchant_assignments if not exists
     const { data: existingAssignment } = await supabaseAdmin
       .from("merchant_assignments")
