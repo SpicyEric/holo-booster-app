@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MessageSquare, ChevronRight, ShieldAlert, Send, Loader2, Trophy } from 'lucide-react';
+import { MessageSquare, ChevronRight, ShieldAlert, Send, Loader2, Trophy, Gift } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { MainLayout } from '@/app/components/layout/MainLayout';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
@@ -16,6 +17,7 @@ interface Message {
   body: string;
   sent_at: string | null;
   read_at: string | null;
+  offer_id: string | null;
   customer?: {
     name: string;
     logo_url: string | null;
@@ -101,7 +103,7 @@ export const AppMessages = () => {
       const { data, error } = await supabase
         .from('app_messages')
         .select(`
-          id, title, body, sent_at, read_at, merchant_customer_id,
+          id, title, body, sent_at, read_at, offer_id, merchant_customer_id,
           customers!merchant_customer_id (name, logo_url)
         `)
         .eq('user_id', user?.id)
@@ -210,7 +212,7 @@ export const AppMessages = () => {
           messages.map((message) => (
             <Card
               key={message.id}
-              className={`p-4 cursor-pointer hover:shadow-md transition-shadow ${
+              className={`p-4 cursor-pointer hover:shadow-md transition-shadow active:scale-[0.98] ${
                 !message.read_at ? 'border-l-4 border-l-primary' : ''
               }`}
               onClick={() => navigate(`/app/messages/${message.id}`)}
@@ -231,11 +233,19 @@ export const AppMessages = () => {
                     <ChevronRight className="h-5 w-5 text-muted-foreground flex-shrink-0" />
                   </div>
                   <p className="text-sm text-muted-foreground truncate">{message.body}</p>
-                  {message.sent_at && (
-                    <p className="text-xs text-muted-foreground mt-1">
-                      {format(new Date(message.sent_at), 'dd. MMM yyyy', { locale: de })}
-                    </p>
-                  )}
+                  <div className="flex items-center gap-2 mt-1">
+                    {message.sent_at && (
+                      <p className="text-xs text-muted-foreground">
+                        {format(new Date(message.sent_at), 'dd. MMM yyyy', { locale: de })}
+                      </p>
+                    )}
+                    {message.offer_id && (
+                      <Badge variant="outline" className="text-xs rounded-full border-primary/30 text-primary">
+                        <Gift className="h-3 w-3 mr-1" />
+                        Angebot
+                      </Badge>
+                    )}
+                  </div>
                 </div>
               </div>
             </Card>
