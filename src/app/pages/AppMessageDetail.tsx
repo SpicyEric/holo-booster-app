@@ -179,7 +179,8 @@ const AppMessageDetail = () => {
       await supabase
         .from('app_messages')
         .update({ offer_redeemed_at: new Date().toISOString() })
-        .eq('id', message.id);
+        .eq('id', message.id)
+        .eq('user_id', user.id);
 
       toast.success(`🎉 ${points} Punkte gutgeschrieben!`);
       setMessage(prev => prev ? { ...prev, offer_redeemed_at: new Date().toISOString() } : null);
@@ -235,14 +236,37 @@ const AppMessageDetail = () => {
           }
 
           // Mark offer as redeemed
+          const redeemedAt = new Date().toISOString();
           await supabase
             .from('app_messages')
-            .update({ offer_redeemed_at: new Date().toISOString() })
-            .eq('id', message.id);
+            .update({ offer_redeemed_at: redeemedAt })
+            .eq('id', message.id)
+            .eq('user_id', user.id);
+
+          // Log as 0-point transaction for history
+          try {
+            const { data: account } = await supabase
+              .from('loyalty_accounts')
+              .select('id')
+              .eq('user_id', user.id)
+              .eq('merchant_customer_id', message.merchant_customer_id)
+              .maybeSingle();
+            if (account) {
+              await supabase.from('point_transactions').insert({
+                loyalty_account_id: account.id,
+                merchant_customer_id: message.merchant_customer_id,
+                points_change: 0,
+                transaction_type: 'offer_redeemed',
+                description: `Angebot eingelöst: ${message.offer?.title || 'Angebot'}`
+              });
+            }
+          } catch (txErr) {
+            console.error('[MessageDetail] Transaction log error:', txErr);
+          }
 
           setShowNfcDialog(false);
           toast.success('✅ Angebot eingelöst!');
-          setMessage(prev => prev ? { ...prev, offer_redeemed_at: new Date().toISOString() } : null);
+          setMessage(prev => prev ? { ...prev, offer_redeemed_at: redeemedAt } : null);
         } catch (err) {
           console.error('[MessageDetail] Error redeeming via NFC:', err);
           toast.error('Fehler beim Einlösen');
