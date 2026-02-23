@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Gift, Clock, Check, Loader2, Sparkles } from 'lucide-react';
+import { ArrowLeft, Gift, Clock, Check, Loader2, Sparkles, Smartphone } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { Card } from '@/components/ui/card';
@@ -9,6 +9,14 @@ import { Badge } from '@/components/ui/badge';
 import { format, differenceInDays, differenceInHours } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { toast } from 'sonner';
+import { nfcService } from '@/app/services/nfcService';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from '@/components/ui/dialog';
 
 interface MessageDetail {
   id: string;
@@ -38,6 +46,8 @@ const AppMessageDetail = () => {
   const [message, setMessage] = useState<MessageDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [redeeming, setRedeeming] = useState(false);
+  const [showNfcDialog, setShowNfcDialog] = useState(false);
+  const [nfcScanning, setNfcScanning] = useState(false);
 
   useEffect(() => {
     if (id && user) {
@@ -46,9 +56,16 @@ const AppMessageDetail = () => {
     }
   }, [id, user]);
 
+  // Stop NFC scan when dialog closes
+  useEffect(() => {
+    if (!showNfcDialog && nfcScanning) {
+      nfcService.stopScan();
+      setNfcScanning(false);
+    }
+  }, [showNfcDialog]);
+
   const loadMessage = async () => {
     try {
-      // Load message
       const { data: msgData, error: msgError } = await supabase
         .from('app_messages')
         .select(`
@@ -70,7 +87,6 @@ const AppMessageDetail = () => {
         offer: null,
       };
 
-      // Load offer if present
       if ((msgData as any).offer_id) {
         const { data: offerData } = await supabase
           .from('offers')
@@ -120,7 +136,6 @@ const AppMessageDetail = () => {
 
     setRedeeming(true);
     try {
-      // Get or create loyalty account
       let { data: account } = await supabase
         .from('loyalty_accounts')
         .select('id, current_points_balance')
@@ -153,7 +168,6 @@ const AppMessageDetail = () => {
         if (updateError) throw updateError;
       }
 
-      // Log transaction
       await supabase.from('point_transactions').insert({
         loyalty_account_id: account!.id,
         merchant_customer_id: message.merchant_customer_id,
@@ -162,10 +176,9 @@ const AppMessageDetail = () => {
         description: `Geburtstags-Bonus: ${points} Punkte`
       });
 
-      // Mark as redeemed
       await supabase
         .from('app_messages')
-        .update({ offer_redeemed_at: new Date().toISOString() } as any)
+        .update({ offer_redeemed_at: new Date().toISOString() })
         .eq('id', message.id);
 
       toast.success(`🎉 ${points} Punkte gutgeschrieben!`);
@@ -178,24 +191,67 @@ const AppMessageDetail = () => {
     }
   };
 
-  const handleRedeemOffer = async () => {
-    if (!message) return;
-    
-    setRedeeming(true);
-    try {
-      // Mark offer as redeemed
-      await supabase
-        .from('app_messages')
-        .update({ offer_redeemed_at: new Date().toISOString() } as any)
-        .eq('id', message.id);
+  const handleRedeemOfferClick = () => {
+    // Open NFC dialog instead of directly redeeming
+    setShowNfcDialog(true);
+    startNfcScan();
+  };
 
-      toast.success('✅ Angebot eingelöst!');
-      setMessage(prev => prev ? { ...prev, offer_redeemed_at: new Date().toISOString() } : null);
+  const startNfcScan = async () => {
+    if (!message || !user) return;
+    setNfcScanning(true);
+
+    try {
+      await nfcService.startScan(async (result) => {
+        setNfcScanning(false);
+
+        if (!result.success) {
+          if (result.error && !result.error.includes('abgebrochen')) {
+            toast.error(result.error);
+          }
+          return;
+        }
+
+        // Validate the stamp belongs to the merchant of this message
+        try {
+          const { data, error } = await supabase.rpc('award_points_via_nfc', {
+            p_chip_data: result.chipData,
+            p_user_id: user.id,
+            p_hardware_uid: result.hardwareUid || null,
+          });
+
+          if (error) throw error;
+
+          const response = data as any;
+          if (!response?.success) {
+            toast.error(response?.error || 'Ungültiger Stempel');
+            return;
+          }
+
+          // Check the stamp is from the correct merchant
+          if (response.merchant_customer_id !== message.merchant_customer_id) {
+            toast.error('Dieser Stempel gehört nicht zu diesem Geschäft. Bitte nutze den Stempel von ' + (message.customer?.name || 'dem richtigen Geschäft') + '.');
+            return;
+          }
+
+          // Mark offer as redeemed
+          await supabase
+            .from('app_messages')
+            .update({ offer_redeemed_at: new Date().toISOString() })
+            .eq('id', message.id);
+
+          setShowNfcDialog(false);
+          toast.success('✅ Angebot eingelöst!');
+          setMessage(prev => prev ? { ...prev, offer_redeemed_at: new Date().toISOString() } : null);
+        } catch (err) {
+          console.error('[MessageDetail] Error redeeming via NFC:', err);
+          toast.error('Fehler beim Einlösen');
+        }
+      });
     } catch (err) {
-      console.error('[MessageDetail] Error redeeming offer:', err);
-      toast.error('Fehler beim Einlösen');
-    } finally {
-      setRedeeming(false);
+      console.error('[MessageDetail] NFC scan error:', err);
+      setNfcScanning(false);
+      toast.error('NFC konnte nicht gestartet werden');
     }
   };
 
@@ -336,16 +392,12 @@ const AppMessageDetail = () => {
                           Zeige dieses Angebot im Geschäft und halte den Stempel an dein Handy
                         </p>
                         <Button 
-                          onClick={handleRedeemOffer} 
+                          onClick={handleRedeemOfferClick} 
                           disabled={redeeming}
                           className="w-full rounded-xl"
                         >
-                          {redeeming ? (
-                            <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                          ) : (
-                            <Gift className="h-4 w-4 mr-2" />
-                          )}
-                          Angebot einlösen
+                          <Smartphone className="h-4 w-4 mr-2" />
+                          Angebot per Stempel einlösen
                         </Button>
                       </div>
                     )}
@@ -356,6 +408,33 @@ const AppMessageDetail = () => {
           </Card>
         )}
       </div>
+
+      {/* NFC Scan Dialog */}
+      <Dialog open={showNfcDialog} onOpenChange={setShowNfcDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-center">Angebot einlösen</DialogTitle>
+            <DialogDescription className="text-center">
+              Halte jetzt den NFC-Stempel von {message?.customer?.name || 'dem Geschäft'} an dein Handy, um das Angebot einzulösen.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex flex-col items-center gap-4 py-6">
+            <div className="w-24 h-24 rounded-full bg-primary/10 flex items-center justify-center animate-pulse">
+              <Smartphone className="h-12 w-12 text-primary" />
+            </div>
+            {nfcScanning ? (
+              <div className="flex items-center gap-2 text-muted-foreground">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                <span className="text-sm">Warte auf NFC-Stempel...</span>
+              </div>
+            ) : (
+              <Button variant="outline" onClick={startNfcScan}>
+                Erneut scannen
+              </Button>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

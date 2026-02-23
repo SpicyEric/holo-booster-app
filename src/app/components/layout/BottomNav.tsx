@@ -29,12 +29,16 @@ export const BottomNav = ({ onNavigate, currentIndex }: BottomNavProps) => {
     if (!user) return;
 
     const checkBadge = async () => {
-      // Check unread messages
+      // Check unread messages that have an offer (messages without offers are auto-marked as read)
+      const sevenDaysAgo = new Date();
+      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+      
       const { count: unreadCount } = await supabase
         .from('app_messages')
         .select('id', { count: 'exact', head: true })
         .eq('user_id', user.id)
-        .is('read_at', null);
+        .is('read_at', null)
+        .gte('sent_at', sevenDaysAgo.toISOString());
 
       // Check email verification
       const { data: profile } = await supabase
@@ -65,7 +69,6 @@ export const BottomNav = ({ onNavigate, currentIndex }: BottomNavProps) => {
           const redeemableCount = rewards.filter(r => (pointsMap.get(r.merchant_customer_id) || 0) >= r.points_required).length;
           if (redeemableCount > 0) {
             const lastSeen = localStorage.getItem(`rewards_seen_${user.id}`);
-            // If never seen or rewards changed since last seen
             if (!lastSeen) {
               hasUnseenRewards = true;
             }
