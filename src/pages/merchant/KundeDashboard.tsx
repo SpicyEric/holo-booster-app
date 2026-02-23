@@ -297,16 +297,26 @@ export default function KundeDashboard() {
         .select("*", { count: "exact", head: true })
         .eq("merchant_customer_id", customerId);
 
+      // Count stamp transactions (nfc_stamp type)
       const { count: totalStamps } = await supabase
         .from("point_transactions")
         .select("*", { count: "exact", head: true })
         .eq("merchant_customer_id", customerId)
-        .gt("points_change", 0);
+        .eq("transaction_type", "nfc_stamp");
 
-      const { count: totalRedemptions } = await supabase
+      // Count reward redemptions + offer redemptions
+      const { count: rewardRedemptions } = await supabase
         .from("reward_redemptions")
         .select("*", { count: "exact", head: true })
         .eq("merchant_customer_id", customerId);
+
+      const { count: offerRedemptions } = await supabase
+        .from("point_transactions")
+        .select("*", { count: "exact", head: true })
+        .eq("merchant_customer_id", customerId)
+        .eq("transaction_type", "offer_redeemed");
+
+      const totalRedemptions = (rewardRedemptions || 0) + (offerRedemptions || 0);
 
       // Network Effect: Count redeemed new customer offers (Neukundenaktionen)
       const { count: networkEffect } = await supabase
@@ -481,7 +491,7 @@ export default function KundeDashboard() {
   const loadCustomerSegments = async (customerId: string) => {
     const { data: loyaltyAccounts } = await supabase
       .from("loyalty_accounts")
-      .select("user_id")
+      .select("id, user_id")
       .eq("merchant_customer_id", customerId);
 
     if (!loyaltyAccounts || loyaltyAccounts.length === 0) {
@@ -500,9 +510,9 @@ export default function KundeDashboard() {
         .from("point_transactions")
         .select("*", { count: "exact", head: true })
         .eq("merchant_customer_id", customerId)
-        .eq("loyalty_account_id", acc.user_id)
+        .eq("loyalty_account_id", acc.id)
         .gt("points_change", 0);
-      userTransactionCounts[acc.user_id] = count || 0;
+      userTransactionCounts[acc.id] = count || 0;
     }
 
     let neu = 0, selten = 0, treu = 0, vip = 0;
@@ -785,65 +795,7 @@ export default function KundeDashboard() {
           </div>
         </div>
 
-        {/* Kennzahlen & Transaktionen */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Kennzahlen */}
-          <div className="bg-gray-50 rounded-2xl p-6 border border-gray-100">
-            <h3 className="font-semibold text-gray-900 mb-4">Kennzahlen</h3>
-            <div className="space-y-3">
-              <div className="bg-white rounded-xl p-4 border border-gray-100 flex items-center justify-between">
-                <span className="text-gray-600">Eloyo-Nutzer gesamt</span>
-                <div className="flex items-center gap-2">
-                  <span className="text-xl font-bold text-gray-900">{stats?.totalContacts?.toLocaleString('de-DE') || 0}</span>
-                  {stats && stats.newContacts7Days > 0 && (
-                    <span className="text-xs text-green-600 bg-green-100 px-2 py-0.5 rounded-full">+{stats.newContacts7Days}</span>
-                  )}
-                </div>
-              </div>
-              <div className="bg-white rounded-xl p-4 border border-gray-100 flex items-center justify-between">
-                <span className="text-gray-600">Transaktionen</span>
-                <span className="text-xl font-bold text-gray-900">{((stats?.totalStamps || 0) + (stats?.totalRedemptions || 0)).toLocaleString('de-DE')}</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Letzte Transaktionen */}
-          <div className="bg-gray-50 rounded-2xl p-6 border border-gray-100">
-            <h3 className="font-semibold text-gray-900 mb-4">Letzte Transaktionen</h3>
-            <div className="space-y-2 max-h-[200px] overflow-y-auto">
-              {transactions.length === 0 ? (
-                <p className="text-sm text-gray-500 text-center py-8">Noch keine Transaktionen</p>
-              ) : (
-                transactions.map((tx) => (
-                  <div key={tx.id} className="bg-white rounded-xl p-3 border border-gray-100 flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
-                        tx.points_change > 0 ? 'bg-green-100' : 'bg-amber-100'
-                      }`}>
-                        {tx.points_change > 0 ? (
-                          <TrendingUp className="w-4 h-4 text-green-600" />
-                        ) : (
-                          <Gift className="w-4 h-4 text-amber-600" />
-                        )}
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium text-gray-900">{tx.description || tx.transaction_type || 'Transaktion'}</p>
-                        <p className="text-xs text-gray-500">
-                          {new Date(tx.created_at).toLocaleDateString("de-DE", { 
-                            day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" 
-                          })}
-                        </p>
-                      </div>
-                    </div>
-                    <span className={`font-bold ${tx.points_change > 0 ? 'text-green-600' : 'text-amber-600'}`}>
-                      {tx.points_change > 0 ? '+' : ''}{tx.points_change}
-                    </span>
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
-        </div>
+        {/* Removed: Kennzahlen & Letzte Transaktionen – see /kunde/transaktionen */}
       </div>
     </div>
   );

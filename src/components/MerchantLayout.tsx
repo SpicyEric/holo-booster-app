@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { signOut } from "@/lib/auth";
 import { useNavigate, useLocation, Outlet } from "react-router-dom";
 import { toast } from "sonner";
-import { LogOut, Home, Building2, Star, MessageSquare, User, Menu } from "lucide-react";
+import { LogOut, Home, Building2, Star, MessageSquare, User, Menu, ArrowLeftRight } from "lucide-react";
 import eloyoLogo from '@/assets/eloyo-logo.png';
 import {
   DropdownMenu,
@@ -30,6 +30,7 @@ const MerchantLayout = () => {
   const navItems = [
     { path: '/kunde', label: 'Dashboard', icon: Home },
     { path: '/kunde/mein-geschaeft', label: 'Mein Geschäft', icon: Building2 },
+    { path: '/kunde/transaktionen', label: 'Transaktionen', icon: ArrowLeftRight },
     { path: '/kunde/google-bewertungen', label: 'Google-Bewertungen', icon: Star },
     { path: '/kunde/nachrichten', label: 'Nachrichten', icon: MessageSquare },
     { path: '/kunde/konto', label: 'Mein Konto', icon: User },
