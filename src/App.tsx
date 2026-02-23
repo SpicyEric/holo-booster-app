@@ -30,6 +30,7 @@ import MeinGeschaeft from "./pages/merchant/MeinGeschaeft";
 import GoogleBewertungen from "./pages/merchant/GoogleBewertungen";
 import MeinKonto from "./pages/merchant/MeinKonto";
 import Nachrichten from "./pages/merchant/Nachrichten";
+import Transaktionen from "./pages/merchant/Transaktionen";
 import PartnerLayout from "./pages/partner/PartnerLayout";
 import PartnerDashboardHome from "./pages/partner/PartnerDashboardHome";
 import PartnerLeads from "./pages/partner/PartnerLeads";
@@ -106,6 +107,7 @@ const App = () => (
             <Route path="mein-geschaeft" element={<MeinGeschaeft />} />
             <Route path="google-bewertungen" element={<GoogleBewertungen />} />
             <Route path="nachrichten" element={<Nachrichten />} />
+            <Route path="transaktionen" element={<Transaktionen />} />
             <Route path="konto" element={<MeinKonto />} />
           </Route>
           
