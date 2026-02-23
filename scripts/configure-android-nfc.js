@@ -586,8 +586,16 @@ function configureAndroidManifest() {
   }
 
   // CRITICAL: Set singleTask launch mode to prevent NFC intents from
-  // creating a new Activity instance (which would reload the WebView and lose session)
-  if (!content.includes('android:launchMode')) {
+  // creating a new Activity instance (which would reload the WebView and lose session).
+  // Capacitor defaults to singleTop, which does NOT prevent restart on NFC intents.
+  if (content.includes('android:launchMode="singleTop"')) {
+    content = content.replace(
+      /android:launchMode="singleTop"/,
+      'android:launchMode="singleTask"'
+    );
+    console.log('   ✅ Changed launchMode from singleTop → singleTask (prevents NFC restart)');
+    modified = true;
+  } else if (!content.includes('android:launchMode="singleTask"')) {
     content = content.replace(
       /(<activity[^>]*android:name="[^"]*MainActivity")/,
       '$1\n            android:launchMode="singleTask"'
