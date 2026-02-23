@@ -584,6 +584,17 @@ function configureAndroidManifest() {
     console.log('   ✅ Locked screen orientation to portrait');
     modified = true;
   }
+
+  // CRITICAL: Set singleTask launch mode to prevent NFC intents from
+  // creating a new Activity instance (which would reload the WebView and lose session)
+  if (!content.includes('android:launchMode')) {
+    content = content.replace(
+      /(<activity[^>]*android:name="[^"]*MainActivity")/,
+      '$1\n            android:launchMode="singleTask"'
+    );
+    console.log('   ✅ Set launchMode to singleTask (prevents NFC restart)');
+    modified = true;
+  }
   
   if (modified) {
     fs.writeFileSync(manifestPath, content, 'utf8');
