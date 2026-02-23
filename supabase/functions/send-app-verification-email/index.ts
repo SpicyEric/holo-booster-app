@@ -41,7 +41,8 @@ serve(async (req) => {
     }
 
     const token = profile.email_verification_token;
-    const baseUrl = origin || 'https://holo-booster-app.lovable.app';
+    // Always use production URL - Capacitor sends localhost as origin which breaks links
+    const baseUrl = (origin && !origin.includes('localhost')) ? origin : 'https://holo-booster-app.lovable.app';
     const verifyUrl = `${baseUrl}/app/verify-email?token=${token}`;
 
     const resendApiKey = Deno.env.get('RESEND_API_KEY');
