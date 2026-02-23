@@ -94,6 +94,10 @@ export const AppMessages = () => {
   const loadMessages = async () => {
     setLoading(true);
     try {
+      // Only show messages from the last 7 days
+      const sevenDaysAgo = new Date();
+      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
       const { data, error } = await supabase
         .from('app_messages')
         .select(`
@@ -101,6 +105,7 @@ export const AppMessages = () => {
           customers!merchant_customer_id (name, logo_url)
         `)
         .eq('user_id', user?.id)
+        .gte('sent_at', sevenDaysAgo.toISOString())
         .order('sent_at', { ascending: false });
 
       if (!error && data) {

@@ -19,6 +19,8 @@ export type Database = {
           body: string
           id: string
           merchant_customer_id: string
+          offer_id: string | null
+          offer_redeemed_at: string | null
           read_at: string | null
           sent_at: string | null
           show_in_storefront: boolean | null
@@ -29,6 +31,8 @@ export type Database = {
           body: string
           id?: string
           merchant_customer_id: string
+          offer_id?: string | null
+          offer_redeemed_at?: string | null
           read_at?: string | null
           sent_at?: string | null
           show_in_storefront?: boolean | null
@@ -39,6 +43,8 @@ export type Database = {
           body?: string
           id?: string
           merchant_customer_id?: string
+          offer_id?: string | null
+          offer_redeemed_at?: string | null
           read_at?: string | null
           sent_at?: string | null
           show_in_storefront?: boolean | null
@@ -51,6 +57,13 @@ export type Database = {
             columns: ["merchant_customer_id"]
             isOneToOne: false
             referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "app_messages_offer_id_fkey"
+            columns: ["offer_id"]
+            isOneToOne: false
+            referencedRelation: "offers"
             referencedColumns: ["id"]
           },
         ]
@@ -573,7 +586,10 @@ export type Database = {
           billing_address: Json | null
           birthday_bonus_points: number
           birthday_enabled: boolean
+          birthday_gift_type: string | null
           birthday_message: string | null
+          birthday_offer_description: string | null
+          birthday_offer_title: string | null
           box_id: string | null
           city: string | null
           company_name: string | null
@@ -636,7 +652,10 @@ export type Database = {
           billing_address?: Json | null
           birthday_bonus_points?: number
           birthday_enabled?: boolean
+          birthday_gift_type?: string | null
           birthday_message?: string | null
+          birthday_offer_description?: string | null
+          birthday_offer_title?: string | null
           box_id?: string | null
           city?: string | null
           company_name?: string | null
@@ -699,7 +718,10 @@ export type Database = {
           billing_address?: Json | null
           birthday_bonus_points?: number
           birthday_enabled?: boolean
+          birthday_gift_type?: string | null
           birthday_message?: string | null
+          birthday_offer_description?: string | null
+          birthday_offer_title?: string | null
           box_id?: string | null
           city?: string | null
           company_name?: string | null

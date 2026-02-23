@@ -17,16 +17,15 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    // Get today's month and day
     const today = new Date();
-    const todayMonth = today.getMonth() + 1; // 1-12
+    const todayMonth = today.getMonth() + 1;
     const todayDay = today.getDate();
     const todayStr = today.toISOString().split("T")[0];
 
     // Find all merchants with birthday automation enabled
     const { data: merchants, error: merchantError } = await supabase
       .from("customers")
-      .select("id, name, birthday_enabled, birthday_message, birthday_bonus_points")
+      .select("id, name, birthday_enabled, birthday_message, birthday_bonus_points, birthday_gift_type, birthday_offer_title, birthday_offer_description")
       .eq("birthday_enabled", true)
       .eq("active", true);
 
@@ -48,7 +47,6 @@ Deno.serve(async (req) => {
     let totalSent = 0;
 
     for (const merchant of merchants) {
-      // Get all loyalty accounts for this merchant
       const { data: loyaltyAccounts } = await supabase
         .from("loyalty_accounts")
         .select("id, user_id")
@@ -58,7 +56,6 @@ Deno.serve(async (req) => {
 
       const userIds = loyaltyAccounts.map((la) => la.user_id);
 
-      // Get profiles with birthday today
       const { data: birthdayProfiles } = await supabase
         .from("profiles")
         .select("user_id, first_name, birth_date")
@@ -67,7 +64,6 @@ Deno.serve(async (req) => {
 
       if (!birthdayProfiles || birthdayProfiles.length === 0) continue;
 
-      // Filter profiles where birth_date matches today's month and day
       const birthdayUsers = birthdayProfiles.filter((p) => {
         if (!p.birth_date) return false;
         const bd = new Date(p.birth_date);
@@ -76,10 +72,11 @@ Deno.serve(async (req) => {
 
       if (birthdayUsers.length === 0) continue;
 
-      const bonusPoints = merchant.birthday_bonus_points || 50;
+      const giftType = (merchant as any).birthday_gift_type || "points";
+      const bonusPoints = merchant.birthday_bonus_points || 5;
       const messageBody =
         merchant.birthday_message ||
-        "Alles Gute zum Geburtstag! Als kleines Geschenk schenken wir dir Bonus-Punkte.";
+        "Alles Gute zum Geburtstag! Als kleines Geschenk schenken wir dir etwas Besonderes.";
 
       for (const user of birthdayUsers) {
         // Check if we already sent a birthday message today
@@ -93,60 +90,74 @@ Deno.serve(async (req) => {
           .ilike("title", "%Geburtstag%")
           .maybeSingle();
 
-        if (existingMsg) continue; // Already sent today
+        if (existingMsg) continue;
 
-        // Find the loyalty account for this user
-        const loyaltyAccount = loyaltyAccounts.find(
-          (la) => la.user_id === user.user_id
-        );
-        if (!loyaltyAccount) continue;
-
-        // Award bonus points
-        await supabase
-          .from("loyalty_accounts")
-          .update({
-            current_points_balance: supabase.rpc ? undefined : undefined,
-          });
-
-        // Use raw update to increment points
-        const { data: currentAccount } = await supabase
-          .from("loyalty_accounts")
-          .select("current_points_balance")
-          .eq("id", loyaltyAccount.id)
-          .single();
-
-        if (currentAccount) {
-          await supabase
-            .from("loyalty_accounts")
-            .update({
-              current_points_balance:
-                (currentAccount.current_points_balance || 0) + bonusPoints,
-              updated_at: new Date().toISOString(),
-            })
-            .eq("id", loyaltyAccount.id);
-        }
-
-        // Log the transaction
-        await supabase.from("point_transactions").insert({
-          loyalty_account_id: loyaltyAccount.id,
-          merchant_customer_id: merchant.id,
-          points_change: bonusPoints,
-          transaction_type: "birthday_bonus",
-          description: `Geburtstags-Bonus: ${bonusPoints} Punkte`,
-        });
-
-        // Send birthday message
         const greeting = user.first_name
           ? `Alles Gute zum Geburtstag, ${user.first_name}!`
           : "Alles Gute zum Geburtstag!";
 
-        await supabase.from("app_messages").insert({
-          merchant_customer_id: merchant.id,
-          user_id: user.user_id,
-          title: greeting,
-          body: `${messageBody}\n\n🎁 Du hast ${bonusPoints} Bonus-Punkte erhalten!`,
-          show_in_storefront: false,
-        });
+        let offerId: string | null = null;
+
+        if (giftType === "points") {
+          // Create a birthday bonus offer (points are NOT credited automatically - user claims them)
+          const validUntil = new Date();
+          validUntil.setDate(validUntil.getDate() + 30);
+
+          const { data: offerData } = await supabase
+            .from("offers")
+            .insert({
+              merchant_customer_id: merchant.id,
+              title: `🎁 Geburtstags-Bonus`,
+              description: `${bonusPoints} Punkte als Geburtstagsgeschenk`,
+              is_active: true,
+              show_in_storefront: false,
+              valid_until: validUntil.toISOString(),
+            })
+            .select("id")
+            .single();
+
+          if (offerData) offerId = offerData.id;
+
+          await supabase.from("app_messages").insert({
+            merchant_customer_id: merchant.id,
+            user_id: user.user_id,
+            title: greeting,
+            body: `${messageBody}\n\n🎁 Du hast ${bonusPoints} Bonus-Punkte als Geschenk! Tippe hier, um sie einzulösen.`,
+            show_in_storefront: false,
+            offer_id: offerId,
+          } as any);
+        } else {
+          // Create an offer gift
+          const offerTitle = (merchant as any).birthday_offer_title || "Geburtstags-Angebot";
+          const offerDesc = (merchant as any).birthday_offer_description || null;
+
+          const validUntil = new Date();
+          validUntil.setDate(validUntil.getDate() + 30);
+
+          const { data: offerData } = await supabase
+            .from("offers")
+            .insert({
+              merchant_customer_id: merchant.id,
+              title: offerTitle,
+              description: offerDesc,
+              is_active: true,
+              show_in_storefront: false,
+              valid_until: validUntil.toISOString(),
+            })
+            .select("id")
+            .single();
+
+          if (offerData) offerId = offerData.id;
+
+          await supabase.from("app_messages").insert({
+            merchant_customer_id: merchant.id,
+            user_id: user.user_id,
+            title: greeting,
+            body: `${messageBody}\n\n🎁 Wir haben ein besonderes Angebot für dich: ${offerTitle}`,
+            show_in_storefront: false,
+            offer_id: offerId,
+          } as any);
+        }
 
         totalSent++;
       }
