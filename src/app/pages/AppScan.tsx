@@ -68,7 +68,17 @@ export const AppScan = () => {
   }, [searchParams, checkingNfc, nfcSupported, nfcEnabled]);
 
   const handleChipScan = useCallback(async (chipData: string, hardwareUid?: string) => {
-    if (!user) {
+    // Re-check session directly to avoid stale hook state (e.g. during token refresh)
+    let currentUserId = user?.id;
+    if (!currentUserId) {
+      try {
+        const { data: { session: freshSession } } = await supabase.auth.getSession();
+        currentUserId = freshSession?.user?.id;
+      } catch (e) {
+        console.error('[AppScan] Failed to get fresh session:', e);
+      }
+    }
+    if (!currentUserId) {
       toast.error('Bitte melde dich an');
       navigate('/app/auth');
       return;
@@ -80,7 +90,7 @@ export const AppScan = () => {
     try {
       const { data, error } = await supabase.rpc('award_points_via_nfc', {
         p_chip_data: chipData,
-        p_user_id: user.id,
+        p_user_id: currentUserId,
         p_hardware_uid: hardwareUid || null,
       });
 
