@@ -18,8 +18,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { Package, Palette, CheckCircle2, Clock, XCircle, RefreshCw } from "lucide-react";
+import { Package, Palette, CheckCircle2, Clock, XCircle, RefreshCw, Store, Trash2 } from "lucide-react";
 
 interface Order {
   id: string;
@@ -37,19 +38,81 @@ interface Order {
   };
 }
 
+interface ShopSuggestion {
+  id: string;
+  created_at: string;
+  shop_name: string;
+  street: string | null;
+  house_number: string | null;
+  postal_code: string | null;
+  city: string | null;
+  contact_person: string | null;
+  status: string;
+}
+
 export default function Orders() {
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [orders, setOrders] = useState<Order[]>([]);
   const [userRole, setUserRole] = useState<string | null>(null);
   const [filterStatus, setFilterStatus] = useState<string>("all");
+  const [suggestions, setSuggestions] = useState<ShopSuggestion[]>([]);
+  const [suggestionsLoading, setSuggestionsLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState("orders");
 
   useEffect(() => {
     if (user) {
       checkUserRole();
       loadOrders();
+      loadSuggestions();
     }
   }, [user, filterStatus]);
+
+  const loadSuggestions = async () => {
+    try {
+      setSuggestionsLoading(true);
+      const { data, error } = await supabase
+        .from("shop_suggestions")
+        .select("*")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      setSuggestions(data || []);
+    } catch (error) {
+      console.error("Error loading suggestions:", error);
+    } finally {
+      setSuggestionsLoading(false);
+    }
+  };
+
+  const updateSuggestionStatus = async (id: string, newStatus: string) => {
+    try {
+      const { error } = await supabase
+        .from("shop_suggestions")
+        .update({ status: newStatus })
+        .eq("id", id);
+      if (error) throw error;
+      toast.success("Status aktualisiert");
+      loadSuggestions();
+    } catch (error) {
+      console.error("Error updating suggestion:", error);
+      toast.error("Fehler");
+    }
+  };
+
+  const deleteSuggestion = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from("shop_suggestions")
+        .delete()
+        .eq("id", id);
+      if (error) throw error;
+      toast.success("Vorschlag gelöscht");
+      loadSuggestions();
+    } catch (error) {
+      console.error("Error deleting suggestion:", error);
+      toast.error("Fehler");
+    }
+  };
 
   const checkUserRole = async () => {
     const { data: roles } = await supabase
@@ -178,119 +241,191 @@ export default function Orders() {
   const pendingCount = orders.filter(o => o.status === "pending").length;
   const inProgressCount = orders.filter(o => o.status === "in_progress").length;
   const completedCount = orders.filter(o => o.status === "completed").length;
+  const newSuggestionsCount = suggestions.filter(s => s.status === "new").length;
+
+  const getSuggestionStatusBadge = (status: string) => {
+    switch (status) {
+      case "new":
+        return <Badge variant="secondary" className="gap-1 text-xs"><Clock className="h-2.5 w-2.5" />Neu</Badge>;
+      case "contacted":
+        return <Badge variant="default" className="gap-1 text-xs"><CheckCircle2 className="h-2.5 w-2.5" />Kontaktiert</Badge>;
+      case "done":
+        return <Badge className="bg-green-600 gap-1 text-xs"><CheckCircle2 className="h-2.5 w-2.5" />Erledigt</Badge>;
+      case "rejected":
+        return <Badge variant="destructive" className="gap-1 text-xs"><XCircle className="h-2.5 w-2.5" />Abgelehnt</Badge>;
+      default:
+        return <Badge variant="outline" className="text-xs">{status}</Badge>;
+    }
+  };
 
   return (
     <div className="space-y-3">
-      {/* Header - compact */}
+      {/* Header */}
       <div className="flex justify-between items-center border-b pb-3">
         <div>
-          <h1 className="text-xl font-semibold">Bestellungen</h1>
-          <p className="text-xs text-muted-foreground">
-            {orders.length} Bestellungen · {pendingCount} offen · {inProgressCount} in Bearbeitung · {completedCount} fertig
-          </p>
+          <h1 className="text-xl font-semibold">Bestellungen & Vorschläge</h1>
         </div>
-        <Button size="sm" variant="outline" onClick={() => loadOrders()}>
+        <Button size="sm" variant="outline" onClick={() => { loadOrders(); loadSuggestions(); }}>
           <RefreshCw className="w-3 h-3 mr-1" />
           Aktualisieren
         </Button>
       </div>
 
-      {/* Filter - compact */}
-      <div className="flex gap-2 items-center bg-muted/30 p-2 rounded border">
-        <span className="text-xs text-muted-foreground">Status:</span>
-        <Select value={filterStatus} onValueChange={setFilterStatus}>
-          <SelectTrigger className="h-8 w-[150px] text-sm">
-            <SelectValue placeholder="Status" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Alle</SelectItem>
-            <SelectItem value="pending">Offen</SelectItem>
-            <SelectItem value="in_progress">In Bearbeitung</SelectItem>
-            <SelectItem value="completed">Fertig</SelectItem>
-            <SelectItem value="cancelled">Storniert</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <TabsList>
+          <TabsTrigger value="orders">
+            Bestellungen ({orders.length})
+          </TabsTrigger>
+          <TabsTrigger value="suggestions">
+            Shop-Vorschläge {newSuggestionsCount > 0 && <Badge variant="destructive" className="ml-1.5 h-5 min-w-5 text-[10px]">{newSuggestionsCount}</Badge>}
+          </TabsTrigger>
+        </TabsList>
 
-      {/* Table - dense */}
-      <div className="border rounded">
-        {loading ? (
-          <div className="text-center py-8 text-sm text-muted-foreground">
-            Laden...
+        <TabsContent value="orders" className="space-y-3">
+          <p className="text-xs text-muted-foreground">
+            {orders.length} Bestellungen · {pendingCount} offen · {inProgressCount} in Bearbeitung · {completedCount} fertig
+          </p>
+
+          {/* Filter */}
+          <div className="flex gap-2 items-center bg-muted/30 p-2 rounded border">
+            <span className="text-xs text-muted-foreground">Status:</span>
+            <Select value={filterStatus} onValueChange={setFilterStatus}>
+              <SelectTrigger className="h-8 w-[150px] text-sm">
+                <SelectValue placeholder="Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Alle</SelectItem>
+                <SelectItem value="pending">Offen</SelectItem>
+                <SelectItem value="in_progress">In Bearbeitung</SelectItem>
+                <SelectItem value="completed">Fertig</SelectItem>
+                <SelectItem value="cancelled">Storniert</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
-        ) : orders.length === 0 ? (
-          <div className="text-center py-8 text-sm text-muted-foreground">
-            Keine Bestellungen gefunden
+
+          {/* Orders Table */}
+          <div className="border rounded">
+            {loading ? (
+              <div className="text-center py-8 text-sm text-muted-foreground">Laden...</div>
+            ) : orders.length === 0 ? (
+              <div className="text-center py-8 text-sm text-muted-foreground">Keine Bestellungen gefunden</div>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-muted/50 hover:bg-muted/50">
+                    <TableHead className="h-8 text-xs font-semibold w-8"></TableHead>
+                    <TableHead className="h-8 text-xs font-semibold">Bestellnr.</TableHead>
+                    <TableHead className="h-8 text-xs font-semibold">Kunde</TableHead>
+                    <TableHead className="h-8 text-xs font-semibold">Typ</TableHead>
+                    <TableHead className="h-8 text-xs font-semibold">Menge</TableHead>
+                    <TableHead className="h-8 text-xs font-semibold">Betrag</TableHead>
+                    <TableHead className="h-8 text-xs font-semibold">Datum</TableHead>
+                    <TableHead className="h-8 text-xs font-semibold">Status</TableHead>
+                    <TableHead className="h-8 text-xs font-semibold w-32">Aktion</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {orders.map((order) => (
+                    <TableRow key={order.id} className="hover:bg-accent/30">
+                      <TableCell className="py-1.5">{getOrderIcon(order.order_type)}</TableCell>
+                      <TableCell className="py-1.5 font-mono text-xs">{order.id.substring(0, 8).toUpperCase()}</TableCell>
+                      <TableCell className="py-1.5">
+                        <div>
+                          <p className="text-sm font-medium">{order.customers?.name || "—"}</p>
+                          {order.customers?.customer_number && <p className="text-[10px] text-muted-foreground">#{order.customers.customer_number}</p>}
+                        </div>
+                      </TableCell>
+                      <TableCell className="py-1.5 text-sm">{order.order_type === "aufsteller" ? "Aufsteller" : order.order_type === "design" ? "Design" : order.order_type}</TableCell>
+                      <TableCell className="py-1.5 text-sm">{order.quantity || "—"}</TableCell>
+                      <TableCell className="py-1.5 text-sm font-medium">{formatAmount(order.amount_cents)}</TableCell>
+                      <TableCell className="py-1.5 text-xs text-muted-foreground">{formatDate(order.created_at)}</TableCell>
+                      <TableCell className="py-1.5">{getStatusBadge(order.status)}</TableCell>
+                      <TableCell className="py-1.5">
+                        <Select value={order.status} onValueChange={(value) => updateOrderStatus(order.id, value)}>
+                          <SelectTrigger className="h-7 text-xs w-28"><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="pending">Offen</SelectItem>
+                            <SelectItem value="in_progress">Bearbeitung</SelectItem>
+                            <SelectItem value="completed">Fertig</SelectItem>
+                            <SelectItem value="cancelled">Storniert</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
           </div>
-        ) : (
-          <Table>
-            <TableHeader>
-              <TableRow className="bg-muted/50 hover:bg-muted/50">
-                <TableHead className="h-8 text-xs font-semibold w-8"></TableHead>
-                <TableHead className="h-8 text-xs font-semibold">Bestellnr.</TableHead>
-                <TableHead className="h-8 text-xs font-semibold">Kunde</TableHead>
-                <TableHead className="h-8 text-xs font-semibold">Typ</TableHead>
-                <TableHead className="h-8 text-xs font-semibold">Menge</TableHead>
-                <TableHead className="h-8 text-xs font-semibold">Betrag</TableHead>
-                <TableHead className="h-8 text-xs font-semibold">Datum</TableHead>
-                <TableHead className="h-8 text-xs font-semibold">Status</TableHead>
-                <TableHead className="h-8 text-xs font-semibold w-32">Aktion</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {orders.map((order) => (
-                <TableRow key={order.id} className="hover:bg-accent/30">
-                  <TableCell className="py-1.5">
-                    {getOrderIcon(order.order_type)}
-                  </TableCell>
-                  <TableCell className="py-1.5 font-mono text-xs">
-                    {order.id.substring(0, 8).toUpperCase()}
-                  </TableCell>
-                  <TableCell className="py-1.5">
-                    <div>
-                      <p className="text-sm font-medium">{order.customers?.name || "—"}</p>
-                      {order.customers?.customer_number && (
-                        <p className="text-[10px] text-muted-foreground">#{order.customers.customer_number}</p>
-                      )}
-                    </div>
-                  </TableCell>
-                  <TableCell className="py-1.5 text-sm">
-                    {order.order_type === "aufsteller" ? "Aufsteller" : order.order_type === "design" ? "Design" : order.order_type}
-                  </TableCell>
-                  <TableCell className="py-1.5 text-sm">
-                    {order.quantity || "—"}
-                  </TableCell>
-                  <TableCell className="py-1.5 text-sm font-medium">
-                    {formatAmount(order.amount_cents)}
-                  </TableCell>
-                  <TableCell className="py-1.5 text-xs text-muted-foreground">
-                    {formatDate(order.created_at)}
-                  </TableCell>
-                  <TableCell className="py-1.5">
-                    {getStatusBadge(order.status)}
-                  </TableCell>
-                  <TableCell className="py-1.5">
-                    <Select
-                      value={order.status}
-                      onValueChange={(value) => updateOrderStatus(order.id, value)}
-                    >
-                      <SelectTrigger className="h-7 text-xs w-28">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="pending">Offen</SelectItem>
-                        <SelectItem value="in_progress">Bearbeitung</SelectItem>
-                        <SelectItem value="completed">Fertig</SelectItem>
-                        <SelectItem value="cancelled">Storniert</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        )}
-      </div>
+        </TabsContent>
+
+        <TabsContent value="suggestions" className="space-y-3">
+          <p className="text-xs text-muted-foreground">
+            {suggestions.length} Vorschläge von App-Nutzern · {newSuggestionsCount} neu
+          </p>
+
+          <div className="border rounded">
+            {suggestionsLoading ? (
+              <div className="text-center py-8 text-sm text-muted-foreground">Laden...</div>
+            ) : suggestions.length === 0 ? (
+              <div className="text-center py-8 text-sm text-muted-foreground">
+                <Store className="h-8 w-8 mx-auto mb-2 text-muted-foreground/50" />
+                Keine Vorschläge vorhanden
+              </div>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-muted/50 hover:bg-muted/50">
+                    <TableHead className="h-8 text-xs font-semibold">Shop-Name</TableHead>
+                    <TableHead className="h-8 text-xs font-semibold">Adresse</TableHead>
+                    <TableHead className="h-8 text-xs font-semibold">Ansprechpartner</TableHead>
+                    <TableHead className="h-8 text-xs font-semibold">Datum</TableHead>
+                    <TableHead className="h-8 text-xs font-semibold">Status</TableHead>
+                    <TableHead className="h-8 text-xs font-semibold w-36">Aktion</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {suggestions.map((s) => (
+                    <TableRow key={s.id} className="hover:bg-accent/30">
+                      <TableCell className="py-1.5">
+                        <div className="flex items-center gap-2">
+                          <Store className="h-3.5 w-3.5 text-primary" />
+                          <span className="text-sm font-medium">{s.shop_name}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell className="py-1.5 text-sm">
+                        {[s.street, s.house_number].filter(Boolean).join(' ')}
+                        {s.postal_code || s.city ? <br /> : null}
+                        {[s.postal_code, s.city].filter(Boolean).join(' ')}
+                        {!s.street && !s.postal_code && !s.city && "—"}
+                      </TableCell>
+                      <TableCell className="py-1.5 text-sm">{s.contact_person || "—"}</TableCell>
+                      <TableCell className="py-1.5 text-xs text-muted-foreground">{formatDate(s.created_at)}</TableCell>
+                      <TableCell className="py-1.5">{getSuggestionStatusBadge(s.status)}</TableCell>
+                      <TableCell className="py-1.5">
+                        <div className="flex gap-1">
+                          <Select value={s.status} onValueChange={(value) => updateSuggestionStatus(s.id, value)}>
+                            <SelectTrigger className="h-7 text-xs w-24"><SelectValue /></SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="new">Neu</SelectItem>
+                              <SelectItem value="contacted">Kontaktiert</SelectItem>
+                              <SelectItem value="done">Erledigt</SelectItem>
+                              <SelectItem value="rejected">Abgelehnt</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => deleteSuggestion(s.id)}>
+                            <Trash2 className="h-3 w-3 text-destructive" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
+          </div>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
