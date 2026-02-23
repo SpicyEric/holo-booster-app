@@ -6,7 +6,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
-import { Loader2, Plus, MessageSquare, Gift, Trash2, Edit2, Send, Users, Clock, UserPlus, Zap, Cake, Save } from 'lucide-react';
+import { Loader2, Plus, MessageSquare, Gift, Send, Users, Clock, UserPlus, Zap, Cake, Save, ChevronDown } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import {
@@ -72,8 +72,9 @@ const Nachrichten = () => {
   const [newCustomerOffer, setNewCustomerOffer] = useState<NewCustomerOffer | null>(null);
   
   const [showMessageDialog, setShowMessageDialog] = useState(false);
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [showNewCustomerOfferDialog, setShowNewCustomerOfferDialog] = useState(false);
-  const [editingMessage, setEditingMessage] = useState<Message | null>(null);
+  const [showAllMessages, setShowAllMessages] = useState(false);
   const [saving, setSaving] = useState(false);
   const [estimatingRecipients, setEstimatingRecipients] = useState(false);
   const [estimatedRecipients, setEstimatedRecipients] = useState<number | null>(null);
@@ -148,23 +149,33 @@ const Nachrichten = () => {
 
       const { data: msgData } = await supabase
         .from('app_messages')
-        .select('id, title, body, show_in_storefront, sent_at')
+        .select('id, title, body, show_in_storefront, sent_at, offer_id')
         .eq('merchant_customer_id', assignment.customer_id)
         .order('sent_at', { ascending: false });
 
       if (msgData) {
-        const typedMessages = msgData.map((msg: any) => ({
+        // Deduplicate: group by title+body+sent_at (same broadcast = same message)
+        const seen = new Map<string, any>();
+        for (const msg of msgData) {
+          const key = `${msg.title}||${msg.body}||${msg.sent_at}`;
+          if (!seen.has(key)) {
+            seen.set(key, { ...msg, recipient_count: 1 });
+          } else {
+            seen.get(key)!.recipient_count++;
+          }
+        }
+        const dedupedMessages = Array.from(seen.values()).map((msg: any) => ({
           id: msg.id,
           title: msg.title,
           body: msg.body,
           show_in_storefront: msg.show_in_storefront,
           sent_at: msg.sent_at,
           segment: { type: 'all' as const },
-          offer_id: null,
+          offer_id: msg.offer_id,
           is_sent: true,
-          recipient_count: 0
+          recipient_count: msg.recipient_count
         }));
-        setMessages(typedMessages);
+        setMessages(dedupedMessages);
       }
 
       const { data: offerData } = await supabase
@@ -239,7 +250,7 @@ const Nachrichten = () => {
     }
   }, [messageForm.segment_type, messageForm.segment_value, showMessageDialog]);
 
-  const handleSaveMessage = async () => {
+  const handleSendMessage = async () => {
     if (!customerId || !messageForm.title || !messageForm.body) {
       toast.error('Bitte füllen Sie alle Felder aus');
       return;
@@ -272,18 +283,7 @@ const Nachrichten = () => {
         offerId = offerData.id;
       }
 
-      if (editingMessage) {
-        const { error } = await supabase
-          .from('app_messages')
-          .update({
-            title: messageForm.title,
-            body: messageForm.body,
-          })
-          .eq('id', editingMessage.id);
-        if (error) throw error;
-        toast.success('Nachricht aktualisiert');
-      } else {
-        // Get recipients based on segment
+      // Get recipients based on segment
         let query = supabase
           .from('loyalty_accounts')
           .select('user_id')
@@ -326,10 +326,9 @@ const Nachrichten = () => {
         
         const offerNote = offerId ? ' (mit Angebot, 7 Tage gültig)' : '';
         toast.success(`Nachricht an ${recipientUserIds.length} Kunden gesendet!${offerNote}`);
-      }
 
+      setShowConfirmDialog(false);
       setShowMessageDialog(false);
-      setEditingMessage(null);
       resetMessageForm();
       loadData();
     } catch (error) {
@@ -397,17 +396,6 @@ const Nachrichten = () => {
     }
   };
 
-  const handleDeleteMessage = async (id: string) => {
-    try {
-      const { error } = await supabase.from('app_messages').delete().eq('id', id);
-      if (error) throw error;
-      toast.success('Nachricht gelöscht');
-      loadData();
-    } catch (error) {
-      toast.error('Fehler beim Löschen');
-    }
-  };
-
   const handleDeleteNewCustomerOffer = async () => {
     if (!newCustomerOffer) return;
     try {
@@ -419,20 +407,6 @@ const Nachrichten = () => {
     } catch (error) {
       toast.error('Fehler beim Löschen');
     }
-  };
-
-  const openEditMessage = (msg: Message) => {
-    setEditingMessage(msg);
-    setMessageForm({
-      title: msg.title,
-      body: msg.body,
-      segment_type: msg.segment?.type || 'all',
-      segment_value: msg.segment?.value || 30,
-      attach_offer: !!msg.offer_id,
-      offer_title: '',
-      offer_description: ''
-    });
-    setShowMessageDialog(true);
   };
 
   const getSegmentLabel = (segment: Segment) => {
@@ -480,7 +454,6 @@ const Nachrichten = () => {
               </div>
             </div>
             <Button onClick={() => { 
-              setEditingMessage(null); 
               resetMessageForm();
               setShowMessageDialog(true); 
             }} className="rounded-xl">
@@ -493,8 +466,8 @@ const Nachrichten = () => {
               <p className="text-gray-500 text-center py-8">Noch keine Nachrichten gesendet</p>
             ) : (
               <div className="space-y-3">
-                {messages.map((msg) => (
-                  <div key={msg.id} className="flex items-center justify-between p-4 bg-white rounded-xl border border-gray-100">
+                {(showAllMessages ? messages : messages.slice(0, 5)).map((msg) => (
+                  <div key={msg.id} className="p-4 bg-white rounded-xl border border-gray-100">
                     <div className="space-y-1">
                       <div className="flex items-center gap-2">
                         <p className="font-semibold text-gray-900">{msg.title}</p>
@@ -506,12 +479,11 @@ const Nachrichten = () => {
                       </div>
                       <p className="text-sm text-gray-500 line-clamp-1">{msg.body}</p>
                       <div className="flex items-center gap-2 text-xs text-gray-500">
-                        <Badge variant="secondary" className="text-xs rounded-full">
-                          <Users className="h-3 w-3 mr-1" />
-                          {getSegmentLabel(msg.segment)}
-                        </Badge>
                         {msg.recipient_count !== null && msg.recipient_count > 0 && (
-                          <span>{msg.recipient_count} Empfänger</span>
+                          <Badge variant="secondary" className="text-xs rounded-full">
+                            <Users className="h-3 w-3 mr-1" />
+                            {msg.recipient_count} Empfänger
+                          </Badge>
                         )}
                         {msg.sent_at && (
                           <span className="flex items-center gap-1">
@@ -521,16 +493,18 @@ const Nachrichten = () => {
                         )}
                       </div>
                     </div>
-                    <div className="flex items-center gap-1">
-                      <Button variant="ghost" size="sm" onClick={() => openEditMessage(msg)} className="rounded-lg">
-                        <Edit2 className="h-4 w-4" />
-                      </Button>
-                      <Button variant="ghost" size="sm" onClick={() => handleDeleteMessage(msg.id)} className="rounded-lg">
-                        <Trash2 className="h-4 w-4 text-destructive" />
-                      </Button>
-                    </div>
                   </div>
                 ))}
+                {messages.length > 5 && !showAllMessages && (
+                  <Button 
+                    variant="ghost" 
+                    className="w-full rounded-xl text-primary"
+                    onClick={() => setShowAllMessages(true)}
+                  >
+                    <ChevronDown className="h-4 w-4 mr-2" />
+                    Alle {messages.length} Nachrichten anzeigen
+                  </Button>
+                )}
               </div>
             )}
           </CardContent>
@@ -665,6 +639,7 @@ const Nachrichten = () => {
                         className="mt-1 rounded-xl w-32"
                       />
                       <p className="text-xs text-gray-400 mt-1">Punkte werden beim Öffnen der Nachricht gutgeschrieben</p>
+                      <p className="text-xs text-gray-400">Standardwert: 5 Punkte</p>
                     </div>
                   ) : (
                     <div className="space-y-3 p-3 bg-pink-50/50 rounded-xl border border-pink-100">
@@ -687,7 +662,7 @@ const Nachrichten = () => {
                           className="mt-1 rounded-xl text-sm"
                         />
                       </div>
-                      <p className="text-xs text-gray-400">Angebot ist einlösbar über Stempel und verfällt nach Einlösung</p>
+                      <p className="text-xs text-gray-400">Angebot ist einlösbar über Stempel, verfällt nach 7 Tagen und kann nur einmal eingelöst werden</p>
                     </div>
                   )}
                 </div>
@@ -735,13 +710,12 @@ const Nachrichten = () => {
         <Dialog open={showMessageDialog} onOpenChange={setShowMessageDialog}>
           <DialogContent className="max-w-lg rounded-2xl">
             <DialogHeader>
-              <DialogTitle>{editingMessage ? 'Nachricht bearbeiten' : 'Neue Nachricht'}</DialogTitle>
+              <DialogTitle>Neue Nachricht</DialogTitle>
               <DialogDescription>
                 Erreichen Sie Ihre Kunden mit einer gezielten Nachricht
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2">
-              {/* Empfänger-Auswahl */}
               <div className="p-4 bg-gray-50 rounded-xl space-y-3">
                 <Label className="font-semibold text-gray-700">Empfänger auswählen</Label>
                 <Select 
@@ -815,7 +789,6 @@ const Nachrichten = () => {
                 />
               </div>
 
-              {/* Angebot anhängen */}
               <div className="p-4 bg-gray-50 rounded-xl space-y-3">
                 <div className="flex items-center justify-between">
                   <div>
@@ -860,13 +833,67 @@ const Nachrichten = () => {
             <DialogFooter>
               <div className="flex gap-2 w-full justify-end">
                 <Button variant="outline" onClick={() => setShowMessageDialog(false)} className="rounded-xl">Abbrechen</Button>
-                <Button onClick={handleSaveMessage} disabled={saving} className="rounded-xl">
+                <Button 
+                  onClick={() => {
+                    if (!messageForm.title || !messageForm.body) {
+                      toast.error('Bitte füllen Sie alle Felder aus');
+                      return;
+                    }
+                    setShowConfirmDialog(true);
+                  }} 
+                  disabled={saving} 
+                  className="rounded-xl"
+                >
+                  <Send className="h-4 w-4 mr-2" />
+                  Weiter zur Vorschau
+                </Button>
+              </div>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Send Confirmation Dialog */}
+        <Dialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
+          <DialogContent className="max-w-md rounded-2xl">
+            <DialogHeader>
+              <DialogTitle>Nachricht senden?</DialogTitle>
+              <DialogDescription>
+                Überprüfen Sie Ihre Nachricht bevor sie gesendet wird
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="p-4 bg-gray-50 rounded-xl space-y-2">
+                <p className="text-xs text-gray-500 uppercase font-semibold">Vorschau</p>
+                <p className="font-bold text-gray-900">{messageForm.title}</p>
+                <p className="text-sm text-gray-700 whitespace-pre-wrap">{messageForm.body}</p>
+                {messageForm.attach_offer && messageForm.offer_title && (
+                  <div className="mt-3 p-3 bg-primary/5 rounded-lg border border-primary/20">
+                    <div className="flex items-center gap-2">
+                      <Gift className="h-4 w-4 text-primary" />
+                      <span className="font-semibold text-sm">{messageForm.offer_title}</span>
+                    </div>
+                    {messageForm.offer_description && (
+                      <p className="text-xs text-gray-500 mt-1">{messageForm.offer_description}</p>
+                    )}
+                    <p className="text-xs text-amber-600 mt-2">⏰ 7 Tage gültig</p>
+                  </div>
+                )}
+              </div>
+              <div className="flex items-center gap-2 text-sm text-gray-600">
+                <Users className="h-4 w-4" />
+                <span>Wird an <strong>{estimatedRecipients ?? '?'}</strong> Empfänger gesendet</span>
+              </div>
+            </div>
+            <DialogFooter>
+              <div className="flex gap-2 w-full justify-end">
+                <Button variant="outline" onClick={() => setShowConfirmDialog(false)} className="rounded-xl">Zurück</Button>
+                <Button onClick={handleSendMessage} disabled={saving} className="rounded-xl">
                   {saving ? (
                     <Loader2 className="h-4 w-4 animate-spin mr-2" />
                   ) : (
                     <Send className="h-4 w-4 mr-2" />
                   )}
-                  {editingMessage ? 'Speichern' : 'Nachricht senden'}
+                  Jetzt senden
                 </Button>
               </div>
             </DialogFooter>
