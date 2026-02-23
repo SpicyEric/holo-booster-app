@@ -1,6 +1,7 @@
-import { HelpCircle, ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Sun, Moon } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import { useTheme } from '@/app/hooks/useTheme';
 
 export interface TopBarProps {
   title: string;
@@ -9,9 +10,10 @@ export interface TopBarProps {
 
 export const TopBar = ({ title, showBack = false }: TopBarProps) => {
   const navigate = useNavigate();
+  const { isDark, toggle } = useTheme();
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 bg-background border-b border-border flex items-center justify-between px-4 shadow-sm" style={{ paddingTop: 'env(safe-area-inset-top, 0px)', height: 'calc(3.5rem + env(safe-area-inset-top, 0px))' }}>
+    <header className="fixed top-0 left-0 right-0 z-50 bg-card border-b border-border flex items-center justify-between px-4 shadow-sm" style={{ paddingTop: 'env(safe-area-inset-top, 0px)', height: 'calc(3.5rem + env(safe-area-inset-top, 0px))' }}>
       <div className="flex items-center gap-2">
         {showBack && (
           <Button variant="ghost" size="icon" onClick={() => navigate(-1)} className="text-foreground -ml-2">
@@ -20,9 +22,23 @@ export const TopBar = ({ title, showBack = false }: TopBarProps) => {
         )}
         <h1 className="text-lg font-semibold text-foreground">{title}</h1>
       </div>
-      <Button variant="ghost" size="icon" className="text-muted-foreground">
-        <HelpCircle className="h-5 w-5" />
-      </Button>
+      <button
+        onClick={toggle}
+        className="relative w-14 h-7 rounded-full bg-muted border border-border transition-colors flex items-center px-1"
+        aria-label="Dark Mode umschalten"
+      >
+        <span
+          className={`absolute w-5 h-5 rounded-full bg-primary shadow-md transition-transform duration-300 flex items-center justify-center ${
+            isDark ? 'translate-x-7' : 'translate-x-0'
+          }`}
+        >
+          {isDark ? (
+            <Moon className="h-3 w-3 text-primary-foreground" />
+          ) : (
+            <Sun className="h-3 w-3 text-primary-foreground" />
+          )}
+        </span>
+      </button>
     </header>
   );
 };

@@ -237,7 +237,7 @@ export const AppMerchantDetail = () => {
         </Button>
 
         {/* Points Badge */}
-        <div className="absolute top-4 right-4 bg-white/90 rounded-full px-3 py-1">
+        <div className="absolute top-4 right-4 bg-card/90 rounded-full px-3 py-1">
           <span className="font-bold text-primary">{userPoints}</span>
           <span className="text-sm text-muted-foreground ml-1">Punkte</span>
         </div>

@@ -235,7 +235,7 @@ export default function AppStores() {
                   key={store.id}
                   onClick={() => window.location.href = `/app/merchant/${store.id}`}
                   className="w-full rounded-xl overflow-hidden shadow-md text-left relative"
-                  style={{ aspectRatio: '1.55 / 1', border: '8px solid red', backgroundColor: 'yellow' }}
+                  style={{ aspectRatio: '1.55 / 1' }}
                 >
                   <div className="absolute inset-0">
                     {store.cover_image_url ? (
@@ -244,7 +244,7 @@ export default function AppStores() {
                       <div className="w-full h-full bg-gradient-to-br from-purple-500 to-blue-500" />
                     )}
                   </div>
-                  <div className="absolute top-3 left-3 z-20 w-12 h-12 rounded-full bg-red-500 border-2 border-white shadow-lg flex items-center justify-center overflow-hidden">
+                  <div className="absolute top-3 left-3 z-20 w-12 h-12 rounded-full bg-primary border-2 border-card shadow-lg flex items-center justify-center overflow-hidden">
                     {store.logo_url ? (
                       <img src={store.logo_url} alt={`${store.name} Logo`} className="w-full h-full object-cover" />
                     ) : (
@@ -253,7 +253,7 @@ export default function AppStores() {
                   </div>
                   {store.distance !== undefined && (
                     <div className="absolute top-3 right-3 z-20">
-                      <span className="bg-white/95 backdrop-blur-sm text-gray-800 text-xs font-medium px-2 py-1 rounded-full shadow-sm">
+                      <span className="bg-card/95 backdrop-blur-sm text-foreground text-xs font-medium px-2 py-1 rounded-full shadow-sm">
                         {store.distance < 1 ? `${Math.round(store.distance * 1000)}m` : `${store.distance.toFixed(1)}km`}
                       </span>
                     </div>
