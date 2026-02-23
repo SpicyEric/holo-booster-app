@@ -460,6 +460,17 @@ const AppMessagesContent = () => {
     setEmailVerified(data?.email_verified === true);
   };
 
+  // Re-check email verification when app comes back to foreground (e.g. after clicking verify link)
+  useEffect(() => {
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible' && user) {
+        checkVerification();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibility);
+    return () => document.removeEventListener('visibilitychange', handleVisibility);
+  }, [user]);
+
   const loadRedeemableRewards = async () => {
     if (!user) return;
     try {
