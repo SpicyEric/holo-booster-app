@@ -68,19 +68,24 @@ export const AppScan = () => {
   }, [searchParams, checkingNfc, nfcSupported, nfcEnabled]);
 
   const handleChipScan = useCallback(async (chipData: string, hardwareUid?: string) => {
+    console.log('[AppScan] handleChipScan called, chipData:', chipData, 'user from hook:', user?.id);
+    
     // Re-check session directly to avoid stale hook state (e.g. during token refresh)
     let currentUserId = user?.id;
     if (!currentUserId) {
+      console.log('[AppScan] user hook is null, trying getSession...');
       try {
         const { data: { session: freshSession } } = await supabase.auth.getSession();
+        console.log('[AppScan] getSession result:', freshSession?.user?.id || 'NULL');
         currentUserId = freshSession?.user?.id;
       } catch (e) {
         console.error('[AppScan] Failed to get fresh session:', e);
       }
     }
     if (!currentUserId) {
-      toast.error('Bitte melde dich an');
-      navigate('/app/auth');
+      console.error('[AppScan] NO USER FOUND - would redirect to auth. Aborting instead.');
+      toast.error('Session konnte nicht geladen werden. Bitte versuche es erneut.');
+      setScanning(false);
       return;
     }
 
