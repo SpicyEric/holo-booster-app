@@ -54,7 +54,7 @@ serve(async (req) => {
         'Authorization': `Bearer ${resendApiKey}`,
       },
       body: JSON.stringify({
-        from: 'Eloyo <onboarding@resend.dev>',
+        from: 'Eloyo <support@eloyo.de>',
         to: [email],
         subject: 'Bestätige deine E-Mail-Adresse – Eloyo',
         html: `
