@@ -574,11 +574,21 @@ function configureAndroidManifest() {
     console.log('   ✅ Added NFC intent filters to MainActivity');
     modified = true;
   }
+
+  // Enforce portrait-only orientation on MainActivity
+  if (!content.includes('android:screenOrientation')) {
+    content = content.replace(
+      /(<activity[^>]*android:name="[^"]*MainActivity")/,
+      '$1\n            android:screenOrientation="portrait"'
+    );
+    console.log('   ✅ Locked screen orientation to portrait');
+    modified = true;
+  }
   
   if (modified) {
     fs.writeFileSync(manifestPath, content, 'utf8');
   } else {
-    console.log('   ✅ All permissions and filters already present');
+    console.log('   ✅ All permissions, filters, and orientation already present');
   }
 }
 
