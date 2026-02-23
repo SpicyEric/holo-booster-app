@@ -217,7 +217,7 @@ export const AppAuth = () => {
           user_id: data.user.id,
           birth_date: birthDate,
           gender: gender,
-        });
+        }, { onConflict: 'user_id' });
 
         // Send verification email in background
         supabase.functions.invoke('send-app-verification-email', {

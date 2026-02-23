@@ -18,6 +18,9 @@ const config: CapacitorConfig = {
     // Deep Links für Android
     allowMixedContent: true,
   },
+  // Screen orientation lock is handled natively:
+  // Android: Add android:screenOrientation="portrait" to <activity> in AndroidManifest.xml
+  // iOS: Uncheck Landscape Left and Landscape Right in Xcode > General > Deployment Info
   plugins: {
     // App Plugin für Deep Links
     App: {
