@@ -77,20 +77,21 @@ const Nachrichten = () => {
   const [saving, setSaving] = useState(false);
   const [estimatingRecipients, setEstimatingRecipients] = useState(false);
   const [estimatedRecipients, setEstimatedRecipients] = useState<number | null>(null);
-  const [lastMessageSentAt, setLastMessageSentAt] = useState<Date | null>(null);
 
   // Automations state
   const [welcomeEnabled, setWelcomeEnabled] = useState(false);
   const [welcomeMessage, setWelcomeMessage] = useState('Herzlich willkommen in unserem Bonusprogramm! Sammle Stempel und sichere dir tolle Prämien.');
   const [birthdayEnabled, setBirthdayEnabled] = useState(false);
-  const [birthdayMessage, setBirthdayMessage] = useState('Alles Gute zum Geburtstag! Als kleines Geschenk schenken wir dir Bonus-Punkte.');
-  const [birthdayBonusPoints, setBirthdayBonusPoints] = useState(50);
+  const [birthdayMessage, setBirthdayMessage] = useState('Alles Gute zum Geburtstag! Als kleines Geschenk schenken wir dir etwas Besonderes.');
+  const [birthdayBonusPoints, setBirthdayBonusPoints] = useState(5);
+  const [birthdayGiftType, setBirthdayGiftType] = useState<'points' | 'offer'>('points');
+  const [birthdayOfferTitle, setBirthdayOfferTitle] = useState('');
+  const [birthdayOfferDescription, setBirthdayOfferDescription] = useState('');
   const [savingAutomations, setSavingAutomations] = useState(false);
 
   const [messageForm, setMessageForm] = useState({
     title: '',
     body: '',
-    show_in_storefront: true,
     segment_type: 'all' as Segment['type'],
     segment_value: 30,
     attach_offer: false,
@@ -130,7 +131,7 @@ const Nachrichten = () => {
       // Load automation settings from customer record
       const { data: customerData } = await supabase
         .from('customers')
-        .select('welcome_enabled, welcome_message, birthday_enabled, birthday_message, birthday_bonus_points')
+        .select('welcome_enabled, welcome_message, birthday_enabled, birthday_message, birthday_bonus_points, birthday_gift_type, birthday_offer_title, birthday_offer_description')
         .eq('id', assignment.customer_id)
         .maybeSingle();
 
@@ -139,7 +140,10 @@ const Nachrichten = () => {
         if (customerData.welcome_message) setWelcomeMessage(customerData.welcome_message);
         setBirthdayEnabled(customerData.birthday_enabled ?? false);
         if (customerData.birthday_message) setBirthdayMessage(customerData.birthday_message);
-        setBirthdayBonusPoints(customerData.birthday_bonus_points ?? 50);
+        setBirthdayBonusPoints((customerData as any).birthday_bonus_points ?? 5);
+        setBirthdayGiftType(((customerData as any).birthday_gift_type as 'points' | 'offer') || 'points');
+        setBirthdayOfferTitle((customerData as any).birthday_offer_title || '');
+        setBirthdayOfferDescription((customerData as any).birthday_offer_description || '');
       }
 
       const { data: msgData } = await supabase
@@ -161,11 +165,6 @@ const Nachrichten = () => {
           recipient_count: 0
         }));
         setMessages(typedMessages);
-
-        // Track last sent date for 7-day cooldown
-        if (msgData.length > 0 && msgData[0].sent_at) {
-          setLastMessageSentAt(new Date(msgData[0].sent_at));
-        }
       }
 
       const { data: offerData } = await supabase
@@ -205,17 +204,24 @@ const Nachrichten = () => {
     
     setEstimatingRecipients(true);
     try {
-      const { data, error } = await supabase.functions.invoke('estimate-campaign', {
-        body: {
-          segment: {
-            type: messageForm.segment_type,
-            value: messageForm.segment_value
-          }
-        }
-      });
+      let query = supabase
+        .from('loyalty_accounts')
+        .select('id', { count: 'exact', head: true })
+        .eq('merchant_customer_id', customerId);
 
+      if (messageForm.segment_type === 'last_stamped_days') {
+        const cutoff = new Date();
+        cutoff.setDate(cutoff.getDate() - messageForm.segment_value);
+        query = query.gte('updated_at', cutoff.toISOString());
+      } else if (messageForm.segment_type === 'not_stamped_days') {
+        const cutoff = new Date();
+        cutoff.setDate(cutoff.getDate() - messageForm.segment_value);
+        query = query.lt('updated_at', cutoff.toISOString());
+      }
+
+      const { count, error } = await query;
       if (error) throw error;
-      setEstimatedRecipients(data?.estRecipients || 0);
+      setEstimatedRecipients(count || 0);
     } catch (error) {
       console.error('Error estimating recipients:', error);
       setEstimatedRecipients(null);
@@ -246,6 +252,9 @@ const Nachrichten = () => {
 
       let offerId: string | null = null;
       if (messageForm.attach_offer && messageForm.offer_title) {
+        const validUntil = new Date();
+        validUntil.setDate(validUntil.getDate() + 7);
+        
         const { data: offerData, error: offerError } = await supabase
           .from('offers')
           .insert({
@@ -253,7 +262,8 @@ const Nachrichten = () => {
             title: messageForm.offer_title,
             description: messageForm.offer_description || null,
             is_active: true,
-            show_in_storefront: false
+            show_in_storefront: false,
+            valid_until: validUntil.toISOString()
           })
           .select('id')
           .single();
@@ -262,29 +272,34 @@ const Nachrichten = () => {
         offerId = offerData.id;
       }
 
-      const segment: Segment = {
-        type: messageForm.segment_type,
-        value: messageForm.segment_type !== 'all' ? messageForm.segment_value : undefined
-      };
-
       if (editingMessage) {
         const { error } = await supabase
           .from('app_messages')
           .update({
             title: messageForm.title,
             body: messageForm.body,
-            show_in_storefront: messageForm.show_in_storefront
           })
           .eq('id', editingMessage.id);
         if (error) throw error;
         toast.success('Nachricht aktualisiert');
       } else {
-        // Fetch all users with loyalty accounts for this merchant
-        const { data: loyaltyAccounts, error: laError } = await supabase
+        // Get recipients based on segment
+        let query = supabase
           .from('loyalty_accounts')
           .select('user_id')
           .eq('merchant_customer_id', customerId);
 
+        if (messageForm.segment_type === 'last_stamped_days') {
+          const cutoff = new Date();
+          cutoff.setDate(cutoff.getDate() - messageForm.segment_value);
+          query = query.gte('updated_at', cutoff.toISOString());
+        } else if (messageForm.segment_type === 'not_stamped_days') {
+          const cutoff = new Date();
+          cutoff.setDate(cutoff.getDate() - messageForm.segment_value);
+          query = query.lt('updated_at', cutoff.toISOString());
+        }
+
+        const { data: loyaltyAccounts, error: laError } = await query;
         if (laError) throw laError;
 
         const recipientUserIds = loyaltyAccounts?.map(la => la.user_id) || [];
@@ -295,21 +310,22 @@ const Nachrichten = () => {
           return;
         }
 
-        // Insert one message per recipient
         const messagesToInsert = recipientUserIds.map(uid => ({
           merchant_customer_id: customerId,
           user_id: uid,
           title: messageForm.title,
           body: messageForm.body,
-          show_in_storefront: messageForm.show_in_storefront,
+          offer_id: offerId,
           sent_at: new Date().toISOString()
-        }));
+        } as any));
 
         const { error } = await supabase
           .from('app_messages')
           .insert(messagesToInsert);
         if (error) throw error;
-        toast.success(`Nachricht an ${recipientUserIds.length} Kunden gesendet!`);
+        
+        const offerNote = offerId ? ' (mit Angebot, 7 Tage gültig)' : '';
+        toast.success(`Nachricht an ${recipientUserIds.length} Kunden gesendet!${offerNote}`);
       }
 
       setShowMessageDialog(false);
@@ -328,7 +344,6 @@ const Nachrichten = () => {
     setMessageForm({
       title: '',
       body: '',
-      show_in_storefront: true,
       segment_type: 'all',
       segment_value: 30,
       attach_offer: false,
@@ -411,7 +426,6 @@ const Nachrichten = () => {
     setMessageForm({
       title: msg.title,
       body: msg.body,
-      show_in_storefront: msg.show_in_storefront ?? true,
       segment_type: msg.segment?.type || 'all',
       segment_value: msg.segment?.value || 30,
       attach_offer: !!msg.offer_id,
@@ -426,9 +440,9 @@ const Nachrichten = () => {
       case 'all':
         return 'Alle Kunden';
       case 'last_stamped_days':
-        return `Gestempelt in ${segment.value} Tagen`;
+        return `Gestempelt in dem Zeitraum von ${segment.value} Tagen`;
       case 'not_stamped_days':
-        return `${segment.value}+ Tage inaktiv`;
+        return `Außerhalb des Zeitraums von ${segment.value} Tagen`;
       default:
         return 'Alle Kunden';
     }
@@ -598,7 +612,7 @@ const Nachrichten = () => {
                 </div>
               </div>
               {birthdayEnabled && (
-                <div className="mt-3 space-y-3">
+                <div className="mt-3 space-y-4">
                   <div>
                     <Label className="text-xs text-gray-600">Nachricht</Label>
                     <Textarea
@@ -608,16 +622,74 @@ const Nachrichten = () => {
                       rows={2}
                     />
                   </div>
-                  <div>
-                    <Label className="text-xs text-gray-600">Bonuspunkte als Geschenk</Label>
-                    <Input
-                      type="number"
-                      min={0}
-                      value={birthdayBonusPoints}
-                      onChange={(e) => setBirthdayBonusPoints(parseInt(e.target.value) || 0)}
-                      className="mt-1 rounded-xl w-32"
-                    />
+
+                  {/* Gift type toggle */}
+                  <div className="space-y-3">
+                    <Label className="text-xs text-gray-600 font-semibold">Geschenk-Typ</Label>
+                    <div className="grid grid-cols-2 gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setBirthdayGiftType('points')}
+                        className={`p-3 rounded-xl border-2 text-left transition-all ${
+                          birthdayGiftType === 'points' 
+                            ? 'border-pink-400 bg-pink-50 ring-1 ring-pink-200' 
+                            : 'border-gray-200 bg-white hover:border-gray-300'
+                        }`}
+                      >
+                        <div className="font-semibold text-sm text-gray-900">🎁 Bonuspunkte</div>
+                        <p className="text-xs text-gray-500 mt-1">Punkte als Geschenk</p>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setBirthdayGiftType('offer')}
+                        className={`p-3 rounded-xl border-2 text-left transition-all ${
+                          birthdayGiftType === 'offer' 
+                            ? 'border-pink-400 bg-pink-50 ring-1 ring-pink-200' 
+                            : 'border-gray-200 bg-white hover:border-gray-300'
+                        }`}
+                      >
+                        <div className="font-semibold text-sm text-gray-900">🎉 Angebot</div>
+                        <p className="text-xs text-gray-500 mt-1">Angebot als Geschenk</p>
+                      </button>
+                    </div>
                   </div>
+
+                  {birthdayGiftType === 'points' ? (
+                    <div>
+                      <Label className="text-xs text-gray-600">Bonuspunkte als Geschenk</Label>
+                      <Input
+                        type="number"
+                        min={1}
+                        value={birthdayBonusPoints}
+                        onChange={(e) => setBirthdayBonusPoints(parseInt(e.target.value) || 5)}
+                        className="mt-1 rounded-xl w-32"
+                      />
+                      <p className="text-xs text-gray-400 mt-1">Punkte werden beim Öffnen der Nachricht gutgeschrieben</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-3 p-3 bg-pink-50/50 rounded-xl border border-pink-100">
+                      <div>
+                        <Label className="text-xs text-gray-600">Angebotstitel</Label>
+                        <Input
+                          value={birthdayOfferTitle}
+                          onChange={(e) => setBirthdayOfferTitle(e.target.value)}
+                          placeholder="z.B. Frühstück zum halben Preis"
+                          className="mt-1 rounded-xl text-sm"
+                        />
+                      </div>
+                      <div>
+                        <Label className="text-xs text-gray-600">Beschreibung (optional)</Label>
+                        <Textarea
+                          value={birthdayOfferDescription}
+                          onChange={(e) => setBirthdayOfferDescription(e.target.value)}
+                          placeholder="Details zum Geburtstags-Angebot..."
+                          rows={2}
+                          className="mt-1 rounded-xl text-sm"
+                        />
+                      </div>
+                      <p className="text-xs text-gray-400">Angebot ist einlösbar über Stempel und verfällt nach Einlösung</p>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -635,7 +707,10 @@ const Nachrichten = () => {
                       birthday_enabled: birthdayEnabled,
                       birthday_message: birthdayMessage,
                       birthday_bonus_points: birthdayBonusPoints,
-                    })
+                      birthday_gift_type: birthdayGiftType,
+                      birthday_offer_title: birthdayOfferTitle || null,
+                      birthday_offer_description: birthdayOfferDescription || null,
+                    } as any)
                     .eq('id', customerId);
                   if (error) throw error;
                   toast.success('Automatisierungen gespeichert');
@@ -690,14 +765,19 @@ const Nachrichten = () => {
 
                 {messageForm.segment_type !== 'all' && (
                   <div>
-                    <Label className="text-gray-700">Zeitraum (Tage)</Label>
+                    <Label className="text-gray-700">
+                      {messageForm.segment_type === 'last_stamped_days' 
+                        ? `Gestempelt innerhalb der letzten ${messageForm.segment_value} Tage`
+                        : `Nicht gestempelt seit ${messageForm.segment_value} Tagen`
+                      }
+                    </Label>
                     <Input
                       type="number"
                       min={1}
                       value={messageForm.segment_value}
                       onChange={(e) => setMessageForm({ ...messageForm, segment_value: parseInt(e.target.value) || 30 })}
                       placeholder="z.B. 30"
-                      className="rounded-xl"
+                      className="rounded-xl mt-1"
                     />
                   </div>
                 )}
@@ -707,7 +787,7 @@ const Nachrichten = () => {
                   {estimatingRecipients ? (
                     <span className="text-gray-500">Berechne...</span>
                   ) : estimatedRecipients !== null ? (
-                    <span className="font-semibold text-gray-900">~{estimatedRecipients} Empfänger</span>
+                    <span className="font-semibold text-gray-900">{estimatedRecipients} Empfänger</span>
                   ) : (
                     <span className="text-gray-500">Empfänger werden berechnet</span>
                   )}
@@ -740,7 +820,7 @@ const Nachrichten = () => {
                 <div className="flex items-center justify-between">
                   <div>
                     <Label className="font-semibold text-gray-700">Angebot anhängen</Label>
-                    <p className="text-xs text-gray-500">Optional: Exklusives Angebot für Empfänger</p>
+                    <p className="text-xs text-gray-500">Exklusives Angebot nur für Empfänger</p>
                   </div>
                   <Switch
                     checked={messageForm.attach_offer}
@@ -769,47 +849,27 @@ const Nachrichten = () => {
                         className="rounded-xl mt-1"
                       />
                     </div>
+                    <div className="flex items-center gap-2 text-xs text-amber-600 bg-amber-50 p-2 rounded-lg">
+                      <Clock className="h-3 w-3 flex-shrink-0" />
+                      <span>Angebot ist 7 Tage gültig und einlösbar über Stempel</span>
+                    </div>
                   </div>
                 )}
               </div>
-
-              <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
-                <Label className="text-gray-700">In App dauerhaft anzeigen</Label>
-                <Switch
-                  checked={messageForm.show_in_storefront}
-                  onCheckedChange={(checked) => setMessageForm({ ...messageForm, show_in_storefront: checked })}
-                />
-              </div>
             </div>
-            {(() => {
-              const COOLDOWN_DAYS = 7;
-              const cooldownActive = !editingMessage && lastMessageSentAt && 
-                (Date.now() - lastMessageSentAt.getTime()) < COOLDOWN_DAYS * 24 * 60 * 60 * 1000;
-              const daysRemaining = cooldownActive && lastMessageSentAt
-                ? Math.ceil((COOLDOWN_DAYS * 24 * 60 * 60 * 1000 - (Date.now() - lastMessageSentAt.getTime())) / (24 * 60 * 60 * 1000))
-                : 0;
-
-              return (
-                <DialogFooter className="flex-col gap-2">
-                  {cooldownActive && (
-                    <p className="text-sm text-destructive w-full text-center">
-                      ⏳ Spamschutz: Nächste Nachricht in {daysRemaining} {daysRemaining === 1 ? 'Tag' : 'Tagen'} möglich
-                    </p>
+            <DialogFooter>
+              <div className="flex gap-2 w-full justify-end">
+                <Button variant="outline" onClick={() => setShowMessageDialog(false)} className="rounded-xl">Abbrechen</Button>
+                <Button onClick={handleSaveMessage} disabled={saving} className="rounded-xl">
+                  {saving ? (
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  ) : (
+                    <Send className="h-4 w-4 mr-2" />
                   )}
-                  <div className="flex gap-2 w-full justify-end">
-                    <Button variant="outline" onClick={() => setShowMessageDialog(false)} className="rounded-xl">Abbrechen</Button>
-                    <Button onClick={handleSaveMessage} disabled={saving || !!cooldownActive} className="rounded-xl">
-                      {saving ? (
-                        <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                      ) : (
-                        <Send className="h-4 w-4 mr-2" />
-                      )}
-                      {editingMessage ? 'Speichern' : 'Nachricht senden'}
-                    </Button>
-                  </div>
-                </DialogFooter>
-              );
-            })()}
+                  {editingMessage ? 'Speichern' : 'Nachricht senden'}
+                </Button>
+              </div>
+            </DialogFooter>
           </DialogContent>
         </Dialog>
 

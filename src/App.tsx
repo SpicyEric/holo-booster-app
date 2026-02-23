@@ -57,6 +57,7 @@ import AppPrivacy from "./app/pages/AppPrivacy";
 import AppMyCards from "./app/pages/AppMyCards";
 import AppVerifyEmail from "./app/pages/AppVerifyEmail";
 import AppRewards from "./app/pages/AppRewards";
+import AppMessageDetail from "./app/pages/AppMessageDetail";
 import Leads from "./pages/admin/Leads";
 
 const queryClient = new QueryClient();
@@ -135,6 +136,7 @@ const App = () => (
           <Route path="/app/privacy" element={<AppProtectedRoute><AppPrivacy /></AppProtectedRoute>} />
           <Route path="/app/my-cards" element={<AppProtectedRoute><AppMyCards /></AppProtectedRoute>} />
           <Route path="/app/rewards" element={<AppProtectedRoute><AppRewards /></AppProtectedRoute>} />
+          <Route path="/app/messages/:id" element={<AppProtectedRoute><AppMessageDetail /></AppProtectedRoute>} />
           <Route path="/app/verify-email" element={<AppVerifyEmail />} />
           
           {/* Scan Route */}
