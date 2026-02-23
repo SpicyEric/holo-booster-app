@@ -915,16 +915,17 @@ const MeinGeschaeft = () => {
                       <Label className="mb-2 block">Logo</Label>
                       <div className="border-2 border-dashed border-gray-200 rounded-xl p-4 text-center hover:border-primary/50 transition-colors">
                         {formData.logo_url ? (
-                          <div className="flex items-center justify-between">
-                            <span className="text-sm text-gray-600 truncate">Logo hochgeladen</span>
-                            <label className="cursor-pointer text-sm text-primary hover:underline">
+                          <div className="space-y-3">
+                            <img src={formData.logo_url} alt="Logo" className="w-20 h-20 object-contain mx-auto rounded-lg bg-white" />
+                            <label className="cursor-pointer text-sm text-primary hover:underline block">
                               <input type="file" accept="image/*" className="hidden" onChange={(e) => { const file = e.target.files?.[0]; if (file) handleImageUpload(file, "logo"); }} />
-                              {uploadingLogo ? "..." : "Ändern"}
+                              {uploadingLogo ? "Hochladen..." : "Ändern"}
                             </label>
                           </div>
                         ) : (
-                          <label className="cursor-pointer block">
+                          <label className="cursor-pointer block py-4">
                             <input type="file" accept="image/*" className="hidden" onChange={(e) => { const file = e.target.files?.[0]; if (file) handleImageUpload(file, "logo"); }} />
+                            <ImageIcon className="w-8 h-8 mx-auto mb-2 text-gray-300" />
                             <span className="text-sm text-gray-500">{uploadingLogo ? "Hochladen..." : "Logo hochladen"}</span>
                           </label>
                         )}
@@ -934,16 +935,17 @@ const MeinGeschaeft = () => {
                       <Label className="mb-2 block">Titelbild</Label>
                       <div className="border-2 border-dashed border-gray-200 rounded-xl p-4 text-center hover:border-primary/50 transition-colors">
                         {formData.cover_image_url ? (
-                          <div className="flex items-center justify-between">
-                            <span className="text-sm text-gray-600 truncate">Titelbild hochgeladen</span>
-                            <label className="cursor-pointer text-sm text-primary hover:underline">
+                          <div className="space-y-3">
+                            <img src={formData.cover_image_url} alt="Titelbild" className="w-full h-24 object-cover mx-auto rounded-lg" />
+                            <label className="cursor-pointer text-sm text-primary hover:underline block">
                               <input type="file" accept="image/*" className="hidden" onChange={(e) => { const file = e.target.files?.[0]; if (file) handleImageUpload(file, "cover"); }} />
-                              {uploadingCover ? "..." : "Ändern"}
+                              {uploadingCover ? "Hochladen..." : "Ändern"}
                             </label>
                           </div>
                         ) : (
-                          <label className="cursor-pointer block">
+                          <label className="cursor-pointer block py-4">
                             <input type="file" accept="image/*" className="hidden" onChange={(e) => { const file = e.target.files?.[0]; if (file) handleImageUpload(file, "cover"); }} />
+                            <ImageIcon className="w-8 h-8 mx-auto mb-2 text-gray-300" />
                             <span className="text-sm text-gray-500">{uploadingCover ? "Hochladen..." : "Titelbild hochladen"}</span>
                           </label>
                         )}
