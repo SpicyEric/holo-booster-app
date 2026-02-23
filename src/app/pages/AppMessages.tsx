@@ -111,22 +111,27 @@ export const AppMessages = () => {
         .order('sent_at', { ascending: false });
 
       if (!error && data) {
+        // Auto-mark messages WITHOUT offers as read
+        const unreadNoOffer = data.filter(m => !m.read_at && !m.offer_id);
+        if (unreadNoOffer.length > 0) {
+          const ids = unreadNoOffer.map(m => m.id);
+          const now = new Date().toISOString();
+          await supabase
+            .from('app_messages')
+            .update({ read_at: now })
+            .in('id', ids)
+            .eq('user_id', user!.id);
+          // Update local data so dots disappear immediately
+          data.forEach(m => {
+            if (!m.read_at && !m.offer_id) m.read_at = now;
+          });
+        }
+
         const formatted = data.map(msg => ({
           ...msg,
           customer: Array.isArray(msg.customers) ? msg.customers[0] : msg.customers,
         }));
         setMessages(formatted as unknown as Message[]);
-
-        // Auto-mark messages WITHOUT offers as read
-        const unreadNoOffer = data.filter(m => !m.read_at && !m.offer_id);
-        if (unreadNoOffer.length > 0) {
-          const ids = unreadNoOffer.map(m => m.id);
-          await supabase
-            .from('app_messages')
-            .update({ read_at: new Date().toISOString() })
-            .in('id', ids)
-            .eq('user_id', user!.id);
-        }
       }
     } catch (err) {
       console.error('[AppMessages] Error:', err);

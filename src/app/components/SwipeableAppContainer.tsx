@@ -511,18 +511,24 @@ const AppMessagesContent = () => {
       if (data) {
         const merchantIds = [...new Set(data.map(m => m.merchant_customer_id))];
         const { data: merchants } = await supabase.from('customers').select('id, name, logo_url').in('id', merchantIds);
-        setMessages(data.map(msg => ({ ...msg, merchant: merchants?.find(m => m.id === msg.merchant_customer_id) })));
-
+        
         // Auto-mark messages WITHOUT offers as read
         const unreadNoOffer = data.filter(m => !m.read_at && !m.offer_id);
         if (unreadNoOffer.length > 0) {
           const ids = unreadNoOffer.map(m => m.id);
+          const now = new Date().toISOString();
           await supabase
             .from('app_messages')
-            .update({ read_at: new Date().toISOString() })
+            .update({ read_at: now })
             .in('id', ids)
             .eq('user_id', user!.id);
+          // Update local data so dots disappear immediately
+          data.forEach(m => {
+            if (!m.read_at && !m.offer_id) m.read_at = now;
+          });
         }
+        
+        setMessages(data.map(msg => ({ ...msg, merchant: merchants?.find(m => m.id === msg.merchant_customer_id) })));
       }
     } catch (err) {
       console.error('[Messages] Error:', err);
