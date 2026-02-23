@@ -33,7 +33,7 @@ export const useRewardRedemption = ({ userId, merchantId, merchantName, rewardTi
   
   const [pendingReward, setPendingReward] = useState<{ id: string; points: number } | null>(null);
 
-  const validateNfcChip = async (chipData: string): Promise<boolean> => {
+  const validateNfcChip = async (chipData: string, hardwareUid?: string): Promise<boolean> => {
     // chipData format: "BOXID:farbe" (e.g., "T3K8M-N2P5R-W7Y9Q:grün")
     const parts = chipData.split(':');
     if (parts.length !== 2) {
@@ -42,36 +42,48 @@ export const useRewardRedemption = ({ userId, merchantId, merchantName, rewardTi
 
     const [boxId, color] = parts;
 
-    // Check if this NFC chip belongs to the correct merchant
-    const { data: nfcChip, error } = await supabase
-      .from('nfc_chips')
-      .select('merchant_customer_id, is_active')
-      .eq('chip_uid', chipData)
+    // Step 1: Find the box in the registry
+    const { data: box } = await supabase
+      .from('boxes')
+      .select('id')
+      .eq('box_id', boxId.toUpperCase())
       .maybeSingle();
 
-    if (error || !nfcChip) {
-      // Try looking up by box_id pattern
-      const { data: box } = await supabase
-        .from('boxes')
-        .select('id')
-        .eq('box_id', boxId)
-        .maybeSingle();
-
-      if (box) {
-        const { data: customerBox } = await supabase
-          .from('customer_boxes')
-          .select('customer_id')
-          .eq('box_id', box.id)
-          .maybeSingle();
-
-        if (customerBox && customerBox.customer_id === merchantId) {
-          return true;
-        }
-      }
+    if (!box) {
+      console.log('[RewardRedemption] Box not found:', boxId);
       return false;
     }
 
-    return nfcChip.merchant_customer_id === merchantId && nfcChip.is_active;
+    // Step 2: Check if this box is assigned to the correct merchant
+    const { data: customerBox } = await supabase
+      .from('customer_boxes')
+      .select('customer_id')
+      .eq('box_id', box.id)
+      .maybeSingle();
+
+    if (!customerBox || customerBox.customer_id !== merchantId) {
+      console.log('[RewardRedemption] Box not assigned to merchant:', merchantId);
+      return false;
+    }
+
+    // Step 3: Find NFC chip config for this merchant + color and verify hardware UID
+    const { data: nfcChip } = await supabase
+      .from('nfc_chips')
+      .select('hardware_uid, is_active')
+      .eq('merchant_customer_id', merchantId)
+      .ilike('stamp_color', color)
+      .eq('is_active', true)
+      .maybeSingle();
+
+    if (nfcChip && nfcChip.hardware_uid) {
+      // Verify hardware UID if one is registered
+      if (!hardwareUid || hardwareUid.toLowerCase() !== nfcChip.hardware_uid.toLowerCase()) {
+        console.log('[RewardRedemption] Hardware UID mismatch');
+        return false;
+      }
+    }
+
+    return true;
   };
 
   const redeemReward = async (rewardId: string, pointsRequired: number): Promise<boolean> => {
@@ -232,7 +244,7 @@ export const useRewardRedemption = ({ userId, merchantId, merchantName, rewardTi
         }
 
         // Validate the NFC chip belongs to the correct merchant
-        const isValid = await validateNfcChip(result.chipData);
+        const isValid = await validateNfcChip(result.chipData, result.hardwareUid);
         
         if (!isValid) {
           setState(prev => ({
