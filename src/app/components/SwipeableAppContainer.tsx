@@ -440,6 +440,7 @@ const AppHomeContent = () => {
 const AppMessagesContent = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [messages, setMessages] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [emailVerified, setEmailVerified] = useState(true);
@@ -453,6 +454,13 @@ const AppMessagesContent = () => {
       localStorage.setItem(`rewards_seen_${user.id}`, Date.now().toString());
     }
   }, [user]);
+
+  // Reload messages when navigating back to this tab (e.g. from message detail)
+  useEffect(() => {
+    if (user && location.pathname === '/app/messages') {
+      loadMessages();
+    }
+  }, [location.pathname]);
 
   const checkVerification = async () => {
     if (!user) return;

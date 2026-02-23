@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Home, MessageSquare, Store, Settings, Stamp, LucideIcon } from 'lucide-react';
+import { Home, MessageSquare, Search, Settings, Stamp, LucideIcon } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -85,10 +85,10 @@ export const BottomNav = ({ onNavigate, currentIndex }: BottomNavProps) => {
   }, [user]);
 
   const navItems: NavItem[] = [
-    { icon: Home, label: 'Feed', path: '/app', index: 0 },
-    { icon: Store, label: 'Stores', path: '/app/stores', index: 1 },
-    { icon: MessageSquare, label: 'Nachrichten', path: '/app/messages', index: 2 },
-    { icon: Settings, label: 'Einstellungen', path: '/app/profile', index: 3 },
+    { icon: Home, label: '', path: '/app', index: 0 },
+    { icon: Search, label: '', path: '/app/stores', index: 1 },
+    { icon: MessageSquare, label: '', path: '/app/messages', index: 2 },
+    { icon: Settings, label: '', path: '/app/profile', index: 3 },
   ];
 
   const handleCenterButtonClick = () => {
@@ -128,7 +128,6 @@ export const BottomNav = ({ onNavigate, currentIndex }: BottomNavProps) => {
             <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full border-2 border-background" />
           )}
         </div>
-        <span className="text-xs mt-1">{item.label}</span>
       </button>
     );
   };
