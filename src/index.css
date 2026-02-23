@@ -48,6 +48,43 @@ All colors MUST be HSL.
     --shadow-glow: 0 4px 20px hsl(262 83% 58% / 0.15);
     --shadow-card: 0 2px 8px hsl(0 0% 0% / 0.1);
   }
+
+  /* Dark mode */
+  .dark {
+    --background: 0 0% 13%;           /* #212121 - dark gray, not pure black */
+    --foreground: 0 0% 93%;           /* #ededed - near-white text */
+
+    --card: 0 0% 17%;                 /* #2b2b2b - slightly lighter card */
+    --card-foreground: 0 0% 93%;
+
+    --popover: 0 0% 17%;
+    --popover-foreground: 0 0% 93%;
+
+    --primary: 262 83% 58%;           /* Keep purple */
+    --primary-foreground: 0 0% 100%;
+    
+    --secondary: 217 91% 60%;         /* Keep blue */
+    --secondary-foreground: 0 0% 100%;
+
+    --muted: 0 0% 20%;                /* #333333 */
+    --muted-foreground: 0 0% 63%;     /* #a1a1a1 */
+
+    --accent: 280 100% 70%;
+    --accent-foreground: 0 0% 93%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 0 0% 22%;               /* #383838 subtle dark borders */
+    --input: 0 0% 20%;                /* #333333 */
+    --ring: 262 83% 58%;
+
+    --gradient-primary: linear-gradient(135deg, hsl(262 83% 58%), hsl(217 91% 60%));
+    --gradient-glow: linear-gradient(135deg, hsl(262 83% 58% / 0.15), hsl(217 91% 60% / 0.15));
+    
+    --shadow-glow: 0 4px 20px hsl(262 83% 58% / 0.25);
+    --shadow-card: 0 2px 8px hsl(0 0% 0% / 0.3);
+  }
 }
 
 @layer base {
@@ -55,9 +92,12 @@ All colors MUST be HSL.
     @apply border-border;
   }
 
-  /* Force light mode - ignore system dark mode preference */
   html {
-    color-scheme: light !important;
+    color-scheme: light;
+  }
+
+  html.dark {
+    color-scheme: dark;
   }
 
   body {
