@@ -141,7 +141,7 @@ export const useRewardRedemption = ({ userId, merchantId, merchantName, rewardTi
           merchant_customer_id: merchantId,
           points_change: -pointsRequired,
           transaction_type: 'redemption',
-          description: 'Prämie eingelöst',
+          description: `Prämie eingelöst: ${rewardTitle}`,
         });
 
       // Send push notification
