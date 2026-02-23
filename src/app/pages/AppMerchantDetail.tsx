@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, MapPin, Phone, Globe, Instagram, Clock, Gift, Sparkles } from 'lucide-react';
+import { ArrowLeft, MapPin, Phone, Globe, Instagram, Clock, Gift, Sparkles, History } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
@@ -49,6 +49,14 @@ interface NewCustomerOffer {
   merchant_customer_id: string;
 }
 
+interface Transaction {
+  id: string;
+  points_change: number;
+  transaction_type: string | null;
+  description: string | null;
+  created_at: string | null;
+}
+
 export const AppMerchantDetail = () => {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
@@ -56,6 +64,7 @@ export const AppMerchantDetail = () => {
   const [merchant, setMerchant] = useState<Merchant | null>(null);
   const [rewards, setRewards] = useState<Reward[]>([]);
   const [newCustomerOffer, setNewCustomerOffer] = useState<NewCustomerOffer | null>(null);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [userPoints, setUserPoints] = useState(0);
   const [hasEverStamped, setHasEverStamped] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -98,7 +107,7 @@ export const AppMerchantDetail = () => {
       if (user) {
         const { data: loyaltyAccount } = await supabase
           .from('loyalty_accounts')
-          .select('current_points_balance')
+          .select('id, current_points_balance')
           .eq('user_id', user.id)
           .eq('merchant_customer_id', id)
           .maybeSingle();
@@ -106,6 +115,17 @@ export const AppMerchantDetail = () => {
         const points = loyaltyAccount?.current_points_balance || 0;
         setUserPoints(points);
         setHasEverStamped(points > 0);
+
+        // Load transactions for this merchant
+        if (loyaltyAccount) {
+          const { data: txData } = await supabase
+            .from('point_transactions')
+            .select('id, points_change, transaction_type, description, created_at')
+            .eq('loyalty_account_id', loyaltyAccount.id)
+            .order('created_at', { ascending: false });
+
+          if (txData) setTransactions(txData);
+        }
 
         // Load new customer offer only if user has 0 points
         if (points === 0) {
@@ -236,11 +256,12 @@ export const AppMerchantDetail = () => {
         </div>
       </div>
 
-      {/* Tabs - Only Prämien and Info */}
+      {/* Tabs */}
       <Tabs defaultValue="rewards" className="p-4">
-        <TabsList className="w-full grid grid-cols-2">
+        <TabsList className="w-full grid grid-cols-3">
           <TabsTrigger value="rewards">Prämien</TabsTrigger>
           <TabsTrigger value="info">Info</TabsTrigger>
+          <TabsTrigger value="transactions">Transaktionen</TabsTrigger>
         </TabsList>
 
         <TabsContent value="rewards" className="mt-4 space-y-3">
@@ -391,6 +412,48 @@ export const AppMerchantDetail = () => {
               )}
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="transactions" className="mt-4 space-y-3">
+          {transactions.length === 0 ? (
+            <Card>
+              <CardContent className="p-6 text-center text-muted-foreground">
+                <History className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                Noch keine Transaktionen
+              </CardContent>
+            </Card>
+          ) : (
+            transactions.map((tx) => {
+              const isPositive = tx.points_change > 0;
+              const date = tx.created_at
+                ? new Date(tx.created_at).toLocaleDateString('de-DE', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                  })
+                : '';
+              return (
+                <Card key={tx.id}>
+                  <CardContent className="p-4 flex items-center gap-3">
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                      isPositive ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+                    }`}>
+                      {isPositive ? '+' : '−'}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-sm">{tx.description || (isPositive ? 'Punkte erhalten' : 'Punkte eingelöst')}</p>
+                      <p className="text-xs text-muted-foreground">{date}</p>
+                    </div>
+                    <span className={`font-bold text-sm ${isPositive ? 'text-green-700' : 'text-red-600'}`}>
+                      {isPositive ? '+' : ''}{tx.points_change}
+                    </span>
+                  </CardContent>
+                </Card>
+              );
+            })
+          )}
         </TabsContent>
       </Tabs>
 
