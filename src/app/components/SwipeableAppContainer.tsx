@@ -498,10 +498,15 @@ const AppMessagesContent = () => {
   const loadMessages = async () => {
     setLoading(true);
     try {
+      // Only show messages from the last 7 days
+      const sevenDaysAgo = new Date();
+      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
       const { data } = await supabase
         .from('app_messages')
-        .select('id, title, body, sent_at, read_at, merchant_customer_id')
+        .select('id, title, body, sent_at, read_at, offer_id, merchant_customer_id')
         .eq('user_id', user?.id)
+        .gte('sent_at', sevenDaysAgo.toISOString())
         .order('sent_at', { ascending: false });
       if (data) {
         const merchantIds = [...new Set(data.map(m => m.merchant_customer_id))];
@@ -567,8 +572,12 @@ const AppMessagesContent = () => {
       ) : messages.length > 0 ? (
         <div className="space-y-3">
           {messages.map((msg) => (
-            <Card key={msg.id} className={`p-4 ${!msg.read_at ? 'border-primary/50 bg-primary/5' : ''}`}>
-              <div className="flex items-start gap-3">
+            <Card 
+              key={msg.id} 
+              className={`p-4 cursor-pointer hover:shadow-md transition-shadow active:scale-[0.98] ${!msg.read_at ? 'border-l-4 border-l-primary' : ''}`}
+              onClick={() => navigate(`/app/messages/${msg.id}`)}
+            >
+              <div className="flex items-center gap-3">
                 {msg.merchant?.logo_url ? (
                   <img src={msg.merchant.logo_url} alt={msg.merchant.name} className="w-10 h-10 rounded-full object-cover" />
                 ) : (
@@ -577,12 +586,20 @@ const AppMessagesContent = () => {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between mb-1">
                     <h3 className="font-semibold text-foreground truncate">{msg.merchant?.name || 'Eloyo'}</h3>
-                    <span className="text-xs text-muted-foreground">{formatDate(msg.sent_at)}</span>
+                    <ChevronRight className="h-4 w-4 text-muted-foreground flex-shrink-0" />
                   </div>
-                  <p className="font-medium text-foreground mb-1">{msg.title}</p>
-                  <p className="text-sm text-muted-foreground line-clamp-2">{msg.body}</p>
+                  <p className="font-medium text-foreground text-sm mb-1">{msg.title}</p>
+                  <p className="text-sm text-muted-foreground line-clamp-1">{msg.body}</p>
+                  <div className="flex items-center gap-2 mt-1">
+                    <span className="text-xs text-muted-foreground">{formatDate(msg.sent_at)}</span>
+                    {msg.offer_id && (
+                      <span className="inline-flex items-center text-xs text-primary font-medium">
+                        <Gift className="h-3 w-3 mr-1" />Angebot
+                      </span>
+                    )}
+                  </div>
                 </div>
-                {!msg.read_at && <div className="w-2 h-2 rounded-full bg-primary mt-2" />}
+                {!msg.read_at && <div className="w-2 h-2 rounded-full bg-primary mt-2 flex-shrink-0" />}
               </div>
             </Card>
           ))}
