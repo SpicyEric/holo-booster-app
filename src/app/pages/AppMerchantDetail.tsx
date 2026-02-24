@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, MapPin, Phone, Globe, Instagram, Clock, Gift, Sparkles, History } from 'lucide-react';
+import { ArrowLeft, MapPin, Phone, Globe, Instagram, Clock, Gift, Sparkles, History, Star } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
@@ -57,6 +57,13 @@ interface Transaction {
   created_at: string | null;
 }
 
+interface GoogleReviewBonus {
+  enabled: boolean;
+  pointsValue: number;
+  reviewUrl: string | null;
+  alreadyClaimed: boolean;
+}
+
 export const AppMerchantDetail = () => {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
@@ -68,6 +75,13 @@ export const AppMerchantDetail = () => {
   const [userPoints, setUserPoints] = useState(0);
   const [hasEverStamped, setHasEverStamped] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [googleReviewBonus, setGoogleReviewBonus] = useState<GoogleReviewBonus>({
+    enabled: false,
+    pointsValue: 5,
+    reviewUrl: null,
+    alreadyClaimed: false,
+  });
+  const [claimingReviewBonus, setClaimingReviewBonus] = useState(false);
   
   // Dialog states
   const [selectedReward, setSelectedReward] = useState<Reward | null>(null);
@@ -103,6 +117,10 @@ export const AppMerchantDetail = () => {
 
       if (rewardsData) setRewards(rewardsData);
 
+      // Check Google review bonus settings
+      const reviewEnabled = (merchantData as any).google_review_points_enabled === true;
+      const reviewPointsVal = (merchantData as any).google_review_points_value || 5;
+      const reviewUrl = (merchantData as any).google_review_url || null;
       // Load user points and check if ever stamped
       if (user) {
         const { data: loyaltyAccount } = await supabase
@@ -140,6 +158,30 @@ export const AppMerchantDetail = () => {
             setNewCustomerOffer(offerData);
           }
         }
+
+        // Check if user already claimed Google review bonus
+        if (reviewEnabled && reviewUrl) {
+          const { data: claimData } = await supabase
+            .from('google_review_claims')
+            .select('id')
+            .eq('user_id', user.id)
+            .eq('merchant_customer_id', id!)
+            .maybeSingle();
+
+          setGoogleReviewBonus({
+            enabled: true,
+            pointsValue: reviewPointsVal,
+            reviewUrl,
+            alreadyClaimed: !!claimData,
+          });
+        } else {
+          setGoogleReviewBonus({ enabled: false, pointsValue: 5, reviewUrl: null, alreadyClaimed: false });
+        }
+      } else {
+        // Not logged in - still set review bonus info for display
+        if (reviewEnabled && reviewUrl) {
+          setGoogleReviewBonus({ enabled: true, pointsValue: reviewPointsVal, reviewUrl, alreadyClaimed: false });
+        }
       }
     } catch (err) {
       console.error('Error loading merchant:', err);
@@ -168,6 +210,72 @@ export const AppMerchantDetail = () => {
   const handleRewardClick = (reward: Reward) => {
     setSelectedReward(reward);
     setRewardDialogOpen(true);
+  };
+
+  const handleClaimGoogleReviewBonus = async () => {
+    if (!user || !id || googleReviewBonus.alreadyClaimed) return;
+    
+    // First open the Google review URL
+    if (googleReviewBonus.reviewUrl) {
+      window.open(googleReviewBonus.reviewUrl, '_blank');
+    }
+
+    setClaimingReviewBonus(true);
+    try {
+      // Create claim record
+      const { error: claimError } = await supabase
+        .from('google_review_claims')
+        .insert({
+          user_id: user.id,
+          merchant_customer_id: id,
+          points_awarded: googleReviewBonus.pointsValue,
+        });
+
+      if (claimError) throw claimError;
+
+      // Get or create loyalty account
+      let { data: loyaltyAccount } = await supabase
+        .from('loyalty_accounts')
+        .select('id, current_points_balance')
+        .eq('user_id', user.id)
+        .eq('merchant_customer_id', id)
+        .maybeSingle();
+
+      if (!loyaltyAccount) {
+        const { data: newAccount, error: createErr } = await supabase
+          .from('loyalty_accounts')
+          .insert({ user_id: user.id, merchant_customer_id: id, current_points_balance: googleReviewBonus.pointsValue })
+          .select('id, current_points_balance')
+          .single();
+        if (createErr) throw createErr;
+        loyaltyAccount = newAccount;
+      } else {
+        const newBalance = (loyaltyAccount.current_points_balance || 0) + googleReviewBonus.pointsValue;
+        await supabase
+          .from('loyalty_accounts')
+          .update({ current_points_balance: newBalance })
+          .eq('id', loyaltyAccount.id);
+        loyaltyAccount.current_points_balance = newBalance;
+      }
+
+      // Log the transaction
+      await supabase.from('point_transactions').insert({
+        loyalty_account_id: loyaltyAccount!.id,
+        merchant_customer_id: id,
+        points_change: googleReviewBonus.pointsValue,
+        transaction_type: 'google_review_bonus',
+        description: 'Google-Bewertungs-Bonus',
+      });
+
+      setUserPoints(loyaltyAccount!.current_points_balance || 0);
+      setGoogleReviewBonus(prev => ({ ...prev, alreadyClaimed: true }));
+      toast.success(`+${googleReviewBonus.pointsValue} Bonuspunkte erhalten! 🎉`);
+    } catch (err) {
+      console.error('Error claiming review bonus:', err);
+      toast.error('Fehler beim Einlösen des Bonus');
+    } finally {
+      setClaimingReviewBonus(false);
+    }
   };
 
   const handleNewCustomerOfferClick = () => {
@@ -292,8 +400,33 @@ export const AppMerchantDetail = () => {
             </Card>
           )}
 
+          {/* Google Review Bonus */}
+          {googleReviewBonus.enabled && !googleReviewBonus.alreadyClaimed && (
+            <Card 
+              className="border-2 border-amber-400 bg-amber-50 dark:bg-amber-950/30 cursor-pointer hover:shadow-lg transition-shadow"
+              onClick={handleClaimGoogleReviewBonus}
+            >
+              <CardContent className="p-4 flex items-center gap-4">
+                <div className="w-12 h-12 rounded-lg bg-amber-100 dark:bg-amber-900/50 flex items-center justify-center">
+                  <Star className="h-6 w-6 text-amber-600 fill-amber-500" />
+                </div>
+                <div className="flex-1">
+                  <Badge className="mb-1 text-xs bg-amber-500 hover:bg-amber-600">Google-Bewertung</Badge>
+                  <h3 className="font-medium">Bewerte uns & erhalte Bonuspunkte!</h3>
+                  <p className="text-sm text-muted-foreground line-clamp-1">
+                    Hinterlasse eine Google-Bewertung und erhalte {googleReviewBonus.pointsValue} Bonuspunkte
+                  </p>
+                </div>
+                <Badge variant="secondary">
+                  <Star className="h-3 w-3 mr-1" />
+                  +{googleReviewBonus.pointsValue}
+                </Badge>
+              </CardContent>
+            </Card>
+          )}
+
           {/* Regular Rewards */}
-          {rewards.length === 0 && !newCustomerOffer ? (
+          {rewards.length === 0 && !newCustomerOffer && !googleReviewBonus.enabled ? (
             <Card>
               <CardContent className="p-6 text-center text-muted-foreground">
                 <Gift className="h-8 w-8 mx-auto mb-2 opacity-50" />
