@@ -1115,6 +1115,13 @@ const MeinGeschaeft = () => {
 
               {/* Stempel Tab */}
               <TabsContent value="stempel" className="space-y-6">
+                {/* Recommendation Banner */}
+                <div className="rounded-2xl bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200/60 p-5">
+                  <p className="text-base font-semibold text-amber-900 leading-relaxed">
+                    💡 Empfehlung: Die magische Zahl für die erste Belohnung liegt bei <span className="text-amber-700 font-bold">4–6 Interaktionen</span>. Das fühlt sich für den Kunden erreichbar an, aber nicht geschenkt – und motiviert, schnell wiederzukommen.
+                  </p>
+                </div>
+
                 {/* Stamp System Selector */}
                 <Card className="rounded-2xl shadow-sm border-0 bg-gray-50/80">
                   <CardHeader className="pb-4">
