@@ -1118,7 +1118,7 @@ const MeinGeschaeft = () => {
                 {/* Recommendation Banner */}
                 <div className="rounded-2xl bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200/60 p-5">
                   <p className="text-base font-semibold text-amber-900 leading-relaxed">
-                    💡 Empfehlung: Die magische Zahl für die erste Belohnung liegt bei <span className="text-amber-700 font-bold">4–6 Interaktionen</span>. Das fühlt sich für den Kunden erreichbar an, aber nicht geschenkt – und motiviert, schnell wiederzukommen.
+                    💡 Empfehlung: Die magische Zahl für die erste kleine Belohnung liegt bei <span className="text-amber-700 font-bold">4–6 Interaktionen</span>. Das fühlt sich für den Kunden erreichbar an, aber nicht geschenkt – und motiviert, schnell wiederzukommen.
                   </p>
                 </div>
 
@@ -1168,14 +1168,11 @@ const MeinGeschaeft = () => {
                         </div>
                       ) : (
                         <div className="space-y-4">
-                          <div className="p-4 bg-white rounded-xl border border-gray-100 space-y-2">
-                            <p className="text-sm text-muted-foreground">
-                              <strong>Umsatzbasiertes Stempelsystem.</strong> Verschiedene Stempelfarben vergeben unterschiedlich viele Punkte. So fühlt sich das System für deine Kunden fairer an, weil sie selbst Einfluss darauf nehmen können, wie viele Punkte sie erhalten – z.&nbsp;B. indem sie etwas mehr kaufen.
-                            </p>
-                            <ul className="text-sm text-muted-foreground space-y-1 mt-2">
-                              <li>🟢 <strong>Grüner Stempel:</strong> Unter <span className="font-semibold text-foreground">{avgRevenue} €</span> Einkaufswert</li>
-                              <li>🔵 <strong>Blauer Stempel:</strong> Zwischen <span className="font-semibold text-foreground">{avgRevenue} €</span> und <span className="font-semibold text-foreground">{Math.round(avgRevenue * 15 / 7)} €</span> Einkaufswert</li>
-                              <li>🔴 <strong>Roter Stempel:</strong> Über <span className="font-semibold text-foreground">{Math.round(avgRevenue * 15 / 7)} €</span> Einkaufswert</li>
+                          <div className="p-4 bg-white rounded-xl border border-gray-100 space-y-1">
+                            <ul className="text-sm text-muted-foreground space-y-1">
+                              <li>🟢 <strong>Grüner Stempel:</strong> Unter <span className="font-semibold text-foreground">{avgRevenue} €</span></li>
+                              <li>🔵 <strong>Blauer Stempel:</strong> {avgRevenue} € – <span className="font-semibold text-foreground">{Math.round(avgRevenue * 15 / 7)} €</span></li>
+                              <li>🔴 <strong>Roter Stempel:</strong> Über <span className="font-semibold text-foreground">{Math.round(avgRevenue * 15 / 7)} €</span></li>
                             </ul>
                           </div>
                           <div>
