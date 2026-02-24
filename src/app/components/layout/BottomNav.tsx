@@ -47,7 +47,7 @@ export const BottomNav = ({ onNavigate, currentIndex }: BottomNavProps) => {
         .eq('user_id', user.id)
         .maybeSingle();
 
-      // Check for unseen redeemable rewards
+      // Check for unseen redeemable rewards (compare count to last seen count)
       let hasUnseenRewards = false;
       const { data: accounts } = await supabase
         .from('loyalty_accounts')
@@ -67,11 +67,9 @@ export const BottomNav = ({ onNavigate, currentIndex }: BottomNavProps) => {
 
         if (rewards) {
           const redeemableCount = rewards.filter(r => (pointsMap.get(r.merchant_customer_id) || 0) >= r.points_required).length;
-          if (redeemableCount > 0) {
-            const lastSeen = localStorage.getItem(`rewards_seen_${user.id}`);
-            if (!lastSeen) {
-              hasUnseenRewards = true;
-            }
+          const lastSeenCount = parseInt(localStorage.getItem(`rewards_seen_count_${user.id}`) || '0', 10);
+          if (redeemableCount > lastSeenCount) {
+            hasUnseenRewards = true;
           }
         }
       }
