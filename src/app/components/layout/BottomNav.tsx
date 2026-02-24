@@ -74,7 +74,7 @@ export const BottomNav = ({ onNavigate, currentIndex }: BottomNavProps) => {
         }
       }
 
-      setMessageBadge((unreadCount || 0) > 0 || profile?.email_verified !== true || hasUnseenRewards);
+      setMessageBadge((unreadCount || 0) > 0 || hasUnseenRewards);
     };
 
     checkBadge();

@@ -392,16 +392,18 @@ export const AppMerchantDetail = () => {
                     </p>
                   )}
                 </div>
-                <Badge variant="secondary">
-                  <Gift className="h-3 w-3 mr-1" />
-                  +{newCustomerOffer.bonus_stamps}
-                </Badge>
+                {newCustomerOffer.bonus_stamps > 0 && (
+                  <Badge variant="secondary">
+                    <Gift className="h-3 w-3 mr-1" />
+                    +{newCustomerOffer.bonus_stamps}
+                  </Badge>
+                )}
               </CardContent>
             </Card>
           )}
 
-          {/* Google Review Bonus */}
-          {googleReviewBonus.enabled && !googleReviewBonus.alreadyClaimed && (
+          {/* Google Review Bonus - only show with exactly 1 transaction and not yet claimed */}
+          {!loading && googleReviewBonus.enabled && !googleReviewBonus.alreadyClaimed && transactions.length === 1 && (
             <Card 
               className="border-2 border-amber-400 bg-amber-50 dark:bg-amber-950/30 cursor-pointer hover:shadow-lg transition-shadow"
               onClick={handleClaimGoogleReviewBonus}
