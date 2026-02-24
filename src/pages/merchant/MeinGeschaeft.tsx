@@ -765,9 +765,9 @@ const MeinGeschaeft = () => {
                   <Info className="w-4 h-4 mr-2" />
                   Info
                 </TabsTrigger>
-                <TabsTrigger value="neukundenpraemie" className="rounded-lg">
-                  <UserPlus className="w-4 h-4 mr-2" />
-                  Neukundenprämie
+                <TabsTrigger value="stempel" className="rounded-lg">
+                  <Package className="w-4 h-4 mr-2" />
+                  Stempel
                 </TabsTrigger>
               </TabsList>
 
@@ -825,81 +825,45 @@ const MeinGeschaeft = () => {
                   </CardContent>
                 </Card>
 
-                {/* Stamps Section */}
-                <Card className="rounded-2xl shadow-sm border-0 bg-gray-50/80">
-                  <CardHeader className="pb-4">
+                {/* Neukundenprämie Section */}
+                <Card className="rounded-2xl shadow-sm border-0 bg-primary/5">
+                  <CardHeader className="flex flex-row items-center justify-between pb-4">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-                        <Package className="h-5 w-5 text-primary" />
+                        <UserPlus className="h-5 w-5 text-primary" />
                       </div>
                       <div>
-                        <CardTitle className="text-lg font-semibold text-gray-900">Box-IDs</CardTitle>
-                        <CardDescription className="text-gray-500">Verknüpfen Sie Ihre Starterbox</CardDescription>
+                        <CardTitle className="text-lg font-semibold text-gray-900">Neukundenprämie</CardTitle>
+                        <CardDescription className="text-gray-500">Locken Sie neue Kunden an</CardDescription>
                       </div>
                     </div>
+                    <Button variant={newCustomerOffer ? "outline" : "default"} onClick={() => setShowNcoDialog(true)} className="rounded-xl">
+                      {newCustomerOffer ? <><Edit2 className="h-4 w-4 mr-2" />Bearbeiten</> : <><Plus className="h-4 w-4 mr-2" />Erstellen</>}
+                    </Button>
                   </CardHeader>
-                  <CardContent className="space-y-4">
-                    {customerBoxes.length > 0 && (
-                      <div className="space-y-3">
-                        {customerBoxes.map((box) => (
-                          <div key={box.id} className="flex items-center justify-between p-4 bg-white rounded-xl border border-gray-100">
-                            <code className="font-mono text-sm font-semibold text-gray-900">{box.box_code}</code>
-                            <span className="text-xs text-gray-500">Hinzugefügt: {new Date(box.assigned_at).toLocaleDateString('de-DE')}</span>
+                  <CardContent>
+                    {newCustomerOffer ? (
+                      <div className="flex items-center justify-between p-4 bg-white rounded-xl border border-gray-100">
+                        <div>
+                          <div className="flex items-center gap-2 mb-1">
+                            <p className="font-semibold text-gray-900">{newCustomerOffer.title}</p>
+                            <Badge variant={newCustomerOffer.is_active ? "default" : "secondary"} className="rounded-full">
+                              {newCustomerOffer.is_active ? 'Aktiv' : 'Inaktiv'}
+                            </Badge>
                           </div>
-                        ))}
+                          {newCustomerOffer.description && <p className="text-sm text-gray-500">{newCustomerOffer.description}</p>}
+                        </div>
+                        <Button variant="ghost" size="sm" onClick={handleDeleteNco} className="rounded-lg">
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
                       </div>
+                    ) : (
+                      <p className="text-gray-500 text-center py-8">
+                        Noch keine Neukundenprämie erstellt. Diese wird nur neuen Kunden angezeigt, die noch nie bei Ihnen gestempelt haben.
+                      </p>
                     )}
-                    <div className="flex gap-3">
-                      <Input
-                        value={newBoxId}
-                        onChange={(e) => setNewBoxId(formatBoxIdInput(e.target.value))}
-                        placeholder="XXXXX-XXXXX-XXXXX"
-                        className="font-mono rounded-xl"
-                        maxLength={17}
-                      />
-                      <Button onClick={handleAddBox} disabled={addingBox || !newBoxId.trim()} className="rounded-xl">
-                        {addingBox ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
-                      </Button>
-                    </div>
                   </CardContent>
                 </Card>
-
-                {/* Stamp Colors */}
-                {nfcChips.length > 0 && (
-                  <Card className="rounded-2xl shadow-sm border-0 bg-gray-50/80">
-                    <CardHeader className="pb-4">
-                      <CardTitle className="flex items-center gap-3 text-lg font-semibold text-gray-900">
-                        <span className="text-lg">🔖</span>
-                        Stempelfarben & Punkte
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      {nfcChips.map((chip) => (
-                        <div key={chip.id} className="flex items-center gap-4 p-4 bg-white rounded-xl border border-gray-100">
-                          <div className={`h-10 w-10 rounded-full ${getColorBadge(chip.stamp_color)} shadow-sm`} />
-                          <div className="flex-1 grid grid-cols-1 sm:grid-cols-3 gap-4">
-                            <div>
-                              <Label className="text-xs text-gray-500">Name</Label>
-                              <Input value={chip.stamp_name || ''} onChange={(e) => handleChipChange(chip.id, 'stamp_name', e.target.value)} className="h-9 rounded-lg" />
-                            </div>
-                            <div>
-                              <Label className="text-xs text-gray-500">Farbe</Label>
-                              <Input value={chip.stamp_color || ''} onChange={(e) => handleChipChange(chip.id, 'stamp_color', e.target.value)} className="h-9 rounded-lg" />
-                            </div>
-                            <div>
-                              <Label className="text-xs text-gray-500">Punkte</Label>
-                              <Input type="number" min="1" value={chip.points_value || 1} onChange={(e) => handleChipChange(chip.id, 'points_value', parseInt(e.target.value) || 1)} className="h-9 rounded-lg" />
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                      <Button onClick={handleSaveChips} disabled={savingChips} className="rounded-xl">
-                        {savingChips ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
-                        Stempel speichern
-                      </Button>
-                    </CardContent>
-                  </Card>
-                )}
               </TabsContent>
 
               {/* Info Tab */}
@@ -1116,45 +1080,77 @@ const MeinGeschaeft = () => {
                 </Card>
               </TabsContent>
 
-              {/* Neukundenprämie Tab */}
-              <TabsContent value="neukundenpraemie" className="space-y-6">
-                <Card className="rounded-2xl shadow-sm border-0 bg-primary/5">
-                  <CardHeader className="flex flex-row items-center justify-between pb-4">
+              {/* Stempel Tab */}
+              <TabsContent value="stempel" className="space-y-6">
+                {/* Stamp Colors & Points */}
+                {nfcChips.length > 0 && (
+                  <Card className="rounded-2xl shadow-sm border-0 bg-gray-50/80">
+                    <CardHeader className="pb-4">
+                      <CardTitle className="flex items-center gap-3 text-lg font-semibold text-gray-900">
+                        <span className="text-lg">🔖</span>
+                        Stempelfarben & Punkte (manuell einstellen)
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      {nfcChips.map((chip) => (
+                        <div key={chip.id} className="flex items-center gap-4 p-4 bg-white rounded-xl border border-gray-100">
+                          <div className={`h-10 w-10 rounded-full ${getColorBadge(chip.stamp_color)} shadow-sm flex-shrink-0`} />
+                          <div className="flex-1 grid grid-cols-2 gap-4">
+                            <div>
+                              <Label className="text-xs text-gray-500">Farbe</Label>
+                              <p className="text-sm font-medium text-gray-900 capitalize mt-1">{chip.stamp_color || '–'}</p>
+                            </div>
+                            <div>
+                              <Label className="text-xs text-gray-500">Punkte</Label>
+                              <Input type="number" min="1" value={chip.points_value || 1} onChange={(e) => handleChipChange(chip.id, 'points_value', parseInt(e.target.value) || 1)} className="h-9 rounded-lg" />
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                      <Button onClick={handleSaveChips} disabled={savingChips} className="rounded-xl">
+                        {savingChips ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
+                        Stempel speichern
+                      </Button>
+                    </CardContent>
+                  </Card>
+                )}
+
+                {/* Box-IDs */}
+                <Card className="rounded-2xl shadow-sm border-0 bg-gray-50/80">
+                  <CardHeader className="pb-4">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-                        <UserPlus className="h-5 w-5 text-primary" />
+                        <Package className="h-5 w-5 text-primary" />
                       </div>
                       <div>
-                        <CardTitle className="text-lg font-semibold text-gray-900">Neukundenprämie</CardTitle>
-                        <CardDescription className="text-gray-500">Locken Sie neue Kunden an</CardDescription>
+                        <CardTitle className="text-lg font-semibold text-gray-900">Box-IDs</CardTitle>
+                        <CardDescription className="text-gray-500">Verknüpfen Sie Ihre Starterbox</CardDescription>
                       </div>
                     </div>
-                    <Button variant={newCustomerOffer ? "outline" : "default"} onClick={() => setShowNcoDialog(true)} className="rounded-xl">
-                      {newCustomerOffer ? <><Edit2 className="h-4 w-4 mr-2" />Bearbeiten</> : <><Plus className="h-4 w-4 mr-2" />Erstellen</>}
-                    </Button>
                   </CardHeader>
-                  <CardContent>
-                    {newCustomerOffer ? (
-                      <div className="flex items-center justify-between p-4 bg-white rounded-xl border border-gray-100">
-                        <div>
-                          <div className="flex items-center gap-2 mb-1">
-                            <p className="font-semibold text-gray-900">{newCustomerOffer.title}</p>
-                            <Badge variant={newCustomerOffer.is_active ? "default" : "secondary"} className="rounded-full">
-                              {newCustomerOffer.is_active ? 'Aktiv' : 'Inaktiv'}
-                            </Badge>
+                  <CardContent className="space-y-4">
+                    {customerBoxes.length > 0 && (
+                      <div className="space-y-3">
+                        {customerBoxes.map((box) => (
+                          <div key={box.id} className="flex items-center justify-between p-4 bg-white rounded-xl border border-gray-100">
+                            <code className="font-mono text-sm font-semibold text-gray-900">{box.box_code}</code>
+                            <span className="text-xs text-gray-500">Hinzugefügt: {new Date(box.assigned_at).toLocaleDateString('de-DE')}</span>
                           </div>
-                          {newCustomerOffer.description && <p className="text-sm text-gray-500">{newCustomerOffer.description}</p>}
-              
-                        </div>
-                        <Button variant="ghost" size="sm" onClick={handleDeleteNco} className="rounded-lg">
-                          <Trash2 className="h-4 w-4 text-destructive" />
-                        </Button>
+                        ))}
                       </div>
-                    ) : (
-                      <p className="text-gray-500 text-center py-8">
-                        Noch keine Neukundenprämie erstellt. Diese wird nur neuen Kunden angezeigt, die noch nie bei Ihnen gestempelt haben.
-                      </p>
                     )}
+                    <div className="flex gap-3">
+                      <Input
+                        value={newBoxId}
+                        onChange={(e) => setNewBoxId(formatBoxIdInput(e.target.value))}
+                        placeholder="XXXXX-XXXXX-XXXXX"
+                        className="font-mono rounded-xl"
+                        maxLength={17}
+                      />
+                      <Button onClick={handleAddBox} disabled={addingBox || !newBoxId.trim()} className="rounded-xl">
+                        {addingBox ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
+                      </Button>
+                    </div>
                   </CardContent>
                 </Card>
               </TabsContent>
