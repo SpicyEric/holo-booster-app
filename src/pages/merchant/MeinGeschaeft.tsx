@@ -14,10 +14,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
-import { 
+import {
   Upload, Save, MapPin, Phone, Globe, Instagram, Facebook, Twitter,
-  Clock, Store, Gift, Info, UserPlus, Plus, Trash2, Edit2, Loader2, Package, ImageIcon
+  Clock, Store, Gift, Info, UserPlus, Plus, Trash2, Edit2, Loader2, Package, ImageIcon, BarChart3, Stamp
 } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { Slider } from "@/components/ui/slider";
 import {
   Dialog,
   DialogContent,
@@ -170,6 +172,8 @@ const MeinGeschaeft = () => {
   const [newBoxId, setNewBoxId] = useState('');
   const [addingBox, setAddingBox] = useState(false);
   const [savingChips, setSavingChips] = useState(false);
+  const [stampMode, setStampMode] = useState<'classic' | 'revenue'>('classic');
+  const [avgRevenue, setAvgRevenue] = useState(7);
 
   useEffect(() => {
     if (user?.id) {
@@ -1082,13 +1086,95 @@ const MeinGeschaeft = () => {
 
               {/* Stempel Tab */}
               <TabsContent value="stempel" className="space-y-6">
+                {/* Stamp System Selector */}
+                <Card className="rounded-2xl shadow-sm border-0 bg-gray-50/80">
+                  <CardHeader className="pb-4">
+                    <CardTitle className="flex items-center gap-3 text-lg font-semibold text-gray-900">
+                      <span className="text-lg">⚙️</span>
+                      Stempelsystem wählen
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    <div className="flex items-center justify-between gap-4">
+                      <div className={`text-sm font-medium transition-colors ${stampMode === 'classic' ? 'text-primary' : 'text-muted-foreground'}`}>
+                        Klassisch
+                      </div>
+                      <Switch
+                        checked={stampMode === 'revenue'}
+                        onCheckedChange={(checked) => {
+                          const newMode = checked ? 'revenue' : 'classic';
+                          setStampMode(newMode);
+                          if (newMode === 'classic') {
+                            setNfcChips(chips => chips.map(chip => ({ ...chip, points_value: 10 })));
+                          } else {
+                            const blue = avgRevenue;
+                            setNfcChips(chips => chips.map(chip => {
+                              const color = chip.stamp_color?.toLowerCase() || '';
+                              if (color === 'grün' || color === 'green') return { ...chip, points_value: Math.max(1, Math.round(blue * 3 / 7)) };
+                              if (color === 'blau' || color === 'blue') return { ...chip, points_value: blue };
+                              if (color === 'rot' || color === 'red') return { ...chip, points_value: Math.round(blue * 15 / 7) };
+                              return chip;
+                            }));
+                          }
+                        }}
+                      />
+                      <div className={`text-sm font-medium transition-colors ${stampMode === 'revenue' ? 'text-primary' : 'text-muted-foreground'}`}>
+                        Umsatzbasiert
+                      </div>
+                    </div>
+
+                    {stampMode === 'classic' ? (
+                      <div className="p-4 bg-white rounded-xl border border-gray-100">
+                        <p className="text-sm text-muted-foreground">
+                          <strong>Pro Besuch ein Stempel.</strong> Jeder Stempel gibt die gleiche Punktzahl (10 Punkte). Klassisches Stempelsystem – ideal für Geschäfte mit gleichbleibendem Einkaufswert.
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="space-y-4">
+                        <div className="p-4 bg-white rounded-xl border border-gray-100">
+                          <p className="text-sm text-muted-foreground">
+                            <strong>Umsatzbasiertes Stempelsystem.</strong> Verschiedene Stempelfarben vergeben unterschiedlich viele Punkte – je nach Umsatzhöhe des Kunden. Ideal für Geschäfte mit variierenden Einkaufswerten.
+                          </p>
+                        </div>
+                        <div>
+                          <Label className="text-sm font-medium mb-3 block">
+                            Durchschnittlicher Umsatz pro Kunde: <span className="text-primary font-bold">{avgRevenue} €</span>
+                          </Label>
+                          <Slider
+                            min={5}
+                            max={100}
+                            step={1}
+                            value={[avgRevenue]}
+                            onValueChange={(val) => {
+                              const blue = val[0];
+                              setAvgRevenue(blue);
+                              setNfcChips(chips => chips.map(chip => {
+                                const color = chip.stamp_color?.toLowerCase() || '';
+                                if (color === 'grün' || color === 'green') return { ...chip, points_value: Math.max(1, Math.round(blue * 3 / 7)) };
+                                if (color === 'blau' || color === 'blue') return { ...chip, points_value: blue };
+                                if (color === 'rot' || color === 'red') return { ...chip, points_value: Math.round(blue * 15 / 7) };
+                                return chip;
+                              }));
+                            }}
+                            className="w-full"
+                          />
+                          <div className="flex justify-between text-xs text-muted-foreground mt-1">
+                            <span>5 €</span>
+                            <span>100 €</span>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+
                 {/* Stamp Colors & Points */}
                 {nfcChips.length > 0 && (
                   <Card className="rounded-2xl shadow-sm border-0 bg-gray-50/80">
                     <CardHeader className="pb-4">
                       <CardTitle className="flex items-center gap-3 text-lg font-semibold text-gray-900">
                         <span className="text-lg">🔖</span>
-                        Stempelfarben & Punkte (manuell einstellen)
+                        Stempelfarben & Punkte {stampMode === 'classic' ? '' : '(automatisch berechnet)'}
                       </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
@@ -1097,12 +1183,16 @@ const MeinGeschaeft = () => {
                           <div className={`h-10 w-10 rounded-full ${getColorBadge(chip.stamp_color)} shadow-sm flex-shrink-0`} />
                           <div className="flex-1 grid grid-cols-2 gap-4">
                             <div>
-                              <Label className="text-xs text-gray-500">Farbe</Label>
-                              <p className="text-sm font-medium text-gray-900 capitalize mt-1">{chip.stamp_color || '–'}</p>
+                              <Label className="text-xs text-muted-foreground">Farbe</Label>
+                              <p className="text-sm font-medium text-foreground capitalize mt-1">{chip.stamp_color || '–'}</p>
                             </div>
                             <div>
-                              <Label className="text-xs text-gray-500">Punkte</Label>
-                              <Input type="number" min="1" value={chip.points_value || 1} onChange={(e) => handleChipChange(chip.id, 'points_value', parseInt(e.target.value) || 1)} className="h-9 rounded-lg" />
+                              <Label className="text-xs text-muted-foreground">Punkte</Label>
+                              {stampMode === 'classic' ? (
+                                <p className="text-sm font-bold text-foreground mt-1">{chip.points_value || 1}</p>
+                              ) : (
+                                <p className="text-sm font-bold text-foreground mt-1">{chip.points_value || 1}</p>
+                              )}
                             </div>
                           </div>
                         </div>
