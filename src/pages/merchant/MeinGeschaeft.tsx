@@ -1131,10 +1131,15 @@ const MeinGeschaeft = () => {
                       </div>
                     ) : (
                       <div className="space-y-4">
-                        <div className="p-4 bg-white rounded-xl border border-gray-100">
+                        <div className="p-4 bg-white rounded-xl border border-gray-100 space-y-2">
                           <p className="text-sm text-muted-foreground">
-                            <strong>Umsatzbasiertes Stempelsystem.</strong> Verschiedene Stempelfarben vergeben unterschiedlich viele Punkte – je nach Umsatzhöhe des Kunden. Ideal für Geschäfte mit variierenden Einkaufswerten.
+                            <strong>Umsatzbasiertes Stempelsystem.</strong> Verschiedene Stempelfarben vergeben unterschiedlich viele Punkte. So fühlt sich das System für deine Kunden fairer an, weil sie selbst Einfluss darauf nehmen können, wie viele Punkte sie erhalten – z.&nbsp;B. indem sie etwas mehr kaufen.
                           </p>
+                          <ul className="text-sm text-muted-foreground space-y-1 mt-2">
+                            <li>🟢 <strong>Grüner Stempel:</strong> Unter <span className="font-semibold text-foreground">{avgRevenue} €</span> Einkaufswert</li>
+                            <li>🔵 <strong>Blauer Stempel:</strong> Zwischen <span className="font-semibold text-foreground">{avgRevenue} €</span> und <span className="font-semibold text-foreground">{Math.round(avgRevenue * 15 / 7)} €</span> Einkaufswert</li>
+                            <li>🔴 <strong>Roter Stempel:</strong> Über <span className="font-semibold text-foreground">{Math.round(avgRevenue * 15 / 7)} €</span> Einkaufswert</li>
+                          </ul>
                         </div>
                         <div>
                           <Label className="text-sm font-medium mb-3 block">
