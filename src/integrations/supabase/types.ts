@@ -583,6 +583,7 @@ export type Database = {
           auto_reply_daily_time: string | null
           auto_reply_enabled: boolean | null
           auto_reply_min_rating: number | null
+          avg_revenue: number | null
           billing_address: Json | null
           birthday_bonus_points: number
           birthday_enabled: boolean
@@ -618,6 +619,7 @@ export type Database = {
           lead_source: string | null
           logo_url: string | null
           longitude: number | null
+          manual_stamp_mode: boolean | null
           name: string
           next_auto_reply_run: string | null
           next_followup_date: string | null
@@ -632,6 +634,7 @@ export type Database = {
           promoter_id: string | null
           qr_code_url: string | null
           sales_notes: string | null
+          stamp_mode: string | null
           stamp_reward_text: string | null
           stamps_required: number | null
           status: string | null
@@ -649,6 +652,7 @@ export type Database = {
           auto_reply_daily_time?: string | null
           auto_reply_enabled?: boolean | null
           auto_reply_min_rating?: number | null
+          avg_revenue?: number | null
           billing_address?: Json | null
           birthday_bonus_points?: number
           birthday_enabled?: boolean
@@ -684,6 +688,7 @@ export type Database = {
           lead_source?: string | null
           logo_url?: string | null
           longitude?: number | null
+          manual_stamp_mode?: boolean | null
           name: string
           next_auto_reply_run?: string | null
           next_followup_date?: string | null
@@ -698,6 +703,7 @@ export type Database = {
           promoter_id?: string | null
           qr_code_url?: string | null
           sales_notes?: string | null
+          stamp_mode?: string | null
           stamp_reward_text?: string | null
           stamps_required?: number | null
           status?: string | null
@@ -715,6 +721,7 @@ export type Database = {
           auto_reply_daily_time?: string | null
           auto_reply_enabled?: boolean | null
           auto_reply_min_rating?: number | null
+          avg_revenue?: number | null
           billing_address?: Json | null
           birthday_bonus_points?: number
           birthday_enabled?: boolean
@@ -750,6 +757,7 @@ export type Database = {
           lead_source?: string | null
           logo_url?: string | null
           longitude?: number | null
+          manual_stamp_mode?: boolean | null
           name?: string
           next_auto_reply_run?: string | null
           next_followup_date?: string | null
@@ -764,6 +772,7 @@ export type Database = {
           promoter_id?: string | null
           qr_code_url?: string | null
           sales_notes?: string | null
+          stamp_mode?: string | null
           stamp_reward_text?: string | null
           stamps_required?: number | null
           status?: string | null
