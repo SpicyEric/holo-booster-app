@@ -239,6 +239,10 @@ const MeinGeschaeft = () => {
           twitter: customer.twitter || "",
           opening_hours: (customer.opening_hours as OpeningHours) || defaultOpeningHours,
         });
+        // Restore stamp settings
+        if ((customer as any).stamp_mode) setStampMode((customer as any).stamp_mode);
+        if ((customer as any).avg_revenue != null) setAvgRevenue((customer as any).avg_revenue);
+        if ((customer as any).manual_stamp_mode != null) setManualMode((customer as any).manual_stamp_mode);
       }
 
       // Load rewards
@@ -585,6 +589,15 @@ const MeinGeschaeft = () => {
           .eq('id', chip.id);
         if (error) throw error;
       }
+      // Persist stamp settings to customer
+      await supabase
+        .from('customers')
+        .update({
+          stamp_mode: stampMode,
+          avg_revenue: avgRevenue,
+          manual_stamp_mode: manualMode,
+        } as any)
+        .eq('id', customerId);
       toast.success('Stempel gespeichert');
     } catch {
       toast.error('Fehler beim Speichern');
