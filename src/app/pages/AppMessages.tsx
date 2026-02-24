@@ -39,8 +39,6 @@ export const AppMessages = () => {
       loadMessages();
       checkVerification();
       loadRedeemableRewards();
-      // Mark rewards as "seen" by saving timestamp
-      localStorage.setItem(`rewards_seen_${user.id}`, Date.now().toString());
     }
   }, [user]);
 
@@ -87,6 +85,8 @@ export const AppMessages = () => {
       if (rewards) {
         const count = rewards.filter(r => (pointsMap.get(r.merchant_customer_id) || 0) >= r.points_required).length;
         setRedeemableCount(count);
+        // Mark current count as "seen" so badge disappears
+        localStorage.setItem(`rewards_seen_count_${user.id}`, count.toString());
       }
     } catch (err) {
       console.error('[Messages] Error loading rewards:', err);

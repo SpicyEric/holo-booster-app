@@ -3,12 +3,11 @@ import { useNavigate } from 'react-router-dom';
 import { Gift, ChevronRight } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { MainLayout } from '@/app/components/layout/MainLayout';
-import { RewardRedemptionDialog } from '@/app/components/RewardRedemptionDialog';
 
 interface Reward {
   id: string;
@@ -24,21 +23,12 @@ interface Reward {
   };
 }
 
-interface UserPoints {
-  merchant_customer_id: string;
-  current_points: number;
-}
-
 export const AppRewards = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [rewards, setRewards] = useState<Reward[]>([]);
   const [userPoints, setUserPoints] = useState<Map<string, number>>(new Map());
   const [loading, setLoading] = useState(true);
-  
-  // Dialog states
-  const [selectedReward, setSelectedReward] = useState<Reward | null>(null);
-  const [rewardDialogOpen, setRewardDialogOpen] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -49,30 +39,45 @@ export const AppRewards = () => {
   const loadRewards = async () => {
     setLoading(true);
     try {
-      const { data: rewardsData, error: rewardsError } = await supabase
+      // Load user points first
+      const { data: pointsData } = await supabase
+        .from('loyalty_accounts')
+        .select('merchant_customer_id, current_points_balance')
+        .eq('user_id', user?.id)
+        .gt('current_points_balance', 0);
+
+      const pointsMap = new Map<string, number>();
+      if (pointsData) {
+        pointsData.forEach(p => {
+          pointsMap.set(p.merchant_customer_id, p.current_points_balance || 0);
+        });
+      }
+      setUserPoints(pointsMap);
+
+      if (pointsMap.size === 0) {
+        setRewards([]);
+        setLoading(false);
+        return;
+      }
+
+      const merchantIds = Array.from(pointsMap.keys());
+
+      const { data: rewardsData } = await supabase
         .from('rewards')
         .select(`
           id, title, description, points_required, image_url, merchant_customer_id,
           customer:customers!merchant_customer_id (name, company_name, logo_url)
         `)
         .eq('is_active', true)
+        .in('merchant_customer_id', merchantIds)
         .order('points_required', { ascending: true });
 
-      if (!rewardsError && rewardsData) {
-        setRewards(rewardsData as unknown as Reward[]);
-      }
-
-      const { data: pointsData, error: pointsError } = await supabase
-        .from('user_stamp_cards')
-        .select('merchant_customer_id, current_points')
-        .eq('user_id', user?.id);
-
-      if (!pointsError && pointsData) {
-        const pointsMap = new Map<string, number>();
-        pointsData.forEach((p: UserPoints) => {
-          pointsMap.set(p.merchant_customer_id, p.current_points || 0);
-        });
-        setUserPoints(pointsMap);
+      if (rewardsData) {
+        // Only keep rewards the user can actually afford
+        const redeemable = (rewardsData as unknown as Reward[]).filter(r => 
+          (pointsMap.get(r.merchant_customer_id) || 0) >= r.points_required
+        );
+        setRewards(redeemable);
       }
     } catch (err) {
       console.error('Error loading rewards:', err);
@@ -81,149 +86,70 @@ export const AppRewards = () => {
     }
   };
 
-  const canRedeem = (reward: Reward) => {
-    const points = userPoints.get(reward.merchant_customer_id) || 0;
-    return points >= reward.points_required;
-  };
-
-  const getUserPointsForMerchant = (merchantId: string) => {
-    return userPoints.get(merchantId) || 0;
-  };
-
   const handleRewardClick = (reward: Reward) => {
-    setSelectedReward(reward);
-    setRewardDialogOpen(true);
-  };
-
-  const handlePointsUpdated = (newPoints: number) => {
-    if (selectedReward) {
-      setUserPoints(prev => {
-        const newMap = new Map(prev);
-        newMap.set(selectedReward.merchant_customer_id, newPoints);
-        return newMap;
-      });
-    }
+    // Navigate to merchant stamp card / detail page
+    navigate(`/app/merchant/${reward.merchant_customer_id}`);
   };
 
   if (loading) {
     return (
-      <MainLayout title="Prämien">
+      <MainLayout title="Einlösbare Prämien">
         <div className="space-y-4">
           {[1, 2, 3].map((i) => (
-            <Skeleton key={i} className="h-32 w-full rounded-lg" />
+            <Skeleton key={i} className="h-20 w-full rounded-lg" />
           ))}
         </div>
       </MainLayout>
     );
   }
 
-  const rewardsByMerchant = rewards.reduce((acc, reward) => {
-    const key = reward.merchant_customer_id;
-    if (!acc[key]) {
-      acc[key] = {
-        merchant: reward.customer,
-        merchantId: key,
-        rewards: [],
-        userPoints: userPoints.get(key) || 0,
-      };
-    }
-    acc[key].rewards.push(reward);
-    return acc;
-  }, {} as Record<string, { merchant: Reward['customer']; merchantId: string; rewards: Reward[]; userPoints: number }>);
-
   return (
-    <MainLayout title="Prämien">
-      <div className="space-y-6">
-        {Object.keys(rewardsByMerchant).length === 0 ? (
+    <MainLayout title="Einlösbare Prämien">
+      <div className="space-y-3">
+        {rewards.length === 0 ? (
           <Card>
             <CardContent className="p-6 text-center">
               <Gift className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
-              <p className="text-muted-foreground">Noch keine Prämien verfügbar</p>
+              <p className="text-muted-foreground">Keine einlösbaren Prämien vorhanden</p>
               <Button variant="outline" className="mt-4" onClick={() => navigate('/app/stores')}>
                 Geschäfte entdecken
               </Button>
             </CardContent>
           </Card>
         ) : (
-          Object.values(rewardsByMerchant).map(({ merchant, merchantId, rewards, userPoints }) => (
-            <Card key={merchantId}>
-              <CardHeader className="pb-2">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    {merchant.logo_url ? (
-                      <img 
-                        src={merchant.logo_url} 
-                        alt={merchant.name}
-                        className="w-10 h-10 rounded-full object-cover"
-                      />
-                    ) : (
-                      <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                        <Gift className="h-5 w-5 text-primary" />
-                      </div>
-                    )}
-                    <CardTitle className="text-base">
-                      {merchant.company_name || merchant.name}
-                    </CardTitle>
+          rewards.map((reward) => (
+            <Card
+              key={reward.id}
+              className="cursor-pointer hover:shadow-md transition-shadow active:scale-[0.98] border-primary/30"
+              onClick={() => handleRewardClick(reward)}
+            >
+              <CardContent className="p-4 flex items-center gap-3">
+                {reward.customer?.logo_url ? (
+                  <img
+                    src={reward.customer.logo_url}
+                    alt={reward.customer.name}
+                    className="w-10 h-10 rounded-full object-cover"
+                  />
+                ) : (
+                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                    <Gift className="h-5 w-5 text-primary" />
                   </div>
-                  <Badge variant="secondary">{userPoints} Punkte</Badge>
+                )}
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium truncate">{reward.title}</p>
+                  <p className="text-sm text-muted-foreground truncate">
+                    {reward.customer.company_name || reward.customer.name}
+                  </p>
                 </div>
-              </CardHeader>
-              <CardContent className="space-y-2">
-                {rewards.map((reward) => (
-                  <div 
-                    key={reward.id}
-                    className={`flex items-center justify-between p-3 rounded-lg border cursor-pointer ${
-                      canRedeem(reward) 
-                        ? 'bg-primary/5 border-primary hover:bg-primary/10' 
-                        : 'bg-muted/50 border-border hover:bg-muted'
-                    }`}
-                    onClick={() => handleRewardClick(reward)}
-                  >
-                    <div className="flex items-center gap-3 flex-1">
-                      {reward.image_url ? (
-                        <img 
-                          src={reward.image_url} 
-                          alt={reward.title}
-                          className="w-10 h-10 rounded-lg object-cover"
-                        />
-                      ) : (
-                        <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                          <Gift className="h-5 w-5 text-primary" />
-                        </div>
-                      )}
-                      <div className="flex-1 min-w-0">
-                        <p className="font-medium">{reward.title}</p>
-                        {reward.description && (
-                          <p className="text-sm text-muted-foreground line-clamp-1">{reward.description}</p>
-                        )}
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Badge variant={canRedeem(reward) ? 'default' : 'outline'}>
-                        {reward.points_required} Punkte
-                      </Badge>
-                      <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                    </div>
-                  </div>
-                ))}
+                <div className="flex items-center gap-2">
+                  <Badge variant="default">{reward.points_required} Punkte</Badge>
+                  <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                </div>
               </CardContent>
             </Card>
           ))
         )}
       </div>
-
-      {/* Reward Redemption Dialog */}
-      {selectedReward && (
-        <RewardRedemptionDialog
-          reward={selectedReward}
-          open={rewardDialogOpen}
-          onOpenChange={setRewardDialogOpen}
-          userPoints={getUserPointsForMerchant(selectedReward.merchant_customer_id)}
-          merchantId={selectedReward.merchant_customer_id}
-          merchantName={selectedReward.customer.company_name || selectedReward.customer.name}
-          onPointsUpdated={handlePointsUpdated}
-        />
-      )}
     </MainLayout>
   );
 };
