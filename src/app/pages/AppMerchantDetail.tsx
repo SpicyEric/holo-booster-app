@@ -118,9 +118,9 @@ export const AppMerchantDetail = () => {
       if (rewardsData) setRewards(rewardsData);
 
       // Check Google review bonus settings
-      const reviewEnabled = (merchantData as any).google_review_points_enabled === true;
-      const reviewPointsVal = (merchantData as any).google_review_points_value || 5;
-      const reviewUrl = (merchantData as any).google_review_url || null;
+      const reviewEnabled = merchantData.google_review_points_enabled === true;
+      const reviewPointsVal = merchantData.google_review_points_value || 5;
+      const reviewUrl = merchantData.google_review_url || null;
       // Load user points and check if ever stamped
       if (user) {
         const { data: loyaltyAccount } = await supabase
