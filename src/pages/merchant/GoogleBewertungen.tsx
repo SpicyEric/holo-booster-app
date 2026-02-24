@@ -248,41 +248,6 @@ const GoogleBewertungen = () => {
             </div>
           </Card>
 
-          {/* Auto-Reply Card - Coming Soon */}
-          <Card className="p-6 rounded-2xl shadow-sm border-0 bg-blue-50/40 relative overflow-hidden opacity-60 pointer-events-none select-none">
-            <div className="absolute top-3 right-3 z-10 bg-blue-600 text-white text-xs font-semibold px-3 py-1 rounded-full pointer-events-auto">
-              Demnächst verfügbar
-            </div>
-            <div className="flex items-start gap-4">
-              <div className="w-12 h-12 rounded-xl bg-blue-100 flex items-center justify-center flex-shrink-0">
-                <Bot className="w-6 h-6 text-blue-400" />
-              </div>
-              <div className="flex-1">
-                <h3 className="text-lg font-semibold text-blue-900/60 mb-2">
-                  Automatische Antworten
-                </h3>
-                <p className="text-sm text-blue-700/60 mb-4">
-                  Lassen Sie KI automatisch auf Google-Bewertungen antworten. 
-                  Professionelle, personalisierte Antworten werden für Sie erstellt.
-                </p>
-                
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between p-4 bg-white/60 rounded-xl">
-                    <div>
-                      <p className="font-medium text-gray-500">Auto-Reply aktivieren</p>
-                      <p className="text-sm text-gray-400">KI beantwortet neue Bewertungen automatisch</p>
-                    </div>
-                    <Switch checked={false} disabled />
-                  </div>
-                  
-                  <Button disabled className="rounded-xl">
-                    Einstellungen speichern
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </Card>
-
           {/* Review Points Card */}
           <Card className="p-6 rounded-2xl shadow-sm border-0 bg-green-50/80">
             <div className="flex items-start gap-4">
@@ -343,6 +308,41 @@ const GoogleBewertungen = () => {
                     ) : (
                       "Einstellungen speichern"
                     )}
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </Card>
+
+          {/* Auto-Reply Card - Coming Soon */}
+          <Card className="p-6 rounded-2xl shadow-sm border-0 bg-blue-50/40 relative overflow-hidden opacity-60 pointer-events-none select-none">
+            <div className="absolute top-3 right-3 z-10 bg-blue-600 text-white text-xs font-semibold px-3 py-1 rounded-full pointer-events-auto">
+              Demnächst verfügbar
+            </div>
+            <div className="flex items-start gap-4">
+              <div className="w-12 h-12 rounded-xl bg-blue-100 flex items-center justify-center flex-shrink-0">
+                <Bot className="w-6 h-6 text-blue-400" />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-lg font-semibold text-blue-900/60 mb-2">
+                  Automatische Antworten
+                </h3>
+                <p className="text-sm text-blue-700/60 mb-4">
+                  Lassen Sie KI automatisch auf Google-Bewertungen antworten. 
+                  Professionelle, personalisierte Antworten werden für Sie erstellt.
+                </p>
+                
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between p-4 bg-white/60 rounded-xl">
+                    <div>
+                      <p className="font-medium text-gray-500">Auto-Reply aktivieren</p>
+                      <p className="text-sm text-gray-400">KI beantwortet neue Bewertungen automatisch</p>
+                    </div>
+                    <Switch checked={false} disabled />
+                  </div>
+                  
+                  <Button disabled className="rounded-xl">
+                    Einstellungen speichern
                   </Button>
                 </div>
               </div>
