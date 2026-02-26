@@ -297,7 +297,17 @@ export default function CustomerMap() {
   };
 
   const handleSearch = async () => {
-    if (!plz.trim() || !geocoderRef.current || !placesServiceRef.current || !map) return;
+    if (!plz.trim()) return;
+    if (!geocoderRef.current || !placesServiceRef.current || !map) {
+      // Lazy-init if map is loaded but refs weren't set (e.g. tab switch)
+      if (map && typeof google !== 'undefined') {
+        geocoderRef.current = new google.maps.Geocoder();
+        placesServiceRef.current = new google.maps.places.PlacesService(map);
+      } else {
+        toast.error('Karte noch nicht bereit – bitte kurz warten');
+        return;
+      }
+    }
 
     setSearching(true);
     setPlaces([]);
@@ -307,8 +317,12 @@ export default function CustomerMap() {
       // Geocode PLZ
       const geocodeResult = await new Promise<google.maps.GeocoderResult[]>((resolve, reject) => {
         geocoderRef.current!.geocode(
-          { address: `${plz.trim()}, Deutschland` },
+          { 
+            address: plz.trim(),
+            componentRestrictions: { country: 'DE' },
+          },
           (results, status) => {
+            console.log('[StoreFinder] Geocode status:', status, 'results:', results?.length);
             if (status === 'OK' && results && results.length > 0) {
               resolve(results);
             } else {
