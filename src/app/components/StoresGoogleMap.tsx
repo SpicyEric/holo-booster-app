@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { GoogleMap, useJsApiLoader, Marker, InfoWindow } from '@react-google-maps/api';
 import { useNavigate } from 'react-router-dom';
+import { useGoogleMapsApiKey } from '@/hooks/useGoogleMapsApiKey';
 
 interface Store {
   id: string;
@@ -42,14 +43,12 @@ const mapStyles = [
 
 const LIBRARIES: ('places')[] = ['places'];
 
-export function StoresGoogleMap({ userLocation, stores }: StoresGoogleMapProps) {
+function StoresGoogleMapContent({ userLocation, stores, apiKey }: StoresGoogleMapProps & { apiKey: string }) {
   const navigate = useNavigate();
   const [selectedStore, setSelectedStore] = useState<Store | null>(null);
   const [map, setMap] = useState<google.maps.Map | null>(null);
   const [markerIcons, setMarkerIcons] = useState<{ [key: string]: google.maps.Icon }>({});
   const [initialCenterSet, setInitialCenterSet] = useState(false);
-
-  const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
 
   const { isLoaded } = useJsApiLoader({
     googleMapsApiKey: apiKey,
@@ -137,14 +136,6 @@ export function StoresGoogleMap({ userLocation, stores }: StoresGoogleMapProps) 
     });
   }, [isLoaded, validStores]);
 
-  if (!apiKey) {
-    return (
-      <div className="flex items-center justify-center h-full bg-muted rounded-xl">
-        <p className="text-muted-foreground">Google Maps API Key nicht konfiguriert</p>
-      </div>
-    );
-  }
-
   return (
     <div style={{ width: '100%', height: '100%', touchAction: 'none' }}>
       {isLoaded ? (
@@ -229,4 +220,26 @@ export function StoresGoogleMap({ userLocation, stores }: StoresGoogleMapProps) 
       )}
     </div>
   );
+}
+
+export function StoresGoogleMap(props: StoresGoogleMapProps) {
+  const { apiKey, loading, error } = useGoogleMapsApiKey();
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-full bg-muted rounded-xl">
+        <p className="text-muted-foreground">Google Maps wird vorbereitet...</p>
+      </div>
+    );
+  }
+
+  if (!apiKey) {
+    return (
+      <div className="flex items-center justify-center h-full bg-muted rounded-xl">
+        <p className="text-muted-foreground">{error || 'Google Maps API Key nicht konfiguriert'}</p>
+      </div>
+    );
+  }
+
+  return <StoresGoogleMapContent {...props} apiKey={apiKey} />;
 }
