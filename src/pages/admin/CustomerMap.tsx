@@ -175,6 +175,8 @@ function CustomerMapContent({ googleMapsApiKey }: { googleMapsApiKey: string }) 
   const [activeTab, setActiveTab] = useState<'customers' | 'finder'>('customers');
   const [plz, setPlz] = useState('');
   const [radius, setRadius] = useState(5); // km
+  const [searchMode, setSearchMode] = useState<'plz' | 'pin'>('plz');
+  const [isSelectingSearchPin, setIsSelectingSearchPin] = useState(false);
   const [activeCategories, setActiveCategories] = useState<string[]>(
     PLACE_CATEGORIES.map((c) => c.id)
   );
@@ -220,12 +222,22 @@ function CustomerMapContent({ googleMapsApiKey }: { googleMapsApiKey: string }) 
   }, []);
 
   const handleMapClick = useCallback((e: google.maps.MapMouseEvent) => {
-    if (isRepositioning && selectedCustomer && e.latLng) {
-      const lat = e.latLng.lat();
-      const lng = e.latLng.lng();
-      setNewPosition({ lat, lng });
+    if (!e.latLng) return;
+
+    const clickedPoint = { lat: e.latLng.lat(), lng: e.latLng.lng() };
+
+    if (isRepositioning && selectedCustomer) {
+      setNewPosition(clickedPoint);
+      return;
     }
-  }, [isRepositioning, selectedCustomer]);
+
+    if (activeTab === 'finder' && searchMode === 'pin' && isSelectingSearchPin) {
+      setSearchCenter(clickedPoint);
+      setIsSelectingSearchPin(false);
+      setSelectedPlace(null);
+      toast.success('Pin gesetzt – jetzt Suche starten');
+    }
+  }, [isRepositioning, selectedCustomer, activeTab, searchMode, isSelectingSearchPin]);
 
   // --- Customer mode handlers ---
   const handleStartRepositioning = () => {
@@ -298,50 +310,69 @@ function CustomerMapContent({ googleMapsApiKey }: { googleMapsApiKey: string }) 
   };
 
   const handleSearch = async () => {
-    const normalizedPlz = plz.trim();
-    if (!normalizedPlz) return;
-
-    if (!/^\d{5}$/.test(normalizedPlz)) {
-      toast.error('Bitte eine gültige 5-stellige PLZ eingeben');
-      return;
-    }
-
-    if (!geocoderRef.current || !placesServiceRef.current) {
-      toast.error('Google Maps ist noch nicht bereit, bitte kurz warten');
-      return;
-    }
-
     const categoriesToSearch = PLACE_CATEGORIES.filter((c) => activeCategories.includes(c.id));
     if (categoriesToSearch.length === 0) {
       toast.info('Bitte mindestens eine Kategorie auswählen');
       return;
     }
 
+    if (!placesServiceRef.current) {
+      toast.error('Google Maps ist noch nicht bereit, bitte kurz warten');
+      return;
+    }
+
+    let center: { lat: number; lng: number };
+
+    if (searchMode === 'pin') {
+      if (!searchCenter) {
+        toast.error('Bitte zuerst einen Pin auf der Karte setzen');
+        return;
+      }
+      center = searchCenter;
+    } else {
+      const normalizedPlz = plz.trim();
+      if (!normalizedPlz) return;
+
+      if (!/^\d{5}$/.test(normalizedPlz)) {
+        toast.error('Bitte eine gültige 5-stellige PLZ eingeben');
+        return;
+      }
+
+      if (!geocoderRef.current) {
+        toast.error('Google Maps ist noch nicht bereit, bitte kurz warten');
+        return;
+      }
+
+      try {
+        center = await new Promise<{ lat: number; lng: number }>((resolve, reject) => {
+          geocoderRef.current?.geocode(
+            {
+              address: `${normalizedPlz}, Deutschland`,
+              componentRestrictions: { country: 'DE' },
+            },
+            (results, status) => {
+              if (status !== google.maps.GeocoderStatus.OK || !results?.[0]?.geometry?.location) {
+                reject(new Error('PLZ_NOT_FOUND'));
+                return;
+              }
+
+              const location = results[0].geometry.location;
+              resolve({ lat: location.lat(), lng: location.lng() });
+            }
+          );
+        });
+      } catch {
+        toast.error('PLZ konnte nicht gefunden werden');
+        return;
+      }
+    }
+
     setSearching(true);
     setPlaces([]);
     setSelectedPlace(null);
+    setSearchCenter(center);
 
     try {
-      const center = await new Promise<{ lat: number; lng: number }>((resolve, reject) => {
-        geocoderRef.current?.geocode(
-          {
-            address: normalizedPlz,
-            componentRestrictions: { country: 'DE' },
-          },
-          (results, status) => {
-            if (status !== google.maps.GeocoderStatus.OK || !results?.[0]?.geometry?.location) {
-              reject(new Error('PLZ_NOT_FOUND'));
-              return;
-            }
-
-            const location = results[0].geometry.location;
-            resolve({ lat: location.lat(), lng: location.lng() });
-          }
-        );
-      });
-
-      setSearchCenter(center);
-
       if (map) {
         map.panTo(center);
         const zoomForRadius = radius <= 3 ? 13 : radius <= 7 ? 12 : radius <= 10 ? 11 : 10;
@@ -350,10 +381,10 @@ function CustomerMapContent({ googleMapsApiKey }: { googleMapsApiKey: string }) 
 
       const radiusMeters = radius * 1000;
 
-      const placeGroups = await Promise.all(
+      const placeGroups = await Promise.allSettled(
         categoriesToSearch.map(
           (category) =>
-            new Promise<PlaceResult[]>((resolve, reject) => {
+            new Promise<PlaceResult[]>((resolve) => {
               placesServiceRef.current?.nearbySearch(
                 {
                   location: center,
@@ -368,7 +399,8 @@ function CustomerMapContent({ googleMapsApiKey }: { googleMapsApiKey: string }) 
                   }
 
                   if (status !== google.maps.places.PlacesServiceStatus.OK || !results) {
-                    reject(new Error(`PLACES_ERROR_${status}`));
+                    console.warn(`[StoreFinder] Kategorie ${category.id} lieferte Status:`, status);
+                    resolve([]);
                     return;
                   }
 
@@ -393,9 +425,11 @@ function CustomerMapContent({ googleMapsApiKey }: { googleMapsApiKey: string }) 
         )
       );
 
-      const merged = placeGroups.flat();
-      const deduped = Array.from(new Map(merged.map((place) => [place.place_id, place])).values());
+      const merged = placeGroups
+        .filter((result): result is PromiseFulfilledResult<PlaceResult[]> => result.status === 'fulfilled')
+        .flatMap((result) => result.value);
 
+      const deduped = Array.from(new Map(merged.map((place) => [place.place_id, place])).values());
       setPlaces(deduped);
 
       if (deduped.length === 0) {
@@ -404,13 +438,8 @@ function CustomerMapContent({ googleMapsApiKey }: { googleMapsApiKey: string }) 
         toast(`${deduped.length} Geschäfte gefunden`);
       }
     } catch (error) {
-      const msg = error instanceof Error ? error.message : '';
-      if (msg === 'PLZ_NOT_FOUND') {
-        toast.error('PLZ konnte nicht gefunden werden');
-      } else {
-        console.error('[StoreFinder] Google search error:', error);
-        toast.error('Suche fehlgeschlagen – bitte erneut versuchen');
-      }
+      console.error('[StoreFinder] Google search error:', error);
+      toast.error('Suche fehlgeschlagen – bitte erneut versuchen');
     } finally {
       setSearching(false);
     }
@@ -640,9 +669,37 @@ function CustomerMapContent({ googleMapsApiKey }: { googleMapsApiKey: string }) 
               <div className="flex-1 overflow-y-auto">
                 {/* Search controls */}
                 <div className="p-4 border-b space-y-4">
-                  <div>
-                    <label className="text-sm font-medium mb-1 block">Postleitzahl</label>
-                    <div className="flex gap-2">
+                  <div className="grid grid-cols-2 gap-2">
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant={searchMode === 'plz' ? 'default' : 'outline'}
+                      onClick={() => {
+                        setSearchMode('plz');
+                        setIsSelectingSearchPin(false);
+                      }}
+                    >
+                      Postleitzahl
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant={searchMode === 'pin' ? 'default' : 'outline'}
+                      onClick={() => {
+                        setSearchMode('pin');
+                        setIsSelectingSearchPin(false);
+                        setSearchCenter(null);
+                        setPlaces([]);
+                        setSelectedPlace(null);
+                      }}
+                    >
+                      Pin auf Karte
+                    </Button>
+                  </div>
+
+                  {searchMode === 'plz' ? (
+                    <div>
+                      <label className="text-sm font-medium mb-1 block">Postleitzahl</label>
                       <Input
                         placeholder="z.B. 80331"
                         value={plz}
@@ -651,11 +708,53 @@ function CustomerMapContent({ googleMapsApiKey }: { googleMapsApiKey: string }) 
                         className="flex-1"
                         maxLength={5}
                       />
-                      <Button onClick={handleSearch} disabled={searching || !plz.trim()}>
-                        {searching ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
-                      </Button>
                     </div>
-                  </div>
+                  ) : (
+                    <div className="space-y-2">
+                      <p className="text-xs text-muted-foreground">
+                        Setze einen Pin auf der Karte als Suchzentrum.
+                      </p>
+                      <div className="flex gap-2">
+                        <Button
+                          type="button"
+                          variant={isSelectingSearchPin ? 'default' : 'outline'}
+                          className="flex-1"
+                          onClick={() => setIsSelectingSearchPin((prev) => !prev)}
+                        >
+                          <MapPin className="h-4 w-4 mr-1" />
+                          {isSelectingSearchPin ? 'Auf Karte klicken…' : searchCenter ? 'Pin neu setzen' : 'Pin setzen'}
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="icon"
+                          onClick={() => {
+                            setSearchCenter(null);
+                            setPlaces([]);
+                            setSelectedPlace(null);
+                            setIsSelectingSearchPin(false);
+                          }}
+                          disabled={!searchCenter}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                      {searchCenter && (
+                        <p className="text-xs font-mono text-muted-foreground">
+                          {searchCenter.lat.toFixed(5)}, {searchCenter.lng.toFixed(5)}
+                        </p>
+                      )}
+                    </div>
+                  )}
+
+                  <Button
+                    onClick={handleSearch}
+                    disabled={searching || (searchMode === 'plz' ? !plz.trim() : !searchCenter)}
+                    className="w-full"
+                  >
+                    {searching ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
+                    Suchen
+                  </Button>
 
                   <div>
                     <label className="text-sm font-medium mb-1 block">
@@ -813,17 +912,28 @@ function CustomerMapContent({ googleMapsApiKey }: { googleMapsApiKey: string }) 
                 {activeTab === 'finder' && (
                   <>
                     {searchCenter && (
-                      <Circle
-                        center={searchCenter}
-                        radius={radius * 1000}
-                        options={{
-                          fillColor: '#6d28d9',
-                          fillOpacity: 0.06,
-                          strokeColor: '#6d28d9',
-                          strokeOpacity: 0.3,
-                          strokeWeight: 2,
-                        }}
-                      />
+                      <>
+                        <OverlayView
+                          position={searchCenter}
+                          mapPaneName={OverlayView.OVERLAY_MOUSE_TARGET}
+                        >
+                          <div
+                            className="w-5 h-5 rounded-full bg-primary border-2 border-background shadow-md"
+                            style={{ marginLeft: -10, marginTop: -10 }}
+                          />
+                        </OverlayView>
+                        <Circle
+                          center={searchCenter}
+                          radius={radius * 1000}
+                          options={{
+                            fillColor: '#6d28d9',
+                            fillOpacity: 0.06,
+                            strokeColor: '#6d28d9',
+                            strokeOpacity: 0.3,
+                            strokeWeight: 2,
+                          }}
+                        />
+                      </>
                     )}
                     {filteredPlaces.map((place) => (
                       <OverlayView
@@ -852,6 +962,12 @@ function CustomerMapContent({ googleMapsApiKey }: { googleMapsApiKey: string }) 
             {isRepositioning && (
               <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground px-4 py-2 rounded-lg shadow-lg">
                 Klicke auf die Karte um die neue Position zu setzen
+              </div>
+            )}
+
+            {activeTab === 'finder' && searchMode === 'pin' && isSelectingSearchPin && (
+              <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground px-4 py-2 rounded-lg shadow-lg">
+                Klicke auf die Karte, um den Such-Pin zu setzen
               </div>
             )}
 
