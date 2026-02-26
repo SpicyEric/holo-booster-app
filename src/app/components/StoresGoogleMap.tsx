@@ -40,7 +40,7 @@ const mapStyles = [
   },
 ];
 
-const LIBRARIES: ('places' | 'maps')[] = ['places', 'maps'];
+const LIBRARIES: ('places')[] = ['places'];
 
 export function StoresGoogleMap({ userLocation, stores }: StoresGoogleMapProps) {
   const navigate = useNavigate();
@@ -49,7 +49,7 @@ export function StoresGoogleMap({ userLocation, stores }: StoresGoogleMapProps) 
   const [markerIcons, setMarkerIcons] = useState<{ [key: string]: google.maps.Icon }>({});
   const [initialCenterSet, setInitialCenterSet] = useState(false);
 
-  const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || 'AIzaSyBZMmrGWon1J1LJDeZ2HgKMF6sd9D2jJ6Q';
+  const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
 
   const { isLoaded } = useJsApiLoader({
     googleMapsApiKey: apiKey,

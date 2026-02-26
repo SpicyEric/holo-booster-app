@@ -10,7 +10,7 @@ import { toast } from 'sonner';
 import { MapPin, X, Save, Navigation, Search, Store, Users, Loader2 } from 'lucide-react';
 import { GoogleMap, useJsApiLoader, OverlayView, Circle } from '@react-google-maps/api';
 
-const LIBRARIES: ('places' | 'maps')[] = ['places', 'maps'];
+const LIBRARIES: ('places')[] = ['places'];
 
 interface Customer {
   id: string;
@@ -37,7 +37,7 @@ interface PlaceResult {
   user_ratings_total?: number;
 }
 
-const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || 'AIzaSyBZMmrGWon1J1LJDeZ2HgKMF6sd9D2jJ6Q';
+const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
 
 const mapContainerStyle = {
   width: '100%',
@@ -297,7 +297,12 @@ export default function CustomerMap() {
   };
 
   const handleSearch = async () => {
-    if (!plz.trim()) return;
+    const normalizedPlz = plz.trim();
+    if (!normalizedPlz) return;
+    if (!/^\d{5}$/.test(normalizedPlz)) {
+      toast.error('Bitte eine gültige 5-stellige PLZ eingeben');
+      return;
+    }
     if (!geocoderRef.current || !placesServiceRef.current || !map) {
       // Lazy-init if map is loaded but refs weren't set (e.g. tab switch)
       if (map && typeof google !== 'undefined') {
@@ -314,11 +319,13 @@ export default function CustomerMap() {
     setSelectedPlace(null);
 
     try {
-      // Geocode PLZ
-      const geocodeResult = await new Promise<google.maps.GeocoderResult[]>((resolve, reject) => {
+      // Geocode PLZ (Google first, OpenStreetMap fallback)
+      let center: { lat: number; lng: number } | null = null;
+
+      const geocodeResult = await new Promise<google.maps.GeocoderResult[] | null>((resolve) => {
         geocoderRef.current!.geocode(
-          { 
-            address: plz.trim(),
+          {
+            address: normalizedPlz,
             componentRestrictions: { country: 'DE' },
           },
           (results, status) => {
@@ -326,14 +333,42 @@ export default function CustomerMap() {
             if (status === 'OK' && results && results.length > 0) {
               resolve(results);
             } else {
-              reject(new Error('PLZ nicht gefunden'));
+              resolve(null);
             }
           }
         );
       });
 
-      const location = geocodeResult[0].geometry.location;
-      const center = { lat: location.lat(), lng: location.lng() };
+      if (geocodeResult?.[0]?.geometry?.location) {
+        const location = geocodeResult[0].geometry.location;
+        center = { lat: location.lat(), lng: location.lng() };
+      }
+
+      if (!center) {
+        const fallbackRes = await fetch(
+          `https://nominatim.openstreetmap.org/search?postalcode=${encodeURIComponent(normalizedPlz)}&country=Germany&format=json&limit=1`,
+          {
+            headers: {
+              Accept: 'application/json',
+            },
+          }
+        );
+
+        if (fallbackRes.ok) {
+          const fallbackData = (await fallbackRes.json()) as Array<{ lat: string; lon: string }>;
+          if (fallbackData.length > 0) {
+            center = {
+              lat: Number(fallbackData[0].lat),
+              lng: Number(fallbackData[0].lon),
+            };
+          }
+        }
+      }
+
+      if (!center) {
+        throw new Error('PLZ_NOT_FOUND');
+      }
+
       setSearchCenter(center);
 
       // Pan map
@@ -393,8 +428,13 @@ export default function CustomerMap() {
       } else {
         toast(`${allResults.length} Geschäfte gefunden`);
       }
-    } catch {
-      toast.error('PLZ konnte nicht gefunden werden');
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : '';
+      if (errorMessage === 'PLZ_NOT_FOUND') {
+        toast.error('PLZ konnte nicht gefunden werden');
+      } else {
+        toast.error('Suche fehlgeschlagen – bitte erneut versuchen');
+      }
     } finally {
       setSearching(false);
     }
