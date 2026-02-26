@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
-import { GoogleMap, LoadScript, Marker, InfoWindow } from '@react-google-maps/api';
+import { GoogleMap, useJsApiLoader, Marker, InfoWindow } from '@react-google-maps/api';
 import { useNavigate } from 'react-router-dom';
 
 interface Store {
@@ -40,21 +40,27 @@ const mapStyles = [
   },
 ];
 
+const LIBRARIES: ('places' | 'maps')[] = ['places', 'maps'];
+
 export function StoresGoogleMap({ userLocation, stores }: StoresGoogleMapProps) {
   const navigate = useNavigate();
   const [selectedStore, setSelectedStore] = useState<Store | null>(null);
   const [map, setMap] = useState<google.maps.Map | null>(null);
-  const [isLoaded, setIsLoaded] = useState(false);
   const [markerIcons, setMarkerIcons] = useState<{ [key: string]: google.maps.Icon }>({});
   const [initialCenterSet, setInitialCenterSet] = useState(false);
+
+  const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || 'AIzaSyBZMmrGWon1J1LJDeZ2HgKMF6sd9D2jJ6Q';
+
+  const { isLoaded } = useJsApiLoader({
+    googleMapsApiKey: apiKey,
+    libraries: LIBRARIES,
+  });
 
   // Filter stores with valid coordinates (not 0,0)
   const validStores = stores.filter(store => store.lat !== 0 && store.lng !== 0);
 
   // Always center on user location
   const center = { lat: userLocation[0], lng: userLocation[1] };
-
-  const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || 'AIzaSyBZMmrGWon1J1LJDeZ2HgKMF6sd9D2jJ6Q';
 
   // Fit bounds to show all stores when map loads
   const onMapLoad = useCallback((mapInstance: google.maps.Map) => {
@@ -141,10 +147,6 @@ export function StoresGoogleMap({ userLocation, stores }: StoresGoogleMapProps) 
 
   return (
     <div style={{ width: '100%', height: '100%', touchAction: 'none' }}>
-    <LoadScript
-      googleMapsApiKey={apiKey}
-      onLoad={() => setIsLoaded(true)}
-    >
       {isLoaded ? (
         <GoogleMap
           mapContainerStyle={mapContainerStyle}
@@ -225,7 +227,6 @@ export function StoresGoogleMap({ userLocation, stores }: StoresGoogleMapProps) 
           <p className="text-muted-foreground">Karte wird geladen...</p>
         </div>
       )}
-    </LoadScript>
     </div>
   );
 }
