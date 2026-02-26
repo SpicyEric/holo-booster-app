@@ -380,60 +380,77 @@ function CustomerMapContent({ googleMapsApiKey }: { googleMapsApiKey: string }) 
       }
 
       const radiusMeters = radius * 1000;
+      const failedStatuses = new Set<string>();
+      const collectedPlaces: PlaceResult[] = [];
 
-      const placeGroups = await Promise.allSettled(
-        categoriesToSearch.map(
-          (category) =>
-            new Promise<PlaceResult[]>((resolve) => {
-              placesServiceRef.current?.nearbySearch(
-                {
-                  location: center,
-                  radius: radiusMeters,
-                  type: category.googleType as any,
-                  keyword: category.keyword,
-                },
-                (results, status) => {
-                  if (status === google.maps.places.PlacesServiceStatus.ZERO_RESULTS) {
-                    resolve([]);
-                    return;
-                  }
-
-                  if (status !== google.maps.places.PlacesServiceStatus.OK || !results) {
-                    console.warn(`[StoreFinder] Kategorie ${category.id} lieferte Status:`, status);
-                    resolve([]);
-                    return;
-                  }
-
-                  const mapped = results
-                    .filter((place) => place.place_id && place.geometry?.location)
-                    .map((place) => ({
-                      place_id: place.place_id as string,
-                      name: place.name || 'Unbekannt',
-                      vicinity: place.vicinity || '',
-                      lat: place.geometry!.location!.lat(),
-                      lng: place.geometry!.location!.lng(),
-                      types: place.types || [],
-                      category: category.id,
-                      rating: place.rating,
-                      user_ratings_total: place.user_ratings_total,
-                    }));
-
-                  resolve(mapped);
+      for (const category of categoriesToSearch) {
+        const categoryResults = await new Promise<PlaceResult[]>((resolve) => {
+          const runSearch = (attempt = 0) => {
+            placesServiceRef.current?.nearbySearch(
+              {
+                location: center,
+                radius: radiusMeters,
+                type: category.googleType as any,
+                keyword: category.keyword,
+              },
+              (results, status) => {
+                if (status === google.maps.places.PlacesServiceStatus.ZERO_RESULTS) {
+                  resolve([]);
+                  return;
                 }
-              );
-            })
-        )
-      );
 
-      const merged = placeGroups
-        .filter((result): result is PromiseFulfilledResult<PlaceResult[]> => result.status === 'fulfilled')
-        .flatMap((result) => result.value);
+                if (
+                  status === google.maps.places.PlacesServiceStatus.OVER_QUERY_LIMIT &&
+                  attempt < 2
+                ) {
+                  setTimeout(() => runSearch(attempt + 1), 350 * (attempt + 1));
+                  return;
+                }
 
-      const deduped = Array.from(new Map(merged.map((place) => [place.place_id, place])).values());
+                if (status !== google.maps.places.PlacesServiceStatus.OK || !results) {
+                  failedStatuses.add(String(status));
+                  console.warn(`[StoreFinder] Kategorie ${category.id} lieferte Status:`, status);
+                  resolve([]);
+                  return;
+                }
+
+                const mapped = results
+                  .filter((place) => place.place_id && place.geometry?.location)
+                  .map((place) => ({
+                    place_id: place.place_id as string,
+                    name: place.name || 'Unbekannt',
+                    vicinity: place.vicinity || '',
+                    lat: place.geometry!.location!.lat(),
+                    lng: place.geometry!.location!.lng(),
+                    types: place.types || [],
+                    category: category.id,
+                    rating: place.rating,
+                    user_ratings_total: place.user_ratings_total,
+                  }));
+
+                resolve(mapped);
+              }
+            );
+          };
+
+          runSearch();
+        });
+
+        collectedPlaces.push(...categoryResults);
+        await new Promise((resolve) => setTimeout(resolve, 120));
+      }
+
+      const deduped = Array.from(new Map(collectedPlaces.map((place) => [place.place_id, place])).values());
       setPlaces(deduped);
 
       if (deduped.length === 0) {
-        toast.info('Keine Geschäfte in diesem Bereich gefunden');
+        if (failedStatuses.has(google.maps.places.PlacesServiceStatus.REQUEST_DENIED)) {
+          toast.error('Google Places lehnt die Suche ab – bitte API-Restriktionen prüfen');
+        } else if (failedStatuses.has(google.maps.places.PlacesServiceStatus.OVER_QUERY_LIMIT)) {
+          toast.error('Zu viele Anfragen gleichzeitig – bitte erneut suchen');
+        } else {
+          toast.info('Keine Geschäfte in diesem Bereich gefunden');
+        }
       } else {
         toast(`${deduped.length} Geschäfte gefunden`);
       }
