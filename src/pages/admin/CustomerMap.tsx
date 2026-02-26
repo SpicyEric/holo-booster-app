@@ -10,7 +10,7 @@ import { toast } from 'sonner';
 import { MapPin, X, Save, Navigation, Search, Store, Users, Loader2 } from 'lucide-react';
 import { GoogleMap, useJsApiLoader, OverlayView, Circle } from '@react-google-maps/api';
 
-const LIBRARIES: ('places')[] = ['places'];
+const LIBRARIES: ('places' | 'maps')[] = ['places', 'maps'];
 
 interface Customer {
   id: string;
