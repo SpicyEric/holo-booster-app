@@ -10,7 +10,7 @@ import { toast } from 'sonner';
 import { MapPin, X, Save, Navigation, Search, Store, Users, Loader2 } from 'lucide-react';
 import { GoogleMap, useJsApiLoader, OverlayView, Circle } from '@react-google-maps/api';
 
-const LIBRARIES: ('places')[] = ['places'];
+const LIBRARIES: ('places')[] = ['places']; // keep places for potential future use
 
 interface Customer {
   id: string;
@@ -50,19 +50,21 @@ const defaultCenter = {
 };
 
 const PLACE_CATEGORIES = [
-  { id: 'bakery', label: 'Bäckerei', type: 'bakery', color: '#d97706' },
-  { id: 'cafe', label: 'Café', type: 'cafe', color: '#92400e' },
-  { id: 'restaurant', label: 'Restaurant', type: 'restaurant', color: '#dc2626' },
-  { id: 'hair_care', label: 'Friseur', type: 'hair_care', color: '#7c3aed' },
-  { id: 'beauty_salon', label: 'Kosmetik / Beauty', type: 'beauty_salon', color: '#ec4899' },
-  { id: 'pharmacy', label: 'Apotheke', type: 'pharmacy', color: '#16a34a' },
-  { id: 'gas_station', label: 'Tankstelle', type: 'gas_station', color: '#475569' },
-  { id: 'gym', label: 'Fitnessstudio', type: 'gym', color: '#0891b2' },
-  { id: 'florist', label: 'Blumenladen', type: 'florist', color: '#e11d48' },
-  { id: 'book_store', label: 'Buchhandlung', type: 'book_store', color: '#854d0e' },
-  { id: 'pet_store', label: 'Tierhandlung', type: 'pet_store', color: '#65a30d' },
-  { id: 'laundry', label: 'Waschsalon', type: 'laundry', color: '#0284c7' },
-  { id: 'store', label: 'Kiosk / Laden', type: 'store', color: '#6366f1' },
+  { id: 'bakery', label: 'Bäckerei', osmTag: '"shop"="bakery"', color: '#d97706' },
+  { id: 'cafe', label: 'Café', osmTag: '"amenity"="cafe"', color: '#92400e' },
+  { id: 'restaurant', label: 'Restaurant', osmTag: '"amenity"="restaurant"', color: '#dc2626' },
+  { id: 'hairdresser', label: 'Friseur / Barber', osmTag: '"shop"="hairdresser"', color: '#7c3aed' },
+  { id: 'beauty', label: 'Kosmetik / Beauty', osmTag: '"shop"="beauty"', color: '#ec4899' },
+  { id: 'pharmacy', label: 'Apotheke', osmTag: '"amenity"="pharmacy"', color: '#16a34a' },
+  { id: 'fuel', label: 'Tankstelle', osmTag: '"amenity"="fuel"', color: '#475569' },
+  { id: 'fitness', label: 'Fitnessstudio', osmTag: '"leisure"="fitness_centre"', color: '#0891b2' },
+  { id: 'florist', label: 'Blumenladen', osmTag: '"shop"="florist"', color: '#e11d48' },
+  { id: 'books', label: 'Buchhandlung', osmTag: '"shop"="books"', color: '#854d0e' },
+  { id: 'pet', label: 'Tierhandlung', osmTag: '"shop"="pet"', color: '#65a30d' },
+  { id: 'laundry', label: 'Waschsalon', osmTag: '"shop"="laundry"', color: '#0284c7' },
+  { id: 'convenience', label: 'Kiosk / Laden', osmTag: '"shop"="convenience"', color: '#6366f1' },
+  { id: 'tattoo', label: 'Tattoostudio', osmTag: '"shop"="tattoo"', color: '#1e1b4b' },
+  { id: 'ice_cream', label: 'Eisdiele', osmTag: '"amenity"="ice_cream"', color: '#f472b6' },
 ];
 
 // Custom marker component with logo
@@ -181,8 +183,6 @@ export default function CustomerMap() {
   const [selectedPlace, setSelectedPlace] = useState<PlaceResult | null>(null);
   const [searching, setSearching] = useState(false);
   const [searchCenter, setSearchCenter] = useState<{ lat: number; lng: number } | null>(null);
-  const geocoderRef = useRef<google.maps.Geocoder | null>(null);
-  const placesServiceRef = useRef<google.maps.places.PlacesService | null>(null);
 
   const { isLoaded, loadError } = useJsApiLoader({
     googleMapsApiKey: GOOGLE_MAPS_API_KEY,
@@ -210,8 +210,6 @@ export default function CustomerMap() {
 
   const onLoad = useCallback((mapInstance: google.maps.Map) => {
     setMap(mapInstance);
-    geocoderRef.current = new google.maps.Geocoder();
-    placesServiceRef.current = new google.maps.places.PlacesService(mapInstance);
   }, []);
 
   const onUnmount = useCallback(() => {
@@ -303,124 +301,94 @@ export default function CustomerMap() {
       toast.error('Bitte eine gültige 5-stellige PLZ eingeben');
       return;
     }
-    if (!geocoderRef.current || !placesServiceRef.current || !map) {
-      // Lazy-init if map is loaded but refs weren't set (e.g. tab switch)
-      if (map && typeof google !== 'undefined') {
-        geocoderRef.current = new google.maps.Geocoder();
-        placesServiceRef.current = new google.maps.places.PlacesService(map);
-      } else {
-        toast.error('Karte noch nicht bereit – bitte kurz warten');
-        return;
-      }
-    }
 
     setSearching(true);
     setPlaces([]);
     setSelectedPlace(null);
 
     try {
-      // Geocode PLZ (Google first, OpenStreetMap fallback)
-      let center: { lat: number; lng: number } | null = null;
+      // 1) Geocode PLZ via Nominatim
+      const geoRes = await fetch(
+        `https://nominatim.openstreetmap.org/search?postalcode=${encodeURIComponent(normalizedPlz)}&country=Germany&format=json&limit=1`,
+        { headers: { Accept: 'application/json' } }
+      );
+      const geoData = (await geoRes.json()) as Array<{ lat: string; lon: string }>;
+      if (!geoData.length) throw new Error('PLZ_NOT_FOUND');
 
-      const geocodeResult = await new Promise<google.maps.GeocoderResult[] | null>((resolve) => {
-        geocoderRef.current!.geocode(
-          {
-            address: normalizedPlz,
-            componentRestrictions: { country: 'DE' },
-          },
-          (results, status) => {
-            console.log('[StoreFinder] Geocode status:', status, 'results:', results?.length);
-            if (status === 'OK' && results && results.length > 0) {
-              resolve(results);
-            } else {
-              resolve(null);
-            }
-          }
-        );
-      });
-
-      if (geocodeResult?.[0]?.geometry?.location) {
-        const location = geocodeResult[0].geometry.location;
-        center = { lat: location.lat(), lng: location.lng() };
-      }
-
-      if (!center) {
-        const fallbackRes = await fetch(
-          `https://nominatim.openstreetmap.org/search?postalcode=${encodeURIComponent(normalizedPlz)}&country=Germany&format=json&limit=1`,
-          {
-            headers: {
-              Accept: 'application/json',
-            },
-          }
-        );
-
-        if (fallbackRes.ok) {
-          const fallbackData = (await fallbackRes.json()) as Array<{ lat: string; lon: string }>;
-          if (fallbackData.length > 0) {
-            center = {
-              lat: Number(fallbackData[0].lat),
-              lng: Number(fallbackData[0].lon),
-            };
-          }
-        }
-      }
-
-      if (!center) {
-        throw new Error('PLZ_NOT_FOUND');
-      }
-
+      const center = { lat: Number(geoData[0].lat), lng: Number(geoData[0].lon) };
       setSearchCenter(center);
 
       // Pan map
-      map.panTo(center);
-      const zoomForRadius = radius <= 3 ? 13 : radius <= 7 ? 12 : radius <= 10 ? 11 : 10;
-      map.setZoom(zoomForRadius);
-
-      // Search each active category
-      const categoriesToSearch = PLACE_CATEGORIES.filter((c) => activeCategories.includes(c.id));
-      const allResults: PlaceResult[] = [];
-
-      for (const cat of categoriesToSearch) {
-        try {
-          const results = await new Promise<google.maps.places.PlaceResult[]>((resolve) => {
-            placesServiceRef.current!.nearbySearch(
-              {
-                location: center,
-                radius: radius * 1000,
-                type: cat.type,
-              },
-              (results, status) => {
-                if (status === google.maps.places.PlacesServiceStatus.OK && results) {
-                  resolve(results);
-                } else {
-                  resolve([]);
-                }
-              }
-            );
-          });
-
-          results.forEach((r) => {
-            if (r.geometry?.location && r.place_id && r.name) {
-              // Avoid duplicates
-              if (!allResults.some((existing) => existing.place_id === r.place_id)) {
-                allResults.push({
-                  place_id: r.place_id,
-                  name: r.name,
-                  vicinity: r.vicinity || '',
-                  lat: r.geometry.location.lat(),
-                  lng: r.geometry.location.lng(),
-                  types: r.types || [],
-                  category: cat.id,
-                  rating: r.rating,
-                  user_ratings_total: r.user_ratings_total,
-                });
-              }
-            }
-          });
-        } catch {
-          // skip failed category
-        }
+      if (map) {
+        map.panTo(center);
+        const zoomForRadius = radius <= 3 ? 13 : radius <= 7 ? 12 : radius <= 10 ? 11 : 10;
+        map.setZoom(zoomForRadius);
       }
+
+      // 2) Build Overpass query for all active categories
+      const categoriesToSearch = PLACE_CATEGORIES.filter((c) => activeCategories.includes(c.id));
+      if (categoriesToSearch.length === 0) {
+        toast.info('Bitte mindestens eine Kategorie auswählen');
+        setSearching(false);
+        return;
+      }
+
+      const radiusMeters = radius * 1000;
+      const overpassQueries = categoriesToSearch
+        .map((cat) => `node[${cat.osmTag}](around:${radiusMeters},${center.lat},${center.lng});`)
+        .join('\n');
+
+      const overpassQuery = `
+        [out:json][timeout:25];
+        (
+          ${overpassQueries}
+        );
+        out body;
+      `;
+
+      console.log('[StoreFinder] Overpass query:', overpassQuery);
+
+      const overpassRes = await fetch('https://overpass-api.de/api/interpreter', {
+        method: 'POST',
+        body: `data=${encodeURIComponent(overpassQuery)}`,
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      });
+
+      if (!overpassRes.ok) throw new Error('OVERPASS_FAILED');
+
+      const overpassData = await overpassRes.json();
+      const elements = overpassData.elements || [];
+
+      // Map elements to PlaceResult
+      const allResults: PlaceResult[] = [];
+      elements.forEach((el: any) => {
+        if (!el.lat || !el.lon || !el.tags?.name) return;
+
+        // Determine category
+        let matchedCat = '';
+        for (const cat of categoriesToSearch) {
+          const [tagKey, tagVal] = cat.osmTag.replace(/"/g, '').split('=');
+          if (el.tags[tagKey] === tagVal) {
+            matchedCat = cat.id;
+            break;
+          }
+        }
+        if (!matchedCat) return;
+
+        const addr = [el.tags['addr:street'], el.tags['addr:housenumber'], el.tags['addr:city']]
+          .filter(Boolean)
+          .join(' ');
+
+        allResults.push({
+          place_id: String(el.id),
+          name: el.tags.name,
+          vicinity: addr || '',
+          lat: el.lat,
+          lng: el.lon,
+          types: [],
+          category: matchedCat,
+        });
+      });
 
       setPlaces(allResults);
       if (allResults.length === 0) {
@@ -429,10 +397,11 @@ export default function CustomerMap() {
         toast(`${allResults.length} Geschäfte gefunden`);
       }
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : '';
-      if (errorMessage === 'PLZ_NOT_FOUND') {
+      const msg = error instanceof Error ? error.message : '';
+      if (msg === 'PLZ_NOT_FOUND') {
         toast.error('PLZ konnte nicht gefunden werden');
       } else {
+        console.error('[StoreFinder] Error:', error);
         toast.error('Suche fehlgeschlagen – bitte erneut versuchen');
       }
     } finally {
