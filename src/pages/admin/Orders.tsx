@@ -341,9 +341,9 @@ export default function Orders() {
       {/* Header */}
       <div className="flex justify-between items-center border-b pb-3">
         <div>
-          <h1 className="text-xl font-semibold">Bestellungen & Vorschläge</h1>
+          <h1 className="text-xl font-semibold">Nachrichten</h1>
         </div>
-        <Button size="sm" variant="outline" onClick={() => { loadOrders(); loadSuggestions(); }}>
+        <Button size="sm" variant="outline" onClick={() => { loadOrders(); loadSuggestions(); loadSupportMessages(); }}>
           <RefreshCw className="w-3 h-3 mr-1" />
           Aktualisieren
         </Button>
