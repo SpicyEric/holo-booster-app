@@ -6,7 +6,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { MainLayout } from '@/app/components/layout/MainLayout';
 
 interface FeedItem {
-  type: 'post' | 'offer';
+  type: 'post' | 'offer' | 'merchant_card';
   id: string;
   merchant_customer_id: string;
   merchant_name: string;
@@ -19,6 +19,7 @@ interface FeedItem {
   created_at: string;
   like_count: number;
   liked_by_user: boolean;
+  points_balance?: number;
 }
 
 function haversineDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
@@ -107,7 +108,38 @@ export const AppHome = () => {
               liked_by_user: userLikes.has(post.id),
             });
           });
-        }
+      }
+
+      // Add merchant card entries for stamped merchants (so feed isn't empty)
+      if (stampedMerchantIds.length > 0) {
+        const { data: stampedMerchants } = await supabase
+          .from('customers')
+          .select('id, name, company_name, logo_url, cover_image_url, description, updated_at')
+          .in('id', stampedMerchantIds);
+
+        // Set of merchants that already have feed posts
+        const merchantsWithPosts = new Set(items.filter(i => i.type === 'post').map(i => i.merchant_customer_id));
+
+        stampedMerchants?.forEach(m => {
+          // Only add merchant card if they don't already have feed posts
+          if (!merchantsWithPosts.has(m.id)) {
+            const account = accounts?.find(a => a.merchant_customer_id === m.id);
+            items.push({
+              type: 'merchant_card',
+              id: `mc-${m.id}`,
+              merchant_customer_id: m.id,
+              merchant_name: m.company_name || m.name || 'Unbekannt',
+              merchant_logo: m.logo_url || null,
+              image_url: m.cover_image_url || null,
+              body: m.description || null,
+              created_at: m.updated_at || new Date().toISOString(),
+              like_count: 0,
+              liked_by_user: false,
+              points_balance: account?.current_points_balance ?? 0,
+            });
+          }
+        });
+      }
       }
 
       // Load new customer offers (for merchants where user has NO points)
@@ -222,7 +254,7 @@ export const AppHome = () => {
       ) : (
         <div className="-mx-4 space-y-6">
           {feedItems.map((item) => (
-            <div key={`${item.type}-${item.id}`} className="bg-card">
+            <div key={`${item.type}-${item.id}`} className={`bg-card ${item.type === 'offer' ? 'border-l-4 border-primary' : ''}`}>
               {/* Header: profile pic + name */}
               <div
                 className="flex items-center gap-3 px-4 py-3 cursor-pointer"
@@ -247,8 +279,29 @@ export const AppHome = () => {
                 <span className="text-xs text-muted-foreground">{formatTimeAgo(item.created_at)}</span>
               </div>
 
-              {/* Image - full width, square aspect */}
-              {item.image_url ? (
+              {/* Image */}
+              {item.type === 'merchant_card' ? (
+                // Merchant card: rectangular cover image (like stamp card header)
+                <div
+                  className="w-full aspect-[16/7] bg-muted cursor-pointer"
+                  onClick={() => navigate(`/app/merchant/${item.merchant_customer_id}`)}
+                >
+                  {item.image_url ? (
+                    <img
+                      src={item.image_url}
+                      alt=""
+                      className="w-full h-full object-cover"
+                      loading="lazy"
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center">
+                      <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
+                        <span className="text-3xl font-bold text-primary">{item.merchant_name.charAt(0)}</span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : item.image_url ? (
                 <div
                   className="w-full aspect-square bg-muted cursor-pointer"
                   onClick={() => navigate(`/app/merchant/${item.merchant_customer_id}`)}
@@ -300,6 +353,14 @@ export const AppHome = () => {
                     <span className="inline-flex items-center gap-1 px-3 py-1.5 bg-primary/10 text-primary rounded-full text-sm font-semibold">
                       <Gift className="h-4 w-4" />
                       Neukundenprämie
+                    </span>
+                  </div>
+                )}
+
+                {item.type === 'merchant_card' && item.points_balance !== undefined && (
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="inline-flex items-center gap-1 px-3 py-1.5 bg-muted text-muted-foreground rounded-full text-xs font-medium">
+                      {item.points_balance} Punkte gesammelt
                     </span>
                   </div>
                 )}
