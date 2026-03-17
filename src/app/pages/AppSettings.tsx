@@ -156,12 +156,19 @@ export default function AppSettings() {
 
     setDeleting(true);
     try {
-      const { error } = await supabase.auth.signOut();
+      // Actually delete the account via edge function
+      const { data, error } = await supabase.functions.invoke('deleteUserAccount', {
+        body: { userId: user.id }
+      });
 
       if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+
+      // Sign out locally after successful deletion
+      await supabase.auth.signOut();
 
       toast.success('Konto gelöscht', {
-        description: 'Dein Konto wurde erfolgreich gelöscht.',
+        description: 'Dein Konto wurde erfolgreich und unwiderruflich gelöscht.',
       });
 
       navigate('/app/auth');
