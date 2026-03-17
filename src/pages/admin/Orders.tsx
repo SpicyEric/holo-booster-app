@@ -76,6 +76,7 @@ export default function Orders() {
       checkUserRole();
       loadOrders();
       loadSuggestions();
+      loadSupportMessages();
     }
   }, [user, filterStatus]);
 
