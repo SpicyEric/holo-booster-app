@@ -258,6 +258,14 @@ export const RewardRedemptionDialog = ({
                   : 'Bestätigungsmail senden'}
               </Button>
             </div>
+          ) : !isOnline ? (
+            <div className="bg-muted border border-border rounded-lg p-4 text-center space-y-2">
+              <WifiOff className="h-8 w-8 text-muted-foreground mx-auto" />
+              <p className="font-medium text-foreground">Kein Internet</p>
+              <p className="text-sm text-muted-foreground">
+                Zum Einlösen von Prämien wird eine Internetverbindung benötigt. Bitte versuche es erneut, wenn du online bist.
+              </p>
+            </div>
           ) : canRedeem ? (
             <div className="space-y-3">
               <p className="text-sm text-center text-muted-foreground">
