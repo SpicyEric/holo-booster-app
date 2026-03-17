@@ -354,28 +354,50 @@ export const AppScan = () => {
             <Card className="w-full max-w-sm">
               <CardContent className="pt-8 pb-6 text-center">
                 {result.success ? (
-                  <>
-                    <motion.div
-                      initial={{ scale: 0 }}
-                      animate={{ scale: 1 }}
-                      transition={{ type: 'spring', bounce: 0.5 }}
-                    >
-                      <div className="w-20 h-20 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center mx-auto mb-4">
-                        <CheckCircle className="h-10 w-10 text-green-600" />
+                  result.isOffline ? (
+                    <>
+                      <motion.div
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        transition={{ type: 'spring', bounce: 0.5 }}
+                      >
+                        <div className="w-20 h-20 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center mx-auto mb-4">
+                          <CloudUpload className="h-10 w-10 text-amber-600" />
+                        </div>
+                      </motion.div>
+                      <h2 className="text-2xl font-bold mb-2">Stempel erkannt!</h2>
+                      <p className="text-muted-foreground mb-4">
+                        Du bist gerade offline. Dein Stempel wird automatisch gutgeschrieben, sobald du wieder Internet hast.
+                      </p>
+                      <div className="flex items-center justify-center gap-2 text-lg font-medium text-amber-600 mb-2">
+                        <WifiOff className="h-5 w-5" />
+                        Wird synchronisiert...
                       </div>
-                    </motion.div>
-                    <h2 className="text-2xl font-bold mb-2">Geschafft!</h2>
-                    <p className="text-muted-foreground mb-4">
-                      bei {result.merchantName}
-                    </p>
-                    <div className="flex items-center justify-center gap-2 text-3xl font-bold text-primary mb-2">
-                      <Sparkles className="h-6 w-6" />
-                      +{result.points} Punkte
-                    </div>
-                    <p className="text-sm text-muted-foreground">
-                      Gesamt: {result.totalPoints} Punkte
-                    </p>
-                  </>
+                    </>
+                  ) : (
+                    <>
+                      <motion.div
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        transition={{ type: 'spring', bounce: 0.5 }}
+                      >
+                        <div className="w-20 h-20 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center mx-auto mb-4">
+                          <CheckCircle className="h-10 w-10 text-green-600" />
+                        </div>
+                      </motion.div>
+                      <h2 className="text-2xl font-bold mb-2">Geschafft!</h2>
+                      <p className="text-muted-foreground mb-4">
+                        bei {result.merchantName}
+                      </p>
+                      <div className="flex items-center justify-center gap-2 text-3xl font-bold text-primary mb-2">
+                        <Sparkles className="h-6 w-6" />
+                        +{result.points} Punkte
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        Gesamt: {result.totalPoints} Punkte
+                      </p>
+                    </>
+                  )
                 ) : (
                   <>
                     <div className="w-20 h-20 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center mx-auto mb-4">

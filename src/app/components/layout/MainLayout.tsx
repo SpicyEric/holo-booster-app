@@ -5,6 +5,7 @@ import { BottomNav } from './BottomNav';
 import Particles from '@/components/Particles';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
+import { OfflineBanner } from '@/app/components/OfflineBanner';
 
 export interface MainLayoutProps {
   children: ReactNode;
@@ -29,6 +30,7 @@ export const MainLayout = ({ children, title, showBack = false }: MainLayoutProp
         disableRotation={false}
         cameraDistance={20}
       />
+      <OfflineBanner />
       <TopBar title={title} showBack={showBack} />
       <main className="container mx-auto px-4 py-6 max-w-2xl relative z-10">
         {children}
