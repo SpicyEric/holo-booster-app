@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Nfc, CheckCircle, XCircle, Sparkles, Settings, X } from 'lucide-react';
+import { Nfc, CheckCircle, XCircle, Sparkles, Settings, X, WifiOff, CloudUpload } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
@@ -10,6 +10,8 @@ import { toast } from 'sonner';
 import confetti from 'canvas-confetti';
 import { MainLayout } from '@/app/components/layout/MainLayout';
 import { nfcService, type NfcReadResult } from '@/app/services/nfcService';
+import { useNetworkStatus } from '@/app/hooks/useNetworkStatus';
+import { offlineQueueService } from '@/app/services/offlineQueueService';
 import { NfcPermissionDialog } from '@/app/components/NfcPermissionDialog';
 
 type ScanResult = {
