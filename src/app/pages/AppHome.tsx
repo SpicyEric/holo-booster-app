@@ -206,8 +206,13 @@ export const AppHome = () => {
       });
 
       setFeedItems(items);
+      // Cache for offline use
+      offlineCacheService.set('home_feed', items);
     } catch (err) {
       console.error('[Feed] Error:', err);
+      // On error, try cache
+      const cached = offlineCacheService.get<FeedItem[]>('home_feed');
+      if (cached) setFeedItems(cached);
     } finally {
       setLoading(false);
     }
