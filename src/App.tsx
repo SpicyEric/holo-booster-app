@@ -135,6 +135,7 @@ const App = () => (
           <Route path="/app/scan" element={<AppProtectedRoute><AppScan /></AppProtectedRoute>} />
           <Route path="/app/merchant/:id" element={<AppProtectedRoute><AppMerchantDetail /></AppProtectedRoute>} />
           <Route path="/app/suggest-shop" element={<AppProtectedRoute><AppSuggestShop /></AppProtectedRoute>} />
+          <Route path="/app/support" element={<AppProtectedRoute><AppSupport /></AppProtectedRoute>} />
           <Route path="/app/terms" element={<AppProtectedRoute><AppTerms /></AppProtectedRoute>} />
           <Route path="/app/privacy" element={<AppProtectedRoute><AppPrivacy /></AppProtectedRoute>} />
           <Route path="/app/my-cards" element={<AppProtectedRoute><AppMyCards /></AppProtectedRoute>} />
