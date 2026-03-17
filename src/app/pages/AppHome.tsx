@@ -52,6 +52,17 @@ export const AppHome = () => {
 
   const loadFeed = async () => {
     setLoading(true);
+    
+    // Try loading from cache first if offline
+    if (!navigator.onLine) {
+      const cached = offlineCacheService.get<FeedItem[]>('home_feed');
+      if (cached) {
+        setFeedItems(cached);
+        setLoading(false);
+        return;
+      }
+    }
+    
     try {
       const items: FeedItem[] = [];
 
