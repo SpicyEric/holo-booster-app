@@ -300,6 +300,26 @@ export default function Orders() {
   const inProgressCount = orders.filter(o => o.status === "in_progress").length;
   const completedCount = orders.filter(o => o.status === "completed").length;
   const newSuggestionsCount = suggestions.filter(s => s.status === "new").length;
+  const newSupportCount = supportMessages.filter(m => m.status === "new").length;
+
+  const getCategoryLabel = (cat: string) => {
+    switch (cat) {
+      case 'bug': return 'Bug';
+      case 'question': return 'Frage';
+      case 'feedback': return 'Feedback';
+      case 'other': return 'Sonstiges';
+      default: return cat;
+    }
+  };
+
+  const getCategoryIcon = (cat: string) => {
+    switch (cat) {
+      case 'bug': return <Bug className="h-3.5 w-3.5 text-destructive" />;
+      case 'question': return <HelpCircle className="h-3.5 w-3.5 text-primary" />;
+      case 'feedback': return <MessageSquare className="h-3.5 w-3.5 text-green-500" />;
+      default: return <HeadphonesIcon className="h-3.5 w-3.5 text-muted-foreground" />;
+    }
+  };
 
   const getSuggestionStatusBadge = (status: string) => {
     switch (status) {
