@@ -1,6 +1,7 @@
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { Home, Gift, User, Scan, Store } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useOfflineSync } from '@/app/hooks/useOfflineSync';
 
 /**
  * Mobile-optimized layout for end customer app
@@ -9,6 +10,7 @@ import { cn } from '@/lib/utils';
 export const AppLayout = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  useOfflineSync(); // Auto-sync pending offline stamps
 
   const navItems = [
     { path: '/app', icon: Home, label: 'Feed' },

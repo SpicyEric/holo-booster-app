@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
-import { Gift, Check, Smartphone, X, AlertCircle, ShieldAlert, Send, Loader2 } from 'lucide-react';
+import { Gift, Check, Smartphone, X, AlertCircle, ShieldAlert, Send, Loader2, WifiOff } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/hooks/useAuth';
 import { useRewardRedemption } from '@/app/hooks/useRewardRedemption';
+import { useNetworkStatus } from '@/app/hooks/useNetworkStatus';
 import { NfcPermissionDialog } from '@/app/components/NfcPermissionDialog';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -38,6 +39,7 @@ export const RewardRedemptionDialog = ({
   onPointsUpdated,
 }: RewardRedemptionDialogProps) => {
   const { user } = useAuth();
+  const isOnline = useNetworkStatus();
   const [emailVerified, setEmailVerified] = useState<boolean | null>(null);
   const [resending, setResending] = useState(false);
   const [resendCooldown, setResendCooldown] = useState(0);
@@ -255,6 +257,14 @@ export const RewardRedemptionDialog = ({
                   ? `Erneut senden (${resendCooldown}s)`
                   : 'Bestätigungsmail senden'}
               </Button>
+            </div>
+          ) : !isOnline ? (
+            <div className="bg-muted border border-border rounded-lg p-4 text-center space-y-2">
+              <WifiOff className="h-8 w-8 text-muted-foreground mx-auto" />
+              <p className="font-medium text-foreground">Kein Internet</p>
+              <p className="text-sm text-muted-foreground">
+                Zum Einlösen von Prämien wird eine Internetverbindung benötigt. Bitte versuche es erneut, wenn du online bist.
+              </p>
             </div>
           ) : canRedeem ? (
             <div className="space-y-3">

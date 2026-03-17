@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Nfc, CheckCircle, XCircle, Sparkles, Settings, X } from 'lucide-react';
+import { Nfc, CheckCircle, XCircle, Sparkles, Settings, X, WifiOff, CloudUpload } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
@@ -10,6 +10,8 @@ import { toast } from 'sonner';
 import confetti from 'canvas-confetti';
 import { MainLayout } from '@/app/components/layout/MainLayout';
 import { nfcService, type NfcReadResult } from '@/app/services/nfcService';
+import { useNetworkStatus } from '@/app/hooks/useNetworkStatus';
+import { offlineQueueService } from '@/app/services/offlineQueueService';
 import { NfcPermissionDialog } from '@/app/components/NfcPermissionDialog';
 
 type ScanResult = {
@@ -19,12 +21,14 @@ type ScanResult = {
   merchantName?: string;
   merchantCustomerId?: string;
   error?: string;
+  isOffline?: boolean;
 };
 
 export const AppScan = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { user } = useAuth();
+  const isOnline = useNetworkStatus();
   const [scanning, setScanning] = useState(false);
   const [result, setResult] = useState<ScanResult | null>(null);
   const [nfcSupported, setNfcSupported] = useState(false);
@@ -68,7 +72,7 @@ export const AppScan = () => {
   }, [searchParams, checkingNfc, nfcSupported, nfcEnabled]);
 
   const handleChipScan = useCallback(async (chipData: string, hardwareUid?: string) => {
-    console.log('[AppScan] handleChipScan called, chipData:', chipData, 'user from hook:', user?.id);
+    console.log('[AppScan] handleChipScan called, chipData:', chipData, 'user from hook:', user?.id, 'online:', isOnline);
     
     // Re-check session directly to avoid stale hook state (e.g. during token refresh)
     let currentUserId = user?.id;
@@ -92,6 +96,39 @@ export const AppScan = () => {
     setScanning(true);
     setResult(null);
 
+    // OFFLINE MODE: Queue the stamp locally
+    if (!navigator.onLine) {
+      console.log('[AppScan] OFFLINE - queuing stamp locally');
+      
+      if (offlineQueueService.hasPendingStampForBox(chipData)) {
+        setResult({
+          success: false,
+          error: 'Du hast bereits einen Offline-Stempel für dieses Geschäft in der Warteschlange. Dieser wird gutgeschrieben sobald du wieder Internet hast.',
+        });
+        setScanning(false);
+        return;
+      }
+
+      const pendingStamp = offlineQueueService.addStamp(chipData, hardwareUid || null, currentUserId);
+      
+      if (pendingStamp) {
+        setResult({
+          success: true,
+          isOffline: true,
+          merchantName: 'Händler',
+        });
+        toast.success('Stempel erkannt! Wird gutgeschrieben sobald Internet da ist.');
+      } else {
+        setResult({
+          success: false,
+          error: 'Offline-Stempel konnte nicht gespeichert werden.',
+        });
+      }
+      setScanning(false);
+      return;
+    }
+
+    // ONLINE MODE: Normal flow
     try {
       const { data, error } = await supabase.rpc('award_points_via_nfc', {
         p_chip_data: chipData,
@@ -144,15 +181,40 @@ export const AppScan = () => {
       }
     } catch (error: any) {
       console.error('Scan error:', error);
-      setResult({
-        success: false,
-        error: error.message || 'Verbindungsfehler',
-      });
-      toast.error('Scan fehlgeschlagen');
+      
+      // If the error is a network issue, try offline fallback
+      if (error.message?.includes('fetch') || error.message?.includes('network') || error.message?.includes('Failed')) {
+        console.log('[AppScan] Network error detected - falling back to offline mode');
+        
+        if (offlineQueueService.hasPendingStampForBox(chipData)) {
+          setResult({
+            success: false,
+            error: 'Du hast bereits einen Offline-Stempel für dieses Geschäft in der Warteschlange.',
+          });
+        } else {
+          const pendingStamp = offlineQueueService.addStamp(chipData, hardwareUid || null, currentUserId);
+          if (pendingStamp) {
+            setResult({
+              success: true,
+              isOffline: true,
+              merchantName: 'Händler',
+            });
+            toast.success('Verbindung fehlgeschlagen – Stempel wird offline gespeichert.');
+          } else {
+            setResult({ success: false, error: 'Fehler beim Speichern' });
+          }
+        }
+      } else {
+        setResult({
+          success: false,
+          error: error.message || 'Verbindungsfehler',
+        });
+        toast.error('Scan fehlgeschlagen');
+      }
     } finally {
       setScanning(false);
     }
-  }, [user, navigate]);
+  }, [user, navigate, isOnline]);
 
   const handleNfcRead = useCallback((nfcResult: NfcReadResult) => {
     if (nfcResult.success && nfcResult.chipData) {
@@ -292,28 +354,50 @@ export const AppScan = () => {
             <Card className="w-full max-w-sm">
               <CardContent className="pt-8 pb-6 text-center">
                 {result.success ? (
-                  <>
-                    <motion.div
-                      initial={{ scale: 0 }}
-                      animate={{ scale: 1 }}
-                      transition={{ type: 'spring', bounce: 0.5 }}
-                    >
-                      <div className="w-20 h-20 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center mx-auto mb-4">
-                        <CheckCircle className="h-10 w-10 text-green-600" />
+                  result.isOffline ? (
+                    <>
+                      <motion.div
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        transition={{ type: 'spring', bounce: 0.5 }}
+                      >
+                        <div className="w-20 h-20 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center mx-auto mb-4">
+                          <CloudUpload className="h-10 w-10 text-amber-600" />
+                        </div>
+                      </motion.div>
+                      <h2 className="text-2xl font-bold mb-2">Stempel erkannt!</h2>
+                      <p className="text-muted-foreground mb-4">
+                        Du bist gerade offline. Dein Stempel wird automatisch gutgeschrieben, sobald du wieder Internet hast.
+                      </p>
+                      <div className="flex items-center justify-center gap-2 text-lg font-medium text-amber-600 mb-2">
+                        <WifiOff className="h-5 w-5" />
+                        Wird synchronisiert...
                       </div>
-                    </motion.div>
-                    <h2 className="text-2xl font-bold mb-2">Geschafft!</h2>
-                    <p className="text-muted-foreground mb-4">
-                      bei {result.merchantName}
-                    </p>
-                    <div className="flex items-center justify-center gap-2 text-3xl font-bold text-primary mb-2">
-                      <Sparkles className="h-6 w-6" />
-                      +{result.points} Punkte
-                    </div>
-                    <p className="text-sm text-muted-foreground">
-                      Gesamt: {result.totalPoints} Punkte
-                    </p>
-                  </>
+                    </>
+                  ) : (
+                    <>
+                      <motion.div
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        transition={{ type: 'spring', bounce: 0.5 }}
+                      >
+                        <div className="w-20 h-20 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center mx-auto mb-4">
+                          <CheckCircle className="h-10 w-10 text-green-600" />
+                        </div>
+                      </motion.div>
+                      <h2 className="text-2xl font-bold mb-2">Geschafft!</h2>
+                      <p className="text-muted-foreground mb-4">
+                        bei {result.merchantName}
+                      </p>
+                      <div className="flex items-center justify-center gap-2 text-3xl font-bold text-primary mb-2">
+                        <Sparkles className="h-6 w-6" />
+                        +{result.points} Punkte
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        Gesamt: {result.totalPoints} Punkte
+                      </p>
+                    </>
+                  )
                 ) : (
                   <>
                     <div className="w-20 h-20 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center mx-auto mb-4">

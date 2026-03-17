@@ -4,6 +4,7 @@ import { Gift, MapPin, Heart, Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { MainLayout } from '@/app/components/layout/MainLayout';
+import { offlineCacheService } from '@/app/services/offlineQueueService';
 
 interface FeedItem {
   type: 'post' | 'offer' | 'merchant_card';
@@ -51,6 +52,17 @@ export const AppHome = () => {
 
   const loadFeed = async () => {
     setLoading(true);
+    
+    // Try loading from cache first if offline
+    if (!navigator.onLine) {
+      const cached = offlineCacheService.get<FeedItem[]>('home_feed');
+      if (cached) {
+        setFeedItems(cached);
+        setLoading(false);
+        return;
+      }
+    }
+    
     try {
       const items: FeedItem[] = [];
 
@@ -194,8 +206,13 @@ export const AppHome = () => {
       });
 
       setFeedItems(items);
+      // Cache for offline use
+      offlineCacheService.set('home_feed', items);
     } catch (err) {
       console.error('[Feed] Error:', err);
+      // On error, try cache
+      const cached = offlineCacheService.get<FeedItem[]>('home_feed');
+      if (cached) setFeedItems(cached);
     } finally {
       setLoading(false);
     }
