@@ -96,6 +96,52 @@ export default function Orders() {
     }
   };
 
+  const loadSupportMessages = async () => {
+    try {
+      setSupportLoading(true);
+      const { data, error } = await supabase
+        .from("support_messages" as any)
+        .select("*")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      setSupportMessages((data as any) || []);
+    } catch (error) {
+      console.error("Error loading support messages:", error);
+    } finally {
+      setSupportLoading(false);
+    }
+  };
+
+  const updateSupportStatus = async (id: string, newStatus: string) => {
+    try {
+      const { error } = await supabase
+        .from("support_messages" as any)
+        .update({ status: newStatus } as any)
+        .eq("id", id);
+      if (error) throw error;
+      toast.success("Status aktualisiert");
+      loadSupportMessages();
+    } catch (error) {
+      console.error("Error updating support message:", error);
+      toast.error("Fehler");
+    }
+  };
+
+  const deleteSupportMessage = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from("support_messages" as any)
+        .delete()
+        .eq("id", id);
+      if (error) throw error;
+      toast.success("Nachricht gelöscht");
+      loadSupportMessages();
+    } catch (error) {
+      console.error("Error deleting support message:", error);
+      toast.error("Fehler");
+    }
+  };
+
   const updateSuggestionStatus = async (id: string, newStatus: string) => {
     try {
       const { error } = await supabase
