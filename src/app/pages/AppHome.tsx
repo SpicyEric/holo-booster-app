@@ -4,6 +4,7 @@ import { Gift, MapPin, Heart, Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { MainLayout } from '@/app/components/layout/MainLayout';
+import { offlineCacheService } from '@/app/services/offlineQueueService';
 
 interface FeedItem {
   type: 'post' | 'offer' | 'merchant_card';
