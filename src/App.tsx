@@ -53,6 +53,7 @@ import AppAuth from "./app/pages/AppAuth";
 import AppMerchantDetail from "./app/pages/AppMerchantDetail";
 import AppScan from "./app/pages/AppScan";
 import AppSuggestShop from "./app/pages/AppSuggestShop";
+import AppSupport from "./app/pages/AppSupport";
 import AppTerms from "./app/pages/AppTerms";
 import AppPrivacy from "./app/pages/AppPrivacy";
 import AppMyCards from "./app/pages/AppMyCards";
