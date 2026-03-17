@@ -28,6 +28,7 @@ export const AppScan = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { user } = useAuth();
+  const isOnline = useNetworkStatus();
   const [scanning, setScanning] = useState(false);
   const [result, setResult] = useState<ScanResult | null>(null);
   const [nfcSupported, setNfcSupported] = useState(false);
