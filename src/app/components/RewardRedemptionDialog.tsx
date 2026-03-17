@@ -39,6 +39,7 @@ export const RewardRedemptionDialog = ({
   onPointsUpdated,
 }: RewardRedemptionDialogProps) => {
   const { user } = useAuth();
+  const isOnline = useNetworkStatus();
   const [emailVerified, setEmailVerified] = useState<boolean | null>(null);
   const [resending, setResending] = useState(false);
   const [resendCooldown, setResendCooldown] = useState(0);
