@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
-import { Gift, Check, Smartphone, X, AlertCircle, ShieldAlert, Send, Loader2 } from 'lucide-react';
+import { Gift, Check, Smartphone, X, AlertCircle, ShieldAlert, Send, Loader2, WifiOff } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/hooks/useAuth';
 import { useRewardRedemption } from '@/app/hooks/useRewardRedemption';
+import { useNetworkStatus } from '@/app/hooks/useNetworkStatus';
 import { NfcPermissionDialog } from '@/app/components/NfcPermissionDialog';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
