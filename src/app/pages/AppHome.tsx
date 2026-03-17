@@ -254,7 +254,7 @@ export const AppHome = () => {
       ) : (
         <div className="-mx-4 space-y-6">
           {feedItems.map((item) => (
-            <div key={`${item.type}-${item.id}`} className="bg-card">
+            <div key={`${item.type}-${item.id}`} className={`bg-card ${item.type === 'offer' ? 'border-l-4 border-primary' : ''}`}>
               {/* Header: profile pic + name */}
               <div
                 className="flex items-center gap-3 px-4 py-3 cursor-pointer"
