@@ -17,7 +17,7 @@ const menuItems = [
   { title: "Kunden", url: "/admin/customers", icon: Users },
   { title: "Karte", url: "/admin/map", icon: Map },
   { title: "Box-IDs", url: "/admin/boxes", icon: Box },
-  { title: "Bestellungen & Vorschläge", url: "/admin/orders", icon: Package },
+  { title: "Nachrichten", url: "/admin/orders", icon: Package },
   { title: "Accounts", url: "/admin/accounts", icon: UserCog },
   { title: "Statistiken", url: "/admin/stats", icon: BarChart3 },
   { title: "Kunde abschließen", url: "/admin/checkout", icon: ShoppingCart },
