@@ -77,10 +77,10 @@ export default function AppProfile() {
         <div className="space-y-2 pt-4 border-t border-border">
           <h3 className="font-bold text-foreground mb-3">Support & Sicherheit</h3>
           <button
-            onClick={() => window.open('https://wa.me/', '_blank')}
+            onClick={() => navigate('/app/support')}
             className="w-full text-left py-3 flex items-center justify-between hover:text-primary transition-colors"
           >
-            <span className="text-foreground">Kontakt</span>
+            <span className="text-foreground">Kontakt & Hilfe</span>
             <ChevronRight className="h-5 w-5 text-muted-foreground" />
           </button>
           <button

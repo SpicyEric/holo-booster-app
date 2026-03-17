@@ -889,7 +889,7 @@ const AppProfileContent = () => {
         <h3 className="text-sm font-medium text-muted-foreground mb-2 px-1">Support & Sicherheit</h3>
         <div className="space-y-2">
           {[
-            { icon: HelpCircle, label: 'Kontakt & Hilfe', href: 'mailto:support@eloyo.de' },
+            { icon: HelpCircle, label: 'Kontakt & Hilfe', href: '/app/support' },
             { icon: FileText, label: 'Nutzungsbedingungen', href: '/app/terms' },
             { icon: Shield, label: 'Datenschutz', href: '/app/privacy' },
           ].map((item) => {

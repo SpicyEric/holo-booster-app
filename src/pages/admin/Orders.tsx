@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { Package, Palette, CheckCircle2, Clock, XCircle, RefreshCw, Store, Trash2 } from "lucide-react";
+import { Package, Palette, CheckCircle2, Clock, XCircle, RefreshCw, Store, Trash2, HeadphonesIcon, Bug, HelpCircle, MessageSquare } from "lucide-react";
 
 interface Order {
   id: string;
@@ -50,6 +50,15 @@ interface ShopSuggestion {
   status: string;
 }
 
+interface SupportMessage {
+  id: string;
+  created_at: string;
+  category: string;
+  message: string;
+  status: string;
+  admin_notes: string | null;
+}
+
 export default function Orders() {
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
@@ -58,6 +67,8 @@ export default function Orders() {
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [suggestions, setSuggestions] = useState<ShopSuggestion[]>([]);
   const [suggestionsLoading, setSuggestionsLoading] = useState(true);
+  const [supportMessages, setSupportMessages] = useState<SupportMessage[]>([]);
+  const [supportLoading, setSupportLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("orders");
 
   useEffect(() => {
@@ -65,6 +76,7 @@ export default function Orders() {
       checkUserRole();
       loadOrders();
       loadSuggestions();
+      loadSupportMessages();
     }
   }, [user, filterStatus]);
 
@@ -81,6 +93,52 @@ export default function Orders() {
       console.error("Error loading suggestions:", error);
     } finally {
       setSuggestionsLoading(false);
+    }
+  };
+
+  const loadSupportMessages = async () => {
+    try {
+      setSupportLoading(true);
+      const { data, error } = await supabase
+        .from("support_messages" as any)
+        .select("*")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      setSupportMessages((data as any) || []);
+    } catch (error) {
+      console.error("Error loading support messages:", error);
+    } finally {
+      setSupportLoading(false);
+    }
+  };
+
+  const updateSupportStatus = async (id: string, newStatus: string) => {
+    try {
+      const { error } = await supabase
+        .from("support_messages" as any)
+        .update({ status: newStatus } as any)
+        .eq("id", id);
+      if (error) throw error;
+      toast.success("Status aktualisiert");
+      loadSupportMessages();
+    } catch (error) {
+      console.error("Error updating support message:", error);
+      toast.error("Fehler");
+    }
+  };
+
+  const deleteSupportMessage = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from("support_messages" as any)
+        .delete()
+        .eq("id", id);
+      if (error) throw error;
+      toast.success("Nachricht gelöscht");
+      loadSupportMessages();
+    } catch (error) {
+      console.error("Error deleting support message:", error);
+      toast.error("Fehler");
     }
   };
 
@@ -242,6 +300,26 @@ export default function Orders() {
   const inProgressCount = orders.filter(o => o.status === "in_progress").length;
   const completedCount = orders.filter(o => o.status === "completed").length;
   const newSuggestionsCount = suggestions.filter(s => s.status === "new").length;
+  const newSupportCount = supportMessages.filter(m => m.status === "new").length;
+
+  const getCategoryLabel = (cat: string) => {
+    switch (cat) {
+      case 'bug': return 'Bug';
+      case 'question': return 'Frage';
+      case 'feedback': return 'Feedback';
+      case 'other': return 'Sonstiges';
+      default: return cat;
+    }
+  };
+
+  const getCategoryIcon = (cat: string) => {
+    switch (cat) {
+      case 'bug': return <Bug className="h-3.5 w-3.5 text-destructive" />;
+      case 'question': return <HelpCircle className="h-3.5 w-3.5 text-primary" />;
+      case 'feedback': return <MessageSquare className="h-3.5 w-3.5 text-green-500" />;
+      default: return <HeadphonesIcon className="h-3.5 w-3.5 text-muted-foreground" />;
+    }
+  };
 
   const getSuggestionStatusBadge = (status: string) => {
     switch (status) {
@@ -263,9 +341,9 @@ export default function Orders() {
       {/* Header */}
       <div className="flex justify-between items-center border-b pb-3">
         <div>
-          <h1 className="text-xl font-semibold">Bestellungen & Vorschläge</h1>
+          <h1 className="text-xl font-semibold">Nachrichten</h1>
         </div>
-        <Button size="sm" variant="outline" onClick={() => { loadOrders(); loadSuggestions(); }}>
+        <Button size="sm" variant="outline" onClick={() => { loadOrders(); loadSuggestions(); loadSupportMessages(); }}>
           <RefreshCw className="w-3 h-3 mr-1" />
           Aktualisieren
         </Button>
@@ -278,6 +356,9 @@ export default function Orders() {
           </TabsTrigger>
           <TabsTrigger value="suggestions">
             Shop-Vorschläge {newSuggestionsCount > 0 && <Badge variant="destructive" className="ml-1.5 h-5 min-w-5 text-[10px]">{newSuggestionsCount}</Badge>}
+          </TabsTrigger>
+          <TabsTrigger value="support">
+            Support {newSupportCount > 0 && <Badge variant="destructive" className="ml-1.5 h-5 min-w-5 text-[10px]">{newSupportCount}</Badge>}
           </TabsTrigger>
         </TabsList>
 
@@ -414,6 +495,62 @@ export default function Orders() {
                             </SelectContent>
                           </Select>
                           <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => deleteSuggestion(s.id)}>
+                            <Trash2 className="h-3 w-3 text-destructive" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
+          </div>
+        </TabsContent>
+
+        <TabsContent value="support" className="space-y-3">
+          <p className="text-xs text-muted-foreground">
+            {supportMessages.length} Support-Nachrichten · {newSupportCount} neu
+          </p>
+
+          <div className="border rounded">
+            {supportLoading ? (
+              <div className="text-center py-8 text-sm text-muted-foreground">Laden...</div>
+            ) : supportMessages.length === 0 ? (
+              <div className="text-center py-8 text-sm text-muted-foreground">
+                <HeadphonesIcon className="h-8 w-8 mx-auto mb-2 text-muted-foreground/50" />
+                Keine Support-Nachrichten
+              </div>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-muted/50 hover:bg-muted/50">
+                    <TableHead className="h-8 text-xs font-semibold w-8"></TableHead>
+                    <TableHead className="h-8 text-xs font-semibold">Kategorie</TableHead>
+                    <TableHead className="h-8 text-xs font-semibold">Nachricht</TableHead>
+                    <TableHead className="h-8 text-xs font-semibold">Datum</TableHead>
+                    <TableHead className="h-8 text-xs font-semibold">Status</TableHead>
+                    <TableHead className="h-8 text-xs font-semibold w-36">Aktion</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {supportMessages.map((m) => (
+                    <TableRow key={m.id} className="hover:bg-accent/30">
+                      <TableCell className="py-1.5">{getCategoryIcon(m.category)}</TableCell>
+                      <TableCell className="py-1.5 text-sm font-medium">{getCategoryLabel(m.category)}</TableCell>
+                      <TableCell className="py-1.5 text-sm max-w-xs truncate">{m.message}</TableCell>
+                      <TableCell className="py-1.5 text-xs text-muted-foreground">{formatDate(m.created_at)}</TableCell>
+                      <TableCell className="py-1.5">{getSuggestionStatusBadge(m.status)}</TableCell>
+                      <TableCell className="py-1.5">
+                        <div className="flex gap-1">
+                          <Select value={m.status} onValueChange={(value) => updateSupportStatus(m.id, value)}>
+                            <SelectTrigger className="h-7 text-xs w-24"><SelectValue /></SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="new">Neu</SelectItem>
+                              <SelectItem value="in_progress">Bearbeitung</SelectItem>
+                              <SelectItem value="done">Erledigt</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => deleteSupportMessage(m.id)}>
                             <Trash2 className="h-3 w-3 text-destructive" />
                           </Button>
                         </div>
