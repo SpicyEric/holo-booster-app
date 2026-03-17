@@ -6,7 +6,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { MainLayout } from '@/app/components/layout/MainLayout';
 
 interface FeedItem {
-  type: 'post' | 'offer';
+  type: 'post' | 'offer' | 'merchant_card';
   id: string;
   merchant_customer_id: string;
   merchant_name: string;
@@ -19,6 +19,7 @@ interface FeedItem {
   created_at: string;
   like_count: number;
   liked_by_user: boolean;
+  points_balance?: number;
 }
 
 function haversineDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
