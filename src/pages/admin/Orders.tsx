@@ -357,6 +357,9 @@ export default function Orders() {
           <TabsTrigger value="suggestions">
             Shop-Vorschläge {newSuggestionsCount > 0 && <Badge variant="destructive" className="ml-1.5 h-5 min-w-5 text-[10px]">{newSuggestionsCount}</Badge>}
           </TabsTrigger>
+          <TabsTrigger value="support">
+            Support {newSupportCount > 0 && <Badge variant="destructive" className="ml-1.5 h-5 min-w-5 text-[10px]">{newSupportCount}</Badge>}
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="orders" className="space-y-3">
