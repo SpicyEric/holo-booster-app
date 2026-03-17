@@ -506,6 +506,62 @@ export default function Orders() {
             )}
           </div>
         </TabsContent>
+
+        <TabsContent value="support" className="space-y-3">
+          <p className="text-xs text-muted-foreground">
+            {supportMessages.length} Support-Nachrichten · {newSupportCount} neu
+          </p>
+
+          <div className="border rounded">
+            {supportLoading ? (
+              <div className="text-center py-8 text-sm text-muted-foreground">Laden...</div>
+            ) : supportMessages.length === 0 ? (
+              <div className="text-center py-8 text-sm text-muted-foreground">
+                <HeadphonesIcon className="h-8 w-8 mx-auto mb-2 text-muted-foreground/50" />
+                Keine Support-Nachrichten
+              </div>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-muted/50 hover:bg-muted/50">
+                    <TableHead className="h-8 text-xs font-semibold w-8"></TableHead>
+                    <TableHead className="h-8 text-xs font-semibold">Kategorie</TableHead>
+                    <TableHead className="h-8 text-xs font-semibold">Nachricht</TableHead>
+                    <TableHead className="h-8 text-xs font-semibold">Datum</TableHead>
+                    <TableHead className="h-8 text-xs font-semibold">Status</TableHead>
+                    <TableHead className="h-8 text-xs font-semibold w-36">Aktion</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {supportMessages.map((m) => (
+                    <TableRow key={m.id} className="hover:bg-accent/30">
+                      <TableCell className="py-1.5">{getCategoryIcon(m.category)}</TableCell>
+                      <TableCell className="py-1.5 text-sm font-medium">{getCategoryLabel(m.category)}</TableCell>
+                      <TableCell className="py-1.5 text-sm max-w-xs truncate">{m.message}</TableCell>
+                      <TableCell className="py-1.5 text-xs text-muted-foreground">{formatDate(m.created_at)}</TableCell>
+                      <TableCell className="py-1.5">{getSuggestionStatusBadge(m.status)}</TableCell>
+                      <TableCell className="py-1.5">
+                        <div className="flex gap-1">
+                          <Select value={m.status} onValueChange={(value) => updateSupportStatus(m.id, value)}>
+                            <SelectTrigger className="h-7 text-xs w-24"><SelectValue /></SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="new">Neu</SelectItem>
+                              <SelectItem value="in_progress">Bearbeitung</SelectItem>
+                              <SelectItem value="done">Erledigt</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => deleteSupportMessage(m.id)}>
+                            <Trash2 className="h-3 w-3 text-destructive" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
+          </div>
+        </TabsContent>
       </Tabs>
     </div>
   );
