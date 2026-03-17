@@ -50,6 +50,15 @@ interface ShopSuggestion {
   status: string;
 }
 
+interface SupportMessage {
+  id: string;
+  created_at: string;
+  category: string;
+  message: string;
+  status: string;
+  admin_notes: string | null;
+}
+
 export default function Orders() {
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
@@ -58,6 +67,8 @@ export default function Orders() {
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [suggestions, setSuggestions] = useState<ShopSuggestion[]>([]);
   const [suggestionsLoading, setSuggestionsLoading] = useState(true);
+  const [supportMessages, setSupportMessages] = useState<SupportMessage[]>([]);
+  const [supportLoading, setSupportLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("orders");
 
   useEffect(() => {
