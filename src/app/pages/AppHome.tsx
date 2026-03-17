@@ -108,7 +108,38 @@ export const AppHome = () => {
               liked_by_user: userLikes.has(post.id),
             });
           });
-        }
+      }
+
+      // Add merchant card entries for stamped merchants (so feed isn't empty)
+      if (stampedMerchantIds.length > 0) {
+        const { data: stampedMerchants } = await supabase
+          .from('customers')
+          .select('id, name, company_name, logo_url, cover_image_url, description, updated_at')
+          .in('id', stampedMerchantIds);
+
+        // Set of merchants that already have feed posts
+        const merchantsWithPosts = new Set(items.filter(i => i.type === 'post').map(i => i.merchant_customer_id));
+
+        stampedMerchants?.forEach(m => {
+          // Only add merchant card if they don't already have feed posts
+          if (!merchantsWithPosts.has(m.id)) {
+            const account = accounts?.find(a => a.merchant_customer_id === m.id);
+            items.push({
+              type: 'merchant_card',
+              id: `mc-${m.id}`,
+              merchant_customer_id: m.id,
+              merchant_name: m.company_name || m.name || 'Unbekannt',
+              merchant_logo: m.logo_url || null,
+              image_url: m.cover_image_url || null,
+              body: m.description || null,
+              created_at: m.updated_at || new Date().toISOString(),
+              like_count: 0,
+              liked_by_user: false,
+              points_balance: account?.current_points_balance ?? 0,
+            });
+          }
+        });
+      }
       }
 
       // Load new customer offers (for merchants where user has NO points)
