@@ -21,6 +21,7 @@ type ScanResult = {
   merchantName?: string;
   merchantCustomerId?: string;
   error?: string;
+  isOffline?: boolean;
 };
 
 export const AppScan = () => {
