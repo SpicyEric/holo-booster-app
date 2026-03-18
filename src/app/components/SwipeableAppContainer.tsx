@@ -234,7 +234,7 @@ const AppHomeContent = () => {
           const postMerchantIds = [...new Set(posts.map(p => p.merchant_customer_id))];
           const { data: merchants } = await supabase
             .from('customers')
-            .select('id, name, company_name, logo_url')
+            .select('id, name, company_name, logo_url, latitude, longitude')
             .in('id', postMerchantIds);
 
           const postIds = posts.map(p => p.id);
