@@ -20,35 +20,22 @@ export function useDeepLinkHandler() {
     try {
       const parsedUrl = new URL(url);
       const pathname = parsedUrl.pathname;
-      const chip = parsedUrl.searchParams.get('chip');
-      const nfcTag = parsedUrl.searchParams.get('nfc');
 
-      // NFC Tag ID aus verschiedenen Quellen
-      const tagId = chip || nfcTag;
-
-      if (tagId) {
-        // Navigate to scan page WITHOUT auto-awarding points
-        // User must actively press scan button to collect points
-        console.log('NFC Tag erkannt (background), navigating to scan page without auto-award:', tagId);
-        navigate('/app/scan');
+      // NFC/Chip deep links komplett ignorieren
+      // Punkte werden NUR über den aktiven Scan-Bildschirm vergeben
+      const hasChipParam = parsedUrl.searchParams.has('chip') || parsedUrl.searchParams.has('nfc');
+      if (hasChipParam) {
+        console.log('NFC Deep Link ignoriert - Punkte nur über aktiven Scan');
         return;
       }
 
-      // Allgemeine Deep-Link Navigation
-      if (pathname.startsWith('/app')) {
+      // Allgemeine Deep-Link Navigation (keine Scan-Seite)
+      if (pathname.startsWith('/app') && !pathname.includes('/scan')) {
         navigate(pathname + parsedUrl.search);
-      } else if (pathname === '/scan' || pathname.startsWith('/s/')) {
-        // Legacy Scan-Links
-        navigate(`/app/scan${parsedUrl.search}`);
       }
     } catch (error) {
       console.error('Deep Link Parse Fehler:', error);
-      
-      // Fallback: Wenn URL nicht parsebar, könnte es eine reine Tag-ID sein
-      if (url && !url.includes('://') && !url.includes('/')) {
-        console.log('Direkter Tag-ID erkannt:', url);
-        navigate(`/app/scan?chip=${encodeURIComponent(url)}`);
-      }
+      // Unbekannte URLs ignorieren
     }
   }, [navigate]);
 

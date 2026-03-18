@@ -1,6 +1,5 @@
 import { useEffect, useCallback, createContext, useContext, ReactNode } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { toast } from 'sonner';
+import { useNavigate } from 'react-router-dom';
 
 // Check if Capacitor App plugin is available
 const getCapacitorApp = async () => {
@@ -34,13 +33,11 @@ interface DeepLinkProviderProps {
  */
 export function DeepLinkProvider({ children }: DeepLinkProviderProps) {
   const navigate = useNavigate();
-  const location = useLocation();
 
   const handleDeepLink = useCallback((url: string) => {
     console.log('🔗 Deep Link empfangen:', url);
 
     try {
-      let tagId: string | null = null;
       let targetPath: string | null = null;
 
       // Versuche URL zu parsen
@@ -48,48 +45,34 @@ export function DeepLinkProvider({ children }: DeepLinkProviderProps) {
         const parsedUrl = new URL(url);
         const pathname = parsedUrl.pathname;
         
-        // NFC Tag ID extrahieren
-        tagId = parsedUrl.searchParams.get('chip') || 
-                parsedUrl.searchParams.get('nfc') ||
-                parsedUrl.searchParams.get('tag');
+        // NFC/Chip deep links komplett ignorieren - Punkte werden NUR
+        // über den aktiven Scan-Bildschirm vergeben
+        const hasChipParam = parsedUrl.searchParams.has('chip') || 
+                             parsedUrl.searchParams.has('nfc') ||
+                             parsedUrl.searchParams.has('tag');
+        
+        if (hasChipParam) {
+          console.log('📱 NFC Deep Link ignoriert - Punkte nur über aktiven Scan');
+          return;
+        }
 
-        // Ziel-Pfad bestimmen
-        if (pathname.startsWith('/app')) {
+        // Ziel-Pfad bestimmen (nur nicht-NFC Links)
+        if (pathname.startsWith('/app') && !pathname.includes('/scan')) {
           targetPath = pathname;
-        } else if (pathname === '/scan' || pathname.startsWith('/s/')) {
-          targetPath = '/app/scan';
         }
       } catch {
-        // Nicht eine gültige URL - könnte direkte Tag-ID sein
-        if (url && !url.includes('://') && !url.includes('/')) {
-          tagId = url;
-        }
+        // Nicht eine gültige URL - ignorieren
+        console.log('📱 Ungültige Deep Link URL ignoriert');
       }
 
-      // Wenn Tag-ID gefunden, zur Scan-Seite navigieren
-      if (tagId) {
-        console.log('📱 NFC Tag erkannt:', tagId);
-        
-        // Zeige Toast wenn nicht bereits auf Scan-Seite
-        if (!location.pathname.includes('/scan')) {
-          toast.info('NFC-Tag erkannt', {
-            description: 'Verarbeite Punkte...',
-            duration: 2000,
-          });
-        }
-        
-        navigate(`/app/scan?chip=${encodeURIComponent(tagId)}`, { replace: true });
-        return;
-      }
-
-      // Allgemeine Navigation
+      // Allgemeine Navigation (keine Scan-Seite)
       if (targetPath) {
         navigate(targetPath, { replace: true });
       }
     } catch (error) {
       console.error('Deep Link Verarbeitungsfehler:', error);
     }
-  }, [navigate, location.pathname]);
+  }, [navigate]);
 
   useEffect(() => {
     let cleanup: (() => void) | undefined;
@@ -147,24 +130,8 @@ export function DeepLinkProvider({ children }: DeepLinkProviderProps) {
     };
   }, [handleDeepLink]);
 
-  // Listener für NFC Events vom Native Plugin
-  useEffect(() => {
-    const handleNfcEvent = (event: CustomEvent) => {
-      const tagId = event.detail?.tagId || event.detail?.id || event.detail?.serialNumber;
-      if (tagId) {
-        console.log('📱 NFC Event empfangen:', tagId);
-        handleDeepLink(`eloyo://scan?chip=${tagId}`);
-      }
-    };
-
-    window.addEventListener('capacitor-nfc-tag' as any, handleNfcEvent);
-    window.addEventListener('nfc-tag-scanned' as any, handleNfcEvent);
-
-    return () => {
-      window.removeEventListener('capacitor-nfc-tag' as any, handleNfcEvent);
-      window.removeEventListener('nfc-tag-scanned' as any, handleNfcEvent);
-    };
-  }, [handleDeepLink]);
+  // NFC Events werden NICHT global verarbeitet.
+  // Punkte werden ausschließlich über den aktiven Scan-Bildschirm (AppScan) vergeben.
 
   return (
     <DeepLinkContext.Provider value={{ handleDeepLink }}>
