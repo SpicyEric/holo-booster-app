@@ -137,23 +137,37 @@ serve(async (req) => {
           console.log("[WEBHOOK] Updated existing customer:", existingCustomer.id);
         } else {
           // Create new customer entry
+          // Parse address from metadata
+          let parsedAddress: any = null;
+          try {
+            parsedAddress = metadata.address ? JSON.parse(metadata.address) : null;
+          } catch {
+            console.warn("[WEBHOOK] Failed to parse address metadata");
+          }
+
           const { data: newCustomer, error } = await supabase
             .from("customers")
             .insert({
-              name: metadata.customerName || "Unknown",
+              name: metadata.companyName || metadata.customerName || "Unknown",
               email: metadata.customerEmail || (customer as any).email,
               company_name: metadata.companyName || null,
+              contact_person: metadata.customerName || null,
               stripe_customer_id: customerId,
               stripe_subscription_id: subscriptionId,
               promoter_id: metadata.promoterId || null,
               status: isSEPA ? "pending_payment" : "active",
               google_review_url: "https://google.com/review",
               offer_text: "Willkommen bei Eloyo!",
-              billing_address: metadata.address ? {
-                street: metadata.address.street,
-                city: metadata.address.city,
-                postalCode: metadata.address.postalCode,
-                country: metadata.address.country,
+              street: parsedAddress?.street || null,
+              house_number: parsedAddress?.houseNumber || null,
+              postal_code: parsedAddress?.postalCode || null,
+              city: parsedAddress?.city || null,
+              billing_address: parsedAddress ? {
+                street: parsedAddress.street,
+                houseNumber: parsedAddress.houseNumber,
+                city: parsedAddress.city,
+                postalCode: parsedAddress.postalCode,
+                country: parsedAddress.country,
               } : null,
             })
             .select()
@@ -163,6 +177,38 @@ serve(async (req) => {
             console.error("[WEBHOOK] Error creating customer:", error);
           } else {
             console.log("[WEBHOOK] Created new customer:", newCustomer.id);
+
+            // Geocode address if available
+            if (parsedAddress?.street && parsedAddress?.city) {
+              try {
+                const geoResponse = await fetch(
+                  `${Deno.env.get("SUPABASE_URL")}/functions/v1/geocode-address`,
+                  {
+                    method: "POST",
+                    headers: {
+                      "Content-Type": "application/json",
+                      "Authorization": `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
+                    },
+                    body: JSON.stringify({
+                      street: parsedAddress.street,
+                      houseNumber: parsedAddress.houseNumber || "",
+                      postalCode: parsedAddress.postalCode || "",
+                      city: parsedAddress.city,
+                    }),
+                  }
+                );
+                const geoData = await geoResponse.json();
+                if (geoData?.lat && geoData?.lng) {
+                  await supabase.from("customers").update({
+                    latitude: geoData.lat,
+                    longitude: geoData.lng,
+                  }).eq("id", newCustomer.id);
+                  console.log("[WEBHOOK] Geocoded address for customer:", newCustomer.id);
+                }
+              } catch (geoErr) {
+                console.warn("[WEBHOOK] Geocoding failed:", geoErr);
+              }
+            }
             
             // Also create merchant in App-Database for mobile app
             await createAppMerchant({

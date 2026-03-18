@@ -226,7 +226,7 @@ const MeinGeschaeft = () => {
       
       if (customer) {
         setFormData({
-          name: customer.name || "",
+          name: customer.company_name || customer.name || "",
           description: customer.description || "",
           industry: customer.industry || "",
           street: customer.street || "",

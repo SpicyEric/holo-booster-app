@@ -45,6 +45,7 @@ export default function PartnerCheckout() {
   const [customerEmail, setCustomerEmail] = useState("");
   const [companyName, setCompanyName] = useState("");
   const [street, setStreet] = useState("");
+  const [houseNumber, setHouseNumber] = useState("");
   const [city, setCity] = useState("");
   const [postalCode, setPostalCode] = useState("");
   const [country, setCountry] = useState("Deutschland");
@@ -128,7 +129,7 @@ export default function PartnerCheckout() {
       const { data, error } = await supabase.functions.invoke("create-checkout-session", {
         body: {
           customerName, customerEmail, companyName,
-          address: { street, city, postalCode, country },
+          address: { street, houseNumber, city, postalCode, country },
           billingInterval: isYearlyBilling ? 'yearly' : 'monthly',
           promoCodes: validatedDiscounts.map(d => d.code),
           partnerUserId: user?.id, // Track which partner made this sale
@@ -245,14 +246,15 @@ export default function PartnerCheckout() {
               <div className="space-y-2"><Label>E-Mail *</Label><Input type="email" value={customerEmail} onChange={e => setCustomerEmail(e.target.value)} placeholder="max@beispiel.de" required /></div>
             </div>
             <div className="space-y-2"><Label>Firmenname *</Label><Input value={companyName} onChange={e => setCompanyName(e.target.value)} placeholder="Musterfirma GmbH" required /></div>
+            <div className="grid md:grid-cols-3 gap-4">
+              <div className="space-y-2 md:col-span-2"><Label>Straße</Label><Input value={street} onChange={e => setStreet(e.target.value)} placeholder="Musterstraße" /></div>
+              <div className="space-y-2"><Label>Hausnummer</Label><Input value={houseNumber} onChange={e => setHouseNumber(e.target.value)} placeholder="123" /></div>
+            </div>
             <div className="grid md:grid-cols-2 gap-4">
-              <div className="space-y-2"><Label>Straße & Hausnummer</Label><Input value={street} onChange={e => setStreet(e.target.value)} /></div>
               <div className="space-y-2"><Label>PLZ</Label><Input value={postalCode} onChange={e => setPostalCode(e.target.value)} /></div>
-            </div>
-            <div className="grid md:grid-cols-2 gap-4">
               <div className="space-y-2"><Label>Stadt</Label><Input value={city} onChange={e => setCity(e.target.value)} /></div>
-              <div className="space-y-2"><Label>Land</Label><Input value={country} onChange={e => setCountry(e.target.value)} /></div>
             </div>
+            <div className="space-y-2"><Label>Land</Label><Input value={country} onChange={e => setCountry(e.target.value)} /></div>
           </CardContent>
         </Card>
 
