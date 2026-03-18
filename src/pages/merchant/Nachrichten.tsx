@@ -80,8 +80,6 @@ const Nachrichten = () => {
   const [estimatedRecipients, setEstimatedRecipients] = useState<number | null>(null);
 
   // Automations state
-  const [welcomeEnabled, setWelcomeEnabled] = useState(false);
-  const [welcomeMessage, setWelcomeMessage] = useState('Herzlich willkommen in unserem Bonusprogramm! Sammle Stempel und sichere dir tolle Prämien.');
   const [birthdayEnabled, setBirthdayEnabled] = useState(false);
   const [birthdayMessage, setBirthdayMessage] = useState('Alles Gute zum Geburtstag! Als kleines Geschenk schenken wir dir etwas Besonderes.');
   const [birthdayBonusPoints, setBirthdayBonusPoints] = useState(5);
@@ -132,13 +130,11 @@ const Nachrichten = () => {
       // Load automation settings from customer record
       const { data: customerData } = await supabase
         .from('customers')
-        .select('welcome_enabled, welcome_message, birthday_enabled, birthday_message, birthday_bonus_points, birthday_gift_type, birthday_offer_title, birthday_offer_description')
+        .select('birthday_enabled, birthday_message, birthday_bonus_points, birthday_gift_type, birthday_offer_title, birthday_offer_description')
         .eq('id', assignment.customer_id)
         .maybeSingle();
 
       if (customerData) {
-        setWelcomeEnabled(customerData.welcome_enabled ?? false);
-        if (customerData.welcome_message) setWelcomeMessage(customerData.welcome_message);
         setBirthdayEnabled(customerData.birthday_enabled ?? false);
         if (customerData.birthday_message) setBirthdayMessage(customerData.birthday_message);
         setBirthdayBonusPoints((customerData as any).birthday_bonus_points ?? 5);
@@ -526,42 +522,6 @@ const Nachrichten = () => {
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
-            {/* Willkommensnachricht */}
-            <div className={`p-4 rounded-xl border-2 transition-colors ${welcomeEnabled ? 'bg-green-50/50 border-green-200' : 'bg-white border-gray-100'}`}>
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-3">
-                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${welcomeEnabled ? 'bg-green-500' : 'bg-gray-200'}`}>
-                    <Gift className={`h-4 w-4 ${welcomeEnabled ? 'text-white' : 'text-gray-500'}`} />
-                  </div>
-                  <div>
-                    <h4 className="font-semibold text-gray-900">Willkommensnachricht</h4>
-                    <p className="text-xs text-gray-500">Wird gesendet, wenn ein Kunde zum ersten Mal stempelt</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className={`text-xs font-medium ${welcomeEnabled ? 'text-green-600' : 'text-gray-400'}`}>
-                    {welcomeEnabled ? 'Aktiv' : 'Inaktiv'}
-                  </span>
-                  <Switch
-                    checked={welcomeEnabled}
-                    onCheckedChange={setWelcomeEnabled}
-                    className="scale-125 data-[state=checked]:bg-green-500"
-                  />
-                </div>
-              </div>
-              {welcomeEnabled && (
-                <div className="mt-3">
-                  <Label className="text-xs text-gray-600">Nachricht</Label>
-                  <Textarea
-                    value={welcomeMessage}
-                    onChange={(e) => setWelcomeMessage(e.target.value)}
-                    className="mt-1 rounded-xl text-sm"
-                    rows={2}
-                  />
-                </div>
-              )}
-            </div>
-
             {/* Geburtstagsgrüße */}
             <div className={`p-4 rounded-xl border-2 transition-colors ${birthdayEnabled ? 'bg-pink-50/50 border-pink-200' : 'bg-white border-gray-100'}`}>
               <div className="flex items-center justify-between mb-3">
@@ -677,8 +637,6 @@ const Nachrichten = () => {
                   const { error } = await supabase
                     .from('customers')
                     .update({
-                      welcome_enabled: welcomeEnabled,
-                      welcome_message: welcomeMessage,
                       birthday_enabled: birthdayEnabled,
                       birthday_message: birthdayMessage,
                       birthday_bonus_points: birthdayBonusPoints,

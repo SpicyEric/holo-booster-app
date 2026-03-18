@@ -24,30 +24,33 @@ export const BottomNav = ({ onNavigate, currentIndex }: BottomNavProps) => {
   const { user } = useAuth();
   const [messageBadge, setMessageBadge] = useState(false);
 
-  // Check for unread messages, unverified email, or unseen redeemable rewards
+  // Check for unread messages or unseen redeemable rewards
   useEffect(() => {
     if (!user) return;
 
     const checkBadge = async () => {
-      // Check unread messages that have an offer (messages without offers are auto-marked as read)
+      // If user already dismissed badge by visiting messages tab, check timestamp
+      const lastVisited = localStorage.getItem(`messages_last_visited_${user.id}`);
+      
       const sevenDaysAgo = new Date();
       sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-      
-      const { count: unreadCount } = await supabase
+
+      // Check unread messages
+      let query = supabase
         .from('app_messages')
         .select('id', { count: 'exact', head: true })
         .eq('user_id', user.id)
         .is('read_at', null)
         .gte('sent_at', sevenDaysAgo.toISOString());
 
-      // Check email verification
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('email_verified')
-        .eq('user_id', user.id)
-        .maybeSingle();
+      // Only count messages sent after last visit
+      if (lastVisited) {
+        query = query.gt('sent_at', lastVisited);
+      }
 
-      // Check for unseen redeemable rewards (compare count to last seen count)
+      const { count: unreadCount } = await query;
+
+      // Check for unseen redeemable rewards
       let hasUnseenRewards = false;
       const { data: accounts } = await supabase
         .from('loyalty_accounts')
@@ -94,6 +97,36 @@ export const BottomNav = ({ onNavigate, currentIndex }: BottomNavProps) => {
   };
 
   const handleNavClick = (item: NavItem) => {
+    // When clicking messages tab, dismiss badge immediately
+    if (item.path === '/app/messages' && user) {
+      setMessageBadge(false);
+      localStorage.setItem(`messages_last_visited_${user.id}`, new Date().toISOString());
+      // Also update rewards seen count
+      const updateRewardsSeen = async () => {
+        try {
+          const { data: accounts } = await supabase
+            .from('loyalty_accounts')
+            .select('merchant_customer_id, current_points_balance')
+            .eq('user_id', user.id)
+            .gt('current_points_balance', 0);
+          if (accounts && accounts.length > 0) {
+            const merchantIds = accounts.map(a => a.merchant_customer_id);
+            const pointsMap = new Map(accounts.map(a => [a.merchant_customer_id, a.current_points_balance || 0]));
+            const { data: rewards } = await supabase
+              .from('rewards')
+              .select('id, points_required, merchant_customer_id')
+              .eq('is_active', true)
+              .in('merchant_customer_id', merchantIds);
+            if (rewards) {
+              const count = rewards.filter(r => (pointsMap.get(r.merchant_customer_id) || 0) >= r.points_required).length;
+              localStorage.setItem(`rewards_seen_count_${user.id}`, count.toString());
+            }
+          }
+        } catch {}
+      };
+      updateRewardsSeen();
+    }
+
     if (onNavigate) {
       onNavigate(item.index);
     } else {
