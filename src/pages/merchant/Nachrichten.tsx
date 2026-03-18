@@ -637,8 +637,6 @@ const Nachrichten = () => {
                   const { error } = await supabase
                     .from('customers')
                     .update({
-                      welcome_enabled: welcomeEnabled,
-                      welcome_message: welcomeMessage,
                       birthday_enabled: birthdayEnabled,
                       birthday_message: birthdayMessage,
                       birthday_bonus_points: birthdayBonusPoints,

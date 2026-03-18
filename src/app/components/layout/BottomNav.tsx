@@ -97,6 +97,36 @@ export const BottomNav = ({ onNavigate, currentIndex }: BottomNavProps) => {
   };
 
   const handleNavClick = (item: NavItem) => {
+    // When clicking messages tab, dismiss badge immediately
+    if (item.path === '/app/messages' && user) {
+      setMessageBadge(false);
+      localStorage.setItem(`messages_last_visited_${user.id}`, new Date().toISOString());
+      // Also update rewards seen count
+      const updateRewardsSeen = async () => {
+        try {
+          const { data: accounts } = await supabase
+            .from('loyalty_accounts')
+            .select('merchant_customer_id, current_points_balance')
+            .eq('user_id', user.id)
+            .gt('current_points_balance', 0);
+          if (accounts && accounts.length > 0) {
+            const merchantIds = accounts.map(a => a.merchant_customer_id);
+            const pointsMap = new Map(accounts.map(a => [a.merchant_customer_id, a.current_points_balance || 0]));
+            const { data: rewards } = await supabase
+              .from('rewards')
+              .select('id, points_required, merchant_customer_id')
+              .eq('is_active', true)
+              .in('merchant_customer_id', merchantIds);
+            if (rewards) {
+              const count = rewards.filter(r => (pointsMap.get(r.merchant_customer_id) || 0) >= r.points_required).length;
+              localStorage.setItem(`rewards_seen_count_${user.id}`, count.toString());
+            }
+          }
+        } catch {}
+      };
+      updateRewardsSeen();
+    }
+
     if (onNavigate) {
       onNavigate(item.index);
     } else {

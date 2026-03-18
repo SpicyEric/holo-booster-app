@@ -384,7 +384,7 @@ const AppMessageDetail = () => {
                   )}
                   {isExpired && !isRedeemed && (
                     <Badge variant="secondary" className="text-muted-foreground">
-                      Abgelaufen
+                      Diese Prämie ist leider abgelaufen
                     </Badge>
                   )}
                   {offerValidity && !offerValidity.expired && !isRedeemed && (
