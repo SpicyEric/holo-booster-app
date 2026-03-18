@@ -125,18 +125,18 @@ export default function WizardStepSuggestion({ state, onChange }: Props) {
       <div className="bg-muted/50 rounded-lg p-4 border border-border">
         <div className="flex items-center gap-2 mb-2">
           <Info className="h-4 w-4 text-muted-foreground" />
-          <span className="text-xs font-medium text-foreground">
+          <span className="text-sm font-medium text-foreground">
             Beispiel-Einkäufe
           </span>
         </div>
-        <div className="space-y-1.5">
+        <div className="space-y-2">
           {exampleAmounts.map((amt) => {
             const formatted = amt.toFixed(2).replace(".", ",");
             const label = getStampLabel(amt);
             return (
               <div
                 key={amt}
-                className="flex justify-between text-xs"
+                className="flex justify-between text-sm"
               >
                 <span className="text-muted-foreground">
                   Einkauf {formatted} €
@@ -155,6 +155,14 @@ export default function WizardStepSuggestion({ state, onChange }: Props) {
             );
           })}
         </div>
+      </div>
+
+      {/* Customization hint */}
+      <div className="bg-muted/50 rounded-lg p-4 border border-border">
+        <p className="text-sm text-muted-foreground">
+          💡 Dies ist nur deine Ersteinrichtung – du kannst dein Stempelsystem
+          jederzeit im Dashboard individuell anpassen.
+        </p>
       </div>
     </div>
   );
