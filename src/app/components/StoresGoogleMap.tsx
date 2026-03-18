@@ -113,13 +113,20 @@ function StoresGoogleMapContent({ userLocation, stores, apiKey }: StoresGoogleMa
     });
   }, [isLoaded, validStores]);
 
+  if (!isLoaded) {
+    return (
+      <div style={{ width: '100%', height: '100%' }} className="flex items-center justify-center">
+        <p className="text-muted-foreground">Karte wird geladen...</p>
+      </div>
+    );
+  }
+
   return (
     <div style={{ width: '100%', height: '100%', touchAction: 'none' }}>
-      {isLoaded ? (
-        <GoogleMap
-          mapContainerStyle={mapContainerStyle}
-          center={initialCenterSet ? undefined : center}
-          zoom={14}
+      <GoogleMap
+        mapContainerStyle={mapContainerStyle}
+        center={center}
+        zoom={14}
           onLoad={onMapLoad}
           options={{
             zoomControl: true,
@@ -189,12 +196,7 @@ function StoresGoogleMapContent({ userLocation, stores, apiKey }: StoresGoogleMa
               </div>
             </InfoWindow>
           )}
-        </GoogleMap>
-      ) : (
-        <div className="flex items-center justify-center h-full">
-          <p className="text-muted-foreground">Karte wird geladen...</p>
-        </div>
-      )}
+      </GoogleMap>
     </div>
   );
 }

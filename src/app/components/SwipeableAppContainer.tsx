@@ -791,7 +791,7 @@ const AppStoresContent = () => {
     <PullToRefresh onRefresh={handleRefresh}>
     <div className="space-y-0">
       {/* Sticky header: Tabs + Search */}
-      <div className="sticky top-0 z-20 bg-background pb-3 space-y-3">
+      <div className="sticky top-0 z-30 bg-background pb-3 space-y-3">
         <div className="flex rounded-lg bg-muted p-1">
           <button
             onClick={() => setActiveTab('list')}
@@ -838,7 +838,7 @@ const AppStoresContent = () => {
                     )}
                   </div>
                   {/* Logo - Top Left */}
-                  <div className="absolute top-3 left-3 z-20 w-16 h-16 rounded-full bg-background border-2 border-white shadow-lg flex items-center justify-center overflow-hidden">
+                  <div className="absolute top-3 left-3 z-10 w-16 h-16 rounded-full bg-background border-2 border-white shadow-lg flex items-center justify-center overflow-hidden">
                     {merchant.logo_url ? (
                       <img src={merchant.logo_url} alt="Logo" className="w-full h-full object-cover" />
                     ) : (
@@ -847,7 +847,7 @@ const AppStoresContent = () => {
                   </div>
                   {/* Distance Badge - Top Right */}
                   {merchant.distance !== null && (
-                    <div className="absolute top-3 right-3 z-20">
+                    <div className="absolute top-3 right-3 z-10">
                       <span className="bg-white/95 backdrop-blur-sm text-gray-800 text-xs font-medium px-2 py-1 rounded-full shadow-sm">
                         {merchant.distance < 1 ? `${Math.round(merchant.distance * 1000)}m` : `${merchant.distance.toFixed(1)}km`}
                       </span>
