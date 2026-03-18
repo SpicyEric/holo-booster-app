@@ -279,6 +279,10 @@ const AppHomeContent = () => {
         stampedMerchants?.forEach(m => {
           if (!merchantsWithPosts.has(m.id)) {
             const account = accounts?.find(a => a.merchant_customer_id === m.id);
+            let distance: number | undefined;
+            if (userLocation && m?.latitude && m?.longitude) {
+              distance = haversineDistance(userLocation.lat, userLocation.lng, m.latitude, m.longitude);
+            }
             items.push({
               type: 'merchant_card',
               id: `mc-${m.id}`,
@@ -290,6 +294,7 @@ const AppHomeContent = () => {
               created_at: m.updated_at || new Date().toISOString(),
               like_count: 0, liked_by_user: false,
               points_balance: account?.current_points_balance ?? 0,
+              distance,
             });
           }
         });
