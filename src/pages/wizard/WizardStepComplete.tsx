@@ -24,10 +24,10 @@ export default function WizardStepComplete() {
             <Image className="h-5 w-5 text-primary" />
           </div>
           <div>
-            <p className="text-sm font-medium text-foreground">
+            <p className="text-base font-medium text-foreground">
               Titelbild & Logo hochladen
             </p>
-            <p className="text-xs text-muted-foreground mt-0.5">
+            <p className="text-sm text-muted-foreground mt-0.5">
               Ein ansprechendes Profilbild und ein Logo machen dein Geschäft
               erkennbar und professionell.
             </p>
