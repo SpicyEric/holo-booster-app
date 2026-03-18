@@ -7,6 +7,7 @@ interface CheckoutRequest {
   companyName: string;
   address?: {
     street: string;
+    houseNumber?: string;
     city: string;
     postalCode: string;
     country: string;
