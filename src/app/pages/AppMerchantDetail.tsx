@@ -198,13 +198,17 @@ export const AppMerchantDetail = () => {
     const days = ['Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag', 'Sonntag'];
     const dayKeys = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
     
-    return dayKeys.map((key, i) => {
+    // Only show days that are actually configured
+    const result = dayKeys.map((key, i) => {
       const dayHours = hours[key];
-      if (!dayHours || dayHours.closed) {
+      if (!dayHours) return null;
+      if (dayHours.closed) {
         return { day: days[i], time: 'Geschlossen' };
       }
       return { day: days[i], time: `${dayHours.open} - ${dayHours.close}` };
-    });
+    }).filter(Boolean) as { day: string; time: string }[];
+    
+    return result.length > 0 ? result : null;
   };
 
   const handleRewardClick = (reward: Reward) => {

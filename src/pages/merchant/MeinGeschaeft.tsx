@@ -135,7 +135,7 @@ const MeinGeschaeft = () => {
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const [uploadingCover, setUploadingCover] = useState(false);
   const [customerId, setCustomerId] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState("praemien");
+  const [activeTab, setActiveTab] = useState("info");
   const [scrollTarget, setScrollTarget] = useState<'description' | 'hours' | 'contact' | 'bottom' | null>(null);
   
   // Business Info
@@ -1015,28 +1015,55 @@ const MeinGeschaeft = () => {
 
                 {/* Opening Hours */}
                 <Card className="rounded-2xl shadow-sm border-0 bg-gray-50/80 p-6">
-                  <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                    <Clock className="w-5 h-5" />
-                    Öffnungszeiten
-                  </h3>
-                  <div className="space-y-3">
-                    {DAYS.map((day) => (
-                      <div key={day.key} className="flex items-center gap-4">
-                        <div className="w-24 text-sm font-medium">{day.label}</div>
-                        <label className="flex items-center gap-2 cursor-pointer">
-                          <input type="checkbox" checked={formData.opening_hours[day.key]?.closed || false} onChange={(e) => handleOpeningHoursChange(day.key, "closed", e.target.checked)} className="rounded" />
-                          <span className="text-sm text-gray-500">Geschlossen</span>
-                        </label>
-                        {!formData.opening_hours[day.key]?.closed && (
-                          <div className="flex items-center gap-2 flex-1">
-                            <Input type="time" value={formData.opening_hours[day.key]?.open || "09:00"} onChange={(e) => handleOpeningHoursChange(day.key, "open", e.target.value)} className="w-28 rounded-xl" />
-                            <span className="text-gray-400">-</span>
-                            <Input type="time" value={formData.opening_hours[day.key]?.close || "18:00"} onChange={(e) => handleOpeningHoursChange(day.key, "close", e.target.value)} className="w-28 rounded-xl" />
-                          </div>
-                        )}
-                      </div>
-                    ))}
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-semibold flex items-center gap-2">
+                      <Clock className="w-5 h-5" />
+                      Öffnungszeiten
+                    </h3>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm text-muted-foreground">{Object.keys(formData.opening_hours).length > 0 ? 'An' : 'Aus'}</span>
+                      <Switch
+                        checked={Object.keys(formData.opening_hours).length > 0}
+                        onCheckedChange={(checked) => {
+                          if (checked) {
+                            // Initialize all days with default hours
+                            const defaultHours: OpeningHours = {};
+                            DAYS.forEach(day => {
+                              defaultHours[day.key] = { open: "09:00", close: "18:00", closed: false };
+                            });
+                            setFormData(prev => ({ ...prev, opening_hours: defaultHours }));
+                          } else {
+                            // Clear all opening hours
+                            setFormData(prev => ({ ...prev, opening_hours: {} }));
+                          }
+                        }}
+                      />
+                    </div>
                   </div>
+                  {Object.keys(formData.opening_hours).length > 0 ? (
+                    <div className="space-y-3">
+                      {DAYS.map((day) => (
+                        <div key={day.key} className="flex items-center gap-4">
+                          <div className="w-24 text-sm font-medium">{day.label}</div>
+                          <label className="flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" checked={formData.opening_hours[day.key]?.closed || false} onChange={(e) => handleOpeningHoursChange(day.key, "closed", e.target.checked)} className="rounded" />
+                            <span className="text-sm text-gray-500">Geschlossen</span>
+                          </label>
+                          {!formData.opening_hours[day.key]?.closed && (
+                            <div className="flex items-center gap-2 flex-1">
+                              <Input type="time" value={formData.opening_hours[day.key]?.open || "09:00"} onChange={(e) => handleOpeningHoursChange(day.key, "open", e.target.value)} className="w-28 rounded-xl" />
+                              <span className="text-gray-400">-</span>
+                              <Input type="time" value={formData.opening_hours[day.key]?.close || "18:00"} onChange={(e) => handleOpeningHoursChange(day.key, "close", e.target.value)} className="w-28 rounded-xl" />
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-muted-foreground text-center py-4">
+                      Öffnungszeiten sind deaktiviert. Schalten Sie den Regler ein, um Öffnungszeiten anzuzeigen.
+                    </p>
+                  )}
                 </Card>
 
                 {/* Contact & Links */}
@@ -1117,78 +1144,31 @@ const MeinGeschaeft = () => {
 
               {/* Stempel Tab */}
               <TabsContent value="stempel" className="space-y-6">
-                {/* Recommendation Banner */}
-                <div className="rounded-2xl bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200/60 p-5">
-                  <p className="text-base font-semibold text-amber-900 leading-relaxed">
-                    💡 Empfehlung: Die magische Zahl für die erste kleine Belohnung liegt bei <span className="text-amber-700 font-bold">4–6 Interaktionen</span>. Das fühlt sich für den Kunden erreichbar an, aber nicht geschenkt – und motiviert, schnell wiederzukommen.
-                  </p>
-                </div>
-
-                {/* Stamp System Selector */}
+                {/* Stamp System - Wizard-style with avg spend slider */}
                 <Card className="rounded-2xl shadow-sm border-0 bg-gray-50/80">
                   <CardHeader className="pb-4">
                     <CardTitle className="flex items-center gap-3 text-lg font-semibold text-gray-900">
                       <span className="text-lg">⚙️</span>
-                      Stempelsystem wählen
+                      Stempelsystem
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-6">
                     <div className={`space-y-6 transition-opacity ${manualMode ? 'opacity-30 pointer-events-none' : ''}`}>
-                      <div className="flex items-center justify-between gap-4">
-                        <div className={`text-sm font-medium transition-colors ${stampMode === 'classic' ? 'text-primary' : 'text-muted-foreground'}`}>
-                          Klassisch
-                        </div>
-                        <Switch
-                          checked={stampMode === 'revenue'}
-                          onCheckedChange={(checked) => {
-                            const newMode = checked ? 'revenue' : 'classic';
-                            setStampMode(newMode);
-                            if (newMode === 'classic') {
-                              setNfcChips(chips => chips.map(chip => ({ ...chip, points_value: 10 })));
-                            } else {
-                              const blue = avgRevenue;
-                              setNfcChips(chips => chips.map(chip => {
-                                const color = chip.stamp_color?.toLowerCase() || '';
-                                if (color === 'grün' || color === 'green') return { ...chip, points_value: Math.max(1, Math.round(blue * 3 / 7)) };
-                                if (color === 'blau' || color === 'blue') return { ...chip, points_value: blue };
-                                if (color === 'rot' || color === 'red') return { ...chip, points_value: Math.round(blue * 15 / 7) };
-                                return chip;
-                              }));
-                            }
-                          }}
-                        />
-                        <div className={`text-sm font-medium transition-colors ${stampMode === 'revenue' ? 'text-primary' : 'text-muted-foreground'}`}>
-                          Umsatzbasiert
-                        </div>
-                      </div>
+                      <div>
+                        <p className="text-sm text-muted-foreground mb-4">
+                          Wie viel gibt ein Kunde bei dir im Durchschnitt pro Besuch aus?
+                        </p>
 
-                      {stampMode === 'classic' ? (
-                        <div className="p-4 bg-white rounded-xl border border-gray-100">
-                          <p className="text-sm text-muted-foreground">
-                            <strong>Pro Besuch ein Stempel.</strong> Jeder Stempel gibt die gleiche Punktzahl (10 Punkte). Klassisches Stempelsystem – ideal für Geschäfte mit gleichbleibendem Einkaufswert.
-                          </p>
-                        </div>
-                      ) : (
-                        <div className="space-y-4">
-                          <div className="p-4 bg-white rounded-xl border border-gray-100 space-y-1">
-                            <ul className="text-sm text-muted-foreground space-y-1">
-                              <li>🟢 <strong>Grüner Stempel:</strong> Unter <span className="font-semibold text-foreground">{avgRevenue} €</span></li>
-                              <li>🔵 <strong>Blauer Stempel:</strong> {avgRevenue} € – <span className="font-semibold text-foreground">{Math.round(avgRevenue * 15 / 7)} €</span></li>
-                              <li>🔴 <strong>Roter Stempel:</strong> Über <span className="font-semibold text-foreground">{Math.round(avgRevenue * 15 / 7)} €</span></li>
-                            </ul>
-                          </div>
-                          <div>
-                            <Label className="text-sm font-medium mb-3 block">
-                              Durchschnittlicher Umsatz pro Kunde: <span className="text-primary font-bold">{avgRevenue} €</span>
-                            </Label>
-                            <Slider
-                              min={5}
-                              max={100}
-                              step={1}
-                              value={[avgRevenue]}
-                              onValueChange={(val) => {
-                                const blue = val[0];
-                                setAvgRevenue(blue);
+                        {/* Quick select buttons */}
+                        <div className="flex flex-wrap gap-2 mb-4">
+                          {[5, 8, 12, 20, 35].map((val) => (
+                            <button
+                              key={val}
+                              type="button"
+                              onClick={() => {
+                                setAvgRevenue(val);
+                                setStampMode('revenue');
+                                const blue = val;
                                 setNfcChips(chips => chips.map(chip => {
                                   const color = chip.stamp_color?.toLowerCase() || '';
                                   if (color === 'grün' || color === 'green') return { ...chip, points_value: Math.max(1, Math.round(blue * 3 / 7)) };
@@ -1197,15 +1177,84 @@ const MeinGeschaeft = () => {
                                   return chip;
                                 }));
                               }}
-                              className="w-full"
-                            />
-                            <div className="flex justify-between text-xs text-muted-foreground mt-1">
-                              <span>5 €</span>
-                              <span>100 €</span>
+                              className={`px-4 py-2 rounded-full border-2 text-sm font-medium transition-all ${
+                                avgRevenue === val && stampMode === 'revenue'
+                                  ? 'border-primary bg-primary/10 text-primary'
+                                  : 'border-gray-200 bg-white text-gray-700 hover:border-primary/40'
+                              }`}
+                            >
+                              ca. {val} €
+                            </button>
+                          ))}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setAvgRevenue(50);
+                              setStampMode('revenue');
+                              const blue = 50;
+                              setNfcChips(chips => chips.map(chip => {
+                                const color = chip.stamp_color?.toLowerCase() || '';
+                                if (color === 'grün' || color === 'green') return { ...chip, points_value: Math.max(1, Math.round(blue * 3 / 7)) };
+                                if (color === 'blau' || color === 'blue') return { ...chip, points_value: blue };
+                                if (color === 'rot' || color === 'red') return { ...chip, points_value: Math.round(blue * 15 / 7) };
+                                return chip;
+                              }));
+                            }}
+                            className={`px-4 py-2 rounded-full border-2 text-sm font-medium transition-all ${
+                              avgRevenue === 50 && stampMode === 'revenue'
+                                ? 'border-primary bg-primary/10 text-primary'
+                                : 'border-gray-200 bg-white text-gray-700 hover:border-primary/40'
+                            }`}
+                          >
+                            &gt; 35 €
+                          </button>
+                        </div>
+
+                        {/* Slider */}
+                        <div className="space-y-3">
+                          <div className="text-center">
+                            <div className="bg-primary/10 border border-primary/30 rounded-full px-4 py-1.5 inline-block">
+                              <span className="text-lg font-bold text-primary">
+                                ca. {avgRevenue} €
+                              </span>
                             </div>
                           </div>
+                          <Slider
+                            min={3}
+                            max={50}
+                            step={1}
+                            value={[avgRevenue]}
+                            onValueChange={(val) => {
+                              const blue = val[0];
+                              setAvgRevenue(blue);
+                              setStampMode('revenue');
+                              setNfcChips(chips => chips.map(chip => {
+                                const color = chip.stamp_color?.toLowerCase() || '';
+                                if (color === 'grün' || color === 'green') return { ...chip, points_value: Math.max(1, Math.round(blue * 3 / 7)) };
+                                if (color === 'blau' || color === 'blue') return { ...chip, points_value: blue };
+                                if (color === 'rot' || color === 'red') return { ...chip, points_value: Math.round(blue * 15 / 7) };
+                                return chip;
+                              }));
+                            }}
+                            className="w-full"
+                          />
+                          <div className="flex justify-between text-xs text-muted-foreground">
+                            <span>3 €</span>
+                            <span>50 €</span>
+                          </div>
                         </div>
-                      )}
+
+                        {/* Threshold display */}
+                        {stampMode === 'revenue' && (
+                          <div className="p-4 bg-white rounded-xl border border-gray-100 space-y-1 mt-4">
+                            <ul className="text-sm text-muted-foreground space-y-1">
+                              <li>🟢 <strong>Grüner Stempel:</strong> ab <span className="font-semibold text-foreground">{Math.max(1, Math.round(avgRevenue * 3 / 7))} €</span> Einkaufswert</li>
+                              <li>🔵 <strong>Blauer Stempel:</strong> ab <span className="font-semibold text-foreground">{avgRevenue} €</span> Einkaufswert</li>
+                              <li>🔴 <strong>Roter Stempel:</strong> ab <span className="font-semibold text-foreground">{Math.round(avgRevenue * 15 / 7)} €</span> Einkaufswert</li>
+                            </ul>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </CardContent>
                 </Card>

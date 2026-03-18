@@ -269,7 +269,7 @@ export default function MerchantSetup() {
 
   const handleFinish = () => {
     toast.success("Einrichtung abgeschlossen! 🎉");
-    navigate("/kunde");
+    navigate("/kunde/mein-geschaeft");
   };
 
   // ─── Step handler mapping ───
