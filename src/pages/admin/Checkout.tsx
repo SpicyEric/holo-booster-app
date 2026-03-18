@@ -443,8 +443,6 @@ export default function Checkout() {
                     placeholder="12345"
                   />
                 </div>
-
-              <div className="grid md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="city">Stadt</Label>
                   <Input
