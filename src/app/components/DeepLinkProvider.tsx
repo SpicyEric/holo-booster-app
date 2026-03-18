@@ -33,7 +33,6 @@ interface DeepLinkProviderProps {
  */
 export function DeepLinkProvider({ children }: DeepLinkProviderProps) {
   const navigate = useNavigate();
-  const location = useLocation();
 
   const handleDeepLink = useCallback((url: string) => {
     console.log('🔗 Deep Link empfangen:', url);
