@@ -39,6 +39,7 @@ class NfcService {
   private currentCallback: NfcReadCallback | null = null;
   private abortController: AbortController | null = null;
   private nfcListenerHandle: any = null;
+  private scanStartedAt: number = 0; // Timestamp when scan session was started
 
   isNativeApp(): boolean {
     return this.isNative;
