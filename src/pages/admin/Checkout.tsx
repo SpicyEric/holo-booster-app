@@ -55,6 +55,7 @@ export default function Checkout() {
   const [customerEmail, setCustomerEmail] = useState("");
   const [companyName, setCompanyName] = useState("");
   const [street, setStreet] = useState("");
+  const [houseNumber, setHouseNumber] = useState("");
   const [city, setCity] = useState("");
   const [postalCode, setPostalCode] = useState("");
   const [country, setCountry] = useState("Deutschland");
