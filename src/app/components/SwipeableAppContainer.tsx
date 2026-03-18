@@ -368,7 +368,7 @@ const AppHomeContent = () => {
     <PullToRefresh onRefresh={handleRefresh}>
     <div className="-mx-4 space-y-6">
       {feedItems.map((item: any) => (
-        <div key={`${item.type}-${item.id}`} className="bg-card">
+        <div key={`${item.type}-${item.id}`} className={`bg-card ${item.type === 'offer' ? 'border-l-4 border-primary' : ''}`}>
           <div className="flex items-center gap-3 px-4 py-3 cursor-pointer" onClick={() => navigate(`/app/merchant/${item.merchant_customer_id}`)}>
             {item.merchant_logo ? (
               <img src={item.merchant_logo} alt="" className="w-9 h-9 rounded-full object-cover" />
@@ -389,7 +389,20 @@ const AppHomeContent = () => {
             <span className="text-xs text-muted-foreground">{formatTimeAgo(item.created_at)}</span>
           </div>
 
-          {item.image_url ? (
+          {/* Merchant card: wide aspect ratio with cover image */}
+          {item.type === 'merchant_card' ? (
+            <div className="w-full aspect-[16/7] bg-muted cursor-pointer" onClick={() => navigate(`/app/merchant/${item.merchant_customer_id}`)}>
+              {item.image_url ? (
+                <img src={item.image_url} alt="" className="w-full h-full object-cover" loading="lazy" />
+              ) : (
+                <div className="w-full h-full bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center">
+                  <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
+                    <span className="text-3xl font-bold text-primary">{item.merchant_name.charAt(0)}</span>
+                  </div>
+                </div>
+              )}
+            </div>
+          ) : item.image_url ? (
             <div className="w-full aspect-square bg-muted cursor-pointer" onClick={() => navigate(`/app/merchant/${item.merchant_customer_id}`)}>
               <img src={item.image_url} alt="" className="w-full h-full object-cover" loading="lazy" />
             </div>
