@@ -42,8 +42,8 @@ serve(async (req) => {
     // Parse request body for pause duration
     const { pauseMonths = 1 } = await req.json().catch(() => ({ pauseMonths: 1 }));
     
-    // Validate pause duration (max 2 months)
-    const validPauseMonths = Math.min(Math.max(1, pauseMonths), 2);
+    // Validate pause duration (max 3 months)
+    const validPauseMonths = Math.min(Math.max(1, pauseMonths), 3);
     logStep("Pause duration", { pauseMonths: validPauseMonths });
 
     // Get customer record with subscription ID
