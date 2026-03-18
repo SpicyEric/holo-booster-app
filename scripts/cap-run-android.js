@@ -6,12 +6,14 @@
  * Why:
  * - `npx cap run android` performs a sync first, which can re-introduce Java
  *   settings incompatible with Capacitor 7 in generated Android modules.
- * - Our `configure-android-nfc.js` script enforces Java 21, Gradle 8.11.1, and SDK 35.
+ * - `cap sync` copies assets from `dist`. If `dist` is stale, old app code (incl. old map logic)
+ *   is shipped to Android even when source files were updated.
  *
  * This helper enforces the correct order:
- *   1) cap sync android
- *   2) run post-sync hooks (Android/iOS) -> includes Java 17 patching
- *   3) cap run android --no-sync
+ *   1) npm run build
+ *   2) cap sync android
+ *   3) run post-sync hooks (Android/iOS)
+ *   4) cap run android --no-sync
  */
 
 import { execSync } from 'child_process';
@@ -21,6 +23,7 @@ function run(cmd) {
 }
 
 function main() {
+  run('npm run build');
   run('npx cap sync android');
   run('node scripts/capacitor-hooks.js');
   run('npx cap run android --no-sync');
