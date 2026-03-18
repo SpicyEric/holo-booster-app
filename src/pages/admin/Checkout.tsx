@@ -215,6 +215,7 @@ export default function Checkout() {
             companyName,
             address: {
               street,
+              houseNumber,
               city,
               postalCode,
               country,
