@@ -132,24 +132,8 @@ export function DeepLinkProvider({ children }: DeepLinkProviderProps) {
     };
   }, [handleDeepLink]);
 
-  // Listener für NFC Events vom Native Plugin
-  useEffect(() => {
-    const handleNfcEvent = (event: CustomEvent) => {
-      const tagId = event.detail?.tagId || event.detail?.id || event.detail?.serialNumber;
-      if (tagId) {
-        console.log('📱 NFC Event empfangen:', tagId);
-        handleDeepLink(`eloyo://scan?chip=${tagId}`);
-      }
-    };
-
-    window.addEventListener('capacitor-nfc-tag' as any, handleNfcEvent);
-    window.addEventListener('nfc-tag-scanned' as any, handleNfcEvent);
-
-    return () => {
-      window.removeEventListener('capacitor-nfc-tag' as any, handleNfcEvent);
-      window.removeEventListener('nfc-tag-scanned' as any, handleNfcEvent);
-    };
-  }, [handleDeepLink]);
+  // NFC Events werden NICHT global verarbeitet.
+  // Punkte werden ausschließlich über den aktiven Scan-Bildschirm (AppScan) vergeben.
 
   return (
     <DeepLinkContext.Provider value={{ handleDeepLink }}>

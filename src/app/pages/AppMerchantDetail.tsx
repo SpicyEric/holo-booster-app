@@ -284,6 +284,26 @@ export const AppMerchantDetail = () => {
 
   const handlePointsUpdated = (newPoints: number) => {
     setUserPoints(newPoints);
+    // Transaktionen sofort neu laden damit die Einlösung direkt sichtbar ist
+    reloadTransactions();
+  };
+
+  const reloadTransactions = async () => {
+    if (!user || !id) return;
+    const { data: loyaltyAccount } = await supabase
+      .from('loyalty_accounts')
+      .select('id')
+      .eq('user_id', user.id)
+      .eq('merchant_customer_id', id)
+      .maybeSingle();
+    if (loyaltyAccount) {
+      const { data: txData } = await supabase
+        .from('point_transactions')
+        .select('id, points_change, transaction_type, description, created_at')
+        .eq('loyalty_account_id', loyaltyAccount.id)
+        .order('created_at', { ascending: false });
+      if (txData) setTransactions(txData);
+    }
   };
 
   const handleNewCustomerOfferRedeemed = () => {

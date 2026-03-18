@@ -122,6 +122,9 @@ class NfcService {
       return;
     }
 
+    // Zuerst alle alten Listener/Sessions aufräumen um gecachte Tags zu verwerfen
+    await this.cleanupPreviousScan();
+
     this.isScanning = true;
     this.currentCallback = onRead;
 
@@ -133,6 +136,25 @@ class NfcService {
     } else {
       await this.startWebScan(onRead);
     }
+  }
+
+  /**
+   * Cleanup any previous scan state to prevent queued tags from firing
+   */
+  private async cleanupPreviousScan(): Promise<void> {
+    if (this.nfcListenerHandle) {
+      try {
+        await this.nfcListenerHandle.remove();
+      } catch {}
+      this.nfcListenerHandle = null;
+    }
+    try {
+      await Nfc.stopScanSession();
+    } catch {}
+    // Remove all Nfc listeners to clear any queued events
+    try {
+      await Nfc.removeAllListeners();
+    } catch {}
   }
 
   private validateChipData(data: string): boolean {
