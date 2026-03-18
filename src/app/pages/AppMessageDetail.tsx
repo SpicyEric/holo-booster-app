@@ -213,11 +213,12 @@ const AppMessageDetail = () => {
           return;
         }
 
-        // Validate the stamp belongs to the merchant of this message
+        // Fraud-safe, atomic server-side redemption
         try {
-          const { data, error } = await supabase.rpc('award_points_via_nfc', {
-            p_chip_data: result.chipData,
+          const { data, error } = await supabase.rpc('redeem_message_offer_via_nfc', {
+            p_message_id: message.id,
             p_user_id: user.id,
+            p_chip_data: result.chipData,
             p_hardware_uid: result.hardwareUid || null,
           });
 
@@ -225,45 +226,26 @@ const AppMessageDetail = () => {
 
           const response = data as any;
           if (!response?.success) {
-            toast.error(response?.error || 'Ungültiger Stempel');
-            return;
-          }
-
-          // Check the stamp is from the correct merchant
-          if (response.merchant_customer_id !== message.merchant_customer_id) {
-            toast.error('Dieser Stempel gehört nicht zu diesem Geschäft. Bitte nutze den Stempel von ' + (message.customer?.name || 'dem richtigen Geschäft') + '.');
-            return;
-          }
-
-          // Mark offer as redeemed
-          const redeemedAt = new Date().toISOString();
-          await supabase
-            .from('app_messages')
-            .update({ offer_redeemed_at: redeemedAt })
-            .eq('id', message.id)
-            .eq('user_id', user.id);
-
-          // Log as 0-point transaction for history
-          try {
-            const { data: account } = await supabase
-              .from('loyalty_accounts')
-              .select('id')
-              .eq('user_id', user.id)
-              .eq('merchant_customer_id', message.merchant_customer_id)
-              .maybeSingle();
-            if (account) {
-              await supabase.from('point_transactions').insert({
-                loyalty_account_id: account.id,
-                merchant_customer_id: message.merchant_customer_id,
-                points_change: 0,
-                transaction_type: 'offer_redeemed',
-                description: `Angebot eingelöst: ${message.offer?.title || 'Angebot'}`
-              });
+            if (response?.error_code === 'already_redeemed') {
+              const redeemedAt = response?.offer_redeemed_at || new Date().toISOString();
+              setMessage(prev => prev ? { ...prev, offer_redeemed_at: redeemedAt } : null);
+              setShowNfcDialog(false);
+              toast.info('Dieses Angebot wurde bereits eingelöst.');
+              return;
             }
-          } catch (txErr) {
-            console.error('[MessageDetail] Transaction log error:', txErr);
+
+            if (response?.error_code === 'expired_offer') {
+              setShowNfcDialog(false);
+              toast.error('Diese Prämie ist leider abgelaufen');
+              await loadMessage();
+              return;
+            }
+
+            toast.error(response?.error || 'Fehler beim Einlösen');
+            return;
           }
 
+          const redeemedAt = response?.offer_redeemed_at || new Date().toISOString();
           setShowNfcDialog(false);
           toast.success('✅ Angebot eingelöst!');
           setMessage(prev => prev ? { ...prev, offer_redeemed_at: redeemedAt } : null);
