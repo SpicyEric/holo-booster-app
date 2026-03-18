@@ -52,7 +52,9 @@ const INDEX_TO_TITLE: Record<number, string> = {
 export const SwipeableAppContainer = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const [currentIndex, setCurrentIndex] = useState(0);
+  const [currentIndex, setCurrentIndex] = useState(() => {
+    return ROUTE_TO_INDEX[window.location.pathname] ?? 0;
+  });
   const [swipeEnabled, setSwipeEnabled] = useState(true);
   
   // Initialize push notifications
