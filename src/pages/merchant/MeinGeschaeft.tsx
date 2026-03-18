@@ -1015,28 +1015,55 @@ const MeinGeschaeft = () => {
 
                 {/* Opening Hours */}
                 <Card className="rounded-2xl shadow-sm border-0 bg-gray-50/80 p-6">
-                  <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                    <Clock className="w-5 h-5" />
-                    Öffnungszeiten
-                  </h3>
-                  <div className="space-y-3">
-                    {DAYS.map((day) => (
-                      <div key={day.key} className="flex items-center gap-4">
-                        <div className="w-24 text-sm font-medium">{day.label}</div>
-                        <label className="flex items-center gap-2 cursor-pointer">
-                          <input type="checkbox" checked={formData.opening_hours[day.key]?.closed || false} onChange={(e) => handleOpeningHoursChange(day.key, "closed", e.target.checked)} className="rounded" />
-                          <span className="text-sm text-gray-500">Geschlossen</span>
-                        </label>
-                        {!formData.opening_hours[day.key]?.closed && (
-                          <div className="flex items-center gap-2 flex-1">
-                            <Input type="time" value={formData.opening_hours[day.key]?.open || "09:00"} onChange={(e) => handleOpeningHoursChange(day.key, "open", e.target.value)} className="w-28 rounded-xl" />
-                            <span className="text-gray-400">-</span>
-                            <Input type="time" value={formData.opening_hours[day.key]?.close || "18:00"} onChange={(e) => handleOpeningHoursChange(day.key, "close", e.target.value)} className="w-28 rounded-xl" />
-                          </div>
-                        )}
-                      </div>
-                    ))}
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-semibold flex items-center gap-2">
+                      <Clock className="w-5 h-5" />
+                      Öffnungszeiten
+                    </h3>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm text-muted-foreground">{Object.keys(formData.opening_hours).length > 0 ? 'An' : 'Aus'}</span>
+                      <Switch
+                        checked={Object.keys(formData.opening_hours).length > 0}
+                        onCheckedChange={(checked) => {
+                          if (checked) {
+                            // Initialize all days with default hours
+                            const defaultHours: OpeningHours = {};
+                            DAYS.forEach(day => {
+                              defaultHours[day.key] = { open: "09:00", close: "18:00", closed: false };
+                            });
+                            setFormData(prev => ({ ...prev, opening_hours: defaultHours }));
+                          } else {
+                            // Clear all opening hours
+                            setFormData(prev => ({ ...prev, opening_hours: {} }));
+                          }
+                        }}
+                      />
+                    </div>
                   </div>
+                  {Object.keys(formData.opening_hours).length > 0 ? (
+                    <div className="space-y-3">
+                      {DAYS.map((day) => (
+                        <div key={day.key} className="flex items-center gap-4">
+                          <div className="w-24 text-sm font-medium">{day.label}</div>
+                          <label className="flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" checked={formData.opening_hours[day.key]?.closed || false} onChange={(e) => handleOpeningHoursChange(day.key, "closed", e.target.checked)} className="rounded" />
+                            <span className="text-sm text-gray-500">Geschlossen</span>
+                          </label>
+                          {!formData.opening_hours[day.key]?.closed && (
+                            <div className="flex items-center gap-2 flex-1">
+                              <Input type="time" value={formData.opening_hours[day.key]?.open || "09:00"} onChange={(e) => handleOpeningHoursChange(day.key, "open", e.target.value)} className="w-28 rounded-xl" />
+                              <span className="text-gray-400">-</span>
+                              <Input type="time" value={formData.opening_hours[day.key]?.close || "18:00"} onChange={(e) => handleOpeningHoursChange(day.key, "close", e.target.value)} className="w-28 rounded-xl" />
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-muted-foreground text-center py-4">
+                      Öffnungszeiten sind deaktiviert. Schalten Sie den Regler ein, um Öffnungszeiten anzuzeigen.
+                    </p>
+                  )}
                 </Card>
 
                 {/* Contact & Links */}
