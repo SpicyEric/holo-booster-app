@@ -192,6 +192,7 @@ const MeinGeschaeft = () => {
   const [stampMode, setStampMode] = useState<'classic' | 'revenue'>('classic');
   const [avgRevenue, setAvgRevenue] = useState(7);
   const [manualMode, setManualMode] = useState(false);
+  const [selectedVariant, setSelectedVariant] = useState<'balanced' | 'umsatzboost'>('balanced');
 
   useEffect(() => {
     if (user?.id) {
