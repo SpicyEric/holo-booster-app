@@ -84,7 +84,6 @@ function StoresGoogleMapContent({
   const [authError, setAuthError] = useState(false);
 
   const { isLoaded, loadError } = useJsApiLoader({
-    id: 'google-maps-script',
     googleMapsApiKey: apiKey,
     libraries: LIBRARIES,
   });
