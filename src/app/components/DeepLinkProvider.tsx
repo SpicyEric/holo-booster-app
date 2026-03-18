@@ -1,6 +1,5 @@
 import { useEffect, useCallback, createContext, useContext, ReactNode } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { toast } from 'sonner';
+import { useNavigate } from 'react-router-dom';
 
 // Check if Capacitor App plugin is available
 const getCapacitorApp = async () => {
