@@ -119,18 +119,31 @@ export default function TestWizard() {
         {/* Navigation */}
         <div className="flex items-center justify-between mt-8">
           <div>
-            {step > 0 && !isLastStep && (
+            {step > 2 && !isLastStep && (
               <Button variant="ghost" size="sm" onClick={goBack}>
                 <ArrowLeft className="h-4 w-4 mr-1" />
                 Zurück
               </Button>
             )}
           </div>
-          <Button onClick={isLastStep ? () => alert("Wizard abgeschlossen – weiter zum Dashboard!") : goNext}>
+          <Button
+            onClick={isLastStep ? () => alert("Wizard abgeschlossen – weiter zum Dashboard!") : goNext}
+            disabled={!isStepValid}
+          >
             {isLastStep ? (
               <>
                 <CheckCircle2 className="h-4 w-4 mr-1" />
                 Loslegen
+              </>
+            ) : step === 0 ? (
+              <>
+                Passwort festlegen
+                <ChevronRight className="h-4 w-4 ml-1" />
+              </>
+            ) : step === 1 ? (
+              <>
+                Einrichtung starten
+                <ChevronRight className="h-4 w-4 ml-1" />
               </>
             ) : (
               <>
