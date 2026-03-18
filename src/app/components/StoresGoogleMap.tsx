@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, Component, type ReactNode, useRef } from 'react';
+import { useEffect, useState, useCallback, Component, type ReactNode } from 'react';
 import { GoogleMap, useJsApiLoader, Marker, InfoWindow } from '@react-google-maps/api';
 import { useNavigate } from 'react-router-dom';
 import { useGoogleMapsApiKey } from '@/hooks/useGoogleMapsApiKey';
@@ -32,9 +32,7 @@ const mapStyles = [
 ];
 
 const LIBRARIES: ('places')[] = ['places'];
-const MAP_RENDER_TIMEOUT_MS = 12000;
 
-// ─── Error Boundary ───
 interface ErrorBoundaryState {
   hasError: boolean;
 }
@@ -53,7 +51,7 @@ class MapErrorBoundary extends Component<{ children: ReactNode; onRetry: () => v
   render() {
     if (this.state.hasError) {
       return (
-        <div className="flex flex-col items-center justify-center h-full gap-4 p-6">
+        <div className="flex flex-col items-center justify-center h-full gap-4 p-6 bg-muted rounded-xl">
           <AlertCircle className="h-10 w-10 text-destructive" />
           <p className="text-muted-foreground text-center">Die Karte konnte nicht geladen werden.</p>
           <Button
@@ -64,8 +62,7 @@ class MapErrorBoundary extends Component<{ children: ReactNode; onRetry: () => v
               this.props.onRetry();
             }}
           >
-            <RefreshCw className="h-4 w-4 mr-2" />
-            Erneut versuchen
+            <RefreshCw className="h-4 w-4 mr-2" /> Erneut versuchen
           </Button>
         </div>
       );
@@ -75,7 +72,6 @@ class MapErrorBoundary extends Component<{ children: ReactNode; onRetry: () => v
   }
 }
 
-// ─── Map Content ───
 function StoresGoogleMapContent({
   userLocation,
   stores,
@@ -84,70 +80,40 @@ function StoresGoogleMapContent({
 }: StoresGoogleMapProps & { apiKey: string; onRetry: () => void }) {
   const navigate = useNavigate();
   const [selectedStore, setSelectedStore] = useState<Store | null>(null);
-  const [map, setMap] = useState<google.maps.Map | null>(null);
   const [markerIcons, setMarkerIcons] = useState<Record<string, google.maps.Icon>>({});
-  const [initialCenterSet, setInitialCenterSet] = useState(false);
-  const [tilesLoaded, setTilesLoaded] = useState(false);
-  const [renderError, setRenderError] = useState<string | null>(null);
-  const renderTimeoutRef = useRef<number | null>(null);
+  const [authError, setAuthError] = useState(false);
 
   const { isLoaded, loadError } = useJsApiLoader({
-    id: 'google-maps-script',
     googleMapsApiKey: apiKey,
     libraries: LIBRARIES,
   });
-
-  const clearRenderTimeout = useCallback(() => {
-    if (renderTimeoutRef.current !== null) {
-      window.clearTimeout(renderTimeoutRef.current);
-      renderTimeoutRef.current = null;
-    }
-  }, []);
-
-  const startRenderTimeout = useCallback(() => {
-    clearRenderTimeout();
-    renderTimeoutRef.current = window.setTimeout(() => {
-      setRenderError('Die Karte konnte nicht vollständig geladen werden.');
-    }, MAP_RENDER_TIMEOUT_MS);
-  }, [clearRenderTimeout]);
 
   const validStores = stores.filter((store) => store.lat !== 0 && store.lng !== 0);
   const center = { lat: userLocation[0], lng: userLocation[1] };
 
   const onMapLoad = useCallback(
     (mapInstance: google.maps.Map) => {
-      setMap(mapInstance);
-      setTilesLoaded(false);
-      setRenderError(null);
-      mapInstance.setCenter({ lat: userLocation[0], lng: userLocation[1] });
+      mapInstance.setCenter(center);
       mapInstance.setZoom(14);
-      setInitialCenterSet(true);
-      startRenderTimeout();
     },
-    [startRenderTimeout, userLocation]
+    [center]
   );
-
-  const onMapTilesLoaded = useCallback(() => {
-    setTilesLoaded(true);
-    setRenderError(null);
-    clearRenderTimeout();
-  }, [clearRenderTimeout]);
 
   useEffect(() => {
     if (!isLoaded || typeof window === 'undefined') return;
 
-    const previousAuthFailure = (window as typeof window & { gm_authFailure?: () => void }).gm_authFailure;
+    const win = window as typeof window & { gm_authFailure?: () => void };
+    const previousAuthFailure = win.gm_authFailure;
 
-    (window as typeof window & { gm_authFailure?: () => void }).gm_authFailure = () => {
+    win.gm_authFailure = () => {
       console.error('[GoogleMap] gm_authFailure triggered');
-      setRenderError('Google Maps konnte nicht autorisiert werden.');
-      clearRenderTimeout();
+      setAuthError(true);
     };
 
     return () => {
-      (window as typeof window & { gm_authFailure?: () => void }).gm_authFailure = previousAuthFailure;
+      win.gm_authFailure = previousAuthFailure;
     };
-  }, [clearRenderTimeout, isLoaded]);
+  }, [isLoaded]);
 
   useEffect(() => {
     if (!isLoaded || typeof google === 'undefined') return;
@@ -162,7 +128,6 @@ function StoresGoogleMapContent({
       const borderWidth = 3;
       canvas.width = size;
       canvas.height = size;
-
       const ctx = canvas.getContext('2d');
       if (!ctx) return;
 
@@ -204,27 +169,15 @@ function StoresGoogleMapContent({
     });
   }, [isLoaded, validStores]);
 
-  useEffect(() => {
-    if (loadError) {
-      setRenderError('Google Maps konnte nicht geladen werden.');
-      clearRenderTimeout();
-    }
-  }, [clearRenderTimeout, loadError]);
-
-  useEffect(() => {
-    return () => {
-      clearRenderTimeout();
-    };
-  }, [clearRenderTimeout]);
-
-  if (renderError) {
+  if (loadError || authError) {
     return (
       <div className="flex flex-col items-center justify-center h-full gap-3 p-6 bg-muted rounded-xl">
         <AlertCircle className="h-8 w-8 text-destructive" />
-        <p className="text-muted-foreground text-sm text-center">{renderError}</p>
+        <p className="text-muted-foreground text-sm text-center">
+          Google Maps konnte nicht geladen werden.
+        </p>
         <Button variant="outline" size="sm" onClick={onRetry}>
-          <RefreshCw className="h-4 w-4 mr-2" />
-          Erneut versuchen
+          <RefreshCw className="h-4 w-4 mr-2" /> Erneut versuchen
         </Button>
       </div>
     );
@@ -240,22 +193,12 @@ function StoresGoogleMapContent({
   }
 
   return (
-    <div className="relative w-full h-full">
-      {!tilesLoaded && (
-        <div className="absolute inset-0 z-10 flex items-center justify-center bg-muted/80">
-          <div className="flex items-center gap-3">
-            <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-primary" />
-            <p className="text-sm text-muted-foreground">Karte wird gerendert...</p>
-          </div>
-        </div>
-      )}
-
+    <div className="w-full h-full">
       <GoogleMap
         mapContainerStyle={mapContainerStyle}
-        center={!initialCenterSet ? center : undefined}
-        zoom={!initialCenterSet ? 14 : undefined}
+        center={center}
+        zoom={14}
         onLoad={onMapLoad}
-        onTilesLoaded={onMapTilesLoaded}
         options={{
           zoomControl: true,
           streetViewControl: false,
@@ -327,13 +270,12 @@ function StoresGoogleMapContent({
   );
 }
 
-// ─── Wrapper with API key + error boundary ───
 export function StoresGoogleMap(props: StoresGoogleMapProps) {
   const { apiKey, loading, error } = useGoogleMapsApiKey();
   const [retryKey, setRetryKey] = useState(0);
 
   const handleRetry = useCallback(() => {
-    setRetryKey((key) => key + 1);
+    setRetryKey((prev) => prev + 1);
   }, []);
 
   if (loading) {
