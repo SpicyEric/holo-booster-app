@@ -157,6 +157,7 @@ const App = () => (
           <Route path="/customer" element={<Navigate to="/kunde" replace />} />
           
           <Route path="/design-variants" element={<DesignVariants />} />
+          <Route path="/test-wizard" element={<TestWizard />} />
         <Route path="*" element={<NotFound />} />
         </Routes>
         </DeepLinkProvider>
