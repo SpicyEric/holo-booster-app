@@ -39,6 +39,7 @@ class NfcService {
   private currentCallback: NfcReadCallback | null = null;
   private abortController: AbortController | null = null;
   private nfcListenerHandle: any = null;
+  private scanStartedAt: number = 0; // Timestamp when scan session was started
 
   isNativeApp(): boolean {
     return this.isNative;
@@ -166,8 +167,19 @@ class NfcService {
     try {
       console.log('[NFC] Setting up Capawesome NFC listener');
 
+      // Record when we started so we can reject stale/buffered tags
+      this.scanStartedAt = Date.now();
+
       this.nfcListenerHandle = await Nfc.addListener('nfcTagScanned', (event: any) => {
-        console.log('[NFC] Tag scanned:', JSON.stringify(event));
+        const elapsed = Date.now() - this.scanStartedAt;
+        console.log('[NFC] Tag scanned, elapsed since scan start:', elapsed, 'ms');
+        
+        // Reject tags that arrive within 600ms of starting - these are buffered/stale
+        if (elapsed < 600) {
+          console.log('[NFC] Ignoring stale/buffered NFC tag (arrived too quickly after scan start)');
+          return;
+        }
+        
         this.processNfcTag(event.nfcTag, onRead);
       });
 
