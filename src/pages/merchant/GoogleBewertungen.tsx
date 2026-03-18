@@ -370,27 +370,6 @@ const GoogleBewertungen = () => {
             </ol>
           </Card>
 
-          {/* Stats Card (Placeholder) */}
-          <Card className="p-6 rounded-2xl shadow-sm border-0 bg-gray-50/80">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Bewertungs-Statistiken</h3>
-            <p className="text-gray-500 text-sm">
-              Hier werden bald deine Bewertungs-Statistiken angezeigt, z.B. wie viele Kunden nach dem Stempeln eine Bewertung abgegeben haben.
-            </p>
-            <div className="mt-4 grid grid-cols-3 gap-4">
-              <div className="text-center p-4 bg-white rounded-xl">
-                <div className="text-2xl font-bold text-gray-900">-</div>
-                <div className="text-xs text-gray-500 mt-1">Anfragen gesendet</div>
-              </div>
-              <div className="text-center p-4 bg-white rounded-xl">
-                <div className="text-2xl font-bold text-gray-900">-</div>
-                <div className="text-xs text-gray-500 mt-1">Bewertungen erhalten</div>
-              </div>
-              <div className="text-center p-4 bg-white rounded-xl">
-                <div className="text-2xl font-bold text-gray-900">-%</div>
-                <div className="text-xs text-gray-500 mt-1">Conversion Rate</div>
-              </div>
-            </div>
-          </Card>
         </div>
       </div>
     </div>

@@ -9,19 +9,9 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { 
-  Loader2, KeyRound, Trash2, User, Mail, CreditCard, FileText, 
-  Download, ExternalLink, Pause, XCircle 
+  Loader2, KeyRound, User, Mail, CreditCard, FileText, 
+  Download, ExternalLink, ChevronDown, ChevronUp, AlertTriangle
 } from "lucide-react";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 import {
   Dialog,
   DialogContent,
@@ -37,7 +27,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
 interface Customer {
   id: string;
@@ -77,18 +67,20 @@ export default function MeinKonto() {
   const [subscription, setSubscription] = useState<SubscriptionInfo | null>(null);
   
   const [showPasswordDialog, setShowPasswordDialog] = useState(false);
-  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  const [showPauseDialog, setShowPauseDialog] = useState(false);
   const [showCancelDialog, setShowCancelDialog] = useState(false);
+  const [showAllInvoices, setShowAllInvoices] = useState(false);
   
   const [changingPassword, setChangingPassword] = useState(false);
-  const [deleting, setDeleting] = useState(false);
   const [processingAction, setProcessingAction] = useState(false);
   
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [deleteConfirmed, setDeleteConfirmed] = useState(false);
+  
+  // Cancel dialog state
+  const [cancelChoice, setCancelChoice] = useState<'pause' | 'cancel'>('pause');
   const [pauseMonths, setPauseMonths] = useState('1');
+
+  const INVOICES_INITIAL = 4;
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -97,9 +89,7 @@ export default function MeinKonto() {
   }, [user, authLoading, navigate]);
 
   useEffect(() => {
-    if (user) {
-      loadData();
-    }
+    if (user) loadData();
   }, [user]);
 
   const loadData = async () => {
@@ -122,7 +112,6 @@ export default function MeinKonto() {
         if (customerData) {
           setCustomer(customerData);
 
-          // Load invoices
           const { data: invoiceData } = await supabase
             .from('invoices')
             .select('*')
@@ -133,7 +122,6 @@ export default function MeinKonto() {
             setInvoices(invoiceData);
           }
 
-          // Load subscription info
           if (customerData.stripe_subscription_id) {
             try {
               const { data: subInfo } = await supabase.functions.invoke('get-subscription-info');
@@ -158,20 +146,14 @@ export default function MeinKonto() {
       toast.error("Passwörter stimmen nicht überein");
       return;
     }
-
     if (newPassword.length < 6) {
       toast.error("Passwort muss mindestens 6 Zeichen lang sein");
       return;
     }
-
     setChangingPassword(true);
     try {
-      const { error } = await supabase.auth.updateUser({
-        password: newPassword,
-      });
-
+      const { error } = await supabase.auth.updateUser({ password: newPassword });
       if (error) throw error;
-
       toast.success("Passwort erfolgreich geändert");
       setShowPasswordDialog(false);
       setNewPassword("");
@@ -181,31 +163,6 @@ export default function MeinKonto() {
       toast.error("Fehler beim Ändern des Passworts");
     } finally {
       setChangingPassword(false);
-    }
-  };
-
-  const deleteAccount = async () => {
-    if (!deleteConfirmed) {
-      toast.error("Bitte bestätigen Sie die Löschung");
-      return;
-    }
-
-    setDeleting(true);
-    try {
-      try {
-        await supabase.functions.invoke("cancel-subscription");
-      } catch (e) {
-        // Ignore if no subscription
-      }
-
-      await supabase.auth.signOut();
-      toast.success("Löschungsanfrage wurde übermittelt. Ihr Account wird in Kürze gelöscht.");
-      navigate("/");
-    } catch (error: any) {
-      console.error("Error deleting account:", error);
-      toast.error("Fehler beim Löschen des Accounts");
-    } finally {
-      setDeleting(false);
     }
   };
 
@@ -230,7 +187,7 @@ export default function MeinKonto() {
       });
       if (error) throw error;
       toast.success(`Abo für ${pauseMonths} Monat(e) pausiert`);
-      setShowPauseDialog(false);
+      setShowCancelDialog(false);
       loadData();
     } catch (error) {
       console.error('Error pausing subscription:', error);
@@ -253,6 +210,14 @@ export default function MeinKonto() {
       toast.error('Fehler beim Kündigen');
     } finally {
       setProcessingAction(false);
+    }
+  };
+
+  const handleCancelDialogConfirm = () => {
+    if (cancelChoice === 'pause') {
+      handlePauseSubscription();
+    } else {
+      handleCancelSubscription();
     }
   };
 
@@ -279,6 +244,8 @@ export default function MeinKonto() {
     const config = statusConfig[status || ''] || { variant: 'outline', label: status || '-' };
     return <Badge variant={config.variant} className="rounded-full">{config.label}</Badge>;
   };
+
+  const displayedInvoices = showAllInvoices ? invoices : invoices.slice(0, INVOICES_INITIAL);
 
   if (authLoading || loading) {
     return (
@@ -327,7 +294,7 @@ export default function MeinKonto() {
           </CardContent>
         </Card>
 
-        {/* Subscription / Zahlungen */}
+        {/* Subscription */}
         <Card className="rounded-2xl shadow-sm border-0 bg-gray-50/80">
           <CardHeader className="pb-4">
             <CardTitle className="flex items-center gap-3 text-lg font-semibold text-gray-900">
@@ -363,20 +330,16 @@ export default function MeinKonto() {
               </Button>
               
               {customer?.status === 'active' && (
-                <>
-                  <Button variant="outline" onClick={() => setShowPauseDialog(true)} className="rounded-xl">
-                    <Pause className="h-4 w-4 mr-2" />
-                    Pausieren
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    className="text-destructive hover:text-destructive rounded-xl" 
-                    onClick={() => setShowCancelDialog(true)}
-                  >
-                    <XCircle className="h-4 w-4 mr-2" />
-                    Kündigen
-                  </Button>
-                </>
+                <Button 
+                  variant="outline" 
+                  className="rounded-xl" 
+                  onClick={() => {
+                    setCancelChoice('pause');
+                    setShowCancelDialog(true);
+                  }}
+                >
+                  Abo kündigen
+                </Button>
               )}
             </div>
           </CardContent>
@@ -398,7 +361,7 @@ export default function MeinKonto() {
               <p className="text-gray-500 text-center py-8">Noch keine Rechnungen vorhanden</p>
             ) : (
               <div className="space-y-3">
-                {invoices.map((invoice) => (
+                {displayedInvoices.map((invoice) => (
                   <div key={invoice.id} className="flex items-center justify-between p-4 bg-white rounded-xl border border-gray-100">
                     <div className="flex items-center gap-4">
                       <FileText className="h-5 w-5 text-gray-400" />
@@ -424,6 +387,20 @@ export default function MeinKonto() {
                     </div>
                   </div>
                 ))}
+
+                {invoices.length > INVOICES_INITIAL && (
+                  <Button
+                    variant="ghost"
+                    className="w-full text-gray-500"
+                    onClick={() => setShowAllInvoices(!showAllInvoices)}
+                  >
+                    {showAllInvoices ? (
+                      <>Weniger anzeigen <ChevronUp className="w-4 h-4 ml-1" /></>
+                    ) : (
+                      <>Alle {invoices.length} Rechnungen anzeigen <ChevronDown className="w-4 h-4 ml-1" /></>
+                    )}
+                  </Button>
+                )}
               </div>
             )}
           </CardContent>
@@ -445,30 +422,6 @@ export default function MeinKonto() {
           <CardContent>
             <Button variant="outline" onClick={() => setShowPasswordDialog(true)} className="rounded-xl">
               Passwort ändern
-            </Button>
-          </CardContent>
-        </Card>
-
-        {/* Delete Account */}
-        <Card className="rounded-2xl shadow-sm border-0 bg-red-50/50">
-          <CardHeader className="pb-4">
-            <CardTitle className="flex items-center gap-3 text-lg font-semibold text-red-700">
-              <div className="w-10 h-10 rounded-xl bg-red-100 flex items-center justify-center">
-                <Trash2 className="h-5 w-5 text-red-600" />
-              </div>
-              Account löschen
-            </CardTitle>
-            <CardDescription className="text-red-600/80">
-              Löschen Sie Ihren Account und alle damit verbundenen Daten dauerhaft.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Button 
-              variant="destructive" 
-              onClick={() => setShowDeleteDialog(true)}
-              className="rounded-xl"
-            >
-              Account löschen
             </Button>
           </CardContent>
         </Card>
@@ -516,95 +469,100 @@ export default function MeinKonto() {
           </DialogContent>
         </Dialog>
 
-        {/* Delete Dialog */}
-        <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-          <AlertDialogContent className="rounded-2xl">
-            <AlertDialogHeader>
-              <AlertDialogTitle>Account löschen?</AlertDialogTitle>
-              <AlertDialogDescription>
-                Diese Aktion kann nicht rückgängig gemacht werden. Alle Ihre Daten 
-                werden dauerhaft gelöscht. Ein aktives Abonnement wird automatisch gekündigt.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <div className="flex items-center space-x-3 py-4">
-              <Checkbox
-                id="delete-confirm"
-                checked={deleteConfirmed}
-                onCheckedChange={(checked) => setDeleteConfirmed(checked as boolean)}
-              />
+        {/* Combined Cancel/Pause Dialog */}
+        <Dialog open={showCancelDialog} onOpenChange={setShowCancelDialog}>
+          <DialogContent className="rounded-2xl sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Abo kündigen</DialogTitle>
+              <DialogDescription>
+                Was möchten Sie tun?
+              </DialogDescription>
+            </DialogHeader>
+
+            <RadioGroup value={cancelChoice} onValueChange={(v) => setCancelChoice(v as 'pause' | 'cancel')} className="space-y-3">
               <label
-                htmlFor="delete-confirm"
-                className="text-sm font-medium leading-none"
+                className={`flex items-start gap-3 p-4 rounded-xl border-2 cursor-pointer transition-colors ${
+                  cancelChoice === 'pause' ? 'border-primary bg-primary/5' : 'border-gray-200 bg-white'
+                }`}
               >
-                Ich verstehe, dass diese Aktion nicht rückgängig gemacht werden kann
+                <RadioGroupItem value="pause" className="mt-0.5" />
+                <div>
+                  <p className="font-semibold text-gray-900">Abo pausieren</p>
+                  <p className="text-sm text-gray-500 mt-1">
+                    Ihr Abo wird vorübergehend pausiert. Danach geht es automatisch weiter.
+                  </p>
+                </div>
               </label>
-            </div>
-            <AlertDialogFooter>
-              <AlertDialogCancel onClick={() => setDeleteConfirmed(false)} className="rounded-xl">
+
+              <label
+                className={`flex items-start gap-3 p-4 rounded-xl border-2 cursor-pointer transition-colors ${
+                  cancelChoice === 'cancel' ? 'border-primary bg-primary/5' : 'border-gray-200 bg-white'
+                }`}
+              >
+                <RadioGroupItem value="cancel" className="mt-0.5" />
+                <div>
+                  <p className="font-semibold text-gray-900">Abo endgültig kündigen</p>
+                  <p className="text-sm text-gray-500 mt-1">
+                    Ihr Abo wird zum Ende der Laufzeit beendet.
+                  </p>
+                </div>
+              </label>
+            </RadioGroup>
+
+            {cancelChoice === 'pause' && (
+              <div className="space-y-2">
+                <Label className="text-gray-700">Wie lange pausieren?</Label>
+                <Select value={pauseMonths} onValueChange={setPauseMonths}>
+                  <SelectTrigger className="rounded-xl">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="1">1 Monat</SelectItem>
+                    <SelectItem value="2">2 Monate</SelectItem>
+                    <SelectItem value="3">3 Monate</SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-gray-500">
+                  Während der Pause ist Ihr Geschäft im eloyo-Netzwerk nicht sichtbar. Nach Ablauf der Pause wird Ihr Abo automatisch fortgesetzt.
+                </p>
+              </div>
+            )}
+
+            {cancelChoice === 'cancel' && (
+              <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 space-y-2">
+                <div className="flex items-start gap-2">
+                  <AlertTriangle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <p className="font-semibold text-amber-900">Achtung: Unwiderruflicher Datenverlust</p>
+                    <p className="text-sm text-amber-800 mt-1">
+                      Mit der Kündigung verlieren Sie dauerhaft den Zugriff auf Ihren gesamten Kundenstamm, 
+                      alle gesammelten Kontaktdaten und die Möglichkeit, Ihre Kunden über eloyo zu erreichen. 
+                      Bei einer erneuten Anmeldung starten Sie komplett von vorne.
+                    </p>
+                    <p className="text-sm text-amber-800 mt-2 font-medium">
+                      Tipp: Pausieren Sie stattdessen – so bleiben alle Daten erhalten.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <DialogFooter className="gap-2 sm:gap-0">
+              <Button variant="outline" onClick={() => setShowCancelDialog(false)} className="rounded-xl">
                 Abbrechen
-              </AlertDialogCancel>
-              <AlertDialogAction
-                onClick={deleteAccount}
-                disabled={!deleteConfirmed || deleting}
-                className="bg-destructive text-destructive-foreground hover:bg-destructive/90 rounded-xl"
-              >
-                {deleting && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
-                Account löschen
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-
-        {/* Pause Dialog */}
-        <AlertDialog open={showPauseDialog} onOpenChange={setShowPauseDialog}>
-          <AlertDialogContent className="rounded-2xl">
-            <AlertDialogHeader>
-              <AlertDialogTitle>Abo pausieren</AlertDialogTitle>
-              <AlertDialogDescription>
-                Wie lange möchten Sie Ihr Abo pausieren?
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <Select value={pauseMonths} onValueChange={setPauseMonths}>
-              <SelectTrigger className="rounded-xl">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="1">1 Monat</SelectItem>
-                <SelectItem value="2">2 Monate</SelectItem>
-              </SelectContent>
-            </Select>
-            <AlertDialogFooter>
-              <AlertDialogCancel className="rounded-xl">Abbrechen</AlertDialogCancel>
-              <AlertDialogAction onClick={handlePauseSubscription} disabled={processingAction} className="rounded-xl">
-                {processingAction && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
-                Pausieren
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-
-        {/* Cancel Dialog */}
-        <AlertDialog open={showCancelDialog} onOpenChange={setShowCancelDialog}>
-          <AlertDialogContent className="rounded-2xl">
-            <AlertDialogHeader>
-              <AlertDialogTitle>Abo kündigen</AlertDialogTitle>
-              <AlertDialogDescription>
-                Möchten Sie Ihr Abo wirklich kündigen? Es bleibt bis zum Ende der aktuellen Laufzeit aktiv.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel className="rounded-xl">Abbrechen</AlertDialogCancel>
-              <AlertDialogAction 
-                onClick={handleCancelSubscription} 
+              </Button>
+              <Button 
+                onClick={handleCancelDialogConfirm} 
                 disabled={processingAction}
-                className="bg-destructive text-destructive-foreground hover:bg-destructive/90 rounded-xl"
+                className="rounded-xl"
+                variant={cancelChoice === 'cancel' ? 'destructive' : 'default'}
               >
                 {processingAction && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
-                Kündigen
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
+                {cancelChoice === 'pause' ? 'Jetzt pausieren' : 'Endgültig kündigen'}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );
