@@ -252,11 +252,16 @@ const AppHomeContent = () => {
 
           posts.forEach(post => {
             const m = merchants?.find(m => m.id === post.merchant_customer_id);
+            let distance: number | undefined;
+            if (userLocation && m?.latitude && m?.longitude) {
+              distance = haversineDistance(userLocation.lat, userLocation.lng, m.latitude, m.longitude);
+            }
             items.push({
               type: 'post', id: post.id, merchant_customer_id: post.merchant_customer_id,
               merchant_name: m?.company_name || m?.name || 'Unbekannt', merchant_logo: m?.logo_url || null,
               image_url: post.image_url, body: post.body, created_at: post.created_at,
               like_count: likeCounts.get(post.id) || 0, liked_by_user: userLikes.has(post.id),
+              distance,
             });
           });
         }
