@@ -197,8 +197,8 @@ function StoresGoogleMapContent({
     <div className="w-full h-full">
       <GoogleMap
         mapContainerStyle={mapContainerStyle}
-        defaultCenter={center}
-        defaultZoom={14}
+        center={center}
+        zoom={14}
         onLoad={onMapLoad}
         options={{
           zoomControl: true,
