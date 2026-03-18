@@ -252,10 +252,9 @@ export default function PartnerCheckout() {
             </div>
             <div className="grid md:grid-cols-2 gap-4">
               <div className="space-y-2"><Label>PLZ</Label><Input value={postalCode} onChange={e => setPostalCode(e.target.value)} /></div>
-            <div className="grid md:grid-cols-2 gap-4">
               <div className="space-y-2"><Label>Stadt</Label><Input value={city} onChange={e => setCity(e.target.value)} /></div>
-              <div className="space-y-2"><Label>Land</Label><Input value={country} onChange={e => setCountry(e.target.value)} /></div>
             </div>
+            <div className="space-y-2"><Label>Land</Label><Input value={country} onChange={e => setCountry(e.target.value)} /></div>
           </CardContent>
         </Card>
 
