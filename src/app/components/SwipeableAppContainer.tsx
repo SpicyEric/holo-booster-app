@@ -85,7 +85,7 @@ export const SwipeableAppContainer = () => {
   useEffect(() => {
     const targetIndex = ROUTE_TO_INDEX[location.pathname];
     if (targetIndex !== undefined && emblaApi) {
-      emblaApi.scrollTo(targetIndex, false);
+      emblaApi.scrollTo(targetIndex, true);
       setCurrentIndex(targetIndex);
     }
   }, [location.pathname, emblaApi]);
