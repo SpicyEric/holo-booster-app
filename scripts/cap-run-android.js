@@ -23,6 +23,7 @@ function run(cmd) {
 }
 
 function main() {
+  run('npm run build');
   run('npx cap sync android');
   run('node scripts/capacitor-hooks.js');
   run('npx cap run android --no-sync');
