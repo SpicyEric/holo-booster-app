@@ -74,6 +74,7 @@ export const SwipeableAppContainer = () => {
     dragFree: false,
     startIndex: currentIndex,
     watchDrag: swipeEnabled,
+    duration: 25,
   });
 
   // Re-initialize embla when swipe enabled state changes
