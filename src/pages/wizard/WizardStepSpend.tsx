@@ -39,7 +39,7 @@ export default function WizardStepSpend({ state, onChange }: Props) {
           type="button"
           onClick={() => onChange({ avgSpend: 50 })}
           className={cn(
-            "px-4 py-2 rounded-full border-2 text-sm font-medium transition-all",
+            "px-5 py-2.5 rounded-full border-2 text-base font-medium transition-all",
             state.avgSpend === 50
               ? "border-primary bg-primary/10 text-primary"
               : "border-border bg-card text-foreground hover:border-primary/40"
