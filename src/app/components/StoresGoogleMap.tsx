@@ -122,11 +122,11 @@ function StoresGoogleMapContent({ userLocation, stores, apiKey }: StoresGoogleMa
   }
 
   return (
-    <div style={{ width: '100%', height: '100%', touchAction: 'none' }}>
+    <div style={{ width: '100%', height: '100%' }}>
       <GoogleMap
         mapContainerStyle={mapContainerStyle}
-        center={center}
-        zoom={14}
+        defaultCenter={center}
+        defaultZoom={14}
           onLoad={onMapLoad}
           options={{
             zoomControl: true,
