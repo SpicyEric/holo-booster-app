@@ -125,8 +125,8 @@ function StoresGoogleMapContent({ userLocation, stores, apiKey }: StoresGoogleMa
     <div style={{ width: '100%', height: '100%' }}>
       <GoogleMap
         mapContainerStyle={mapContainerStyle}
-        defaultCenter={center}
-        defaultZoom={14}
+        center={!initialCenterSet ? center : undefined}
+        zoom={!initialCenterSet ? 14 : undefined}
           onLoad={onMapLoad}
           options={{
             zoomControl: true,
