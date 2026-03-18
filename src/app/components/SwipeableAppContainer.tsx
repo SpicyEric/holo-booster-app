@@ -847,7 +847,7 @@ const AppStoresContent = () => {
                   </div>
                   {/* Distance Badge - Top Right */}
                   {merchant.distance !== null && (
-                    <div className="absolute top-3 right-3 z-20">
+                    <div className="absolute top-3 right-3 z-10">
                       <span className="bg-white/95 backdrop-blur-sm text-gray-800 text-xs font-medium px-2 py-1 rounded-full shadow-sm">
                         {merchant.distance < 1 ? `${Math.round(merchant.distance * 1000)}m` : `${merchant.distance.toFixed(1)}km`}
                       </span>

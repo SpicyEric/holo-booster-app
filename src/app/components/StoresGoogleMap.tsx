@@ -196,12 +196,7 @@ function StoresGoogleMapContent({ userLocation, stores, apiKey }: StoresGoogleMa
               </div>
             </InfoWindow>
           )}
-        </GoogleMap>
-      ) : (
-        <div className="flex items-center justify-center h-full">
-          <p className="text-muted-foreground">Karte wird geladen...</p>
-        </div>
-      )}
+      </GoogleMap>
     </div>
   );
 }
