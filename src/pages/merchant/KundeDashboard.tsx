@@ -511,7 +511,7 @@ export default function KundeDashboard() {
         .select("*", { count: "exact", head: true })
         .eq("merchant_customer_id", customerId)
         .eq("loyalty_account_id", acc.id)
-        .gt("points_change", 0);
+        .eq("transaction_type", "nfc_stamp");
       userTransactionCounts[acc.id] = count || 0;
     }
 

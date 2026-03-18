@@ -867,7 +867,9 @@ const MeinGeschaeft = () => {
                       </div>
                       <div>
                         <CardTitle className="text-lg font-semibold text-gray-900">Neukundenprämie</CardTitle>
-                        <CardDescription className="text-gray-500">Locken Sie neue Kunden an</CardDescription>
+                        <CardDescription className="text-gray-500">
+                          Motiviere eloyo-Nutzer, die dein Geschäft noch nicht besucht haben, zum ersten Besuch – oder überzeuge bestehende Kunden, die App herunterzuladen und direkt mit dem Punktesammeln zu starten.
+                        </CardDescription>
                       </div>
                     </div>
                     <Button variant={newCustomerOffer ? "outline" : "default"} onClick={() => setShowNcoDialog(true)} className="rounded-xl">
