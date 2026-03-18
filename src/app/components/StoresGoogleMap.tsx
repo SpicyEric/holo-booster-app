@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, Component, type ReactNode } from 'react';
+import { useEffect, useState, useCallback, useMemo, Component, type ReactNode } from 'react';
 import { GoogleMap, useJsApiLoader, Marker, InfoWindow } from '@react-google-maps/api';
 import { useNavigate } from 'react-router-dom';
 import { useGoogleMapsApiKey } from '@/hooks/useGoogleMapsApiKey';
@@ -88,8 +88,8 @@ function StoresGoogleMapContent({
     libraries: LIBRARIES,
   });
 
-  const validStores = stores.filter((store) => store.lat !== 0 && store.lng !== 0);
-  const center = { lat: userLocation[0], lng: userLocation[1] };
+  const validStores = useMemo(() => stores.filter((store) => store.lat !== 0 && store.lng !== 0), [stores]);
+  const center = useMemo(() => ({ lat: userLocation[0], lng: userLocation[1] }), [userLocation]);
 
   const onMapLoad = useCallback(
     (mapInstance: google.maps.Map) => {
@@ -118,10 +118,20 @@ function StoresGoogleMapContent({
   useEffect(() => {
     if (!isLoaded || typeof google === 'undefined') return;
 
+    let cancelled = false;
+
+    const storesWithLogo = validStores.filter((store) => Boolean(store.logo_url));
+
+    if (storesWithLogo.length === 0) {
+      setMarkerIcons((prev) => (Object.keys(prev).length === 0 ? prev : {}));
+      return;
+    }
+
     setMarkerIcons({});
 
-    validStores.forEach((store) => {
-      if (!store.logo_url) return;
+    storesWithLogo.forEach((store) => {
+      const logoUrl = store.logo_url;
+      if (!logoUrl) return;
 
       const canvas = document.createElement('canvas');
       const size = 44;
@@ -135,6 +145,8 @@ function StoresGoogleMapContent({
       img.crossOrigin = 'anonymous';
 
       img.onload = () => {
+        if (cancelled) return;
+
         try {
           ctx.save();
           ctx.beginPath();
@@ -155,18 +167,30 @@ function StoresGoogleMapContent({
             anchor: new google.maps.Point(22, 22),
           };
 
-          setMarkerIcons((prev) => ({ ...prev, [store.id]: icon }));
+          setMarkerIcons((prev) => {
+            const currentIcon = prev[store.id];
+            if (currentIcon?.url === icon.url) {
+              return prev;
+            }
+            return { ...prev, [store.id]: icon };
+          });
         } catch (error) {
           console.warn('[GoogleMap] Marker icon render failed, using fallback icon:', error);
         }
       };
 
       img.onerror = () => {
-        console.warn(`[GoogleMap] Logo could not be loaded for store ${store.id}`);
+        if (!cancelled) {
+          console.warn(`[GoogleMap] Logo could not be loaded for store ${store.id}`);
+        }
       };
 
-      img.src = store.logo_url;
+      img.src = logoUrl;
     });
+
+    return () => {
+      cancelled = true;
+    };
   }, [isLoaded, validStores]);
 
   if (loadError || authError) {
