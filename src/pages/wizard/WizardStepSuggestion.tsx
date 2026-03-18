@@ -112,9 +112,9 @@ export default function WizardStepSuggestion({ state, onChange }: Props) {
                 <Stamp
                   className={cn("h-8 w-8 mx-auto mb-2", STAMP_COLOR[tier.color])}
                 />
-                <p className="font-bold text-sm">{tier.label}</p>
-                <p className="text-xs mt-1">ab {tier.threshold} €</p>
-                <p className="text-lg font-bold mt-1">{tier.points} Pkt.</p>
+                <p className="font-bold text-base">{tier.label}</p>
+                <p className="text-sm mt-1">ab {tier.threshold} €</p>
+                <p className="text-xl font-bold mt-1">{tier.points} Pkt.</p>
               </div>
             ))}
           </div>

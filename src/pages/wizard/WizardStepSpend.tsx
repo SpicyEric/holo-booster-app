@@ -76,7 +76,7 @@ export default function WizardStepSpend({ state, onChange }: Props) {
         </div>
       </div>
 
-      <p className="text-xs text-muted-foreground bg-muted/50 rounded-lg p-3 border border-border">
+      <p className="text-sm text-muted-foreground bg-muted/50 rounded-lg p-4 border border-border">
         Wir nutzen diesen Wert, um dir ein Punktesystem vorzuschlagen, das
         für dich und deine Kunden leicht verständlich bleibt.
       </p>

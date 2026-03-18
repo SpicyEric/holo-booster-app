@@ -51,7 +51,7 @@ export default function WizardStepComplete() {
       </div>
 
       <div className="bg-muted/50 rounded-lg p-4 border border-border">
-        <p className="text-xs text-muted-foreground">
+        <p className="text-sm text-muted-foreground">
           Im nächsten Schritt kannst du Adresse, Beschreibung und weitere
           Details ergänzen.
         </p>

@@ -130,8 +130,8 @@ export const GOAL_OPTIONS = [
   },
   {
     value: "simple",
-    label: "Einfaches Treueprogramm",
-    description: "Maximale Klarheit – ein Stempel pro Besuch",
+    label: "Ein Stempel pro Besuch",
+    description: "Maximale Klarheit",
     icon: "check-circle",
   },
   {

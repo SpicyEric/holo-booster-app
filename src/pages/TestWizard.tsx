@@ -117,7 +117,7 @@ export default function TestWizard() {
         </AnimatePresence>
 
         {/* Navigation */}
-        <div className="flex items-center justify-between mt-6">
+        <div className="flex items-center justify-between mt-8">
           <div>
             {step > 0 && !isLastStep && (
               <Button variant="ghost" size="sm" onClick={goBack}>

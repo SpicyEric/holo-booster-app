@@ -49,10 +49,10 @@ export default function WizardStepBusiness({ state, onChange }: Props) {
 
       <div>
         <Label className="mb-3 block">Branche auswählen</Label>
-        <p className="text-xs text-muted-foreground mb-3">
+        <p className="text-sm text-muted-foreground mb-4">
           Damit wir dir ein passendes Punktesystem empfehlen können.
         </p>
-        <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+        <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
           {INDUSTRIES.map((ind) => {
             const Icon = ICON_MAP[ind.icon] || Store;
             const selected = state.industry === ind.value;
@@ -62,7 +62,7 @@ export default function WizardStepBusiness({ state, onChange }: Props) {
                 type="button"
                 onClick={() => onChange({ industry: ind.value })}
                 className={cn(
-                  "flex flex-col items-center gap-1.5 p-3 rounded-xl border-2 transition-all text-center",
+                  "flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all text-center",
                   "hover:border-primary/40 hover:bg-primary/5",
                   selected
                     ? "border-primary bg-primary/10 shadow-sm"
@@ -71,13 +71,13 @@ export default function WizardStepBusiness({ state, onChange }: Props) {
               >
                 <Icon
                   className={cn(
-                    "h-5 w-5",
+                    "h-6 w-6",
                     selected ? "text-primary" : "text-muted-foreground"
                   )}
                 />
                 <span
                   className={cn(
-                    "text-xs font-medium leading-tight",
+                    "text-sm font-medium leading-tight",
                     selected ? "text-primary" : "text-foreground"
                   )}
                 >
