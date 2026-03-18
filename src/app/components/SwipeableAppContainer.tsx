@@ -52,6 +52,7 @@ const INDEX_TO_TITLE: Record<number, string> = {
 export const SwipeableAppContainer = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const prevPathRef = useRef(location.pathname);
   const [currentIndex, setCurrentIndex] = useState(() => {
     return ROUTE_TO_INDEX[window.location.pathname] ?? 0;
   });
@@ -86,9 +87,12 @@ export const SwipeableAppContainer = () => {
   useEffect(() => {
     const targetIndex = ROUTE_TO_INDEX[location.pathname];
     if (targetIndex !== undefined && emblaApi) {
-      emblaApi.scrollTo(targetIndex, true);
+      // Smooth animation for tab-to-tab navigation, instant jump when returning from detail pages
+      const prevWasTab = ROUTE_TO_INDEX[prevPathRef.current] !== undefined;
+      emblaApi.scrollTo(targetIndex, !prevWasTab);
       setCurrentIndex(targetIndex);
     }
+    prevPathRef.current = location.pathname;
   }, [location.pathname, emblaApi]);
 
   // Handle carousel slide changes
@@ -257,6 +261,34 @@ const AppHomeContent = () => {
         }
       }
 
+      // Add merchant card entries for stamped merchants without feed posts
+      if (stampedMerchantIds.length > 0) {
+        const { data: stampedMerchants } = await supabase
+          .from('customers')
+          .select('id, name, company_name, logo_url, cover_image_url, description, updated_at')
+          .in('id', stampedMerchantIds);
+
+        const merchantsWithPosts = new Set(items.filter((i: any) => i.type === 'post').map((i: any) => i.merchant_customer_id));
+
+        stampedMerchants?.forEach(m => {
+          if (!merchantsWithPosts.has(m.id)) {
+            const account = accounts?.find(a => a.merchant_customer_id === m.id);
+            items.push({
+              type: 'merchant_card',
+              id: `mc-${m.id}`,
+              merchant_customer_id: m.id,
+              merchant_name: m.company_name || m.name || 'Unbekannt',
+              merchant_logo: m.logo_url || null,
+              image_url: m.cover_image_url || null,
+              body: m.description || null,
+              created_at: m.updated_at || new Date().toISOString(),
+              like_count: 0, liked_by_user: false,
+              points_balance: account?.current_points_balance ?? 0,
+            });
+          }
+        });
+      }
+
       const { data: offersData } = await supabase
         .from('new_customer_offers')
         .select('id, merchant_customer_id, title, description, bonus_stamps, created_at, image_url')
@@ -364,7 +396,7 @@ const AppHomeContent = () => {
     <PullToRefresh onRefresh={handleRefresh}>
     <div className="-mx-4 space-y-6">
       {feedItems.map((item: any) => (
-        <div key={`${item.type}-${item.id}`} className="bg-card">
+        <div key={`${item.type}-${item.id}`} className={`bg-card ${item.type === 'offer' ? 'border-l-4 border-primary' : ''}`}>
           <div className="flex items-center gap-3 px-4 py-3 cursor-pointer" onClick={() => navigate(`/app/merchant/${item.merchant_customer_id}`)}>
             {item.merchant_logo ? (
               <img src={item.merchant_logo} alt="" className="w-9 h-9 rounded-full object-cover" />
@@ -385,7 +417,20 @@ const AppHomeContent = () => {
             <span className="text-xs text-muted-foreground">{formatTimeAgo(item.created_at)}</span>
           </div>
 
-          {item.image_url ? (
+          {/* Merchant card: wide aspect ratio with cover image */}
+          {item.type === 'merchant_card' ? (
+            <div className="w-full aspect-[16/7] bg-muted cursor-pointer" onClick={() => navigate(`/app/merchant/${item.merchant_customer_id}`)}>
+              {item.image_url ? (
+                <img src={item.image_url} alt="" className="w-full h-full object-cover" loading="lazy" />
+              ) : (
+                <div className="w-full h-full bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center">
+                  <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
+                    <span className="text-3xl font-bold text-primary">{item.merchant_name.charAt(0)}</span>
+                  </div>
+                </div>
+              )}
+            </div>
+          ) : item.image_url ? (
             <div className="w-full aspect-square bg-muted cursor-pointer" onClick={() => navigate(`/app/merchant/${item.merchant_customer_id}`)}>
               <img src={item.image_url} alt="" className="w-full h-full object-cover" loading="lazy" />
             </div>
@@ -419,6 +464,13 @@ const AppHomeContent = () => {
               <div className="flex items-center gap-2 mb-2">
                 <span className="inline-flex items-center gap-1 px-3 py-1.5 bg-primary/10 text-primary rounded-full text-sm font-semibold">
                   <Gift className="h-4 w-4" />Neukundenprämie
+                </span>
+              </div>
+            )}
+            {item.type === 'merchant_card' && item.points_balance !== undefined && (
+              <div className="flex items-center gap-2 mb-2">
+                <span className="inline-flex items-center gap-1 px-3 py-1.5 bg-muted text-muted-foreground rounded-full text-xs font-medium">
+                  {item.points_balance} Punkte gesammelt
                 </span>
               </div>
             )}

@@ -11,12 +11,19 @@ html {
 }
 
 /* Hide all scrollbars app-wide */
-* {
-  scrollbar-width: none; /* Firefox */
-  -ms-overflow-style: none; /* IE/Edge */
+*,
+*::before,
+*::after {
+  scrollbar-width: none !important; /* Firefox */
+  -ms-overflow-style: none !important; /* IE/Edge */
 }
-*::-webkit-scrollbar {
-  display: none; /* Chrome/Safari */
+*::-webkit-scrollbar,
+*::before::-webkit-scrollbar,
+*::after::-webkit-scrollbar {
+  display: none !important; /* Chrome/Safari */
+  width: 0 !important;
+  height: 0 !important;
+  background: transparent !important;
 }
 
 /* Fixed safe-area shield — prevents content from showing behind system status bar */
@@ -26,6 +33,6 @@ html {
   left: 0;
   right: 0;
   height: env(safe-area-inset-top, 0px);
-  background: hsl(var(--card));
+  background: hsl(var(--background));
   z-index: 60;
 }

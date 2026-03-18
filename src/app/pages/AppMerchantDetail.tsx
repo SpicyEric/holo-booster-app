@@ -316,9 +316,9 @@ export const AppMerchantDetail = () => {
   const merchantName = merchant.company_name || merchant.name;
 
   return (
-    <div className="min-h-screen bg-background pb-24">
-      {/* Safe area shield */}
-      <div className="safe-area-top-shield" />
+    <div className="min-h-screen bg-background pb-24 overflow-x-hidden" style={{ WebkitOverflowScrolling: 'touch' }}>
+      {/* Safe area shield - must be outside scroll flow */}
+      <div className="fixed top-0 left-0 right-0 z-[60]" style={{ height: 'env(safe-area-inset-top, 0px)', background: 'hsl(var(--background))' }} />
 
       {/* Fixed Points Badge - stays visible while scrolling */}
       <div className="fixed right-4 z-50 bg-card/95 backdrop-blur-sm rounded-full px-3 py-1 shadow-md border border-border" style={{ top: 'calc(env(safe-area-inset-top, 0px) + 0.75rem)' }}>
