@@ -1,60 +1,30 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
-import { toast } from "sonner";
-import { 
-  Store, Upload, Clock, 
-  CheckCircle2, ChevronRight, Loader2,
-  Package, ArrowLeft, MapPin
+  ChevronRight, ArrowLeft,
+  Package, Store, ShoppingCart, Target, Stamp, Gift, CheckCircle2, Loader2
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import RichTextEditor from "@/components/merchant/RichTextEditor";
+import { toast } from "sonner";
+import eloyoLogo from "@/assets/eloyo-logo.png";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import eloyoLogo from "@/assets/eloyo-logo.png";
 
-const INDUSTRIES = [
-  { value: "cafe", label: "Café" },
-  { value: "restaurant", label: "Restaurant" },
-  { value: "shishabar", label: "Shishabar" },
-  { value: "cbd-shop", label: "CBD-Shop" },
-  { value: "baeckerei", label: "Bäckerei" },
-  { value: "fashion-store", label: "Fashion Store" },
-  { value: "barbershop", label: "Barbershop" },
-  { value: "apotheke", label: "Apotheke" },
-  { value: "supermarkt", label: "Supermarkt" },
-  { value: "reformhaus", label: "Reformhaus" },
-  { value: "vegan-restaurant", label: "Veganes Restaurant" },
-  { value: "lieferservice", label: "Lieferservice" },
-];
+import { initialWizardState, STEP_META, calculateSuggestion, suggestedRewardPoints } from "../wizard/wizardLogic";
+import type { WizardState } from "../wizard/wizardLogic";
+import WizardStepBoxId from "../wizard/WizardStepBoxId";
+import WizardStepBusiness from "../wizard/WizardStepBusiness";
+import WizardStepSpend from "../wizard/WizardStepSpend";
+import WizardStepGoal from "../wizard/WizardStepGoal";
+import WizardStepSuggestion from "../wizard/WizardStepSuggestion";
+import WizardStepReward from "../wizard/WizardStepReward";
+import WizardStepComplete from "../wizard/WizardStepComplete";
 
-const DAYS = [
-  { key: "monday", label: "Montag" },
-  { key: "tuesday", label: "Dienstag" },
-  { key: "wednesday", label: "Mittwoch" },
-  { key: "thursday", label: "Donnerstag" },
-  { key: "friday", label: "Freitag" },
-  { key: "saturday", label: "Samstag" },
-  { key: "sunday", label: "Sonntag" },
-];
-
-const TOTAL_STEPS = 3; // 0: Box-ID, 1: Name+Adresse, 2: Bild+Beschreibung+Öffnungszeiten
-
-const stepMeta = [
-  { icon: Package, title: "Box-ID verknüpfen", subtitle: "Verbinde deine Starterbox mit deinem Geschäft" },
-  { icon: Store, title: "Name & Adresse", subtitle: "Geschäftsname, Branche und Standort" },
-  { icon: Upload, title: "Profil vervollständigen", subtitle: "Titelbild, Beschreibung und Öffnungszeiten" },
-];
+// Real wizard skips password step (step 0), so we use steps 1-7 from STEP_META
+const WIZARD_STEPS = STEP_META.slice(1); // 7 steps: Box-ID, Business, Spend, Goal, Suggestion, Reward, Complete
+const TOTAL = WIZARD_STEPS.length;
+const STEP_ICONS = [Package, Store, ShoppingCart, Target, Stamp, Gift, CheckCircle2];
 
 export default function MerchantSetup() {
   const { user } = useAuth();
@@ -64,129 +34,100 @@ export default function MerchantSetup() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [customerId, setCustomerId] = useState<string | null>(null);
-  const [uploadingCover, setUploadingCover] = useState(false);
+  const [state, setState] = useState<WizardState>({ ...initialWizardState });
 
-  // Form state
-  const [boxId, setBoxId] = useState("");
-  const [boxLinked, setBoxLinked] = useState(false);
-  const [name, setName] = useState("");
-  const [industry, setIndustry] = useState("");
-  const [coverUrl, setCoverUrl] = useState("");
-  const [description, setDescription] = useState("");
-  const [openingHours, setOpeningHours] = useState<Record<string, { open: string; close: string; closed: boolean }>>({});
+  const update = (updates: Partial<WizardState>) =>
+    setState((prev) => ({ ...prev, ...updates }));
 
-  // Address state
-  const [street, setStreet] = useState("");
-  const [houseNumber, setHouseNumber] = useState("");
-  const [postalCode, setPostalCode] = useState("");
-  const [city, setCity] = useState("");
-  const [latitude, setLatitude] = useState<number | null>(null);
-  const [longitude, setLongitude] = useState<number | null>(null);
-  const [geocoding, setGeocoding] = useState(false);
-
+  // Load merchant assignment
   useEffect(() => {
-    if (user?.id) loadCustomer();
+    if (!user?.id) return;
+    (async () => {
+      try {
+        const { data: assignment } = await supabase
+          .from("merchant_assignments")
+          .select("customer_id")
+          .eq("merchant_user_id", user.id)
+          .maybeSingle();
+
+        if (!assignment?.customer_id) {
+          setLoading(false);
+          return;
+        }
+        setCustomerId(assignment.customer_id);
+
+        // Check if box already linked → skip box step
+        const { count } = await supabase
+          .from("customer_boxes")
+          .select("id", { count: "exact", head: true })
+          .eq("customer_id", assignment.customer_id);
+
+        if (count && count > 0) {
+          setStep(1); // Skip to business step
+        }
+
+        // Load existing customer data
+        const { data: customer } = await supabase
+          .from("customers")
+          .select("name, industry, avg_revenue")
+          .eq("id", assignment.customer_id)
+          .single();
+
+        if (customer) {
+          if (customer.name) update({ businessName: customer.name });
+          if (customer.industry) update({ industry: customer.industry });
+          if (customer.avg_revenue) update({ avgSpend: customer.avg_revenue });
+        }
+      } catch (e) {
+        console.error(e);
+      } finally {
+        setLoading(false);
+      }
+    })();
   }, [user?.id]);
 
-  const loadCustomer = async () => {
-    try {
-      const { data: assignment } = await supabase
-        .from("merchant_assignments")
-        .select("customer_id")
-        .eq("merchant_user_id", user!.id)
-        .maybeSingle();
-
-      if (!assignment?.customer_id) {
-        setLoading(false);
-        return;
-      }
-
-      setCustomerId(assignment.customer_id);
-
-      const { count } = await supabase
-        .from("customer_boxes")
-        .select("id", { count: "exact", head: true })
-        .eq("customer_id", assignment.customer_id);
-
-      if (count && count > 0) {
-        setBoxLinked(true);
-        setStep(1);
-      }
-
-      const { data: customer } = await supabase
-        .from("customers")
-        .select("name, industry, cover_image_url, description, opening_hours, street, house_number, postal_code, city, latitude, longitude")
-        .eq("id", assignment.customer_id)
-        .single();
-
-      if (customer) {
-        setName(customer.name || "");
-        setIndustry(customer.industry || "");
-        setCoverUrl(customer.cover_image_url || "");
-        setDescription(customer.description || "");
-        setStreet(customer.street || "");
-        setHouseNumber(customer.house_number || "");
-        setPostalCode(customer.postal_code || "");
-        setCity(customer.city || "");
-        setLatitude(customer.latitude || null);
-        setLongitude(customer.longitude || null);
-        if (customer.opening_hours && typeof customer.opening_hours === "object") {
-          setOpeningHours(customer.opening_hours as any);
-        }
-      }
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setLoading(false);
-    }
+  const goNext = () => {
+    setDirection(1);
+    if (step < TOTAL - 1) setStep((s) => s + 1);
   };
 
-  const formatBoxIdInput = (value: string) => {
-    const clean = value.replace(/[^A-Za-z0-9]/g, "").toUpperCase();
-    const parts = [];
-    for (let i = 0; i < clean.length && i < 15; i += 5) {
-      parts.push(clean.slice(i, i + 5));
-    }
-    return parts.join("-");
+  const goBack = () => {
+    setDirection(-1);
+    if (step > 0) setStep((s) => s - 1);
   };
+
+  // ─── Step actions ───
 
   const handleLinkBox = async () => {
-    if (!customerId || !boxId.trim()) return;
-
+    if (!customerId || !state.boxId.trim()) return;
     const pattern = /^[A-Z0-9]{5}-[A-Z0-9]{5}-[A-Z0-9]{5}$/;
-    if (!pattern.test(boxId)) {
+    if (!pattern.test(state.boxId)) {
       toast.error("Ungültiges Format: XXXXX-XXXXX-XXXXX");
       return;
     }
-
     setSaving(true);
     try {
       const { data: boxData } = await supabase
         .from("boxes")
         .select("id, box_id, stamp_preset")
-        .eq("box_id", boxId)
+        .eq("box_id", state.boxId)
         .maybeSingle();
 
-      if (!boxData) {
-        toast.error("Box-ID existiert nicht");
-        return;
-      }
+      if (!boxData) { toast.error("Box-ID existiert nicht"); return; }
 
       const { count } = await supabase
         .from("customer_boxes")
         .select("id", { count: "exact", head: true })
         .eq("box_id", boxData.id);
 
-      if (count && count > 0) {
-        toast.error("Diese Box ist bereits vergeben");
-        return;
-      }
+      if (count && count > 0) { toast.error("Diese Box ist bereits vergeben"); return; }
 
       await supabase.from("customer_boxes").insert({
         customer_id: customerId,
         box_id: boxData.id,
       });
 
+      // Create NFC chip configs based on preset
       const preset = boxData.stamp_preset || "standard_3";
       const configs = preset === "standard_5"
         ? [
@@ -205,7 +146,7 @@ export default function MerchantSetup() {
       for (let i = 0; i < configs.length; i++) {
         await supabase.from("nfc_chips").insert({
           merchant_customer_id: customerId,
-          chip_uid: `${customerId.substring(0, 8)}-${i + 1}`,
+          chip_uid: `${customerId!.substring(0, 8)}-${i + 1}`,
           stamp_name: `Stempel ${i + 1}`,
           stamp_color: configs[i].stamp_color,
           points_value: configs[i].points_value,
@@ -214,7 +155,6 @@ export default function MerchantSetup() {
         });
       }
 
-      setBoxLinked(true);
       toast.success("Box erfolgreich verknüpft! 🎉");
       goNext();
     } catch {
@@ -224,121 +164,146 @@ export default function MerchantSetup() {
     }
   };
 
-  const handleCoverUpload = async (file: File) => {
+  const handleSaveBusiness = async () => {
     if (!customerId) return;
-    setUploadingCover(true);
-    try {
-      const ext = file.name.split(".").pop();
-      const path = `${customerId}/cover_${Date.now()}.${ext}`;
-      const { error } = await supabase.storage.from("customer-assets").upload(path, file, { upsert: true });
-      if (error) throw error;
-      const { data: { publicUrl } } = supabase.storage.from("customer-assets").getPublicUrl(path);
-      setCoverUrl(publicUrl);
-      toast.success("Titelbild hochgeladen");
-    } catch {
-      toast.error("Fehler beim Hochladen");
-    } finally {
-      setUploadingCover(false);
-    }
-  };
-
-  const geocodeAddress = useCallback(async (): Promise<{ lat: number; lng: number } | null> => {
-    if (!street || !postalCode || !city) return null;
-    setGeocoding(true);
-    try {
-      const { data, error } = await supabase.functions.invoke("geocode-address", {
-        body: { street, houseNumber, postalCode, city },
-      });
-      if (error) throw error;
-      if (data?.lat && data?.lng) {
-        setLatitude(data.lat);
-        setLongitude(data.lng);
-        return { lat: data.lat, lng: data.lng };
-      } else {
-        toast.error("Adresse konnte nicht gefunden werden");
-        return null;
-      }
-    } catch {
-      toast.error("Geocoding fehlgeschlagen");
-      return null;
-    } finally {
-      setGeocoding(false);
-    }
-  }, [street, houseNumber, postalCode, city]);
-
-  const saveProgress = async () => {
-    if (!customerId) return;
+    if (!state.businessName.trim()) { toast.error("Bitte Geschäftsnamen eingeben"); return; }
+    if (!state.industry) { toast.error("Bitte Branche wählen"); return; }
     setSaving(true);
     try {
-      const updateData: Record<string, any> = {
-        name: name || undefined,
-        industry: industry || undefined,
-        cover_image_url: coverUrl || undefined,
-        description: description || undefined,
-        opening_hours: Object.keys(openingHours).length > 0 ? openingHours : undefined,
-        street: street || undefined,
-        house_number: houseNumber || undefined,
-        postal_code: postalCode || undefined,
-        city: city || undefined,
-        latitude: latitude || undefined,
-        longitude: longitude || undefined,
+      await supabase.from("customers").update({
+        name: state.businessName,
+        industry: state.industry,
         updated_at: new Date().toISOString(),
-      };
-
-      Object.keys(updateData).forEach(key => {
-        if (updateData[key] === undefined) delete updateData[key];
-      });
-
-      await supabase.from("customers").update(updateData).eq("id", customerId);
+      }).eq("id", customerId);
+      goNext();
     } catch {
-      // Silent fail
+      toast.error("Fehler beim Speichern");
     } finally {
       setSaving(false);
     }
   };
 
-  const goNext = () => {
-    setDirection(1);
-    if (step < TOTAL_STEPS - 1) {
-      setStep(s => s + 1);
-    }
-  };
+  const handleSaveStampSystem = async () => {
+    if (!customerId) return;
+    const isSimpleOnly = state.goals.length === 1 && state.goals.includes("simple");
+    const suggestion = calculateSuggestion(
+      state.avgSpend,
+      state.goals,
+      isSimpleOnly ? "simple" : state.selectedVariant
+    );
 
-  const goBack = () => {
-    setDirection(-1);
-    if (step > (boxLinked ? 1 : 0)) {
-      setStep(s => s - 1);
-    }
-  };
+    setSaving(true);
+    try {
+      // Update avg_revenue on customer
+      await supabase.from("customers").update({
+        avg_revenue: state.avgSpend,
+        stamp_mode: suggestion.type === "simple" ? "simple" : "tiered",
+        updated_at: new Date().toISOString(),
+      }).eq("id", customerId);
 
-  const handleNextWithSave = async () => {
-    // Step 1: Name + Address validation
-    if (step === 1) {
-      if (!name.trim()) {
-        toast.error("Bitte gib einen Geschäftsnamen ein");
-        return;
-      }
-      if (!street.trim() || !postalCode.trim() || !city.trim()) {
-        toast.error("Bitte fülle Straße, PLZ und Stadt aus");
-        return;
-      }
-      if (!latitude || !longitude) {
-        const result = await geocodeAddress();
-        if (!result) {
-          toast.error("Bitte klicke auf 'Adresse prüfen', um deinen Standort zu bestätigen");
-          return;
+      // Update NFC chip point values based on suggestion
+      if (suggestion.type === "tiered" && suggestion.tiers) {
+        const colorMap: Record<string, string> = {
+          green: "grün",
+          blue: "blau",
+          red: "rot",
+        };
+        for (const tier of suggestion.tiers) {
+          const dbColor = colorMap[tier.color] || tier.color;
+          await supabase.from("nfc_chips")
+            .update({ points_value: tier.points })
+            .eq("merchant_customer_id", customerId)
+            .eq("stamp_color", dbColor);
         }
+      } else if (suggestion.type === "simple") {
+        await supabase.from("nfc_chips")
+          .update({ points_value: suggestion.pointsPerVisit ?? 5 })
+          .eq("merchant_customer_id", customerId);
       }
+
+      goNext(); // Go to reward step
+    } catch {
+      toast.error("Fehler beim Speichern");
+    } finally {
+      setSaving(false);
     }
-    await saveProgress();
-    goNext();
   };
 
-  const handleFinish = async () => {
-    await saveProgress();
-    toast.success("Geschäft eingerichtet! 🎉");
+  const handleCreateReward = async () => {
+    if (!customerId) return;
+    if (!state.rewardName.trim()) { toast.error("Bitte Prämienname eingeben"); return; }
+
+    const isSimpleOnly = state.goals.length === 1 && state.goals.includes("simple");
+    const suggestion = calculateSuggestion(
+      state.avgSpend,
+      state.goals,
+      isSimpleOnly ? "simple" : state.selectedVariant
+    );
+    const pointsCost = suggestedRewardPoints(suggestion);
+
+    setSaving(true);
+    try {
+      // Create the reward
+      await supabase.from("offers").insert({
+        merchant_customer_id: customerId,
+        title: state.rewardName,
+        description: state.rewardDescription || null,
+        image_url: state.rewardImageUrl || null,
+        is_active: true,
+        show_in_storefront: true,
+      });
+
+      // Set stamps_required on customer to match reward points
+      await supabase.from("customers").update({
+        stamps_required: pointsCost,
+        stamp_reward_text: state.rewardName,
+        updated_at: new Date().toISOString(),
+      }).eq("id", customerId);
+
+      toast.success("Prämie erstellt! 🎉");
+      goNext(); // Complete step
+    } catch {
+      toast.error("Fehler beim Erstellen der Prämie");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleFinish = () => {
+    toast.success("Einrichtung abgeschlossen! 🎉");
     navigate("/kunde");
   };
+
+  // ─── Step handler mapping ───
+
+  const handleStepAction = () => {
+    switch (step) {
+      case 0: return handleLinkBox();       // Box-ID
+      case 1: return handleSaveBusiness();  // Business
+      case 2: goNext(); return;             // Spend (just move forward)
+      case 3: goNext(); return;             // Goal (just move forward)
+      case 4: return handleSaveStampSystem(); // Suggestion → save stamp config
+      case 5: return handleCreateReward();  // Reward
+      case 6: return handleFinish();        // Complete
+    }
+  };
+
+  // ─── Validation ───
+
+  const isStepValid = (() => {
+    switch (step) {
+      case 0: return state.boxId.trim().length === 17; // Box-ID with dashes
+      case 1: return state.businessName.trim().length > 0 && state.industry.length > 0;
+      case 2: return true; // Spend always valid (has default)
+      case 3: return state.goals.length > 0;
+      case 4: return true; // Suggestion always valid
+      case 5: return state.rewardName.trim().length > 0;
+      case 6: return true;
+      default: return true;
+    }
+  })();
+
+  // ─── Loading / error states ───
 
   if (loading) {
     return (
@@ -360,14 +325,17 @@ export default function MerchantSetup() {
     );
   }
 
-  const isLastStep = step === TOTAL_STEPS - 1;
-  const meta = stepMeta[step];
-  const Icon = meta.icon;
-  const progress = ((step + 1) / TOTAL_STEPS) * 100;
+  const meta = WIZARD_STEPS[step];
+  const Icon = STEP_ICONS[step];
+  const progress = ((step + 1) / TOTAL) * 100;
+  const isLastStep = step === TOTAL - 1;
 
-  const googleMapsEmbedUrl = latitude && longitude
-    ? `https://www.google.com/maps?q=${latitude},${longitude}&z=16&output=embed`
-    : null;
+  // Button labels
+  const buttonLabel = (() => {
+    if (isLastStep) return "Loslegen";
+    if (step === 0) return "Einrichtung starten";
+    return "Weiter";
+  })();
 
   return (
     <div className="min-h-screen bg-background">
@@ -375,21 +343,15 @@ export default function MerchantSetup() {
       <div className="border-b border-border bg-card sticky top-0 z-10">
         <div className="max-w-2xl mx-auto px-6 py-4 flex items-center justify-between">
           <img src={eloyoLogo} alt="Eloyo" className="h-7 w-auto" />
-          <span className="text-sm text-muted-foreground">
-            Schritt {step + 1} von {TOTAL_STEPS}
-          </span>
+          <span className="text-sm text-muted-foreground">Schritt {step + 1} von {TOTAL}</span>
         </div>
         <div className="h-1 bg-muted">
-          <motion.div
-            className="h-full bg-primary"
-            animate={{ width: `${progress}%` }}
-            transition={{ duration: 0.3 }}
-          />
+          <motion.div className="h-full bg-primary" animate={{ width: `${progress}%` }} transition={{ duration: 0.3 }} />
         </div>
       </div>
 
       {/* Content */}
-      <div className="max-w-2xl mx-auto px-6 py-8">
+      <div className="max-w-3xl mx-auto px-6 py-10">
         <AnimatePresence mode="wait" custom={direction}>
           <motion.div
             key={step}
@@ -400,317 +362,51 @@ export default function MerchantSetup() {
             transition={{ duration: 0.25 }}
           >
             {/* Step Header */}
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                <Icon className="w-5 h-5 text-primary" />
+            <div className="flex items-center gap-4 mb-8">
+              <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
+                <Icon className="w-6 h-6 text-primary" />
               </div>
               <div>
-                <h2 className="text-lg font-semibold text-foreground">{meta.title}</h2>
-                <p className="text-sm text-muted-foreground">{meta.subtitle}</p>
+                <h2 className="text-xl font-semibold text-foreground">{meta.title}</h2>
+                <p className="text-base text-muted-foreground">{meta.subtitle}</p>
               </div>
             </div>
 
             {/* Step Content */}
-            <div className="bg-card border border-border rounded-xl p-6">
-              {/* Step 0: Box-ID */}
-              {step === 0 && (
-                <div className="space-y-4">
-                  <p className="text-sm text-muted-foreground">
-                    Du findest die Box-ID auf der Innenseite deiner Starterbox (Aufkleber).
-                  </p>
-                  <div>
-                    <Label htmlFor="boxId">Box-ID</Label>
-                    <Input
-                      id="boxId"
-                      placeholder="XXXXX-XXXXX-XXXXX"
-                      value={boxId}
-                      onChange={e => setBoxId(formatBoxIdInput(e.target.value))}
-                      className="mt-1 font-mono text-lg tracking-wider"
-                      maxLength={17}
-                    />
-                  </div>
-                  <Button
-                    onClick={handleLinkBox}
-                    disabled={boxId.length < 17 || saving}
-                    className="w-full"
-                  >
-                    {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Package className="h-4 w-4 mr-2" />}
-                    Box verknüpfen
-                  </Button>
-                </div>
-              )}
-
-              {/* Step 1: Name + Branche + Adresse */}
-              {step === 1 && (
-                <div className="space-y-5">
-                  <div>
-                    <Label htmlFor="name">Geschäftsname *</Label>
-                    <Input
-                      id="name"
-                      placeholder="z.B. Bäckerei Meier"
-                      value={name}
-                      onChange={e => setName(e.target.value)}
-                      className="mt-1"
-                    />
-                  </div>
-                  <div>
-                    <Label>Branche</Label>
-                    <Select value={industry} onValueChange={setIndustry}>
-                      <SelectTrigger className="mt-1">
-                        <SelectValue placeholder="Branche wählen..." />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {INDUSTRIES.map(i => (
-                          <SelectItem key={i.value} value={i.value}>{i.label}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="border-t border-border pt-5">
-                    <div className="flex items-center gap-2 mb-3">
-                      <MapPin className="h-4 w-4 text-primary" />
-                      <span className="text-sm font-medium text-foreground">Adresse (Pflicht)</span>
-                    </div>
-                    <p className="text-sm text-muted-foreground mb-3">
-                      Deine Adresse wird benötigt, damit Kunden dein Geschäft in der App finden können.
-                    </p>
-                    <div className="grid grid-cols-3 gap-3">
-                      <div className="col-span-2">
-                        <Label htmlFor="street">Straße *</Label>
-                        <Input
-                          id="street"
-                          placeholder="Hauptstraße"
-                          value={street}
-                          onChange={e => { setStreet(e.target.value); setLatitude(null); setLongitude(null); }}
-                          className="mt-1"
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="houseNumber">Nr.</Label>
-                        <Input
-                          id="houseNumber"
-                          placeholder="12a"
-                          value={houseNumber}
-                          onChange={e => { setHouseNumber(e.target.value); setLatitude(null); setLongitude(null); }}
-                          className="mt-1"
-                        />
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-3 gap-3 mt-3">
-                      <div>
-                        <Label htmlFor="postalCode">PLZ *</Label>
-                        <Input
-                          id="postalCode"
-                          placeholder="10115"
-                          value={postalCode}
-                          onChange={e => { setPostalCode(e.target.value); setLatitude(null); setLongitude(null); }}
-                          className="mt-1"
-                          maxLength={5}
-                        />
-                      </div>
-                      <div className="col-span-2">
-                        <Label htmlFor="city">Stadt *</Label>
-                        <Input
-                          id="city"
-                          placeholder="Berlin"
-                          value={city}
-                          onChange={e => { setCity(e.target.value); setLatitude(null); setLongitude(null); }}
-                          className="mt-1"
-                        />
-                      </div>
-                    </div>
-
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={geocodeAddress}
-                      disabled={geocoding || !street.trim() || !postalCode.trim() || !city.trim()}
-                      className="w-full mt-3"
-                    >
-                      {geocoding ? (
-                        <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                      ) : (
-                        <MapPin className="h-4 w-4 mr-2" />
-                      )}
-                      Adresse prüfen
-                    </Button>
-
-                    {latitude && longitude && (
-                      <div className="space-y-2 mt-3">
-                        <div className="flex items-center gap-2 text-sm text-green-600">
-                          <CheckCircle2 className="h-4 w-4" />
-                          <span>Standort gefunden</span>
-                        </div>
-                        <div className="rounded-lg overflow-hidden border border-border h-48">
-                          <iframe
-                            title="Standort-Vorschau"
-                            width="100%"
-                            height="100%"
-                            style={{ border: 0 }}
-                            loading="lazy"
-                            referrerPolicy="no-referrer-when-downgrade"
-                            src={googleMapsEmbedUrl!}
-                          />
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {/* Step 2: Bild + Beschreibung + Öffnungszeiten */}
-              {step === 2 && (
-                <div className="space-y-6">
-                  {/* Titelbild */}
-                  <div>
-                    <div className="flex items-center gap-2 mb-3">
-                      <Upload className="h-4 w-4 text-primary" />
-                      <span className="text-sm font-medium text-foreground">Titelbild</span>
-                    </div>
-                    {coverUrl ? (
-                      <div className="relative rounded-lg overflow-hidden">
-                        <img src={coverUrl} alt="Titelbild" className="w-full h-40 object-cover" />
-                        <Button
-                          variant="secondary"
-                          size="sm"
-                          className="absolute bottom-3 right-3"
-                          onClick={() => setCoverUrl("")}
-                        >
-                          Ändern
-                        </Button>
-                      </div>
-                    ) : (
-                      <label className="flex flex-col items-center justify-center h-40 border-2 border-dashed border-border rounded-lg cursor-pointer hover:border-primary/50 transition-colors">
-                        {uploadingCover ? (
-                          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-                        ) : (
-                          <>
-                            <Upload className="h-8 w-8 text-muted-foreground mb-2" />
-                            <span className="text-sm text-muted-foreground">Bild auswählen</span>
-                            <span className="text-xs text-muted-foreground mt-1">Empfohlen: 1200 × 400px</span>
-                          </>
-                        )}
-                        <input
-                          type="file"
-                          accept="image/*"
-                          className="hidden"
-                          onChange={e => {
-                            const file = e.target.files?.[0];
-                            if (file) handleCoverUpload(file);
-                          }}
-                        />
-                      </label>
-                    )}
-                  </div>
-
-                  {/* Beschreibung */}
-                  <div className="border-t border-border pt-5">
-                    <Label className="mb-2 block">Beschreibung</Label>
-                    <p className="text-sm text-muted-foreground mb-2">
-                      Beschreibe dein Geschäft in ein paar Sätzen.
-                    </p>
-                    <RichTextEditor
-                      value={description}
-                      onChange={setDescription}
-                      placeholder="Erzähl deinen Kunden etwas über dein Geschäft..."
-                    />
-                  </div>
-
-                  {/* Öffnungszeiten */}
-                  <div className="border-t border-border pt-5">
-                    <div className="flex items-center gap-2 mb-3">
-                      <Clock className="h-4 w-4 text-primary" />
-                      <span className="text-sm font-medium text-foreground">Öffnungszeiten</span>
-                    </div>
-                    <div className="space-y-3">
-                      {DAYS.map(day => {
-                        const dayData = openingHours[day.key] || { open: "09:00", close: "18:00", closed: false };
-                        const isConfigured = !!openingHours[day.key];
-                        return (
-                          <div key={day.key} className="flex items-center gap-3">
-                            <div className="w-20 text-sm font-medium text-foreground">{day.label}</div>
-                            <Switch
-                              checked={isConfigured && !dayData.closed}
-                              onCheckedChange={(checked) => {
-                                setOpeningHours(prev => ({
-                                  ...prev,
-                                  [day.key]: checked
-                                    ? { open: prev[day.key]?.open || "09:00", close: prev[day.key]?.close || "18:00", closed: false }
-                                    : { ...dayData, closed: true },
-                                }));
-                              }}
-                            />
-                            {isConfigured && !dayData.closed ? (
-                              <div className="flex items-center gap-2">
-                                <Input
-                                  type="time"
-                                  value={dayData.open}
-                                  onChange={e =>
-                                    setOpeningHours(prev => ({
-                                      ...prev,
-                                      [day.key]: { ...dayData, open: e.target.value },
-                                    }))
-                                  }
-                                  className="w-28 h-8 text-sm"
-                                />
-                                <span className="text-muted-foreground text-sm">–</span>
-                                <Input
-                                  type="time"
-                                  value={dayData.close}
-                                  onChange={e =>
-                                    setOpeningHours(prev => ({
-                                      ...prev,
-                                      [day.key]: { ...dayData, close: e.target.value },
-                                    }))
-                                  }
-                                  className="w-28 h-8 text-sm"
-                                />
-                              </div>
-                            ) : (
-                              <span className="text-sm text-muted-foreground">
-                                {isConfigured ? "Geschlossen" : "Nicht angegeben"}
-                              </span>
-                            )}
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                </div>
-              )}
+            <div className="bg-card border border-border rounded-xl p-8">
+              {step === 0 && <WizardStepBoxId state={state} onChange={update} />}
+              {step === 1 && <WizardStepBusiness state={state} onChange={update} />}
+              {step === 2 && <WizardStepSpend state={state} onChange={update} />}
+              {step === 3 && <WizardStepGoal state={state} onChange={update} />}
+              {step === 4 && <WizardStepSuggestion state={state} onChange={update} />}
+              {step === 5 && <WizardStepReward state={state} onChange={update} />}
+              {step === 6 && <WizardStepComplete />}
             </div>
           </motion.div>
         </AnimatePresence>
 
         {/* Navigation */}
-        <div className="flex items-center justify-between mt-6">
+        <div className="flex items-center justify-between mt-8">
           <div>
-            {step > (boxLinked ? 1 : 0) && step > 0 && (
+            {step > 1 && !isLastStep && (
               <Button variant="ghost" size="sm" onClick={goBack}>
                 <ArrowLeft className="h-4 w-4 mr-1" />
                 Zurück
               </Button>
             )}
           </div>
-          <div className="flex gap-2">
-            {step > 0 && (
-              <Button onClick={isLastStep ? handleFinish : handleNextWithSave} disabled={saving}>
-                {saving && <Loader2 className="h-4 w-4 animate-spin mr-1" />}
-                {isLastStep ? (
-                  <>
-                    <CheckCircle2 className="h-4 w-4 mr-1" />
-                    Fertig
-                  </>
-                ) : (
-                  <>
-                    Weiter
-                    <ChevronRight className="h-4 w-4 ml-1" />
-                  </>
-                )}
-              </Button>
-            )}
-          </div>
+          <Button
+            onClick={handleStepAction}
+            disabled={!isStepValid || saving}
+          >
+            {saving ? (
+              <Loader2 className="h-4 w-4 animate-spin mr-1" />
+            ) : isLastStep ? (
+              <CheckCircle2 className="h-4 w-4 mr-1" />
+            ) : null}
+            {saving ? "Speichern..." : buttonLabel}
+            {!isLastStep && !saving && <ChevronRight className="h-4 w-4 ml-1" />}
+          </Button>
         </div>
       </div>
     </div>
