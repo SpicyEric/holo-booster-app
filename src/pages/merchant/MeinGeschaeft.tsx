@@ -1145,12 +1145,12 @@ const MeinGeschaeft = () => {
                 </Card>
               </TabsContent>
 
-              {/* Stempel Tab */}
+               {/* Stempel Tab */}
               <TabsContent value="stempel" className="space-y-6">
-                {/* Stamp System - Wizard-style with avg spend slider */}
-                <Card className="rounded-2xl shadow-sm border-0 bg-gray-50/80">
+                {/* Stamp System - Wizard-style with calculateSuggestion */}
+                <Card className="rounded-2xl shadow-sm border-0 bg-muted/40">
                   <CardHeader className="pb-4">
-                    <CardTitle className="flex items-center gap-3 text-lg font-semibold text-gray-900">
+                    <CardTitle className="flex items-center gap-3 text-lg font-semibold">
                       <span className="text-lg">⚙️</span>
                       Stempelsystem
                     </CardTitle>
@@ -1164,53 +1164,24 @@ const MeinGeschaeft = () => {
 
                         {/* Quick select buttons */}
                         <div className="flex flex-wrap gap-2 mb-4">
-                          {[5, 8, 12, 20, 35].map((val) => (
+                          {SPEND_PRESETS.map((val) => (
                             <button
                               key={val}
                               type="button"
                               onClick={() => {
                                 setAvgRevenue(val);
                                 setStampMode('revenue');
-                                const blue = val;
-                                setNfcChips(chips => chips.map(chip => {
-                                  const color = chip.stamp_color?.toLowerCase() || '';
-                                  if (color === 'grün' || color === 'green') return { ...chip, points_value: Math.max(1, Math.round(blue * 3 / 7)) };
-                                  if (color === 'blau' || color === 'blue') return { ...chip, points_value: blue };
-                                  if (color === 'rot' || color === 'red') return { ...chip, points_value: Math.round(blue * 15 / 7) };
-                                  return chip;
-                                }));
                               }}
-                              className={`px-4 py-2 rounded-full border-2 text-sm font-medium transition-all ${
+                              className={cn(
+                                "px-4 py-2 rounded-full border-2 text-sm font-medium transition-all",
                                 avgRevenue === val && stampMode === 'revenue'
                                   ? 'border-primary bg-primary/10 text-primary'
-                                  : 'border-gray-200 bg-white text-gray-700 hover:border-primary/40'
-                              }`}
+                                  : 'border-border bg-card text-muted-foreground hover:border-primary/40'
+                              )}
                             >
                               ca. {val} €
                             </button>
                           ))}
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setAvgRevenue(50);
-                              setStampMode('revenue');
-                              const blue = 50;
-                              setNfcChips(chips => chips.map(chip => {
-                                const color = chip.stamp_color?.toLowerCase() || '';
-                                if (color === 'grün' || color === 'green') return { ...chip, points_value: Math.max(1, Math.round(blue * 3 / 7)) };
-                                if (color === 'blau' || color === 'blue') return { ...chip, points_value: blue };
-                                if (color === 'rot' || color === 'red') return { ...chip, points_value: Math.round(blue * 15 / 7) };
-                                return chip;
-                              }));
-                            }}
-                            className={`px-4 py-2 rounded-full border-2 text-sm font-medium transition-all ${
-                              avgRevenue === 50 && stampMode === 'revenue'
-                                ? 'border-primary bg-primary/10 text-primary'
-                                : 'border-gray-200 bg-white text-gray-700 hover:border-primary/40'
-                            }`}
-                          >
-                            &gt; 35 €
-                          </button>
                         </div>
 
                         {/* Slider */}
@@ -1228,16 +1199,8 @@ const MeinGeschaeft = () => {
                             step={1}
                             value={[avgRevenue]}
                             onValueChange={(val) => {
-                              const blue = val[0];
-                              setAvgRevenue(blue);
+                              setAvgRevenue(val[0]);
                               setStampMode('revenue');
-                              setNfcChips(chips => chips.map(chip => {
-                                const color = chip.stamp_color?.toLowerCase() || '';
-                                if (color === 'grün' || color === 'green') return { ...chip, points_value: Math.max(1, Math.round(blue * 3 / 7)) };
-                                if (color === 'blau' || color === 'blue') return { ...chip, points_value: blue };
-                                if (color === 'rot' || color === 'red') return { ...chip, points_value: Math.round(blue * 15 / 7) };
-                                return chip;
-                              }));
                             }}
                             className="w-full"
                           />
@@ -1247,16 +1210,99 @@ const MeinGeschaeft = () => {
                           </div>
                         </div>
 
-                        {/* Threshold display */}
+                        {/* Variant selector */}
                         {stampMode === 'revenue' && (
-                          <div className="p-4 bg-white rounded-xl border border-gray-100 space-y-1 mt-4">
-                            <ul className="text-sm text-muted-foreground space-y-1">
-                              <li>🟢 <strong>Grüner Stempel:</strong> ab <span className="font-semibold text-foreground">{Math.max(1, Math.round(avgRevenue * 3 / 7))} €</span> Einkaufswert</li>
-                              <li>🔵 <strong>Blauer Stempel:</strong> ab <span className="font-semibold text-foreground">{avgRevenue} €</span> Einkaufswert</li>
-                              <li>🔴 <strong>Roter Stempel:</strong> ab <span className="font-semibold text-foreground">{Math.round(avgRevenue * 15 / 7)} €</span> Einkaufswert</li>
-                            </ul>
+                          <div className="flex gap-2 mt-4">
+                            <button
+                              type="button"
+                              onClick={() => setSelectedVariant('balanced')}
+                              className={cn(
+                                "flex-1 py-2.5 px-3 rounded-lg border-2 text-sm font-medium transition-all",
+                                selectedVariant === 'balanced'
+                                  ? "border-primary bg-primary/10 text-primary"
+                                  : "border-border text-muted-foreground hover:border-primary/40"
+                              )}
+                            >
+                              ⚖️ Ausgewogen
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setSelectedVariant('umsatzboost')}
+                              className={cn(
+                                "flex-1 py-2.5 px-3 rounded-lg border-2 text-sm font-medium transition-all",
+                                selectedVariant === 'umsatzboost'
+                                  ? "border-primary bg-primary/10 text-primary"
+                                  : "border-border text-muted-foreground hover:border-primary/40"
+                              )}
+                            >
+                              🚀 Umsatzboost
+                            </button>
                           </div>
                         )}
+
+                        {/* Threshold display using calculateSuggestion */}
+                        {stampMode === 'revenue' && (() => {
+                          const suggestion = calculateSuggestion(avgRevenue, ['visits'], selectedVariant);
+                          return suggestion.type === 'tiered' && suggestion.tiers ? (
+                            <>
+                              {/* Tier cards */}
+                              <div className="grid grid-cols-3 gap-3 mt-4">
+                                {suggestion.tiers.map((tier) => {
+                                  const colorStyles: Record<string, string> = {
+                                    green: "bg-emerald-50 border-emerald-300 text-emerald-700",
+                                    blue: "bg-blue-50 border-blue-300 text-blue-700",
+                                    red: "bg-red-50 border-red-300 text-red-700",
+                                  };
+                                  const stampColor: Record<string, string> = {
+                                    green: "text-emerald-500",
+                                    blue: "text-blue-500",
+                                    red: "text-red-500",
+                                  };
+                                  return (
+                                    <div
+                                      key={tier.label}
+                                      className={cn("rounded-xl border-2 p-4 text-center", colorStyles[tier.color])}
+                                    >
+                                      <Stamp className={cn("h-8 w-8 mx-auto mb-2", stampColor[tier.color])} />
+                                      <p className="font-bold text-base">{tier.label}</p>
+                                      <p className="text-sm mt-1">ab {tier.threshold} €</p>
+                                      <p className="text-xl font-bold mt-1">{tier.points} Pkt.</p>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+
+                              {/* Example purchases */}
+                              <div className="bg-muted/50 rounded-lg p-4 border border-border mt-4">
+                                <div className="flex items-center gap-2 mb-2">
+                                  <Info className="h-4 w-4 text-muted-foreground" />
+                                  <span className="text-sm font-medium text-foreground">Beispiel-Einkäufe</span>
+                                </div>
+                                <div className="space-y-2">
+                                  {[avgRevenue * 0.5, avgRevenue * 0.8, avgRevenue * 1.3, avgRevenue * 2.8].map((amt) => {
+                                    const formatted = amt.toFixed(2).replace(".", ",");
+                                    let label = "Kein Stempel";
+                                    const tiers = suggestion.tiers!;
+                                    for (let i = tiers.length - 1; i >= 0; i--) {
+                                      if (amt >= tiers[i].threshold) {
+                                        label = `${tiers[i].label} (${tiers[i].points} Pkt.)`;
+                                        break;
+                                      }
+                                    }
+                                    return (
+                                      <div key={amt} className="flex justify-between text-sm">
+                                        <span className="text-muted-foreground">Einkauf: {formatted} €</span>
+                                        <span className={cn("font-medium", label === "Kein Stempel" ? "text-muted-foreground" : "text-foreground")}>
+                                          → {label}
+                                        </span>
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                            </>
+                          ) : null;
+                        })()}
                       </div>
                     </div>
                   </CardContent>
