@@ -405,7 +405,7 @@ const AppHomeContent = () => {
     <PullToRefresh onRefresh={handleRefresh}>
     <div className="-mx-4 space-y-6">
       {feedItems.map((item: any) => (
-        <div key={`${item.type}-${item.id}`} className={`bg-card ${item.type === 'offer' ? 'border-l-4 border-primary' : ''}`}>
+        <div key={`${item.type}-${item.id}`} className="bg-card">
           <div className="flex items-center gap-3 px-4 py-3 cursor-pointer" onClick={() => navigate(`/app/merchant/${item.merchant_customer_id}`)}>
             {item.merchant_logo ? (
               <img src={item.merchant_logo} alt="" className="w-9 h-9 rounded-full object-cover" />
@@ -416,14 +416,13 @@ const AppHomeContent = () => {
             )}
             <div className="flex-1 min-w-0">
               <span className="font-semibold text-sm text-foreground">{item.merchant_name}</span>
-              {item.type === 'offer' && item.distance !== undefined && (
-                <span className="text-xs text-muted-foreground ml-2">
-                  <MapPin className="h-3 w-3 inline -mt-0.5" />
-                  {item.distance < 1 ? ` ${Math.round(item.distance * 1000)}m` : ` ${item.distance.toFixed(1)}km`}
-                </span>
-              )}
             </div>
-            <span className="text-xs text-muted-foreground">{formatTimeAgo(item.created_at)}</span>
+            {item.distance !== undefined && (
+              <span className="text-xs text-muted-foreground flex items-center gap-0.5">
+                <MapPin className="h-3 w-3" />
+                {item.distance < 1 ? `${Math.round(item.distance * 1000)}m` : `${item.distance.toFixed(1)}km`}
+              </span>
+            )}
           </div>
 
           {/* Merchant card: wide aspect ratio with cover image */}
