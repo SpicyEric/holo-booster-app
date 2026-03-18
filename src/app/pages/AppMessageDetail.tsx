@@ -303,8 +303,10 @@ const AppMessageDetail = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      {/* Safe area shield */}
+      <div className="fixed top-0 left-0 right-0 z-[60]" style={{ height: 'env(safe-area-inset-top, 0px)', background: 'hsl(var(--card))' }} />
       {/* Header */}
-      <div className="sticky top-0 z-10 bg-card border-b border-border px-4 py-3 flex items-center gap-3">
+      <div className="fixed top-0 left-0 right-0 z-50 bg-card border-b border-border px-4 py-3 flex items-center gap-3" style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 0.75rem)' }}>
         <Button variant="ghost" size="sm" onClick={() => navigate(-1)} className="p-1">
           <ArrowLeft className="h-5 w-5" />
         </Button>
