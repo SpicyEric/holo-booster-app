@@ -166,12 +166,10 @@ export default function MerchantSetup() {
 
   const handleSaveBusiness = async () => {
     if (!customerId) return;
-    if (!state.businessName.trim()) { toast.error("Bitte Geschäftsnamen eingeben"); return; }
     if (!state.industry) { toast.error("Bitte Branche wählen"); return; }
     setSaving(true);
     try {
       await supabase.from("customers").update({
-        name: state.businessName,
         industry: state.industry,
         updated_at: new Date().toISOString(),
       }).eq("id", customerId);
@@ -293,7 +291,7 @@ export default function MerchantSetup() {
   const isStepValid = (() => {
     switch (step) {
       case 0: return state.boxId.trim().length === 17; // Box-ID with dashes
-      case 1: return state.businessName.trim().length > 0 && state.industry.length > 0;
+      case 1: return state.industry.length > 0;
       case 2: return true; // Spend always valid (has default)
       case 3: return state.goals.length > 0;
       case 4: return true; // Suggestion always valid
