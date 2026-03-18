@@ -57,6 +57,9 @@ export default function WizardStepPassword({ state, onChange }: Props) {
           {tooShort && (
             <p className="text-xs text-destructive mt-1">Mindestens 8 Zeichen erforderlich</p>
           )}
+          {capsLock && (
+            <p className="text-xs text-amber-600 mt-1 flex items-center gap-1">⚠️ Feststelltaste ist aktiviert</p>
+          )}
         </div>
 
         <div>
