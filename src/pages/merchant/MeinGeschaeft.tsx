@@ -33,6 +33,8 @@ import MerchantPreviewLive from "@/components/merchant/MerchantPreviewLive";
 import RichTextEditor from "@/components/merchant/RichTextEditor";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { calculateSuggestion, SPEND_PRESETS } from "../wizard/wizardLogic";
+import { cn } from "@/lib/utils";
 
 const INDUSTRIES = [
   { value: "cafe", label: "Café" },
