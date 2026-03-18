@@ -50,3 +50,9 @@ verify_jwt = false
 
 [functions.send-app-verification-email]
 verify_jwt = false
+
+[functions.send-push-notification]
+verify_jwt = false
+
+[functions.on-new-app-message]
+verify_jwt = false

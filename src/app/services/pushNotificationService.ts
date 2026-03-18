@@ -1,6 +1,7 @@
 import { Capacitor } from '@capacitor/core';
 import { PushNotifications, Token, PushNotificationSchema, ActionPerformed } from '@capacitor/push-notifications';
 import { LocalNotifications } from '@capacitor/local-notifications';
+import { supabase } from '@/integrations/supabase/client';
 
 class PushNotificationService {
   private initialized = false;
@@ -9,13 +10,12 @@ class PushNotificationService {
     return Capacitor.isNativePlatform();
   }
 
-  async initialize(): Promise<void> {
+  async initialize(userId?: string): Promise<void> {
     if (this.initialized || !this.isNativeApp()) {
       return;
     }
 
     try {
-      // Request permission for push notifications
       const permStatus = await PushNotifications.checkPermissions();
       
       if (permStatus.receive === 'prompt') {
@@ -29,15 +29,14 @@ class PushNotificationService {
         return;
       }
 
-      // Skip remote push registration entirely - Firebase/google-services.json is not configured
-      // Calling PushNotifications.register() without Firebase causes a native FATAL crash
-      // that cannot be caught by JavaScript try-catch
-      // Remote push can be enabled later by adding google-services.json and uncommenting below
-      // await PushNotifications.register();
-      // this.setupListeners();
-      console.log('Remote push registration skipped (Firebase not configured). Using local notifications only.');
+      // Set up listeners BEFORE registering
+      this.setupListeners(userId);
 
-      // Initialize local notifications for local alerts (works without Firebase)
+      // Register for remote push notifications (FCM)
+      await PushNotifications.register();
+      console.log('Push notifications: registration initiated');
+
+      // Initialize local notifications too
       await this.initializeLocalNotifications();
 
       this.initialized = true;
@@ -50,7 +49,6 @@ class PushNotificationService {
   private async initializeLocalNotifications(): Promise<void> {
     try {
       const permStatus = await LocalNotifications.checkPermissions();
-      
       if (permStatus.display === 'prompt') {
         await LocalNotifications.requestPermissions();
       }
@@ -59,57 +57,65 @@ class PushNotificationService {
     }
   }
 
-  private setupListeners(): void {
-    // On registration success
+  private setupListeners(userId?: string): void {
     PushNotifications.addListener('registration', (token: Token) => {
       console.log('Push registration success, token:', token.value);
-      // Here you could send the token to your backend for remote push notifications
-      this.saveDeviceToken(token.value);
+      if (userId) {
+        this.saveDeviceToken(token.value, userId);
+      }
     });
 
-    // On registration error
     PushNotifications.addListener('registrationError', (error: any) => {
       console.error('Push registration error:', error);
     });
 
-    // On push notification received while app is in foreground
     PushNotifications.addListener('pushNotificationReceived', (notification: PushNotificationSchema) => {
-      console.log('Push notification received:', notification);
-      // Show local notification when push is received in foreground
+      console.log('Push notification received in foreground:', notification);
+      // Show local notification when push arrives in foreground
       this.showLocalNotification(notification.title || 'Eloyo', notification.body || '');
     });
 
-    // On push notification tapped
     PushNotifications.addListener('pushNotificationActionPerformed', (notification: ActionPerformed) => {
-      console.log('Push notification action performed:', notification);
-      // Handle navigation based on notification data
+      console.log('Push notification tapped:', notification);
       this.handleNotificationAction(notification);
     });
   }
 
-  private async saveDeviceToken(token: string): Promise<void> {
-    // Save token to localStorage for now
-    // In production, you'd send this to your backend
-    localStorage.setItem('push_notification_token', token);
-    console.log('Device token saved:', token);
+  private async saveDeviceToken(token: string, userId: string): Promise<void> {
+    try {
+      const platform = Capacitor.getPlatform(); // 'android' or 'ios'
+
+      const { error } = await supabase
+        .from('device_tokens')
+        .upsert(
+          { user_id: userId, fcm_token: token, platform, updated_at: new Date().toISOString() },
+          { onConflict: 'user_id,fcm_token' }
+        );
+
+      if (error) {
+        console.error('Error saving device token:', error);
+      } else {
+        console.log('Device token saved to backend');
+      }
+    } catch (err) {
+      console.error('Error saving device token:', err);
+    }
   }
 
   private handleNotificationAction(notification: ActionPerformed): void {
     const data = notification.notification.data;
     
     if (data?.type === 'message') {
-      // Navigate to messages
-      window.location.href = '/app/messages';
+      window.location.href = data.message_id
+        ? `/app/messages/${data.message_id}`
+        : '/app/messages';
     } else if (data?.type === 'reward_redeemed') {
-      // Navigate to rewards or history
       window.location.href = '/app/rewards';
     }
   }
 
-  // Show local notification (for foreground or local triggers)
   async showLocalNotification(title: string, body: string, data?: Record<string, any>): Promise<void> {
     if (!this.isNativeApp()) {
-      // For web, use browser notification API if available
       if ('Notification' in window && Notification.permission === 'granted') {
         new Notification(title, { body });
       }
@@ -123,7 +129,7 @@ class PushNotificationService {
             id: Math.floor(Math.random() * 100000),
             title,
             body,
-            schedule: { at: new Date(Date.now() + 100) }, // Show immediately
+            schedule: { at: new Date(Date.now() + 100) },
             extra: data,
           },
         ],
@@ -133,52 +139,42 @@ class PushNotificationService {
     }
   }
 
-  // Notify about reward redemption
   async notifyRewardRedeemed(rewardTitle: string, pointsSpent: number, merchantName: string): Promise<void> {
-    const title = '🎁 Prämie eingelöst!';
-    const body = `Du hast "${rewardTitle}" bei ${merchantName} eingelöst. (-${pointsSpent} Punkte)`;
-    
-    await this.showLocalNotification(title, body, {
-      type: 'reward_redeemed',
-      rewardTitle,
-      pointsSpent,
-      merchantName,
+    await this.showLocalNotification('🎁 Prämie eingelöst!', `Du hast "${rewardTitle}" bei ${merchantName} eingelöst. (-${pointsSpent} Punkte)`, {
+      type: 'reward_redeemed', rewardTitle, pointsSpent, merchantName,
     });
   }
 
-  // Notify about new customer offer redemption
   async notifyNewCustomerOfferRedeemed(bonusPoints: number, merchantName: string): Promise<void> {
-    const title = '🎉 Willkommen!';
-    const body = `Du hast ${bonusPoints} Bonus-Punkte bei ${merchantName} erhalten!`;
-    
-    await this.showLocalNotification(title, body, {
-      type: 'new_customer_offer',
-      bonusPoints,
-      merchantName,
+    await this.showLocalNotification('🎉 Willkommen!', `Du hast ${bonusPoints} Bonus-Punkte bei ${merchantName} erhalten!`, {
+      type: 'new_customer_offer', bonusPoints, merchantName,
     });
   }
 
-  // Notify about new message received
   async notifyNewMessage(messageTitle: string, merchantName: string): Promise<void> {
-    const title = `📬 Neue Nachricht von ${merchantName}`;
-    const body = messageTitle;
-    
-    await this.showLocalNotification(title, body, {
-      type: 'message',
-      merchantName,
+    await this.showLocalNotification(`📬 Neue Nachricht von ${merchantName}`, messageTitle, {
+      type: 'message', merchantName,
     });
   }
 
-  // Notify about points earned
   async notifyPointsEarned(points: number, merchantName: string): Promise<void> {
-    const title = '⭐ Punkte gesammelt!';
-    const body = `+${points} Punkte bei ${merchantName}`;
-    
-    await this.showLocalNotification(title, body, {
-      type: 'points_earned',
-      points,
-      merchantName,
+    await this.showLocalNotification('⭐ Punkte gesammelt!', `+${points} Punkte bei ${merchantName}`, {
+      type: 'points_earned', points, merchantName,
     });
+  }
+
+  // Remove device token on logout
+  async removeDeviceToken(userId: string): Promise<void> {
+    if (!this.isNativeApp()) return;
+    try {
+      await supabase
+        .from('device_tokens')
+        .delete()
+        .eq('user_id', userId);
+      console.log('Device tokens removed for user');
+    } catch (err) {
+      console.error('Error removing device tokens:', err);
+    }
   }
 }
 
