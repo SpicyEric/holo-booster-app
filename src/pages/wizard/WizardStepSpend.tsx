@@ -14,19 +14,19 @@ export default function WizardStepSpend({ state, onChange }: Props) {
 
   return (
     <div className="space-y-6">
-      <p className="text-sm text-muted-foreground">
+      <p className="text-base text-muted-foreground">
         Wie viel gibt ein Kunde bei dir im Durchschnitt pro Besuch aus?
       </p>
 
       {/* Quick select buttons */}
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap gap-3">
         {SPEND_PRESETS.map((val) => (
           <button
             key={val}
             type="button"
             onClick={() => onChange({ avgSpend: val })}
             className={cn(
-              "px-4 py-2 rounded-full border-2 text-sm font-medium transition-all",
+              "px-5 py-2.5 rounded-full border-2 text-base font-medium transition-all",
               state.avgSpend === val
                 ? "border-primary bg-primary/10 text-primary"
                 : "border-border bg-card text-foreground hover:border-primary/40"
