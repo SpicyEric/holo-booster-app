@@ -72,9 +72,9 @@ const Auth = () => {
     };
   }, []);
 
-  const redirectByRole = (userRole: UserRole) => {
+  const redirectByRole = (userRole: UserRole, isPasswordSetup = false) => {
     if (userRole === 'admin') navigate('/admin');
-    else if (userRole === 'merchant') navigate('/kunde');
+    else if (userRole === 'merchant') navigate(isPasswordSetup ? '/kunde/setup' : '/kunde');
     else if (userRole === 'partner') navigate('/partner/dashboard');
   };
 
@@ -101,7 +101,7 @@ const Auth = () => {
     if (authedUser) {
       const userRole = await deriveUserRole(authedUser.id, authedUser.email);
       setIsLoading(false);
-      if (userRole) redirectByRole(userRole);
+      if (userRole) redirectByRole(userRole, true);
       else toast.error("Ihr Konto ist noch nicht freigeschaltet.");
     } else {
       setIsLoading(false);
