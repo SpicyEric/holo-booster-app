@@ -439,6 +439,13 @@ const AppHomeContent = () => {
                 </span>
               </div>
             )}
+            {item.type === 'merchant_card' && item.points_balance !== undefined && (
+              <div className="flex items-center gap-2 mb-2">
+                <span className="inline-flex items-center gap-1 px-3 py-1.5 bg-muted text-muted-foreground rounded-full text-xs font-medium">
+                  {item.points_balance} Punkte gesammelt
+                </span>
+              </div>
+            )}
             {item.type === 'offer' && item.title && (
               <p className="text-sm font-semibold text-foreground mb-1">{item.title}</p>
             )}
