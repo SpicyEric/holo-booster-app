@@ -331,13 +331,11 @@ const AppHomeContent = () => {
         }
       }
 
+      // Sort ALL items by distance (nearest first), items without distance go to the end
       items.sort((a, b) => {
-        if (a.type === 'offer' && b.type === 'offer') {
-          if (a.distance !== undefined && b.distance !== undefined) return a.distance - b.distance;
-          if (a.distance !== undefined) return -1;
-          if (b.distance !== undefined) return 1;
-        }
-        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+        const distA = a.distance ?? Infinity;
+        const distB = b.distance ?? Infinity;
+        return distA - distB;
       });
 
       setFeedItems(items);
