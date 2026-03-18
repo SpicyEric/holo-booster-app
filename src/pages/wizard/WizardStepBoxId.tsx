@@ -28,7 +28,7 @@ export default function WizardStepBoxId({ state, onChange }: Props) {
         <h3 className="text-xl font-bold text-foreground">
           Willkommen bei eloyo! 🎉
         </h3>
-        <p className="text-sm text-muted-foreground mt-2 max-w-sm mx-auto">
+        <p className="text-base text-muted-foreground mt-2 max-w-md mx-auto">
           Schön, dass du dich für uns entschieden hast! Wir starten jetzt
           direkt mit deiner Einrichtung.
         </p>
