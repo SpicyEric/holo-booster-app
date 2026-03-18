@@ -135,7 +135,7 @@ const MeinGeschaeft = () => {
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const [uploadingCover, setUploadingCover] = useState(false);
   const [customerId, setCustomerId] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState("praemien");
+  const [activeTab, setActiveTab] = useState("info");
   const [scrollTarget, setScrollTarget] = useState<'description' | 'hours' | 'contact' | 'bottom' | null>(null);
   
   // Business Info
