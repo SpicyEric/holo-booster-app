@@ -791,7 +791,7 @@ const AppStoresContent = () => {
     <PullToRefresh onRefresh={handleRefresh}>
     <div className="space-y-0">
       {/* Sticky header: Tabs + Search */}
-      <div className="sticky top-0 z-20 bg-background pb-3 space-y-3">
+      <div className="sticky top-0 z-30 bg-background pb-3 space-y-3">
         <div className="flex rounded-lg bg-muted p-1">
           <button
             onClick={() => setActiveTab('list')}
