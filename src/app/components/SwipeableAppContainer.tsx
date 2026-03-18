@@ -52,6 +52,7 @@ const INDEX_TO_TITLE: Record<number, string> = {
 export const SwipeableAppContainer = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const prevPathRef = useRef(location.pathname);
   const [currentIndex, setCurrentIndex] = useState(() => {
     return ROUTE_TO_INDEX[window.location.pathname] ?? 0;
   });
@@ -86,9 +87,12 @@ export const SwipeableAppContainer = () => {
   useEffect(() => {
     const targetIndex = ROUTE_TO_INDEX[location.pathname];
     if (targetIndex !== undefined && emblaApi) {
-      emblaApi.scrollTo(targetIndex, true);
+      // Smooth animation for tab-to-tab navigation, instant jump when returning from detail pages
+      const prevWasTab = ROUTE_TO_INDEX[prevPathRef.current] !== undefined;
+      emblaApi.scrollTo(targetIndex, !prevWasTab);
       setCurrentIndex(targetIndex);
     }
+    prevPathRef.current = location.pathname;
   }, [location.pathname, emblaApi]);
 
   // Handle carousel slide changes
