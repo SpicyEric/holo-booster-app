@@ -130,13 +130,11 @@ const Nachrichten = () => {
       // Load automation settings from customer record
       const { data: customerData } = await supabase
         .from('customers')
-        .select('welcome_enabled, welcome_message, birthday_enabled, birthday_message, birthday_bonus_points, birthday_gift_type, birthday_offer_title, birthday_offer_description')
+        .select('birthday_enabled, birthday_message, birthday_bonus_points, birthday_gift_type, birthday_offer_title, birthday_offer_description')
         .eq('id', assignment.customer_id)
         .maybeSingle();
 
       if (customerData) {
-        setWelcomeEnabled(customerData.welcome_enabled ?? false);
-        if (customerData.welcome_message) setWelcomeMessage(customerData.welcome_message);
         setBirthdayEnabled(customerData.birthday_enabled ?? false);
         if (customerData.birthday_message) setBirthdayMessage(customerData.birthday_message);
         setBirthdayBonusPoints((customerData as any).birthday_bonus_points ?? 5);
