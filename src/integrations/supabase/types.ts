@@ -2152,6 +2152,15 @@ export type Database = {
         }
         Returns: boolean
       }
+      redeem_message_offer_via_nfc: {
+        Args: {
+          p_chip_data: string
+          p_hardware_uid?: string
+          p_message_id: string
+          p_user_id: string
+        }
+        Returns: Json
+      }
       verify_email_token: { Args: { p_token: string }; Returns: Json }
     }
     Enums: {
