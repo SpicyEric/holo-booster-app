@@ -318,7 +318,7 @@ const AppMessageDetail = () => {
         </span>
       </div>
 
-      <div className="p-4 space-y-4 max-w-lg mx-auto">
+      <div className="p-4 space-y-4 max-w-lg mx-auto" style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 3.5rem)' }}>
         {/* Message content */}
         <Card className="p-5">
           <h1 className="text-xl font-bold text-foreground mb-2">{message.title}</h1>

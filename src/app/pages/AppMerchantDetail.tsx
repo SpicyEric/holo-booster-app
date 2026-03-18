@@ -354,16 +354,7 @@ export const AppMerchantDetail = () => {
         {/* Soft gradient fade to white */}
         <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-background via-background/80 to-transparent" />
         
-        {/* Back Button */}
-        <Button
-          variant="ghost"
-          size="icon"
-          className="absolute left-4 bg-black/20 text-white hover:bg-black/40"
-          style={{ top: 'calc(env(safe-area-inset-top, 0px) + 0.75rem)' }}
-          onClick={() => navigate(-1)}
-        >
-          <ArrowLeft className="h-5 w-5" />
-        </Button>
+        {/* Back button is now fixed above */}
 
         {/* Merchant Name in the fade area */}
         <div className="absolute bottom-4 left-4 right-4">
