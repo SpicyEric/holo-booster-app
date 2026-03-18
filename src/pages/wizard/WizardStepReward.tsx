@@ -51,16 +51,16 @@ export default function WizardStepReward({ state, onChange }: Props) {
       </div>
 
       <div className="bg-muted/50 rounded-lg p-3 border border-border">
-        <p className="text-xs font-medium text-foreground mb-1">
+        <p className="text-sm font-medium text-foreground mb-2">
           💡 Beispiele aus deiner Branche:
         </p>
-        <div className="flex flex-wrap gap-1.5">
+        <div className="flex flex-wrap gap-2">
           {examples.map((ex) => (
             <button
               key={ex}
               type="button"
               onClick={() => onChange({ rewardName: ex })}
-              className="text-xs bg-card border border-border px-2.5 py-1 rounded-full hover:border-primary/40 transition-colors"
+              className="text-sm bg-card border border-border px-3 py-1.5 rounded-full hover:border-primary/40 transition-colors"
             >
               {ex}
             </button>
