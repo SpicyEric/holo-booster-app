@@ -271,7 +271,7 @@ const AppHomeContent = () => {
       if (stampedMerchantIds.length > 0) {
         const { data: stampedMerchants } = await supabase
           .from('customers')
-          .select('id, name, company_name, logo_url, cover_image_url, description, updated_at')
+          .select('id, name, company_name, logo_url, cover_image_url, description, updated_at, latitude, longitude')
           .in('id', stampedMerchantIds);
 
         const merchantsWithPosts = new Set(items.filter((i: any) => i.type === 'post').map((i: any) => i.merchant_customer_id));
