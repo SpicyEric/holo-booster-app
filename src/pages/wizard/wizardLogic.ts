@@ -149,7 +149,7 @@ export const TOTAL_STEPS = 8;
 export const STEP_META = [
   { title: "Passwort erstellen", subtitle: "Sichere dein Konto mit einem Passwort" },
   { title: "Box-ID verknüpfen", subtitle: "Verbinde deine Starterbox" },
-  { title: "Dein Geschäft", subtitle: "Name und Branche auswählen" },
+  { title: "Deine Branche", subtitle: "Wähle deine Branche aus" },
   { title: "Durchschnittlicher Einkaufswert", subtitle: "Wie viel gibt ein Kunde pro Besuch aus?" },
   { title: "Ziel des Bonussystems", subtitle: "Was ist dir am wichtigsten?" },
   { title: "Dein Stempelsystem", subtitle: "Unser Vorschlag basierend auf deinen Angaben" },
