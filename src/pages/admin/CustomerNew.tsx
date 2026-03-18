@@ -98,6 +98,7 @@ const CustomerNew = () => {
         .from("customers")
         .insert({
           name: formData.name,
+          company_name: formData.name,
           industry: formData.industry || null,
           description: formData.description || null,
           street: formData.street || null,
