@@ -412,16 +412,27 @@ export default function Checkout() {
                 />
               </div>
 
-              <div className="grid md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="street">Straße & Hausnummer</Label>
+              <div className="grid md:grid-cols-3 gap-4">
+                <div className="space-y-2 md:col-span-2">
+                  <Label htmlFor="street">Straße</Label>
                   <Input
                     id="street"
                     value={street}
                     onChange={(e) => setStreet(e.target.value)}
-                    placeholder="Musterstraße 123"
+                    placeholder="Musterstraße"
                   />
                 </div>
+                <div className="space-y-2">
+                  <Label htmlFor="houseNumber">Hausnummer</Label>
+                  <Input
+                    id="houseNumber"
+                    value={houseNumber}
+                    onChange={(e) => setHouseNumber(e.target.value)}
+                    placeholder="123"
+                  />
+                </div>
+              </div>
+              <div className="grid md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="postalCode">PLZ</Label>
                   <Input
@@ -431,7 +442,6 @@ export default function Checkout() {
                     placeholder="12345"
                   />
                 </div>
-              </div>
 
               <div className="grid md:grid-cols-2 gap-4">
                 <div className="space-y-2">

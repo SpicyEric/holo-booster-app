@@ -137,23 +137,37 @@ serve(async (req) => {
           console.log("[WEBHOOK] Updated existing customer:", existingCustomer.id);
         } else {
           // Create new customer entry
+          // Parse address from metadata
+          let parsedAddress: any = null;
+          try {
+            parsedAddress = metadata.address ? JSON.parse(metadata.address) : null;
+          } catch {
+            console.warn("[WEBHOOK] Failed to parse address metadata");
+          }
+
           const { data: newCustomer, error } = await supabase
             .from("customers")
             .insert({
-              name: metadata.customerName || "Unknown",
+              name: metadata.companyName || metadata.customerName || "Unknown",
               email: metadata.customerEmail || (customer as any).email,
               company_name: metadata.companyName || null,
+              contact_person: metadata.customerName || null,
               stripe_customer_id: customerId,
               stripe_subscription_id: subscriptionId,
               promoter_id: metadata.promoterId || null,
               status: isSEPA ? "pending_payment" : "active",
               google_review_url: "https://google.com/review",
               offer_text: "Willkommen bei Eloyo!",
-              billing_address: metadata.address ? {
-                street: metadata.address.street,
-                city: metadata.address.city,
-                postalCode: metadata.address.postalCode,
-                country: metadata.address.country,
+              street: parsedAddress?.street || null,
+              house_number: parsedAddress?.houseNumber || null,
+              postal_code: parsedAddress?.postalCode || null,
+              city: parsedAddress?.city || null,
+              billing_address: parsedAddress ? {
+                street: parsedAddress.street,
+                houseNumber: parsedAddress.houseNumber,
+                city: parsedAddress.city,
+                postalCode: parsedAddress.postalCode,
+                country: parsedAddress.country,
               } : null,
             })
             .select()
