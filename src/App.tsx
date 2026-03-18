@@ -42,6 +42,7 @@ import NotFound from "./pages/NotFound";
 import CheckoutSuccess from "./pages/CheckoutSuccess";
 import CheckoutCancel from "./pages/CheckoutCancel";
 import DesignVariants from "./pages/DesignVariants";
+import TestWizard from "./pages/TestWizard";
 
 // App (End Customer) imports
 import { AppProtectedRoute } from "./components/AppProtectedRoute";
@@ -156,6 +157,7 @@ const App = () => (
           <Route path="/customer" element={<Navigate to="/kunde" replace />} />
           
           <Route path="/design-variants" element={<DesignVariants />} />
+          <Route path="/test-wizard" element={<TestWizard />} />
         <Route path="*" element={<NotFound />} />
         </Routes>
         </DeepLinkProvider>
