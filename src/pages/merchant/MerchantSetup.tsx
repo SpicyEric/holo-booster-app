@@ -241,14 +241,14 @@ export default function MerchantSetup() {
 
     setSaving(true);
     try {
-      // Create the reward
-      await supabase.from("offers").insert({
+      // Create the reward in the rewards table (used by the app)
+      await supabase.from("rewards").insert({
         merchant_customer_id: customerId,
         title: state.rewardName,
         description: state.rewardDescription || null,
         image_url: state.rewardImageUrl || null,
+        points_required: pointsCost,
         is_active: true,
-        show_in_storefront: true,
       });
 
       // Set stamps_required on customer to match reward points
