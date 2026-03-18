@@ -317,6 +317,15 @@ export const AppMerchantDetail = () => {
 
   return (
     <div className="min-h-screen bg-background pb-24">
+      {/* Safe area shield */}
+      <div className="safe-area-top-shield" />
+
+      {/* Fixed Points Badge - stays visible while scrolling */}
+      <div className="fixed right-4 z-50 bg-card/95 backdrop-blur-sm rounded-full px-3 py-1 shadow-md border border-border" style={{ top: 'calc(env(safe-area-inset-top, 0px) + 0.75rem)' }}>
+        <span className="font-bold text-primary">{userPoints}</span>
+        <span className="text-sm text-muted-foreground ml-1">Punkte</span>
+      </div>
+
       {/* Cover Image with soft fade */}
       <div className="relative">
         <div className="h-56">
@@ -338,17 +347,12 @@ export const AppMerchantDetail = () => {
         <Button
           variant="ghost"
           size="icon"
-          className="absolute top-4 left-4 bg-black/20 text-white hover:bg-black/40"
+          className="absolute left-4 bg-black/20 text-white hover:bg-black/40"
+          style={{ top: 'calc(env(safe-area-inset-top, 0px) + 0.75rem)' }}
           onClick={() => navigate(-1)}
         >
           <ArrowLeft className="h-5 w-5" />
         </Button>
-
-        {/* Points Badge */}
-        <div className="absolute top-4 right-4 bg-card/90 rounded-full px-3 py-1">
-          <span className="font-bold text-primary">{userPoints}</span>
-          <span className="text-sm text-muted-foreground ml-1">Punkte</span>
-        </div>
 
         {/* Merchant Name in the fade area */}
         <div className="absolute bottom-4 left-4 right-4">
