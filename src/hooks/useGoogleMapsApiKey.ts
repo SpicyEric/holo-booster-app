@@ -10,24 +10,51 @@ interface GoogleMapsApiKeyState {
 const ENV_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY as string | undefined;
 const CACHE_KEY = 'gmaps_api_key';
 const CACHE_TTL = 1000 * 60 * 60; // 1 hour
+const KEY_FETCH_TIMEOUT_MS = 8000;
 
 function getCachedKey(): string | null {
   try {
     const raw = sessionStorage.getItem(CACHE_KEY);
     if (!raw) return null;
+
     const { key, ts } = JSON.parse(raw);
     if (Date.now() - ts < CACHE_TTL && typeof key === 'string' && key.length > 0) {
       return key;
     }
+
     sessionStorage.removeItem(CACHE_KEY);
-  } catch {}
+  } catch {
+    sessionStorage.removeItem(CACHE_KEY);
+  }
+
   return null;
 }
 
 function setCachedKey(key: string) {
   try {
     sessionStorage.setItem(CACHE_KEY, JSON.stringify({ key, ts: Date.now() }));
-  } catch {}
+  } catch {
+    // Ignore storage write failures (private mode, quota exceeded, etc.)
+  }
+}
+
+async function invokeGoogleMapsKeyWithTimeout() {
+  let timeoutId: number | null = null;
+
+  try {
+    const response = await Promise.race([
+      supabase.functions.invoke('get-google-maps-api-key'),
+      new Promise<never>((_, reject) => {
+        timeoutId = window.setTimeout(() => reject(new Error('GOOGLE_MAPS_KEY_TIMEOUT')), KEY_FETCH_TIMEOUT_MS);
+      }),
+    ]);
+
+    return response;
+  } finally {
+    if (timeoutId !== null) {
+      window.clearTimeout(timeoutId);
+    }
+  }
 }
 
 export function useGoogleMapsApiKey(): GoogleMapsApiKeyState {
@@ -47,32 +74,35 @@ export function useGoogleMapsApiKey(): GoogleMapsApiKeyState {
 
     let isMounted = true;
 
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 8000); // 8s timeout
-
     const loadKey = async () => {
       try {
-        const { data, error: invokeError } = await supabase.functions.invoke('get-google-maps-api-key');
+        const { data, error: invokeError } = await invokeGoogleMapsKeyWithTimeout();
 
-        if (invokeError) throw invokeError;
+        if (invokeError) {
+          throw invokeError;
+        }
 
         const resolvedKey = typeof data?.apiKey === 'string' ? data.apiKey.trim() : '';
-        if (!resolvedKey) throw new Error('GOOGLE_MAPS_API_KEY_MISSING');
-
-        if (isMounted) {
-          setCachedKey(resolvedKey);
-          setApiKey(resolvedKey);
-          setError(null);
+        if (!resolvedKey) {
+          throw new Error('GOOGLE_MAPS_API_KEY_MISSING');
         }
+
+        if (!isMounted) return;
+
+        setCachedKey(resolvedKey);
+        setApiKey(resolvedKey);
+        setError(null);
       } catch (err) {
         console.error('[GoogleMaps] Failed to resolve API key:', err);
-        if (isMounted) {
-          setError('Google Maps konnte nicht geladen werden. Bitte versuche es erneut.');
-          setApiKey(null);
-        }
+
+        if (!isMounted) return;
+
+        setError('Google Maps konnte nicht geladen werden. Bitte versuche es erneut.');
+        setApiKey(null);
       } finally {
-        clearTimeout(timeout);
-        if (isMounted) setLoading(false);
+        if (isMounted) {
+          setLoading(false);
+        }
       }
     };
 
@@ -80,7 +110,6 @@ export function useGoogleMapsApiKey(): GoogleMapsApiKeyState {
 
     return () => {
       isMounted = false;
-      clearTimeout(timeout);
     };
   }, [initialKey]);
 
