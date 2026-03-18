@@ -49,7 +49,7 @@ export default function WizardStepSuggestion({ state, onChange }: Props) {
   return (
     <div className="space-y-6">
       <div className="text-center">
-        <p className="text-sm text-muted-foreground">
+        <p className="text-base text-muted-foreground">
           Für dein Team verständlich, für deine Kunden fair – passend zu
           deinem Einkaufswert von ca. {state.avgSpend} €.
         </p>
