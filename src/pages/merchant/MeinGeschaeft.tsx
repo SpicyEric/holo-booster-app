@@ -1144,78 +1144,31 @@ const MeinGeschaeft = () => {
 
               {/* Stempel Tab */}
               <TabsContent value="stempel" className="space-y-6">
-                {/* Recommendation Banner */}
-                <div className="rounded-2xl bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200/60 p-5">
-                  <p className="text-base font-semibold text-amber-900 leading-relaxed">
-                    💡 Empfehlung: Die magische Zahl für die erste kleine Belohnung liegt bei <span className="text-amber-700 font-bold">4–6 Interaktionen</span>. Das fühlt sich für den Kunden erreichbar an, aber nicht geschenkt – und motiviert, schnell wiederzukommen.
-                  </p>
-                </div>
-
-                {/* Stamp System Selector */}
+                {/* Stamp System - Wizard-style with avg spend slider */}
                 <Card className="rounded-2xl shadow-sm border-0 bg-gray-50/80">
                   <CardHeader className="pb-4">
                     <CardTitle className="flex items-center gap-3 text-lg font-semibold text-gray-900">
                       <span className="text-lg">⚙️</span>
-                      Stempelsystem wählen
+                      Stempelsystem
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-6">
                     <div className={`space-y-6 transition-opacity ${manualMode ? 'opacity-30 pointer-events-none' : ''}`}>
-                      <div className="flex items-center justify-between gap-4">
-                        <div className={`text-sm font-medium transition-colors ${stampMode === 'classic' ? 'text-primary' : 'text-muted-foreground'}`}>
-                          Klassisch
-                        </div>
-                        <Switch
-                          checked={stampMode === 'revenue'}
-                          onCheckedChange={(checked) => {
-                            const newMode = checked ? 'revenue' : 'classic';
-                            setStampMode(newMode);
-                            if (newMode === 'classic') {
-                              setNfcChips(chips => chips.map(chip => ({ ...chip, points_value: 10 })));
-                            } else {
-                              const blue = avgRevenue;
-                              setNfcChips(chips => chips.map(chip => {
-                                const color = chip.stamp_color?.toLowerCase() || '';
-                                if (color === 'grün' || color === 'green') return { ...chip, points_value: Math.max(1, Math.round(blue * 3 / 7)) };
-                                if (color === 'blau' || color === 'blue') return { ...chip, points_value: blue };
-                                if (color === 'rot' || color === 'red') return { ...chip, points_value: Math.round(blue * 15 / 7) };
-                                return chip;
-                              }));
-                            }
-                          }}
-                        />
-                        <div className={`text-sm font-medium transition-colors ${stampMode === 'revenue' ? 'text-primary' : 'text-muted-foreground'}`}>
-                          Umsatzbasiert
-                        </div>
-                      </div>
+                      <div>
+                        <p className="text-sm text-muted-foreground mb-4">
+                          Wie viel gibt ein Kunde bei dir im Durchschnitt pro Besuch aus?
+                        </p>
 
-                      {stampMode === 'classic' ? (
-                        <div className="p-4 bg-white rounded-xl border border-gray-100">
-                          <p className="text-sm text-muted-foreground">
-                            <strong>Pro Besuch ein Stempel.</strong> Jeder Stempel gibt die gleiche Punktzahl (10 Punkte). Klassisches Stempelsystem – ideal für Geschäfte mit gleichbleibendem Einkaufswert.
-                          </p>
-                        </div>
-                      ) : (
-                        <div className="space-y-4">
-                          <div className="p-4 bg-white rounded-xl border border-gray-100 space-y-1">
-                            <ul className="text-sm text-muted-foreground space-y-1">
-                              <li>🟢 <strong>Grüner Stempel:</strong> Unter <span className="font-semibold text-foreground">{avgRevenue} €</span></li>
-                              <li>🔵 <strong>Blauer Stempel:</strong> {avgRevenue} € – <span className="font-semibold text-foreground">{Math.round(avgRevenue * 15 / 7)} €</span></li>
-                              <li>🔴 <strong>Roter Stempel:</strong> Über <span className="font-semibold text-foreground">{Math.round(avgRevenue * 15 / 7)} €</span></li>
-                            </ul>
-                          </div>
-                          <div>
-                            <Label className="text-sm font-medium mb-3 block">
-                              Durchschnittlicher Umsatz pro Kunde: <span className="text-primary font-bold">{avgRevenue} €</span>
-                            </Label>
-                            <Slider
-                              min={5}
-                              max={100}
-                              step={1}
-                              value={[avgRevenue]}
-                              onValueChange={(val) => {
-                                const blue = val[0];
-                                setAvgRevenue(blue);
+                        {/* Quick select buttons */}
+                        <div className="flex flex-wrap gap-2 mb-4">
+                          {[5, 8, 12, 20, 35].map((val) => (
+                            <button
+                              key={val}
+                              type="button"
+                              onClick={() => {
+                                setAvgRevenue(val);
+                                setStampMode('revenue');
+                                const blue = val;
                                 setNfcChips(chips => chips.map(chip => {
                                   const color = chip.stamp_color?.toLowerCase() || '';
                                   if (color === 'grün' || color === 'green') return { ...chip, points_value: Math.max(1, Math.round(blue * 3 / 7)) };
@@ -1224,15 +1177,84 @@ const MeinGeschaeft = () => {
                                   return chip;
                                 }));
                               }}
-                              className="w-full"
-                            />
-                            <div className="flex justify-between text-xs text-muted-foreground mt-1">
-                              <span>5 €</span>
-                              <span>100 €</span>
+                              className={`px-4 py-2 rounded-full border-2 text-sm font-medium transition-all ${
+                                avgRevenue === val && stampMode === 'revenue'
+                                  ? 'border-primary bg-primary/10 text-primary'
+                                  : 'border-gray-200 bg-white text-gray-700 hover:border-primary/40'
+                              }`}
+                            >
+                              ca. {val} €
+                            </button>
+                          ))}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setAvgRevenue(50);
+                              setStampMode('revenue');
+                              const blue = 50;
+                              setNfcChips(chips => chips.map(chip => {
+                                const color = chip.stamp_color?.toLowerCase() || '';
+                                if (color === 'grün' || color === 'green') return { ...chip, points_value: Math.max(1, Math.round(blue * 3 / 7)) };
+                                if (color === 'blau' || color === 'blue') return { ...chip, points_value: blue };
+                                if (color === 'rot' || color === 'red') return { ...chip, points_value: Math.round(blue * 15 / 7) };
+                                return chip;
+                              }));
+                            }}
+                            className={`px-4 py-2 rounded-full border-2 text-sm font-medium transition-all ${
+                              avgRevenue === 50 && stampMode === 'revenue'
+                                ? 'border-primary bg-primary/10 text-primary'
+                                : 'border-gray-200 bg-white text-gray-700 hover:border-primary/40'
+                            }`}
+                          >
+                            &gt; 35 €
+                          </button>
+                        </div>
+
+                        {/* Slider */}
+                        <div className="space-y-3">
+                          <div className="text-center">
+                            <div className="bg-primary/10 border border-primary/30 rounded-full px-4 py-1.5 inline-block">
+                              <span className="text-lg font-bold text-primary">
+                                ca. {avgRevenue} €
+                              </span>
                             </div>
                           </div>
+                          <Slider
+                            min={3}
+                            max={50}
+                            step={1}
+                            value={[avgRevenue]}
+                            onValueChange={(val) => {
+                              const blue = val[0];
+                              setAvgRevenue(blue);
+                              setStampMode('revenue');
+                              setNfcChips(chips => chips.map(chip => {
+                                const color = chip.stamp_color?.toLowerCase() || '';
+                                if (color === 'grün' || color === 'green') return { ...chip, points_value: Math.max(1, Math.round(blue * 3 / 7)) };
+                                if (color === 'blau' || color === 'blue') return { ...chip, points_value: blue };
+                                if (color === 'rot' || color === 'red') return { ...chip, points_value: Math.round(blue * 15 / 7) };
+                                return chip;
+                              }));
+                            }}
+                            className="w-full"
+                          />
+                          <div className="flex justify-between text-xs text-muted-foreground">
+                            <span>3 €</span>
+                            <span>50 €</span>
+                          </div>
                         </div>
-                      )}
+
+                        {/* Threshold display */}
+                        {stampMode === 'revenue' && (
+                          <div className="p-4 bg-white rounded-xl border border-gray-100 space-y-1 mt-4">
+                            <ul className="text-sm text-muted-foreground space-y-1">
+                              <li>🟢 <strong>Grüner Stempel:</strong> ab <span className="font-semibold text-foreground">{Math.max(1, Math.round(avgRevenue * 3 / 7))} €</span> Einkaufswert</li>
+                              <li>🔵 <strong>Blauer Stempel:</strong> ab <span className="font-semibold text-foreground">{avgRevenue} €</span> Einkaufswert</li>
+                              <li>🔴 <strong>Roter Stempel:</strong> ab <span className="font-semibold text-foreground">{Math.round(avgRevenue * 15 / 7)} €</span> Einkaufswert</li>
+                            </ul>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
