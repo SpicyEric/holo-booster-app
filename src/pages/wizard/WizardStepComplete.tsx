@@ -39,10 +39,10 @@ export default function WizardStepComplete() {
             <Award className="h-5 w-5 text-primary" />
           </div>
           <div>
-            <p className="text-sm font-medium text-foreground">
+            <p className="text-base font-medium text-foreground">
               Mindestens 10 Prämien anlegen
             </p>
-            <p className="text-xs text-muted-foreground mt-0.5">
+            <p className="text-sm text-muted-foreground mt-0.5">
               Damit deine Kunden das Gefühl haben, mit ihren Punkten spielen
               zu können – z.B. sparen oder direkt einlösen.
             </p>
