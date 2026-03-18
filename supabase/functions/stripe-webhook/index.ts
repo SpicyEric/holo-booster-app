@@ -177,6 +177,38 @@ serve(async (req) => {
             console.error("[WEBHOOK] Error creating customer:", error);
           } else {
             console.log("[WEBHOOK] Created new customer:", newCustomer.id);
+
+            // Geocode address if available
+            if (parsedAddress?.street && parsedAddress?.city) {
+              try {
+                const geoResponse = await fetch(
+                  `${Deno.env.get("SUPABASE_URL")}/functions/v1/geocode-address`,
+                  {
+                    method: "POST",
+                    headers: {
+                      "Content-Type": "application/json",
+                      "Authorization": `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
+                    },
+                    body: JSON.stringify({
+                      street: parsedAddress.street,
+                      houseNumber: parsedAddress.houseNumber || "",
+                      postalCode: parsedAddress.postalCode || "",
+                      city: parsedAddress.city,
+                    }),
+                  }
+                );
+                const geoData = await geoResponse.json();
+                if (geoData?.lat && geoData?.lng) {
+                  await supabase.from("customers").update({
+                    latitude: geoData.lat,
+                    longitude: geoData.lng,
+                  }).eq("id", newCustomer.id);
+                  console.log("[WEBHOOK] Geocoded address for customer:", newCustomer.id);
+                }
+              } catch (geoErr) {
+                console.warn("[WEBHOOK] Geocoding failed:", geoErr);
+              }
+            }
             
             // Also create merchant in App-Database for mobile app
             await createAppMerchant({
