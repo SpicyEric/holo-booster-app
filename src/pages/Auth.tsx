@@ -72,9 +72,9 @@ const Auth = () => {
     };
   }, []);
 
-  const redirectByRole = (userRole: UserRole) => {
+  const redirectByRole = (userRole: UserRole, isPasswordSetup = false) => {
     if (userRole === 'admin') navigate('/admin');
-    else if (userRole === 'merchant') navigate('/kunde');
+    else if (userRole === 'merchant') navigate(isPasswordSetup ? '/kunde/setup' : '/kunde');
     else if (userRole === 'partner') navigate('/partner/dashboard');
   };
 
