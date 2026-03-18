@@ -12,8 +12,13 @@ interface Props {
 export default function WizardStepPassword({ state, onChange }: Props) {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
+  const [capsLock, setCapsLock] = useState(false);
   const passwordsMatch = state.password === state.confirmPassword && state.confirmPassword.length > 0;
   const tooShort = state.password.length > 0 && state.password.length < 8;
+
+  const handleKeyEvent = (e: React.KeyboardEvent) => {
+    setCapsLock(e.getModifierState("CapsLock"));
+  };
 
   return (
     <div className="space-y-6">
