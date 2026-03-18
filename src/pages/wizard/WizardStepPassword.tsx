@@ -21,8 +21,8 @@ export default function WizardStepPassword({ state, onChange }: Props) {
         <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
           <Lock className="w-8 h-8 text-primary" />
         </div>
-        <h3 className="text-lg font-semibold text-foreground">Sichere dein Konto</h3>
-        <p className="text-sm text-muted-foreground mt-1">
+        <h3 className="text-xl font-semibold text-foreground">Sichere dein Konto</h3>
+        <p className="text-base text-muted-foreground mt-1">
           Erstelle ein sicheres Passwort, um dein Konto zu schützen.
         </p>
       </div>

@@ -8,10 +8,10 @@ export default function WizardStepComplete() {
       </div>
 
       <div>
-        <h3 className="text-xl font-bold text-foreground">
+        <h3 className="text-2xl font-bold text-foreground">
           Dein Bonussystem ist eingerichtet! 🎉
         </h3>
-        <p className="text-sm text-muted-foreground mt-2 max-w-sm mx-auto">
+        <p className="text-base text-muted-foreground mt-2 max-w-md mx-auto">
           Kümmere dich jetzt am besten noch um dein Erscheinungsbild im
           eloyo-Netzwerk.
         </p>
@@ -24,10 +24,10 @@ export default function WizardStepComplete() {
             <Image className="h-5 w-5 text-primary" />
           </div>
           <div>
-            <p className="text-sm font-medium text-foreground">
+            <p className="text-base font-medium text-foreground">
               Titelbild & Logo hochladen
             </p>
-            <p className="text-xs text-muted-foreground mt-0.5">
+            <p className="text-sm text-muted-foreground mt-0.5">
               Ein ansprechendes Profilbild und ein Logo machen dein Geschäft
               erkennbar und professionell.
             </p>
@@ -39,10 +39,10 @@ export default function WizardStepComplete() {
             <Award className="h-5 w-5 text-primary" />
           </div>
           <div>
-            <p className="text-sm font-medium text-foreground">
+            <p className="text-base font-medium text-foreground">
               Mindestens 10 Prämien anlegen
             </p>
-            <p className="text-xs text-muted-foreground mt-0.5">
+            <p className="text-sm text-muted-foreground mt-0.5">
               Damit deine Kunden das Gefühl haben, mit ihren Punkten spielen
               zu können – z.B. sparen oder direkt einlösen.
             </p>
@@ -51,7 +51,7 @@ export default function WizardStepComplete() {
       </div>
 
       <div className="bg-muted/50 rounded-lg p-4 border border-border">
-        <p className="text-xs text-muted-foreground">
+        <p className="text-sm text-muted-foreground">
           Im nächsten Schritt kannst du Adresse, Beschreibung und weitere
           Details ergänzen.
         </p>

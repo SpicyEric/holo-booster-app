@@ -49,7 +49,7 @@ export default function WizardStepSuggestion({ state, onChange }: Props) {
   return (
     <div className="space-y-6">
       <div className="text-center">
-        <p className="text-sm text-muted-foreground">
+        <p className="text-base text-muted-foreground">
           Für dein Team verständlich, für deine Kunden fair – passend zu
           deinem Einkaufswert von ca. {state.avgSpend} €.
         </p>
@@ -112,9 +112,9 @@ export default function WizardStepSuggestion({ state, onChange }: Props) {
                 <Stamp
                   className={cn("h-8 w-8 mx-auto mb-2", STAMP_COLOR[tier.color])}
                 />
-                <p className="font-bold text-sm">{tier.label}</p>
-                <p className="text-xs mt-1">ab {tier.threshold} €</p>
-                <p className="text-lg font-bold mt-1">{tier.points} Pkt.</p>
+                <p className="font-bold text-base">{tier.label}</p>
+                <p className="text-sm mt-1">ab {tier.threshold} €</p>
+                <p className="text-xl font-bold mt-1">{tier.points} Pkt.</p>
               </div>
             ))}
           </div>
@@ -125,18 +125,18 @@ export default function WizardStepSuggestion({ state, onChange }: Props) {
       <div className="bg-muted/50 rounded-lg p-4 border border-border">
         <div className="flex items-center gap-2 mb-2">
           <Info className="h-4 w-4 text-muted-foreground" />
-          <span className="text-xs font-medium text-foreground">
+          <span className="text-sm font-medium text-foreground">
             Beispiel-Einkäufe
           </span>
         </div>
-        <div className="space-y-1.5">
+        <div className="space-y-2">
           {exampleAmounts.map((amt) => {
             const formatted = amt.toFixed(2).replace(".", ",");
             const label = getStampLabel(amt);
             return (
               <div
                 key={amt}
-                className="flex justify-between text-xs"
+                className="flex justify-between text-sm"
               >
                 <span className="text-muted-foreground">
                   Einkauf {formatted} €
@@ -155,6 +155,14 @@ export default function WizardStepSuggestion({ state, onChange }: Props) {
             );
           })}
         </div>
+      </div>
+
+      {/* Customization hint */}
+      <div className="bg-muted/50 rounded-lg p-4 border border-border">
+        <p className="text-sm text-muted-foreground">
+          💡 Dies ist nur deine Ersteinrichtung – du kannst dein Stempelsystem
+          jederzeit im Dashboard individuell anpassen.
+        </p>
       </div>
     </div>
   );

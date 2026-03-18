@@ -81,7 +81,7 @@ export default function TestWizard() {
       </div>
 
       {/* Content */}
-      <div className="max-w-2xl mx-auto px-6 py-8">
+      <div className="max-w-3xl mx-auto px-6 py-10">
         <AnimatePresence mode="wait" custom={direction}>
           <motion.div
             key={step}
@@ -92,18 +92,18 @@ export default function TestWizard() {
             transition={{ duration: 0.25 }}
           >
             {/* Step Header */}
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                <Icon className="w-5 h-5 text-primary" />
+            <div className="flex items-center gap-4 mb-8">
+              <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
+                <Icon className="w-6 h-6 text-primary" />
               </div>
               <div>
-                <h2 className="text-lg font-semibold text-foreground">{meta.title}</h2>
-                <p className="text-sm text-muted-foreground">{meta.subtitle}</p>
+                <h2 className="text-xl font-semibold text-foreground">{meta.title}</h2>
+                <p className="text-base text-muted-foreground">{meta.subtitle}</p>
               </div>
             </div>
 
             {/* Step Content */}
-            <div className="bg-card border border-border rounded-xl p-6">
+            <div className="bg-card border border-border rounded-xl p-8">
               {step === 0 && <WizardStepPassword state={state} onChange={update} />}
               {step === 1 && <WizardStepBoxId state={state} onChange={update} />}
               {step === 2 && <WizardStepBusiness state={state} onChange={update} />}
@@ -117,7 +117,7 @@ export default function TestWizard() {
         </AnimatePresence>
 
         {/* Navigation */}
-        <div className="flex items-center justify-between mt-6">
+        <div className="flex items-center justify-between mt-8">
           <div>
             {step > 0 && !isLastStep && (
               <Button variant="ghost" size="sm" onClick={goBack}>

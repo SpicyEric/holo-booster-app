@@ -28,7 +28,7 @@ export default function WizardStepBoxId({ state, onChange }: Props) {
         <h3 className="text-xl font-bold text-foreground">
           Willkommen bei eloyo! 🎉
         </h3>
-        <p className="text-sm text-muted-foreground mt-2 max-w-sm mx-auto">
+        <p className="text-base text-muted-foreground mt-2 max-w-md mx-auto">
           Schön, dass du dich für uns entschieden hast! Wir starten jetzt
           direkt mit deiner Einrichtung.
         </p>
@@ -38,10 +38,10 @@ export default function WizardStepBoxId({ state, onChange }: Props) {
         <div className="flex items-start gap-3">
           <Package className="h-5 w-5 text-primary mt-0.5 shrink-0" />
           <div>
-            <p className="text-sm font-medium text-foreground">
+            <p className="text-base font-medium text-foreground">
               Box-ID eingeben
             </p>
-            <p className="text-xs text-muted-foreground mt-1">
+            <p className="text-sm text-muted-foreground mt-1">
               Du findest deine Box-ID auf der Innenseite des Deckels deiner
               Starterbox.
             </p>

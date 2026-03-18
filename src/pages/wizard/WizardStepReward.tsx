@@ -35,7 +35,7 @@ export default function WizardStepReward({ state, onChange }: Props) {
       <div className="bg-primary/5 border border-primary/20 rounded-lg p-4">
         <div className="flex items-start gap-3">
           <Lightbulb className="h-5 w-5 text-primary mt-0.5 shrink-0" />
-          <div className="text-xs text-foreground space-y-1">
+          <div className="text-sm text-foreground space-y-1">
             <p className="font-medium">Tipp für deine erste Prämie</p>
             <p className="text-muted-foreground">
               Das Ziel der ersten Prämie sollte sein, dass ein
@@ -51,16 +51,16 @@ export default function WizardStepReward({ state, onChange }: Props) {
       </div>
 
       <div className="bg-muted/50 rounded-lg p-3 border border-border">
-        <p className="text-xs font-medium text-foreground mb-1">
+        <p className="text-sm font-medium text-foreground mb-2">
           💡 Beispiele aus deiner Branche:
         </p>
-        <div className="flex flex-wrap gap-1.5">
+        <div className="flex flex-wrap gap-2">
           {examples.map((ex) => (
             <button
               key={ex}
               type="button"
               onClick={() => onChange({ rewardName: ex })}
-              className="text-xs bg-card border border-border px-2.5 py-1 rounded-full hover:border-primary/40 transition-colors"
+              className="text-sm bg-card border border-border px-3 py-1.5 rounded-full hover:border-primary/40 transition-colors"
             >
               {ex}
             </button>
@@ -130,7 +130,7 @@ export default function WizardStepReward({ state, onChange }: Props) {
           )}
         </div>
 
-        <div className="flex items-center gap-2 text-xs text-muted-foreground bg-muted/50 rounded-lg p-3 border border-border">
+        <div className="flex items-center gap-2 text-sm text-muted-foreground bg-muted/50 rounded-lg p-4 border border-border">
           <Info className="h-4 w-4 shrink-0" />
           <span>
             Du kannst diese Prämie nachträglich jederzeit bearbeiten oder
