@@ -8,10 +8,10 @@ export default function WizardStepComplete() {
       </div>
 
       <div>
-        <h3 className="text-xl font-bold text-foreground">
+        <h3 className="text-2xl font-bold text-foreground">
           Dein Bonussystem ist eingerichtet! 🎉
         </h3>
-        <p className="text-sm text-muted-foreground mt-2 max-w-sm mx-auto">
+        <p className="text-base text-muted-foreground mt-2 max-w-md mx-auto">
           Kümmere dich jetzt am besten noch um dein Erscheinungsbild im
           eloyo-Netzwerk.
         </p>
