@@ -580,7 +580,26 @@ const MeinGeschaeft = () => {
     
     setSavingChips(true);
     try {
-      for (const chip of nfcChips) {
+      // If not manual, compute chip values from calculateSuggestion
+      let chipsToSave = nfcChips;
+      if (!manualMode && stampMode === 'revenue') {
+        const suggestion = calculateSuggestion(avgRevenue, ['visits'], selectedVariant);
+        if (suggestion.type === 'tiered' && suggestion.tiers) {
+          const colorMap: Record<string, { points: number }> = {};
+          const dbColorMap: Record<string, string> = { green: 'grün', blue: 'blau', red: 'rot' };
+          for (const tier of suggestion.tiers) {
+            const dbColor = dbColorMap[tier.color] || tier.color;
+            colorMap[dbColor] = { points: tier.points };
+          }
+          chipsToSave = nfcChips.map(chip => {
+            const color = chip.stamp_color?.toLowerCase() || '';
+            if (colorMap[color]) return { ...chip, points_value: colorMap[color].points };
+            return chip;
+          });
+        }
+      }
+
+      for (const chip of chipsToSave) {
         const { error } = await supabase
           .from('nfc_chips')
           .update({
@@ -601,6 +620,7 @@ const MeinGeschaeft = () => {
           manual_stamp_mode: manualMode,
         } as any)
         .eq('id', customerId);
+      setNfcChips(chipsToSave);
       toast.success('Stempel gespeichert');
     } catch {
       toast.error('Fehler beim Speichern');
