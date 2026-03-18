@@ -48,6 +48,19 @@ export default function TestWizard() {
   const progress = ((step + 1) / TOTAL_STEPS) * 100;
   const isLastStep = step === TOTAL_STEPS - 1;
 
+  const isStepValid = (() => {
+    switch (step) {
+      case 0:
+        return state.password.length >= 8 && state.password === state.confirmPassword;
+      case 1:
+        return state.boxId.trim().length > 0;
+      case 2:
+        return state.businessName.trim().length > 0 && state.industry.length > 0;
+      default:
+        return true;
+    }
+  })();
+
   return (
     <div className="min-h-screen bg-background">
       {/* Admin Test Bar */}
@@ -119,18 +132,31 @@ export default function TestWizard() {
         {/* Navigation */}
         <div className="flex items-center justify-between mt-8">
           <div>
-            {step > 0 && !isLastStep && (
+            {step > 2 && !isLastStep && (
               <Button variant="ghost" size="sm" onClick={goBack}>
                 <ArrowLeft className="h-4 w-4 mr-1" />
                 Zurück
               </Button>
             )}
           </div>
-          <Button onClick={isLastStep ? () => alert("Wizard abgeschlossen – weiter zum Dashboard!") : goNext}>
+          <Button
+            onClick={isLastStep ? () => alert("Wizard abgeschlossen – weiter zum Dashboard!") : goNext}
+            disabled={!isStepValid}
+          >
             {isLastStep ? (
               <>
                 <CheckCircle2 className="h-4 w-4 mr-1" />
                 Loslegen
+              </>
+            ) : step === 0 ? (
+              <>
+                Passwort festlegen
+                <ChevronRight className="h-4 w-4 ml-1" />
+              </>
+            ) : step === 1 ? (
+              <>
+                Einrichtung starten
+                <ChevronRight className="h-4 w-4 ml-1" />
               </>
             ) : (
               <>

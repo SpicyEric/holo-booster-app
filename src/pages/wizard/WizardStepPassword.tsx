@@ -12,8 +12,13 @@ interface Props {
 export default function WizardStepPassword({ state, onChange }: Props) {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
+  const [capsLock, setCapsLock] = useState(false);
   const passwordsMatch = state.password === state.confirmPassword && state.confirmPassword.length > 0;
   const tooShort = state.password.length > 0 && state.password.length < 8;
+
+  const handleKeyEvent = (e: React.KeyboardEvent) => {
+    setCapsLock(e.getModifierState("CapsLock"));
+  };
 
   return (
     <div className="space-y-6">
@@ -37,6 +42,8 @@ export default function WizardStepPassword({ state, onChange }: Props) {
               placeholder="Mindestens 8 Zeichen"
               value={state.password}
               onChange={(e) => onChange({ password: e.target.value })}
+              onKeyDown={handleKeyEvent}
+              onKeyUp={handleKeyEvent}
               className="pr-10"
             />
             <button
@@ -50,6 +57,9 @@ export default function WizardStepPassword({ state, onChange }: Props) {
           {tooShort && (
             <p className="text-xs text-destructive mt-1">Mindestens 8 Zeichen erforderlich</p>
           )}
+          {capsLock && (
+            <p className="text-xs text-amber-600 mt-1 flex items-center gap-1">⚠️ Feststelltaste ist aktiviert</p>
+          )}
         </div>
 
         <div>
@@ -61,6 +71,8 @@ export default function WizardStepPassword({ state, onChange }: Props) {
               placeholder="Passwort wiederholen"
               value={state.confirmPassword}
               onChange={(e) => onChange({ confirmPassword: e.target.value })}
+              onKeyDown={handleKeyEvent}
+              onKeyUp={handleKeyEvent}
               className="pr-10"
             />
             <button
