@@ -52,7 +52,9 @@ const INDEX_TO_TITLE: Record<number, string> = {
 export const SwipeableAppContainer = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const [currentIndex, setCurrentIndex] = useState(0);
+  const [currentIndex, setCurrentIndex] = useState(() => {
+    return ROUTE_TO_INDEX[window.location.pathname] ?? 0;
+  });
   const [swipeEnabled, setSwipeEnabled] = useState(true);
   
   // Initialize push notifications
@@ -69,6 +71,7 @@ export const SwipeableAppContainer = () => {
     loop: false,
     skipSnaps: false,
     dragFree: false,
+    startIndex: currentIndex,
     watchDrag: swipeEnabled,
   });
 
@@ -83,7 +86,7 @@ export const SwipeableAppContainer = () => {
   useEffect(() => {
     const targetIndex = ROUTE_TO_INDEX[location.pathname];
     if (targetIndex !== undefined && emblaApi) {
-      emblaApi.scrollTo(targetIndex, false);
+      emblaApi.scrollTo(targetIndex, true);
       setCurrentIndex(targetIndex);
     }
   }, [location.pathname, emblaApi]);
