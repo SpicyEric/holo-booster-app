@@ -166,12 +166,10 @@ export default function MerchantSetup() {
 
   const handleSaveBusiness = async () => {
     if (!customerId) return;
-    if (!state.businessName.trim()) { toast.error("Bitte Geschäftsnamen eingeben"); return; }
     if (!state.industry) { toast.error("Bitte Branche wählen"); return; }
     setSaving(true);
     try {
       await supabase.from("customers").update({
-        name: state.businessName,
         industry: state.industry,
         updated_at: new Date().toISOString(),
       }).eq("id", customerId);
