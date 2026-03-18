@@ -234,7 +234,7 @@ const AppHomeContent = () => {
           const postMerchantIds = [...new Set(posts.map(p => p.merchant_customer_id))];
           const { data: merchants } = await supabase
             .from('customers')
-            .select('id, name, company_name, logo_url')
+            .select('id, name, company_name, logo_url, latitude, longitude')
             .in('id', postMerchantIds);
 
           const postIds = posts.map(p => p.id);
@@ -252,11 +252,16 @@ const AppHomeContent = () => {
 
           posts.forEach(post => {
             const m = merchants?.find(m => m.id === post.merchant_customer_id);
+            let distance: number | undefined;
+            if (userLocation && m?.latitude && m?.longitude) {
+              distance = haversineDistance(userLocation.lat, userLocation.lng, m.latitude, m.longitude);
+            }
             items.push({
               type: 'post', id: post.id, merchant_customer_id: post.merchant_customer_id,
               merchant_name: m?.company_name || m?.name || 'Unbekannt', merchant_logo: m?.logo_url || null,
               image_url: post.image_url, body: post.body, created_at: post.created_at,
               like_count: likeCounts.get(post.id) || 0, liked_by_user: userLikes.has(post.id),
+              distance,
             });
           });
         }
@@ -266,7 +271,7 @@ const AppHomeContent = () => {
       if (stampedMerchantIds.length > 0) {
         const { data: stampedMerchants } = await supabase
           .from('customers')
-          .select('id, name, company_name, logo_url, cover_image_url, description, updated_at')
+          .select('id, name, company_name, logo_url, cover_image_url, description, updated_at, latitude, longitude')
           .in('id', stampedMerchantIds);
 
         const merchantsWithPosts = new Set(items.filter((i: any) => i.type === 'post').map((i: any) => i.merchant_customer_id));
@@ -274,6 +279,10 @@ const AppHomeContent = () => {
         stampedMerchants?.forEach(m => {
           if (!merchantsWithPosts.has(m.id)) {
             const account = accounts?.find(a => a.merchant_customer_id === m.id);
+            let distance: number | undefined;
+            if (userLocation && m?.latitude && m?.longitude) {
+              distance = haversineDistance(userLocation.lat, userLocation.lng, m.latitude, m.longitude);
+            }
             items.push({
               type: 'merchant_card',
               id: `mc-${m.id}`,
@@ -285,6 +294,7 @@ const AppHomeContent = () => {
               created_at: m.updated_at || new Date().toISOString(),
               like_count: 0, liked_by_user: false,
               points_balance: account?.current_points_balance ?? 0,
+              distance,
             });
           }
         });
@@ -321,13 +331,11 @@ const AppHomeContent = () => {
         }
       }
 
+      // Sort ALL items by distance (nearest first), items without distance go to the end
       items.sort((a, b) => {
-        if (a.type === 'offer' && b.type === 'offer') {
-          if (a.distance !== undefined && b.distance !== undefined) return a.distance - b.distance;
-          if (a.distance !== undefined) return -1;
-          if (b.distance !== undefined) return 1;
-        }
-        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+        const distA = a.distance ?? Infinity;
+        const distB = b.distance ?? Infinity;
+        return distA - distB;
       });
 
       setFeedItems(items);
@@ -397,7 +405,7 @@ const AppHomeContent = () => {
     <PullToRefresh onRefresh={handleRefresh}>
     <div className="-mx-4 space-y-6">
       {feedItems.map((item: any) => (
-        <div key={`${item.type}-${item.id}`} className={`bg-card ${item.type === 'offer' ? 'border-l-4 border-primary' : ''}`}>
+        <div key={`${item.type}-${item.id}`} className="bg-card">
           <div className="flex items-center gap-3 px-4 py-3 cursor-pointer" onClick={() => navigate(`/app/merchant/${item.merchant_customer_id}`)}>
             {item.merchant_logo ? (
               <img src={item.merchant_logo} alt="" className="w-9 h-9 rounded-full object-cover" />
@@ -408,14 +416,13 @@ const AppHomeContent = () => {
             )}
             <div className="flex-1 min-w-0">
               <span className="font-semibold text-sm text-foreground">{item.merchant_name}</span>
-              {item.type === 'offer' && item.distance !== undefined && (
-                <span className="text-xs text-muted-foreground ml-2">
-                  <MapPin className="h-3 w-3 inline -mt-0.5" />
-                  {item.distance < 1 ? ` ${Math.round(item.distance * 1000)}m` : ` ${item.distance.toFixed(1)}km`}
-                </span>
-              )}
             </div>
-            <span className="text-xs text-muted-foreground">{formatTimeAgo(item.created_at)}</span>
+            {item.distance !== undefined && (
+              <span className="text-xs text-muted-foreground flex items-center gap-0.5">
+                <MapPin className="h-3 w-3" />
+                {item.distance < 1 ? `${Math.round(item.distance * 1000)}m` : `${item.distance.toFixed(1)}km`}
+              </span>
+            )}
           </div>
 
           {/* Merchant card: wide aspect ratio with cover image */}

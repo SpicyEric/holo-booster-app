@@ -61,37 +61,14 @@ function StoresGoogleMapContent({ userLocation, stores, apiKey }: StoresGoogleMa
   // Always center on user location
   const center = { lat: userLocation[0], lng: userLocation[1] };
 
-  // Fit bounds to show all stores when map loads
+  // Center on user location when map loads
   const onMapLoad = useCallback((mapInstance: google.maps.Map) => {
     setMap(mapInstance);
-    
-    if (validStores.length > 0) {
-      const bounds = new google.maps.LatLngBounds();
-      
-      // Add all store locations to bounds
-      validStores.forEach(store => {
-        bounds.extend({ lat: store.lat, lng: store.lng });
-      });
-      
-      // Add user location to bounds
-      bounds.extend({ lat: userLocation[0], lng: userLocation[1] });
-      
-      // Fit the map to show all markers
-      mapInstance.fitBounds(bounds);
-      
-      // Set a max zoom level so we don't zoom in too much
-      const listener = google.maps.event.addListener(mapInstance, 'idle', () => {
-        const currentZoom = mapInstance.getZoom();
-        if (currentZoom && currentZoom > 15) {
-          mapInstance.setZoom(15);
-        }
-        google.maps.event.removeListener(listener);
-      });
-    }
-    
-    // Mark initial center as set so we don't keep re-centering
+    // Center on user and zoom to a comfortable neighborhood level
+    mapInstance.setCenter({ lat: userLocation[0], lng: userLocation[1] });
+    mapInstance.setZoom(14);
     setInitialCenterSet(true);
-  }, [validStores, userLocation]);
+  }, [userLocation]);
 
   useEffect(() => {
     if (!isLoaded || typeof google === 'undefined') return;
