@@ -35,7 +35,7 @@ export default function WizardStepReward({ state, onChange }: Props) {
       <div className="bg-primary/5 border border-primary/20 rounded-lg p-4">
         <div className="flex items-start gap-3">
           <Lightbulb className="h-5 w-5 text-primary mt-0.5 shrink-0" />
-          <div className="text-xs text-foreground space-y-1">
+          <div className="text-sm text-foreground space-y-1">
             <p className="font-medium">Tipp für deine erste Prämie</p>
             <p className="text-muted-foreground">
               Das Ziel der ersten Prämie sollte sein, dass ein
