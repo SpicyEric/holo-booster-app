@@ -129,7 +129,7 @@ export default function PartnerCheckout() {
       const { data, error } = await supabase.functions.invoke("create-checkout-session", {
         body: {
           customerName, customerEmail, companyName,
-          address: { street, city, postalCode, country },
+          address: { street, houseNumber, city, postalCode, country },
           billingInterval: isYearlyBilling ? 'yearly' : 'monthly',
           promoCodes: validatedDiscounts.map(d => d.code),
           partnerUserId: user?.id, // Track which partner made this sale
