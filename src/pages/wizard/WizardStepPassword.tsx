@@ -42,6 +42,8 @@ export default function WizardStepPassword({ state, onChange }: Props) {
               placeholder="Mindestens 8 Zeichen"
               value={state.password}
               onChange={(e) => onChange({ password: e.target.value })}
+              onKeyDown={handleKeyEvent}
+              onKeyUp={handleKeyEvent}
               className="pr-10"
             />
             <button
