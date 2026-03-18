@@ -320,8 +320,19 @@ export const AppMerchantDetail = () => {
       {/* Safe area shield - must be outside scroll flow */}
       <div className="fixed top-0 left-0 right-0 z-[60]" style={{ height: 'env(safe-area-inset-top, 0px)', background: 'hsl(var(--background))' }} />
 
+      {/* Fixed Back Button */}
+      <Button
+        variant="ghost"
+        size="icon"
+        className="fixed left-4 z-50 bg-black/40 text-white hover:bg-black/60 backdrop-blur-sm"
+        style={{ top: 'calc(env(safe-area-inset-top, 0px) + 0.75rem)' }}
+        onClick={() => navigate(-1)}
+      >
+        <ArrowLeft className="h-5 w-5" />
+      </Button>
+
       {/* Fixed Points Badge - stays visible while scrolling */}
-      <div className="fixed right-4 z-50 bg-card/95 backdrop-blur-sm rounded-full px-3 py-1 shadow-md border border-border" style={{ top: 'calc(env(safe-area-inset-top, 0px) + 0.75rem)' }}>
+      <div className="fixed right-4 z-50 bg-card/80 backdrop-blur-sm rounded-full px-3 py-1 shadow-md border border-border" style={{ top: 'calc(env(safe-area-inset-top, 0px) + 0.75rem)' }}>
         <span className="font-bold text-primary">{userPoints}</span>
         <span className="text-sm text-muted-foreground ml-1">Punkte</span>
       </div>
@@ -343,16 +354,7 @@ export const AppMerchantDetail = () => {
         {/* Soft gradient fade to white */}
         <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-background via-background/80 to-transparent" />
         
-        {/* Back Button */}
-        <Button
-          variant="ghost"
-          size="icon"
-          className="absolute left-4 bg-black/20 text-white hover:bg-black/40"
-          style={{ top: 'calc(env(safe-area-inset-top, 0px) + 0.75rem)' }}
-          onClick={() => navigate(-1)}
-        >
-          <ArrowLeft className="h-5 w-5" />
-        </Button>
+        {/* Back button is now fixed above */}
 
         {/* Merchant Name in the fade area */}
         <div className="absolute bottom-4 left-4 right-4">

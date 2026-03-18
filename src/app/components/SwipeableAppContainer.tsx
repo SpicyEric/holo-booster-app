@@ -74,6 +74,7 @@ export const SwipeableAppContainer = () => {
     dragFree: false,
     startIndex: currentIndex,
     watchDrag: swipeEnabled,
+    duration: 25,
   });
 
   // Re-initialize embla when swipe enabled state changes
@@ -781,29 +782,34 @@ const AppStoresContent = () => {
 
   return (
     <PullToRefresh onRefresh={handleRefresh}>
-    <div className="space-y-4">
-      {/* Tabs */}
-      <div className="flex rounded-lg bg-muted p-1">
-        <button
-          onClick={() => setActiveTab('list')}
-          className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${activeTab === 'list' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
-        >
-          Liste
-        </button>
-        <button
-          onClick={() => setActiveTab('map')}
-          className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${activeTab === 'map' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
-        >
-          Karte
-        </button>
-      </div>
+    <div className="space-y-0">
+      {/* Sticky header: Tabs + Search */}
+      <div className="sticky top-0 z-20 bg-gradient-to-b from-background via-background to-background/95 pb-3 space-y-3">
+        <div className="flex rounded-lg bg-muted p-1">
+          <button
+            onClick={() => setActiveTab('list')}
+            className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${activeTab === 'list' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
+          >
+            Liste
+          </button>
+          <button
+            onClick={() => setActiveTab('map')}
+            className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${activeTab === 'map' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
+          >
+            Karte
+          </button>
+        </div>
 
-      {activeTab === 'list' && (
-        <>
+        {activeTab === 'list' && (
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input placeholder="Geschäft suchen..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="pl-10" />
           </div>
+        )}
+      </div>
+
+      {activeTab === 'list' && (
+        <>
 
           {loading ? (
             <Card className="p-6"><p className="text-muted-foreground text-center">Lädt...</p></Card>

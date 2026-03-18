@@ -11,19 +11,28 @@ html {
 }
 
 /* Hide all scrollbars app-wide */
-*,
-*::before,
-*::after {
+* {
   scrollbar-width: none !important; /* Firefox */
   -ms-overflow-style: none !important; /* IE/Edge */
+  -webkit-overflow-scrolling: touch;
 }
-*::-webkit-scrollbar,
-*::before::-webkit-scrollbar,
-*::after::-webkit-scrollbar {
-  display: none !important; /* Chrome/Safari */
+*::-webkit-scrollbar {
+  display: none !important;
   width: 0 !important;
   height: 0 !important;
   background: transparent !important;
+  -webkit-appearance: none !important;
+  appearance: none !important;
+}
+/* Extra specificity for scroll containers */
+div[style*="overflow"], .overflow-y-auto, .overflow-x-auto, .overflow-auto, .overflow-scroll {
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+div[style*="overflow"]::-webkit-scrollbar, .overflow-y-auto::-webkit-scrollbar, .overflow-x-auto::-webkit-scrollbar, .overflow-auto::-webkit-scrollbar, .overflow-scroll::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
 }
 
 /* Fixed safe-area shield — prevents content from showing behind system status bar */
