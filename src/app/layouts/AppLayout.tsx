@@ -29,6 +29,8 @@ export const AppLayout = () => {
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
+      {/* Safe area shield */}
+      <div className="safe-area-top-shield" />
       {/* Main Content */}
       <main className="flex-1 pb-20 overflow-y-auto">
         <Outlet />
