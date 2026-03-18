@@ -80,8 +80,6 @@ const Nachrichten = () => {
   const [estimatedRecipients, setEstimatedRecipients] = useState<number | null>(null);
 
   // Automations state
-  const [welcomeEnabled, setWelcomeEnabled] = useState(false);
-  const [welcomeMessage, setWelcomeMessage] = useState('Herzlich willkommen in unserem Bonusprogramm! Sammle Stempel und sichere dir tolle Prämien.');
   const [birthdayEnabled, setBirthdayEnabled] = useState(false);
   const [birthdayMessage, setBirthdayMessage] = useState('Alles Gute zum Geburtstag! Als kleines Geschenk schenken wir dir etwas Besonderes.');
   const [birthdayBonusPoints, setBirthdayBonusPoints] = useState(5);
