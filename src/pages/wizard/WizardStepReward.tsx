@@ -11,12 +11,23 @@ interface Props {
 }
 
 const EXAMPLE_REWARDS: Record<string, string[]> = {
-  cafe: ["Gratis Kaffee", "Gratis Croissant", "Gratis Getränk nach Wahl"],
-  baeckerei: ["Gratis Brötchen", "Gratis Teilchen", "10% auf die nächste Bestellung"],
-  restaurant: ["Gratis Dessert", "Gratis Getränk", "10% auf den nächsten Besuch"],
-  friseur: ["Gratis Styling-Produkt", "10% auf den nächsten Schnitt"],
-  barbershop: ["Gratis Bartpflege", "Gratis Styling"],
-  default: ["Gratis Produkt", "10% Rabatt", "Kleines Geschenk"],
+  cafe: ["Gratis Kaffee", "Gratis Croissant", "Stück Kuchen zum halben Preis"],
+  baeckerei: ["Gratis Brötchen", "Gratis Kaffee", "Gratis Breze"],
+  restaurant: ["Gratis Dessert", "Gratis Getränk", "5 € Rabatt auf den nächsten Besuch"],
+  imbiss: ["Gratis Getränk zum Menü", "5 € Rabatt auf deine nächste Bestellung"],
+  friseur: ["5 € Rabatt auf den nächsten Haarschnitt", "Gratis Styling-Produkt"],
+  barbershop: ["5 € Rabatt auf den nächsten Haarschnitt", "Gratis Bartpflege"],
+  kosmetikstudio: ["5 € Rabatt auf die nächste Behandlung", "Gratis Handmassage"],
+  shishabar: ["Gratis Shisha-Kohle", "Gratis Getränk"],
+  einzelhandel: ["5 € Einkaufsgutschein", "Kleines Geschenk ab 30 € Einkauf"],
+  apotheke: ["Kleine Handcreme gratis", "Gratis Probepackung"],
+  tankstelle: ["Gratis Kaffee", "Autowäsche zum halben Preis"],
+  kiosk: ["Gratis Getränk", "5 € Gutschein"],
+  fitnessstudio: ["Gratis Probetraining für einen Freund", "Gratis Proteinshake"],
+  nagelstudio: ["5 € Rabatt auf die nächste Maniküre", "Gratis Nagellack"],
+  eisdiele: ["Gratis Kugel Eis", "Gratis Topping nach Wahl"],
+  waschsalon: ["Gratis Waschgang", "50% auf den nächsten Trocknerdurchgang"],
+  default: ["Gratis Produkt", "5 € Rabatt", "Kleines Geschenk"],
 };
 
 export default function WizardStepReward({ state, onChange }: Props) {

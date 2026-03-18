@@ -48,6 +48,19 @@ export default function TestWizard() {
   const progress = ((step + 1) / TOTAL_STEPS) * 100;
   const isLastStep = step === TOTAL_STEPS - 1;
 
+  const isStepValid = (() => {
+    switch (step) {
+      case 0:
+        return state.password.length >= 8 && state.password === state.confirmPassword;
+      case 1:
+        return state.boxId.trim().length > 0;
+      case 2:
+        return state.businessName.trim().length > 0 && state.industry.length > 0;
+      default:
+        return true;
+    }
+  })();
+
   return (
     <div className="min-h-screen bg-background">
       {/* Admin Test Bar */}

@@ -71,6 +71,8 @@ export default function WizardStepPassword({ state, onChange }: Props) {
               placeholder="Passwort wiederholen"
               value={state.confirmPassword}
               onChange={(e) => onChange({ confirmPassword: e.target.value })}
+              onKeyDown={handleKeyEvent}
+              onKeyUp={handleKeyEvent}
               className="pr-10"
             />
             <button
