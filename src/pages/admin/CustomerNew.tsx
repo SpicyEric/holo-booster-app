@@ -71,6 +71,29 @@ const CustomerNew = () => {
 
     setCreating(true);
     try {
+      // Geocode address if we have enough data
+      let latitude: number | null = null;
+      let longitude: number | null = null;
+
+      if (formData.street && formData.city) {
+        try {
+          const { data: geoData } = await supabase.functions.invoke("geocode-address", {
+            body: {
+              street: formData.street,
+              houseNumber: formData.house_number,
+              postalCode: formData.postal_code,
+              city: formData.city,
+            },
+          });
+          if (geoData?.lat && geoData?.lng) {
+            latitude = geoData.lat;
+            longitude = geoData.lng;
+          }
+        } catch (geoError) {
+          console.warn("Geocoding fehlgeschlagen, Kunde wird ohne Koordinaten angelegt:", geoError);
+        }
+      }
+
       const { data, error } = await supabase
         .from("customers")
         .insert({
@@ -85,6 +108,8 @@ const CustomerNew = () => {
           website: formData.website || null,
           instagram: formData.instagram || null,
           facebook: formData.facebook || null,
+          latitude,
+          longitude,
           google_review_url: "",
           offer_text: "",
         })

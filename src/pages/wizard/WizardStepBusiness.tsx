@@ -1,4 +1,3 @@
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   Coffee, CakeSlice, UtensilsCrossed, Pizza, Scissors,
@@ -36,17 +35,6 @@ interface Props {
 export default function WizardStepBusiness({ state, onChange }: Props) {
   return (
     <div className="space-y-6">
-      <div>
-        <Label htmlFor="businessName">Geschäftsname *</Label>
-        <Input
-          id="businessName"
-          placeholder="z.B. Bäckerei Meier"
-          value={state.businessName}
-          onChange={(e) => onChange({ businessName: e.target.value })}
-          className="mt-1"
-        />
-      </div>
-
       <div>
         <Label className="mb-3 block">Branche auswählen</Label>
         <p className="text-sm text-muted-foreground mb-4">
