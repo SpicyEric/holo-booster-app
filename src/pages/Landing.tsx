@@ -1,4 +1,5 @@
 import ClassicNav from '@/components/ClassicNav';
+import ERecht24Badge from '@/components/ERecht24Badge';
 import Particles from '@/components/Particles';
 import { Button } from '@/components/ui/button';
 import { GlassCard } from '@/components/GlassCard';
