@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { Package, Palette, CheckCircle2, Clock, XCircle, RefreshCw, Store, Trash2, HeadphonesIcon, Bug, HelpCircle, MessageSquare } from "lucide-react";
+import { Package, Palette, CheckCircle2, Clock, XCircle, RefreshCw, Store, Trash2, HeadphonesIcon, Bug, HelpCircle, MessageSquare, Mail } from "lucide-react";
 
 interface Order {
   id: string;
