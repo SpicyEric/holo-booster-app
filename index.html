@@ -7,9 +7,16 @@
     <title>Eloyo | Modernes Kundenbindungssystem</title>
     <meta name="description" content="Das moderne NFC-Stempelsystem für lokale Geschäfte. Digitale Bonuskarten, automatische Kundengewinnung und Echtzeit-Statistiken. DSGVO-konform." />
     <script>
-      // CCM19 Cookie Consent nur auf Website-Seiten laden, nicht in der App (/app/*)
-      if (!window.location.pathname.startsWith('/app')) {
-        var s = document.createElement('script');
+      // CCM19 nur im Web laden – niemals in der nativen App (Capacitor)
+      const isNativeApp = Boolean(
+        window.Capacitor &&
+        typeof window.Capacitor.isNativePlatform === 'function' &&
+        window.Capacitor.isNativePlatform()
+      );
+      const isAppRoute = window.location.pathname.startsWith('/app');
+
+      if (!isNativeApp && !isAppRoute) {
+        const s = document.createElement('script');
         s.src = 'https://cloud.ccm19.de/app.js?apiKey=660ca115503b9572cc20f9b9f880685037ec819b9416cb24&domain=69bbb80b3fbf0a75fd05cc62';
         s.referrerPolicy = 'origin';
         document.head.appendChild(s);
