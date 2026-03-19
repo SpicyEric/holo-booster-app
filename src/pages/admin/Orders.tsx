@@ -126,7 +126,51 @@ export default function Orders() {
     }
   };
 
-  const updateSupportStatus = async (id: string, newStatus: string) => {
+  const loadContactSubmissions = async () => {
+    try {
+      setContactLoading(true);
+      const { data, error } = await supabase
+        .from("contact_submissions" as any)
+        .select("*")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      setContactSubmissions((data as any) || []);
+    } catch (error) {
+      console.error("Error loading contact submissions:", error);
+    } finally {
+      setContactLoading(false);
+    }
+  };
+
+  const updateContactStatus = async (id: string, newStatus: string) => {
+    try {
+      const { error } = await supabase
+        .from("contact_submissions" as any)
+        .update({ status: newStatus } as any)
+        .eq("id", id);
+      if (error) throw error;
+      toast.success("Status aktualisiert");
+      loadContactSubmissions();
+    } catch (error) {
+      console.error("Error updating contact submission:", error);
+      toast.error("Fehler");
+    }
+  };
+
+  const deleteContactSubmission = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from("contact_submissions" as any)
+        .delete()
+        .eq("id", id);
+      if (error) throw error;
+      toast.success("Kontaktanfrage gelöscht");
+      loadContactSubmissions();
+    } catch (error) {
+      console.error("Error deleting contact submission:", error);
+      toast.error("Fehler");
+    }
+  };
     try {
       const { error } = await supabase
         .from("support_messages" as any)
