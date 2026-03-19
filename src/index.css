@@ -2,9 +2,11 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Prevent pinch-to-zoom on touch devices */
+/* Prevent pinch-to-zoom on touch devices & iOS overscroll bounce */
 html {
   touch-action: manipulation;
+  overscroll-behavior: none;
+  background: hsl(var(--background));
 }
 
 /* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
@@ -108,6 +110,7 @@ All colors MUST be HSL.
   body {
     @apply bg-background text-foreground;
     padding-top: env(safe-area-inset-top, 0px);
+    overscroll-behavior: none;
   }
 
   .safe-area-top-shield {

@@ -168,25 +168,25 @@ export const SwipeableAppContainer = () => {
         >
           <div className="flex h-full">
             <div className="flex-[0_0_100%] min-w-0 h-full overflow-y-auto" style={{ overscrollBehavior: 'contain' }}>
-              <div className="container mx-auto px-4 py-6 max-w-2xl relative z-10">
+              <div className="container mx-auto px-4 py-6 pb-16 max-w-2xl relative z-10">
                 <AppHomeContent />
               </div>
             </div>
             
             <div className="flex-[0_0_100%] min-w-0 h-full overflow-y-auto" style={{ overscrollBehavior: 'contain', touchAction: 'pan-y' }}>
-              <div className="container mx-auto px-4 py-6 max-w-2xl relative z-10">
+              <div className="container mx-auto px-4 py-6 pb-16 max-w-2xl relative z-10">
                 <AppStoresContent />
               </div>
             </div>
             
             <div className="flex-[0_0_100%] min-w-0 h-full overflow-y-auto" style={{ overscrollBehavior: 'contain' }}>
-              <div className="container mx-auto px-4 py-6 max-w-2xl relative z-10">
+              <div className="container mx-auto px-4 py-6 pb-16 max-w-2xl relative z-10">
                 <AppMessagesContent />
               </div>
             </div>
             
             <div className="flex-[0_0_100%] min-w-0 h-full overflow-y-auto" style={{ overscrollBehavior: 'contain' }}>
-              <div className="container mx-auto px-4 py-6 max-w-2xl relative z-10">
+              <div className="container mx-auto px-4 py-6 pb-16 max-w-2xl relative z-10">
                 <AppProfileContent />
               </div>
             </div>
