@@ -330,6 +330,7 @@ const Karriere = () => {
           <p>© {new Date().getFullYear()} Eloyo. Alle Rechte vorbehalten.</p>
         </div>
       </footer>
+      <ERecht24Badge />
     </div>
   );
 };

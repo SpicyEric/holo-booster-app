@@ -89,6 +89,7 @@ const Impressum = () => {
           </div>
         </div>
       </div>
+      <ERecht24Badge />
     </div>
   );
 };

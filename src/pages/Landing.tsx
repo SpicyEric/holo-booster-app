@@ -544,6 +544,7 @@ const Landing = () => {
           </div>
         </div>
       </footer>
+      <ERecht24Badge />
     </div>
   );
 };

@@ -206,6 +206,7 @@ const Delete = () => {
           </div>
         </div>
       </div>
+      <ERecht24Badge />
     </div>
   );
 };

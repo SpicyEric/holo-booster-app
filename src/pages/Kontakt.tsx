@@ -246,6 +246,7 @@ const Kontakt = () => {
           </div>
         </div>
       </div>
+      <ERecht24Badge />
     </div>
   );
 };
