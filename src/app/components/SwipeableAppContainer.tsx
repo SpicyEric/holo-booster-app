@@ -58,6 +58,17 @@ export const SwipeableAppContainer = () => {
   });
   const [swipeEnabled, setSwipeEnabled] = useState(true);
   
+  // Reset window scroll on mount — prevents scroll offset leaking from detail/scan pages
+  useEffect(() => {
+    window.scrollTo(0, 0);
+    document.documentElement.style.overflow = 'hidden';
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.documentElement.style.overflow = '';
+      document.body.style.overflow = '';
+    };
+  }, []);
+  
   // Initialize push notifications
   usePushNotifications();
   
