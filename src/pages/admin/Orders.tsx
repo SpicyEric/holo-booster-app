@@ -359,6 +359,7 @@ export default function Orders() {
   const completedCount = orders.filter(o => o.status === "completed").length;
   const newSuggestionsCount = suggestions.filter(s => s.status === "new").length;
   const newSupportCount = supportMessages.filter(m => m.status === "new").length;
+  const newContactCount = contactSubmissions.filter(c => c.status === "new").length;
 
   const getCategoryLabel = (cat: string) => {
     switch (cat) {
