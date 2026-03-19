@@ -73,7 +73,7 @@ export const SwipeableAppContainer = () => {
     skipSnaps: false,
     dragFree: false,
     startIndex: currentIndex,
-    watchDrag: swipeEnabled,
+    watchDrag: false,
     duration: 25,
   });
 
