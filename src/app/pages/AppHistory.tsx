@@ -105,7 +105,7 @@ export const AppHistory = () => {
   }, {} as Record<string, Transaction[]>);
 
   return (
-    <MainLayout title="Transaktionen">
+    <MainLayout title="Transaktionen" showBack>
       <div className="space-y-6">
         {transactions.length === 0 ? (
           <Card>
