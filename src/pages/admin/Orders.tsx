@@ -90,6 +90,7 @@ export default function Orders() {
       loadOrders();
       loadSuggestions();
       loadSupportMessages();
+      loadContactSubmissions();
     }
   }, [user, filterStatus]);
 
