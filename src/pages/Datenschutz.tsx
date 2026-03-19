@@ -306,6 +306,7 @@ const Datenschutz = () => {
           </div>
         </div>
       </div>
+      <ERecht24Badge />
     </div>
   );
 };
