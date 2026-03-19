@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MainLayout } from '@/app/components/layout/MainLayout';
 import { Button } from '@/components/ui/button';
@@ -9,14 +9,15 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { Loader2, Store, CheckCircle, ArrowLeft } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { Loader2, Store, CheckCircle, Clock } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 export default function AppSuggestShop() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [cooldownMinutes, setCooldownMinutes] = useState(0);
 
   const [shopName, setShopName] = useState('');
   const [street, setStreet] = useState('');
@@ -25,9 +26,43 @@ export default function AppSuggestShop() {
   const [city, setCity] = useState('');
   const [contactPerson, setContactPerson] = useState('');
 
+  // Check cooldown on mount and after submission
+  useEffect(() => {
+    let interval: ReturnType<typeof setInterval>;
+    const checkCooldown = async () => {
+      if (!user) return;
+      const { data } = await supabase
+        .from('shop_suggestions')
+        .select('created_at')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (data?.created_at) {
+        const lastSubmit = new Date(data.created_at).getTime();
+        const diff = 30 * 60 * 1000 - (Date.now() - lastSubmit);
+        if (diff > 0) {
+          setCooldownMinutes(Math.ceil(diff / 60000));
+          interval = setInterval(() => {
+            const remaining = 30 * 60 * 1000 - (Date.now() - lastSubmit);
+            if (remaining <= 0) {
+              setCooldownMinutes(0);
+              clearInterval(interval);
+            } else {
+              setCooldownMinutes(Math.ceil(remaining / 60000));
+            }
+          }, 30000);
+        }
+      }
+    };
+    checkCooldown();
+    return () => { if (interval) clearInterval(interval); };
+  }, [user, submitted]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user || !shopName.trim()) return;
+    if (!user || !shopName.trim() || cooldownMinutes > 0) return;
 
     setLoading(true);
     try {
@@ -85,6 +120,16 @@ export default function AppSuggestShop() {
   return (
     <MainLayout title="Shop vorschlagen" showBack>
       <div className="space-y-6">
+        {cooldownMinutes > 0 && (
+          <Card className="border-amber-200 bg-amber-50 dark:bg-amber-950/20 dark:border-amber-800">
+            <CardContent className="flex items-center gap-3 py-4">
+              <Clock className="h-5 w-5 text-amber-600 shrink-0" />
+              <p className="text-sm text-amber-700 dark:text-amber-400">
+                Du kannst in {cooldownMinutes} {cooldownMinutes === 1 ? 'Minute' : 'Minuten'} einen neuen Vorschlag machen.
+              </p>
+            </CardContent>
+          </Card>
+        )}
         <Card>
           <CardHeader>
             <div className="h-14 w-14 rounded-xl bg-primary/10 flex items-center justify-center mb-3">
@@ -105,6 +150,7 @@ export default function AppSuggestShop() {
                   value={shopName}
                   onChange={(e) => setShopName(e.target.value)}
                   required
+                  disabled={cooldownMinutes > 0}
                 />
               </div>
 
@@ -116,6 +162,7 @@ export default function AppSuggestShop() {
                     placeholder="Musterstraße"
                     value={street}
                     onChange={(e) => setStreet(e.target.value)}
+                    disabled={cooldownMinutes > 0}
                   />
                 </div>
                 <div className="space-y-2">
@@ -125,6 +172,7 @@ export default function AppSuggestShop() {
                     placeholder="12"
                     value={houseNumber}
                     onChange={(e) => setHouseNumber(e.target.value)}
+                    disabled={cooldownMinutes > 0}
                   />
                 </div>
               </div>
@@ -137,6 +185,7 @@ export default function AppSuggestShop() {
                     placeholder="12345"
                     value={postalCode}
                     onChange={(e) => setPostalCode(e.target.value)}
+                    disabled={cooldownMinutes > 0}
                   />
                 </div>
                 <div className="space-y-2">
@@ -146,6 +195,7 @@ export default function AppSuggestShop() {
                     placeholder="Berlin"
                     value={city}
                     onChange={(e) => setCity(e.target.value)}
+                    disabled={cooldownMinutes > 0}
                   />
                 </div>
               </div>
@@ -157,6 +207,7 @@ export default function AppSuggestShop() {
                   placeholder="Kennst du jemanden aus dem Geschäft?"
                   value={contactPerson}
                   onChange={(e) => setContactPerson(e.target.value)}
+                  disabled={cooldownMinutes > 0}
                 />
                 <p className="text-xs text-muted-foreground">
                   Wenn du den Inhaber oder einen Mitarbeiter kennst, schreibe hier den Namen.
@@ -166,7 +217,7 @@ export default function AppSuggestShop() {
               <Button
                 type="submit"
                 className="w-full bg-gradient-to-r from-primary to-secondary"
-                disabled={loading || !shopName.trim()}
+                disabled={loading || !shopName.trim() || cooldownMinutes > 0}
               >
                 {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Vorschlag absenden
