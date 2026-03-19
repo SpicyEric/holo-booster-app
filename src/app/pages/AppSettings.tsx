@@ -105,6 +105,7 @@ export default function AppSettings() {
       const { error } = await supabase
         .from('profiles')
         .update({
+          birth_date: birthDate || null,
           gender: gender || null,
         })
         .eq('user_id', user.id);
