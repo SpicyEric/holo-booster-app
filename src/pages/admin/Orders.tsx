@@ -171,6 +171,8 @@ export default function Orders() {
       toast.error("Fehler");
     }
   };
+
+  const updateSupportStatus = async (id: string, newStatus: string) => {
     try {
       const { error } = await supabase
         .from("support_messages" as any)
