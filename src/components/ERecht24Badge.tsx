@@ -1,19 +1,19 @@
 import { useLocation } from 'react-router-dom';
-import erecht24Siegel from '@/assets/erecht24-siegel.png';
-import erecht24Impressum from '@/assets/erecht24-impressum.png';
-import erecht24Datenschutz from '@/assets/erecht24-datenschutz.png';
+import erecht24AgenturLight from '@/assets/erecht24-agentur-light.png';
+import erecht24ImpressumDark from '@/assets/erecht24-impressum-dark.png';
+import erecht24DatenschutzDark from '@/assets/erecht24-datenschutz-dark.png';
 
 const ERecht24Badge = () => {
   const location = useLocation();
 
-  let src = erecht24Siegel;
+  let src = erecht24AgenturLight;
   let alt = 'eRecht24 Agentur Partner für rechtssichere Webseiten';
 
   if (location.pathname === '/impressum') {
-    src = erecht24Impressum;
+    src = erecht24ImpressumDark;
     alt = 'eRecht24 Impressum für rechtssichere Webseiten';
   } else if (location.pathname === '/datenschutz') {
-    src = erecht24Datenschutz;
+    src = erecht24DatenschutzDark;
     alt = 'eRecht24 Datenschutzerklärung für rechtssichere Webseiten';
   }
 
@@ -27,7 +27,7 @@ const ERecht24Badge = () => {
       <img
         src={src}
         alt={alt}
-        className="w-40 sm:w-48 h-auto rounded-lg shadow-lg"
+        className="w-24 sm:w-28 h-auto rounded-lg shadow-lg"
       />
     </a>
   );
