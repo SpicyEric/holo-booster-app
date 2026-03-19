@@ -45,3 +45,8 @@ div[style*="overflow"]::-webkit-scrollbar, .overflow-y-auto::-webkit-scrollbar, 
   background: hsl(var(--background));
   z-index: 60;
 }
+
+/* Safe area bottom padding — prevents bottom nav from overlapping system navigation buttons */
+.safe-area-pb {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
