@@ -402,7 +402,7 @@ export default function Orders() {
         <div>
           <h1 className="text-xl font-semibold">Nachrichten</h1>
         </div>
-        <Button size="sm" variant="outline" onClick={() => { loadOrders(); loadSuggestions(); loadSupportMessages(); }}>
+        <Button size="sm" variant="outline" onClick={() => { loadOrders(); loadSuggestions(); loadSupportMessages(); loadContactSubmissions(); }}>
           <RefreshCw className="w-3 h-3 mr-1" />
           Aktualisieren
         </Button>
