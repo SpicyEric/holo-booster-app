@@ -621,6 +621,68 @@ export default function Orders() {
             )}
           </div>
         </TabsContent>
+
+        <TabsContent value="contact" className="space-y-3">
+          <p className="text-xs text-muted-foreground">
+            {contactSubmissions.length} Kontaktanfragen · {newContactCount} neu
+          </p>
+
+          <div className="border rounded">
+            {contactLoading ? (
+              <div className="text-center py-8 text-sm text-muted-foreground">Laden...</div>
+            ) : contactSubmissions.length === 0 ? (
+              <div className="text-center py-8 text-sm text-muted-foreground">
+                <Mail className="h-8 w-8 mx-auto mb-2 text-muted-foreground/50" />
+                Keine Kontaktanfragen
+              </div>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-muted/50 hover:bg-muted/50">
+                    <TableHead className="h-8 text-xs font-semibold w-8"></TableHead>
+                    <TableHead className="h-8 text-xs font-semibold">Name</TableHead>
+                    <TableHead className="h-8 text-xs font-semibold">E-Mail</TableHead>
+                    <TableHead className="h-8 text-xs font-semibold">Telefon</TableHead>
+                    <TableHead className="h-8 text-xs font-semibold">Nachricht</TableHead>
+                    <TableHead className="h-8 text-xs font-semibold">Datum</TableHead>
+                    <TableHead className="h-8 text-xs font-semibold">Status</TableHead>
+                    <TableHead className="h-8 text-xs font-semibold w-36">Aktion</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {contactSubmissions.map((c) => (
+                    <TableRow key={c.id} className="hover:bg-accent/30">
+                      <TableCell className="py-1.5"><Mail className="h-3.5 w-3.5 text-primary" /></TableCell>
+                      <TableCell className="py-1.5 text-sm font-medium">{c.name}</TableCell>
+                      <TableCell className="py-1.5 text-sm">
+                        <a href={`mailto:${c.email}`} className="text-primary hover:underline">{c.email}</a>
+                      </TableCell>
+                      <TableCell className="py-1.5 text-sm">{c.phone || "—"}</TableCell>
+                      <TableCell className="py-1.5 text-sm max-w-xs truncate">{c.message}</TableCell>
+                      <TableCell className="py-1.5 text-xs text-muted-foreground">{formatDate(c.created_at)}</TableCell>
+                      <TableCell className="py-1.5">{getSuggestionStatusBadge(c.status)}</TableCell>
+                      <TableCell className="py-1.5">
+                        <div className="flex gap-1">
+                          <Select value={c.status} onValueChange={(value) => updateContactStatus(c.id, value)}>
+                            <SelectTrigger className="h-7 text-xs w-24"><SelectValue /></SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="new">Neu</SelectItem>
+                              <SelectItem value="contacted">Kontaktiert</SelectItem>
+                              <SelectItem value="done">Erledigt</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => deleteContactSubmission(c.id)}>
+                            <Trash2 className="h-3 w-3 text-destructive" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
+          </div>
+        </TabsContent>
       </Tabs>
     </div>
   );
