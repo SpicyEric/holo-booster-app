@@ -419,6 +419,9 @@ export default function Orders() {
           <TabsTrigger value="support">
             Support {newSupportCount > 0 && <Badge variant="destructive" className="ml-1.5 h-5 min-w-5 text-[10px]">{newSupportCount}</Badge>}
           </TabsTrigger>
+          <TabsTrigger value="contact">
+            Kontakt {newContactCount > 0 && <Badge variant="destructive" className="ml-1.5 h-5 min-w-5 text-[10px]">{newContactCount}</Badge>}
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="orders" className="space-y-3">
