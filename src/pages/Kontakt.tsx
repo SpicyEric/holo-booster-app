@@ -46,9 +46,14 @@ const Kontakt = () => {
     setLoading(true);
 
     try {
-      const { error } = await supabase.functions.invoke('contact-submit', {
-        body: formData
-      });
+      const { error } = await supabase
+        .from('contact_submissions' as any)
+        .insert({
+          name: formData.name,
+          email: formData.email,
+          phone: formData.phone || null,
+          message: formData.message,
+        } as any);
 
       if (error) throw error;
 
