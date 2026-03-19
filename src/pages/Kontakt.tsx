@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import ERecht24Badge from '@/components/ERecht24Badge';
 import ClassicNav from '@/components/ClassicNav';
 import Particles from '@/components/Particles';
 import { Button } from '@/components/ui/button';
@@ -245,6 +246,7 @@ const Kontakt = () => {
           </div>
         </div>
       </div>
+      <ERecht24Badge />
     </div>
   );
 };

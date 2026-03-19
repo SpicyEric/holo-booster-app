@@ -1,4 +1,5 @@
 import ClassicNav from '@/components/ClassicNav';
+import ERecht24Badge from '@/components/ERecht24Badge';
 import Particles from '@/components/Particles';
 import eloyoLogo from '@/assets/eloyo-logo.png';
 
@@ -88,6 +89,7 @@ const Impressum = () => {
           </div>
         </div>
       </div>
+      <ERecht24Badge />
     </div>
   );
 };

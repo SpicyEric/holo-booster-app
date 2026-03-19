@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import ERecht24Badge from '@/components/ERecht24Badge';
 import ClassicNav from '@/components/ClassicNav';
 import Particles from '@/components/Particles';
 import { Button } from '@/components/ui/button';
@@ -205,6 +206,7 @@ const Delete = () => {
           </div>
         </div>
       </div>
+      <ERecht24Badge />
     </div>
   );
 };
