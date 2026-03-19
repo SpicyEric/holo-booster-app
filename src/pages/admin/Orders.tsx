@@ -59,6 +59,17 @@ interface SupportMessage {
   admin_notes: string | null;
 }
 
+interface ContactSubmission {
+  id: string;
+  created_at: string;
+  name: string;
+  email: string;
+  phone: string | null;
+  message: string;
+  status: string;
+  admin_notes: string | null;
+}
+
 export default function Orders() {
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
