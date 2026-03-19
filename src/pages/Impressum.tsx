@@ -38,79 +38,51 @@ const Impressum = () => {
           
           <div className="bg-card border border-border rounded-2xl p-8 space-y-8">
             <section>
-              <h2 className="text-2xl font-bold mb-4">Angaben gemäß § 5 TMG</h2>
               <p className="text-muted-foreground">
                 Klaus Eric Pfadisch<br />
+                Eloyo<br />
                 Fuggerstr. 2<br />
                 86836 Untermeitingen
-              </p>
-              <p className="text-muted-foreground mt-4">
-                <strong>Hinweis:</strong> Es handelt sich um ein Einzelunternehmen. 
-                "Eloyo" ist ein Fantasiename und keine Rechtsform.
-              </p>
-            </section>
-
-            <section>
-              <h2 className="text-2xl font-bold mb-4">Vertreten durch</h2>
-              <p className="text-muted-foreground">
-                Geschäftsführer: Klaus Eric Pfadisch
               </p>
             </section>
 
             <section>
               <h2 className="text-2xl font-bold mb-4">Kontakt</h2>
               <p className="text-muted-foreground">
-                Telefon: +49 151 62665596<br />
+                Telefon: +49 1516 2665596<br />
                 E-Mail: support@eloyo.de
               </p>
             </section>
 
             <section>
-              <h2 className="text-2xl font-bold mb-4">Registereintrag</h2>
+              <h2 className="text-2xl font-bold mb-4">Verbraucher­streit­beilegung/Universal­schlichtungs­stelle</h2>
               <p className="text-muted-foreground">
-                Es liegt kein Registereintrag vor, da es sich um ein Einzelunternehmen handelt.
+                Wir sind nicht bereit oder verpflichtet, an Streitbeilegungsverfahren vor einer 
+                Verbraucherschlichtungsstelle teilzunehmen.
               </p>
             </section>
 
             <section>
-              <h2 className="text-2xl font-bold mb-4">Umsatzsteuer-ID</h2>
+              <h2 className="text-2xl font-bold mb-4">Zentrale Kontaktstelle nach dem Digital Services Act – DSA (Verordnung (EU) 2022/265)</h2>
               <p className="text-muted-foreground">
-                Es liegt keine Umsatzsteuer-Identifikationsnummer vor, 
-                da noch kein Gewerbe angemeldet wurde.
+                Unsere zentrale Kontaktstelle für Nutzer und Behörden nach Art. 11, 12 DSA erreichen Sie wie folgt:
               </p>
-            </section>
-
-            <section>
-              <h2 className="text-2xl font-bold mb-4">Verantwortlich für den Inhalt nach § 55 Abs. 2 RStV</h2>
-              <p className="text-muted-foreground">
-                Klaus Eric Pfadisch<br />
-                Fuggerstr. 2<br />
-                86836 Untermeitingen
+              <p className="text-muted-foreground mt-2">
+                E-Mail: support@eloyo.de
               </p>
-            </section>
-
-            <section>
-              <h2 className="text-2xl font-bold mb-4">EU-Streitschlichtung</h2>
-              <p className="text-muted-foreground">
-                Die Europäische Kommission stellt eine Plattform zur Online-Streitbeilegung (OS) bereit:{' '}
+              <p className="text-muted-foreground mt-2">
+                Sonstige Kontaktwege:<br />
                 <a 
-                  href="https://ec.europa.eu/consumers/odr/" 
+                  href="https://eloyo.de/kontakt" 
                   target="_blank" 
                   rel="noopener noreferrer"
                   className="text-primary hover:underline"
                 >
-                  https://ec.europa.eu/consumers/odr/
+                  https://eloyo.de/kontakt
                 </a>
-                <br />
-                Unsere E-Mail-Adresse finden Sie oben im Impressum.
               </p>
-            </section>
-
-            <section>
-              <h2 className="text-2xl font-bold mb-4">Verbraucherstreitbeilegung/Universalschlichtungsstelle</h2>
-              <p className="text-muted-foreground">
-                Wir sind nicht bereit oder verpflichtet, an Streitbeilegungsverfahren vor einer 
-                Verbraucherschlichtungsstelle teilzunehmen.
+              <p className="text-muted-foreground mt-2">
+                Die für den Kontakt zur Verfügung stehenden Sprachen sind: Deutsch, Englisch.
               </p>
             </section>
           </div>
