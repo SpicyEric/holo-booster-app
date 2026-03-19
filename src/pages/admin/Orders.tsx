@@ -80,6 +80,8 @@ export default function Orders() {
   const [suggestionsLoading, setSuggestionsLoading] = useState(true);
   const [supportMessages, setSupportMessages] = useState<SupportMessage[]>([]);
   const [supportLoading, setSupportLoading] = useState(true);
+  const [contactSubmissions, setContactSubmissions] = useState<ContactSubmission[]>([]);
+  const [contactLoading, setContactLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("orders");
 
   useEffect(() => {
