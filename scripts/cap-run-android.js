@@ -11,9 +11,8 @@
  *
  * This helper enforces the correct order:
  *   1) npm run build
- *   2) cap sync android
- *   3) run post-sync hooks (Android/iOS)
- *   4) cap run android --no-sync
+ *   2) cap sync android (triggers capacitor:sync:after hooks)
+ *   3) cap run android --no-sync
  */
 
 import { execSync } from 'child_process';
@@ -25,7 +24,6 @@ function run(cmd) {
 function main() {
   run('npm run build');
   run('npx cap sync android');
-  run('node scripts/capacitor-hooks.js');
   run('npx cap run android --no-sync');
 }
 

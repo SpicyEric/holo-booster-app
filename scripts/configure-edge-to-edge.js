@@ -41,6 +41,56 @@ function configureAndroidEdgeToEdge() {
 }
 
 /**
+ * Pick the most suitable Android app theme in styles.xml
+ * Supports AppTheme, AppTheme.NoActionBar, and other AppTheme.* variants
+ */
+function findAndroidAppThemeTag(content) {
+  const styleRegex = /<style\s+name="([^"]+)"[^>]*>/g;
+  const styleTags = [];
+  let match;
+
+  while ((match = styleRegex.exec(content)) !== null) {
+    styleTags.push({
+      name: match[1],
+      openTag: match[0],
+      index: match.index,
+    });
+  }
+
+  return (
+    styleTags.find((style) => style.name === 'AppTheme.NoActionBar') ||
+    styleTags.find((style) => style.name === 'AppTheme') ||
+    styleTags.find((style) => style.name.startsWith('AppTheme.') && !style.name.toLowerCase().includes('launch')) ||
+    styleTags.find((style) => style.name.startsWith('AppTheme')) ||
+    null
+  );
+}
+
+/**
+ * Insert a single <item> into the selected Android app theme
+ */
+function insertAndroidThemeItem(content, { name, value, comment }) {
+  if (content.includes(`name="${name}"`)) {
+    return { content, inserted: false, reason: 'exists' };
+  }
+
+  const themeTag = findAndroidAppThemeTag(content);
+  if (!themeTag) {
+    return { content, inserted: false, reason: 'theme-not-found' };
+  }
+
+  const insertAt = themeTag.index + themeTag.openTag.length;
+  const itemLine = `${comment ? `\n        <!-- ${comment} -->` : ''}\n        <item name="${name}">${value}</item>`;
+
+  return {
+    content: content.slice(0, insertAt) + itemLine + content.slice(insertAt),
+    inserted: true,
+    reason: 'inserted',
+    themeName: themeTag.name,
+  };
+}
+
+/**
  * Patch res/values/styles.xml to set transparent navigation/status bars
  */
 function configureAndroidStyles() {
@@ -56,7 +106,7 @@ function configureAndroidStyles() {
     }
   }
 
-  let content = fs.existsSync(stylesPath) 
+  let content = fs.existsSync(stylesPath)
     ? fs.readFileSync(stylesPath, 'utf8')
     : `<?xml version="1.0" encoding="utf-8"?>
 <resources>
@@ -69,45 +119,36 @@ function configureAndroidStyles() {
 </resources>`;
 
   let modified = false;
+  let themeNotFound = false;
 
-  // Add transparent navigation bar
-  if (!content.includes('android:navigationBarColor')) {
-    content = content.replace(
-      /(<style\s+name="AppTheme"[^>]*>)/,
-      '$1\n        <!-- Edge-to-Edge: transparent system bars -->\n        <item name="android:navigationBarColor">@android:color/transparent</item>'
-    );
-    modified = true;
-    console.log('      ✅ Added transparent navigationBarColor');
+  const styleItems = [
+    {
+      name: 'android:navigationBarColor',
+      value: '@android:color/transparent',
+      comment: 'Edge-to-Edge: transparent system bars',
+    },
+    { name: 'android:statusBarColor', value: '@android:color/transparent' },
+    { name: 'android:enforceNavigationBarContrast', value: 'false' },
+    { name: 'android:enforceStatusBarContrast', value: 'false' },
+  ];
+
+  for (const item of styleItems) {
+    const result = insertAndroidThemeItem(content, item);
+    content = result.content;
+
+    if (result.inserted) {
+      modified = true;
+      console.log(`      ✅ Added ${item.name}${result.themeName ? ` to ${result.themeName}` : ''}`);
+    } else if (result.reason === 'theme-not-found') {
+      themeNotFound = true;
+      break;
+    }
   }
 
-  // Add transparent status bar
-  if (!content.includes('android:statusBarColor')) {
-    content = content.replace(
-      /(<style\s+name="AppTheme"[^>]*>)/,
-      '$1\n        <item name="android:statusBarColor">@android:color/transparent</item>'
-    );
-    modified = true;
-    console.log('      ✅ Added transparent statusBarColor');
-  }
-
-  // Disable enforced navigation bar contrast (Android 10+)
-  if (!content.includes('android:enforceNavigationBarContrast')) {
-    content = content.replace(
-      /(<style\s+name="AppTheme"[^>]*>)/,
-      '$1\n        <item name="android:enforceNavigationBarContrast">false</item>'
-    );
-    modified = true;
-    console.log('      ✅ Added enforceNavigationBarContrast=false');
-  }
-
-  // Disable enforced status bar contrast
-  if (!content.includes('android:enforceStatusBarContrast')) {
-    content = content.replace(
-      /(<style\s+name="AppTheme"[^>]*>)/,
-      '$1\n        <item name="android:enforceStatusBarContrast">false</item>'
-    );
-    modified = true;
-    console.log('      ✅ Added enforceStatusBarContrast=false');
+  if (themeNotFound) {
+    console.log('      ⚠️ No AppTheme style found (expected AppTheme / AppTheme.NoActionBar).');
+    console.log('      ⚠️ Please verify styles.xml theme names manually.');
+    return;
   }
 
   if (modified) {

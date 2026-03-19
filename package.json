@@ -9,7 +9,8 @@
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
     "preview": "vite preview",
-    "cap:sync": "npx cap sync && node scripts/capacitor-hooks.js",
+    "cap:sync": "npx cap sync",
+    "capacitor:sync:after": "node scripts/capacitor-hooks.js",
     "android:run": "node scripts/cap-run-android.js"
   },
   "dependencies": {

@@ -122,9 +122,19 @@ export const SwipeableAppContainer = () => {
     }
   }, [emblaApi]);
 
+  const topInsetOffset = '3.5rem';
+  const bottomInsetOffset = 'calc(5rem + env(safe-area-inset-bottom, 0px))';
+
   return (
     <SwipeControlContext.Provider value={{ setSwipeEnabled }}>
-      <div className="min-h-screen bg-gradient-to-b from-background to-muted/30 pb-20 pt-14 overflow-hidden">
+      <div
+        className="min-h-screen bg-gradient-to-b from-background to-muted/30 overflow-hidden"
+        style={{
+          minHeight: '100dvh',
+          paddingTop: topInsetOffset,
+          paddingBottom: bottomInsetOffset,
+        }}
+      >
         <Particles
           particleColors={['#6366F1', '#8B5CF6', '#A855F7']}
           particleCount={400}
@@ -140,7 +150,11 @@ export const SwipeableAppContainer = () => {
         
         <TopBar title={INDEX_TO_TITLE[currentIndex]} />
         
-        <div className="overflow-hidden h-[calc(100vh-136px)]" ref={emblaRef}>
+        <div
+          className="overflow-hidden"
+          style={{ height: `calc(100dvh - ${topInsetOffset} - ${bottomInsetOffset})` }}
+          ref={emblaRef}
+        >
           <div className="flex h-full">
             <div className="flex-[0_0_100%] min-w-0 h-full overflow-y-auto" style={{ overscrollBehavior: 'contain' }}>
               <div className="container mx-auto px-4 py-6 max-w-2xl relative z-10">

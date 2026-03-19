@@ -104,4 +104,18 @@ All colors MUST be HSL.
     @apply bg-background text-foreground;
     padding-top: env(safe-area-inset-top, 0px);
   }
+
+  .safe-area-top-shield {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: env(safe-area-inset-top, 0px);
+    background: hsl(var(--background));
+    z-index: 60;
+  }
+
+  .safe-area-pb {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
 }
