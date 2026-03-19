@@ -43,6 +43,16 @@ function runIOSHooks() {
   } catch (error) {
     console.error('❌ iOS Hook Fehler:', error.message);
   }
+
+  try {
+    // Edge-to-Edge / Safe Area Konfiguration
+    execSync('node scripts/configure-edge-to-edge.js', { 
+      stdio: 'inherit',
+      cwd: path.join(__dirname, '..')
+    });
+  } catch (error) {
+    console.error('❌ iOS Edge-to-Edge Hook Fehler:', error.message);
+  }
 }
 
 /**
@@ -64,6 +74,16 @@ function runAndroidHooks() {
     });
   } catch (error) {
     console.error('❌ Android Hook Fehler:', error.message);
+  }
+
+  try {
+    // Edge-to-Edge / Safe Area Konfiguration
+    execSync('node scripts/configure-edge-to-edge.js', { 
+      stdio: 'inherit',
+      cwd: path.join(__dirname, '..')
+    });
+  } catch (error) {
+    console.error('❌ Android Edge-to-Edge Hook Fehler:', error.message);
   }
 }
 
