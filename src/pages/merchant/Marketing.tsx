@@ -987,19 +987,6 @@ const Marketing = () => {
           </AlertDialogContent>
         </AlertDialog>
 
-        {/* Reward Suggestions Modal */}
-        <RewardSuggestionsModal
-          open={showRewardSuggestions}
-          onOpenChange={setShowRewardSuggestions}
-          merchantIndustry={merchantIndustry}
-          avgOrderValue={avgOrderValue}
-          onSelectReward={(title, pts) => {
-            setShowRewardSuggestions(false);
-            setEditingReward(null);
-            setRewardForm({ title, description: '', points_required: pts, image_url: '' });
-            setShowRewardDialog(true);
-          }}
-        />
       </div>
     </div>
   );
