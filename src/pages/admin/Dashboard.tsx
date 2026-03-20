@@ -1,10 +1,15 @@
+import { useEffect } from "react";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { AdminTopNav } from "@/components/AdminTopNav";
 import { Outlet } from "react-router-dom";
 
 // Admin Dashboard - nur für User mit App-Rolle 'admin'
-// Kein Partikel-Hintergrund für Admin (funktionales CRM-Design)
 const AdminDashboard = () => {
+  useEffect(() => {
+    document.body.classList.add('ccm19-right');
+    return () => { document.body.classList.remove('ccm19-right'); };
+  }, []);
+
   return (
     <ProtectedRoute allowedRoles={['admin']}>
       <div className="min-h-screen w-full bg-background">
