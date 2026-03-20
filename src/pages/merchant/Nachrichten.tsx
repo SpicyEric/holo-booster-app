@@ -535,19 +535,22 @@ const Nachrichten = () => {
                 </p>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   {[
-                    { tier: '3_days', days: 3, price: '9,90 €', label: '3 Tage' },
-                    { tier: '7_days', days: 7, price: '19,90 €', label: '7 Tage', popular: true },
-                    { tier: '14_days', days: 14, price: '35,90 €', label: '14 Tage' },
+                    { tier: '3_days', days: 3, price: '9,90 €', label: '3 Tage', borderClass: 'border-sky-300 hover:border-sky-400', badgeClass: '', btnVariant: 'outline' as const },
+                    { tier: '7_days', days: 7, price: '19,90 €', label: '7 Tage', borderClass: 'border-violet-400 hover:border-violet-500', badgeClass: 'bg-violet-500', btnVariant: 'default' as const, popular: true },
+                    { tier: '14_days', days: 14, price: '35,90 €', label: '14 Tage', borderClass: 'border-amber-400 hover:border-amber-500 shadow-[0_0_16px_-4px_rgba(245,158,11,0.35)]', badgeClass: 'bg-amber-500', btnVariant: 'default' as const, best: true },
                   ].map((option) => (
                     <div
                       key={option.tier}
-                      className={`relative p-4 rounded-xl border-2 transition-all ${
-                        option.popular ? 'border-amber-400 bg-white shadow-md' : 'border-gray-200 bg-white hover:border-amber-200'
-                      }`}
+                      className={`relative p-4 rounded-xl border-2 transition-all bg-white ${option.borderClass}`}
                     >
                       {option.popular && (
-                        <Badge className="absolute -top-2.5 left-1/2 -translate-x-1/2 bg-amber-500 text-white text-xs rounded-full">
+                        <Badge className={`absolute -top-2.5 left-1/2 -translate-x-1/2 ${option.badgeClass} text-white text-xs rounded-full`}>
                           Beliebt
+                        </Badge>
+                      )}
+                      {option.best && (
+                        <Badge className={`absolute -top-2.5 left-1/2 -translate-x-1/2 ${option.badgeClass} text-white text-xs rounded-full`}>
+                          Beste Reichweite
                         </Badge>
                       )}
                       <div className="text-center space-y-2">
@@ -558,7 +561,7 @@ const Nachrichten = () => {
                           onClick={() => handleBoostPurchase(option.tier)}
                           disabled={boostLoading}
                           className="w-full rounded-xl mt-2"
-                          variant={option.popular ? 'default' : 'outline'}
+                          variant={option.btnVariant}
                         >
                           {boostLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Jetzt buchen'}
                         </Button>
