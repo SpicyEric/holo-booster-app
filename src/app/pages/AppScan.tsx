@@ -428,7 +428,7 @@ export const AppScan = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-background/95 backdrop-blur-sm flex flex-col items-start justify-start pt-8 p-6"
+            className="fixed inset-0 z-50 bg-background/95 backdrop-blur-sm flex flex-col items-center justify-start pt-20 p-6"
             style={{ overscrollBehavior: 'none', touchAction: 'none' }}
           >
             <div className="w-full flex flex-col items-center">
@@ -453,8 +453,8 @@ export const AppScan = () => {
                 </motion.div>
               </motion.div>
 
-              <h2 className="text-2xl font-bold mb-3 text-center">
-                NFC-Stempel scannen
+              <h2 className="text-2xl font-bold mb-3 text-center w-full">
+                Handy-Rückseite an Stempel halten
               </h2>
               <p className="text-muted-foreground text-center max-w-xs">
                 Halte jetzt die obere Rückseite deines Handys an den Eloyo-Stempel
