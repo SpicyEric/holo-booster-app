@@ -145,7 +145,8 @@ const Auth = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="bg-background overflow-hidden" style={{ height: '100dvh' }}>
+    <div className="h-full overflow-y-auto" style={{ overscrollBehavior: 'contain', WebkitOverflowScrolling: 'touch' }}>
       <Particles 
         particleColors={['#8B5CF6', '#3B82F6', '#8B5CF6']}
         particleCount={100}
