@@ -12,7 +12,7 @@ export interface MainLayoutProps {
 
 export const MainLayout = ({ children, title, showBack = false }: MainLayoutProps) => {
   const topInsetOffset = 'calc(3.5rem + env(safe-area-inset-top, 0px))';
-  const bottomInsetOffset = 'calc(5rem + env(safe-area-inset-bottom, 0px))';
+  const bottomInsetOffset = 'calc(7rem + env(safe-area-inset-bottom, 0px))';
 
   return (
     <div

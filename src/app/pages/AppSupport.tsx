@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MainLayout } from '@/app/components/layout/MainLayout';
 import { Button } from '@/components/ui/button';
@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { Loader2, HeadphonesIcon, CheckCircle } from 'lucide-react';
+import { Loader2, HeadphonesIcon, CheckCircle, Clock } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 const categories = [
@@ -26,10 +26,52 @@ export default function AppSupport() {
   const [submitted, setSubmitted] = useState(false);
   const [category, setCategory] = useState('');
   const [message, setMessage] = useState('');
+  const [cooldownMinutes, setCooldownMinutes] = useState(0);
+
+  // Check cooldown on mount and after submission
+  useEffect(() => {
+    let interval: ReturnType<typeof setInterval>;
+    const checkCooldown = async () => {
+      if (!user) return;
+      const { data } = await (supabase as any)
+        .from('support_messages')
+        .select('created_at')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (data?.created_at) {
+        const lastSubmit = new Date(data.created_at).getTime();
+        const diff = 30 * 60 * 1000 - (Date.now() - lastSubmit);
+        if (diff > 0) {
+          setCooldownMinutes(Math.ceil(diff / 60000));
+          interval = setInterval(() => {
+            const remaining = 30 * 60 * 1000 - (Date.now() - lastSubmit);
+            if (remaining <= 0) {
+              setCooldownMinutes(0);
+              clearInterval(interval);
+            } else {
+              setCooldownMinutes(Math.ceil(remaining / 60000));
+            }
+          }, 30000);
+        }
+      }
+    };
+    checkCooldown();
+    return () => { if (interval) clearInterval(interval); };
+  }, [user, submitted]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user || !category || !message.trim()) return;
+
+    if (cooldownMinutes > 0) {
+      toast.error(
+        `Bitte warte noch ${cooldownMinutes} ${cooldownMinutes === 1 ? 'Minute' : 'Minuten'} aus Spamschutzgründen. Du kannst uns auch per E-Mail an support@eloyo.de kontaktieren.`
+      );
+      return;
+    }
 
     setLoading(true);
     try {
@@ -80,6 +122,17 @@ export default function AppSupport() {
   return (
     <MainLayout title="Support & Hilfe" showBack>
       <div className="space-y-6">
+        {cooldownMinutes > 0 && (
+          <Card className="border-amber-200 bg-amber-50 dark:bg-amber-950/20 dark:border-amber-800">
+            <CardContent className="flex items-start gap-3 py-4">
+              <Clock className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
+              <p className="text-sm text-amber-700 dark:text-amber-400">
+                Du kannst in {cooldownMinutes} {cooldownMinutes === 1 ? 'Minute' : 'Minuten'} eine neue Nachricht senden. 
+                Alternativ erreichst du uns per E-Mail an <span className="font-medium">support@eloyo.de</span>.
+              </p>
+            </CardContent>
+          </Card>
+        )}
         <Card>
           <CardHeader>
             <div className="h-14 w-14 rounded-xl bg-primary/10 flex items-center justify-center mb-3">
@@ -94,7 +147,7 @@ export default function AppSupport() {
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
                 <Label>Kategorie *</Label>
-                <Select value={category} onValueChange={setCategory}>
+                <Select value={category} onValueChange={setCategory} disabled={cooldownMinutes > 0}>
                   <SelectTrigger>
                     <SelectValue placeholder="Was beschreibt dein Anliegen?" />
                   </SelectTrigger>
@@ -116,6 +169,7 @@ export default function AppSupport() {
                   rows={5}
                   maxLength={2000}
                   required
+                  disabled={cooldownMinutes > 0}
                 />
                 <p className="text-xs text-muted-foreground text-right">
                   {message.length}/2000
@@ -125,7 +179,7 @@ export default function AppSupport() {
               <Button
                 type="submit"
                 className="w-full bg-gradient-to-r from-primary to-secondary"
-                disabled={loading || !category || !message.trim()}
+                disabled={loading || !category || !message.trim() || cooldownMinutes > 0}
               >
                 {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Nachricht absenden
