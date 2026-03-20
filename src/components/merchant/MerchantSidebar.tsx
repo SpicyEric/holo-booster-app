@@ -112,11 +112,11 @@ function SidebarNav({ collapsed, onNavigate }: { collapsed: boolean; onNavigate?
         ))}
       </nav>
 
-      <div className="border-t border-border/40 p-3">
+      <div className="border-t border-white/10 p-3">
         <button
           onClick={handleLogout}
           className={cn(
-            "w-full flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-muted-foreground hover:text-destructive hover:bg-destructive/8 transition-all active:scale-[0.97]",
+            "w-full flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-white/50 hover:text-red-300 hover:bg-white/10 transition-all active:scale-[0.97]",
             collapsed && "justify-center px-0"
           )}
           title={collapsed ? "Logout" : undefined}
