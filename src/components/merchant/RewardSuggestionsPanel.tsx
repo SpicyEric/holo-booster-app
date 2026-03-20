@@ -12,6 +12,7 @@ interface Props {
   merchantIndustry: string | null;
   avgOrderValue: number;
   avgPointsPerVisit?: number;
+  stampPoints?: { green: number | null; blue: number | null; red: number | null };
   onSelectReward: (title: string, pointsRequired: number) => void;
 }
 
@@ -62,7 +63,7 @@ const CATEGORY_META = {
   large: { label: 'Groß', visits: '~12–18 Besuche' },
 };
 
-export default function RewardSuggestionsPanel({ merchantIndustry, avgOrderValue, avgPointsPerVisit = 10, onSelectReward }: Props) {
+export default function RewardSuggestionsPanel({ merchantIndustry, avgOrderValue, avgPointsPerVisit = 10, stampPoints, onSelectReward }: Props) {
   const defaultIndustry = merchantIndustry || 'sonstiges';
   const [selectedIndustry, setSelectedIndustry] = useState(defaultIndustry);
 
@@ -97,7 +98,7 @@ export default function RewardSuggestionsPanel({ merchantIndustry, avgOrderValue
           </div>
           <div className="min-w-0 flex-1">
             <CardTitle className="text-lg font-semibold">Beispielprämien</CardTitle>
-            <CardDescription>Klicke auf +, um eine Prämie zu übernehmen</CardDescription>
+            <CardDescription>Basierend auf deinem Stempelsystem</CardDescription>
           </div>
         </div>
         <div className="flex items-center gap-2 pt-2">
@@ -115,6 +116,30 @@ export default function RewardSuggestionsPanel({ merchantIndustry, avgOrderValue
             </SelectContent>
           </Select>
         </div>
+        {/* Stamp overview */}
+        {stampPoints && (stampPoints.green || stampPoints.blue || stampPoints.red) && (
+          <div className="flex items-center gap-3 pt-2 px-1">
+            {stampPoints.green != null && (
+              <div className="flex items-center gap-1.5">
+                <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 shrink-0" />
+                <span className="text-xs text-muted-foreground">{stampPoints.green} Pkt.</span>
+              </div>
+            )}
+            {stampPoints.blue != null && (
+              <div className="flex items-center gap-1.5">
+                <span className="w-2.5 h-2.5 rounded-full bg-blue-500 shrink-0" />
+                <span className="text-xs text-muted-foreground">{stampPoints.blue} Pkt.</span>
+              </div>
+            )}
+            {stampPoints.red != null && (
+              <div className="flex items-center gap-1.5">
+                <span className="w-2.5 h-2.5 rounded-full bg-red-500 shrink-0" />
+                <span className="text-xs text-muted-foreground">{stampPoints.red} Pkt.</span>
+              </div>
+            )}
+            <span className="text-xs text-muted-foreground/60 ml-auto">Ø {avgPointsPerVisit} Pkt./Besuch</span>
+          </div>
+        )}
       </CardHeader>
 
       <CardContent className="space-y-5 overflow-y-auto max-h-[60vh]">
