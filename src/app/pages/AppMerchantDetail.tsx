@@ -325,7 +325,7 @@ export const AppMerchantDetail = () => {
           <Skeleton className="h-4 w-32" />
           <Skeleton className="h-32 w-full" />
         </div>
-      </div>
+      </div></div>
     );
   }
 
