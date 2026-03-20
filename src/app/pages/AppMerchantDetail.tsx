@@ -318,7 +318,7 @@ export const AppMerchantDetail = () => {
 
   if (loading) {
     return (
-      <div className="bg-background overflow-hidden" style={{ height: '100dvh' }}><div className="h-full overflow-y-auto" style={{ overscrollBehavior: 'contain', WebkitOverflowScrolling: 'touch' }}>
+      <div className="bg-background overflow-hidden" style={{ height: '100dvh' }}><div className="h-full overflow-y-auto" style={{ overscrollBehavior: 'none', WebkitOverflowScrolling: 'touch', touchAction: 'pan-y' }}>
         <Skeleton className="h-48 w-full" />
         <div className="p-4 space-y-4">
           <Skeleton className="h-8 w-48" />

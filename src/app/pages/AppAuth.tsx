@@ -7,6 +7,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
+import { useAppViewportLock } from '@/app/hooks/useAppViewportLock';
 
 const getPostAuthRoute = () => {
   const isNative = Capacitor.isNativePlatform();
@@ -20,6 +21,7 @@ type RegistrationStep = 'password' | 'confirmPassword' | 'birthDate' | 'gender' 
 export const AppAuth = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  useAppViewportLock();
   const [mode, setMode] = useState<'register' | 'login'>('register');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
