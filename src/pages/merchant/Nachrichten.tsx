@@ -535,7 +535,7 @@ const Nachrichten = () => {
                 </p>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   {[
-                    { tier: '3_days', days: 3, price: '9,90 €', label: '3 Tage', radius: '10 km', borderClass: 'border-sky-300 hover:border-sky-400', badgeClass: '', btnVariant: 'outline' as const },
+                    { tier: '3_days', days: 3, price: '9,90 €', label: '3 Tage', radius: '10 km', borderClass: 'border-sky-300 hover:border-sky-400', badgeClass: '', btnVariant: 'default' as const },
                     { tier: '7_days', days: 7, price: '19,90 €', label: '7 Tage', radius: '10 km', borderClass: 'border-violet-400 hover:border-violet-500', badgeClass: 'bg-violet-500', btnVariant: 'default' as const, popular: true },
                     { tier: '14_days', days: 14, price: '35,90 €', label: '14 Tage', radius: '15 km', borderClass: 'border-amber-400 hover:border-amber-500 shadow-[0_0_16px_-4px_rgba(245,158,11,0.35)]', badgeClass: 'bg-amber-500', btnVariant: 'default' as const, best: true },
                   ].map((option) => (
