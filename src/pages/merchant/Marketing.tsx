@@ -298,12 +298,18 @@ const Marketing = () => {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-5 rounded-xl bg-primary/8 p-1">
-            <TabsTrigger value="praemien" className="rounded-lg text-xs sm:text-sm"><Gift className="w-4 h-4 mr-1.5 hidden sm:inline" />Prämien</TabsTrigger>
-            <TabsTrigger value="boost" className="rounded-lg text-xs sm:text-sm"><Rocket className="w-4 h-4 mr-1.5 hidden sm:inline" />Neukunden</TabsTrigger>
-            <TabsTrigger value="reviews" className="rounded-lg text-xs sm:text-sm"><Star className="w-4 h-4 mr-1.5 hidden sm:inline" />Bewertungen</TabsTrigger>
-            <TabsTrigger value="messages" className="rounded-lg text-xs sm:text-sm"><MessageSquare className="w-4 h-4 mr-1.5 hidden sm:inline" />Nachrichten</TabsTrigger>
-            <TabsTrigger value="automations" className="rounded-lg text-xs sm:text-sm"><Zap className="w-4 h-4 mr-1.5 hidden sm:inline" />Automationen</TabsTrigger>
+          <TabsList className="inline-flex flex-wrap gap-2 bg-transparent p-0">
+            {[
+              { value: "praemien", label: "Prämien", icon: Gift },
+              { value: "boost", label: "Neukunden", icon: Rocket },
+              { value: "reviews", label: "Bewertungen", icon: Star },
+              { value: "messages", label: "Nachrichten", icon: MessageSquare },
+              { value: "automations", label: "Automationen", icon: Zap },
+            ].map(tab => (
+              <TabsTrigger key={tab.value} value={tab.value} className="rounded-full px-4 py-2 text-xs sm:text-sm font-medium border border-border/50 data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:border-primary data-[state=active]:shadow-sm data-[state=inactive]:bg-white data-[state=inactive]:text-muted-foreground hover:bg-primary/5 transition-all duration-200">
+                <tab.icon className="w-4 h-4 mr-1.5 hidden sm:inline" />{tab.label}
+              </TabsTrigger>
+            ))}
           </TabsList>
 
           {/* ========== PRÄMIEN TAB ========== */}

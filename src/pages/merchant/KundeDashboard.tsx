@@ -5,17 +5,21 @@ import { useAuth } from "@/hooks/useAuth";
 import { getUserCustomer } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
 import { 
   Loader2, Users, Trophy, Gift, Zap, TrendingUp,
   AlertTriangle, Pause, Clock, Star, Image, MapPin, Megaphone,
-  ArrowRight, Sparkles, ChevronRight
+  ArrowRight, Sparkles, ChevronRight, Target, CheckCircle2, Circle,
+  Rocket
 } from "lucide-react";
 import { 
   AreaChart, Area, XAxis, YAxis, Tooltip, 
   ResponsiveContainer, BarChart, Bar
 } from "recharts";
+import { cn } from "@/lib/utils";
+import confetti from "canvas-confetti";
 
-// ---- types (unchanged) ----
+// ---- types ----
 interface Customer { id: string; name: string; email: string; company_name: string | null; status: string; customer_number: number | null; }
 interface SubscriptionInfo { hasSubscription: boolean; status?: string; currentPeriodEnd?: string; cancelAtPeriodEnd?: boolean; cancelAt?: string | null; }
 interface DashboardStats { totalContacts: number; totalStamps: number; totalRedemptions: number; networkEffect: number; newContacts7Days: number; }
@@ -51,22 +55,28 @@ const DEMO_SEGMENTS: CustomerSegment[] = [
 const DateRangeSelector = ({ value, onChange }: { value: DateRange; onChange: (v: DateRange) => void }) => (
   <div className="flex gap-1">
     {([7,14,30,90] as DateRange[]).map(d => (
-      <button key={d} className={`px-3 py-1 text-xs rounded-full transition-all font-medium ${value===d ? 'bg-primary text-primary-foreground shadow-sm' : 'bg-muted text-muted-foreground hover:bg-muted/80'}`} onClick={()=>onChange(d)}>{d}T</button>
+      <button key={d} className={`px-3 py-1 text-xs rounded-full transition-all duration-200 font-medium ${value===d ? 'bg-primary text-primary-foreground shadow-sm' : 'bg-white/60 text-muted-foreground hover:bg-white/80'}`} onClick={()=>onChange(d)}>{d}T</button>
     ))}
   </div>
 );
 
-const KpiCard = ({ icon: Icon, label, value, iconBg, iconColor }: { icon: React.ElementType; label: string; value: string; iconBg: string; iconColor: string }) => (
-  <div className="bg-card rounded-2xl p-5 border border-border/50 shadow-sm hover:shadow-md transition-shadow">
-    <div className="flex items-center gap-3 mb-3">
-      <div className={`w-10 h-10 rounded-xl ${iconBg} flex items-center justify-center`}>
-        <Icon className={`w-5 h-5 ${iconColor}`} />
+const KpiCard = ({ icon: Icon, label, value, trend, iconBg, iconColor }: { icon: React.ElementType; label: string; value: string; trend?: string; iconBg: string; iconColor: string }) => (
+  <div className="bg-white rounded-2xl p-5 border border-border/30 shadow-[0_1px_3px_hsl(262,30%,80%/0.3)] hover:shadow-[0_4px_12px_hsl(262,30%,80%/0.4)] transition-all duration-300 group">
+    <div className="flex items-center justify-between mb-3">
+      <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center transition-transform duration-300 group-hover:scale-105", iconBg)}>
+        <Icon className={cn("w-5 h-5", iconColor)} />
       </div>
+      {trend && (
+        <span className="text-xs font-medium text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">{trend}</span>
+      )}
     </div>
     <p className="text-3xl font-bold text-foreground tracking-tight">{value}</p>
     <p className="text-sm text-muted-foreground mt-1">{label}</p>
   </div>
 );
+
+// ---- Mission item ----
+interface Mission { label: string; description: string; completed: boolean; path: string; icon: React.ElementType; }
 
 // ---- quick win item ----
 interface QuickWin { label: string; description: string; icon: React.ElementType; path: string; color: string; }
@@ -85,12 +95,10 @@ export default function KundeDashboard() {
   const [segments, setSegments] = useState<CustomerSegment[]>([]);
   const [hourlyRange, setHourlyRange] = useState<DateRange>(30);
   const [growthRange, setGrowthRange] = useState<DateRange>(7);
-
-  // Quick wins logic
   const [quickWins, setQuickWins] = useState<QuickWin[]>([]);
+  const [missions, setMissions] = useState<Mission[]>([]);
 
   useEffect(() => { if (!authLoading && !user) navigate("/auth"); }, [user, authLoading, navigate]);
-
   useEffect(() => { if (user) loadData(); }, [user]);
 
   useEffect(() => {
@@ -126,8 +134,8 @@ export default function KundeDashboard() {
         } else {
           await Promise.all([loadDashboardStats(customerData.id), loadHourlyData(customerData.id), loadGrowthData(customerData.id), loadGenderData(customerData.id), loadAgeData(customerData.id), loadCustomerSegments(customerData.id)]);
         }
-        // Build quick wins
         buildQuickWins(customerData);
+        buildMissions(customerData);
       } else {
         setStats({ totalContacts: 0, totalStamps: 0, totalRedemptions: 0, networkEffect: 0, newContacts7Days: 0 });
       }
@@ -136,20 +144,33 @@ export default function KundeDashboard() {
 
   const buildQuickWins = async (cust: any) => {
     const wins: QuickWin[] = [];
-    // Check cover image
     if (!cust.cover_image_url) wins.push({ label: "Titelbild hochladen", description: "Mach dein Profil für Kunden attraktiver", icon: Image, path: "/kunde/mein-geschaeft", color: "text-blue-600" });
-    // Check google review url
     if (!cust.google_review_url) wins.push({ label: "Google-Bewertungsbonus aktivieren", description: "Erhalte mehr Sichtbarkeit durch Kundenbewertungen", icon: Star, path: "/kunde/marketing", color: "text-amber-600" });
-    // Check opening hours
     const oh = cust.opening_hours;
     if (!oh || Object.keys(oh).length === 0) wins.push({ label: "Öffnungszeiten eintragen", description: "Hilf Kunden, dich zum richtigen Zeitpunkt zu finden", icon: Clock, path: "/kunde/mein-geschaeft", color: "text-green-600" });
-    // Always offer
-    wins.push({ label: "Neukunden-Kampagne starten", description: "Pushe dein Geschäft im Feed und gewinne neue Kunden", icon: Megaphone, path: "/kunde/marketing", color: "text-purple-600" });
+    wins.push({ label: "Neukunden-Kampagne starten", description: "Pushe dein Geschäft und gewinne neue Kunden", icon: Megaphone, path: "/kunde/marketing", color: "text-primary" });
     if (!cust.description) wins.push({ label: "Geschäftsbeschreibung vervollständigen", description: "Zeige Kunden, was dich besonders macht", icon: MapPin, path: "/kunde/mein-geschaeft", color: "text-rose-600" });
     setQuickWins(wins.slice(0, 4));
   };
 
-  // ---- data loaders (same logic, trimmed) ----
+  const buildMissions = async (cust: any) => {
+    const m: Mission[] = [
+      { label: "Geschäftsprofil vervollständigen", description: "Logo, Titelbild und Beschreibung", completed: !!(cust.logo_url && cust.cover_image_url && cust.description), path: "/kunde/mein-geschaeft", icon: Store },
+      { label: "Erste Prämie erstellen", description: "Belohnungen für deine Kunden", completed: false, path: "/kunde/marketing", icon: Gift },
+      { label: "Google-Bewertungen aktivieren", description: "Steigere deine Online-Sichtbarkeit", completed: !!cust.google_review_points_enabled, path: "/kunde/marketing", icon: Star },
+      { label: "Öffnungszeiten eintragen", description: "Damit Kunden wissen, wann du da bist", completed: !!(cust.opening_hours && Object.keys(cust.opening_hours).length > 0), path: "/kunde/mein-geschaeft", icon: Clock },
+      { label: "Erste Kampagne starten", description: "Werde sichtbar für neue Kunden", completed: false, path: "/kunde/marketing", icon: Rocket },
+    ];
+    // Check rewards
+    const { count } = await supabase.from("rewards").select("*", { count: "exact", head: true }).eq("merchant_customer_id", cust.id).eq("is_active", true);
+    m[1].completed = (count || 0) > 0;
+    // Check boosts
+    const { count: boostCount } = await supabase.from("merchant_boosts").select("*", { count: "exact", head: true }).eq("merchant_customer_id", cust.id);
+    m[4].completed = (boostCount || 0) > 0;
+    setMissions(m);
+  };
+
+  // ---- data loaders ----
   const loadDashboardStats = async (cid: string) => {
     try {
       const [c1,c2,c3,c4,c5] = await Promise.all([
@@ -213,6 +234,12 @@ export default function KundeDashboard() {
 
   const formatDate = (ds: string) => new Date(ds).toLocaleDateString("de-DE",{ year:'numeric', month:'long', day:'numeric' });
 
+  // Gamification helpers
+  const completedMissions = missions.filter(m => m.completed).length;
+  const totalMissions = missions.length;
+  const progressPercent = totalMissions > 0 ? Math.round((completedMissions / totalMissions) * 100) : 0;
+  const levelLabel = progressPercent >= 100 ? "Profi" : progressPercent >= 60 ? "Aktiv wachsend" : progressPercent >= 20 ? "Guter Start" : "Einsteiger";
+
   if (authLoading || loading) {
     return <div className="flex items-center justify-center min-h-[60vh]"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
   }
@@ -222,23 +249,23 @@ export default function KundeDashboard() {
       <div className="max-w-6xl mx-auto px-6 lg:px-8 py-8 space-y-8">
 
         {/* ====== Hero / Welcome ====== */}
-        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-primary/90 via-primary to-secondary p-8 text-primary-foreground shadow-lg">
-          <div className="absolute -top-20 -right-20 w-60 h-60 bg-white/5 rounded-full blur-2xl" />
-          <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-white/5 rounded-full blur-2xl" />
+        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[hsl(262,60%,45%)] via-[hsl(262,70%,50%)] to-[hsl(230,70%,55%)] p-8 text-white shadow-[0_8px_30px_hsl(262,50%,40%/0.35)]">
+          <div className="absolute -top-24 -right-24 w-72 h-72 bg-white/[0.06] rounded-full blur-3xl animate-[pulse_8s_ease-in-out_infinite]" />
+          <div className="absolute -bottom-16 -left-16 w-48 h-48 bg-white/[0.04] rounded-full blur-3xl animate-[pulse_10s_ease-in-out_infinite_2s]" />
           <div className="relative z-10">
             <div className="flex items-center gap-2 mb-2">
-              <Sparkles className="h-5 w-5 opacity-80" />
-              <span className="text-sm font-medium opacity-80">Dein Eloyo-Dashboard</span>
+              <Sparkles className="h-5 w-5 opacity-70" />
+              <span className="text-sm font-medium opacity-70">Dein Eloyo-Dashboard</span>
             </div>
-            <h1 className="text-3xl lg:text-4xl font-bold tracking-tight">
+            <h1 className="text-3xl lg:text-4xl font-bold tracking-tight leading-[1.1]">
               Willkommen zurück{customer?.company_name ? `, ${customer.company_name}` : ''}!
             </h1>
-            <p className="mt-2 text-base opacity-80 max-w-xl">
+            <p className="mt-2 text-base opacity-75 max-w-xl">
               Hier siehst du, wie dein Kundenbindungssystem läuft und wo du als Nächstes optimieren kannst.
             </p>
             {stats && (
-              <div className="flex items-center gap-4 mt-4">
-                <Badge className="bg-white/20 hover:bg-white/30 text-white border-0 rounded-full px-3 py-1">
+              <div className="flex items-center gap-3 mt-5">
+                <Badge className="bg-white/20 hover:bg-white/30 text-white border-0 rounded-full px-3 py-1 backdrop-blur-sm">
                   <TrendingUp className="w-3 h-3 mr-1" /> +{stats.newContacts7Days} neue Kunden diese Woche
                 </Badge>
               </div>
@@ -260,14 +287,64 @@ export default function KundeDashboard() {
           </div>
         )}
 
+        {/* ====== Fortschritts-Modul (Gamification) ====== */}
+        {missions.length > 0 && (
+          <div className="bg-white rounded-2xl p-6 border border-border/30 shadow-[0_1px_3px_hsl(262,30%,80%/0.3)]">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                  <Target className="w-5 h-5 text-primary" />
+                </div>
+                <div>
+                  <h2 className="text-lg font-semibold text-foreground">Dein Fortschritt</h2>
+                  <p className="text-sm text-muted-foreground">{completedMissions} von {totalMissions} Optimierungen abgeschlossen</p>
+                </div>
+              </div>
+              <Badge variant="outline" className="rounded-full border-primary/30 text-primary font-medium px-3">
+                {levelLabel}
+              </Badge>
+            </div>
+            <Progress value={progressPercent} className="h-2.5 mb-5 bg-primary/10 [&>div]:bg-gradient-to-r [&>div]:from-primary [&>div]:to-secondary" />
+            <div className="space-y-2">
+              {missions.map((mission, i) => (
+                <button
+                  key={i}
+                  onClick={() => {
+                    if (!mission.completed) navigate(mission.path);
+                  }}
+                  className={cn(
+                    "w-full flex items-center gap-3 p-3 rounded-xl text-left transition-all duration-200",
+                    mission.completed
+                      ? "bg-emerald-50/80 cursor-default"
+                      : "hover:bg-primary/[0.04] cursor-pointer group"
+                  )}
+                >
+                  {mission.completed ? (
+                    <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0" />
+                  ) : (
+                    <Circle className="w-5 h-5 text-muted-foreground/40 shrink-0 group-hover:text-primary/60 transition-colors" />
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <p className={cn("text-sm font-medium", mission.completed ? "text-emerald-700 line-through" : "text-foreground")}>{mission.label}</p>
+                    <p className="text-xs text-muted-foreground">{mission.description}</p>
+                  </div>
+                  {!mission.completed && (
+                    <ChevronRight className="w-4 h-4 text-muted-foreground/40 group-hover:text-primary transition-colors shrink-0" />
+                  )}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* ====== KPI Cards ====== */}
         <div>
           <h2 className="text-lg font-semibold text-foreground mb-4">Deine Kennzahlen</h2>
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            <KpiCard icon={Users} label="Neue Kunden" value={stats?.totalContacts?.toLocaleString('de-DE') || '0'} iconBg="bg-primary/10" iconColor="text-primary" />
-            <KpiCard icon={Trophy} label="Punkte vergeben" value={stats?.totalStamps?.toLocaleString('de-DE') || '0'} iconBg="bg-green-100" iconColor="text-green-600" />
-            <KpiCard icon={Gift} label="Prämien eingelöst" value={stats?.totalRedemptions?.toLocaleString('de-DE') || '0'} iconBg="bg-amber-100" iconColor="text-amber-600" />
-            <KpiCard icon={Zap} label="Kunden aktiviert" value={stats?.networkEffect?.toLocaleString('de-DE') || '0'} iconBg="bg-purple-100" iconColor="text-purple-600" />
+            <KpiCard icon={Users} label="Neue Kunden" value={stats?.totalContacts?.toLocaleString('de-DE') || '0'} trend={stats && stats.newContacts7Days > 0 ? `+${stats.newContacts7Days} diese Woche` : undefined} iconBg="bg-primary/10" iconColor="text-primary" />
+            <KpiCard icon={Trophy} label="Punkte vergeben" value={stats?.totalStamps?.toLocaleString('de-DE') || '0'} iconBg="bg-emerald-50" iconColor="text-emerald-600" />
+            <KpiCard icon={Gift} label="Prämien eingelöst" value={stats?.totalRedemptions?.toLocaleString('de-DE') || '0'} iconBg="bg-amber-50" iconColor="text-amber-600" />
+            <KpiCard icon={Zap} label="Kunden aktiviert" value={stats?.networkEffect?.toLocaleString('de-DE') || '0'} iconBg="bg-purple-50" iconColor="text-purple-600" />
           </div>
         </div>
 
@@ -281,10 +358,10 @@ export default function KundeDashboard() {
                 <button
                   key={i}
                   onClick={() => navigate(win.path)}
-                  className="flex items-center gap-4 p-4 bg-card rounded-2xl border border-border/50 hover:border-primary/30 hover:shadow-md transition-all text-left group active:scale-[0.98]"
+                  className="flex items-center gap-4 p-4 bg-white rounded-2xl border border-border/30 hover:border-primary/30 hover:shadow-[0_4px_12px_hsl(262,30%,80%/0.3)] transition-all duration-300 text-left group active:scale-[0.98]"
                 >
-                  <div className="w-10 h-10 rounded-xl bg-primary/8 flex items-center justify-center shrink-0">
-                    <win.icon className={`w-5 h-5 ${win.color}`} />
+                  <div className="w-10 h-10 rounded-xl bg-primary/[0.06] flex items-center justify-center shrink-0 group-hover:bg-primary/10 transition-colors">
+                    <win.icon className={cn("w-5 h-5", win.color)} />
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="font-medium text-foreground text-sm">{win.label}</p>
@@ -301,8 +378,7 @@ export default function KundeDashboard() {
         <div>
           <h2 className="text-lg font-semibold text-foreground mb-4">Performance & Aktivität</h2>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Stempelzeiten */}
-            <div className="bg-card rounded-2xl p-6 border border-border/50 shadow-sm">
+            <div className="bg-white rounded-2xl p-6 border border-border/30 shadow-[0_1px_3px_hsl(262,30%,80%/0.3)]">
               <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-2"><Clock className="w-5 h-5 text-muted-foreground" /><h3 className="font-semibold text-foreground">Häufigste Stempelzeiten</h3></div>
                 <DateRangeSelector value={hourlyRange} onChange={setHourlyRange} />
@@ -319,8 +395,7 @@ export default function KundeDashboard() {
                 </ResponsiveContainer>
               </div>
             </div>
-            {/* Nutzerzuwachs */}
-            <div className="bg-card rounded-2xl p-6 border border-border/50 shadow-sm">
+            <div className="bg-white rounded-2xl p-6 border border-border/30 shadow-[0_1px_3px_hsl(262,30%,80%/0.3)]">
               <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-2"><TrendingUp className="w-5 h-5 text-muted-foreground" /><h3 className="font-semibold text-foreground">Kundenzuwachs</h3></div>
                 <DateRangeSelector value={growthRange} onChange={setGrowthRange} />
@@ -345,7 +420,7 @@ export default function KundeDashboard() {
           <h2 className="text-lg font-semibold text-foreground mb-4">Kundengruppen</h2>
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             {segments.map(seg => (
-              <div key={seg.name} className="bg-card rounded-2xl p-5 border border-border/50 shadow-sm text-center hover:shadow-md transition-shadow">
+              <div key={seg.name} className="bg-white rounded-2xl p-5 border border-border/30 shadow-[0_1px_3px_hsl(262,30%,80%/0.3)] text-center hover:shadow-[0_4px_12px_hsl(262,30%,80%/0.3)] transition-all duration-300">
                 <div className="w-14 h-14 mx-auto rounded-full flex items-center justify-center mb-3" style={{ backgroundColor: seg.color + '15' }}>
                   <span className="text-xs font-bold" style={{ color: seg.color }}>{seg.name}</span>
                 </div>
@@ -361,8 +436,7 @@ export default function KundeDashboard() {
         <div>
           <h2 className="text-lg font-semibold text-foreground mb-4">Kunden-Insights</h2>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Geschlecht */}
-            <div className="bg-card rounded-2xl p-6 border border-border/50 shadow-sm">
+            <div className="bg-white rounded-2xl p-6 border border-border/30 shadow-[0_1px_3px_hsl(262,30%,80%/0.3)]">
               <h3 className="font-semibold text-foreground mb-6">Nach Geschlecht</h3>
               <div className="flex items-center justify-center">
                 <div className="relative w-40 h-40">
@@ -377,8 +451,7 @@ export default function KundeDashboard() {
                 </div>
               </div>
             </div>
-            {/* Alter */}
-            <div className="bg-card rounded-2xl p-6 border border-border/50 shadow-sm">
+            <div className="bg-white rounded-2xl p-6 border border-border/30 shadow-[0_1px_3px_hsl(262,30%,80%/0.3)]">
               <h3 className="font-semibold text-foreground mb-6">Nach Alter</h3>
               <div className="h-[160px] w-full">
                 <ResponsiveContainer width="100%" height="100%">

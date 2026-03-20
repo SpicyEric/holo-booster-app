@@ -296,7 +296,7 @@ export default function Transaktionen() {
               {displayed.map((tx) => (
                 <div
                   key={tx.id}
-                  className="group bg-card rounded-xl p-4 border border-border/50 flex items-center justify-between hover:shadow-sm hover:border-border transition-all duration-200"
+                  className="group bg-white rounded-xl p-4 border border-border/30 flex items-center justify-between hover:shadow-[0_4px_12px_hsl(262,30%,80%/0.3)] hover:border-primary/20 transition-all duration-300"
                 >
                   <div className="flex items-center gap-3 min-w-0">
                     <div className={cn(

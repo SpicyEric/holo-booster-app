@@ -3,14 +3,17 @@ import { signOut } from "@/lib/auth";
 import { toast } from "sonner";
 import {
   LayoutDashboard, Store, Users, Megaphone, Settings,
-  LogOut, ChevronLeft, Menu, X,
+  LogOut, ChevronLeft, Menu, X, Building2,
 } from "lucide-react";
 import eloyoLogo from "@/assets/eloyo-logo.png";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { getUserCustomer } from "@/lib/auth";
 
 interface NavItem {
   path: string;
@@ -51,7 +54,7 @@ const NAV_GROUPS: NavGroup[] = [
   },
 ];
 
-function SidebarNav({ collapsed, onNavigate }: { collapsed: boolean; onNavigate?: () => void }) {
+function SidebarNav({ collapsed, onNavigate, companyName, subStatus }: { collapsed: boolean; onNavigate?: () => void; companyName?: string; subStatus?: string }) {
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -93,16 +96,20 @@ function SidebarNav({ collapsed, onNavigate }: { collapsed: boolean; onNavigate?
                     key={item.path}
                     onClick={() => handleNav(item.path)}
                     className={cn(
-                      "w-full flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200",
+                      "w-full flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200 relative",
                       "hover:bg-white/10 active:scale-[0.97]",
                       active
                         ? "bg-white/15 text-white shadow-sm"
-                        : "text-white/70 hover:text-white",
+                        : "text-white/60 hover:text-white",
                       collapsed && "justify-center px-0"
                     )}
                     title={collapsed ? item.label : undefined}
                   >
-                    <item.icon className={cn("h-[18px] w-[18px] shrink-0", active && "text-white")} />
+                    {/* Active accent bar */}
+                    {active && (
+                      <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 bg-white rounded-r-full" />
+                    )}
+                    <item.icon className={cn("h-[18px] w-[18px] shrink-0 transition-colors", active ? "text-white" : "text-white/50")} />
                     {!collapsed && <span>{item.label}</span>}
                   </button>
                 );
@@ -112,16 +119,32 @@ function SidebarNav({ collapsed, onNavigate }: { collapsed: boolean; onNavigate?
         ))}
       </nav>
 
-      <div className="border-t border-white/10 p-3">
+      {/* Profile module at bottom */}
+      <div className="border-t border-white/10 p-3 space-y-2">
+        {!collapsed && companyName && (
+          <div className="px-3 py-2">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-lg bg-white/15 flex items-center justify-center shrink-0">
+                <Building2 className="h-4 w-4 text-white/80" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-sm font-medium text-white/90 truncate">{companyName}</p>
+                <p className="text-[11px] text-white/40">
+                  {subStatus === 'active' ? '● Abo aktiv' : subStatus === 'paused' ? '● Pausiert' : '● Status unbekannt'}
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
         <button
           onClick={handleLogout}
           className={cn(
-            "w-full flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-white/50 hover:text-red-300 hover:bg-white/10 transition-all active:scale-[0.97]",
+            "w-full flex items-center gap-3 rounded-xl px-3 py-2 text-[13px] font-medium text-white/40 hover:text-red-300 hover:bg-white/10 transition-all duration-200 active:scale-[0.97]",
             collapsed && "justify-center px-0"
           )}
           title={collapsed ? "Logout" : undefined}
         >
-          <LogOut className="h-[18px] w-[18px] shrink-0" />
+          <LogOut className="h-4 w-4 shrink-0" />
           {!collapsed && <span>Logout</span>}
         </button>
       </div>
@@ -134,6 +157,20 @@ export default function MerchantSidebar() {
   const isMobile = useIsMobile();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const { user } = useAuth();
+  const [companyName, setCompanyName] = useState<string>("");
+  const [subStatus, setSubStatus] = useState<string>("");
+
+  useEffect(() => {
+    if (user?.id) {
+      getUserCustomer(user.id).then(c => {
+        if (c) {
+          setCompanyName(c.company_name || c.name || "");
+          setSubStatus(c.status || "active");
+        }
+      });
+    }
+  }, [user?.id]);
 
   // Mobile: hamburger + sheet
   if (isMobile) {
@@ -149,7 +186,7 @@ export default function MerchantSidebar() {
         </Button>
 
         <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
-          <SheetContent side="left" className="w-[280px] p-0 flex flex-col bg-[hsl(262,50%,28%)] border-white/10">
+          <SheetContent side="left" className="w-[280px] p-0 flex flex-col bg-[hsl(262,50%,22%)] border-white/10">
             <div className="flex items-center justify-between h-16 border-b border-white/10 px-4">
               <img
                 src={eloyoLogo}
@@ -161,7 +198,7 @@ export default function MerchantSidebar() {
                 <X className="h-4 w-4" />
               </Button>
             </div>
-            <SidebarNav collapsed={false} onNavigate={() => setMobileOpen(false)} />
+            <SidebarNav collapsed={false} onNavigate={() => setMobileOpen(false)} companyName={companyName} subStatus={subStatus} />
           </SheetContent>
         </Sheet>
       </>
@@ -172,7 +209,7 @@ export default function MerchantSidebar() {
   return (
     <aside
       className={cn(
-        "sticky top-0 h-screen flex flex-col border-r border-white/10 bg-[hsl(262,50%,28%)] transition-all duration-300 z-20 shrink-0",
+        "sticky top-0 h-screen flex flex-col border-r border-white/5 bg-[hsl(262,50%,22%)] transition-all duration-300 z-20 shrink-0",
         collapsed ? "w-[68px]" : "w-[260px]"
       )}
     >
@@ -194,11 +231,11 @@ export default function MerchantSidebar() {
           className="h-8 w-8 rounded-lg text-white/50 hover:text-white hover:bg-white/10"
           onClick={() => setCollapsed(!collapsed)}
         >
-          <ChevronLeft className={cn("h-4 w-4 transition-transform", collapsed && "rotate-180")} />
+          <ChevronLeft className={cn("h-4 w-4 transition-transform duration-200", collapsed && "rotate-180")} />
         </Button>
       </div>
 
-      <SidebarNav collapsed={collapsed} />
+      <SidebarNav collapsed={collapsed} companyName={companyName} subStatus={subStatus} />
     </aside>
   );
 }
