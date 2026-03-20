@@ -98,6 +98,8 @@ const Marketing = () => {
   const [savingAutomations, setSavingAutomations] = useState(false);
   const [automationsChanged, setAutomationsChanged] = useState(false);
   const automationsLoadedRef = useRef(false);
+  const [middleStampPoints, setMiddleStampPoints] = useState<number | null>(null);
+  const [showBonusHint, setShowBonusHint] = useState(false);
 
   // Track automation changes
   useEffect(() => {
@@ -127,6 +129,11 @@ const Marketing = () => {
       if (!assignment) { setLoading(false); return; }
       setCustomerId(assignment.customer_id);
 
+      // Fetch middle stamp (blue) points value for recommendation
+      const { data: blueChip } = await supabase.from('nfc_chips').select('points_value').eq('merchant_customer_id', assignment.customer_id).eq('stamp_color', 'blue').eq('is_active', true).maybeSingle();
+      const midPoints = blueChip?.points_value ?? null;
+      setMiddleStampPoints(midPoints);
+
       const { data: cd } = await supabase.from('customers').select('google_review_url, google_review_points_enabled, google_review_points_value, birthday_enabled, birthday_message, birthday_bonus_points, birthday_gift_type, birthday_offer_title, birthday_offer_description').eq('id', assignment.customer_id).maybeSingle();
       if (cd) {
         setGoogleReviewUrl(cd.google_review_url || "");
@@ -134,7 +141,9 @@ const Marketing = () => {
         setReviewPointsValue(cd.google_review_points_value || 5);
         setBirthdayEnabled(cd.birthday_enabled ?? false);
         if (cd.birthday_message) setBirthdayMessage(cd.birthday_message);
-        setBirthdayBonusPoints((cd as any).birthday_bonus_points ?? 5);
+        // Default to middle stamp points if no birthday bonus was ever set
+        const savedBonusPoints = (cd as any).birthday_bonus_points;
+        setBirthdayBonusPoints(savedBonusPoints ?? midPoints ?? 5);
         setBirthdayGiftType(((cd as any).birthday_gift_type as 'points' | 'offer') || 'points');
         setBirthdayOfferTitle((cd as any).birthday_offer_title || '');
         setBirthdayOfferDescription((cd as any).birthday_offer_description || '');
@@ -681,7 +690,25 @@ const Marketing = () => {
                         </div>
                       </div>
                       {birthdayGiftType === 'points' ? (
-                        <div><Label className="text-xs text-muted-foreground">Bonuspunkte</Label><Input type="number" min={1} value={birthdayBonusPoints} onChange={e=>setBirthdayBonusPoints(parseInt(e.target.value)||5)} className="mt-1 rounded-xl w-32" /></div>
+                        <div>
+                          <Label className="text-xs text-muted-foreground">Bonuspunkte</Label>
+                          <div className="flex items-start gap-3 mt-1">
+                            <Input
+                              type="number"
+                              min={1}
+                              value={birthdayBonusPoints}
+                              onChange={e => setBirthdayBonusPoints(parseInt(e.target.value) || 5)}
+                              onFocus={() => setShowBonusHint(true)}
+                              onBlur={() => setShowBonusHint(false)}
+                              className="rounded-xl w-32"
+                            />
+                            {showBonusHint && middleStampPoints && (
+                              <div className="flex-1 bg-primary/5 border border-primary/20 rounded-xl px-3 py-2 text-xs text-foreground/80 animate-in fade-in-0 slide-in-from-left-2 duration-200">
+                                💡 Basierend auf dem, was dein Durchschnittskunde bei dir ausgibt, empfehlen wir dir <strong>{middleStampPoints} Punkte</strong> als Geburtstagsgeschenk.
+                              </div>
+                            )}
+                          </div>
+                        </div>
                       ) : (
                         <div className="space-y-3 p-3 bg-pink-50/50 rounded-xl border border-pink-100">
                           <div><Label className="text-xs">Angebotstitel</Label><Input value={birthdayOfferTitle} onChange={e=>setBirthdayOfferTitle(e.target.value)} placeholder="z.B. Frühstück zum halben Preis" className="mt-1 rounded-xl text-sm" /></div>
