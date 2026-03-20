@@ -293,7 +293,7 @@ export default function RewardSuggestionsPanel({ merchantIndustry, avgOrderValue
               </div>
               <div className="space-y-2">
                 {grouped[cat].map((reward, i) => {
-                  const pts = calculateRewardPoints(reward.estimated_value, avg);
+                  const pts = calculateRewardPoints(reward.estimated_value, avg, avgPointsPerVisit);
                   return (
                     <div
                       key={i}
