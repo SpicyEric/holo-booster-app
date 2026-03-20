@@ -241,7 +241,8 @@ export const AppHome = () => {
               like_count: 0,
               liked_by_user: false,
               distance,
-              is_boosted: boostedMerchantIds.has(m.id),
+              is_boosted: boostMap.has(m.id),
+              boost_radius: boostMap.get(m.id),
             });
           }
         }
