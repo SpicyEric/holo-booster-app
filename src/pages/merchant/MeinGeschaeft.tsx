@@ -443,6 +443,8 @@ const MeinGeschaeft = () => {
       
       if (error) throw error;
       toast.success("Gespeichert!");
+      initialFormDataRef.current = { ...formData };
+      setProfileDirty(false);
     } catch (error: any) {
       toast.error("Fehler beim Speichern");
     } finally {
