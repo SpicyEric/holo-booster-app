@@ -19,25 +19,40 @@ interface Props {
  * Calculates recommended points for a reward based on merchant's individual setup.
  * Rounds to clean 50-step values (50, 100, 150, 200, …).
  */
-function calculateRewardPoints(estimatedValue: number, avgOrderValue: number, avgPointsPerVisit: number): number {
-  if (avgOrderValue <= 0) avgOrderValue = 10;
+function getTargetVisits(category: 'small' | 'medium' | 'large'): number {
+  switch (category) {
+    case 'small': return 6;
+    case 'medium': return 10;
+    case 'large': return 15;
+  }
+}
+
+function getRewardValueBonus(category: 'small' | 'medium' | 'large', estimatedValue: number): number {
+  if (category === 'small') {
+    if (estimatedValue <= 2) return 0;
+    if (estimatedValue <= 4) return 25;
+    return 50;
+  }
+  if (category === 'medium') {
+    if (estimatedValue <= 7) return 0;
+    if (estimatedValue <= 10) return 50;
+    return 100;
+  }
+  // large
+  if (estimatedValue <= 12) return 0;
+  if (estimatedValue <= 18) return 50;
+  if (estimatedValue <= 25) return 100;
+  return 150;
+}
+
+function calculateRewardPoints(category: 'small' | 'medium' | 'large', estimatedValue: number, avgPointsPerVisit: number): number {
   if (avgPointsPerVisit <= 0) avgPointsPerVisit = 10;
 
-  const valueRatio = estimatedValue / avgOrderValue;
+  const targetVisits = getTargetVisits(category);
+  const bonus = getRewardValueBonus(category, estimatedValue);
+  const raw = (avgPointsPerVisit * targetVisits) + bonus;
 
-  // Target visits: small rewards ~6, medium ~10, large ~15
-  let targetVisits: number;
-  if (valueRatio <= 0.3) targetVisits = 5;
-  else if (valueRatio <= 0.5) targetVisits = 6;
-  else if (valueRatio <= 1.0) targetVisits = 8;
-  else if (valueRatio <= 2.0) targetVisits = 12;
-  else if (valueRatio <= 3.0) targetVisits = 15;
-  else targetVisits = 18;
-
-  // Core formula: points scale with both visits AND reward value
-  const raw = avgPointsPerVisit * targetVisits * (1 + valueRatio);
-
-  // Round to nearest 25 (gives 50/75/100/125/150/175/200/250/…)
+  // Round to nearest 25 (50/75/100/125/…)
   return Math.max(50, Math.round(raw / 25) * 25);
 }
 
