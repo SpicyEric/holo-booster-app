@@ -1,0 +1,1 @@
+UPDATE merchant_boosts SET status = 'expired' WHERE id IN ('2d171b88-d8a3-49e3-b2d7-033f58f40d9e', '7b78f170-8dcf-4887-be6f-a7b4bee8aa7c');
