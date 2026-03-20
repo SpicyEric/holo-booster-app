@@ -417,21 +417,36 @@ export default function Transaktionen() {
             <div className="bg-white rounded-xl p-4 border border-border/30 shadow-[0_1px_3px_hsl(262,30%,80%/0.3)]">
               <h3 className="text-sm font-semibold text-foreground mb-3">Kundengruppen</h3>
               <div className="space-y-2">
-                {segments.map(seg => (
-                  <div key={seg.name} className="flex items-center gap-3">
-                    <div className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: seg.color }} />
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-medium text-foreground">{seg.name}</span>
-                        <span className="text-xs text-muted-foreground">{seg.percentage}%</span>
-                      </div>
-                      <div className="h-1.5 bg-muted/50 rounded-full mt-1 overflow-hidden">
-                        <div className="h-full rounded-full transition-all duration-500" style={{ width: `${seg.percentage}%`, backgroundColor: seg.color }} />
-                      </div>
-                    </div>
-                    <span className="text-xs text-muted-foreground tabular-nums w-8 text-right">{seg.count}</span>
-                  </div>
-                ))}
+                {segments.map(seg => {
+                  const segTooltips: Record<string, string> = {
+                    "Neu": "Kunden, die einmal gestempelt haben",
+                    "Selten": "Kunden, die 2–5 mal gestempelt haben",
+                    "Treu": "Kunden, die 6–15 mal gestempelt haben",
+                    "VIP": "Kunden, die mehr als 15 mal gestempelt haben",
+                  };
+                  return (
+                    <Tooltip key={seg.name}>
+                      <TooltipTrigger asChild>
+                        <div className="flex items-center gap-3 cursor-default">
+                          <div className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: seg.color }} />
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between">
+                              <span className="text-xs font-medium text-foreground">{seg.name}</span>
+                              <span className="text-xs text-muted-foreground">{seg.percentage}%</span>
+                            </div>
+                            <div className="h-1.5 bg-muted/50 rounded-full mt-1 overflow-hidden">
+                              <div className="h-full rounded-full transition-all duration-500" style={{ width: `${seg.percentage}%`, backgroundColor: seg.color }} />
+                            </div>
+                          </div>
+                          <span className="text-xs text-muted-foreground tabular-nums w-8 text-right">{seg.count}</span>
+                        </div>
+                      </TooltipTrigger>
+                      <TooltipContent side="left" className="text-xs">
+                        {segTooltips[seg.name] || seg.label}
+                      </TooltipContent>
+                    </Tooltip>
+                  );
+                })}
               </div>
             </div>
 
