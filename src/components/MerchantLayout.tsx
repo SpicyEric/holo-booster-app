@@ -32,7 +32,7 @@ const MerchantLayout = () => {
     { path: '/kunde/mein-geschaeft', label: 'Mein Geschäft', icon: Building2 },
     { path: '/kunde/transaktionen', label: 'Transaktionen', icon: ArrowLeftRight },
     { path: '/kunde/google-bewertungen', label: 'Google-Bewertungen', icon: Star },
-    { path: '/kunde/nachrichten', label: 'Nachrichten', icon: MessageSquare },
+    { path: '/kunde/nachrichten', label: 'Kampagnen', icon: MessageSquare },
     { path: '/kunde/konto', label: 'Mein Konto', icon: User },
   ];
 
