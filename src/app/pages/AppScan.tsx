@@ -428,36 +428,38 @@ export const AppScan = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-background/95 backdrop-blur-sm flex flex-col items-center justify-center p-6"
+            className="fixed inset-0 z-50 bg-background/95 backdrop-blur-sm flex flex-col items-start justify-start pt-8 p-6"
             style={{ overscrollBehavior: 'none', touchAction: 'none' }}
           >
-            <motion.div
-              animate={{ 
-                scale: [1, 1.2, 1],
-                opacity: [0.7, 1, 0.7]
-              }}
-              transition={{ 
-                repeat: Infinity, 
-                duration: 2,
-                ease: "easeInOut"
-              }}
-              className="w-40 h-40 rounded-full bg-primary/20 flex items-center justify-center mb-8"
-            >
+            <div className="w-full flex flex-col items-center">
               <motion.div
-                animate={{ scale: [1, 1.1, 1] }}
-                transition={{ repeat: Infinity, duration: 1.5 }}
-                className="w-28 h-28 rounded-full bg-primary/30 flex items-center justify-center"
+                animate={{ 
+                  scale: [1, 1.2, 1],
+                  opacity: [0.7, 1, 0.7]
+                }}
+                transition={{ 
+                  repeat: Infinity, 
+                  duration: 2,
+                  ease: "easeInOut"
+                }}
+                className="w-40 h-40 rounded-full bg-primary/20 flex items-center justify-center mb-8"
               >
-                <Nfc className="h-14 w-14 text-primary" />
+                <motion.div
+                  animate={{ scale: [1, 1.1, 1] }}
+                  transition={{ repeat: Infinity, duration: 1.5 }}
+                  className="w-28 h-28 rounded-full bg-primary/30 flex items-center justify-center"
+                >
+                  <Nfc className="h-14 w-14 text-primary" />
+                </motion.div>
               </motion.div>
-            </motion.div>
 
-            <h2 className="text-2xl font-bold mb-3 text-center">
-              NFC-Stempel scannen
-            </h2>
-            <p className="text-muted-foreground text-center max-w-xs">
-              Halte dein Handy jetzt an den Eloyo-Stempel
-            </p>
+              <h2 className="text-2xl font-bold mb-3 text-center">
+                NFC-Stempel scannen
+              </h2>
+              <p className="text-muted-foreground text-center max-w-xs">
+                Halte jetzt die obere Rückseite deines Handys an den Eloyo-Stempel
+              </p>
+            </div>
           </motion.div>
         )}
 
