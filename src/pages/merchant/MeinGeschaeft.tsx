@@ -625,6 +625,8 @@ const MeinGeschaeft = () => {
         } as any)
         .eq('id', customerId);
       setNfcChips(chipsToSave);
+      setInitialStampState({ stampMode, avgRevenue, manualMode });
+      setStampSettingsDirty(false);
       toast.success('Stempel gespeichert');
     } catch {
       toast.error('Fehler beim Speichern');
