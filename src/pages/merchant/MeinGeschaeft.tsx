@@ -185,12 +185,21 @@ const MeinGeschaeft = () => {
   const [selectedVariant, setSelectedVariant] = useState<'balanced' | 'umsatzboost'>('balanced');
   const [stampSettingsDirty, setStampSettingsDirty] = useState(false);
   const [initialStampState, setInitialStampState] = useState<{ stampMode: string; avgRevenue: number; manualMode: boolean } | null>(null);
+  const initialFormDataRef = useRef<typeof formData | null>(null);
+  const [profileDirty, setProfileDirty] = useState(false);
 
   useEffect(() => {
     if (user?.id) {
       loadData();
     }
   }, [user?.id]);
+
+  // Track dirty state for profile info
+  useEffect(() => {
+    if (!initialFormDataRef.current) return;
+    const isDirty = JSON.stringify(formData) !== JSON.stringify(initialFormDataRef.current);
+    setProfileDirty(isDirty);
+  }, [formData]);
 
   // Track dirty state for stamp settings
   useEffect(() => {
