@@ -492,9 +492,84 @@ const Nachrichten = () => {
       <div className="max-w-4xl mx-auto p-6 sm:p-8 space-y-8">
         {/* Header */}
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Nachrichten</h1>
+          <h1 className="text-2xl font-bold text-gray-900">Kampagnen</h1>
           <p className="text-gray-500 mt-1">Erreichen Sie Ihre Kunden gezielt</p>
         </div>
+
+        {/* Neukunden-Boost */}
+        <Card className="rounded-2xl shadow-sm border-0 bg-gradient-to-br from-amber-50 to-orange-50">
+          <CardHeader className="pb-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center">
+                <Rocket className="h-5 w-5 text-amber-600" />
+              </div>
+              <div>
+                <CardTitle className="text-lg font-semibold text-gray-900">Neukunden-Boost</CardTitle>
+                <CardDescription className="text-gray-500">
+                  Erreichen Sie neue Kunden in Ihrer Umgebung
+                </CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {activeBoost ? (
+              <div className="p-4 bg-white rounded-xl border border-green-200">
+                <div className="flex items-center gap-2 mb-2">
+                  <CheckCircle2 className="h-5 w-5 text-green-500" />
+                  <span className="font-semibold text-green-700">Boost aktiv</span>
+                </div>
+                <div className="flex items-center gap-2 text-sm text-gray-600">
+                  <Timer className="h-4 w-4" />
+                  <span>Läuft noch bis {new Date(activeBoost.ends_at).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
+                </div>
+                <p className="text-sm text-gray-500 mt-2">
+                  Ihr Geschäft wird im Umkreis von 15 km allen App-Nutzern ganz oben im Feed angezeigt.
+                </p>
+              </div>
+            ) : (
+              <>
+                <p className="text-sm text-gray-600">
+                  Pushen Sie Ihr Geschäft im Feed der App! Alle Nutzer im Umkreis von 15 km sehen Ihren Eintrag ganz oben – 
+                  mit einer hervorgehobenen Anzeige und dem Label „Gesponsert". Bei mehreren gesponserten Einträgen wird 
+                  nach Distanz zum Nutzer sortiert, sodass die Nächstgelegenen immer oben erscheinen.
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  {[
+                    { tier: '3_days', days: 3, price: '9,90 €', label: '3 Tage' },
+                    { tier: '7_days', days: 7, price: '19,90 €', label: '7 Tage', popular: true },
+                    { tier: '14_days', days: 14, price: '35,90 €', label: '14 Tage' },
+                  ].map((option) => (
+                    <div
+                      key={option.tier}
+                      className={`relative p-4 rounded-xl border-2 transition-all ${
+                        option.popular ? 'border-amber-400 bg-white shadow-md' : 'border-gray-200 bg-white hover:border-amber-200'
+                      }`}
+                    >
+                      {option.popular && (
+                        <Badge className="absolute -top-2.5 left-1/2 -translate-x-1/2 bg-amber-500 text-white text-xs rounded-full">
+                          Beliebt
+                        </Badge>
+                      )}
+                      <div className="text-center space-y-2">
+                        <p className="text-2xl font-bold text-gray-900">{option.price}</p>
+                        <p className="text-sm font-medium text-gray-600">{option.label}</p>
+                        <p className="text-xs text-gray-400">15 km Radius</p>
+                        <Button
+                          onClick={() => handleBoostPurchase(option.tier)}
+                          disabled={boostLoading}
+                          className="w-full rounded-xl mt-2"
+                          variant={option.popular ? 'default' : 'outline'}
+                        >
+                          {boostLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Jetzt buchen'}
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
+          </CardContent>
+        </Card>
 
         {/* Nachrichten */}
         <Card className="rounded-2xl shadow-sm border-0 bg-gray-50/80">
