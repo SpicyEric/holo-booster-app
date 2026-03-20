@@ -37,7 +37,7 @@ interface Reward { id: string; title: string; }
 interface HourlyData { hour: string; count: number; }
 interface GrowthData { date: string; total: number; }
 interface GenderData { gender: string; count: number; percentage: number; }
-interface AgeData { age: string; count: number; }
+interface AgeData { age: string; count: number; male: number; female: number; }
 interface CustomerSegment { name: string; label: string; count: number; percentage: number; color: string; }
 
 type DateRange = 7 | 14 | 30 | 90;
