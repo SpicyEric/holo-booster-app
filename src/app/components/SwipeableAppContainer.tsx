@@ -509,6 +509,11 @@ const AppHomeContent = () => {
                   {item.like_count > 0 && (
                     <span className="text-sm font-semibold text-foreground">{item.like_count} {item.like_count === 1 ? 'Like' : 'Likes'}</span>
                   )}
+                  {isBoostedInRange && (
+                    <span className="inline-flex items-center ml-auto px-2.5 py-1 bg-amber-500/15 text-amber-600 dark:text-amber-400 rounded-full text-xs font-semibold">
+                      Gesponsert
+                    </span>
+                  )}
                 </div>
               )}
               {item.type === 'offer' && (
@@ -523,11 +528,13 @@ const AppHomeContent = () => {
                   )}
                 </div>
               )}
-              {item.type === 'merchant_card' && item.points_balance !== undefined && (
+              {item.type === 'merchant_card' && (
                 <div className="flex items-center gap-2 mb-2 flex-wrap">
-                  <span className="inline-flex items-center gap-1 px-3 py-1.5 bg-muted text-muted-foreground rounded-full text-xs font-medium">
-                    {item.points_balance} Punkte gesammelt
-                  </span>
+                  {item.points_balance !== undefined && item.points_balance > 0 && (
+                    <span className="inline-flex items-center gap-1 px-3 py-1.5 bg-muted text-muted-foreground rounded-full text-xs font-medium">
+                      {item.points_balance} Punkte gesammelt
+                    </span>
+                  )}
                   {isBoostedInRange && (
                     <span className="inline-flex items-center px-2.5 py-1.5 bg-amber-500/15 text-amber-600 dark:text-amber-400 rounded-full text-xs font-semibold">
                       Gesponsert
