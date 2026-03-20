@@ -652,6 +652,55 @@ const Marketing = () => {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+
+        {/* Reward Dialog */}
+        <Dialog open={showRewardDialog} onOpenChange={setShowRewardDialog}>
+          <DialogContent className="max-w-lg rounded-2xl">
+            <DialogHeader>
+              <DialogTitle>{editingReward ? 'Prämie bearbeiten' : 'Neue Prämie'}</DialogTitle>
+              <DialogDescription>Erstelle eine Belohnung, die Kunden mit Punkten einlösen können</DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div><Label>Titel *</Label><Input value={rewardForm.title} onChange={e => setRewardForm({ ...rewardForm, title: e.target.value })} placeholder="z.B. Gratis Kaffee" className="rounded-xl mt-1" /></div>
+              <div><Label>Beschreibung</Label><Textarea value={rewardForm.description} onChange={e => setRewardForm({ ...rewardForm, description: e.target.value })} placeholder="Details..." rows={2} className="rounded-xl mt-1" /></div>
+              <div><Label>Benötigte Punkte</Label><Input type="number" min={1} value={rewardForm.points_required} onChange={e => setRewardForm({ ...rewardForm, points_required: parseInt(e.target.value) || 10 })} className="rounded-xl mt-1 w-32" /></div>
+              <div>
+                <Label>Bild (optional)</Label>
+                <label className="cursor-pointer block mt-1 border-2 border-dashed border-border rounded-xl p-4 text-center hover:border-primary/50 transition-colors">
+                  <input type="file" accept="image/*" className="hidden" onChange={e => { const f = e.target.files?.[0]; if (f) handleRewardImageUpload(f); }} />
+                  {rewardForm.image_url ? <img src={rewardForm.image_url} alt="Preview" className="w-16 h-16 object-cover mx-auto rounded-lg" /> : <span className="text-sm text-muted-foreground">{uploadingRewardImage ? 'Hochladen...' : 'Bild hochladen'}</span>}
+                </label>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setShowRewardDialog(false)} className="rounded-xl">Abbrechen</Button>
+              <Button onClick={handleSaveReward} disabled={saving || !rewardForm.title} className="rounded-xl">{saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}{editingReward ? 'Aktualisieren' : 'Erstellen'}</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* NCO Dialog */}
+        <Dialog open={showNcoDialog} onOpenChange={setShowNcoDialog}>
+          <DialogContent className="max-w-lg rounded-2xl">
+            <DialogHeader>
+              <DialogTitle>{newCustomerOffer ? 'Neukundenprämie bearbeiten' : 'Neukundenprämie erstellen'}</DialogTitle>
+              <DialogDescription>Ein Willkommensbonus für neue Kunden</DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div><Label>Titel *</Label><Input value={ncoForm.title} onChange={e => setNcoForm({ ...ncoForm, title: e.target.value })} placeholder="z.B. Willkommensbonus" className="rounded-xl mt-1" /></div>
+              <div><Label>Beschreibung</Label><Textarea value={ncoForm.description} onChange={e => setNcoForm({ ...ncoForm, description: e.target.value })} placeholder="Details..." rows={2} className="rounded-xl mt-1" /></div>
+              <div><Label>Bonuspunkte</Label><Input type="number" min={0} value={ncoForm.bonus_stamps} onChange={e => setNcoForm({ ...ncoForm, bonus_stamps: parseInt(e.target.value) || 0 })} className="rounded-xl mt-1 w-32" /></div>
+              <div className="flex items-center justify-between p-3 bg-muted/30 rounded-xl">
+                <div><p className="text-sm font-medium">Aktiv</p></div>
+                <Switch checked={ncoForm.is_active} onCheckedChange={v => setNcoForm({ ...ncoForm, is_active: v })} />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setShowNcoDialog(false)} className="rounded-xl">Abbrechen</Button>
+              <Button onClick={handleSaveNco} disabled={saving || !ncoForm.title} className="rounded-xl">{saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}{newCustomerOffer ? 'Aktualisieren' : 'Erstellen'}</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );
