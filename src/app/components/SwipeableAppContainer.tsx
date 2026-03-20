@@ -222,6 +222,20 @@ const AppHomeContent = () => {
     setLoading(true);
     try {
       const items: any[] = [];
+
+      const { data: activeBoosts } = await supabase
+        .from('merchant_boosts')
+        .select('merchant_customer_id, tier')
+        .eq('status', 'active')
+        .gt('ends_at', new Date().toISOString());
+
+      const boostMap = new Map<string, number>();
+      activeBoosts?.forEach((boost) => {
+        const radius = boost.tier === '14_days' ? 15 : 10;
+        const existing = boostMap.get(boost.merchant_customer_id);
+        if (!existing || radius > existing) boostMap.set(boost.merchant_customer_id, radius);
+      });
+
       const { data: accounts } = await supabase
         .from('loyalty_accounts')
         .select('merchant_customer_id, current_points_balance')
@@ -275,7 +289,6 @@ const AppHomeContent = () => {
         }
       }
 
-      // Add merchant card entries for stamped merchants without feed posts
       if (stampedMerchantIds.length > 0) {
         const { data: stampedMerchants } = await supabase
           .from('customers')
@@ -339,14 +352,27 @@ const AppHomeContent = () => {
         }
       }
 
-      // Sort ALL items by distance (nearest first), items without distance go to the end
-      items.sort((a, b) => {
-        const distA = a.distance ?? Infinity;
-        const distB = b.distance ?? Infinity;
-        return distA - distB;
+      const enhancedItems = items.map((item) => ({
+        ...item,
+        is_boosted: boostMap.has(item.merchant_customer_id),
+        boost_radius: boostMap.get(item.merchant_customer_id),
+      }));
+
+      enhancedItems.sort((a, b) => {
+        const aBoosted = a.is_boosted && (a.distance === undefined || a.distance <= (a.boost_radius ?? 10));
+        const bBoosted = b.is_boosted && (b.distance === undefined || b.distance <= (b.boost_radius ?? 10));
+
+        if (aBoosted && !bBoosted) return -1;
+        if (!aBoosted && bBoosted) return 1;
+
+        if (a.distance !== undefined && b.distance !== undefined) return a.distance - b.distance;
+        if (a.distance !== undefined) return -1;
+        if (b.distance !== undefined) return 1;
+
+        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
       });
 
-      setFeedItems(items);
+      setFeedItems(enhancedItems);
     } catch (err) {
       console.error('[Feed] Error:', err);
     } finally {
@@ -412,97 +438,121 @@ const AppHomeContent = () => {
   return (
     <PullToRefresh onRefresh={handleRefresh}>
     <div className="-mx-4 space-y-6">
-      {feedItems.map((item: any) => (
-        <div key={`${item.type}-${item.id}`} className="bg-card">
-          <div className="flex items-center gap-3 px-4 py-3 cursor-pointer" onClick={() => navigate(`/app/merchant/${item.merchant_customer_id}`)}>
-            {item.merchant_logo ? (
-              <img src={item.merchant_logo} alt="" className="w-9 h-9 rounded-full object-cover" />
-            ) : (
-              <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center text-sm font-bold text-primary">
-                {item.merchant_name.charAt(0)}
+      {feedItems.map((item: any) => {
+        const isBoostedInRange = item.is_boosted && (item.distance === undefined || item.distance <= (item.boost_radius ?? 10));
+
+        return (
+          <div
+            key={`${item.type}-${item.id}`}
+            className={`bg-card relative ${isBoostedInRange ? 'ring-2 ring-amber-400/60 shadow-[0_0_15px_-3px_rgba(245,158,11,0.3)]' : ''}`}
+            style={isBoostedInRange ? { animation: 'boost-glow 3s ease-in-out infinite' } : undefined}
+          >
+            {isBoostedInRange && (
+              <div className="absolute top-2 right-2 z-10 flex items-center gap-1 px-2.5 py-1 bg-amber-500/90 text-white text-xs font-semibold rounded-full backdrop-blur-sm shadow-sm">
+                <Sparkles className="h-3 w-3" />
+                Gesponsert
               </div>
             )}
-            <div className="flex-1 min-w-0">
-              <span className="font-semibold text-sm text-foreground">{item.merchant_name}</span>
-            </div>
-            {item.distance !== undefined && (
-              <span className="text-xs text-muted-foreground flex items-center gap-0.5">
-                <MapPin className="h-3 w-3" />
-                {item.distance < 1 ? `${Math.round(item.distance * 1000)}m` : `${item.distance.toFixed(1)}km`}
-              </span>
-            )}
-          </div>
 
-          {/* Merchant card: wide aspect ratio with cover image */}
-          {item.type === 'merchant_card' ? (
-            <div className="w-full aspect-[16/7] bg-muted cursor-pointer" onClick={() => navigate(`/app/merchant/${item.merchant_customer_id}`)}>
-              {item.image_url ? (
-                <img src={item.image_url} alt="" className="w-full h-full object-cover" loading="lazy" />
+            <div className="flex items-center gap-3 px-4 py-3 cursor-pointer" onClick={() => navigate(`/app/merchant/${item.merchant_customer_id}`)}>
+              {item.merchant_logo ? (
+                <img src={item.merchant_logo} alt="" className="w-9 h-9 rounded-full object-cover" />
               ) : (
-                <div className="w-full h-full bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center">
-                  <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
-                    <span className="text-3xl font-bold text-primary">{item.merchant_name.charAt(0)}</span>
+                <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center text-sm font-bold text-primary">
+                  {item.merchant_name.charAt(0)}
+                </div>
+              )}
+              <div className="flex-1 min-w-0">
+                <span className="font-semibold text-sm text-foreground">{item.merchant_name}</span>
+              </div>
+              {item.distance !== undefined && (
+                <span className="text-xs text-muted-foreground flex items-center gap-0.5">
+                  <MapPin className="h-3 w-3" />
+                  {item.distance < 1 ? `${Math.round(item.distance * 1000)}m` : `${item.distance.toFixed(1)}km`}
+                </span>
+              )}
+            </div>
+
+            {item.type === 'merchant_card' ? (
+              <div className="w-full aspect-[16/7] bg-muted cursor-pointer" onClick={() => navigate(`/app/merchant/${item.merchant_customer_id}`)}>
+                {item.image_url ? (
+                  <img src={item.image_url} alt="" className="w-full h-full object-cover" loading="lazy" />
+                ) : (
+                  <div className="w-full h-full bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center">
+                    <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
+                      <span className="text-3xl font-bold text-primary">{item.merchant_name.charAt(0)}</span>
+                    </div>
                   </div>
-                </div>
-              )}
-            </div>
-          ) : item.image_url ? (
-            <div className="w-full aspect-square bg-muted cursor-pointer" onClick={() => navigate(`/app/merchant/${item.merchant_customer_id}`)}>
-              <img src={item.image_url} alt="" className="w-full h-full object-cover" loading="lazy" />
-            </div>
-          ) : (
-            <div className="w-full aspect-square bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center cursor-pointer" onClick={() => navigate(`/app/merchant/${item.merchant_customer_id}`)}>
-              {item.type === 'offer' ? (
-                <div className="text-center px-8">
-                  <Gift className="h-16 w-16 text-primary mx-auto mb-4" />
-                  <p className="text-2xl font-bold text-foreground">{item.title}</p>
-                </div>
-              ) : (
-                <div className="w-24 h-24 rounded-full bg-primary/10 flex items-center justify-center">
-                  <span className="text-4xl font-bold text-primary">{item.merchant_name.charAt(0)}</span>
-                </div>
-              )}
-            </div>
-          )}
-
-          <div className="px-4 py-3">
-            {item.type === 'post' && (
-              <div className="flex items-center gap-4 mb-2">
-                <button onClick={() => toggleLike(item)} className="flex items-center gap-1.5">
-                  <Heart className={`h-6 w-6 transition-colors ${item.liked_by_user ? 'fill-red-500 text-red-500' : 'text-foreground'}`} />
-                </button>
-                {item.like_count > 0 && (
-                  <span className="text-sm font-semibold text-foreground">{item.like_count} {item.like_count === 1 ? 'Like' : 'Likes'}</span>
+                )}
+              </div>
+            ) : item.image_url ? (
+              <div className="w-full aspect-square bg-muted cursor-pointer" onClick={() => navigate(`/app/merchant/${item.merchant_customer_id}`)}>
+                <img src={item.image_url} alt="" className="w-full h-full object-cover" loading="lazy" />
+              </div>
+            ) : (
+              <div className="w-full aspect-square bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center cursor-pointer" onClick={() => navigate(`/app/merchant/${item.merchant_customer_id}`)}>
+                {item.type === 'offer' ? (
+                  <div className="text-center px-8">
+                    <Gift className="h-16 w-16 text-primary mx-auto mb-4" />
+                    <p className="text-2xl font-bold text-foreground">{item.title}</p>
+                  </div>
+                ) : (
+                  <div className="w-24 h-24 rounded-full bg-primary/10 flex items-center justify-center">
+                    <span className="text-4xl font-bold text-primary">{item.merchant_name.charAt(0)}</span>
+                  </div>
                 )}
               </div>
             )}
-            {item.type === 'offer' && (
-              <div className="flex items-center gap-2 mb-2">
-                <span className="inline-flex items-center gap-1 px-3 py-1.5 bg-primary/10 text-primary rounded-full text-sm font-semibold">
-                  <Gift className="h-4 w-4" />Neukundenprämie
-                </span>
-              </div>
-            )}
-            {item.type === 'merchant_card' && item.points_balance !== undefined && (
-              <div className="flex items-center gap-2 mb-2">
-                <span className="inline-flex items-center gap-1 px-3 py-1.5 bg-muted text-muted-foreground rounded-full text-xs font-medium">
-                  {item.points_balance} Punkte gesammelt
-                </span>
-              </div>
-            )}
-            {item.type === 'offer' && item.title && (
-              <p className="text-sm font-semibold text-foreground mb-1">{item.title}</p>
-            )}
-            {(item.body || item.title) && (
-              <p className="text-sm text-foreground">
-                <span className="font-semibold mr-1.5">{item.merchant_name}</span>
-                {item.type === 'offer' ? (item.body || item.title) : item.body}
-              </p>
-            )}
+
+            <div className="px-4 py-3">
+              {item.type === 'post' && (
+                <div className="flex items-center gap-4 mb-2">
+                  <button onClick={() => toggleLike(item)} className="flex items-center gap-1.5">
+                    <Heart className={`h-6 w-6 transition-colors ${item.liked_by_user ? 'fill-red-500 text-red-500' : 'text-foreground'}`} />
+                  </button>
+                  {item.like_count > 0 && (
+                    <span className="text-sm font-semibold text-foreground">{item.like_count} {item.like_count === 1 ? 'Like' : 'Likes'}</span>
+                  )}
+                </div>
+              )}
+              {item.type === 'offer' && (
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="inline-flex items-center gap-1 px-3 py-1.5 bg-primary/10 text-primary rounded-full text-sm font-semibold">
+                    <Gift className="h-4 w-4" />Neukundenprämie
+                  </span>
+                </div>
+              )}
+              {item.type === 'merchant_card' && item.points_balance !== undefined && (
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="inline-flex items-center gap-1 px-3 py-1.5 bg-muted text-muted-foreground rounded-full text-xs font-medium">
+                    {item.points_balance} Punkte gesammelt
+                  </span>
+                </div>
+              )}
+              {item.type === 'offer' && item.title && (
+                <p className="text-sm font-semibold text-foreground mb-1">{item.title}</p>
+              )}
+              {(item.body || item.title) && (
+                <p className="text-sm text-foreground">
+                  <span className="font-semibold mr-1.5">{item.merchant_name}</span>
+                  {item.type === 'offer' ? (item.body || item.title) : item.body}
+                </p>
+              )}
+            </div>
           </div>
-        </div>
-      ))}
+        );
+      })}
     </div>
+    <style>{`
+      @keyframes boost-glow {
+        0%, 100% {
+          box-shadow: 0 0 12px -3px rgba(245, 158, 11, 0.25);
+        }
+        50% {
+          box-shadow: 0 0 20px -2px rgba(245, 158, 11, 0.45);
+        }
+      }
+    `}</style>
     </PullToRefresh>
   );
 };
