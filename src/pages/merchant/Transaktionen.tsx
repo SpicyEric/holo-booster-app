@@ -479,5 +479,6 @@ export default function Transaktionen() {
         </div>
       </div>
     </div>
+    </TooltipProvider>
   );
 }
