@@ -318,14 +318,14 @@ export const AppMerchantDetail = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen">
+      <div className="bg-background overflow-hidden" style={{ height: '100dvh' }}><div className="h-full overflow-y-auto" style={{ overscrollBehavior: 'contain', WebkitOverflowScrolling: 'touch' }}>
         <Skeleton className="h-48 w-full" />
         <div className="p-4 space-y-4">
           <Skeleton className="h-8 w-48" />
           <Skeleton className="h-4 w-32" />
           <Skeleton className="h-32 w-full" />
         </div>
-      </div>
+      </div></div>
     );
   }
 
@@ -340,7 +340,8 @@ export const AppMerchantDetail = () => {
   const merchantName = merchant.company_name || merchant.name;
 
   return (
-    <div className="min-h-screen bg-background pb-24 overflow-x-hidden" style={{ WebkitOverflowScrolling: 'touch' }}>
+    <div className="bg-background overflow-hidden" style={{ height: '100dvh' }}>
+    <div className="h-full overflow-y-auto pb-24 overflow-x-hidden" style={{ overscrollBehavior: 'contain', WebkitOverflowScrolling: 'touch' }}>
       {/* Safe area shield - must be outside scroll flow */}
       <div className="fixed top-0 left-0 right-0 z-[60]" style={{ height: 'env(safe-area-inset-top, 0px)', background: 'hsl(var(--background))' }} />
 
@@ -647,6 +648,7 @@ export const AppMerchantDetail = () => {
       )}
 
       <BottomNav />
+    </div>
     </div>
   );
 };
