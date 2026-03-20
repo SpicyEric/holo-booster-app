@@ -137,7 +137,8 @@ export const AppHome = () => {
               like_count: likeCounts.get(post.id) || 0,
               liked_by_user: userLikes.has(post.id),
               distance,
-              is_boosted: boostedMerchantIds.has(post.merchant_customer_id),
+              is_boosted: boostMap.has(post.merchant_customer_id),
+              boost_radius: boostMap.get(post.merchant_customer_id),
             });
           });
         }
