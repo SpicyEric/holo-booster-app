@@ -53,8 +53,8 @@ function calculateRewardPoints(category: 'small' | 'medium' | 'large', estimated
   const bonus = getRewardValueBonus(category, estimatedValue);
   const raw = (avgPointsPerVisit * targetVisits) + bonus;
 
-  // Round to nearest 25 (50/75/100/125/…)
-  return Math.max(50, Math.round(raw / 25) * 25);
+  // Round to nearest 25 (25/50/75/100/125/…)
+  return Math.max(25, Math.round(raw / 25) * 25);
 }
 
 const CATEGORY_META = {
