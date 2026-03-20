@@ -171,7 +171,8 @@ export const AppHome = () => {
               liked_by_user: false,
               points_balance: account?.current_points_balance ?? 0,
               distance,
-              is_boosted: boostedMerchantIds.has(m.id),
+              is_boosted: boostMap.has(m.id),
+              boost_radius: boostMap.get(m.id),
             });
           }
         });
