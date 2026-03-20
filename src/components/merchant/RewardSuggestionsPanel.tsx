@@ -16,6 +16,7 @@ interface ExampleReward {
 interface Props {
   merchantIndustry: string | null;
   avgOrderValue: number;
+  avgPointsPerVisit?: number;
   onSelectReward: (title: string, pointsRequired: number) => void;
 }
 
