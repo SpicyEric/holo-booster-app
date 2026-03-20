@@ -477,11 +477,12 @@ export default function Transaktionen() {
               {/* Age */}
               <div className="h-[100px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={ageData}>
+                  <BarChart data={ageData} barGap={1} barCategoryGap="20%">
                     <XAxis dataKey="age" tick={{ fontSize: 9, fill: 'hsl(0,0%,45%)' }} tickLine={false} axisLine={false} />
                     <YAxis hide />
-                    <RechartsTooltip contentStyle={{ backgroundColor: "hsl(0,0%,100%)", border: "1px solid hsl(0,0%,90%)", borderRadius: "8px", fontSize: "12px" }} formatter={(v: number) => [`${v}`, "Kunden"]} />
-                    <Bar dataKey="count" fill="hsl(262,83%,58%)" radius={[4, 4, 0, 0]} />
+                    <RechartsTooltip contentStyle={{ backgroundColor: "hsl(0,0%,100%)", border: "1px solid hsl(0,0%,90%)", borderRadius: "8px", fontSize: "12px" }} formatter={(v: number, name: string) => [`${v}`, name === 'male' ? 'Männlich' : 'Weiblich']} />
+                    <Bar dataKey="male" fill="hsl(262,83%,58%)" radius={[3, 3, 0, 0]} name="male" />
+                    <Bar dataKey="female" fill="#F97316" radius={[3, 3, 0, 0]} name="female" />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
