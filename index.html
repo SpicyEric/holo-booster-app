@@ -22,36 +22,14 @@
         document.head.appendChild(s);
       }
 
-      // Move CCM19 widget to right side on logged-in routes
-      function ccm19PositionCheck() {
-        var p = window.location.pathname;
-        var isLoggedIn = p.startsWith('/kunde') || p.startsWith('/admin') || p.startsWith('/partner');
-        var widget = document.querySelector('[id*="ccm19"], .ccm-widget, [class*="ccm"]');
-        if (!widget) {
-          // Also try the common CCM19 root element
-          var allFixed = document.querySelectorAll('div[style*="position: fixed"][style*="bottom"]');
-          allFixed.forEach(function(el) {
-            if (el.innerHTML && el.innerHTML.indexOf('ccm') !== -1) widget = el;
-          });
-        }
-        if (widget) {
-          if (isLoggedIn) {
-            widget.style.setProperty('left', 'auto', 'important');
-            widget.style.setProperty('right', '20px', 'important');
-          }
-        }
-      }
-      // Run periodically to catch CCM19 after it loads
-      var ccm19Interval = setInterval(ccm19PositionCheck, 1000);
-      setTimeout(function() { clearInterval(ccm19Interval); }, 15000);
     </script>
     <style>
-      /* Move CCM19 cookie widget to right on logged-in merchant/admin/partner routes */
+      /* Hide CCM19 cookie widget completely when logged in */
       body.ccm19-right .ccm-root,
       body.ccm19-right [id*="ccm19"],
-      body.ccm19-right [class*="ccm-widget"] {
-        left: auto !important;
-        right: 20px !important;
+      body.ccm19-right [class*="ccm-widget"],
+      body.ccm19-right [class*="ccm19"] {
+        display: none !important;
       }
     </style>
     <link rel="preconnect" href="https://fonts.googleapis.com">
