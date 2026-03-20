@@ -3,7 +3,7 @@ import erecht24AgenturLight from '@/assets/erecht24-agentur-light.png';
 import erecht24ImpressumDark from '@/assets/erecht24-impressum-dark.png';
 import erecht24DatenschutzDark from '@/assets/erecht24-datenschutz-dark.png';
 
-const PUBLIC_PATHS = ['/', '/impressum', '/datenschutz', '/kontakt', '/karriere', '/delete'];
+const PUBLIC_PATHS = ['/', '/home', '/impressum', '/datenschutz', '/kontakt', '/karriere', '/delete'];
 
 const ERecht24Badge = () => {
   const location = useLocation();

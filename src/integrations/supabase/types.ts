@@ -17,7 +17,10 @@ export type Database = {
       app_messages: {
         Row: {
           body: string
+          bonus_points: number | null
+          bonus_points_claimed_at: string | null
           id: string
+          image_url: string | null
           merchant_customer_id: string
           offer_id: string | null
           offer_redeemed_at: string | null
@@ -29,7 +32,10 @@ export type Database = {
         }
         Insert: {
           body: string
+          bonus_points?: number | null
+          bonus_points_claimed_at?: string | null
           id?: string
+          image_url?: string | null
           merchant_customer_id: string
           offer_id?: string | null
           offer_redeemed_at?: string | null
@@ -41,7 +47,10 @@ export type Database = {
         }
         Update: {
           body?: string
+          bonus_points?: number | null
+          bonus_points_claimed_at?: string | null
           id?: string
+          image_url?: string | null
           merchant_customer_id?: string
           offer_id?: string | null
           offer_redeemed_at?: string | null

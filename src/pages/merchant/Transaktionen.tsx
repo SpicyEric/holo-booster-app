@@ -37,7 +37,7 @@ interface Reward { id: string; title: string; }
 interface HourlyData { hour: string; count: number; }
 interface GrowthData { date: string; total: number; }
 interface GenderData { gender: string; count: number; percentage: number; }
-interface AgeData { age: string; count: number; }
+interface AgeData { age: string; count: number; male: number; female: number; }
 interface CustomerSegment { name: string; label: string; count: number; percentage: number; color: string; }
 
 type DateRange = 7 | 14 | 30 | 90;
@@ -104,7 +104,7 @@ export default function Transaktionen() {
         for (let i = 0; i < 7; i++) { const d = new Date(); d.setDate(d.getDate()-(6-i)); base += Math.floor(4+Math.random()*8); gd.push({ date: d.toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"}), total: base }); }
         setGrowthData(gd);
         setGenderData([{ gender: "Männlich", count: 1560, percentage: 65 },{ gender: "Weiblich", count: 840, percentage: 35 }]);
-        setAgeData([{age:"14-17",count:96},{age:"18-24",count:384},{age:"25-34",count:720},{age:"35-44",count:576},{age:"45-54",count:384},{age:"55-64",count:168},{age:"65+",count:72}]);
+        setAgeData([{age:"14-17",count:96,male:58,female:38},{age:"18-24",count:384,male:245,female:139},{age:"25-34",count:720,male:468,female:252},{age:"35-44",count:576,male:374,female:202},{age:"45-54",count:384,male:250,female:134},{age:"55-64",count:168,male:109,female:59},{age:"65+",count:72,male:47,female:25}]);
         setSegments([
           { name: "Neu", label: "1 Besuch", count: 480, percentage: 20, color: "#22C55E" },
           { name: "Selten", label: "2-5 Besuche", count: 720, percentage: 30, color: "#A855F7" },
@@ -155,12 +155,23 @@ export default function Transaktionen() {
   const loadAgeData = async (cid: string) => {
     const { data: la } = await supabase.from("loyalty_accounts").select("user_id").eq("merchant_customer_id", cid);
     const brackets = [{ label: "14-17", min: 14, max: 17 }, { label: "18-24", min: 18, max: 24 }, { label: "25-34", min: 25, max: 34 }, { label: "35-44", min: 35, max: 44 }, { label: "45-54", min: 45, max: 54 }, { label: "55-64", min: 55, max: 64 }, { label: "65+", min: 65, max: 150 }];
-    const ac: Record<string, number> = {}; brackets.forEach(b => ac[b.label] = 0);
+    const mc: Record<string, number> = {}; const fc: Record<string, number> = {}; const ac: Record<string, number> = {};
+    brackets.forEach(b => { mc[b.label] = 0; fc[b.label] = 0; ac[b.label] = 0; });
     if (la && la.length > 0) {
-      const { data: ps } = await supabase.from("profiles").select("birth_date").in("user_id", la.map(a => a.user_id));
-      (ps || []).forEach((p: any) => { if (p.birth_date) { const age = Math.floor((Date.now() - new Date(p.birth_date).getTime()) / (365.25 * 24 * 60 * 60 * 1000)); const br = brackets.find(b => age >= b.min && age <= b.max); if (br) ac[br.label]++; } });
+      const { data: ps } = await supabase.from("profiles").select("birth_date, gender").in("user_id", la.map(a => a.user_id));
+      (ps || []).forEach((p: any) => {
+        if (p.birth_date) {
+          const age = Math.floor((Date.now() - new Date(p.birth_date).getTime()) / (365.25 * 24 * 60 * 60 * 1000));
+          const br = brackets.find(b => age >= b.min && age <= b.max);
+          if (br) {
+            ac[br.label]++;
+            if (p.gender === 'männlich' || p.gender === 'male') mc[br.label]++;
+            else if (p.gender === 'weiblich' || p.gender === 'female') fc[br.label]++;
+          }
+        }
+      });
     }
-    setAgeData(brackets.map(b => ({ age: b.label, count: ac[b.label] || 0 })));
+    setAgeData(brackets.map(b => ({ age: b.label, count: ac[b.label] || 0, male: mc[b.label] || 0, female: fc[b.label] || 0 })));
   };
 
   const loadCustomerSegments = async (cid: string) => {
@@ -466,11 +477,12 @@ export default function Transaktionen() {
               {/* Age */}
               <div className="h-[100px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={ageData}>
+                  <BarChart data={ageData} barGap={1} barCategoryGap="20%">
                     <XAxis dataKey="age" tick={{ fontSize: 9, fill: 'hsl(0,0%,45%)' }} tickLine={false} axisLine={false} />
                     <YAxis hide />
-                    <RechartsTooltip contentStyle={{ backgroundColor: "hsl(0,0%,100%)", border: "1px solid hsl(0,0%,90%)", borderRadius: "8px", fontSize: "12px" }} formatter={(v: number) => [`${v}`, "Kunden"]} />
-                    <Bar dataKey="count" fill="hsl(262,83%,58%)" radius={[4, 4, 0, 0]} />
+                    <RechartsTooltip contentStyle={{ backgroundColor: "hsl(0,0%,100%)", border: "1px solid hsl(0,0%,90%)", borderRadius: "8px", fontSize: "12px" }} formatter={(v: number, name: string) => [`${v}`, name === 'male' ? 'Männlich' : 'Weiblich']} />
+                    <Bar dataKey="male" fill="hsl(262,83%,58%)" radius={[3, 3, 0, 0]} name="male" />
+                    <Bar dataKey="female" fill="#F97316" radius={[3, 3, 0, 0]} name="female" />
                   </BarChart>
                 </ResponsiveContainer>
               </div>

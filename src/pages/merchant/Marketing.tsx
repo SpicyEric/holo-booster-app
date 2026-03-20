@@ -1,9 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
@@ -12,7 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   Loader2, Plus, MessageSquare, Gift, Send, Users, Clock, UserPlus, Zap, Cake, Save, 
   ChevronDown, Rocket, CheckCircle2, Timer, Star, ExternalLink, Copy, Bot, Megaphone,
-  Edit2, Trash2
+  Edit2, Trash2, Upload, Coins
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -20,8 +19,14 @@ import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
 import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
+import RichTextEditor from '@/components/merchant/RichTextEditor';
+import { cn } from '@/lib/utils';
 
 // ---- Types ----
 interface Segment { type: 'all' | 'last_stamped_days' | 'not_stamped_days'; value?: number; }
@@ -52,6 +57,8 @@ const Marketing = () => {
   const [showNcoDialog, setShowNcoDialog] = useState(false);
   const [ncoForm, setNcoForm] = useState({ title: '', description: '', bonus_stamps: 0, is_active: true, image_url: '' });
   const [uploadingNcoImage, setUploadingNcoImage] = useState(false);
+  const [ncoGiftType, setNcoGiftType] = useState<'offer' | 'points'>('offer');
+  const [showDeleteNcoConfirm, setShowDeleteNcoConfirm] = useState(false);
 
   // --- Boost state ---
   const [boostLoading, setBoostLoading] = useState(false);
@@ -74,7 +81,12 @@ const Marketing = () => {
   const [saving, setSaving] = useState(false);
   const [estimatingRecipients, setEstimatingRecipients] = useState(false);
   const [estimatedRecipients, setEstimatedRecipients] = useState<number | null>(null);
-  const [messageForm, setMessageForm] = useState({ title: '', body: '', segment_type: 'all' as Segment['type'], segment_value: 30, attach_offer: false, offer_title: '', offer_description: '' });
+  const [messageForm, setMessageForm] = useState({
+    title: '', body: '', segment_type: 'all' as Segment['type'], segment_value: 30,
+    attach_offer: false, offer_title: '', offer_description: '',
+    attach_points: false, bonus_points: 0, image_url: ''
+  });
+  const [uploadingMessageImage, setUploadingMessageImage] = useState(false);
 
   // --- Automations state ---
   const [birthdayEnabled, setBirthdayEnabled] = useState(false);
@@ -84,6 +96,13 @@ const Marketing = () => {
   const [birthdayOfferTitle, setBirthdayOfferTitle] = useState('');
   const [birthdayOfferDescription, setBirthdayOfferDescription] = useState('');
   const [savingAutomations, setSavingAutomations] = useState(false);
+  const [automationsChanged, setAutomationsChanged] = useState(false);
+  const automationsLoadedRef = useRef(false);
+
+  // Track automation changes
+  useEffect(() => {
+    if (automationsLoadedRef.current) setAutomationsChanged(true);
+  }, [birthdayEnabled, birthdayMessage, birthdayBonusPoints, birthdayGiftType, birthdayOfferTitle, birthdayOfferDescription]);
 
   useEffect(() => { loadData(); }, []);
 
@@ -108,7 +127,6 @@ const Marketing = () => {
       if (!assignment) { setLoading(false); return; }
       setCustomerId(assignment.customer_id);
 
-      // Load customer data (google reviews + automations)
       const { data: cd } = await supabase.from('customers').select('google_review_url, google_review_points_enabled, google_review_points_value, birthday_enabled, birthday_message, birthday_bonus_points, birthday_gift_type, birthday_offer_title, birthday_offer_description').eq('id', assignment.customer_id).maybeSingle();
       if (cd) {
         setGoogleReviewUrl(cd.google_review_url || "");
@@ -121,17 +139,19 @@ const Marketing = () => {
         setBirthdayOfferTitle((cd as any).birthday_offer_title || '');
         setBirthdayOfferDescription((cd as any).birthday_offer_description || '');
       }
+      // Mark automations as loaded (so changes after this trigger automationsChanged)
+      setTimeout(() => { automationsLoadedRef.current = true; }, 100);
 
-      // Rewards
       const { data: rewardsData } = await supabase.from('rewards').select('*').eq('merchant_customer_id', assignment.customer_id).order('points_required', { ascending: true });
       if (rewardsData) setRewards(rewardsData);
 
-      // New customer offer
       const { data: ncoData } = await supabase.from('new_customer_offers').select('*').eq('merchant_customer_id', assignment.customer_id).maybeSingle();
       setNewCustomerOffer(ncoData);
-      if (ncoData) setNcoForm({ title: ncoData.title, description: ncoData.description || '', bonus_stamps: ncoData.bonus_stamps || 0, is_active: ncoData.is_active ?? true, image_url: ncoData.image_url || '' });
+      if (ncoData) {
+        setNcoForm({ title: ncoData.title, description: ncoData.description || '', bonus_stamps: ncoData.bonus_stamps || 0, is_active: ncoData.is_active ?? true, image_url: ncoData.image_url || '' });
+        setNcoGiftType(ncoData.bonus_stamps && ncoData.bonus_stamps > 0 ? 'points' : 'offer');
+      }
 
-      // Messages
       const { data: msgData } = await supabase.from('app_messages').select('id, title, body, show_in_storefront, sent_at, offer_id').eq('merchant_customer_id', assignment.customer_id).order('sent_at', { ascending: false });
       if (msgData) {
         const seen = new Map<string, any>();
@@ -142,7 +162,6 @@ const Marketing = () => {
       const { data: offerData } = await supabase.from('offers').select('id, title, description').eq('merchant_customer_id', assignment.customer_id).eq('is_active', true);
       if (offerData) setOffers(offerData);
 
-      // Boosts
       const { data: boosts } = await supabase.from('merchant_boosts').select('*').eq('merchant_customer_id', assignment.customer_id).order('created_at', { ascending: false });
       if (boosts) { const active = boosts.find(b => b.status === 'active' && new Date(b.ends_at) > new Date()); setActiveBoost(active || null); }
     } catch (e) { console.error(e); } finally { setLoading(false); }
@@ -161,14 +180,8 @@ const Marketing = () => {
     if (!customerId) return;
     setSavingReviewPoints(true);
     try {
-      const { error } = await supabase.from("customers").update({
-        google_review_points_enabled: reviewPointsEnabled,
-        google_review_points_value: reviewPointsValue,
-        google_review_url: googleReviewUrl,
-        updated_at: new Date().toISOString()
-      }).eq("id", customerId);
-      if (error) throw error;
-      toast.success("Gespeichert!");
+      const { error } = await supabase.from("customers").update({ google_review_points_enabled: reviewPointsEnabled, google_review_points_value: reviewPointsValue, google_review_url: googleReviewUrl, updated_at: new Date().toISOString() }).eq("id", customerId);
+      if (error) throw error; toast.success("Gespeichert!");
     } catch { toast.error("Fehler"); } finally { setSavingReviewPoints(false); }
   };
 
@@ -186,7 +199,10 @@ const Marketing = () => {
     } catch { setEstimatedRecipients(null); } finally { setEstimatingRecipients(false); }
   };
 
-  const resetMessageForm = () => { setMessageForm({ title: '', body: '', segment_type: 'all', segment_value: 30, attach_offer: false, offer_title: '', offer_description: '' }); setEstimatedRecipients(null); };
+  const resetMessageForm = () => {
+    setMessageForm({ title: '', body: '', segment_type: 'all', segment_value: 30, attach_offer: false, offer_title: '', offer_description: '', attach_points: false, bonus_points: 0, image_url: '' });
+    setEstimatedRecipients(null);
+  };
 
   const handleSendMessage = async () => {
     if (!customerId || !messageForm.title || !messageForm.body) { toast.error('Bitte füllen Sie alle Felder aus'); return; }
@@ -206,7 +222,12 @@ const Marketing = () => {
       const { data: la } = await query;
       const uids = la?.map(l => l.user_id) || [];
       if (uids.length === 0) { toast.error('Keine Kunden gefunden'); setSaving(false); return; }
-      const msgs = uids.map(uid => ({ merchant_customer_id: customerId, user_id: uid, title: messageForm.title, body: messageForm.body, offer_id: offerId, sent_at: new Date().toISOString() } as any));
+      const msgs = uids.map(uid => ({
+        merchant_customer_id: customerId, user_id: uid, title: messageForm.title, body: messageForm.body,
+        offer_id: offerId, sent_at: new Date().toISOString(),
+        image_url: messageForm.image_url || null,
+        bonus_points: messageForm.attach_points && messageForm.bonus_points > 0 ? messageForm.bonus_points : null,
+      } as any));
       const { error } = await supabase.from('app_messages').insert(msgs);
       if (error) throw error;
       toast.success(`Nachricht an ${uids.length} Kunden gesendet!`);
@@ -219,7 +240,7 @@ const Marketing = () => {
     setSavingAutomations(true);
     try {
       const { error } = await supabase.from('customers').update({ birthday_enabled: birthdayEnabled, birthday_message: birthdayMessage, birthday_bonus_points: birthdayBonusPoints, birthday_gift_type: birthdayGiftType, birthday_offer_title: birthdayOfferTitle || null, birthday_offer_description: birthdayOfferDescription || null } as any).eq('id', customerId);
-      if (error) throw error; toast.success('Gespeichert');
+      if (error) throw error; toast.success('Gespeichert'); setAutomationsChanged(false);
     } catch { toast.error('Fehler'); } finally { setSavingAutomations(false); }
   };
 
@@ -244,12 +265,10 @@ const Marketing = () => {
     try {
       if (editingReward) {
         const { error } = await supabase.from("rewards").update({ title: rewardForm.title, description: rewardForm.description || null, points_required: rewardForm.points_required, image_url: rewardForm.image_url || null }).eq("id", editingReward.id);
-        if (error) throw error;
-        toast.success("Prämie aktualisiert");
+        if (error) throw error; toast.success("Prämie aktualisiert");
       } else {
         const { error } = await supabase.from("rewards").insert({ merchant_customer_id: customerId, title: rewardForm.title, description: rewardForm.description || null, points_required: rewardForm.points_required, image_url: rewardForm.image_url || null, is_active: true });
-        if (error) throw error;
-        toast.success("Prämie erstellt");
+        if (error) throw error; toast.success("Prämie erstellt");
       }
       setShowRewardDialog(false); setEditingReward(null); setRewardForm({ title: '', description: '', points_required: 10, image_url: '' }); loadData();
     } catch { toast.error("Fehler beim Speichern"); } finally { setSaving(false); }
@@ -259,24 +278,76 @@ const Marketing = () => {
     try { const { error } = await supabase.from("rewards").delete().eq("id", id); if (error) throw error; toast.success("Prämie gelöscht"); loadData(); } catch { toast.error("Fehler beim Löschen"); }
   };
 
+  // --- NCO handlers ---
+  const handleNcoImageUpload = async (file: File) => {
+    if (!customerId) return;
+    setUploadingNcoImage(true);
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${customerId}/nco_${Date.now()}.${fileExt}`;
+      const { error: uploadError } = await supabase.storage.from("customer-assets").upload(fileName, file, { upsert: true });
+      if (uploadError) throw uploadError;
+      const { data: { publicUrl } } = supabase.storage.from("customer-assets").getPublicUrl(fileName);
+      setNcoForm(prev => ({ ...prev, image_url: publicUrl }));
+      toast.success("Bild hochgeladen");
+    } catch { toast.error("Fehler beim Hochladen"); } finally { setUploadingNcoImage(false); }
+  };
+
+  const handleMessageImageUpload = async (file: File) => {
+    if (!customerId) return;
+    setUploadingMessageImage(true);
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${customerId}/msg_${Date.now()}.${fileExt}`;
+      const { error: uploadError } = await supabase.storage.from("customer-assets").upload(fileName, file, { upsert: true });
+      if (uploadError) throw uploadError;
+      const { data: { publicUrl } } = supabase.storage.from("customer-assets").getPublicUrl(fileName);
+      setMessageForm(prev => ({ ...prev, image_url: publicUrl }));
+      toast.success("Bild hochgeladen");
+    } catch { toast.error("Fehler beim Hochladen"); } finally { setUploadingMessageImage(false); }
+  };
+
   const handleSaveNco = async () => {
-    if (!customerId || !ncoForm.title) { toast.error("Bitte Titel eingeben"); return; }
+    if (!customerId) return;
+    if (ncoGiftType === 'offer' && !ncoForm.title) { toast.error("Bitte Titel eingeben"); return; }
+    if (ncoGiftType === 'points' && (!ncoForm.bonus_stamps || ncoForm.bonus_stamps <= 0)) { toast.error("Bitte Bonuspunkte eingeben"); return; }
     setSaving(true);
     try {
+      const dataToSave = ncoGiftType === 'points'
+        ? { title: `${ncoForm.bonus_stamps} Willkommens-Punkte`, description: ncoForm.description || null, bonus_stamps: ncoForm.bonus_stamps, image_url: null }
+        : { title: ncoForm.title, description: ncoForm.description || null, bonus_stamps: 0, image_url: ncoForm.image_url || null };
+
       if (newCustomerOffer) {
-        const { error } = await supabase.from("new_customer_offers").update({ title: ncoForm.title, description: ncoForm.description || null, bonus_stamps: ncoForm.bonus_stamps, is_active: ncoForm.is_active, image_url: ncoForm.image_url || null }).eq("id", newCustomerOffer.id);
+        const { error } = await supabase.from("new_customer_offers").update(dataToSave).eq("id", newCustomerOffer.id);
         if (error) throw error; toast.success("Neukundenprämie aktualisiert");
       } else {
-        const { error } = await supabase.from("new_customer_offers").insert({ merchant_customer_id: customerId, title: ncoForm.title, description: ncoForm.description || null, bonus_stamps: ncoForm.bonus_stamps, is_active: ncoForm.is_active, image_url: ncoForm.image_url || null });
+        const { error } = await supabase.from("new_customer_offers").insert({ ...dataToSave, merchant_customer_id: customerId, is_active: true });
         if (error) throw error; toast.success("Neukundenprämie erstellt");
       }
       setShowNcoDialog(false); loadData();
     } catch { toast.error("Fehler beim Speichern"); } finally { setSaving(false); }
   };
 
-  const handleDeleteNco = async () => {
+  const handleDeleteNcoConfirmed = async () => {
     if (!newCustomerOffer) return;
-    try { const { error } = await supabase.from("new_customer_offers").delete().eq("id", newCustomerOffer.id); if (error) throw error; toast.success("Neukundenprämie gelöscht"); setNewCustomerOffer(null); setNcoForm({ title: '', description: '', bonus_stamps: 0, is_active: true, image_url: '' }); } catch { toast.error("Fehler beim Löschen"); }
+    try {
+      const { error } = await supabase.from("new_customer_offers").delete().eq("id", newCustomerOffer.id);
+      if (error) throw error;
+      toast.success("Neukundenprämie gelöscht");
+      setNewCustomerOffer(null);
+      setNcoForm({ title: '', description: '', bonus_stamps: 0, is_active: true, image_url: '' });
+      setShowDeleteNcoConfirm(false);
+    } catch { toast.error("Fehler beim Löschen"); }
+  };
+
+  const handleToggleNcoActive = async (active: boolean) => {
+    if (!newCustomerOffer) return;
+    try {
+      const { error } = await supabase.from('new_customer_offers').update({ is_active: active }).eq('id', newCustomerOffer.id);
+      if (error) throw error;
+      toast.success(active ? 'Neukundenprämie aktiviert' : 'Neukundenprämie deaktiviert');
+      loadData();
+    } catch { toast.error('Fehler'); }
   };
 
   if (loading) return <div className="flex items-center justify-center min-h-[60vh]"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
@@ -370,7 +441,7 @@ const Marketing = () => {
                     <CardDescription>Gewinne neue Kunden mit einem attraktiven Willkommensangebot</CardDescription>
                   </div>
                 </div>
-                <Button variant={newCustomerOffer ? "outline" : "default"} onClick={() => setShowNcoDialog(true)} className="rounded-xl">
+                <Button variant={newCustomerOffer ? "outline" : "default"} onClick={() => { if (newCustomerOffer) { setNcoForm({ title: newCustomerOffer.title, description: newCustomerOffer.description || '', bonus_stamps: newCustomerOffer.bonus_stamps || 0, is_active: newCustomerOffer.is_active ?? true, image_url: newCustomerOffer.image_url || '' }); setNcoGiftType(newCustomerOffer.bonus_stamps && newCustomerOffer.bonus_stamps > 0 ? 'points' : 'offer'); } else { setNcoForm({ title: '', description: '', bonus_stamps: 0, is_active: true, image_url: '' }); setNcoGiftType('offer'); } setShowNcoDialog(true); }} className="rounded-xl">
                   {newCustomerOffer ? <><Edit2 className="h-4 w-4 mr-2" />Bearbeiten</> : <><Plus className="h-4 w-4 mr-2" />Erstellen</>}
                 </Button>
               </CardHeader>
@@ -386,14 +457,29 @@ const Marketing = () => {
                 </div>
                 {newCustomerOffer ? (
                   <div className="flex items-center justify-between p-4 bg-card rounded-xl border border-border/30">
-                    <div>
-                      <div className="flex items-center gap-2 mb-1">
-                        <p className="font-semibold text-foreground">{newCustomerOffer.title}</p>
-                        <Badge variant={newCustomerOffer.is_active ? "default" : "secondary"} className="rounded-full">{newCustomerOffer.is_active ? 'Aktiv' : 'Inaktiv'}</Badge>
+                    <div className="flex items-center gap-3">
+                      {newCustomerOffer.image_url && (
+                        <img src={newCustomerOffer.image_url} alt={newCustomerOffer.title} className="w-12 h-12 rounded-xl object-cover" />
+                      )}
+                      <div>
+                        <div className="flex items-center gap-2 mb-1">
+                          <p className="font-semibold text-foreground">{newCustomerOffer.title}</p>
+                        </div>
+                        {newCustomerOffer.description && <p className="text-sm text-muted-foreground">{newCustomerOffer.description}</p>}
+                        {newCustomerOffer.bonus_stamps && newCustomerOffer.bonus_stamps > 0 && (
+                          <Badge variant="secondary" className="rounded-full mt-1"><Coins className="h-3 w-3 mr-1" />{newCustomerOffer.bonus_stamps} Bonuspunkte</Badge>
+                        )}
                       </div>
-                      {newCustomerOffer.description && <p className="text-sm text-muted-foreground">{newCustomerOffer.description}</p>}
                     </div>
-                    <Button variant="ghost" size="sm" onClick={handleDeleteNco} className="rounded-lg"><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                    <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2">
+                        <span className={`text-xs font-medium ${newCustomerOffer.is_active ? 'text-primary' : 'text-muted-foreground'}`}>
+                          {newCustomerOffer.is_active ? 'Aktiv' : 'Inaktiv'}
+                        </span>
+                        <Switch checked={newCustomerOffer.is_active ?? false} onCheckedChange={handleToggleNcoActive} />
+                      </div>
+                      <Button variant="ghost" size="sm" onClick={() => setShowDeleteNcoConfirm(true)} className="rounded-lg"><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                    </div>
                   </div>
                 ) : (
                   <p className="text-muted-foreground text-center py-4">Noch keine Neukundenprämie erstellt</p>
@@ -502,8 +588,6 @@ const Marketing = () => {
                 </Button>
               </CardContent>
             </Card>
-
-            {/* Auto Reply removed - now in Automationen tab */}
           </TabsContent>
 
           {/* ========== NACHRICHTEN TAB ========== */}
@@ -579,7 +663,12 @@ const Marketing = () => {
                   </div>
                   {birthdayEnabled && (
                     <div className="mt-3 space-y-4">
-                      <div><Label className="text-xs text-muted-foreground">Nachricht</Label><Textarea value={birthdayMessage} onChange={(e) => setBirthdayMessage(e.target.value)} className="mt-1 rounded-xl text-sm" rows={2} /></div>
+                      <div>
+                        <Label className="text-xs text-muted-foreground">Nachricht</Label>
+                        <div className="mt-1">
+                          <RichTextEditor value={birthdayMessage} onChange={setBirthdayMessage} placeholder="Geburtstagsnachricht..." rows={2} />
+                        </div>
+                      </div>
                       <div className="space-y-3">
                         <Label className="text-xs text-muted-foreground font-semibold">Geschenk-Typ</Label>
                         <div className="grid grid-cols-2 gap-2">
@@ -596,14 +685,29 @@ const Marketing = () => {
                       ) : (
                         <div className="space-y-3 p-3 bg-pink-50/50 rounded-xl border border-pink-100">
                           <div><Label className="text-xs">Angebotstitel</Label><Input value={birthdayOfferTitle} onChange={e=>setBirthdayOfferTitle(e.target.value)} placeholder="z.B. Frühstück zum halben Preis" className="mt-1 rounded-xl text-sm" /></div>
-                          <div><Label className="text-xs">Beschreibung</Label><Textarea value={birthdayOfferDescription} onChange={e=>setBirthdayOfferDescription(e.target.value)} placeholder="Details..." rows={2} className="mt-1 rounded-xl text-sm" /></div>
+                          <div><Label className="text-xs">Beschreibung</Label>
+                            <div className="mt-1">
+                              <RichTextEditor value={birthdayOfferDescription} onChange={setBirthdayOfferDescription} placeholder="Details..." rows={2} />
+                            </div>
+                          </div>
                         </div>
                       )}
                     </div>
                   )}
                 </div>
-                <Button onClick={handleSaveAutomations} disabled={savingAutomations || !customerId} variant="outline" className="rounded-xl">
-                  {savingAutomations ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}Automatisierungen speichern
+                <Button
+                  onClick={handleSaveAutomations}
+                  disabled={savingAutomations || !customerId}
+                  className={cn(
+                    "rounded-xl transition-all duration-300",
+                    automationsChanged
+                      ? "bg-primary text-primary-foreground ring-2 ring-primary/40 ring-offset-2 shadow-lg shadow-primary/20"
+                      : ""
+                  )}
+                  variant={automationsChanged ? "default" : "outline"}
+                >
+                  {savingAutomations ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
+                  {automationsChanged ? '💾 Änderungen speichern' : 'Automatisierungen speichern'}
                 </Button>
               </CardContent>
             </Card>
@@ -644,18 +748,65 @@ const Marketing = () => {
                 {estimatedRecipients !== null && <div className="flex items-center gap-2 text-sm"><Users className="h-4 w-4 text-primary" /><span className="font-medium">{estimatedRecipients} Empfänger</span></div>}
               </div>
               <div><Label>Titel</Label><Input value={messageForm.title} onChange={e=>setMessageForm({...messageForm,title:e.target.value})} placeholder="Betreff..." className="rounded-xl mt-1" /></div>
-              <div><Label>Nachricht</Label><Textarea value={messageForm.body} onChange={e=>setMessageForm({...messageForm,body:e.target.value})} placeholder="Deine Nachricht..." rows={4} className="rounded-xl mt-1" /></div>
+              <div>
+                <Label>Nachricht</Label>
+                <div className="mt-1">
+                  <RichTextEditor value={messageForm.body} onChange={v => setMessageForm({...messageForm, body: v})} placeholder="Deine Nachricht..." rows={4} />
+                </div>
+              </div>
+
+              {/* Image Upload */}
+              <div className="p-3 bg-muted/30 rounded-xl space-y-2">
+                <Label className="text-sm font-medium">Bild anhängen (optional)</Label>
+                <label className="cursor-pointer block border-2 border-dashed border-border rounded-xl p-3 text-center hover:border-primary/50 transition-colors">
+                  <input type="file" accept="image/*" className="hidden" onChange={e => { const f = e.target.files?.[0]; if (f) handleMessageImageUpload(f); }} />
+                  {messageForm.image_url ? (
+                    <div className="relative inline-block">
+                      <img src={messageForm.image_url} alt="Preview" className="w-20 h-20 object-cover mx-auto rounded-lg" />
+                      <Button type="button" variant="destructive" size="sm" className="absolute -top-2 -right-2 h-6 w-6 p-0 rounded-full" onClick={(e) => { e.preventDefault(); setMessageForm(prev => ({...prev, image_url: ''})); }}>
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  ) : (
+                    <span className="text-sm text-muted-foreground flex items-center justify-center gap-2">
+                      {uploadingMessageImage ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+                      {uploadingMessageImage ? 'Hochladen...' : 'Bild hochladen'}
+                    </span>
+                  )}
+                </label>
+              </div>
+
+              {/* Attach Offer */}
               <div className="flex items-center justify-between p-3 bg-muted/30 rounded-xl">
-                <div><p className="text-sm font-medium">Angebot anhängen</p><p className="text-xs text-muted-foreground">7 Tage gültig, einmalig einlösbar</p></div>
+                <div><p className="text-sm font-medium">Angebot anhängen</p><p className="text-xs text-muted-foreground">7 Tage gültig, einmalig einlösbar per NFC</p></div>
                 <div className="flex items-center gap-2">
                   <span className={`text-xs font-medium ${messageForm.attach_offer ? 'text-primary' : 'text-muted-foreground'}`}>{messageForm.attach_offer ? 'Aktiv' : 'Inaktiv'}</span>
-                  <Switch checked={messageForm.attach_offer} onCheckedChange={v=>setMessageForm({...messageForm,attach_offer:v})} />
+                  <Switch checked={messageForm.attach_offer} onCheckedChange={v=>setMessageForm({...messageForm, attach_offer: v, attach_points: v ? false : messageForm.attach_points})} />
                 </div>
               </div>
               {messageForm.attach_offer && (
                 <div className="space-y-3 p-3 bg-muted/30 rounded-xl">
                   <div><Label>Angebotstitel</Label><Input value={messageForm.offer_title} onChange={e=>setMessageForm({...messageForm,offer_title:e.target.value})} placeholder="z.B. 20% Rabatt" className="rounded-xl mt-1" /></div>
-                  <div><Label>Beschreibung</Label><Textarea value={messageForm.offer_description} onChange={e=>setMessageForm({...messageForm,offer_description:e.target.value})} placeholder="Details..." rows={2} className="rounded-xl mt-1" /></div>
+                  <div><Label>Beschreibung</Label>
+                    <div className="mt-1">
+                      <RichTextEditor value={messageForm.offer_description} onChange={v => setMessageForm({...messageForm, offer_description: v})} placeholder="Details..." rows={2} />
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Attach Points */}
+              <div className="flex items-center justify-between p-3 bg-muted/30 rounded-xl">
+                <div><p className="text-sm font-medium">Punkte anhängen</p><p className="text-xs text-muted-foreground">Kunden erhalten Punkte beim Öffnen der Nachricht</p></div>
+                <div className="flex items-center gap-2">
+                  <span className={`text-xs font-medium ${messageForm.attach_points ? 'text-primary' : 'text-muted-foreground'}`}>{messageForm.attach_points ? 'Aktiv' : 'Inaktiv'}</span>
+                  <Switch checked={messageForm.attach_points} onCheckedChange={v=>setMessageForm({...messageForm, attach_points: v, attach_offer: v ? false : messageForm.attach_offer})} />
+                </div>
+              </div>
+              {messageForm.attach_points && (
+                <div className="p-3 bg-muted/30 rounded-xl">
+                  <Label>Anzahl Bonuspunkte</Label>
+                  <Input type="number" min={1} value={messageForm.bonus_points || ''} onChange={e=>setMessageForm({...messageForm, bonus_points: parseInt(e.target.value) || 0})} placeholder="z.B. 5" className="rounded-xl mt-1 w-32" />
                 </div>
               )}
             </div>
@@ -686,7 +837,7 @@ const Marketing = () => {
             </DialogHeader>
             <div className="space-y-4">
               <div><Label>Titel *</Label><Input value={rewardForm.title} onChange={e => setRewardForm({ ...rewardForm, title: e.target.value })} placeholder="z.B. Gratis Kaffee" className="rounded-xl mt-1" /></div>
-              <div><Label>Beschreibung</Label><Textarea value={rewardForm.description} onChange={e => setRewardForm({ ...rewardForm, description: e.target.value })} placeholder="Details..." rows={2} className="rounded-xl mt-1" /></div>
+              <div><Label>Beschreibung</Label><textarea value={rewardForm.description} onChange={e => setRewardForm({ ...rewardForm, description: e.target.value })} placeholder="Details..." rows={2} className="flex min-h-[60px] w-full rounded-xl border border-input bg-background px-3 py-2 text-sm mt-1" /></div>
               <div><Label>Benötigte Punkte</Label><Input type="number" min={1} value={rewardForm.points_required} onChange={e => setRewardForm({ ...rewardForm, points_required: parseInt(e.target.value) || 10 })} className="rounded-xl mt-1 w-32" /></div>
               <div>
                 <Label>Bild (optional)</Label>
@@ -710,24 +861,93 @@ const Marketing = () => {
               <DialogTitle>{newCustomerOffer ? 'Neukundenprämie bearbeiten' : 'Neukundenprämie erstellen'}</DialogTitle>
               <DialogDescription>Ein Willkommensbonus für neue Kunden</DialogDescription>
             </DialogHeader>
-            <div className="space-y-4">
-              <div><Label>Titel *</Label><Input value={ncoForm.title} onChange={e => setNcoForm({ ...ncoForm, title: e.target.value })} placeholder="z.B. Willkommensbonus" className="rounded-xl mt-1" /></div>
-              <div><Label>Beschreibung</Label><Textarea value={ncoForm.description} onChange={e => setNcoForm({ ...ncoForm, description: e.target.value })} placeholder="Details..." rows={2} className="rounded-xl mt-1" /></div>
-              <div><Label>Bonuspunkte</Label><Input type="number" min={0} value={ncoForm.bonus_stamps} onChange={e => setNcoForm({ ...ncoForm, bonus_stamps: parseInt(e.target.value) || 0 })} className="rounded-xl mt-1 w-32" /></div>
-              <div className="flex items-center justify-between p-3 bg-muted/30 rounded-xl">
-                <div><p className="text-sm font-medium">Neukundenprämie aktiv</p></div>
-                <div className="flex items-center gap-2">
-                  <span className={`text-xs font-medium ${ncoForm.is_active ? 'text-primary' : 'text-muted-foreground'}`}>{ncoForm.is_active ? 'Aktiv' : 'Inaktiv'}</span>
-                  <Switch checked={ncoForm.is_active} onCheckedChange={v => setNcoForm({ ...ncoForm, is_active: v })} />
+            <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2">
+              {/* Gift Type Toggle */}
+              <div className="space-y-2">
+                <Label className="font-semibold">Art der Neukundenprämie</Label>
+                <div className="grid grid-cols-2 gap-2">
+                  <button type="button" onClick={() => setNcoGiftType('offer')} className={`p-3 rounded-xl border-2 text-left transition-all ${ncoGiftType === 'offer' ? 'border-primary bg-primary/5 ring-1 ring-primary/20' : 'border-border bg-card hover:border-muted-foreground/30'}`}>
+                    <div className="font-semibold text-sm">🎁 Angebot</div>
+                    <p className="text-xs text-muted-foreground mt-1">Titel, Beschreibung & Bild</p>
+                  </button>
+                  <button type="button" onClick={() => setNcoGiftType('points')} className={`p-3 rounded-xl border-2 text-left transition-all ${ncoGiftType === 'points' ? 'border-primary bg-primary/5 ring-1 ring-primary/20' : 'border-border bg-card hover:border-muted-foreground/30'}`}>
+                    <div className="font-semibold text-sm">⭐ Bonuspunkte</div>
+                    <p className="text-xs text-muted-foreground mt-1">Sofort Punkte schenken</p>
+                  </button>
                 </div>
               </div>
+
+              {ncoGiftType === 'offer' ? (
+                <>
+                  <div><Label>Titel *</Label><Input value={ncoForm.title} onChange={e => setNcoForm({ ...ncoForm, title: e.target.value })} placeholder="z.B. Gratis Kaffee für Neukunden" className="rounded-xl mt-1" /></div>
+                  <div>
+                    <Label>Beschreibung</Label>
+                    <div className="mt-1">
+                      <RichTextEditor value={ncoForm.description} onChange={v => setNcoForm({...ncoForm, description: v})} placeholder="Details zum Angebot..." rows={2} />
+                    </div>
+                  </div>
+                  <div>
+                    <Label>Bild (optional)</Label>
+                    <label className="cursor-pointer block mt-1 border-2 border-dashed border-border rounded-xl p-4 text-center hover:border-primary/50 transition-colors">
+                      <input type="file" accept="image/*" className="hidden" onChange={e => { const f = e.target.files?.[0]; if (f) handleNcoImageUpload(f); }} />
+                      {ncoForm.image_url ? (
+                        <div className="relative inline-block">
+                          <img src={ncoForm.image_url} alt="Preview" className="w-20 h-20 object-cover mx-auto rounded-lg" />
+                          <Button type="button" variant="destructive" size="sm" className="absolute -top-2 -right-2 h-6 w-6 p-0 rounded-full" onClick={(e) => { e.preventDefault(); setNcoForm(prev => ({...prev, image_url: ''})); }}>
+                            <Trash2 className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      ) : (
+                        <span className="text-sm text-muted-foreground flex items-center justify-center gap-2">
+                          {uploadingNcoImage ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+                          {uploadingNcoImage ? 'Hochladen...' : 'Bild hochladen'}
+                        </span>
+                      )}
+                    </label>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="p-4 bg-primary/5 rounded-xl border border-primary/10 text-sm text-muted-foreground">
+                    <p className="font-medium text-foreground mb-1">💡 Willkommens-Bonuspunkte</p>
+                    <p>Diese Funktion versorgt Kunden, die das erste Mal bei dir Punkte sammeln, direkt mit einer großen Anzahl an Punkten – damit sie schneller Prämien bei dir einlösen können und von Anfang an motiviert sind.</p>
+                  </div>
+                  <div>
+                    <Label>Anzahl Bonuspunkte</Label>
+                    <Input type="number" min={1} value={ncoForm.bonus_stamps || ''} onChange={e => setNcoForm({ ...ncoForm, bonus_stamps: parseInt(e.target.value) || 0 })} placeholder="z.B. 10" className="rounded-xl mt-1 w-32" />
+                  </div>
+                  <div>
+                    <Label>Beschreibung (optional)</Label>
+                    <div className="mt-1">
+                      <RichTextEditor value={ncoForm.description} onChange={v => setNcoForm({...ncoForm, description: v})} placeholder="z.B. Willkommen! Hier sind deine Startpunkte 🎉" rows={2} />
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
             <DialogFooter>
               <Button variant="outline" onClick={() => setShowNcoDialog(false)} className="rounded-xl">Abbrechen</Button>
-              <Button onClick={handleSaveNco} disabled={saving || !ncoForm.title} className="rounded-xl">{saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}{newCustomerOffer ? 'Aktualisieren' : 'Erstellen'}</Button>
+              <Button onClick={handleSaveNco} disabled={saving || (ncoGiftType === 'offer' && !ncoForm.title) || (ncoGiftType === 'points' && !ncoForm.bonus_stamps)} className="rounded-xl">
+                {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                {newCustomerOffer ? 'Aktualisieren' : 'Erstellen'}
+              </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
+
+        {/* Delete NCO Confirm */}
+        <AlertDialog open={showDeleteNcoConfirm} onOpenChange={setShowDeleteNcoConfirm}>
+          <AlertDialogContent className="rounded-2xl">
+            <AlertDialogHeader>
+              <AlertDialogTitle>Neukundenprämie löschen?</AlertDialogTitle>
+              <AlertDialogDescription>Bist du sicher, dass du diese Neukundenprämie löschen möchtest? Diese Aktion kann nicht rückgängig gemacht werden.</AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel className="rounded-xl">Abbrechen</AlertDialogCancel>
+              <AlertDialogAction onClick={handleDeleteNcoConfirmed} className="bg-destructive hover:bg-destructive/90 rounded-xl">Löschen</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </div>
   );
