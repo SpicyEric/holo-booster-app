@@ -503,19 +503,7 @@ const Marketing = () => {
               </CardContent>
             </Card>
 
-            {/* Auto Reply - Coming Soon */}
-            <Card className="rounded-2xl shadow-sm border border-border/50 bg-card relative overflow-hidden opacity-50 pointer-events-none">
-              <div className="absolute top-3 right-3 z-10 bg-primary text-white text-xs font-semibold px-3 py-1 rounded-full pointer-events-auto">Demnächst verfügbar</div>
-              <CardHeader className="pb-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center"><Bot className="w-6 h-6 text-blue-400" /></div>
-                  <div>
-                    <CardTitle className="text-lg font-semibold opacity-60">Automatische Antworten</CardTitle>
-                    <CardDescription className="opacity-60">KI beantwortet neue Google-Bewertungen automatisch</CardDescription>
-                  </div>
-                </div>
-              </CardHeader>
-            </Card>
+            {/* Auto Reply removed - now in Automationen tab */}
           </TabsContent>
 
           {/* ========== NACHRICHTEN TAB ========== */}
