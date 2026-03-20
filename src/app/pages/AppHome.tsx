@@ -22,6 +22,7 @@ interface FeedItem {
   liked_by_user: boolean;
   points_balance?: number;
   is_boosted?: boolean;
+  boost_radius?: number;
 }
 
 function haversineDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {

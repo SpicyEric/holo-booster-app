@@ -556,7 +556,7 @@ const Nachrichten = () => {
                       <div className="text-center space-y-2">
                         <p className="text-2xl font-bold text-gray-900">{option.price}</p>
                         <p className="text-sm font-medium text-gray-600">{option.label}</p>
-                        <p className="text-xs text-gray-400">15 km Radius</p>
+                        <p className="text-xs text-gray-400">{option.radius} Radius</p>
                         <Button
                           onClick={() => handleBoostPurchase(option.tier)}
                           disabled={boostLoading}
