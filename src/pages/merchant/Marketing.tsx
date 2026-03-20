@@ -671,7 +671,10 @@ const Marketing = () => {
               <div><Label>Nachricht</Label><Textarea value={messageForm.body} onChange={e=>setMessageForm({...messageForm,body:e.target.value})} placeholder="Deine Nachricht..." rows={4} className="rounded-xl mt-1" /></div>
               <div className="flex items-center justify-between p-3 bg-muted/30 rounded-xl">
                 <div><p className="text-sm font-medium">Angebot anhängen</p><p className="text-xs text-muted-foreground">7 Tage gültig, einmalig einlösbar</p></div>
-                <Switch checked={messageForm.attach_offer} onCheckedChange={v=>setMessageForm({...messageForm,attach_offer:v})} />
+                <div className="flex items-center gap-2">
+                  <span className={`text-xs font-medium ${messageForm.attach_offer ? 'text-primary' : 'text-muted-foreground'}`}>{messageForm.attach_offer ? 'Aktiv' : 'Inaktiv'}</span>
+                  <Switch checked={messageForm.attach_offer} onCheckedChange={v=>setMessageForm({...messageForm,attach_offer:v})} />
+                </div>
               </div>
               {messageForm.attach_offer && (
                 <div className="space-y-3 p-3 bg-muted/30 rounded-xl">
