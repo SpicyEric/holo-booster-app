@@ -12,6 +12,7 @@ interface Props {
   merchantIndustry: string | null;
   avgOrderValue: number;
   avgPointsPerVisit?: number;
+  stampPoints?: { green: number | null; blue: number | null; red: number | null };
   onSelectReward: (title: string, pointsRequired: number) => void;
 }
 
