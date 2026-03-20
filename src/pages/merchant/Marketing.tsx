@@ -103,6 +103,7 @@ const Marketing = () => {
   const [automationsChanged, setAutomationsChanged] = useState(false);
   const automationsLoadedRef = useRef(false);
   const [middleStampPoints, setMiddleStampPoints] = useState<number | null>(null);
+  const [stampPoints, setStampPoints] = useState<{ green: number | null; blue: number | null; red: number | null }>({ green: null, blue: null, red: null });
   const [showBonusHint, setShowBonusHint] = useState(false);
 
   // Track automation changes
