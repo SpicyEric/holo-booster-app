@@ -134,10 +134,22 @@ const Marketing = () => {
       if (!assignment) { setLoading(false); return; }
       setCustomerId(assignment.customer_id);
 
-      // Fetch all stamp points for display
-      const { data: allChips } = await supabase.from('nfc_chips').select('points_value, stamp_color').eq('merchant_customer_id', assignment.customer_id).eq('is_active', true).in('stamp_color', ['green', 'blue', 'red']);
+      // Fetch all stamp points for display (supports DE + EN color values)
+      const { data: allChips } = await supabase
+        .from('nfc_chips')
+        .select('points_value, stamp_color')
+        .eq('merchant_customer_id', assignment.customer_id)
+        .eq('is_active', true)
+        .in('stamp_color', ['grün', 'blau', 'rot', 'green', 'blue', 'red']);
+
       const chipMap = { green: null as number | null, blue: null as number | null, red: null as number | null };
-      allChips?.forEach(c => { if (c.stamp_color === 'green' || c.stamp_color === 'blue' || c.stamp_color === 'red') chipMap[c.stamp_color] = c.points_value; });
+      allChips?.forEach((c) => {
+        const color = (c.stamp_color || '').toLowerCase();
+        if (color === 'grün' || color === 'green') chipMap.green = c.points_value;
+        if (color === 'blau' || color === 'blue') chipMap.blue = c.points_value;
+        if (color === 'rot' || color === 'red') chipMap.red = c.points_value;
+      });
+
       setStampPoints(chipMap);
       const midPoints = chipMap.blue;
       setMiddleStampPoints(midPoints);
