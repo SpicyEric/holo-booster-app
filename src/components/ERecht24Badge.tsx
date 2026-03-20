@@ -3,8 +3,13 @@ import erecht24AgenturLight from '@/assets/erecht24-agentur-light.png';
 import erecht24ImpressumDark from '@/assets/erecht24-impressum-dark.png';
 import erecht24DatenschutzDark from '@/assets/erecht24-datenschutz-dark.png';
 
+const PUBLIC_PATHS = ['/', '/impressum', '/datenschutz', '/kontakt', '/karriere', '/delete'];
+
 const ERecht24Badge = () => {
   const location = useLocation();
+
+  // Only show on public-facing pages
+  if (!PUBLIC_PATHS.includes(location.pathname)) return null;
 
   let src = erecht24AgenturLight;
   let alt = 'eRecht24 Agentur Partner für rechtssichere Webseiten';
