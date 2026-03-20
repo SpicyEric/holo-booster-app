@@ -27,7 +27,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
-import { Loader2, Eye, EyeOff, AlertTriangle } from 'lucide-react';
+import { Loader2, Eye, EyeOff, AlertTriangle, Pencil } from 'lucide-react';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
 
@@ -48,6 +48,11 @@ export default function AppSettings() {
   const [confirmNewPassword, setConfirmNewPassword] = useState('');
   const [changingPassword, setChangingPassword] = useState(false);
   const [showPasswords, setShowPasswords] = useState(false);
+
+  // Email change state
+  const [editingEmail, setEditingEmail] = useState(false);
+  const [newEmail, setNewEmail] = useState('');
+  const [savingEmail, setSavingEmail] = useState(false);
 
   const [birthDate, setBirthDate] = useState('');
   const [gender, setGender] = useState('');
@@ -251,12 +256,60 @@ export default function AppSettings() {
           <CardContent className="space-y-4">
             <div className="space-y-2">
               <Label>E-Mail</Label>
-              <div className="p-3 rounded-md bg-muted text-muted-foreground">
-                {user?.email || ''}
-              </div>
-              <p className="text-xs text-muted-foreground">
-                E-Mail-Adresse kann nicht geändert werden
-              </p>
+              {editingEmail ? (
+                <div className="space-y-2">
+                  <Input
+                    type="email"
+                    value={newEmail}
+                    onChange={(e) => setNewEmail(e.target.value)}
+                    placeholder="Neue E-Mail-Adresse"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Du erhältst eine Bestätigungsmail an die neue Adresse.
+                  </p>
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      disabled={savingEmail || !newEmail || newEmail === user?.email}
+                      onClick={async () => {
+                        setSavingEmail(true);
+                        try {
+                          const { error } = await supabase.auth.updateUser({ email: newEmail });
+                          if (error) throw error;
+                          toast.success('Bestätigungsmail gesendet', {
+                            description: 'Bitte bestätige deine neue E-Mail-Adresse über den Link in der E-Mail.',
+                          });
+                          setEditingEmail(false);
+                          setNewEmail('');
+                        } catch (error: any) {
+                          toast.error(error.message || 'Fehler beim Ändern der E-Mail');
+                        } finally {
+                          setSavingEmail(false);
+                        }
+                      }}
+                    >
+                      {savingEmail && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                      Speichern
+                    </Button>
+                    <Button size="sm" variant="outline" onClick={() => { setEditingEmail(false); setNewEmail(''); }}>
+                      Abbrechen
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <div className="p-3 rounded-md bg-muted text-muted-foreground flex-1">
+                    {user?.email || ''}
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => { setEditingEmail(true); setNewEmail(user?.email || ''); }}
+                  >
+                    <Pencil className="h-4 w-4" />
+                  </Button>
+                </div>
+              )}
             </div>
 
             <Button
