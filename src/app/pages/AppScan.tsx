@@ -428,10 +428,10 @@ export const AppScan = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-background/95 backdrop-blur-sm flex flex-col items-center justify-start pt-34 p-6"
+            className="fixed inset-0 z-50 bg-background/95 backdrop-blur-sm flex flex-col items-center justify-start pt-44 p-6"
             style={{ overscrollBehavior: 'none', touchAction: 'none' }}
           >
-            <div className="w-full flex flex-col items-center">
+            <div className="w-full flex flex-col items-center text-center">
               <motion.div
                 animate={{ 
                   scale: [1, 1.2, 1],
@@ -453,10 +453,10 @@ export const AppScan = () => {
                 </motion.div>
               </motion.div>
 
-              <h2 className="text-2xl font-bold mb-3 text-center w-full">
+              <h2 className="text-2xl font-bold mb-3 w-full text-center">
                 Handy-Rückseite an Stempel halten
               </h2>
-              <p className="text-muted-foreground text-center max-w-xs">
+              <p className="text-muted-foreground text-center max-w-xs mx-auto">
                 Halte jetzt die obere Rückseite deines Handys an den Eloyo-Stempel
               </p>
             </div>
