@@ -31,6 +31,7 @@ import GoogleBewertungen from "./pages/merchant/GoogleBewertungen";
 import MeinKonto from "./pages/merchant/MeinKonto";
 import Nachrichten from "./pages/merchant/Nachrichten";
 import Transaktionen from "./pages/merchant/Transaktionen";
+import Marketing from "./pages/merchant/Marketing";
 import PartnerLayout from "./pages/partner/PartnerLayout";
 import PartnerDashboardHome from "./pages/partner/PartnerDashboardHome";
 import PartnerLeads from "./pages/partner/PartnerLeads";
