@@ -60,7 +60,7 @@ const Marketing = () => {
   const [uploadingNcoImage, setUploadingNcoImage] = useState(false);
   const [ncoGiftType, setNcoGiftType] = useState<'offer' | 'points'>('offer');
   const [showDeleteNcoConfirm, setShowDeleteNcoConfirm] = useState(false);
-  const [showRewardSuggestions, setShowRewardSuggestions] = useState(false);
+  
   const [merchantIndustry, setMerchantIndustry] = useState<string | null>(null);
   const [avgOrderValue, setAvgOrderValue] = useState(10);
 
