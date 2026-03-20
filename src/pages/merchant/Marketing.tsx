@@ -489,7 +489,10 @@ const Marketing = () => {
               <CardContent className="space-y-4">
                 <div className="flex items-center justify-between p-4 bg-card rounded-xl border border-border/30">
                   <div><p className="font-medium text-foreground">Bewertungs-Bonus aktivieren</p><p className="text-sm text-muted-foreground">Kunden erhalten Punkte nach einer Google-Bewertung</p></div>
-                  <Switch checked={reviewPointsEnabled} onCheckedChange={setReviewPointsEnabled} />
+                  <div className="flex items-center gap-2">
+                    <span className={`text-xs font-medium ${reviewPointsEnabled ? 'text-primary' : 'text-muted-foreground'}`}>{reviewPointsEnabled ? 'Aktiv' : 'Inaktiv'}</span>
+                    <Switch checked={reviewPointsEnabled} onCheckedChange={setReviewPointsEnabled} />
+                  </div>
                 </div>
                 {reviewPointsEnabled && (
                   <>
