@@ -70,11 +70,16 @@ export const AppHome = () => {
       // Get active boosts
       const { data: activeBoosts } = await supabase
         .from('merchant_boosts')
-        .select('merchant_customer_id')
+        .select('merchant_customer_id, tier')
         .eq('status', 'active')
         .gt('ends_at', new Date().toISOString());
 
-      const boostedMerchantIds = new Set(activeBoosts?.map(b => b.merchant_customer_id) || []);
+      const boostMap = new Map<string, number>();
+      activeBoosts?.forEach(b => {
+        const radius = b.tier === '14_days' ? 15 : 10;
+        const existing = boostMap.get(b.merchant_customer_id);
+        if (!existing || radius > existing) boostMap.set(b.merchant_customer_id, radius);
+      });
 
       // Get user's loyalty accounts
       const { data: accounts } = await supabase
