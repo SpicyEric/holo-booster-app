@@ -1,10 +1,7 @@
 import { ReactNode } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { TopBar } from './TopBar';
 import { BottomNav } from './BottomNav';
 import Particles from '@/components/Particles';
-import { Button } from '@/components/ui/button';
-import { ArrowLeft } from 'lucide-react';
 import { OfflineBanner } from '@/app/components/OfflineBanner';
 
 export interface MainLayoutProps {
@@ -14,10 +11,18 @@ export interface MainLayoutProps {
 }
 
 export const MainLayout = ({ children, title, showBack = false }: MainLayoutProps) => {
-  const navigate = useNavigate();
+  const topInsetOffset = 'calc(3.5rem + env(safe-area-inset-top, 0px))';
+  const bottomInsetOffset = 'calc(5rem + env(safe-area-inset-bottom, 0px))';
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background to-muted/30 pb-32" style={{ paddingTop: 'calc(3.5rem + env(safe-area-inset-top, 0px))' }}>
+    <div
+      className="bg-gradient-to-b from-background to-muted/30 overflow-hidden"
+      style={{
+        height: '100dvh',
+        paddingTop: topInsetOffset,
+        paddingBottom: bottomInsetOffset,
+      }}
+    >
       <Particles
         particleColors={['#6366F1', '#8B5CF6', '#A855F7']}
         particleCount={400}
@@ -32,7 +37,10 @@ export const MainLayout = ({ children, title, showBack = false }: MainLayoutProp
       />
       <OfflineBanner />
       <TopBar title={title} showBack={showBack} />
-      <main className="container mx-auto px-4 py-6 max-w-2xl relative z-10">
+      <main
+        className="container mx-auto px-4 py-6 max-w-2xl relative z-10 h-full overflow-y-auto"
+        style={{ overscrollBehavior: 'contain', WebkitOverflowScrolling: 'touch' }}
+      >
         {children}
       </main>
       <BottomNav />
