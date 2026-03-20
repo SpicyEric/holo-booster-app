@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Gift, MapPin, Heart, Loader2, Sparkles } from 'lucide-react';
+import { Gift, MapPin, Heart, Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { MainLayout } from '@/app/components/layout/MainLayout';
@@ -342,13 +342,8 @@ export const AppHome = () => {
                   : undefined
               }
             >
-              {/* Sponsored badge */}
-              {item.is_boosted && (item.distance === undefined || item.distance <= (item.boost_radius ?? 10)) && (
-                <div className="absolute top-2 right-2 z-10 flex items-center gap-1 px-2.5 py-1 bg-amber-500/90 text-white text-xs font-semibold rounded-full backdrop-blur-sm shadow-sm">
-                  <Sparkles className="h-3 w-3" />
-                  Gesponsert
-                </div>
-              )}
+
+
 
               {/* Header: profile pic + name */}
               <div
@@ -429,23 +424,40 @@ export const AppHome = () => {
                         {item.like_count} {item.like_count === 1 ? 'Like' : 'Likes'}
                       </span>
                     )}
+                    {item.is_boosted && (item.distance === undefined || item.distance <= (item.boost_radius ?? 10)) && (
+                      <span className="inline-flex items-center ml-auto px-2.5 py-1 bg-amber-500/15 text-amber-600 dark:text-amber-400 rounded-full text-xs font-semibold">
+                        Gesponsert
+                      </span>
+                    )}
                   </div>
                 )}
 
                 {item.type === 'offer' && (
-                  <div className="flex items-center gap-2 mb-2">
+                  <div className="flex items-center gap-2 mb-2 flex-wrap">
                     <span className="inline-flex items-center gap-1 px-3 py-1.5 bg-primary/10 text-primary rounded-full text-sm font-semibold">
                       <Gift className="h-4 w-4" />
                       Neukundenprämie
                     </span>
+                    {item.is_boosted && (item.distance === undefined || item.distance <= (item.boost_radius ?? 10)) && (
+                      <span className="inline-flex items-center px-2.5 py-1.5 bg-amber-500/15 text-amber-600 dark:text-amber-400 rounded-full text-xs font-semibold">
+                        Gesponsert
+                      </span>
+                    )}
                   </div>
                 )}
 
-                {item.type === 'merchant_card' && item.points_balance !== undefined && item.points_balance > 0 && (
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className="inline-flex items-center gap-1 px-3 py-1.5 bg-muted text-muted-foreground rounded-full text-xs font-medium">
-                      {item.points_balance} Punkte gesammelt
-                    </span>
+                {item.type === 'merchant_card' && (
+                  <div className="flex items-center gap-2 mb-2 flex-wrap">
+                    {item.points_balance !== undefined && item.points_balance > 0 && (
+                      <span className="inline-flex items-center gap-1 px-3 py-1.5 bg-muted text-muted-foreground rounded-full text-xs font-medium">
+                        {item.points_balance} Punkte gesammelt
+                      </span>
+                    )}
+                    {item.is_boosted && (item.distance === undefined || item.distance <= (item.boost_radius ?? 10)) && (
+                      <span className="inline-flex items-center px-2.5 py-1.5 bg-amber-500/15 text-amber-600 dark:text-amber-400 rounded-full text-xs font-semibold">
+                        Gesponsert
+                      </span>
+                    )}
                   </div>
                 )}
 
@@ -466,14 +478,14 @@ export const AppHome = () => {
       )}
 
       <style>{`
-        @keyframes boost-glow {
-          0%, 100% {
-            box-shadow: 0 0 12px -3px rgba(245, 158, 11, 0.25);
-          }
-          50% {
-            box-shadow: 0 0 20px -2px rgba(245, 158, 11, 0.45);
-          }
+      @keyframes boost-glow {
+        0%, 100% {
+          box-shadow: 0 0 14px -2px rgba(245, 158, 11, 0.4);
         }
+        50% {
+          box-shadow: 0 0 22px -1px rgba(245, 158, 11, 0.55);
+        }
+      }
       `}</style>
     </MainLayout>
   );

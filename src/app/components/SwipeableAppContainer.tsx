@@ -447,12 +447,8 @@ const AppHomeContent = () => {
             className={`bg-card relative ${isBoostedInRange ? 'ring-2 ring-amber-400/60 shadow-[0_0_15px_-3px_rgba(245,158,11,0.3)]' : ''}`}
             style={isBoostedInRange ? { animation: 'boost-glow 3s ease-in-out infinite' } : undefined}
           >
-            {isBoostedInRange && (
-              <div className="absolute top-2 right-2 z-10 flex items-center gap-1 px-2.5 py-1 bg-amber-500/90 text-white text-xs font-semibold rounded-full backdrop-blur-sm shadow-sm">
-                <Sparkles className="h-3 w-3" />
-                Gesponsert
-              </div>
-            )}
+
+
 
             <div className="flex items-center gap-3 px-4 py-3 cursor-pointer" onClick={() => navigate(`/app/merchant/${item.merchant_customer_id}`)}>
               {item.merchant_logo ? (
@@ -513,20 +509,37 @@ const AppHomeContent = () => {
                   {item.like_count > 0 && (
                     <span className="text-sm font-semibold text-foreground">{item.like_count} {item.like_count === 1 ? 'Like' : 'Likes'}</span>
                   )}
+                  {isBoostedInRange && (
+                    <span className="inline-flex items-center ml-auto px-2.5 py-1 bg-amber-500/15 text-amber-600 dark:text-amber-400 rounded-full text-xs font-semibold">
+                      Gesponsert
+                    </span>
+                  )}
                 </div>
               )}
               {item.type === 'offer' && (
-                <div className="flex items-center gap-2 mb-2">
+                <div className="flex items-center gap-2 mb-2 flex-wrap">
                   <span className="inline-flex items-center gap-1 px-3 py-1.5 bg-primary/10 text-primary rounded-full text-sm font-semibold">
                     <Gift className="h-4 w-4" />Neukundenprämie
                   </span>
+                  {isBoostedInRange && (
+                    <span className="inline-flex items-center px-2.5 py-1.5 bg-amber-500/15 text-amber-600 dark:text-amber-400 rounded-full text-xs font-semibold">
+                      Gesponsert
+                    </span>
+                  )}
                 </div>
               )}
-              {item.type === 'merchant_card' && item.points_balance !== undefined && (
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="inline-flex items-center gap-1 px-3 py-1.5 bg-muted text-muted-foreground rounded-full text-xs font-medium">
-                    {item.points_balance} Punkte gesammelt
-                  </span>
+              {item.type === 'merchant_card' && (
+                <div className="flex items-center gap-2 mb-2 flex-wrap">
+                  {item.points_balance !== undefined && item.points_balance > 0 && (
+                    <span className="inline-flex items-center gap-1 px-3 py-1.5 bg-muted text-muted-foreground rounded-full text-xs font-medium">
+                      {item.points_balance} Punkte gesammelt
+                    </span>
+                  )}
+                  {isBoostedInRange && (
+                    <span className="inline-flex items-center px-2.5 py-1.5 bg-amber-500/15 text-amber-600 dark:text-amber-400 rounded-full text-xs font-semibold">
+                      Gesponsert
+                    </span>
+                  )}
                 </div>
               )}
               {item.type === 'offer' && item.title && (
@@ -546,10 +559,10 @@ const AppHomeContent = () => {
     <style>{`
       @keyframes boost-glow {
         0%, 100% {
-          box-shadow: 0 0 12px -3px rgba(245, 158, 11, 0.25);
+          box-shadow: 0 0 14px -2px rgba(245, 158, 11, 0.4);
         }
         50% {
-          box-shadow: 0 0 20px -2px rgba(245, 158, 11, 0.45);
+          box-shadow: 0 0 22px -1px rgba(245, 158, 11, 0.55);
         }
       }
     `}</style>
