@@ -552,10 +552,10 @@ const AppHomeContent = () => {
     <style>{`
       @keyframes boost-glow {
         0%, 100% {
-          box-shadow: 0 0 12px -3px rgba(245, 158, 11, 0.25);
+          box-shadow: 0 0 14px -2px rgba(245, 158, 11, 0.4);
         }
         50% {
-          box-shadow: 0 0 20px -2px rgba(245, 158, 11, 0.45);
+          box-shadow: 0 0 22px -1px rgba(245, 158, 11, 0.55);
         }
       }
     `}</style>
