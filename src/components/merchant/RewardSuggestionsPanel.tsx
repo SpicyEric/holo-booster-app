@@ -63,7 +63,7 @@ const CATEGORY_META = {
   large: { label: 'Groß', visits: '~12–18 Besuche' },
 };
 
-export default function RewardSuggestionsPanel({ merchantIndustry, avgOrderValue, avgPointsPerVisit = 10, onSelectReward }: Props) {
+export default function RewardSuggestionsPanel({ merchantIndustry, avgOrderValue, avgPointsPerVisit = 10, stampPoints, onSelectReward }: Props) {
   const defaultIndustry = merchantIndustry || 'sonstiges';
   const [selectedIndustry, setSelectedIndustry] = useState(defaultIndustry);
 
