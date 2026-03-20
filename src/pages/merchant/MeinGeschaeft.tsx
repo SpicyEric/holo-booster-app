@@ -192,6 +192,13 @@ const MeinGeschaeft = () => {
     }
   }, [user?.id]);
 
+  // Track dirty state for stamp settings
+  useEffect(() => {
+    if (!initialStampState) return;
+    const isDirty = stampMode !== initialStampState.stampMode || avgRevenue !== initialStampState.avgRevenue || manualMode !== initialStampState.manualMode;
+    setStampSettingsDirty(isDirty);
+  }, [stampMode, avgRevenue, manualMode, initialStampState]);
+
   const loadData = async () => {
     try {
       setLoading(true);
