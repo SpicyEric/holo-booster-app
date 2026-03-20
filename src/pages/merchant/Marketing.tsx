@@ -157,16 +157,19 @@ const Marketing = () => {
     try { const { data, error } = await supabase.functions.invoke('create-boost-checkout', { body: { tier } }); if (error) throw error; if (data?.url) window.location.href = data.url; } catch { toast.error('Fehler beim Erstellen der Bezahlung'); } finally { setBoostLoading(false); }
   };
 
-  const handleSaveGoogleUrl = async () => {
-    if (!customerId) return;
-    setSavingReview(true);
-    try { const { error } = await supabase.from("customers").update({ google_review_url: googleReviewUrl, updated_at: new Date().toISOString() }).eq("id", customerId); if (error) throw error; toast.success("Bewertungslink gespeichert!"); } catch { toast.error("Fehler beim Speichern"); } finally { setSavingReview(false); }
-  };
-
   const handleSaveReviewPoints = async () => {
     if (!customerId) return;
     setSavingReviewPoints(true);
-    try { const { error } = await supabase.from("customers").update({ google_review_points_enabled: reviewPointsEnabled, google_review_points_value: reviewPointsValue, updated_at: new Date().toISOString() }).eq("id", customerId); if (error) throw error; toast.success("Gespeichert!"); } catch { toast.error("Fehler"); } finally { setSavingReviewPoints(false); }
+    try {
+      const { error } = await supabase.from("customers").update({
+        google_review_points_enabled: reviewPointsEnabled,
+        google_review_points_value: reviewPointsValue,
+        google_review_url: googleReviewUrl,
+        updated_at: new Date().toISOString()
+      }).eq("id", customerId);
+      if (error) throw error;
+      toast.success("Gespeichert!");
+    } catch { toast.error("Fehler"); } finally { setSavingReviewPoints(false); }
   };
 
   const copyToClipboard = () => { if (googleReviewUrl) { navigator.clipboard.writeText(googleReviewUrl); setCopied(true); toast.success("Link kopiert!"); setTimeout(() => setCopied(false), 2000); } };
