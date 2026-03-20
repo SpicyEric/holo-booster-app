@@ -22,6 +22,7 @@ interface FeedItem {
   liked_by_user: boolean;
   points_balance?: number;
   is_boosted?: boolean;
+  boost_radius?: number;
 }
 
 function haversineDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
@@ -69,11 +70,16 @@ export const AppHome = () => {
       // Get active boosts
       const { data: activeBoosts } = await supabase
         .from('merchant_boosts')
-        .select('merchant_customer_id')
+        .select('merchant_customer_id, tier')
         .eq('status', 'active')
         .gt('ends_at', new Date().toISOString());
 
-      const boostedMerchantIds = new Set(activeBoosts?.map(b => b.merchant_customer_id) || []);
+      const boostMap = new Map<string, number>();
+      activeBoosts?.forEach(b => {
+        const radius = b.tier === '14_days' ? 15 : 10;
+        const existing = boostMap.get(b.merchant_customer_id);
+        if (!existing || radius > existing) boostMap.set(b.merchant_customer_id, radius);
+      });
 
       // Get user's loyalty accounts
       const { data: accounts } = await supabase
@@ -131,7 +137,8 @@ export const AppHome = () => {
               like_count: likeCounts.get(post.id) || 0,
               liked_by_user: userLikes.has(post.id),
               distance,
-              is_boosted: boostedMerchantIds.has(post.merchant_customer_id),
+              is_boosted: boostMap.has(post.merchant_customer_id),
+              boost_radius: boostMap.get(post.merchant_customer_id),
             });
           });
         }
@@ -164,7 +171,8 @@ export const AppHome = () => {
               liked_by_user: false,
               points_balance: account?.current_points_balance ?? 0,
               distance,
-              is_boosted: boostedMerchantIds.has(m.id),
+              is_boosted: boostMap.has(m.id),
+              boost_radius: boostMap.get(m.id),
             });
           }
         });
@@ -216,7 +224,8 @@ export const AppHome = () => {
               created_at: offer.created_at || new Date().toISOString(),
               like_count: 0,
               liked_by_user: false,
-              is_boosted: boostedMerchantIds.has(m.id),
+              is_boosted: boostMap.has(m.id),
+              boost_radius: boostMap.get(m.id),
             });
           } else {
             // Show as merchant card even without offer
@@ -232,16 +241,17 @@ export const AppHome = () => {
               like_count: 0,
               liked_by_user: false,
               distance,
-              is_boosted: boostedMerchantIds.has(m.id),
+              is_boosted: boostMap.has(m.id),
+              boost_radius: boostMap.get(m.id),
             });
           }
         }
       }
 
-      // Sort: boosted first (within 15km, sorted by distance), then non-boosted by distance
+      // Sort: boosted first (within their tier radius), then non-boosted by distance
       items.sort((a, b) => {
-        const aBoosted = a.is_boosted && (a.distance === undefined || a.distance <= 15);
-        const bBoosted = b.is_boosted && (b.distance === undefined || b.distance <= 15);
+        const aBoosted = a.is_boosted && (a.distance === undefined || a.distance <= (a.boost_radius ?? 10));
+        const bBoosted = b.is_boosted && (b.distance === undefined || b.distance <= (b.boost_radius ?? 10));
 
         if (aBoosted && !bBoosted) return -1;
         if (!aBoosted && bBoosted) return 1;
@@ -320,18 +330,18 @@ export const AppHome = () => {
             <div
               key={`${item.type}-${item.id}`}
               className={`bg-card relative ${
-                item.is_boosted && (item.distance === undefined || item.distance <= 15)
+                item.is_boosted && (item.distance === undefined || item.distance <= (item.boost_radius ?? 10))
                   ? 'ring-2 ring-amber-400/60 shadow-[0_0_15px_-3px_rgba(245,158,11,0.3)]'
                   : ''
               }`}
               style={
-                item.is_boosted && (item.distance === undefined || item.distance <= 15)
+                item.is_boosted && (item.distance === undefined || item.distance <= (item.boost_radius ?? 10))
                   ? { animation: 'boost-glow 3s ease-in-out infinite' }
                   : undefined
               }
             >
               {/* Sponsored badge */}
-              {item.is_boosted && (item.distance === undefined || item.distance <= 15) && (
+              {item.is_boosted && (item.distance === undefined || item.distance <= (item.boost_radius ?? 10)) && (
                 <div className="absolute top-2 right-2 z-10 flex items-center gap-1 px-2.5 py-1 bg-amber-500/90 text-white text-xs font-semibold rounded-full backdrop-blur-sm shadow-sm">
                   <Sparkles className="h-3 w-3" />
                   Gesponsert
