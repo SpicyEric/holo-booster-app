@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState, createContext, useContext, useRef } from 'react';
+import { useCallback, useEffect, useState, useRef } from 'react';
 import useEmblaCarousel from 'embla-carousel-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Store, Gift, MessageSquare, Mail, Bell, MapPin, Search, User, History, LogOut, Shield, FileText, HelpCircle, ChevronRight, Sparkles, AlertCircle, TrendingUp, Trophy, Loader2, Heart } from 'lucide-react';
@@ -19,13 +19,6 @@ import { useMessageNotifications } from '@/app/hooks/useMessageNotifications';
 import { useBackButton } from '@/app/hooks/useBackButton';
 import { ExitAppDialog } from '@/app/components/ExitAppDialog';
 import { useStatusBar } from '@/app/hooks/useStatusBar';
-
-// Context to control swipe behavior
-const SwipeControlContext = createContext<{
-  setSwipeEnabled: (enabled: boolean) => void;
-}>({ setSwipeEnabled: () => {} });
-
-export const useSwipeControl = () => useContext(SwipeControlContext);
 
 // Map route paths to carousel indices
 const ROUTE_TO_INDEX: Record<string, number> = {
@@ -56,7 +49,6 @@ export const SwipeableAppContainer = () => {
   const [currentIndex, setCurrentIndex] = useState(() => {
     return ROUTE_TO_INDEX[window.location.pathname] ?? 0;
   });
-  const [swipeEnabled, setSwipeEnabled] = useState(true);
   
   // Reset window scroll on mount — prevents scroll offset leaking from detail/scan pages
   useEffect(() => {
@@ -87,13 +79,6 @@ export const SwipeableAppContainer = () => {
     watchDrag: false,
     duration: 25,
   });
-
-  // Re-initialize embla when swipe enabled state changes
-  useEffect(() => {
-    if (emblaApi) {
-      emblaApi.reInit({ watchDrag: swipeEnabled });
-    }
-  }, [emblaApi, swipeEnabled]);
 
   // Sync carousel with current route on mount and route changes
   useEffect(() => {
@@ -137,72 +122,70 @@ export const SwipeableAppContainer = () => {
   const bottomInsetOffset = 'calc(5rem + env(safe-area-inset-bottom, 0px))';
 
   return (
-    <SwipeControlContext.Provider value={{ setSwipeEnabled }}>
+    <div
+      className="min-h-screen bg-gradient-to-b from-background to-muted/30 overflow-hidden"
+      style={{
+        minHeight: '100dvh',
+        paddingTop: topInsetOffset,
+        paddingBottom: bottomInsetOffset,
+      }}
+    >
+      <Particles
+        particleColors={['#6366F1', '#8B5CF6', '#A855F7']}
+        particleCount={400}
+        particleSpread={10}
+        speed={0.03}
+        particleBaseSize={120}
+        sizeRandomness={1.8}
+        moveParticlesOnHover={true}
+        alphaParticles={true}
+        disableRotation={false}
+        cameraDistance={20}
+      />
+      
+      <TopBar title={INDEX_TO_TITLE[currentIndex]} />
+      
       <div
-        className="min-h-screen bg-gradient-to-b from-background to-muted/30 overflow-hidden"
-        style={{
-          minHeight: '100dvh',
-          paddingTop: topInsetOffset,
-          paddingBottom: bottomInsetOffset,
-        }}
+        className="overflow-hidden"
+        style={{ height: `calc(100dvh - ${topInsetOffset} - ${bottomInsetOffset})` }}
+        ref={emblaRef}
       >
-        <Particles
-          particleColors={['#6366F1', '#8B5CF6', '#A855F7']}
-          particleCount={400}
-          particleSpread={10}
-          speed={0.03}
-          particleBaseSize={120}
-          sizeRandomness={1.8}
-          moveParticlesOnHover={true}
-          alphaParticles={true}
-          disableRotation={false}
-          cameraDistance={20}
-        />
-        
-        <TopBar title={INDEX_TO_TITLE[currentIndex]} />
-        
-        <div
-          className="overflow-hidden"
-          style={{ height: `calc(100dvh - ${topInsetOffset} - ${bottomInsetOffset})` }}
-          ref={emblaRef}
-        >
-          <div className="flex h-full">
-            <div className="flex-[0_0_100%] min-w-0 h-full overflow-y-auto" style={{ overscrollBehavior: 'contain' }}>
-              <div className="container mx-auto px-4 py-6 pb-16 max-w-2xl relative z-10">
-                <AppHomeContent />
-              </div>
+        <div className="flex h-full">
+          <div className="flex-[0_0_100%] min-w-0 h-full overflow-y-auto" style={{ overscrollBehavior: 'contain', touchAction: 'pan-y' }}>
+            <div className="container mx-auto px-4 py-6 pb-16 max-w-2xl relative z-10">
+              <AppHomeContent />
             </div>
-            
-            <div className="flex-[0_0_100%] min-w-0 h-full overflow-y-auto" style={{ overscrollBehavior: 'contain', touchAction: 'pan-y' }}>
-              <div className="container mx-auto px-4 py-6 pb-16 max-w-2xl relative z-10">
-                <AppStoresContent />
-              </div>
+          </div>
+          
+          <div className="flex-[0_0_100%] min-w-0 h-full overflow-y-auto" style={{ overscrollBehavior: 'contain', touchAction: 'pan-y' }}>
+            <div className="container mx-auto px-4 py-6 pb-16 max-w-2xl relative z-10">
+              <AppStoresContent />
             </div>
-            
-            <div className="flex-[0_0_100%] min-w-0 h-full overflow-y-auto" style={{ overscrollBehavior: 'contain' }}>
-              <div className="container mx-auto px-4 py-6 pb-16 max-w-2xl relative z-10">
-                <AppMessagesContent />
-              </div>
+          </div>
+          
+          <div className="flex-[0_0_100%] min-w-0 h-full overflow-y-auto" style={{ overscrollBehavior: 'contain', touchAction: 'pan-y' }}>
+            <div className="container mx-auto px-4 py-6 pb-16 max-w-2xl relative z-10">
+              <AppMessagesContent />
             </div>
-            
-            <div className="flex-[0_0_100%] min-w-0 h-full overflow-y-auto" style={{ overscrollBehavior: 'contain' }}>
-              <div className="container mx-auto px-4 py-6 pb-16 max-w-2xl relative z-10">
-                <AppProfileContent />
-              </div>
+          </div>
+          
+          <div className="flex-[0_0_100%] min-w-0 h-full overflow-y-auto" style={{ overscrollBehavior: 'contain', touchAction: 'pan-y' }}>
+            <div className="container mx-auto px-4 py-6 pb-16 max-w-2xl relative z-10">
+              <AppProfileContent />
             </div>
           </div>
         </div>
-        
-        <BottomNav onNavigate={scrollToIndex} currentIndex={currentIndex} />
-        
-        {/* Exit App Dialog for Android back button */}
-        <ExitAppDialog 
-          open={showExitDialog} 
-          onConfirm={confirmExit} 
-          onCancel={cancelExit} 
-        />
       </div>
-    </SwipeControlContext.Provider>
+      
+      <BottomNav onNavigate={scrollToIndex} currentIndex={currentIndex} />
+      
+      {/* Exit App Dialog for Android back button */}
+      <ExitAppDialog 
+        open={showExitDialog} 
+        onConfirm={confirmExit} 
+        onCancel={cancelExit} 
+      />
+    </div>
   );
 };
 
@@ -734,19 +717,12 @@ const AppMessagesContent = () => {
 // Stores Content
 const AppStoresContent = () => {
   const navigate = useNavigate();
-  const { setSwipeEnabled } = useSwipeControl();
   const [merchants, setMerchants] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [activeTab, setActiveTab] = useState<'list' | 'map'>('list');
   const [locationError, setLocationError] = useState<string | null>(null);
-
-  // Enable/disable swipe based on active tab
-  useEffect(() => {
-    setSwipeEnabled(activeTab === 'list');
-    return () => setSwipeEnabled(true); // Re-enable on unmount
-  }, [activeTab, setSwipeEnabled]);
 
   useEffect(() => {
     loadMerchants();
