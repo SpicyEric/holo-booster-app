@@ -116,6 +116,30 @@ export default function RewardSuggestionsPanel({ merchantIndustry, avgOrderValue
             </SelectContent>
           </Select>
         </div>
+        {/* Stamp overview */}
+        {stampPoints && (stampPoints.green || stampPoints.blue || stampPoints.red) && (
+          <div className="flex items-center gap-3 pt-2 px-1">
+            {stampPoints.green != null && (
+              <div className="flex items-center gap-1.5">
+                <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 shrink-0" />
+                <span className="text-xs text-muted-foreground">{stampPoints.green} Pkt.</span>
+              </div>
+            )}
+            {stampPoints.blue != null && (
+              <div className="flex items-center gap-1.5">
+                <span className="w-2.5 h-2.5 rounded-full bg-blue-500 shrink-0" />
+                <span className="text-xs text-muted-foreground">{stampPoints.blue} Pkt.</span>
+              </div>
+            )}
+            {stampPoints.red != null && (
+              <div className="flex items-center gap-1.5">
+                <span className="w-2.5 h-2.5 rounded-full bg-red-500 shrink-0" />
+                <span className="text-xs text-muted-foreground">{stampPoints.red} Pkt.</span>
+              </div>
+            )}
+            <span className="text-xs text-muted-foreground/60 ml-auto">Ø {avgPointsPerVisit} Pkt./Besuch</span>
+          </div>
+        )}
       </CardHeader>
 
       <CardContent className="space-y-5 overflow-y-auto max-h-[60vh]">
