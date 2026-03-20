@@ -122,6 +122,15 @@ const Marketing = () => {
         setBirthdayOfferDescription((cd as any).birthday_offer_description || '');
       }
 
+      // Rewards
+      const { data: rewardsData } = await supabase.from('rewards').select('*').eq('merchant_customer_id', assignment.customer_id).order('points_required', { ascending: true });
+      if (rewardsData) setRewards(rewardsData);
+
+      // New customer offer
+      const { data: ncoData } = await supabase.from('new_customer_offers').select('*').eq('merchant_customer_id', assignment.customer_id).maybeSingle();
+      setNewCustomerOffer(ncoData);
+      if (ncoData) setNcoForm({ title: ncoData.title, description: ncoData.description || '', bonus_stamps: ncoData.bonus_stamps || 0, is_active: ncoData.is_active ?? true, image_url: ncoData.image_url || '' });
+
       // Messages
       const { data: msgData } = await supabase.from('app_messages').select('id, title, body, show_in_storefront, sent_at, offer_id').eq('merchant_customer_id', assignment.customer_id).order('sent_at', { ascending: false });
       if (msgData) {
