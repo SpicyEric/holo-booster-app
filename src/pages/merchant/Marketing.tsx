@@ -449,7 +449,6 @@ const Marketing = () => {
               <RewardSuggestionsPanel
                 merchantIndustry={merchantIndustry}
                 avgOrderValue={avgOrderValue}
-                avgPointsPerVisit={middleStampPoints ?? 10}
                 onSelectReward={(title, pts) => {
                   setEditingReward(null);
                   setRewardForm({ title, description: '', points_required: pts, image_url: '' });
