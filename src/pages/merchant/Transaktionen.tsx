@@ -7,6 +7,9 @@ import {
   ChevronDown, ChevronUp, Stamp, Star, Activity, Clock, Users
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import {
+  Tooltip, TooltipContent, TooltipProvider, TooltipTrigger
+} from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -19,7 +22,7 @@ import { format } from "date-fns";
 import { de } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { 
-  AreaChart, Area, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer
+  AreaChart, Area, BarChart, Bar, XAxis, YAxis, Tooltip as RechartsTooltip, ResponsiveContainer
 } from "recharts";
 
 interface Transaction {
@@ -225,6 +228,7 @@ export default function Transaktionen() {
   }
 
   return (
+    <TooltipProvider delayDuration={200}>
     <div className="min-h-screen">
       <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
         {/* Header */}
@@ -383,7 +387,7 @@ export default function Transaktionen() {
                     <defs><linearGradient id="colorGrowthT" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#22C55E" stopOpacity={0.3} /><stop offset="95%" stopColor="#22C55E" stopOpacity={0} /></linearGradient></defs>
                     <XAxis dataKey="date" tick={{ fontSize: 9, fill: 'hsl(0,0%,45%)' }} tickLine={false} axisLine={false} interval={Math.max(1, Math.floor(growthRange / 5))} />
                     <YAxis tick={{ fontSize: 9, fill: 'hsl(0,0%,45%)' }} tickLine={false} axisLine={false} width={30} />
-                    <Tooltip contentStyle={{ backgroundColor: "hsl(0,0%,100%)", border: "1px solid hsl(0,0%,90%)", borderRadius: "8px", fontSize: "12px" }} formatter={(v: number) => [`${v}`, "Kunden"]} />
+                    <RechartsTooltip contentStyle={{ backgroundColor: "hsl(0,0%,100%)", border: "1px solid hsl(0,0%,90%)", borderRadius: "8px", fontSize: "12px" }} formatter={(v: number) => [`${v}`, "Kunden"]} />
                     <Area type="monotone" dataKey="total" stroke="#22C55E" strokeWidth={2} fill="url(#colorGrowthT)" />
                   </AreaChart>
                 </ResponsiveContainer>
@@ -402,7 +406,7 @@ export default function Transaktionen() {
                     <defs><linearGradient id="colorHourT" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="hsl(262,83%,58%)" stopOpacity={0.3} /><stop offset="95%" stopColor="hsl(262,83%,58%)" stopOpacity={0} /></linearGradient></defs>
                     <XAxis dataKey="hour" tick={{ fontSize: 9, fill: 'hsl(0,0%,45%)' }} tickLine={false} axisLine={false} interval={4} />
                     <YAxis tick={{ fontSize: 9, fill: 'hsl(0,0%,45%)' }} tickLine={false} axisLine={false} width={30} />
-                    <Tooltip contentStyle={{ backgroundColor: "hsl(0,0%,100%)", border: "1px solid hsl(0,0%,90%)", borderRadius: "8px", fontSize: "12px" }} formatter={(v: number) => [`${v}`, "Stempel"]} />
+                    <RechartsTooltip contentStyle={{ backgroundColor: "hsl(0,0%,100%)", border: "1px solid hsl(0,0%,90%)", borderRadius: "8px", fontSize: "12px" }} formatter={(v: number) => [`${v}`, "Stempel"]} />
                     <Area type="monotone" dataKey="count" stroke="hsl(262,83%,58%)" strokeWidth={2} fill="url(#colorHourT)" />
                   </AreaChart>
                 </ResponsiveContainer>
@@ -413,21 +417,36 @@ export default function Transaktionen() {
             <div className="bg-white rounded-xl p-4 border border-border/30 shadow-[0_1px_3px_hsl(262,30%,80%/0.3)]">
               <h3 className="text-sm font-semibold text-foreground mb-3">Kundengruppen</h3>
               <div className="space-y-2">
-                {segments.map(seg => (
-                  <div key={seg.name} className="flex items-center gap-3">
-                    <div className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: seg.color }} />
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-medium text-foreground">{seg.name}</span>
-                        <span className="text-xs text-muted-foreground">{seg.percentage}%</span>
-                      </div>
-                      <div className="h-1.5 bg-muted/50 rounded-full mt-1 overflow-hidden">
-                        <div className="h-full rounded-full transition-all duration-500" style={{ width: `${seg.percentage}%`, backgroundColor: seg.color }} />
-                      </div>
-                    </div>
-                    <span className="text-xs text-muted-foreground tabular-nums w-8 text-right">{seg.count}</span>
-                  </div>
-                ))}
+                {segments.map(seg => {
+                  const segTooltips: Record<string, string> = {
+                    "Neu": "Kunden, die einmal gestempelt haben",
+                    "Selten": "Kunden, die 2–5 mal gestempelt haben",
+                    "Treu": "Kunden, die 6–15 mal gestempelt haben",
+                    "VIP": "Kunden, die mehr als 15 mal gestempelt haben",
+                  };
+                  return (
+                    <Tooltip key={seg.name}>
+                      <TooltipTrigger asChild>
+                        <div className="flex items-center gap-3 cursor-default">
+                          <div className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: seg.color }} />
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between">
+                              <span className="text-xs font-medium text-foreground">{seg.name}</span>
+                              <span className="text-xs text-muted-foreground">{seg.percentage}%</span>
+                            </div>
+                            <div className="h-1.5 bg-muted/50 rounded-full mt-1 overflow-hidden">
+                              <div className="h-full rounded-full transition-all duration-500" style={{ width: `${seg.percentage}%`, backgroundColor: seg.color }} />
+                            </div>
+                          </div>
+                          <span className="text-xs text-muted-foreground tabular-nums w-8 text-right">{seg.count}</span>
+                        </div>
+                      </TooltipTrigger>
+                      <TooltipContent side="left" className="text-xs">
+                        {segTooltips[seg.name] || seg.label}
+                      </TooltipContent>
+                    </Tooltip>
+                  );
+                })}
               </div>
             </div>
 
@@ -450,7 +469,7 @@ export default function Transaktionen() {
                   <BarChart data={ageData}>
                     <XAxis dataKey="age" tick={{ fontSize: 9, fill: 'hsl(0,0%,45%)' }} tickLine={false} axisLine={false} />
                     <YAxis hide />
-                    <Tooltip contentStyle={{ backgroundColor: "hsl(0,0%,100%)", border: "1px solid hsl(0,0%,90%)", borderRadius: "8px", fontSize: "12px" }} formatter={(v: number) => [`${v}`, "Kunden"]} />
+                    <RechartsTooltip contentStyle={{ backgroundColor: "hsl(0,0%,100%)", border: "1px solid hsl(0,0%,90%)", borderRadius: "8px", fontSize: "12px" }} formatter={(v: number) => [`${v}`, "Kunden"]} />
                     <Bar dataKey="count" fill="hsl(262,83%,58%)" radius={[4, 4, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
@@ -460,5 +479,6 @@ export default function Transaktionen() {
         </div>
       </div>
     </div>
+    </TooltipProvider>
   );
 }

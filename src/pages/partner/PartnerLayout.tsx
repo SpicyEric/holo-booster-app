@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { signOut } from '@/lib/auth';
@@ -21,6 +22,11 @@ const menuItems = [
 export default function PartnerLayout() {
   const navigate = useNavigate();
   const location = useLocation();
+
+  useEffect(() => {
+    document.body.classList.add('ccm19-right');
+    return () => { document.body.classList.remove('ccm19-right'); };
+  }, []);
 
   const handleLogout = async () => {
     await signOut();
