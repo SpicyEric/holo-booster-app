@@ -424,23 +424,40 @@ export const AppHome = () => {
                         {item.like_count} {item.like_count === 1 ? 'Like' : 'Likes'}
                       </span>
                     )}
+                    {item.is_boosted && (item.distance === undefined || item.distance <= (item.boost_radius ?? 10)) && (
+                      <span className="inline-flex items-center ml-auto px-2.5 py-1 bg-amber-500/15 text-amber-600 dark:text-amber-400 rounded-full text-xs font-semibold">
+                        Gesponsert
+                      </span>
+                    )}
                   </div>
                 )}
 
                 {item.type === 'offer' && (
-                  <div className="flex items-center gap-2 mb-2">
+                  <div className="flex items-center gap-2 mb-2 flex-wrap">
                     <span className="inline-flex items-center gap-1 px-3 py-1.5 bg-primary/10 text-primary rounded-full text-sm font-semibold">
                       <Gift className="h-4 w-4" />
                       Neukundenprämie
                     </span>
+                    {item.is_boosted && (item.distance === undefined || item.distance <= (item.boost_radius ?? 10)) && (
+                      <span className="inline-flex items-center px-2.5 py-1.5 bg-amber-500/15 text-amber-600 dark:text-amber-400 rounded-full text-xs font-semibold">
+                        Gesponsert
+                      </span>
+                    )}
                   </div>
                 )}
 
-                {item.type === 'merchant_card' && item.points_balance !== undefined && item.points_balance > 0 && (
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className="inline-flex items-center gap-1 px-3 py-1.5 bg-muted text-muted-foreground rounded-full text-xs font-medium">
-                      {item.points_balance} Punkte gesammelt
-                    </span>
+                {item.type === 'merchant_card' && (
+                  <div className="flex items-center gap-2 mb-2 flex-wrap">
+                    {item.points_balance !== undefined && item.points_balance > 0 && (
+                      <span className="inline-flex items-center gap-1 px-3 py-1.5 bg-muted text-muted-foreground rounded-full text-xs font-medium">
+                        {item.points_balance} Punkte gesammelt
+                      </span>
+                    )}
+                    {item.is_boosted && (item.distance === undefined || item.distance <= (item.boost_radius ?? 10)) && (
+                      <span className="inline-flex items-center px-2.5 py-1.5 bg-amber-500/15 text-amber-600 dark:text-amber-400 rounded-full text-xs font-semibold">
+                        Gesponsert
+                      </span>
+                    )}
                   </div>
                 )}
 
