@@ -129,6 +129,11 @@ const Marketing = () => {
       if (!assignment) { setLoading(false); return; }
       setCustomerId(assignment.customer_id);
 
+      // Fetch middle stamp (blue) points value for recommendation
+      const { data: blueChip } = await supabase.from('nfc_chips').select('points_value').eq('merchant_customer_id', assignment.customer_id).eq('stamp_color', 'blue').eq('is_active', true).maybeSingle();
+      const midPoints = blueChip?.points_value ?? null;
+      setMiddleStampPoints(midPoints);
+
       const { data: cd } = await supabase.from('customers').select('google_review_url, google_review_points_enabled, google_review_points_value, birthday_enabled, birthday_message, birthday_bonus_points, birthday_gift_type, birthday_offer_title, birthday_offer_description').eq('id', assignment.customer_id).maybeSingle();
       if (cd) {
         setGoogleReviewUrl(cd.google_review_url || "");
@@ -136,7 +141,9 @@ const Marketing = () => {
         setReviewPointsValue(cd.google_review_points_value || 5);
         setBirthdayEnabled(cd.birthday_enabled ?? false);
         if (cd.birthday_message) setBirthdayMessage(cd.birthday_message);
-        setBirthdayBonusPoints((cd as any).birthday_bonus_points ?? 5);
+        // Default to middle stamp points if no birthday bonus was ever set
+        const savedBonusPoints = (cd as any).birthday_bonus_points;
+        setBirthdayBonusPoints(savedBonusPoints ?? midPoints ?? 5);
         setBirthdayGiftType(((cd as any).birthday_gift_type as 'points' | 'offer') || 'points');
         setBirthdayOfferTitle((cd as any).birthday_offer_title || '');
         setBirthdayOfferDescription((cd as any).birthday_offer_description || '');
