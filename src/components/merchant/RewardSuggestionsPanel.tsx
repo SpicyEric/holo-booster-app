@@ -98,7 +98,7 @@ export default function RewardSuggestionsPanel({ merchantIndustry, avgOrderValue
           </div>
           <div className="min-w-0 flex-1">
             <CardTitle className="text-lg font-semibold">Beispielprämien</CardTitle>
-            <CardDescription>Klicke auf +, um eine Prämie zu übernehmen</CardDescription>
+            <CardDescription>Basierend auf deinem Stempelsystem</CardDescription>
           </div>
         </div>
         <div className="flex items-center gap-2 pt-2">
