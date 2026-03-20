@@ -409,9 +409,14 @@ const Marketing = () => {
                     <CardDescription>Belohnungen, die deine Kunden mit gesammelten Punkten einlösen können</CardDescription>
                   </div>
                 </div>
-                <Button onClick={() => { setEditingReward(null); setRewardForm({ title: '', description: '', points_required: 10, image_url: '' }); setShowRewardDialog(true); }} className="rounded-xl">
-                  <Plus className="h-4 w-4 mr-2" />Neue Prämie
-                </Button>
+                <div className="flex items-center gap-2">
+                  <Button variant="outline" onClick={() => setShowRewardSuggestions(true)} className="rounded-xl">
+                    <Sparkles className="h-4 w-4 mr-2" />Beispielprämien
+                  </Button>
+                  <Button onClick={() => { setEditingReward(null); setRewardForm({ title: '', description: '', points_required: 10, image_url: '' }); setShowRewardDialog(true); }} className="rounded-xl">
+                    <Plus className="h-4 w-4 mr-2" />Neue Prämie
+                  </Button>
+                </div>
               </CardHeader>
               <CardContent>
                 {rewards.length === 0 ? (
