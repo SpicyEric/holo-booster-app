@@ -342,13 +342,8 @@ export const AppHome = () => {
                   : undefined
               }
             >
-              {/* Sponsored badge */}
-              {item.is_boosted && (item.distance === undefined || item.distance <= (item.boost_radius ?? 10)) && (
-                <div className="absolute top-2 right-2 z-10 flex items-center gap-1 px-2.5 py-1 bg-amber-500/90 text-white text-xs font-semibold rounded-full backdrop-blur-sm shadow-sm">
-                  <Sparkles className="h-3 w-3" />
-                  Gesponsert
-                </div>
-              )}
+
+
 
               {/* Header: profile pic + name */}
               <div
