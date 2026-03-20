@@ -151,6 +151,8 @@ const Marketing = () => {
         setBirthdayGiftType(((cd as any).birthday_gift_type as 'points' | 'offer') || 'points');
         setBirthdayOfferTitle((cd as any).birthday_offer_title || '');
         setBirthdayOfferDescription((cd as any).birthday_offer_description || '');
+        if (cd.industry) setMerchantIndustry(cd.industry);
+        if (cd.avg_revenue) setAvgOrderValue(cd.avg_revenue);
       }
       // Mark automations as loaded (so changes after this trigger automationsChanged)
       setTimeout(() => { automationsLoadedRef.current = true; }, 100);
