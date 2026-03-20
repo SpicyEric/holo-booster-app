@@ -68,11 +68,13 @@ export const AppHome = () => {
       const items: FeedItem[] = [];
 
       // Get active boosts
-      const { data: activeBoosts } = await supabase
+      const { data: activeBoosts, error: boostError } = await supabase
         .from('merchant_boosts')
         .select('merchant_customer_id, tier')
         .eq('status', 'active')
         .gt('ends_at', new Date().toISOString());
+
+      console.log('[Feed] Active boosts:', activeBoosts, 'Error:', boostError);
 
       const boostMap = new Map<string, number>();
       activeBoosts?.forEach(b => {
