@@ -90,7 +90,7 @@ export default function RewardSuggestionsPanel({ merchantIndustry, avgOrderValue
   };
 
   return (
-    <Card className="rounded-2xl shadow-sm border border-border h-full">
+    <Card className="rounded-2xl shadow-sm border border-primary/15 bg-primary/5 h-full">
       <CardHeader className="pb-3">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
