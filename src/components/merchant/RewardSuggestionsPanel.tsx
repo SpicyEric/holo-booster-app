@@ -175,9 +175,11 @@ export default function RewardSuggestionsPanel({ merchantIndustry, avgOrderValue
                             <TooltipProvider>
                               <Tooltip>
                                 <TooltipTrigger asChild>
-                                  <Badge variant="secondary" className="rounded-full text-xs mt-0.5 cursor-help">
-                                    empfohlen: {pts} Punkte
-                                  </Badge>
+                                  <span className="inline-block">
+                                    <Badge variant="secondary" className="rounded-full text-xs mt-0.5 cursor-help">
+                                      empfohlen: {pts} Punkte
+                                    </Badge>
+                                  </span>
                                 </TooltipTrigger>
                                 <TooltipContent side="bottom" className="max-w-[220px]">
                                   <p className="text-xs">Basierend auf deinem Durchschnittsumsatz und Stempelsystem berechnet.</p>
