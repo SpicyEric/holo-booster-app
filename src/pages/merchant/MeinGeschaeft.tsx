@@ -762,11 +762,18 @@ const MeinGeschaeft = () => {
   }
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen">
       <div className="max-w-7xl mx-auto p-6 sm:p-8">
         <div className="mb-6">
-          <h1 className="text-2xl font-bold text-gray-900">Mein Geschäft</h1>
-          <p className="text-gray-500 mt-1">Verwalten Sie Ihre Prämien, Geschäftsinfos und Stempel</p>
+          <div className="flex items-center gap-3 mb-1">
+            <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+              <Store className="h-5 w-5 text-primary" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold text-foreground">Mein Geschäft</h1>
+              <p className="text-muted-foreground text-sm">Verwalte dein Angebot, System und Geschäftsprofil</p>
+            </div>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
