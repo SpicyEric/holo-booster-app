@@ -66,6 +66,7 @@ const SEGMENT_OPTIONS = [
 ];
 
 const Nachrichten = () => {
+  const [searchParams] = useSearchParams();
   const [loading, setLoading] = useState(true);
   const [customerId, setCustomerId] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
