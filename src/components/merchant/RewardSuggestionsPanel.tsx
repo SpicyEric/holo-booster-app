@@ -30,7 +30,7 @@ function calculateRewardPoints(estimatedValue: number, avgOrderValue: number, av
   else if (ratio <= 2.0) targetVisits = 10;
   else if (ratio <= 3.0) targetVisits = 14;
   else targetVisits = 18;
-  const raw = AVG_POINTS_PER_VISIT * targetVisits;
+  const raw = avgPointsPerVisit * targetVisits;
   return Math.max(5, Math.round(raw / 5) * 5);
 }
 
