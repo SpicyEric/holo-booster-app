@@ -149,15 +149,15 @@ export default function MerchantSidebar() {
         </Button>
 
         <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
-          <SheetContent side="left" className="w-[280px] p-0 flex flex-col">
-            <div className="flex items-center justify-between h-16 border-b border-border/40 px-4">
+          <SheetContent side="left" className="w-[280px] p-0 flex flex-col bg-[hsl(262,50%,28%)] border-white/10">
+            <div className="flex items-center justify-between h-16 border-b border-white/10 px-4">
               <img
                 src={eloyoLogo}
                 alt="Eloyo"
-                className="h-7 w-auto cursor-pointer"
+                className="h-7 w-auto cursor-pointer brightness-0 invert"
                 onClick={() => { navigate("/kunde"); setMobileOpen(false); }}
               />
-              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setMobileOpen(false)}>
+              <Button variant="ghost" size="icon" className="h-8 w-8 text-white/50 hover:text-white hover:bg-white/10" onClick={() => setMobileOpen(false)}>
                 <X className="h-4 w-4" />
               </Button>
             </div>
