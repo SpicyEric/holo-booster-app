@@ -40,7 +40,18 @@ const Marketing = () => {
   const [searchParams] = useSearchParams();
   const [loading, setLoading] = useState(true);
   const [customerId, setCustomerId] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState('boost');
+  const [activeTab, setActiveTab] = useState('praemien');
+
+  // --- Rewards state ---
+  const [rewards, setRewards] = useState<Reward[]>([]);
+  const [showRewardDialog, setShowRewardDialog] = useState(false);
+  const [editingReward, setEditingReward] = useState<Reward | null>(null);
+  const [rewardForm, setRewardForm] = useState({ title: '', description: '', points_required: 10, image_url: '' });
+  const [uploadingRewardImage, setUploadingRewardImage] = useState(false);
+  const [newCustomerOffer, setNewCustomerOffer] = useState<NewCustomerOffer | null>(null);
+  const [showNcoDialog, setShowNcoDialog] = useState(false);
+  const [ncoForm, setNcoForm] = useState({ title: '', description: '', bonus_stamps: 0, is_active: true, image_url: '' });
+  const [uploadingNcoImage, setUploadingNcoImage] = useState(false);
 
   // --- Boost state ---
   const [boostLoading, setBoostLoading] = useState(false);
