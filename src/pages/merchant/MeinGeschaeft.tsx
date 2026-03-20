@@ -843,8 +843,8 @@ const MeinGeschaeft = () => {
               </PhoneFrame>
               
               {/* Global Save Button below phone */}
-              {activeTab === 'info' && (
-                <Button onClick={handleSaveInfo} disabled={saving} className="w-full rounded-xl mt-4" size="lg">
+              {activeTab === 'info' && profileDirty && (
+                <Button onClick={handleSaveInfo} disabled={saving} className="w-full rounded-xl mt-4 animate-pulse" size="lg">
                   {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
                   Änderungen speichern
                 </Button>
