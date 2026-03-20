@@ -26,7 +26,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import RichTextEditor from '@/components/merchant/RichTextEditor';
-import RewardSuggestionsModal from '@/components/merchant/RewardSuggestionsModal';
+import RewardSuggestionsPanel from '@/components/merchant/RewardSuggestionsPanel';
 import { cn } from '@/lib/utils';
 
 // ---- Types ----
