@@ -341,7 +341,7 @@ export const AppMerchantDetail = () => {
 
   return (
     <div className="bg-background overflow-hidden" style={{ height: '100dvh' }}>
-    <div className="h-full overflow-y-auto pb-24 overflow-x-hidden" style={{ overscrollBehavior: 'none', WebkitOverflowScrolling: 'touch', touchAction: 'pan-y' }}>
+    <div className="h-full overflow-y-auto pb-32 overflow-x-hidden" style={{ overscrollBehavior: 'none', WebkitOverflowScrolling: 'touch', touchAction: 'pan-y' }}>
       {/* Safe area shield - must be outside scroll flow */}
       <div className="fixed top-0 left-0 right-0 z-[60]" style={{ height: 'env(safe-area-inset-top, 0px)', background: 'hsl(var(--background))' }} />
 

@@ -93,7 +93,7 @@ export const BottomNav = ({ onNavigate, currentIndex }: BottomNavProps) => {
   ];
 
   const handleCenterButtonClick = () => {
-    navigate('/app/scan?autostart=true');
+    navigate(`/app/scan?autostart=${Date.now()}`);
   };
 
   const handleNavClick = (item: NavItem) => {
