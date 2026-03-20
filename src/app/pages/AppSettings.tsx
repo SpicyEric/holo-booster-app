@@ -49,6 +49,11 @@ export default function AppSettings() {
   const [changingPassword, setChangingPassword] = useState(false);
   const [showPasswords, setShowPasswords] = useState(false);
 
+  // Email change state
+  const [editingEmail, setEditingEmail] = useState(false);
+  const [newEmail, setNewEmail] = useState('');
+  const [savingEmail, setSavingEmail] = useState(false);
+
   const [birthDate, setBirthDate] = useState('');
   const [gender, setGender] = useState('');
 
