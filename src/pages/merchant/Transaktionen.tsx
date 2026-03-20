@@ -155,12 +155,23 @@ export default function Transaktionen() {
   const loadAgeData = async (cid: string) => {
     const { data: la } = await supabase.from("loyalty_accounts").select("user_id").eq("merchant_customer_id", cid);
     const brackets = [{ label: "14-17", min: 14, max: 17 }, { label: "18-24", min: 18, max: 24 }, { label: "25-34", min: 25, max: 34 }, { label: "35-44", min: 35, max: 44 }, { label: "45-54", min: 45, max: 54 }, { label: "55-64", min: 55, max: 64 }, { label: "65+", min: 65, max: 150 }];
-    const ac: Record<string, number> = {}; brackets.forEach(b => ac[b.label] = 0);
+    const mc: Record<string, number> = {}; const fc: Record<string, number> = {}; const ac: Record<string, number> = {};
+    brackets.forEach(b => { mc[b.label] = 0; fc[b.label] = 0; ac[b.label] = 0; });
     if (la && la.length > 0) {
-      const { data: ps } = await supabase.from("profiles").select("birth_date").in("user_id", la.map(a => a.user_id));
-      (ps || []).forEach((p: any) => { if (p.birth_date) { const age = Math.floor((Date.now() - new Date(p.birth_date).getTime()) / (365.25 * 24 * 60 * 60 * 1000)); const br = brackets.find(b => age >= b.min && age <= b.max); if (br) ac[br.label]++; } });
+      const { data: ps } = await supabase.from("profiles").select("birth_date, gender").in("user_id", la.map(a => a.user_id));
+      (ps || []).forEach((p: any) => {
+        if (p.birth_date) {
+          const age = Math.floor((Date.now() - new Date(p.birth_date).getTime()) / (365.25 * 24 * 60 * 60 * 1000));
+          const br = brackets.find(b => age >= b.min && age <= b.max);
+          if (br) {
+            ac[br.label]++;
+            if (p.gender === 'männlich' || p.gender === 'male') mc[br.label]++;
+            else if (p.gender === 'weiblich' || p.gender === 'female') fc[br.label]++;
+          }
+        }
+      });
     }
-    setAgeData(brackets.map(b => ({ age: b.label, count: ac[b.label] || 0 })));
+    setAgeData(brackets.map(b => ({ age: b.label, count: ac[b.label] || 0, male: mc[b.label] || 0, female: fc[b.label] || 0 })));
   };
 
   const loadCustomerSegments = async (cid: string) => {
