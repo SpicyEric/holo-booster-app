@@ -366,7 +366,7 @@ export const AppAuth = () => {
   // Recovery mode - set new password
   if (isRecoveryMode) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-primary/5 to-background flex flex-col items-center justify-center p-4">
+      <div className="h-[100dvh] overflow-y-auto bg-gradient-to-b from-primary/5 to-background flex flex-col items-center justify-center p-4">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-md">
           <div className="text-center mb-8">
             <img src="/eloyo-logo.png" alt="Eloyo" className="h-12 mx-auto mb-2" />
