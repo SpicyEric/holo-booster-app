@@ -181,7 +181,7 @@ export default function Transaktionen() {
         {/* KPI Row */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           {kpis.map((kpi) => (
-            <Card key={kpi.label} className="rounded-2xl border-border/50 shadow-sm hover:shadow-md transition-shadow">
+            <Card key={kpi.label} className="rounded-2xl border-border/30 shadow-[0_1px_3px_hsl(262,30%,80%/0.3)] hover:shadow-[0_4px_12px_hsl(262,30%,80%/0.3)] transition-all duration-300 bg-white">
               <CardContent className="p-4 flex items-center gap-3">
                 <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center shrink-0", kpi.bg)}>
                   <kpi.icon className={cn("h-5 w-5", kpi.color)} />
