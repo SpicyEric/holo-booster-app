@@ -235,9 +235,14 @@ const MeinGeschaeft = () => {
           opening_hours: (customer.opening_hours as OpeningHours) || defaultOpeningHours,
         });
         // Restore stamp settings
-        if ((customer as any).stamp_mode) setStampMode((customer as any).stamp_mode);
-        if ((customer as any).avg_revenue != null) setAvgRevenue((customer as any).avg_revenue);
-        if ((customer as any).manual_stamp_mode != null) setManualMode((customer as any).manual_stamp_mode);
+        const loadedStampMode = (customer as any).stamp_mode || 'classic';
+        const loadedAvgRevenue = (customer as any).avg_revenue ?? 7;
+        const loadedManualMode = (customer as any).manual_stamp_mode ?? false;
+        setStampMode(loadedStampMode);
+        setAvgRevenue(loadedAvgRevenue);
+        setManualMode(loadedManualMode);
+        setInitialStampState({ stampMode: loadedStampMode, avgRevenue: loadedAvgRevenue, manualMode: loadedManualMode });
+        setStampSettingsDirty(false);
       }
 
       // Load rewards
