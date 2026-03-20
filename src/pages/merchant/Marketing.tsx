@@ -26,7 +26,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import RichTextEditor from '@/components/merchant/RichTextEditor';
-import RewardSuggestionsModal from '@/components/merchant/RewardSuggestionsModal';
+import RewardSuggestionsPanel from '@/components/merchant/RewardSuggestionsPanel';
 import { cn } from '@/lib/utils';
 
 // ---- Types ----
@@ -60,7 +60,7 @@ const Marketing = () => {
   const [uploadingNcoImage, setUploadingNcoImage] = useState(false);
   const [ncoGiftType, setNcoGiftType] = useState<'offer' | 'points'>('offer');
   const [showDeleteNcoConfirm, setShowDeleteNcoConfirm] = useState(false);
-  const [showRewardSuggestions, setShowRewardSuggestions] = useState(false);
+  
   const [merchantIndustry, setMerchantIndustry] = useState<string | null>(null);
   const [avgOrderValue, setAvgOrderValue] = useState(10);
 
@@ -399,54 +399,63 @@ const Marketing = () => {
           </TabsList>
 
           {/* ========== PRÄMIEN TAB ========== */}
-          <TabsContent value="praemien" className="space-y-6 mt-6">
-            <Card className="rounded-2xl shadow-sm border border-primary/10 bg-primary/[0.03]">
-              <CardHeader className="flex flex-row items-center justify-between pb-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center"><Gift className="h-5 w-5 text-primary" /></div>
-                  <div>
-                    <CardTitle className="text-lg font-semibold">Prämien</CardTitle>
-                    <CardDescription>Belohnungen, die deine Kunden mit gesammelten Punkten einlösen können</CardDescription>
+          <TabsContent value="praemien" className="mt-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Left: Active Rewards */}
+              <Card className="rounded-2xl shadow-sm border border-primary/10 bg-primary/[0.03]">
+                <CardHeader className="flex flex-row items-center justify-between pb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center"><Gift className="h-5 w-5 text-primary" /></div>
+                    <div>
+                      <CardTitle className="text-lg font-semibold">Aktive Prämien</CardTitle>
+                      <CardDescription>Deine aktuell einlösbaren Prämien</CardDescription>
+                    </div>
                   </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Button variant="outline" onClick={() => setShowRewardSuggestions(true)} className="rounded-xl">
-                    <Sparkles className="h-4 w-4 mr-2" />Beispielprämien
-                  </Button>
                   <Button onClick={() => { setEditingReward(null); setRewardForm({ title: '', description: '', points_required: 10, image_url: '' }); setShowRewardDialog(true); }} className="rounded-xl">
                     <Plus className="h-4 w-4 mr-2" />Neue Prämie
                   </Button>
-                </div>
-              </CardHeader>
-              <CardContent>
-                {rewards.length === 0 ? (
-                  <p className="text-muted-foreground text-center py-8">Noch keine Prämien erstellt</p>
-                ) : (
-                  <div className="space-y-3">
-                    {rewards.map((reward) => (
-                      <div key={reward.id} className="flex items-center justify-between p-4 bg-card rounded-xl border border-border/30">
-                        <div className="flex items-center gap-3">
-                          {reward.image_url ? (
-                            <img src={reward.image_url} alt={reward.title} className="w-12 h-12 rounded-xl object-cover" />
-                          ) : (
-                            <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center"><Gift className="h-6 w-6 text-primary" /></div>
-                          )}
-                          <div>
-                            <p className="font-semibold text-foreground">{reward.title}</p>
-                            {reward.description && <p className="text-sm text-muted-foreground">{reward.description}</p>}
-                            <Badge variant="secondary" className="rounded-full mt-1">{reward.points_required} Punkte</Badge>
+                </CardHeader>
+                <CardContent>
+                  {rewards.length === 0 ? (
+                    <p className="text-muted-foreground text-center py-8">Noch keine Prämien erstellt</p>
+                  ) : (
+                    <div className="space-y-3">
+                      {rewards.map((reward) => (
+                        <div key={reward.id} className="flex items-center justify-between p-4 bg-card rounded-xl border border-border/30">
+                          <div className="flex items-center gap-3">
+                            {reward.image_url ? (
+                              <img src={reward.image_url} alt={reward.title} className="w-12 h-12 rounded-xl object-cover" />
+                            ) : (
+                              <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center"><Gift className="h-6 w-6 text-primary" /></div>
+                            )}
+                            <div>
+                              <p className="font-semibold text-foreground">{reward.title}</p>
+                              {reward.description && <p className="text-sm text-muted-foreground">{reward.description}</p>}
+                              <Badge variant="secondary" className="rounded-full mt-1">{reward.points_required} Punkte</Badge>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Button variant="ghost" size="sm" onClick={() => { setEditingReward(reward); setRewardForm({ title: reward.title, description: reward.description || '', points_required: reward.points_required, image_url: reward.image_url || '' }); setShowRewardDialog(true); }} className="rounded-lg"><Edit2 className="h-4 w-4" /></Button>
+                            <Button variant="ghost" size="sm" onClick={() => handleDeleteReward(reward.id)} className="rounded-lg"><Trash2 className="h-4 w-4 text-destructive" /></Button>
                           </div>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <Button variant="ghost" size="sm" onClick={() => { setEditingReward(reward); setRewardForm({ title: reward.title, description: reward.description || '', points_required: reward.points_required, image_url: reward.image_url || '' }); setShowRewardDialog(true); }} className="rounded-lg"><Edit2 className="h-4 w-4" /></Button>
-                          <Button variant="ghost" size="sm" onClick={() => handleDeleteReward(reward.id)} className="rounded-lg"><Trash2 className="h-4 w-4 text-destructive" /></Button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Right: Example Rewards Panel */}
+              <RewardSuggestionsPanel
+                merchantIndustry={merchantIndustry}
+                avgOrderValue={avgOrderValue}
+                onSelectReward={(title, pts) => {
+                  setEditingReward(null);
+                  setRewardForm({ title, description: '', points_required: pts, image_url: '' });
+                  setShowRewardDialog(true);
+                }}
+              />
+            </div>
           </TabsContent>
 
           {/* ========== NEUKUNDEN TAB ========== */}
@@ -987,19 +996,6 @@ const Marketing = () => {
           </AlertDialogContent>
         </AlertDialog>
 
-        {/* Reward Suggestions Modal */}
-        <RewardSuggestionsModal
-          open={showRewardSuggestions}
-          onOpenChange={setShowRewardSuggestions}
-          merchantIndustry={merchantIndustry}
-          avgOrderValue={avgOrderValue}
-          onSelectReward={(title, pts) => {
-            setShowRewardSuggestions(false);
-            setEditingReward(null);
-            setRewardForm({ title, description: '', points_required: pts, image_url: '' });
-            setShowRewardDialog(true);
-          }}
-        />
       </div>
     </div>
   );
