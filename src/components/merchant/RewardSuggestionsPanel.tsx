@@ -53,8 +53,8 @@ function calculateRewardPoints(category: 'small' | 'medium' | 'large', estimated
   const bonus = getRewardValueBonus(category, estimatedValue);
   const raw = (avgPointsPerVisit * targetVisits) + bonus;
 
-  // Round to nearest 25 (50/75/100/125/…)
-  return Math.max(50, Math.round(raw / 25) * 25);
+  // Round to nearest 25 (25/50/75/100/125/…)
+  return Math.max(25, Math.round(raw / 25) * 25);
 }
 
 const CATEGORY_META = {
@@ -76,7 +76,7 @@ export default function RewardSuggestionsPanel({ merchantIndustry, avgOrderValue
     large: rewards.filter(r => r.category === 'large'),
   }), [rewards]);
 
-  const avg = avgOrderValue || 10;
+  const avgOrder = avgOrderValue || 10;
 
   const handleAdopt = (reward: ExampleReward) => {
     const pts = calculateRewardPoints(reward.category, reward.estimated_value, avgPointsPerVisit);
@@ -90,7 +90,7 @@ export default function RewardSuggestionsPanel({ merchantIndustry, avgOrderValue
   };
 
   return (
-    <Card className="rounded-2xl shadow-sm border border-border h-full">
+    <Card className="rounded-2xl shadow-sm border border-primary/15 bg-primary/5 h-full">
       <CardHeader className="pb-3">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
@@ -119,19 +119,18 @@ export default function RewardSuggestionsPanel({ merchantIndustry, avgOrderValue
         {/* Stamp overview */}
         {stampPoints && (stampPoints.green || stampPoints.blue || stampPoints.red) && (
           <div className="pt-2 px-1 space-y-2">
-            <p className="text-xs text-muted-foreground">Basierend auf deinem eingestellten Durchschnittswert:</p>
+            <p className="text-xs text-muted-foreground">Basierend auf deinem eingestellten Durchschnittsbon:</p>
             <div className="flex flex-wrap items-center gap-2">
               {stampPoints.green != null && (
-                <Badge variant="secondary" className="rounded-full text-xs font-normal">Stempel 1: {stampPoints.green} Pkt.</Badge>
+                <Badge className="rounded-full text-xs font-medium border-emerald-300 bg-emerald-50 text-emerald-700">Stempel: {stampPoints.green} Pkt.</Badge>
               )}
               {stampPoints.blue != null && (
-                <Badge variant="secondary" className="rounded-full text-xs font-normal">Stempel 2: {stampPoints.blue} Pkt.</Badge>
+                <Badge className="rounded-full text-xs font-medium border-blue-300 bg-blue-50 text-blue-700">Stempel: {stampPoints.blue} Pkt.</Badge>
               )}
               {stampPoints.red != null && (
-                <Badge variant="secondary" className="rounded-full text-xs font-normal">Stempel 3: {stampPoints.red} Pkt.</Badge>
+                <Badge className="rounded-full text-xs font-medium border-red-300 bg-red-50 text-red-700">Stempel: {stampPoints.red} Pkt.</Badge>
               )}
-              <Badge variant="outline" className="rounded-full text-xs font-normal">Ø {avgPointsPerVisit} Pkt./Besuch</Badge>
-              <Badge variant="outline" className="rounded-full text-xs font-normal">Ø-Bon {avgOrderValue} €</Badge>
+              <Badge variant="outline" className="rounded-full text-xs font-normal">Ø-Bon {avgOrder} €</Badge>
             </div>
           </div>
         )}
@@ -176,9 +175,11 @@ export default function RewardSuggestionsPanel({ merchantIndustry, avgOrderValue
                             <TooltipProvider>
                               <Tooltip>
                                 <TooltipTrigger asChild>
-                                  <Badge variant="secondary" className="rounded-full text-xs mt-0.5 cursor-help">
-                                    empfohlen: {pts} Punkte
-                                  </Badge>
+                                  <span className="inline-block">
+                                    <Badge variant="secondary" className="rounded-full text-xs mt-0.5 cursor-help">
+                                      empfohlen: {pts} Punkte
+                                    </Badge>
+                                  </span>
                                 </TooltipTrigger>
                                 <TooltipContent side="bottom" className="max-w-[220px]">
                                   <p className="text-xs">Basierend auf deinem Durchschnittsumsatz und Stempelsystem berechnet.</p>
