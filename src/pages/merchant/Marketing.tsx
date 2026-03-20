@@ -739,8 +739,11 @@ const Marketing = () => {
               <div><Label>Beschreibung</Label><Textarea value={ncoForm.description} onChange={e => setNcoForm({ ...ncoForm, description: e.target.value })} placeholder="Details..." rows={2} className="rounded-xl mt-1" /></div>
               <div><Label>Bonuspunkte</Label><Input type="number" min={0} value={ncoForm.bonus_stamps} onChange={e => setNcoForm({ ...ncoForm, bonus_stamps: parseInt(e.target.value) || 0 })} className="rounded-xl mt-1 w-32" /></div>
               <div className="flex items-center justify-between p-3 bg-muted/30 rounded-xl">
-                <div><p className="text-sm font-medium">Aktiv</p></div>
-                <Switch checked={ncoForm.is_active} onCheckedChange={v => setNcoForm({ ...ncoForm, is_active: v })} />
+                <div><p className="text-sm font-medium">Neukundenprämie aktiv</p></div>
+                <div className="flex items-center gap-2">
+                  <span className={`text-xs font-medium ${ncoForm.is_active ? 'text-primary' : 'text-muted-foreground'}`}>{ncoForm.is_active ? 'Aktiv' : 'Inaktiv'}</span>
+                  <Switch checked={ncoForm.is_active} onCheckedChange={v => setNcoForm({ ...ncoForm, is_active: v })} />
+                </div>
               </div>
             </div>
             <DialogFooter>
