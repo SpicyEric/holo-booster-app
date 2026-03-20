@@ -31,6 +31,7 @@ import GoogleBewertungen from "./pages/merchant/GoogleBewertungen";
 import MeinKonto from "./pages/merchant/MeinKonto";
 import Nachrichten from "./pages/merchant/Nachrichten";
 import Transaktionen from "./pages/merchant/Transaktionen";
+import Marketing from "./pages/merchant/Marketing";
 import PartnerLayout from "./pages/partner/PartnerLayout";
 import PartnerDashboardHome from "./pages/partner/PartnerDashboardHome";
 import PartnerLeads from "./pages/partner/PartnerLeads";
@@ -107,10 +108,13 @@ const App = () => (
           <Route path="/kunde" element={<MerchantLayout />}>
             <Route index element={<KundeDashboard />} />
             <Route path="mein-geschaeft" element={<MeinGeschaeft />} />
-            <Route path="google-bewertungen" element={<GoogleBewertungen />} />
-            <Route path="nachrichten" element={<Nachrichten />} />
-            <Route path="transaktionen" element={<Transaktionen />} />
+            <Route path="kunden" element={<Transaktionen />} />
+            <Route path="marketing" element={<Marketing />} />
             <Route path="konto" element={<MeinKonto />} />
+            {/* Legacy redirects for old routes */}
+            <Route path="google-bewertungen" element={<Navigate to="/kunde/marketing" replace />} />
+            <Route path="nachrichten" element={<Navigate to="/kunde/marketing" replace />} />
+            <Route path="transaktionen" element={<Navigate to="/kunde/kunden" replace />} />
           </Route>
           
           {/* Partner Dashboard */}
