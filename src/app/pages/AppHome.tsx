@@ -224,7 +224,8 @@ export const AppHome = () => {
               created_at: offer.created_at || new Date().toISOString(),
               like_count: 0,
               liked_by_user: false,
-              is_boosted: boostedMerchantIds.has(m.id),
+              is_boosted: boostMap.has(m.id),
+              boost_radius: boostMap.get(m.id),
             });
           } else {
             // Show as merchant card even without offer
