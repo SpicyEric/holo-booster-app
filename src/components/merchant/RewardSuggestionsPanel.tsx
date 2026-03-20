@@ -20,10 +20,8 @@ interface Props {
   onSelectReward: (title: string, pointsRequired: number) => void;
 }
 
-// ─── Points logic ───
-const AVG_POINTS_PER_VISIT = 10;
-
-function calculateRewardPoints(estimatedValue: number, avgOrderValue: number): number {
+// Points logic uses actual avg points per visit from stamp config
+function calculateRewardPoints(estimatedValue: number, avgOrderValue: number, avgPointsPerVisit: number): number {
   if (avgOrderValue <= 0) avgOrderValue = 10;
   const ratio = estimatedValue / avgOrderValue;
   let targetVisits: number;
