@@ -250,6 +250,25 @@ const MeinGeschaeft = () => {
           twitter: customer.twitter || "",
           opening_hours: (customer.opening_hours as OpeningHours) || defaultOpeningHours,
         });
+        // Store initial form data for dirty tracking
+        const loadedFormData = {
+          name: customer.company_name || customer.name || "",
+          description: customer.description || "",
+          industry: customer.industry || "",
+          street: customer.street || "",
+          house_number: customer.house_number || "",
+          postal_code: customer.postal_code || "",
+          city: customer.city || "",
+          logo_url: customer.logo_url || "",
+          cover_image_url: customer.cover_image_url || "",
+          phone: customer.phone || "",
+          website: customer.website || "",
+          instagram: customer.instagram || "",
+          facebook: customer.facebook || "",
+          twitter: customer.twitter || "",
+          opening_hours: (customer.opening_hours as OpeningHours) || defaultOpeningHours,
+        };
+        initialFormDataRef.current = loadedFormData;
         // Restore stamp settings
         const loadedStampMode = (customer as any).stamp_mode || 'classic';
         const loadedAvgRevenue = (customer as any).avg_revenue ?? 7;
