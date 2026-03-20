@@ -119,7 +119,9 @@ export default function RewardSuggestionsPanel({ merchantIndustry, avgOrderValue
         {/* Stamp overview */}
         {stampPoints && (stampPoints.green || stampPoints.blue || stampPoints.red) && (
           <div className="pt-2 px-1 space-y-2">
-            <p className="text-xs text-muted-foreground">Basierend auf deinem eingestellten Durchschnittsbon:</p>
+            <p className="text-xs text-muted-foreground">
+              Basierend auf deinem eingestellten Durchschnittsbon von <span className="font-medium text-foreground">{avgOrder} €</span>
+            </p>
             <div className="flex flex-wrap items-center gap-2">
               {stampPoints.green != null && (
                 <Badge className="rounded-full text-xs font-medium border-emerald-300 bg-emerald-50 text-emerald-700">Stempel: {stampPoints.green} Pkt.</Badge>
@@ -130,7 +132,6 @@ export default function RewardSuggestionsPanel({ merchantIndustry, avgOrderValue
               {stampPoints.red != null && (
                 <Badge className="rounded-full text-xs font-medium border-red-300 bg-red-50 text-red-700">Stempel: {stampPoints.red} Pkt.</Badge>
               )}
-              <Badge variant="outline" className="rounded-full text-xs font-normal">Ø-Bon {avgOrder} €</Badge>
             </div>
           </div>
         )}
