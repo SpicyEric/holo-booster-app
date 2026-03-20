@@ -429,16 +429,8 @@ export const AppScan = () => {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             className="fixed inset-0 z-50 bg-background/95 backdrop-blur-sm flex flex-col items-center justify-center p-6"
+            style={{ overscrollBehavior: 'none', touchAction: 'none' }}
           >
-            <Button
-              variant="ghost"
-              size="icon"
-              className="absolute top-4 right-4"
-              onClick={cancelScan}
-            >
-              <X className="h-6 w-6" />
-            </Button>
-
             <motion.div
               animate={{ 
                 scale: [1, 1.2, 1],
@@ -463,22 +455,9 @@ export const AppScan = () => {
             <h2 className="text-2xl font-bold mb-3 text-center">
               NFC-Stempel scannen
             </h2>
-            <p className="text-muted-foreground text-center max-w-xs mb-2">
+            <p className="text-muted-foreground text-center max-w-xs">
               Halte dein Handy jetzt an den Eloyo-Stempel
             </p>
-            {nfcService.isNativeApp() && (
-              <p className="text-xs text-muted-foreground text-center">
-                Halte die Rückseite deines Handys an den Stempel
-              </p>
-            )}
-
-            <Button 
-              variant="outline" 
-              onClick={cancelScan} 
-              className="mt-8 w-full max-w-xs"
-            >
-              Abbrechen
-            </Button>
           </motion.div>
         )}
 
