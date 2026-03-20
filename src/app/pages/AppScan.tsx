@@ -428,7 +428,7 @@ export const AppScan = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-background/95 backdrop-blur-sm flex flex-col items-center justify-start pt-20 p-6"
+            className="fixed inset-0 z-50 bg-background/95 backdrop-blur-sm flex flex-col items-center justify-start pt-28 p-6"
             style={{ overscrollBehavior: 'none', touchAction: 'none' }}
           >
             <div className="w-full flex flex-col items-center">
