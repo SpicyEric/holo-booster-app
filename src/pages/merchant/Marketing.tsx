@@ -223,6 +223,62 @@ const Marketing = () => {
     } catch { toast.error('Fehler'); } finally { setSavingAutomations(false); }
   };
 
+  // --- Rewards handlers ---
+  const handleRewardImageUpload = async (file: File) => {
+    if (!customerId) return;
+    setUploadingRewardImage(true);
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${customerId}/reward_${Date.now()}.${fileExt}`;
+      const { error: uploadError } = await supabase.storage.from("customer-assets").upload(fileName, file, { upsert: true });
+      if (uploadError) throw uploadError;
+      const { data: { publicUrl } } = supabase.storage.from("customer-assets").getPublicUrl(fileName);
+      setRewardForm(prev => ({ ...prev, image_url: publicUrl }));
+      toast.success("Bild hochgeladen");
+    } catch { toast.error("Fehler beim Hochladen"); } finally { setUploadingRewardImage(false); }
+  };
+
+  const handleSaveReward = async () => {
+    if (!customerId || !rewardForm.title) { toast.error("Bitte Titel eingeben"); return; }
+    setSaving(true);
+    try {
+      if (editingReward) {
+        const { error } = await supabase.from("rewards").update({ title: rewardForm.title, description: rewardForm.description || null, points_required: rewardForm.points_required, image_url: rewardForm.image_url || null }).eq("id", editingReward.id);
+        if (error) throw error;
+        toast.success("Prämie aktualisiert");
+      } else {
+        const { error } = await supabase.from("rewards").insert({ merchant_customer_id: customerId, title: rewardForm.title, description: rewardForm.description || null, points_required: rewardForm.points_required, image_url: rewardForm.image_url || null, is_active: true });
+        if (error) throw error;
+        toast.success("Prämie erstellt");
+      }
+      setShowRewardDialog(false); setEditingReward(null); setRewardForm({ title: '', description: '', points_required: 10, image_url: '' }); loadData();
+    } catch { toast.error("Fehler beim Speichern"); } finally { setSaving(false); }
+  };
+
+  const handleDeleteReward = async (id: string) => {
+    try { const { error } = await supabase.from("rewards").delete().eq("id", id); if (error) throw error; toast.success("Prämie gelöscht"); loadData(); } catch { toast.error("Fehler beim Löschen"); }
+  };
+
+  const handleSaveNco = async () => {
+    if (!customerId || !ncoForm.title) { toast.error("Bitte Titel eingeben"); return; }
+    setSaving(true);
+    try {
+      if (newCustomerOffer) {
+        const { error } = await supabase.from("new_customer_offers").update({ title: ncoForm.title, description: ncoForm.description || null, bonus_stamps: ncoForm.bonus_stamps, is_active: ncoForm.is_active, image_url: ncoForm.image_url || null }).eq("id", newCustomerOffer.id);
+        if (error) throw error; toast.success("Neukundenprämie aktualisiert");
+      } else {
+        const { error } = await supabase.from("new_customer_offers").insert({ merchant_customer_id: customerId, title: ncoForm.title, description: ncoForm.description || null, bonus_stamps: ncoForm.bonus_stamps, is_active: ncoForm.is_active, image_url: ncoForm.image_url || null });
+        if (error) throw error; toast.success("Neukundenprämie erstellt");
+      }
+      setShowNcoDialog(false); loadData();
+    } catch { toast.error("Fehler beim Speichern"); } finally { setSaving(false); }
+  };
+
+  const handleDeleteNco = async () => {
+    if (!newCustomerOffer) return;
+    try { const { error } = await supabase.from("new_customer_offers").delete().eq("id", newCustomerOffer.id); if (error) throw error; toast.success("Neukundenprämie gelöscht"); setNewCustomerOffer(null); setNcoForm({ title: '', description: '', bonus_stamps: 0, is_active: true, image_url: '' }); } catch { toast.error("Fehler beim Löschen"); }
+  };
+
   if (loading) return <div className="flex items-center justify-center min-h-[60vh]"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
 
   return (
@@ -242,19 +298,98 @@ const Marketing = () => {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-4 rounded-xl bg-muted/60 p-1">
+          <TabsList className="grid w-full grid-cols-5 rounded-xl bg-primary/8 p-1">
+            <TabsTrigger value="praemien" className="rounded-lg text-xs sm:text-sm"><Gift className="w-4 h-4 mr-1.5 hidden sm:inline" />Prämien</TabsTrigger>
             <TabsTrigger value="boost" className="rounded-lg text-xs sm:text-sm"><Rocket className="w-4 h-4 mr-1.5 hidden sm:inline" />Neukunden</TabsTrigger>
             <TabsTrigger value="reviews" className="rounded-lg text-xs sm:text-sm"><Star className="w-4 h-4 mr-1.5 hidden sm:inline" />Bewertungen</TabsTrigger>
             <TabsTrigger value="messages" className="rounded-lg text-xs sm:text-sm"><MessageSquare className="w-4 h-4 mr-1.5 hidden sm:inline" />Nachrichten</TabsTrigger>
             <TabsTrigger value="automations" className="rounded-lg text-xs sm:text-sm"><Zap className="w-4 h-4 mr-1.5 hidden sm:inline" />Automationen</TabsTrigger>
           </TabsList>
 
+          {/* ========== PRÄMIEN TAB ========== */}
+          <TabsContent value="praemien" className="space-y-6 mt-6">
+            <Card className="rounded-2xl shadow-sm border border-primary/10 bg-primary/[0.03]">
+              <CardHeader className="flex flex-row items-center justify-between pb-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center"><Gift className="h-5 w-5 text-primary" /></div>
+                  <div>
+                    <CardTitle className="text-lg font-semibold">Prämien</CardTitle>
+                    <CardDescription>Belohnungen, die deine Kunden mit gesammelten Punkten einlösen können</CardDescription>
+                  </div>
+                </div>
+                <Button onClick={() => { setEditingReward(null); setRewardForm({ title: '', description: '', points_required: 10, image_url: '' }); setShowRewardDialog(true); }} className="rounded-xl">
+                  <Plus className="h-4 w-4 mr-2" />Neue Prämie
+                </Button>
+              </CardHeader>
+              <CardContent>
+                {rewards.length === 0 ? (
+                  <p className="text-muted-foreground text-center py-8">Noch keine Prämien erstellt</p>
+                ) : (
+                  <div className="space-y-3">
+                    {rewards.map((reward) => (
+                      <div key={reward.id} className="flex items-center justify-between p-4 bg-card rounded-xl border border-border/30">
+                        <div className="flex items-center gap-3">
+                          {reward.image_url ? (
+                            <img src={reward.image_url} alt={reward.title} className="w-12 h-12 rounded-xl object-cover" />
+                          ) : (
+                            <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center"><Gift className="h-6 w-6 text-primary" /></div>
+                          )}
+                          <div>
+                            <p className="font-semibold text-foreground">{reward.title}</p>
+                            {reward.description && <p className="text-sm text-muted-foreground">{reward.description}</p>}
+                            <Badge variant="secondary" className="rounded-full mt-1">{reward.points_required} Punkte</Badge>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Button variant="ghost" size="sm" onClick={() => { setEditingReward(reward); setRewardForm({ title: reward.title, description: reward.description || '', points_required: reward.points_required, image_url: reward.image_url || '' }); setShowRewardDialog(true); }} className="rounded-lg"><Edit2 className="h-4 w-4" /></Button>
+                          <Button variant="ghost" size="sm" onClick={() => handleDeleteReward(reward.id)} className="rounded-lg"><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Neukundenprämie */}
+            <Card className="rounded-2xl shadow-sm border border-primary/10 bg-primary/[0.03]">
+              <CardHeader className="flex flex-row items-center justify-between pb-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center"><UserPlus className="h-5 w-5 text-primary" /></div>
+                  <div>
+                    <CardTitle className="text-lg font-semibold">Neukundenprämie</CardTitle>
+                    <CardDescription>Motiviere neue Nutzer zum ersten Besuch mit einem Willkommensbonus</CardDescription>
+                  </div>
+                </div>
+                <Button variant={newCustomerOffer ? "outline" : "default"} onClick={() => setShowNcoDialog(true)} className="rounded-xl">
+                  {newCustomerOffer ? <><Edit2 className="h-4 w-4 mr-2" />Bearbeiten</> : <><Plus className="h-4 w-4 mr-2" />Erstellen</>}
+                </Button>
+              </CardHeader>
+              <CardContent>
+                {newCustomerOffer ? (
+                  <div className="flex items-center justify-between p-4 bg-card rounded-xl border border-border/30">
+                    <div>
+                      <div className="flex items-center gap-2 mb-1">
+                        <p className="font-semibold text-foreground">{newCustomerOffer.title}</p>
+                        <Badge variant={newCustomerOffer.is_active ? "default" : "secondary"} className="rounded-full">{newCustomerOffer.is_active ? 'Aktiv' : 'Inaktiv'}</Badge>
+                      </div>
+                      {newCustomerOffer.description && <p className="text-sm text-muted-foreground">{newCustomerOffer.description}</p>}
+                    </div>
+                    <Button variant="ghost" size="sm" onClick={handleDeleteNco} className="rounded-lg"><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                  </div>
+                ) : (
+                  <p className="text-muted-foreground text-center py-8">Noch keine Neukundenprämie erstellt</p>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
           {/* ========== NEUKUNDEN TAB ========== */}
           <TabsContent value="boost" className="space-y-6 mt-6">
-            <Card className="rounded-2xl shadow-sm border border-border/50 bg-card">
+            <Card className="rounded-2xl shadow-sm border border-primary/10 bg-primary/[0.03]">
               <CardHeader className="pb-4">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center"><Rocket className="h-5 w-5 text-amber-600" /></div>
+                  <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center"><Rocket className="h-5 w-5 text-primary" /></div>
                   <div>
                     <CardTitle className="text-lg font-semibold">Neukunden-Boost</CardTitle>
                     <CardDescription>Dein Geschäft wird allen App-Nutzern in deiner Umgebung ganz oben im Feed angezeigt</CardDescription>
@@ -299,58 +434,49 @@ const Marketing = () => {
 
           {/* ========== BEWERTUNGEN TAB ========== */}
           <TabsContent value="reviews" className="space-y-6 mt-6">
-            {/* Google Review Link */}
-            <Card className="rounded-2xl shadow-sm border border-border/50 bg-card">
+            <Card className="rounded-2xl shadow-sm border border-primary/10 bg-primary/[0.03]">
               <CardHeader className="pb-4">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center"><Star className="w-6 h-6 text-amber-600 fill-amber-500" /></div>
                   <div>
-                    <CardTitle className="text-lg font-semibold">Google-Bewertungslink</CardTitle>
-                    <CardDescription>Wird nach dem Stempeln angezeigt – mehr Bewertungen = mehr Sichtbarkeit</CardDescription>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex gap-2">
-                  <div className="relative flex-1">
-                    <Star className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-amber-500" />
-                    <Input value={googleReviewUrl} onChange={(e) => setGoogleReviewUrl(e.target.value)} placeholder="https://g.page/r/..." className="pl-10 rounded-xl" />
-                  </div>
-                  <Button variant="outline" size="icon" onClick={copyToClipboard} disabled={!googleReviewUrl} className="rounded-xl">
-                    {copied ? <CheckCircle2 className="w-4 h-4 text-green-600" /> : <Copy className="w-4 h-4" />}
-                  </Button>
-                </div>
-                <div className="flex gap-2">
-                  <Button onClick={handleSaveGoogleUrl} disabled={savingReview} className="rounded-xl">{savingReview ? "Speichern..." : "Speichern"}</Button>
-                  {googleReviewUrl && <Button variant="outline" onClick={() => window.open(googleReviewUrl, '_blank')} className="rounded-xl"><ExternalLink className="w-4 h-4 mr-2" />Link testen</Button>}
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Review Points */}
-            <Card className="rounded-2xl shadow-sm border border-border/50 bg-card">
-              <CardHeader className="pb-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-green-100 flex items-center justify-center"><Gift className="w-6 h-6 text-green-600" /></div>
-                  <div>
                     <CardTitle className="text-lg font-semibold">Bewertungs-Bonus</CardTitle>
-                    <CardDescription>Belohne Kunden mit Bonuspunkten für eine Google-Bewertung</CardDescription>
+                    <CardDescription>Belohne Kunden mit Bonuspunkten für eine Google-Bewertung – mehr Bewertungen = mehr Sichtbarkeit</CardDescription>
                   </div>
                 </div>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="flex items-center justify-between p-4 bg-muted/30 rounded-xl">
-                  <div><p className="font-medium text-foreground">Bonus aktivieren</p><p className="text-sm text-muted-foreground">Kunden erhalten Punkte nach einer Google-Bewertung</p></div>
+                <div className="flex items-center justify-between p-4 bg-card rounded-xl border border-border/30">
+                  <div><p className="font-medium text-foreground">Bewertungs-Bonus aktivieren</p><p className="text-sm text-muted-foreground">Kunden erhalten Punkte nach einer Google-Bewertung</p></div>
                   <Switch checked={reviewPointsEnabled} onCheckedChange={setReviewPointsEnabled} />
                 </div>
                 {reviewPointsEnabled && (
-                  <div className="p-4 bg-muted/30 rounded-xl space-y-3">
-                    <Label>Punkte pro Bewertung</Label>
-                    <div className="flex items-center gap-4">
-                      <Slider value={[reviewPointsValue]} onValueChange={v => setReviewPointsValue(v[0])} min={1} max={20} step={1} className="flex-1" />
-                      <span className="text-lg font-bold text-green-600 min-w-[3rem] text-center">{reviewPointsValue}</span>
+                  <>
+                    <div className="p-4 bg-card rounded-xl border border-border/30 space-y-3">
+                      <Label className="font-medium">Google-Bewertungslink</Label>
+                      <p className="text-sm text-muted-foreground">Wird nach dem Stempeln angezeigt, damit Kunden dich direkt bei Google bewerten können.</p>
+                      <div className="flex gap-2">
+                        <div className="relative flex-1">
+                          <Star className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-amber-500" />
+                          <Input value={googleReviewUrl} onChange={(e) => setGoogleReviewUrl(e.target.value)} placeholder="https://g.page/r/..." className="pl-10 rounded-xl" />
+                        </div>
+                        <Button variant="outline" size="icon" onClick={copyToClipboard} disabled={!googleReviewUrl} className="rounded-xl">
+                          {copied ? <CheckCircle2 className="w-4 h-4 text-green-600" /> : <Copy className="w-4 h-4" />}
+                        </Button>
+                      </div>
+                      {googleReviewUrl && (
+                        <Button variant="outline" size="sm" onClick={() => window.open(googleReviewUrl, '_blank')} className="rounded-xl">
+                          <ExternalLink className="w-4 h-4 mr-2" />Link testen
+                        </Button>
+                      )}
                     </div>
-                  </div>
+                    <div className="p-4 bg-card rounded-xl border border-border/30 space-y-3">
+                      <Label className="font-medium">Punkte pro Bewertung</Label>
+                      <div className="flex items-center gap-4">
+                        <Slider value={[reviewPointsValue]} onValueChange={v => setReviewPointsValue(v[0])} min={1} max={20} step={1} className="flex-1" />
+                        <span className="text-lg font-bold text-primary min-w-[3rem] text-center">{reviewPointsValue}</span>
+                      </div>
+                    </div>
+                  </>
                 )}
                 <Button onClick={handleSaveReviewPoints} disabled={savingReviewPoints} className="rounded-xl">
                   {savingReviewPoints ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Speichern...</> : "Einstellungen speichern"}
