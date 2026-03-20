@@ -447,12 +447,8 @@ const AppHomeContent = () => {
             className={`bg-card relative ${isBoostedInRange ? 'ring-2 ring-amber-400/60 shadow-[0_0_15px_-3px_rgba(245,158,11,0.3)]' : ''}`}
             style={isBoostedInRange ? { animation: 'boost-glow 3s ease-in-out infinite' } : undefined}
           >
-            {isBoostedInRange && (
-              <div className="absolute top-2 right-2 z-10 flex items-center gap-1 px-2.5 py-1 bg-amber-500/90 text-white text-xs font-semibold rounded-full backdrop-blur-sm shadow-sm">
-                <Sparkles className="h-3 w-3" />
-                Gesponsert
-              </div>
-            )}
+
+
 
             <div className="flex items-center gap-3 px-4 py-3 cursor-pointer" onClick={() => navigate(`/app/merchant/${item.merchant_customer_id}`)}>
               {item.merchant_logo ? (
