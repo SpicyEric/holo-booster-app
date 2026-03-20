@@ -23,30 +23,22 @@ function calculateRewardPoints(estimatedValue: number, avgOrderValue: number, av
   if (avgOrderValue <= 0) avgOrderValue = 10;
   if (avgPointsPerVisit <= 0) avgPointsPerVisit = 10;
 
-  const ratio = estimatedValue / avgOrderValue;
+  const valueRatio = estimatedValue / avgOrderValue;
 
-  // Step 1: target visits based on category ratio
+  // Target visits: small rewards ~6, medium ~10, large ~15
   let targetVisits: number;
-  if (ratio <= 0.3) targetVisits = 5;
-  else if (ratio <= 0.6) targetVisits = 6;
-  else if (ratio <= 1.0) targetVisits = 8;
-  else if (ratio <= 1.5) targetVisits = 10;
-  else if (ratio <= 2.5) targetVisits = 14;
+  if (valueRatio <= 0.3) targetVisits = 5;
+  else if (valueRatio <= 0.5) targetVisits = 6;
+  else if (valueRatio <= 1.0) targetVisits = 8;
+  else if (valueRatio <= 2.0) targetVisits = 12;
+  else if (valueRatio <= 3.0) targetVisits = 15;
   else targetVisits = 18;
 
-  // Step 2: reward value factor
-  let rewardFactor: number;
-  if (estimatedValue <= 3) rewardFactor = 0.7;
-  else if (estimatedValue <= 8) rewardFactor = 1.0;
-  else if (estimatedValue <= 20) rewardFactor = 1.3;
-  else rewardFactor = 1.8;
+  // Core formula: points scale with both visits AND reward value
+  const raw = avgPointsPerVisit * targetVisits * (1 + valueRatio);
 
-  // Step 3: calculate
-  const basePoints = avgPointsPerVisit * targetVisits;
-  const finalRaw = basePoints * rewardFactor;
-
-  // Step 4: round to nearest 50 (minimum 50)
-  return Math.max(50, Math.round(finalRaw / 50) * 50);
+  // Round to nearest 25 (gives 50/75/100/125/150/175/200/250/…)
+  return Math.max(50, Math.round(raw / 25) * 25);
 }
 
 const CATEGORY_META = {
