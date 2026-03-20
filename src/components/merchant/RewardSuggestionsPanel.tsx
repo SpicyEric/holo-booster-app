@@ -119,19 +119,18 @@ export default function RewardSuggestionsPanel({ merchantIndustry, avgOrderValue
         {/* Stamp overview */}
         {stampPoints && (stampPoints.green || stampPoints.blue || stampPoints.red) && (
           <div className="pt-2 px-1 space-y-2">
-            <p className="text-xs text-muted-foreground">Basierend auf deinem eingestellten Durchschnittswert:</p>
+            <p className="text-xs text-muted-foreground">Basierend auf deinem eingestellten Durchschnittsbon:</p>
             <div className="flex flex-wrap items-center gap-2">
               {stampPoints.green != null && (
-                <Badge variant="secondary" className="rounded-full text-xs font-normal">Stempel 1: {stampPoints.green} Pkt.</Badge>
+                <Badge className="rounded-full text-xs font-medium border-emerald-300 bg-emerald-50 text-emerald-700">Stempel: {stampPoints.green} Pkt.</Badge>
               )}
               {stampPoints.blue != null && (
-                <Badge variant="secondary" className="rounded-full text-xs font-normal">Stempel 2: {stampPoints.blue} Pkt.</Badge>
+                <Badge className="rounded-full text-xs font-medium border-blue-300 bg-blue-50 text-blue-700">Stempel: {stampPoints.blue} Pkt.</Badge>
               )}
               {stampPoints.red != null && (
-                <Badge variant="secondary" className="rounded-full text-xs font-normal">Stempel 3: {stampPoints.red} Pkt.</Badge>
+                <Badge className="rounded-full text-xs font-medium border-red-300 bg-red-50 text-red-700">Stempel: {stampPoints.red} Pkt.</Badge>
               )}
-              <Badge variant="outline" className="rounded-full text-xs font-normal">Ø {avgPointsPerVisit} Pkt./Besuch</Badge>
-              <Badge variant="outline" className="rounded-full text-xs font-normal">Ø-Bon {avgOrderValue} €</Badge>
+              <Badge variant="outline" className="rounded-full text-xs font-normal">Ø-Bon {avgOrder} €</Badge>
             </div>
           </div>
         )}
