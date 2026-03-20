@@ -454,6 +454,7 @@ const Marketing = () => {
                 merchantIndustry={merchantIndustry}
                 avgOrderValue={avgOrderValue}
                 avgPointsPerVisit={middleStampPoints ?? 10}
+                stampPoints={stampPoints}
                 onSelectReward={(title, pts) => {
                   setEditingReward(null);
                   setRewardForm({ title, description: '', points_required: pts, image_url: '' });
