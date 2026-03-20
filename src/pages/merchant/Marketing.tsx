@@ -134,9 +134,12 @@ const Marketing = () => {
       if (!assignment) { setLoading(false); return; }
       setCustomerId(assignment.customer_id);
 
-      // Fetch middle stamp (blue) points value for recommendation
-      const { data: blueChip } = await supabase.from('nfc_chips').select('points_value').eq('merchant_customer_id', assignment.customer_id).eq('stamp_color', 'blue').eq('is_active', true).maybeSingle();
-      const midPoints = blueChip?.points_value ?? null;
+      // Fetch all stamp points for display
+      const { data: allChips } = await supabase.from('nfc_chips').select('points_value, stamp_color').eq('merchant_customer_id', assignment.customer_id).eq('is_active', true).in('stamp_color', ['green', 'blue', 'red']);
+      const chipMap = { green: null as number | null, blue: null as number | null, red: null as number | null };
+      allChips?.forEach(c => { if (c.stamp_color === 'green' || c.stamp_color === 'blue' || c.stamp_color === 'red') chipMap[c.stamp_color] = c.points_value; });
+      setStampPoints(chipMap);
+      const midPoints = chipMap.blue;
       setMiddleStampPoints(midPoints);
 
       const { data: cd } = await supabase.from('customers').select('google_review_url, google_review_points_enabled, google_review_points_value, birthday_enabled, birthday_message, birthday_bonus_points, birthday_gift_type, birthday_offer_title, birthday_offer_description, industry, avg_revenue').eq('id', assignment.customer_id).maybeSingle();
