@@ -1141,6 +1141,13 @@ const MeinGeschaeft = () => {
                             <span>3 €</span>
                             <span>50 €</span>
                           </div>
+
+                          {stampSettingsDirty && (
+                            <Button onClick={handleSaveChips} disabled={savingChips} className="rounded-xl w-full animate-pulse">
+                              {savingChips ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
+                              Stempel speichern
+                            </Button>
+                          )}
                         </div>
 
                         {/* Variant selector */}
