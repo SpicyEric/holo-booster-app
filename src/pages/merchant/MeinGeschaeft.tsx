@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -185,12 +185,21 @@ const MeinGeschaeft = () => {
   const [selectedVariant, setSelectedVariant] = useState<'balanced' | 'umsatzboost'>('balanced');
   const [stampSettingsDirty, setStampSettingsDirty] = useState(false);
   const [initialStampState, setInitialStampState] = useState<{ stampMode: string; avgRevenue: number; manualMode: boolean } | null>(null);
+  const initialFormDataRef = useRef<typeof formData | null>(null);
+  const [profileDirty, setProfileDirty] = useState(false);
 
   useEffect(() => {
     if (user?.id) {
       loadData();
     }
   }, [user?.id]);
+
+  // Track dirty state for profile info
+  useEffect(() => {
+    if (!initialFormDataRef.current) return;
+    const isDirty = JSON.stringify(formData) !== JSON.stringify(initialFormDataRef.current);
+    setProfileDirty(isDirty);
+  }, [formData]);
 
   // Track dirty state for stamp settings
   useEffect(() => {
@@ -241,6 +250,25 @@ const MeinGeschaeft = () => {
           twitter: customer.twitter || "",
           opening_hours: (customer.opening_hours as OpeningHours) || defaultOpeningHours,
         });
+        // Store initial form data for dirty tracking
+        const loadedFormData = {
+          name: customer.company_name || customer.name || "",
+          description: customer.description || "",
+          industry: customer.industry || "",
+          street: customer.street || "",
+          house_number: customer.house_number || "",
+          postal_code: customer.postal_code || "",
+          city: customer.city || "",
+          logo_url: customer.logo_url || "",
+          cover_image_url: customer.cover_image_url || "",
+          phone: customer.phone || "",
+          website: customer.website || "",
+          instagram: customer.instagram || "",
+          facebook: customer.facebook || "",
+          twitter: customer.twitter || "",
+          opening_hours: (customer.opening_hours as OpeningHours) || defaultOpeningHours,
+        };
+        initialFormDataRef.current = loadedFormData;
         // Restore stamp settings
         const loadedStampMode = (customer as any).stamp_mode || 'classic';
         const loadedAvgRevenue = (customer as any).avg_revenue ?? 7;
@@ -415,6 +443,8 @@ const MeinGeschaeft = () => {
       
       if (error) throw error;
       toast.success("Gespeichert!");
+      initialFormDataRef.current = { ...formData };
+      setProfileDirty(false);
     } catch (error: any) {
       toast.error("Fehler beim Speichern");
     } finally {
@@ -813,8 +843,8 @@ const MeinGeschaeft = () => {
               </PhoneFrame>
               
               {/* Global Save Button below phone */}
-              {activeTab === 'info' && (
-                <Button onClick={handleSaveInfo} disabled={saving} className="w-full rounded-xl mt-4" size="lg">
+              {activeTab === 'info' && profileDirty && (
+                <Button onClick={handleSaveInfo} disabled={saving} className="w-full rounded-xl mt-4 animate-pulse" size="lg">
                   {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
                   Änderungen speichern
                 </Button>
