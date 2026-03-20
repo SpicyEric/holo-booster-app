@@ -11,7 +11,8 @@ import { Slider } from '@/components/ui/slider';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   Loader2, Plus, MessageSquare, Gift, Send, Users, Clock, UserPlus, Zap, Cake, Save, 
-  ChevronDown, Rocket, CheckCircle2, Timer, Star, ExternalLink, Copy, Bot, Megaphone
+  ChevronDown, Rocket, CheckCircle2, Timer, Star, ExternalLink, Copy, Bot, Megaphone,
+  Edit2, Trash2
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -22,11 +23,12 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 
-// ---- Types (unchanged from original Nachrichten + GoogleBewertungen) ----
+// ---- Types ----
 interface Segment { type: 'all' | 'last_stamped_days' | 'not_stamped_days'; value?: number; }
 interface Message { id: string; title: string; body: string; show_in_storefront: boolean | null; sent_at: string | null; segment: Segment; offer_id: string | null; is_sent: boolean | null; recipient_count: number | null; }
 interface Offer { id: string; title: string; description: string | null; }
-interface NewCustomerOffer { id: string; title: string; description: string | null; bonus_stamps: number | null; is_active: boolean | null; }
+interface NewCustomerOffer { id: string; title: string; description: string | null; bonus_stamps: number | null; is_active: boolean | null; image_url: string | null; }
+interface Reward { id: string; title: string; description: string | null; points_required: number; image_url: string | null; is_active: boolean | null; }
 
 const SEGMENT_OPTIONS = [
   { value: 'all', label: 'Alle Kunden', description: 'Alle, die bei Ihnen schon mal Punkte gesammelt haben' },
