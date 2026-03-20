@@ -66,7 +66,7 @@ export const AppScan = () => {
   // Auto-start NFC scan when navigated with autostart param (from center button)
   useEffect(() => {
     const autostart = searchParams.get('autostart');
-    if (autostart === 'true' && !checkingNfc && nfcSupported && nfcEnabled && !scanning && !result) {
+    if (autostart && !checkingNfc && nfcSupported && nfcEnabled && !scanning && !result) {
       startNFCScan();
     }
   }, [searchParams, checkingNfc, nfcSupported, nfcEnabled]);
