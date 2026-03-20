@@ -10,7 +10,7 @@ import {
   Loader2, Users, Trophy, Gift, Zap, TrendingUp,
   AlertTriangle, Pause, Clock, Star, Image, MapPin, Megaphone,
   ArrowRight, Sparkles, ChevronRight, Target, CheckCircle2, Circle,
-  Rocket
+  Rocket, Store
 } from "lucide-react";
 import { 
   AreaChart, Area, XAxis, YAxis, Tooltip, 
