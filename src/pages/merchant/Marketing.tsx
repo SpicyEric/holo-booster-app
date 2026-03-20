@@ -350,7 +350,10 @@ const Marketing = () => {
                 )}
               </CardContent>
             </Card>
+          </TabsContent>
 
+          {/* ========== NEUKUNDEN TAB ========== */}
+          <TabsContent value="boost" className="space-y-6 mt-6">
             {/* Neukundenprämie */}
             <Card className="rounded-2xl shadow-sm border border-primary/10 bg-primary/[0.03]">
               <CardHeader className="flex flex-row items-center justify-between pb-4">
@@ -358,14 +361,23 @@ const Marketing = () => {
                   <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center"><UserPlus className="h-5 w-5 text-primary" /></div>
                   <div>
                     <CardTitle className="text-lg font-semibold">Neukundenprämie</CardTitle>
-                    <CardDescription>Motiviere neue Nutzer zum ersten Besuch mit einem Willkommensbonus</CardDescription>
+                    <CardDescription>Gewinne neue Kunden mit einem attraktiven Willkommensangebot</CardDescription>
                   </div>
                 </div>
                 <Button variant={newCustomerOffer ? "outline" : "default"} onClick={() => setShowNcoDialog(true)} className="rounded-xl">
                   {newCustomerOffer ? <><Edit2 className="h-4 w-4 mr-2" />Bearbeiten</> : <><Plus className="h-4 w-4 mr-2" />Erstellen</>}
                 </Button>
               </CardHeader>
-              <CardContent>
+              <CardContent className="space-y-4">
+                <div className="p-4 bg-primary/5 rounded-xl border border-primary/10 text-sm text-muted-foreground space-y-2">
+                  <p className="font-medium text-foreground">💡 Was ist die Neukundenprämie?</p>
+                  <p>Die Neukundenprämie wird nur Kunden angezeigt, die bei dir <strong>noch keine Punkte gesammelt haben</strong>. Sobald ein Kunde seine ersten Punkte bei dir sammelt, verschwindet das Angebot automatisch.</p>
+                  <p>Das macht sie perfekt für zwei Dinge:</p>
+                  <ul className="list-disc pl-5 space-y-1">
+                    <li><strong>Andere eloyo-Nutzer ins Geschäft holen</strong> – dein Angebot erscheint bei Nutzern in deiner Umgebung, die dich noch nicht kennen.</li>
+                    <li><strong>Bestehende Laufkundschaft digital aktivieren</strong> – biete deinen Stammkunden einen Grund, sich die App herunterzuladen und beim nächsten Besuch direkt einzulösen.</li>
+                  </ul>
+                </div>
                 {newCustomerOffer ? (
                   <div className="flex items-center justify-between p-4 bg-card rounded-xl border border-border/30">
                     <div>
@@ -378,14 +390,12 @@ const Marketing = () => {
                     <Button variant="ghost" size="sm" onClick={handleDeleteNco} className="rounded-lg"><Trash2 className="h-4 w-4 text-destructive" /></Button>
                   </div>
                 ) : (
-                  <p className="text-muted-foreground text-center py-8">Noch keine Neukundenprämie erstellt</p>
+                  <p className="text-muted-foreground text-center py-4">Noch keine Neukundenprämie erstellt</p>
                 )}
               </CardContent>
             </Card>
-          </TabsContent>
 
-          {/* ========== NEUKUNDEN TAB ========== */}
-          <TabsContent value="boost" className="space-y-6 mt-6">
+            {/* Neukunden-Boost */}
             <Card className="rounded-2xl shadow-sm border border-primary/10 bg-primary/[0.03]">
               <CardHeader className="pb-4">
                 <div className="flex items-center gap-3">
@@ -447,7 +457,10 @@ const Marketing = () => {
               <CardContent className="space-y-4">
                 <div className="flex items-center justify-between p-4 bg-card rounded-xl border border-border/30">
                   <div><p className="font-medium text-foreground">Bewertungs-Bonus aktivieren</p><p className="text-sm text-muted-foreground">Kunden erhalten Punkte nach einer Google-Bewertung</p></div>
-                  <Switch checked={reviewPointsEnabled} onCheckedChange={setReviewPointsEnabled} />
+                  <div className="flex items-center gap-2">
+                    <span className={`text-xs font-medium ${reviewPointsEnabled ? 'text-primary' : 'text-muted-foreground'}`}>{reviewPointsEnabled ? 'Aktiv' : 'Inaktiv'}</span>
+                    <Switch checked={reviewPointsEnabled} onCheckedChange={setReviewPointsEnabled} />
+                  </div>
                 </div>
                 {reviewPointsEnabled && (
                   <>
@@ -626,7 +639,10 @@ const Marketing = () => {
               <div><Label>Nachricht</Label><Textarea value={messageForm.body} onChange={e=>setMessageForm({...messageForm,body:e.target.value})} placeholder="Deine Nachricht..." rows={4} className="rounded-xl mt-1" /></div>
               <div className="flex items-center justify-between p-3 bg-muted/30 rounded-xl">
                 <div><p className="text-sm font-medium">Angebot anhängen</p><p className="text-xs text-muted-foreground">7 Tage gültig, einmalig einlösbar</p></div>
-                <Switch checked={messageForm.attach_offer} onCheckedChange={v=>setMessageForm({...messageForm,attach_offer:v})} />
+                <div className="flex items-center gap-2">
+                  <span className={`text-xs font-medium ${messageForm.attach_offer ? 'text-primary' : 'text-muted-foreground'}`}>{messageForm.attach_offer ? 'Aktiv' : 'Inaktiv'}</span>
+                  <Switch checked={messageForm.attach_offer} onCheckedChange={v=>setMessageForm({...messageForm,attach_offer:v})} />
+                </div>
               </div>
               {messageForm.attach_offer && (
                 <div className="space-y-3 p-3 bg-muted/30 rounded-xl">
@@ -691,8 +707,11 @@ const Marketing = () => {
               <div><Label>Beschreibung</Label><Textarea value={ncoForm.description} onChange={e => setNcoForm({ ...ncoForm, description: e.target.value })} placeholder="Details..." rows={2} className="rounded-xl mt-1" /></div>
               <div><Label>Bonuspunkte</Label><Input type="number" min={0} value={ncoForm.bonus_stamps} onChange={e => setNcoForm({ ...ncoForm, bonus_stamps: parseInt(e.target.value) || 0 })} className="rounded-xl mt-1 w-32" /></div>
               <div className="flex items-center justify-between p-3 bg-muted/30 rounded-xl">
-                <div><p className="text-sm font-medium">Aktiv</p></div>
-                <Switch checked={ncoForm.is_active} onCheckedChange={v => setNcoForm({ ...ncoForm, is_active: v })} />
+                <div><p className="text-sm font-medium">Neukundenprämie aktiv</p></div>
+                <div className="flex items-center gap-2">
+                  <span className={`text-xs font-medium ${ncoForm.is_active ? 'text-primary' : 'text-muted-foreground'}`}>{ncoForm.is_active ? 'Aktiv' : 'Inaktiv'}</span>
+                  <Switch checked={ncoForm.is_active} onCheckedChange={v => setNcoForm({ ...ncoForm, is_active: v })} />
+                </div>
               </div>
             </div>
             <DialogFooter>

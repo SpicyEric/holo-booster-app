@@ -5,7 +5,7 @@ import MerchantSidebar from "@/components/merchant/MerchantSidebar";
 const MerchantLayout = () => {
   return (
     <ProtectedRoute allowedRoles={['merchant', 'admin']}>
-      <div className="flex min-h-screen w-full bg-[hsl(260,30%,96%)]">
+      <div className="flex min-h-screen w-full bg-[hsl(262,40%,93%)]">
         <MerchantSidebar />
         <main className="flex-1 min-w-0 overflow-x-hidden">
           <Outlet />
