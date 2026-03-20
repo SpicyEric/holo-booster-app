@@ -368,7 +368,10 @@ export default function MeinKonto() {
                       <div>
                         <p className="font-medium text-gray-900">{formatDate(invoice.issued_at)}</p>
                         <p className="text-sm text-gray-500">
-                          {invoice.invoice_type === 'subscription' ? 'Abo' : 'Einmalig'}
+                          {invoice.invoice_type === 'subscription' ? 'Abo' 
+                            : invoice.invoice_type === 'boost' ? 'Neukunden-Boost'
+                            : invoice.invoice_type === 'sms_campaign' ? 'SMS-Kampagne'
+                            : 'Einmalig'}
                         </p>
                       </div>
                     </div>

@@ -343,6 +343,49 @@ serve(async (req) => {
           }
         }
 
+        // Handle Neukunden-Boost payments
+        if (metadata.boost_id && metadata.merchant_customer_id) {
+          console.log("[WEBHOOK] Boost payment detected:", metadata.boost_id);
+
+          const boostTierLabels: Record<string, string> = {
+            '3_days': '3 Tage',
+            '7_days': '7 Tage',
+            '14_days': '14 Tage',
+          };
+
+          // Activate the boost: set starts_at to now, ends_at accordingly
+          const tierDays: Record<string, number> = { '3_days': 3, '7_days': 7, '14_days': 14 };
+          const days = tierDays[metadata.tier] || 7;
+          const now = new Date();
+          const endsAt = new Date(now);
+          endsAt.setDate(endsAt.getDate() + days);
+
+          await supabase
+            .from('merchant_boosts')
+            .update({
+              status: 'active',
+              starts_at: now.toISOString(),
+              ends_at: endsAt.toISOString(),
+              stripe_checkout_session_id: session.id,
+            })
+            .eq('id', metadata.boost_id);
+
+          console.log("[WEBHOOK] Boost activated:", metadata.boost_id, "until", endsAt.toISOString());
+
+          // Create invoice for the boost payment
+          await supabase.from("invoices").insert({
+            customer_id: metadata.merchant_customer_id,
+            stripe_invoice_id: `boost_${session.id}`,
+            pdf_url: null,
+            total_amount_cents: session.amount_total || 0,
+            currency: (session.currency || 'eur').toUpperCase(),
+            status: "paid",
+            invoice_type: "boost",
+            issued_at: now.toISOString(),
+          });
+          console.log("[WEBHOOK] Boost invoice created for", metadata.merchant_customer_id);
+        }
+
         break;
       }
 
