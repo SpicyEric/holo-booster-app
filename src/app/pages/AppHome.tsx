@@ -248,10 +248,10 @@ export const AppHome = () => {
         }
       }
 
-      // Sort: boosted first (within 15km, sorted by distance), then non-boosted by distance
+      // Sort: boosted first (within their tier radius), then non-boosted by distance
       items.sort((a, b) => {
-        const aBoosted = a.is_boosted && (a.distance === undefined || a.distance <= 15);
-        const bBoosted = b.is_boosted && (b.distance === undefined || b.distance <= 15);
+        const aBoosted = a.is_boosted && (a.distance === undefined || a.distance <= (a.boost_radius ?? 10));
+        const bBoosted = b.is_boosted && (b.distance === undefined || b.distance <= (b.boost_radius ?? 10));
 
         if (aBoosted && !bBoosted) return -1;
         if (!aBoosted && bBoosted) return 1;
