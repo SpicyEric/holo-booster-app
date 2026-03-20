@@ -81,7 +81,7 @@ function SidebarNav({ collapsed, onNavigate }: { collapsed: boolean; onNavigate?
         {NAV_GROUPS.map((group) => (
           <div key={group.label}>
             {!collapsed && (
-              <p className="text-[10px] font-bold tracking-[0.12em] text-muted-foreground/70 uppercase mb-2 px-3">
+              <p className="text-[10px] font-bold tracking-[0.12em] text-white/40 uppercase mb-2 px-3">
                 {group.label}
               </p>
             )}
@@ -94,15 +94,15 @@ function SidebarNav({ collapsed, onNavigate }: { collapsed: boolean; onNavigate?
                     onClick={() => handleNav(item.path)}
                     className={cn(
                       "w-full flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200",
-                      "hover:bg-primary/8 active:scale-[0.97]",
+                      "hover:bg-white/10 active:scale-[0.97]",
                       active
-                        ? "bg-primary/10 text-primary shadow-sm"
-                        : "text-muted-foreground hover:text-foreground",
+                        ? "bg-white/15 text-white shadow-sm"
+                        : "text-white/70 hover:text-white",
                       collapsed && "justify-center px-0"
                     )}
                     title={collapsed ? item.label : undefined}
                   >
-                    <item.icon className={cn("h-[18px] w-[18px] shrink-0", active && "text-primary")} />
+                    <item.icon className={cn("h-[18px] w-[18px] shrink-0", active && "text-white")} />
                     {!collapsed && <span>{item.label}</span>}
                   </button>
                 );
