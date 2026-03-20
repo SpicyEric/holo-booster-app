@@ -512,17 +512,27 @@ const AppHomeContent = () => {
                 </div>
               )}
               {item.type === 'offer' && (
-                <div className="flex items-center gap-2 mb-2">
+                <div className="flex items-center gap-2 mb-2 flex-wrap">
                   <span className="inline-flex items-center gap-1 px-3 py-1.5 bg-primary/10 text-primary rounded-full text-sm font-semibold">
                     <Gift className="h-4 w-4" />Neukundenprämie
                   </span>
+                  {isBoostedInRange && (
+                    <span className="inline-flex items-center px-2.5 py-1.5 bg-amber-500/15 text-amber-600 dark:text-amber-400 rounded-full text-xs font-semibold">
+                      Gesponsert
+                    </span>
+                  )}
                 </div>
               )}
               {item.type === 'merchant_card' && item.points_balance !== undefined && (
-                <div className="flex items-center gap-2 mb-2">
+                <div className="flex items-center gap-2 mb-2 flex-wrap">
                   <span className="inline-flex items-center gap-1 px-3 py-1.5 bg-muted text-muted-foreground rounded-full text-xs font-medium">
                     {item.points_balance} Punkte gesammelt
                   </span>
+                  {isBoostedInRange && (
+                    <span className="inline-flex items-center px-2.5 py-1.5 bg-amber-500/15 text-amber-600 dark:text-amber-400 rounded-full text-xs font-semibold">
+                      Gesponsert
+                    </span>
+                  )}
                 </div>
               )}
               {item.type === 'offer' && item.title && (
