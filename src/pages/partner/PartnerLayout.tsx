@@ -23,6 +23,11 @@ export default function PartnerLayout() {
   const navigate = useNavigate();
   const location = useLocation();
 
+  useEffect(() => {
+    document.body.classList.add('ccm19-right');
+    return () => { document.body.classList.remove('ccm19-right'); };
+  }, []);
+
   const handleLogout = async () => {
     await signOut();
     toast.success('Erfolgreich abgemeldet');
