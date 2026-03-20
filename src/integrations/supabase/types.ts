@@ -1163,6 +1163,56 @@ export type Database = {
           },
         ]
       }
+      merchant_boosts: {
+        Row: {
+          created_at: string
+          created_by_user_id: string | null
+          duration_days: number
+          ends_at: string
+          id: string
+          merchant_customer_id: string
+          starts_at: string
+          status: string
+          stripe_checkout_session_id: string | null
+          stripe_payment_intent_id: string | null
+          tier: string
+        }
+        Insert: {
+          created_at?: string
+          created_by_user_id?: string | null
+          duration_days: number
+          ends_at: string
+          id?: string
+          merchant_customer_id: string
+          starts_at?: string
+          status?: string
+          stripe_checkout_session_id?: string | null
+          stripe_payment_intent_id?: string | null
+          tier: string
+        }
+        Update: {
+          created_at?: string
+          created_by_user_id?: string | null
+          duration_days?: number
+          ends_at?: string
+          id?: string
+          merchant_customer_id?: string
+          starts_at?: string
+          status?: string
+          stripe_checkout_session_id?: string | null
+          stripe_payment_intent_id?: string | null
+          tier?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "merchant_boosts_merchant_customer_id_fkey"
+            columns: ["merchant_customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       new_customer_offers: {
         Row: {
           bonus_stamps: number | null

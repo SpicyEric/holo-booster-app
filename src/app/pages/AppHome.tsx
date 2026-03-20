@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Gift, MapPin, Heart, Loader2 } from 'lucide-react';
+import { Gift, MapPin, Heart, Loader2, Sparkles } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { MainLayout } from '@/app/components/layout/MainLayout';
@@ -21,6 +21,7 @@ interface FeedItem {
   like_count: number;
   liked_by_user: boolean;
   points_balance?: number;
+  is_boosted?: boolean;
 }
 
 function haversineDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
@@ -53,7 +54,6 @@ export const AppHome = () => {
   const loadFeed = async () => {
     setLoading(true);
     
-    // Try loading from cache first if offline
     if (!navigator.onLine) {
       const cached = offlineCacheService.get<FeedItem[]>('home_feed');
       if (cached) {
@@ -66,7 +66,16 @@ export const AppHome = () => {
     try {
       const items: FeedItem[] = [];
 
-      // Get user's loyalty accounts to know which merchants they follow
+      // Get active boosts
+      const { data: activeBoosts } = await supabase
+        .from('merchant_boosts')
+        .select('merchant_customer_id')
+        .eq('status', 'active')
+        .gt('ends_at', new Date().toISOString());
+
+      const boostedMerchantIds = new Set(activeBoosts?.map(b => b.merchant_customer_id) || []);
+
+      // Get user's loyalty accounts
       const { data: accounts } = await supabase
         .from('loyalty_accounts')
         .select('merchant_customer_id, current_points_balance')
@@ -88,10 +97,9 @@ export const AppHome = () => {
           const postMerchantIds = [...new Set(posts.map(p => p.merchant_customer_id))];
           const { data: merchants } = await supabase
             .from('customers')
-            .select('id, name, company_name, logo_url')
+            .select('id, name, company_name, logo_url, latitude, longitude')
             .in('id', postMerchantIds);
 
-          // Get like counts and user likes
           const postIds = posts.map(p => p.id);
           const { data: allLikes } = await supabase
             .from('feed_post_likes')
@@ -107,6 +115,10 @@ export const AppHome = () => {
 
           posts.forEach(post => {
             const m = merchants?.find(m => m.id === post.merchant_customer_id);
+            let distance: number | undefined;
+            if (userLocation && m?.latitude && m?.longitude) {
+              distance = haversineDistance(userLocation.lat, userLocation.lng, m.latitude, m.longitude);
+            }
             items.push({
               type: 'post',
               id: post.id,
@@ -118,24 +130,27 @@ export const AppHome = () => {
               created_at: post.created_at,
               like_count: likeCounts.get(post.id) || 0,
               liked_by_user: userLikes.has(post.id),
+              distance,
+              is_boosted: boostedMerchantIds.has(post.merchant_customer_id),
             });
           });
-      }
+        }
 
-      // Add merchant card entries for stamped merchants (so feed isn't empty)
-      if (stampedMerchantIds.length > 0) {
+        // Add merchant cards for stamped merchants without posts
         const { data: stampedMerchants } = await supabase
           .from('customers')
-          .select('id, name, company_name, logo_url, cover_image_url, description, updated_at')
+          .select('id, name, company_name, logo_url, cover_image_url, description, updated_at, latitude, longitude')
           .in('id', stampedMerchantIds);
 
-        // Set of merchants that already have feed posts
         const merchantsWithPosts = new Set(items.filter(i => i.type === 'post').map(i => i.merchant_customer_id));
 
         stampedMerchants?.forEach(m => {
-          // Only add merchant card if they don't already have feed posts
           if (!merchantsWithPosts.has(m.id)) {
             const account = accounts?.find(a => a.merchant_customer_id === m.id);
+            let distance: number | undefined;
+            if (userLocation && m?.latitude && m?.longitude) {
+              distance = haversineDistance(userLocation.lat, userLocation.lng, m.latitude, m.longitude);
+            }
             items.push({
               type: 'merchant_card',
               id: `mc-${m.id}`,
@@ -148,40 +163,52 @@ export const AppHome = () => {
               like_count: 0,
               liked_by_user: false,
               points_balance: account?.current_points_balance ?? 0,
+              distance,
+              is_boosted: boostedMerchantIds.has(m.id),
             });
           }
         });
       }
-      }
 
-      // Load new customer offers (for merchants where user has NO points)
-      const { data: offersData } = await supabase
-        .from('new_customer_offers')
-        .select('id, merchant_customer_id, title, description, bonus_stamps, created_at, image_url')
-        .eq('is_active', true);
+      // Load ALL active merchants (not just those with offers) for discovery
+      // Get merchants where user does NOT have a loyalty account
+      const { data: allActiveMerchants } = await supabase
+        .from('customers')
+        .select('id, name, company_name, logo_url, cover_image_url, description, latitude, longitude, updated_at')
+        .eq('active', true);
 
-      if (offersData && offersData.length > 0) {
-        const filteredOffers = offersData.filter(o => !stampedSet.has(o.merchant_customer_id));
-        if (filteredOffers.length > 0) {
-          const offerMerchantIds = filteredOffers.map(o => o.merchant_customer_id);
-          const { data: offerMerchants } = await supabase
-            .from('customers')
-            .select('id, name, company_name, logo_url, cover_image_url, latitude, longitude')
-            .in('id', offerMerchantIds);
+      if (allActiveMerchants) {
+        // Already-shown merchant IDs
+        const shownMerchantIds = new Set(items.map(i => i.merchant_customer_id));
 
-          filteredOffers.forEach(offer => {
-            const m = offerMerchants?.find(c => c.id === offer.merchant_customer_id);
-            let distance: number | undefined;
-            if (userLocation && m?.latitude && m?.longitude) {
-              distance = haversineDistance(userLocation.lat, userLocation.lng, m.latitude, m.longitude);
-            }
+        // Load new customer offers for enrichment
+        const { data: offersData } = await supabase
+          .from('new_customer_offers')
+          .select('id, merchant_customer_id, title, description, bonus_stamps, created_at, image_url')
+          .eq('is_active', true);
+
+        const offersMap = new Map(offersData?.map(o => [o.merchant_customer_id, o]) || []);
+
+        for (const m of allActiveMerchants) {
+          if (shownMerchantIds.has(m.id)) continue;
+          if (stampedSet.has(m.id)) continue; // already handled above
+
+          let distance: number | undefined;
+          if (userLocation && m.latitude && m.longitude) {
+            distance = haversineDistance(userLocation.lat, userLocation.lng, m.latitude, m.longitude);
+          }
+
+          const offer = offersMap.get(m.id);
+
+          if (offer) {
+            // Show as offer card
             items.push({
               type: 'offer',
               id: offer.id,
-              merchant_customer_id: offer.merchant_customer_id,
-              merchant_name: m?.company_name || m?.name || 'Unbekannt',
-              merchant_logo: m?.logo_url || null,
-              image_url: offer.image_url || m?.cover_image_url || null,
+              merchant_customer_id: m.id,
+              merchant_name: m.company_name || m.name || 'Unbekannt',
+              merchant_logo: m.logo_url || null,
+              image_url: offer.image_url || m.cover_image_url || null,
               body: offer.description,
               title: offer.title,
               bonus_stamps: offer.bonus_stamps ?? 0,
@@ -189,28 +216,48 @@ export const AppHome = () => {
               created_at: offer.created_at || new Date().toISOString(),
               like_count: 0,
               liked_by_user: false,
+              is_boosted: boostedMerchantIds.has(m.id),
             });
-          });
+          } else {
+            // Show as merchant card even without offer
+            items.push({
+              type: 'merchant_card',
+              id: `mc-${m.id}`,
+              merchant_customer_id: m.id,
+              merchant_name: m.company_name || m.name || 'Unbekannt',
+              merchant_logo: m.logo_url || null,
+              image_url: m.cover_image_url || null,
+              body: m.description || null,
+              created_at: m.updated_at || new Date().toISOString(),
+              like_count: 0,
+              liked_by_user: false,
+              distance,
+              is_boosted: boostedMerchantIds.has(m.id),
+            });
+          }
         }
       }
 
-      // Sort: offers by distance first, then all by date
+      // Sort: boosted first (within 15km, sorted by distance), then non-boosted by distance
       items.sort((a, b) => {
-        // Offers with distance come first
-        if (a.type === 'offer' && b.type === 'offer') {
-          if (a.distance !== undefined && b.distance !== undefined) return a.distance - b.distance;
-          if (a.distance !== undefined) return -1;
-          if (b.distance !== undefined) return 1;
-        }
+        const aBoosted = a.is_boosted && (a.distance === undefined || a.distance <= 15);
+        const bBoosted = b.is_boosted && (b.distance === undefined || b.distance <= 15);
+
+        if (aBoosted && !bBoosted) return -1;
+        if (!aBoosted && bBoosted) return 1;
+
+        // Within same category, sort by distance
+        if (a.distance !== undefined && b.distance !== undefined) return a.distance - b.distance;
+        if (a.distance !== undefined) return -1;
+        if (b.distance !== undefined) return 1;
+
         return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
       });
 
       setFeedItems(items);
-      // Cache for offline use
       offlineCacheService.set('home_feed', items);
     } catch (err) {
       console.error('[Feed] Error:', err);
-      // On error, try cache
       const cached = offlineCacheService.get<FeedItem[]>('home_feed');
       if (cached) setFeedItems(cached);
     } finally {
@@ -221,7 +268,6 @@ export const AppHome = () => {
   const toggleLike = async (item: FeedItem) => {
     if (item.type !== 'post') return;
 
-    // Optimistic update
     setFeedItems(prev => prev.map(fi =>
       fi.id === item.id
         ? { ...fi, liked_by_user: !fi.liked_by_user, like_count: fi.liked_by_user ? fi.like_count - 1 : fi.like_count + 1 }
@@ -271,7 +317,27 @@ export const AppHome = () => {
       ) : (
         <div className="-mx-4 space-y-6">
           {feedItems.map((item) => (
-            <div key={`${item.type}-${item.id}`} className={`bg-card ${item.type === 'offer' ? 'border-l-4 border-primary' : ''}`}>
+            <div
+              key={`${item.type}-${item.id}`}
+              className={`bg-card relative ${
+                item.is_boosted && (item.distance === undefined || item.distance <= 15)
+                  ? 'ring-2 ring-amber-400/60 shadow-[0_0_15px_-3px_rgba(245,158,11,0.3)]'
+                  : ''
+              }`}
+              style={
+                item.is_boosted && (item.distance === undefined || item.distance <= 15)
+                  ? { animation: 'boost-glow 3s ease-in-out infinite' }
+                  : undefined
+              }
+            >
+              {/* Sponsored badge */}
+              {item.is_boosted && (item.distance === undefined || item.distance <= 15) && (
+                <div className="absolute top-2 right-2 z-10 flex items-center gap-1 px-2.5 py-1 bg-amber-500/90 text-white text-xs font-semibold rounded-full backdrop-blur-sm shadow-sm">
+                  <Sparkles className="h-3 w-3" />
+                  Gesponsert
+                </div>
+              )}
+
               {/* Header: profile pic + name */}
               <div
                 className="flex items-center gap-3 px-4 py-3 cursor-pointer"
@@ -286,7 +352,7 @@ export const AppHome = () => {
                 )}
                 <div className="flex-1 min-w-0">
                   <span className="font-semibold text-sm text-foreground">{item.merchant_name}</span>
-                  {item.type === 'offer' && item.distance !== undefined && (
+                  {item.distance !== undefined && (
                     <span className="text-xs text-muted-foreground ml-2">
                       <MapPin className="h-3 w-3 inline -mt-0.5" />
                       {item.distance < 1 ? ` ${Math.round(item.distance * 1000)}m` : ` ${item.distance.toFixed(1)}km`}
@@ -298,18 +364,12 @@ export const AppHome = () => {
 
               {/* Image */}
               {item.type === 'merchant_card' ? (
-                // Merchant card: rectangular cover image (like stamp card header)
                 <div
                   className="w-full aspect-[16/7] bg-muted cursor-pointer"
                   onClick={() => navigate(`/app/merchant/${item.merchant_customer_id}`)}
                 >
                   {item.image_url ? (
-                    <img
-                      src={item.image_url}
-                      alt=""
-                      className="w-full h-full object-cover"
-                      loading="lazy"
-                    />
+                    <img src={item.image_url} alt="" className="w-full h-full object-cover" loading="lazy" />
                   ) : (
                     <div className="w-full h-full bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center">
                       <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
@@ -323,29 +383,24 @@ export const AppHome = () => {
                   className="w-full aspect-square bg-muted cursor-pointer"
                   onClick={() => navigate(`/app/merchant/${item.merchant_customer_id}`)}
                 >
-                  <img
-                    src={item.image_url}
-                    alt=""
-                    className="w-full h-full object-cover"
-                    loading="lazy"
-                  />
+                  <img src={item.image_url} alt="" className="w-full h-full object-cover" loading="lazy" />
                 </div>
               ) : (
-                  <div
-                    className="w-full aspect-square bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center cursor-pointer"
-                    onClick={() => navigate(`/app/merchant/${item.merchant_customer_id}`)}
-                  >
-                    {item.type === 'offer' ? (
-                      <div className="text-center px-8">
-                        <Gift className="h-16 w-16 text-primary mx-auto mb-4" />
-                        <p className="text-2xl font-bold text-foreground">{item.title}</p>
-                      </div>
-                    ) : (
-                      <div className="w-24 h-24 rounded-full bg-primary/10 flex items-center justify-center">
-                        <span className="text-4xl font-bold text-primary">{item.merchant_name.charAt(0)}</span>
-                      </div>
-                    )}
-                  </div>
+                <div
+                  className="w-full aspect-square bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center cursor-pointer"
+                  onClick={() => navigate(`/app/merchant/${item.merchant_customer_id}`)}
+                >
+                  {item.type === 'offer' ? (
+                    <div className="text-center px-8">
+                      <Gift className="h-16 w-16 text-primary mx-auto mb-4" />
+                      <p className="text-2xl font-bold text-foreground">{item.title}</p>
+                    </div>
+                  ) : (
+                    <div className="w-24 h-24 rounded-full bg-primary/10 flex items-center justify-center">
+                      <span className="text-4xl font-bold text-primary">{item.merchant_name.charAt(0)}</span>
+                    </div>
+                  )}
+                </div>
               )}
 
               {/* Actions + text */}
@@ -374,7 +429,7 @@ export const AppHome = () => {
                   </div>
                 )}
 
-                {item.type === 'merchant_card' && item.points_balance !== undefined && (
+                {item.type === 'merchant_card' && item.points_balance !== undefined && item.points_balance > 0 && (
                   <div className="flex items-center gap-2 mb-2">
                     <span className="inline-flex items-center gap-1 px-3 py-1.5 bg-muted text-muted-foreground rounded-full text-xs font-medium">
                       {item.points_balance} Punkte gesammelt
@@ -397,6 +452,17 @@ export const AppHome = () => {
           ))}
         </div>
       )}
+
+      <style>{`
+        @keyframes boost-glow {
+          0%, 100% {
+            box-shadow: 0 0 12px -3px rgba(245, 158, 11, 0.25);
+          }
+          50% {
+            box-shadow: 0 0 20px -2px rgba(245, 158, 11, 0.45);
+          }
+        }
+      `}</style>
     </MainLayout>
   );
 };

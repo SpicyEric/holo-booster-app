@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -6,7 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
-import { Loader2, Plus, MessageSquare, Gift, Send, Users, Clock, UserPlus, Zap, Cake, Save, ChevronDown } from 'lucide-react';
+import { Loader2, Plus, MessageSquare, Gift, Send, Users, Clock, UserPlus, Zap, Cake, Save, ChevronDown, Rocket, CheckCircle2, Timer } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import {
@@ -65,6 +66,7 @@ const SEGMENT_OPTIONS = [
 ];
 
 const Nachrichten = () => {
+  const [searchParams] = useSearchParams();
   const [loading, setLoading] = useState(true);
   const [customerId, setCustomerId] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -104,6 +106,11 @@ const Nachrichten = () => {
     bonus_stamps: 0,
     is_active: true
   });
+
+  // Boost state
+  const [boostLoading, setBoostLoading] = useState(false);
+  const [activeBoost, setActiveBoost] = useState<any>(null);
+  const [boostHistory, setBoostHistory] = useState<any[]>([]);
 
   useEffect(() => {
     loadData();
@@ -199,10 +206,64 @@ const Nachrichten = () => {
           is_active: ncoData.is_active ?? true
         });
       }
+
+      // Load boost data
+      const { data: boosts } = await supabase
+        .from('merchant_boosts')
+        .select('*')
+        .eq('merchant_customer_id', assignment.customer_id)
+        .order('created_at', { ascending: false });
+
+      if (boosts) {
+        const active = boosts.find(b => b.status === 'active' && new Date(b.ends_at) > new Date());
+        setActiveBoost(active || null);
+        setBoostHistory(boosts);
+      }
     } catch (error) {
       console.error('Error loading data:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Handle boost success callback
+  useEffect(() => {
+    const boostStatus = searchParams.get('boost');
+    const boostId = searchParams.get('boost_id');
+    if (boostStatus === 'success' && boostId) {
+      activateBoost(boostId);
+    }
+  }, [searchParams]);
+
+  const activateBoost = async (boostId: string) => {
+    try {
+      const { error } = await supabase.functions.invoke('activate-boost', {
+        body: { boost_id: boostId },
+      });
+      if (error) throw error;
+      toast.success('Neukunden-Boost erfolgreich aktiviert! 🚀');
+      loadData();
+    } catch (err) {
+      console.error('Boost activation error:', err);
+      toast.error('Fehler bei der Boost-Aktivierung');
+    }
+  };
+
+  const handleBoostPurchase = async (tier: string) => {
+    setBoostLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('create-boost-checkout', {
+        body: { tier },
+      });
+      if (error) throw error;
+      if (data?.url) {
+        window.location.href = data.url;
+      }
+    } catch (err) {
+      console.error('Boost checkout error:', err);
+      toast.error('Fehler beim Erstellen der Bezahlung');
+    } finally {
+      setBoostLoading(false);
     }
   };
 
@@ -431,9 +492,84 @@ const Nachrichten = () => {
       <div className="max-w-4xl mx-auto p-6 sm:p-8 space-y-8">
         {/* Header */}
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Nachrichten</h1>
+          <h1 className="text-2xl font-bold text-gray-900">Kampagnen</h1>
           <p className="text-gray-500 mt-1">Erreichen Sie Ihre Kunden gezielt</p>
         </div>
+
+        {/* Neukunden-Boost */}
+        <Card className="rounded-2xl shadow-sm border-0 bg-gradient-to-br from-amber-50 to-orange-50">
+          <CardHeader className="pb-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center">
+                <Rocket className="h-5 w-5 text-amber-600" />
+              </div>
+              <div>
+                <CardTitle className="text-lg font-semibold text-gray-900">Neukunden-Boost</CardTitle>
+                <CardDescription className="text-gray-500">
+                  Erreichen Sie neue Kunden in Ihrer Umgebung
+                </CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {activeBoost ? (
+              <div className="p-4 bg-white rounded-xl border border-green-200">
+                <div className="flex items-center gap-2 mb-2">
+                  <CheckCircle2 className="h-5 w-5 text-green-500" />
+                  <span className="font-semibold text-green-700">Boost aktiv</span>
+                </div>
+                <div className="flex items-center gap-2 text-sm text-gray-600">
+                  <Timer className="h-4 w-4" />
+                  <span>Läuft noch bis {new Date(activeBoost.ends_at).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
+                </div>
+                <p className="text-sm text-gray-500 mt-2">
+                  Ihr Geschäft wird im Umkreis von 15 km allen App-Nutzern ganz oben im Feed angezeigt.
+                </p>
+              </div>
+            ) : (
+              <>
+                <p className="text-sm text-gray-600">
+                  Pushen Sie Ihr Geschäft im Feed der App! Alle Nutzer im Umkreis von 15 km sehen Ihren Eintrag ganz oben – 
+                  mit einer hervorgehobenen Anzeige und dem Label „Gesponsert". Bei mehreren gesponserten Einträgen wird 
+                  nach Distanz zum Nutzer sortiert, sodass die Nächstgelegenen immer oben erscheinen.
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  {[
+                    { tier: '3_days', days: 3, price: '9,90 €', label: '3 Tage' },
+                    { tier: '7_days', days: 7, price: '19,90 €', label: '7 Tage', popular: true },
+                    { tier: '14_days', days: 14, price: '35,90 €', label: '14 Tage' },
+                  ].map((option) => (
+                    <div
+                      key={option.tier}
+                      className={`relative p-4 rounded-xl border-2 transition-all ${
+                        option.popular ? 'border-amber-400 bg-white shadow-md' : 'border-gray-200 bg-white hover:border-amber-200'
+                      }`}
+                    >
+                      {option.popular && (
+                        <Badge className="absolute -top-2.5 left-1/2 -translate-x-1/2 bg-amber-500 text-white text-xs rounded-full">
+                          Beliebt
+                        </Badge>
+                      )}
+                      <div className="text-center space-y-2">
+                        <p className="text-2xl font-bold text-gray-900">{option.price}</p>
+                        <p className="text-sm font-medium text-gray-600">{option.label}</p>
+                        <p className="text-xs text-gray-400">15 km Radius</p>
+                        <Button
+                          onClick={() => handleBoostPurchase(option.tier)}
+                          disabled={boostLoading}
+                          className="w-full rounded-xl mt-2"
+                          variant={option.popular ? 'default' : 'outline'}
+                        >
+                          {boostLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Jetzt buchen'}
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
+          </CardContent>
+        </Card>
 
         {/* Nachrichten */}
         <Card className="rounded-2xl shadow-sm border-0 bg-gray-50/80">
