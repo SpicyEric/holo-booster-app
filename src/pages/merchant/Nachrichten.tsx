@@ -107,6 +107,11 @@ const Nachrichten = () => {
     is_active: true
   });
 
+  // Boost state
+  const [boostLoading, setBoostLoading] = useState(false);
+  const [activeBoost, setActiveBoost] = useState<any>(null);
+  const [boostHistory, setBoostHistory] = useState<any[]>([]);
+
   useEffect(() => {
     loadData();
   }, []);
