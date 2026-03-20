@@ -108,10 +108,13 @@ const App = () => (
           <Route path="/kunde" element={<MerchantLayout />}>
             <Route index element={<KundeDashboard />} />
             <Route path="mein-geschaeft" element={<MeinGeschaeft />} />
-            <Route path="google-bewertungen" element={<GoogleBewertungen />} />
-            <Route path="nachrichten" element={<Nachrichten />} />
-            <Route path="transaktionen" element={<Transaktionen />} />
+            <Route path="kunden" element={<Transaktionen />} />
+            <Route path="marketing" element={<Marketing />} />
             <Route path="konto" element={<MeinKonto />} />
+            {/* Legacy redirects for old routes */}
+            <Route path="google-bewertungen" element={<Navigate to="/kunde/marketing" replace />} />
+            <Route path="nachrichten" element={<Navigate to="/kunde/marketing" replace />} />
+            <Route path="transaktionen" element={<Navigate to="/kunde/kunden" replace />} />
           </Route>
           
           {/* Partner Dashboard */}
