@@ -222,6 +222,20 @@ const AppHomeContent = () => {
     setLoading(true);
     try {
       const items: any[] = [];
+
+      const { data: activeBoosts } = await supabase
+        .from('merchant_boosts')
+        .select('merchant_customer_id, tier')
+        .eq('status', 'active')
+        .gt('ends_at', new Date().toISOString());
+
+      const boostMap = new Map<string, number>();
+      activeBoosts?.forEach((boost) => {
+        const radius = boost.tier === '14_days' ? 15 : 10;
+        const existing = boostMap.get(boost.merchant_customer_id);
+        if (!existing || radius > existing) boostMap.set(boost.merchant_customer_id, radius);
+      });
+
       const { data: accounts } = await supabase
         .from('loyalty_accounts')
         .select('merchant_customer_id, current_points_balance')
@@ -275,7 +289,6 @@ const AppHomeContent = () => {
         }
       }
 
-      // Add merchant card entries for stamped merchants without feed posts
       if (stampedMerchantIds.length > 0) {
         const { data: stampedMerchants } = await supabase
           .from('customers')
@@ -339,14 +352,27 @@ const AppHomeContent = () => {
         }
       }
 
-      // Sort ALL items by distance (nearest first), items without distance go to the end
-      items.sort((a, b) => {
-        const distA = a.distance ?? Infinity;
-        const distB = b.distance ?? Infinity;
-        return distA - distB;
+      const enhancedItems = items.map((item) => ({
+        ...item,
+        is_boosted: boostMap.has(item.merchant_customer_id),
+        boost_radius: boostMap.get(item.merchant_customer_id),
+      }));
+
+      enhancedItems.sort((a, b) => {
+        const aBoosted = a.is_boosted && (a.distance === undefined || a.distance <= (a.boost_radius ?? 10));
+        const bBoosted = b.is_boosted && (b.distance === undefined || b.distance <= (b.boost_radius ?? 10));
+
+        if (aBoosted && !bBoosted) return -1;
+        if (!aBoosted && bBoosted) return 1;
+
+        if (a.distance !== undefined && b.distance !== undefined) return a.distance - b.distance;
+        if (a.distance !== undefined) return -1;
+        if (b.distance !== undefined) return 1;
+
+        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
       });
 
-      setFeedItems(items);
+      setFeedItems(enhancedItems);
     } catch (err) {
       console.error('[Feed] Error:', err);
     } finally {
