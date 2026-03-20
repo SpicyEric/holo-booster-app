@@ -800,7 +800,7 @@ const MeinGeschaeft = () => {
                   }}
                   rewards={rewards}
                   activeTab={activeTab === 'info' ? 'info' : 'rewards'}
-                  onTabChange={(tab) => setActiveTab(tab === 'info' ? 'info' : 'praemien')}
+                  onTabChange={(tab) => setActiveTab(tab === 'info' ? 'info' : 'stempel')}
                   userPoints={25}
                   scrollTarget={scrollTarget}
                 />
