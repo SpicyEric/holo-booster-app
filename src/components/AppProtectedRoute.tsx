@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { canAccessApp, canAccessWeb, getRoleDefaultPath, normalizeRole } from '@/lib/roles';
 import { supabase } from '@/integrations/supabase/client';
+import { useAppViewportLock } from '@/app/hooks/useAppViewportLock';
 
 const AUTH_FLAG_KEY = 'eloyo_was_authenticated';
 const GRACE_PERIOD_MS = 3000;
@@ -23,6 +24,7 @@ interface AppProtectedRouteProps {
 export const AppProtectedRoute = ({ children }: AppProtectedRouteProps) => {
   const { user, role, loading } = useAuth();
   const navigate = useNavigate();
+  useAppViewportLock();
   const [verified, setVerified] = useState(false);
   const [checking, setChecking] = useState(false);
   const hadUserRef = useRef(false);

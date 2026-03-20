@@ -7,6 +7,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
+import { useAppViewportLock } from '@/app/hooks/useAppViewportLock';
 
 const getPostAuthRoute = () => {
   const isNative = Capacitor.isNativePlatform();
@@ -20,6 +21,7 @@ type RegistrationStep = 'password' | 'confirmPassword' | 'birthDate' | 'gender' 
 export const AppAuth = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  useAppViewportLock();
   const [mode, setMode] = useState<'register' | 'login'>('register');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -364,7 +366,7 @@ export const AppAuth = () => {
   // Recovery mode - set new password
   if (isRecoveryMode) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-primary/5 to-background flex flex-col items-center justify-center p-4">
+      <div className="h-[100dvh] overflow-y-auto bg-gradient-to-b from-primary/5 to-background flex flex-col items-center justify-center p-4">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-md">
           <div className="text-center mb-8">
             <img src="/eloyo-logo.png" alt="Eloyo" className="h-12 mx-auto mb-2" />
@@ -393,7 +395,7 @@ export const AppAuth = () => {
   // Login mode
   if (mode === 'login') {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-primary/5 to-background flex flex-col items-center justify-center p-4">
+      <div className="h-[100dvh] overflow-y-auto bg-gradient-to-b from-primary/5 to-background flex flex-col items-center justify-center p-4">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-md">
           <div className="text-center mb-8">
             <img src="/eloyo-logo.png" alt="Eloyo" className="h-12 mx-auto mb-2" />
@@ -469,7 +471,7 @@ export const AppAuth = () => {
 
   // Registration mode
   return (
-    <div className="min-h-screen bg-gradient-to-b from-primary/5 to-background flex flex-col items-center justify-center p-4">
+    <div className="h-[100dvh] overflow-y-auto bg-gradient-to-b from-primary/5 to-background flex flex-col items-center justify-center p-4">
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-md">
         <div className="text-center mb-8">
           <img src="/eloyo-logo.png" alt="Eloyo" className="h-12 mx-auto mb-2" />

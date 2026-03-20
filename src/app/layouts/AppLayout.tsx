@@ -37,7 +37,7 @@ export const AppLayout = () => {
       {/* Main Content */}
       <main
         className="flex-1 pb-20 overflow-y-auto"
-        style={{ overscrollBehavior: 'contain', WebkitOverflowScrolling: 'touch' }}
+        style={{ overscrollBehavior: 'none', WebkitOverflowScrolling: 'touch', touchAction: 'pan-y' }}
       >
         <Outlet />
       </main>

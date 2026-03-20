@@ -39,7 +39,7 @@ export const MainLayout = ({ children, title, showBack = false }: MainLayoutProp
       <TopBar title={title} showBack={showBack} />
       <main
         className="container mx-auto px-4 py-6 max-w-2xl relative z-10 h-full overflow-y-auto"
-        style={{ overscrollBehavior: 'contain', WebkitOverflowScrolling: 'touch' }}
+        style={{ overscrollBehavior: 'none', WebkitOverflowScrolling: 'touch', touchAction: 'pan-y' }}
       >
         {children}
       </main>
