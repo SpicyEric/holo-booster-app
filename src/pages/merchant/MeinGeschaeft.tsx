@@ -819,11 +819,7 @@ const MeinGeschaeft = () => {
           {/* Content */}
           <div className="lg:col-span-2 order-1 lg:order-2">
             <Tabs value={activeTab} onValueChange={setActiveTab}>
-              <TabsList className="grid w-full grid-cols-3 mb-6 rounded-xl bg-muted/60 p-1">
-                <TabsTrigger value="praemien" className="rounded-lg">
-                  <Gift className="w-4 h-4 mr-2" />
-                  Angebot
-                </TabsTrigger>
+              <TabsList className="grid w-full grid-cols-2 mb-6 rounded-xl bg-primary/8 p-1">
                 <TabsTrigger value="stempel" className="rounded-lg">
                   <Package className="w-4 h-4 mr-2" />
                   System
