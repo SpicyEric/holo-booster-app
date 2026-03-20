@@ -76,7 +76,7 @@ export default function RewardSuggestionsPanel({ merchantIndustry, avgOrderValue
     large: rewards.filter(r => r.category === 'large'),
   }), [rewards]);
 
-  const avg = avgOrderValue || 10;
+  const avgOrder = avgOrderValue || 10;
 
   const handleAdopt = (reward: ExampleReward) => {
     const pts = calculateRewardPoints(reward.category, reward.estimated_value, avgPointsPerVisit);
