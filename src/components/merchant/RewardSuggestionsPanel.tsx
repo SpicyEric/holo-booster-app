@@ -16,13 +16,12 @@ interface ExampleReward {
 interface Props {
   merchantIndustry: string | null;
   avgOrderValue: number;
+  avgPointsPerVisit?: number;
   onSelectReward: (title: string, pointsRequired: number) => void;
 }
 
-// ─── Points logic ───
-const AVG_POINTS_PER_VISIT = 10;
-
-function calculateRewardPoints(estimatedValue: number, avgOrderValue: number): number {
+// Points logic uses actual avg points per visit from stamp config
+function calculateRewardPoints(estimatedValue: number, avgOrderValue: number, avgPointsPerVisit: number): number {
   if (avgOrderValue <= 0) avgOrderValue = 10;
   const ratio = estimatedValue / avgOrderValue;
   let targetVisits: number;
@@ -31,7 +30,7 @@ function calculateRewardPoints(estimatedValue: number, avgOrderValue: number): n
   else if (ratio <= 2.0) targetVisits = 10;
   else if (ratio <= 3.0) targetVisits = 14;
   else targetVisits = 18;
-  const raw = AVG_POINTS_PER_VISIT * targetVisits;
+  const raw = avgPointsPerVisit * targetVisits;
   return Math.max(5, Math.round(raw / 5) * 5);
 }
 
@@ -241,7 +240,7 @@ const CATEGORY_META = {
   large: { label: 'Groß', visits: '~12–20 Besuche' },
 };
 
-export default function RewardSuggestionsPanel({ merchantIndustry, avgOrderValue, onSelectReward }: Props) {
+export default function RewardSuggestionsPanel({ merchantIndustry, avgOrderValue, avgPointsPerVisit = 10, onSelectReward }: Props) {
   const defaultIndustry = merchantIndustry || 'sonstiges';
   const [selectedIndustry, setSelectedIndustry] = useState(defaultIndustry);
 
@@ -294,7 +293,7 @@ export default function RewardSuggestionsPanel({ merchantIndustry, avgOrderValue
               </div>
               <div className="space-y-2">
                 {grouped[cat].map((reward, i) => {
-                  const pts = calculateRewardPoints(reward.estimated_value, avg);
+                  const pts = calculateRewardPoints(reward.estimated_value, avg, avgPointsPerVisit);
                   return (
                     <div
                       key={i}

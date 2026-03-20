@@ -183,12 +183,21 @@ const MeinGeschaeft = () => {
   const [avgRevenue, setAvgRevenue] = useState(7);
   const [manualMode, setManualMode] = useState(false);
   const [selectedVariant, setSelectedVariant] = useState<'balanced' | 'umsatzboost'>('balanced');
+  const [stampSettingsDirty, setStampSettingsDirty] = useState(false);
+  const [initialStampState, setInitialStampState] = useState<{ stampMode: string; avgRevenue: number; manualMode: boolean } | null>(null);
 
   useEffect(() => {
     if (user?.id) {
       loadData();
     }
   }, [user?.id]);
+
+  // Track dirty state for stamp settings
+  useEffect(() => {
+    if (!initialStampState) return;
+    const isDirty = stampMode !== initialStampState.stampMode || avgRevenue !== initialStampState.avgRevenue || manualMode !== initialStampState.manualMode;
+    setStampSettingsDirty(isDirty);
+  }, [stampMode, avgRevenue, manualMode, initialStampState]);
 
   const loadData = async () => {
     try {
@@ -233,9 +242,14 @@ const MeinGeschaeft = () => {
           opening_hours: (customer.opening_hours as OpeningHours) || defaultOpeningHours,
         });
         // Restore stamp settings
-        if ((customer as any).stamp_mode) setStampMode((customer as any).stamp_mode);
-        if ((customer as any).avg_revenue != null) setAvgRevenue((customer as any).avg_revenue);
-        if ((customer as any).manual_stamp_mode != null) setManualMode((customer as any).manual_stamp_mode);
+        const loadedStampMode = (customer as any).stamp_mode || 'classic';
+        const loadedAvgRevenue = (customer as any).avg_revenue ?? 7;
+        const loadedManualMode = (customer as any).manual_stamp_mode ?? false;
+        setStampMode(loadedStampMode);
+        setAvgRevenue(loadedAvgRevenue);
+        setManualMode(loadedManualMode);
+        setInitialStampState({ stampMode: loadedStampMode, avgRevenue: loadedAvgRevenue, manualMode: loadedManualMode });
+        setStampSettingsDirty(false);
       }
 
       // Load rewards
@@ -611,6 +625,8 @@ const MeinGeschaeft = () => {
         } as any)
         .eq('id', customerId);
       setNfcChips(chipsToSave);
+      setInitialStampState({ stampMode, avgRevenue, manualMode });
+      setStampSettingsDirty(false);
       toast.success('Stempel gespeichert');
     } catch {
       toast.error('Fehler beim Speichern');
@@ -1125,6 +1141,13 @@ const MeinGeschaeft = () => {
                             <span>3 €</span>
                             <span>50 €</span>
                           </div>
+
+                          {stampSettingsDirty && (
+                            <Button onClick={handleSaveChips} disabled={savingChips} className="rounded-xl w-full animate-pulse">
+                              {savingChips ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
+                              Stempel speichern
+                            </Button>
+                          )}
                         </div>
 
                         {/* Variant selector */}
