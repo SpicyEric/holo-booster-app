@@ -72,11 +72,6 @@ export default function KundeDashboard() {
   useEffect(() => { if (!authLoading && !user) navigate("/auth"); }, [user, authLoading, navigate]);
   useEffect(() => { if (user) loadData(); }, [user]);
 
-  // Set body class for CCM19 positioning
-  useEffect(() => {
-    document.body.classList.add('ccm19-right');
-    return () => { document.body.classList.remove('ccm19-right'); };
-  }, []);
 
   const loadData = async () => {
     try {
