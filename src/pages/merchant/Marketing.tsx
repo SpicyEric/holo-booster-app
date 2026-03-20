@@ -11,7 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   Loader2, Plus, MessageSquare, Gift, Send, Users, Clock, UserPlus, Zap, Cake, Save, 
   ChevronDown, Rocket, CheckCircle2, Timer, Star, ExternalLink, Copy, Bot, Megaphone,
-  Edit2, Trash2, Upload, Coins
+  Edit2, Trash2, Upload, Coins, Sparkles
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -26,6 +26,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import RichTextEditor from '@/components/merchant/RichTextEditor';
+import RewardSuggestionsModal from '@/components/merchant/RewardSuggestionsModal';
 import { cn } from '@/lib/utils';
 
 // ---- Types ----
@@ -59,6 +60,9 @@ const Marketing = () => {
   const [uploadingNcoImage, setUploadingNcoImage] = useState(false);
   const [ncoGiftType, setNcoGiftType] = useState<'offer' | 'points'>('offer');
   const [showDeleteNcoConfirm, setShowDeleteNcoConfirm] = useState(false);
+  const [showRewardSuggestions, setShowRewardSuggestions] = useState(false);
+  const [merchantIndustry, setMerchantIndustry] = useState<string | null>(null);
+  const [avgOrderValue, setAvgOrderValue] = useState(10);
 
   // --- Boost state ---
   const [boostLoading, setBoostLoading] = useState(false);
@@ -134,7 +138,7 @@ const Marketing = () => {
       const midPoints = blueChip?.points_value ?? null;
       setMiddleStampPoints(midPoints);
 
-      const { data: cd } = await supabase.from('customers').select('google_review_url, google_review_points_enabled, google_review_points_value, birthday_enabled, birthday_message, birthday_bonus_points, birthday_gift_type, birthday_offer_title, birthday_offer_description').eq('id', assignment.customer_id).maybeSingle();
+      const { data: cd } = await supabase.from('customers').select('google_review_url, google_review_points_enabled, google_review_points_value, birthday_enabled, birthday_message, birthday_bonus_points, birthday_gift_type, birthday_offer_title, birthday_offer_description, industry, avg_revenue').eq('id', assignment.customer_id).maybeSingle();
       if (cd) {
         setGoogleReviewUrl(cd.google_review_url || "");
         setReviewPointsEnabled(cd.google_review_points_enabled || false);
@@ -147,6 +151,8 @@ const Marketing = () => {
         setBirthdayGiftType(((cd as any).birthday_gift_type as 'points' | 'offer') || 'points');
         setBirthdayOfferTitle((cd as any).birthday_offer_title || '');
         setBirthdayOfferDescription((cd as any).birthday_offer_description || '');
+        if (cd.industry) setMerchantIndustry(cd.industry);
+        if (cd.avg_revenue) setAvgOrderValue(cd.avg_revenue);
       }
       // Mark automations as loaded (so changes after this trigger automationsChanged)
       setTimeout(() => { automationsLoadedRef.current = true; }, 100);
@@ -403,9 +409,14 @@ const Marketing = () => {
                     <CardDescription>Belohnungen, die deine Kunden mit gesammelten Punkten einlösen können</CardDescription>
                   </div>
                 </div>
-                <Button onClick={() => { setEditingReward(null); setRewardForm({ title: '', description: '', points_required: 10, image_url: '' }); setShowRewardDialog(true); }} className="rounded-xl">
-                  <Plus className="h-4 w-4 mr-2" />Neue Prämie
-                </Button>
+                <div className="flex items-center gap-2">
+                  <Button variant="outline" onClick={() => setShowRewardSuggestions(true)} className="rounded-xl">
+                    <Sparkles className="h-4 w-4 mr-2" />Beispielprämien
+                  </Button>
+                  <Button onClick={() => { setEditingReward(null); setRewardForm({ title: '', description: '', points_required: 10, image_url: '' }); setShowRewardDialog(true); }} className="rounded-xl">
+                    <Plus className="h-4 w-4 mr-2" />Neue Prämie
+                  </Button>
+                </div>
               </CardHeader>
               <CardContent>
                 {rewards.length === 0 ? (
@@ -975,6 +986,20 @@ const Marketing = () => {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
+
+        {/* Reward Suggestions Modal */}
+        <RewardSuggestionsModal
+          open={showRewardSuggestions}
+          onOpenChange={setShowRewardSuggestions}
+          merchantIndustry={merchantIndustry}
+          avgOrderValue={avgOrderValue}
+          onSelectReward={(title, pts) => {
+            setShowRewardSuggestions(false);
+            setEditingReward(null);
+            setRewardForm({ title, description: '', points_required: pts, image_url: '' });
+            setShowRewardDialog(true);
+          }}
+        />
       </div>
     </div>
   );
