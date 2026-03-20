@@ -78,7 +78,7 @@ export default function RewardSuggestionsPanel({ merchantIndustry, avgOrderValue
   const avg = avgOrderValue || 10;
 
   const handleAdopt = (reward: ExampleReward) => {
-    const pts = calculateRewardPoints(reward.estimated_value, avg, avgPointsPerVisit);
+    const pts = calculateRewardPoints(reward.category, reward.estimated_value, avgPointsPerVisit);
     onSelectReward(reward.title, pts);
     if (!isOwnIndustry) {
       toast.success('Punkte wurden automatisch für dein Geschäft berechnet.', {
