@@ -386,6 +386,48 @@ const Marketing = () => {
 
           {/* ========== NEUKUNDEN TAB ========== */}
           <TabsContent value="boost" className="space-y-6 mt-6">
+            {/* Neukundenprämie */}
+            <Card className="rounded-2xl shadow-sm border border-primary/10 bg-primary/[0.03]">
+              <CardHeader className="flex flex-row items-center justify-between pb-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center"><UserPlus className="h-5 w-5 text-primary" /></div>
+                  <div>
+                    <CardTitle className="text-lg font-semibold">Neukundenprämie</CardTitle>
+                    <CardDescription>Gewinne neue Kunden mit einem attraktiven Willkommensangebot</CardDescription>
+                  </div>
+                </div>
+                <Button variant={newCustomerOffer ? "outline" : "default"} onClick={() => setShowNcoDialog(true)} className="rounded-xl">
+                  {newCustomerOffer ? <><Edit2 className="h-4 w-4 mr-2" />Bearbeiten</> : <><Plus className="h-4 w-4 mr-2" />Erstellen</>}
+                </Button>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="p-4 bg-primary/5 rounded-xl border border-primary/10 text-sm text-muted-foreground space-y-2">
+                  <p className="font-medium text-foreground">💡 Was ist die Neukundenprämie?</p>
+                  <p>Die Neukundenprämie wird nur Kunden angezeigt, die bei dir <strong>noch keine Punkte gesammelt haben</strong>. Sobald ein Kunde seine ersten Punkte bei dir sammelt, verschwindet das Angebot automatisch.</p>
+                  <p>Das macht sie perfekt für zwei Dinge:</p>
+                  <ul className="list-disc pl-5 space-y-1">
+                    <li><strong>Andere eloyo-Nutzer ins Geschäft holen</strong> – dein Angebot erscheint bei Nutzern in deiner Umgebung, die dich noch nicht kennen.</li>
+                    <li><strong>Bestehende Laufkundschaft digital aktivieren</strong> – biete deinen Stammkunden einen Grund, sich die App herunterzuladen und beim nächsten Besuch direkt einzulösen.</li>
+                  </ul>
+                </div>
+                {newCustomerOffer ? (
+                  <div className="flex items-center justify-between p-4 bg-card rounded-xl border border-border/30">
+                    <div>
+                      <div className="flex items-center gap-2 mb-1">
+                        <p className="font-semibold text-foreground">{newCustomerOffer.title}</p>
+                        <Badge variant={newCustomerOffer.is_active ? "default" : "secondary"} className="rounded-full">{newCustomerOffer.is_active ? 'Aktiv' : 'Inaktiv'}</Badge>
+                      </div>
+                      {newCustomerOffer.description && <p className="text-sm text-muted-foreground">{newCustomerOffer.description}</p>}
+                    </div>
+                    <Button variant="ghost" size="sm" onClick={handleDeleteNco} className="rounded-lg"><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                  </div>
+                ) : (
+                  <p className="text-muted-foreground text-center py-4">Noch keine Neukundenprämie erstellt</p>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Neukunden-Boost */}
             <Card className="rounded-2xl shadow-sm border border-primary/10 bg-primary/[0.03]">
               <CardHeader className="pb-4">
                 <div className="flex items-center gap-3">
