@@ -206,10 +206,64 @@ const Nachrichten = () => {
           is_active: ncoData.is_active ?? true
         });
       }
+
+      // Load boost data
+      const { data: boosts } = await supabase
+        .from('merchant_boosts')
+        .select('*')
+        .eq('merchant_customer_id', assignment.customer_id)
+        .order('created_at', { ascending: false });
+
+      if (boosts) {
+        const active = boosts.find(b => b.status === 'active' && new Date(b.ends_at) > new Date());
+        setActiveBoost(active || null);
+        setBoostHistory(boosts);
+      }
     } catch (error) {
       console.error('Error loading data:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Handle boost success callback
+  useEffect(() => {
+    const boostStatus = searchParams.get('boost');
+    const boostId = searchParams.get('boost_id');
+    if (boostStatus === 'success' && boostId) {
+      activateBoost(boostId);
+    }
+  }, [searchParams]);
+
+  const activateBoost = async (boostId: string) => {
+    try {
+      const { error } = await supabase.functions.invoke('activate-boost', {
+        body: { boost_id: boostId },
+      });
+      if (error) throw error;
+      toast.success('Neukunden-Boost erfolgreich aktiviert! 🚀');
+      loadData();
+    } catch (err) {
+      console.error('Boost activation error:', err);
+      toast.error('Fehler bei der Boost-Aktivierung');
+    }
+  };
+
+  const handleBoostPurchase = async (tier: string) => {
+    setBoostLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('create-boost-checkout', {
+        body: { tier },
+      });
+      if (error) throw error;
+      if (data?.url) {
+        window.location.href = data.url;
+      }
+    } catch (err) {
+      console.error('Boost checkout error:', err);
+      toast.error('Fehler beim Erstellen der Bezahlung');
+    } finally {
+      setBoostLoading(false);
     }
   };
 
