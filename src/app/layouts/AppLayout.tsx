@@ -28,11 +28,17 @@ export const AppLayout = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div
+      className="bg-background flex flex-col overflow-hidden"
+      style={{ height: '100dvh' }}
+    >
       {/* Safe area shield */}
       <div className="safe-area-top-shield" />
       {/* Main Content */}
-      <main className="flex-1 pb-20 overflow-y-auto">
+      <main
+        className="flex-1 pb-20 overflow-y-auto"
+        style={{ overscrollBehavior: 'contain', WebkitOverflowScrolling: 'touch' }}
+      >
         <Outlet />
       </main>
 
