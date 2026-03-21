@@ -461,32 +461,46 @@ const Marketing = () => {
                 </CardContent>
               </Card>
 
-              {/* Right column: Stamp overview + Example Rewards */}
+              {/* Right column: Info row + Example Rewards */}
               <div className="space-y-6">
-                {/* Stamp Overview Card */}
-                {stampPoints && (stampPoints.green || stampPoints.blue || stampPoints.red) && (
+                {/* Stamp overview + Tips row */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {/* Stamp Overview Card */}
+                  {stampPoints && (stampPoints.green || stampPoints.blue || stampPoints.red) && (
+                    <Card className="rounded-2xl shadow-sm border border-primary/15 bg-primary/5">
+                      <CardHeader className="pb-3">
+                        <CardTitle className="text-base font-semibold">Dein Stempelsystem</CardTitle>
+                        <CardDescription>
+                          Dein Durchschnittsbon liegt bei <span className="font-medium text-foreground">{avgOrderValue} €</span>
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="flex flex-wrap items-center gap-2">
+                          {stampPoints.green != null && (
+                            <Badge className="rounded-full text-xs font-medium border-emerald-300 bg-emerald-50 text-emerald-700">Stempel: {stampPoints.green} Pkt.</Badge>
+                          )}
+                          {stampPoints.blue != null && (
+                            <Badge className="rounded-full text-xs font-medium border-blue-300 bg-blue-50 text-blue-700">Stempel: {stampPoints.blue} Pkt.</Badge>
+                          )}
+                          {stampPoints.red != null && (
+                            <Badge className="rounded-full text-xs font-medium border-red-300 bg-red-50 text-red-700">Stempel: {stampPoints.red} Pkt.</Badge>
+                          )}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
+
+                  {/* Tips Card */}
                   <Card className="rounded-2xl shadow-sm border border-primary/15 bg-primary/5">
                     <CardHeader className="pb-3">
-                      <CardTitle className="text-base font-semibold">Dein Stempelsystem</CardTitle>
-                      <CardDescription>
-                        Dein Durchschnittsbon liegt bei <span className="font-medium text-foreground">{avgOrderValue} €</span>
-                      </CardDescription>
+                      <CardTitle className="text-base font-semibold">💡 Tipps</CardTitle>
                     </CardHeader>
-                    <CardContent>
-                      <div className="flex flex-wrap items-center gap-2">
-                        {stampPoints.green != null && (
-                          <Badge className="rounded-full text-xs font-medium border-emerald-300 bg-emerald-50 text-emerald-700">Stempel: {stampPoints.green} Pkt.</Badge>
-                        )}
-                        {stampPoints.blue != null && (
-                          <Badge className="rounded-full text-xs font-medium border-blue-300 bg-blue-50 text-blue-700">Stempel: {stampPoints.blue} Pkt.</Badge>
-                        )}
-                        {stampPoints.red != null && (
-                          <Badge className="rounded-full text-xs font-medium border-red-300 bg-red-50 text-red-700">Stempel: {stampPoints.red} Pkt.</Badge>
-                        )}
-                      </div>
+                    <CardContent className="space-y-2 text-sm text-muted-foreground">
+                      <p>Die <span className="font-medium text-foreground">erste kleine Belohnung</span> sollte bereits nach ca. 5 Besuchen eines Durchschnittskunden erreichbar sein – das motiviert zum Wiederkommen.</p>
+                      <p>Wir empfehlen, mindestens <span className="font-medium text-foreground">9 Prämien</span> anzubieten, damit für jeden Kundentyp etwas dabei ist.</p>
                     </CardContent>
                   </Card>
-                )}
+                </div>
 
                 {/* Example Rewards Panel */}
                 <RewardSuggestionsPanel
