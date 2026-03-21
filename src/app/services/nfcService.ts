@@ -176,6 +176,7 @@ class NfcService {
   }
 
   private buildNativeScanErrorMessage(rawError: unknown): string {
+    const platform = getPlatform();
     const errorText =
       typeof rawError === 'string'
         ? rawError
@@ -193,6 +194,22 @@ class NfcService {
 
     if (errMsg.includes('unavailable') || errMsg.includes('not supported')) {
       return 'NFC ist auf diesem Gerät nicht verfügbar.';
+    }
+
+    const isLikelyIosCoreNfcIssue =
+      platform === 'ios' &&
+      (
+        errMsg.includes('session invalidated unexpectedly') ||
+        errMsg.includes('session terminated unexpectedly') ||
+        errMsg.includes('com.apple.nfcd.service.corenfc') ||
+        errMsg.includes('xpc error') ||
+        errMsg.includes('code=4099') ||
+        errMsg.includes('errorcode: 0xca') ||
+        errMsg.includes('sandbox restriction')
+      );
+
+    if (isLikelyIosCoreNfcIssue) {
+      return 'iOS blockiert NFC für diese App. Bitte prüfe in Xcode die Capability „Near Field Communication Tag Reading“, verwende ein Provisioning-Profil mit NFC-Entitlement und installiere die App danach neu.';
     }
 
     if (errMsg.includes('canceled') || errMsg.includes('cancelled') || errMsg.includes('session invalidated')) {
