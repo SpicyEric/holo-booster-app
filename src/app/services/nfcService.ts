@@ -49,7 +49,14 @@ class NfcService {
     const platform = getPlatform();
     console.log('[NFC] Checking support on platform:', platform);
     
+    // On native platforms (especially iOS), always assume NFC is supported.
+    // All iPhones 7+ have NFC hardware. The actual entitlement/capability
+    // check happens when startScanSession() is called – errors are shown then.
     if (platform === 'android' || platform === 'ios') {
+      if (platform === 'ios') {
+        console.log('[NFC] iOS detected – assuming NFC supported (iPhone 7+)');
+        return true;
+      }
       try {
         const result = await Promise.race([
           Nfc.isSupported(),
