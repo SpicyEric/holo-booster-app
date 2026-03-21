@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
-  ChevronRight, ChevronLeft, ArrowLeft, Eye,
+  ChevronRight, ChevronLeft, ArrowLeft, Eye, Check,
   Lock, Package, Store, ShoppingCart, Target, Stamp, Gift, CheckCircle2
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -16,6 +16,7 @@ import WizardStepGoal from "./wizard/WizardStepGoal";
 import WizardStepSuggestion from "./wizard/WizardStepSuggestion";
 import WizardStepReward from "./wizard/WizardStepReward";
 import WizardStepComplete from "./wizard/WizardStepComplete";
+import { cn } from "@/lib/utils";
 
 const STEP_ICONS = [Lock, Package, Store, ShoppingCart, Target, Stamp, Gift, CheckCircle2];
 
@@ -45,7 +46,6 @@ export default function TestWizard() {
 
   const meta = STEP_META[step];
   const Icon = STEP_ICONS[step];
-  const progress = ((step + 1) / TOTAL_STEPS) * 100;
   const isLastStep = step === TOTAL_STEPS - 1;
 
   const isStepValid = (() => {
@@ -62,109 +62,177 @@ export default function TestWizard() {
   })();
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Admin Test Bar */}
-      <div className="sticky top-0 z-20 bg-destructive/10 border-b-2 border-destructive/30">
-        <div className="max-w-2xl mx-auto px-6 py-2 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Eye className="h-4 w-4 text-destructive" />
-            <span className="text-sm font-semibold text-destructive">Admin Test-Modus</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <Button variant="outline" size="sm" onClick={() => adminGoTo(step - 1)} disabled={step === 0} className="h-8 w-8 p-0">
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
-            <span className="text-xs text-muted-foreground px-2">{step + 1} / {TOTAL_STEPS}</span>
-            <Button variant="outline" size="sm" onClick={() => adminGoTo(step + 1)} disabled={step === TOTAL_STEPS - 1} className="h-8 w-8 p-0">
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-          </div>
+    <div className="min-h-screen bg-[hsl(262,40%,93%)] flex">
+      {/* ─── Left Sidebar ─── */}
+      <div className="hidden md:flex w-72 bg-[hsl(262,50%,18%)] text-white flex-col">
+        {/* Logo */}
+        <div className="px-6 py-6 border-b border-white/10">
+          <img src={eloyoLogo} alt="Eloyo" className="h-7 w-auto brightness-0 invert" />
+          <p className="text-xs text-white/50 mt-2">Einrichtungsassistent</p>
+        </div>
+
+        {/* Step list */}
+        <nav className="flex-1 px-4 py-6 space-y-1">
+          {STEP_META.map((s, i) => {
+            const StepIcon = STEP_ICONS[i];
+            const isCompleted = i < step;
+            const isCurrent = i === step;
+            const isFuture = i > step;
+
+            return (
+              <button
+                key={i}
+                onClick={() => adminGoTo(i)}
+                className={cn(
+                  "w-full flex items-center gap-3 px-3 py-3 rounded-xl transition-all duration-200 text-left",
+                  isCurrent && "bg-white/10",
+                  isFuture && "opacity-40"
+                )}
+              >
+                <div
+                  className={cn(
+                    "w-8 h-8 rounded-lg flex items-center justify-center shrink-0 transition-all",
+                    isCompleted && "bg-emerald-500",
+                    isCurrent && "bg-primary",
+                    isFuture && "bg-white/10"
+                  )}
+                >
+                  {isCompleted ? (
+                    <Check className="w-4 h-4 text-white" />
+                  ) : (
+                    <StepIcon className="w-4 h-4 text-white" />
+                  )}
+                </div>
+                <div className="min-w-0">
+                  <p className={cn(
+                    "text-sm font-medium truncate",
+                    isCurrent ? "text-white" : "text-white/70"
+                  )}>
+                    {s.title}
+                  </p>
+                  {isCurrent && (
+                    <p className="text-xs text-white/40 truncate">{s.subtitle}</p>
+                  )}
+                </div>
+              </button>
+            );
+          })}
+        </nav>
+
+        {/* Footer */}
+        <div className="px-6 py-4 border-t border-white/10">
+          <p className="text-xs text-white/30">Schritt {step + 1} von {TOTAL_STEPS}</p>
         </div>
       </div>
 
-      {/* Header */}
-      <div className="border-b border-border bg-card sticky top-[44px] z-10">
-        <div className="max-w-2xl mx-auto px-6 py-4 flex items-center justify-between">
-          <img src={eloyoLogo} alt="Eloyo" className="h-7 w-auto" />
-          <span className="text-sm text-muted-foreground">Schritt {step + 1} von {TOTAL_STEPS}</span>
-        </div>
-        <div className="h-1 bg-muted">
-          <motion.div className="h-full bg-primary" animate={{ width: `${progress}%` }} transition={{ duration: 0.3 }} />
-        </div>
-      </div>
-
-      {/* Content */}
-      <div className="max-w-3xl mx-auto px-6 py-10">
-        <AnimatePresence mode="wait" custom={direction}>
-          <motion.div
-            key={step}
-            custom={direction}
-            initial={{ x: direction > 0 ? 80 : -80, opacity: 0 }}
-            animate={{ x: 0, opacity: 1 }}
-            exit={{ x: direction > 0 ? -80 : 80, opacity: 0 }}
-            transition={{ duration: 0.25 }}
-          >
-            {/* Step Header */}
-            <div className="flex items-center gap-4 mb-8">
-              <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
-                <Icon className="w-6 h-6 text-primary" />
-              </div>
-              <div>
-                <h2 className="text-xl font-semibold text-foreground">{meta.title}</h2>
-                <p className="text-base text-muted-foreground">{meta.subtitle}</p>
-              </div>
+      {/* ─── Main Content ─── */}
+      <div className="flex-1 flex flex-col">
+        {/* Admin Test Bar */}
+        <div className="sticky top-0 z-20 bg-destructive/10 border-b-2 border-destructive/30">
+          <div className="max-w-2xl mx-auto px-6 py-2 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Eye className="h-4 w-4 text-destructive" />
+              <span className="text-sm font-semibold text-destructive">Admin Test-Modus</span>
             </div>
-
-            {/* Step Content */}
-            <div className="bg-card border border-border rounded-xl p-8">
-              {step === 0 && <WizardStepPassword state={state} onChange={update} />}
-              {step === 1 && <WizardStepBoxId state={state} onChange={update} />}
-              {step === 2 && <WizardStepBusiness state={state} onChange={update} />}
-              {step === 3 && <WizardStepSpend state={state} onChange={update} />}
-              {step === 4 && <WizardStepGoal state={state} onChange={update} />}
-              {step === 5 && <WizardStepSuggestion state={state} onChange={update} />}
-              {step === 6 && <WizardStepReward state={state} onChange={update} />}
-              {step === 7 && <WizardStepComplete />}
-            </div>
-          </motion.div>
-        </AnimatePresence>
-
-        {/* Navigation */}
-        <div className="flex items-center justify-between mt-8">
-          <div>
-            {step > 2 && !isLastStep && (
-              <Button variant="ghost" size="sm" onClick={goBack}>
-                <ArrowLeft className="h-4 w-4 mr-1" />
-                Zurück
+            <div className="flex items-center gap-1">
+              <Button variant="outline" size="sm" onClick={() => adminGoTo(step - 1)} disabled={step === 0} className="h-8 w-8 p-0">
+                <ChevronLeft className="h-4 w-4" />
               </Button>
-            )}
+              <span className="text-xs text-muted-foreground px-2">{step + 1} / {TOTAL_STEPS}</span>
+              <Button variant="outline" size="sm" onClick={() => adminGoTo(step + 1)} disabled={step === TOTAL_STEPS - 1} className="h-8 w-8 p-0">
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
-          <Button
-            onClick={isLastStep ? () => alert("Wizard abgeschlossen – weiter zum Dashboard!") : goNext}
-            disabled={!isStepValid}
-          >
-            {isLastStep ? (
-              <>
-                <CheckCircle2 className="h-4 w-4 mr-1" />
-                Loslegen
-              </>
-            ) : step === 0 ? (
-              <>
-                Passwort festlegen
-                <ChevronRight className="h-4 w-4 ml-1" />
-              </>
-            ) : step === 1 ? (
-              <>
-                Einrichtung starten
-                <ChevronRight className="h-4 w-4 ml-1" />
-              </>
-            ) : (
-              <>
-                Weiter
-                <ChevronRight className="h-4 w-4 ml-1" />
-              </>
-            )}
-          </Button>
+        </div>
+
+        {/* Mobile header */}
+        <div className="md:hidden border-b border-border bg-card sticky top-[44px] z-10">
+          <div className="px-6 py-4 flex items-center justify-between">
+            <img src={eloyoLogo} alt="Eloyo" className="h-7 w-auto" />
+            <span className="text-sm text-muted-foreground">Schritt {step + 1} von {TOTAL_STEPS}</span>
+          </div>
+          <div className="h-1 bg-muted">
+            <motion.div className="h-full bg-primary" animate={{ width: `${((step + 1) / TOTAL_STEPS) * 100}%` }} transition={{ duration: 0.3 }} />
+          </div>
+        </div>
+
+        {/* Content area */}
+        <div className="flex-1 flex items-start justify-center overflow-y-auto">
+          <div className="w-full max-w-2xl px-6 py-10">
+            <AnimatePresence mode="wait" custom={direction}>
+              <motion.div
+                key={step}
+                custom={direction}
+                initial={{ x: direction > 0 ? 80 : -80, opacity: 0 }}
+                animate={{ x: 0, opacity: 1 }}
+                exit={{ x: direction > 0 ? -80 : 80, opacity: 0 }}
+                transition={{ duration: 0.25 }}
+              >
+                {/* Step Header */}
+                <div className="flex items-center gap-4 mb-8">
+                  <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
+                    <Icon className="w-6 h-6 text-primary" />
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-semibold text-foreground">{meta.title}</h2>
+                    <p className="text-base text-muted-foreground">{meta.subtitle}</p>
+                  </div>
+                </div>
+
+                {/* Step Content */}
+                <div className="bg-card border border-border/50 rounded-2xl p-8 shadow-sm">
+                  {step === 0 && <WizardStepPassword state={state} onChange={update} />}
+                  {step === 1 && <WizardStepBoxId state={state} onChange={update} />}
+                  {step === 2 && <WizardStepBusiness state={state} onChange={update} />}
+                  {step === 3 && <WizardStepSpend state={state} onChange={update} />}
+                  {step === 4 && <WizardStepGoal state={state} onChange={update} />}
+                  {step === 5 && <WizardStepSuggestion state={state} onChange={update} />}
+                  {step === 6 && <WizardStepReward state={state} onChange={update} />}
+                  {step === 7 && <WizardStepComplete />}
+                </div>
+              </motion.div>
+            </AnimatePresence>
+
+            {/* Navigation */}
+            <div className="flex items-center justify-between mt-8">
+              <div>
+                {step > 2 && !isLastStep && (
+                  <Button variant="ghost" size="sm" onClick={goBack} className="rounded-xl">
+                    <ArrowLeft className="h-4 w-4 mr-1" />
+                    Zurück
+                  </Button>
+                )}
+              </div>
+              <Button
+                onClick={isLastStep ? () => alert("Wizard abgeschlossen – weiter zum Dashboard!") : goNext}
+                disabled={!isStepValid}
+                className="rounded-xl"
+              >
+                {isLastStep ? (
+                  <>
+                    <CheckCircle2 className="h-4 w-4 mr-1" />
+                    Loslegen
+                  </>
+                ) : step === 0 ? (
+                  <>
+                    Passwort festlegen
+                    <ChevronRight className="h-4 w-4 ml-1" />
+                  </>
+                ) : step === 1 ? (
+                  <>
+                    Einrichtung starten
+                    <ChevronRight className="h-4 w-4 ml-1" />
+                  </>
+                ) : (
+                  <>
+                    Weiter
+                    <ChevronRight className="h-4 w-4 ml-1" />
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
         </div>
       </div>
     </div>
