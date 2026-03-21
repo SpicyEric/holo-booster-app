@@ -552,9 +552,9 @@ const Marketing = () => {
                           <p className="font-semibold text-foreground">{newCustomerOffer.title}</p>
                         </div>
                         {newCustomerOffer.description && <p className="text-sm text-muted-foreground">{newCustomerOffer.description}</p>}
-                        {newCustomerOffer.bonus_stamps && newCustomerOffer.bonus_stamps > 0 && (
+                        {newCustomerOffer.bonus_stamps != null && newCustomerOffer.bonus_stamps > 0 ? (
                           <Badge variant="secondary" className="rounded-full mt-1"><Coins className="h-3 w-3 mr-1" />{newCustomerOffer.bonus_stamps} Bonuspunkte</Badge>
-                        )}
+                        ) : null}
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
