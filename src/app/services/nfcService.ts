@@ -38,7 +38,7 @@ class NfcService {
   private webNdefReader: any = null;
   private currentCallback: NfcReadCallback | null = null;
   private abortController: AbortController | null = null;
-  private nfcListenerHandle: any = null;
+  private nfcListenerHandles: any[] = [];
   private scanStartedAt: number = 0; // Timestamp when scan session was started
 
   isNativeApp(): boolean {
@@ -150,12 +150,7 @@ class NfcService {
    * Cleanup any previous scan state to prevent queued tags from firing
    */
   private async cleanupPreviousScan(): Promise<void> {
-    if (this.nfcListenerHandle) {
-      try {
-        await this.nfcListenerHandle.remove();
-      } catch {}
-      this.nfcListenerHandle = null;
-    }
+    await this.removeNativeListeners();
     try {
       await Nfc.stopScanSession();
     } catch {}
@@ -163,6 +158,72 @@ class NfcService {
     try {
       await Nfc.removeAllListeners();
     } catch {}
+  }
+
+  private async removeNativeListeners(): Promise<void> {
+    if (this.nfcListenerHandles.length === 0) return;
+
+    const handles = [...this.nfcListenerHandles];
+    this.nfcListenerHandles = [];
+
+    await Promise.all(
+      handles.map(async (handle) => {
+        try {
+          await handle?.remove?.();
+        } catch {}
+      })
+    );
+  }
+
+  private buildNativeScanErrorMessage(rawError: unknown): string {
+    const errorText =
+      typeof rawError === 'string'
+        ? rawError
+        : (rawError as any)?.error?.message || (rawError as any)?.message || '';
+
+    const errMsg = errorText.toLowerCase();
+
+    if (errMsg.includes('permission') || errMsg.includes('denied')) {
+      return 'NFC-Berechtigung wird benötigt. Bitte aktiviere NFC in den Einstellungen.';
+    }
+
+    if (errMsg.includes('disabled') || errMsg.includes('not enabled')) {
+      return 'NFC ist deaktiviert. Bitte aktiviere NFC in den Geräteeinstellungen.';
+    }
+
+    if (errMsg.includes('unavailable') || errMsg.includes('not supported')) {
+      return 'NFC ist auf diesem Gerät nicht verfügbar.';
+    }
+
+    if (errMsg.includes('canceled') || errMsg.includes('cancelled') || errMsg.includes('session invalidated')) {
+      return 'NFC-Scan wurde abgebrochen.';
+    }
+
+    if (
+      errMsg.includes('com.apple.nfcd.service.corenfc') ||
+      errMsg.includes('xpc error') ||
+      errMsg.includes('code=4099') ||
+      errMsg.includes('sandbox restriction')
+    ) {
+      return 'iOS blockiert NFC für diese App. Bitte prüfe in Xcode die Capability „Near Field Communication Tag Reading“, nutze ein NFC-fähiges iPhone und installiere die App danach neu.';
+    }
+
+    return 'NFC konnte nicht gestartet werden';
+  }
+
+  private async notifyNativeScanFailure(onRead: NfcReadCallback, rawError: unknown): Promise<void> {
+    const errorMessage = this.buildNativeScanErrorMessage(rawError);
+    console.error('[NFC] Native scan failure details:', rawError);
+
+    if (!this.isScanning) return;
+
+    onRead({
+      chipData: '',
+      success: false,
+      error: errorMessage,
+    });
+
+    await this.stopScan();
   }
 
   private validateChipData(data: string): boolean {
@@ -177,7 +238,7 @@ class NfcService {
       // Record when we started so we can reject stale/buffered tags
       this.scanStartedAt = Date.now();
 
-      this.nfcListenerHandle = await Nfc.addListener('nfcTagScanned', (event: any) => {
+      const tagListener = await Nfc.addListener('nfcTagScanned', (event: any) => {
         const elapsed = Date.now() - this.scanStartedAt;
         console.log('[NFC] Tag scanned, elapsed since scan start:', elapsed, 'ms');
         
@@ -190,6 +251,26 @@ class NfcService {
         this.processNfcTag(event.nfcTag, onRead);
       });
 
+      const sessionErrorListener = await Nfc.addListener('scanSessionError', async (event: any) => {
+        console.error('[NFC] scanSessionError event:', event);
+        await this.notifyNativeScanFailure(onRead, event);
+      });
+
+      const sessionCanceledListener = await Nfc.addListener('scanSessionCanceled', async () => {
+        console.log('[NFC] scanSessionCanceled event');
+        if (!this.isScanning) return;
+
+        onRead({
+          chipData: '',
+          success: false,
+          error: 'NFC-Scan wurde abgebrochen.',
+        });
+
+        await this.stopScan();
+      });
+
+      this.nfcListenerHandles = [tagListener, sessionErrorListener, sessionCanceledListener];
+
       await Nfc.startScanSession({
         alertMessage: 'Halte dein Handy an den NFC-Stempel'
       });
@@ -197,27 +278,7 @@ class NfcService {
       console.log('[NFC] Scan session started');
 
     } catch (error: any) {
-      console.error('[NFC] Native scan error:', error);
-      this.isScanning = false;
-      
-      let errorMessage = 'NFC konnte nicht gestartet werden';
-      const errMsg = error?.message?.toLowerCase() || '';
-      
-      if (errMsg.includes('permission') || errMsg.includes('denied')) {
-        errorMessage = 'NFC-Berechtigung wird benötigt. Bitte aktiviere NFC in den Einstellungen.';
-      } else if (errMsg.includes('disabled') || errMsg.includes('not enabled')) {
-        errorMessage = 'NFC ist deaktiviert. Bitte aktiviere NFC in den Android-Einstellungen.';
-      } else if (errMsg.includes('unavailable') || errMsg.includes('not supported')) {
-        errorMessage = 'NFC ist auf diesem Gerät nicht verfügbar.';
-      } else if (errMsg.includes('canceled') || errMsg.includes('cancelled') || errMsg.includes('session invalidated')) {
-        errorMessage = 'NFC-Scan wurde abgebrochen.';
-      }
-      
-      onRead({
-        chipData: '',
-        success: false,
-        error: errorMessage
-      });
+      await this.notifyNativeScanFailure(onRead, error);
     }
   }
 
@@ -433,14 +494,7 @@ class NfcService {
     this.isScanning = false;
     this.currentCallback = null;
 
-    if (this.nfcListenerHandle) {
-      try {
-        await this.nfcListenerHandle.remove();
-      } catch (error) {
-        console.log('[NFC] Error removing listener:', error);
-      }
-      this.nfcListenerHandle = null;
-    }
+    await this.removeNativeListeners();
 
     try {
       await Nfc.stopScanSession();
