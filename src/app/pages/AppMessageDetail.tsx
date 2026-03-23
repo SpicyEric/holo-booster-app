@@ -26,6 +26,7 @@ interface MessageDetail {
   read_at: string | null;
   offer_id: string | null;
   offer_redeemed_at: string | null;
+  image_url: string | null;
   merchant_customer_id: string;
   customer?: {
     name: string;
@@ -69,7 +70,7 @@ const AppMessageDetail = () => {
       const { data: msgData, error: msgError } = await supabase
         .from('app_messages')
         .select(`
-          id, title, body, sent_at, read_at, offer_id, offer_redeemed_at, merchant_customer_id,
+          id, title, body, sent_at, read_at, offer_id, offer_redeemed_at, image_url, merchant_customer_id,
           customers!merchant_customer_id (name, logo_url)
         `)
         .eq('id', id!)
@@ -323,6 +324,11 @@ const AppMessageDetail = () => {
         <Card className="p-5">
           <h1 className="text-xl font-bold text-foreground mb-2">{message.title}</h1>
           <p className="text-foreground/80 whitespace-pre-wrap leading-relaxed">{message.body}</p>
+          {message.image_url && (
+            <div className="mt-4 rounded-xl overflow-hidden">
+              <img src={message.image_url} alt="" className="w-full object-cover rounded-xl" />
+            </div>
+          )}
           {message.sent_at && (
             <p className="text-xs text-muted-foreground mt-4">
               {format(new Date(message.sent_at), "dd. MMMM yyyy 'um' HH:mm 'Uhr'", { locale: de })}

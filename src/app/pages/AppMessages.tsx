@@ -18,6 +18,7 @@ interface Message {
   sent_at: string | null;
   read_at: string | null;
   offer_id: string | null;
+  image_url: string | null;
   customer?: {
     name: string;
     logo_url: string | null;
@@ -103,7 +104,7 @@ export const AppMessages = () => {
       const { data, error } = await supabase
         .from('app_messages')
         .select(`
-          id, title, body, sent_at, read_at, offer_id, merchant_customer_id,
+          id, title, body, sent_at, read_at, offer_id, image_url, merchant_customer_id,
           customers!merchant_customer_id (name, logo_url)
         `)
         .eq('user_id', user?.id)
@@ -249,6 +250,11 @@ export const AppMessages = () => {
                     <ChevronRight className="h-5 w-5 text-muted-foreground flex-shrink-0" />
                   </div>
                   <p className="text-sm text-muted-foreground truncate">{message.body}</p>
+                  {message.image_url && (
+                    <div className="mt-2 rounded-lg overflow-hidden max-h-32">
+                      <img src={message.image_url} alt="" className="w-full h-full object-cover rounded-lg max-h-32" />
+                    </div>
+                  )}
                   <div className="flex items-center gap-2 mt-1">
                     {message.sent_at && (
                       <p className="text-xs text-muted-foreground">
