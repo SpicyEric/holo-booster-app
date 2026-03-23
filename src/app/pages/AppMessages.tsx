@@ -18,6 +18,7 @@ interface Message {
   sent_at: string | null;
   read_at: string | null;
   offer_id: string | null;
+  image_url: string | null;
   customer?: {
     name: string;
     logo_url: string | null;
