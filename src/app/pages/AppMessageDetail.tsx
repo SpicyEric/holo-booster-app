@@ -70,7 +70,7 @@ const AppMessageDetail = () => {
       const { data: msgData, error: msgError } = await supabase
         .from('app_messages')
         .select(`
-          id, title, body, sent_at, read_at, offer_id, offer_redeemed_at, merchant_customer_id,
+          id, title, body, sent_at, read_at, offer_id, offer_redeemed_at, image_url, merchant_customer_id,
           customers!merchant_customer_id (name, logo_url)
         `)
         .eq('id', id!)
