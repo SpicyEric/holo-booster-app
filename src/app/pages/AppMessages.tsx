@@ -103,7 +103,7 @@ export const AppMessages = () => {
       const { data, error } = await supabase
         .from('app_messages')
         .select(`
-          id, title, body, sent_at, read_at, offer_id, merchant_customer_id,
+          id, title, body, sent_at, read_at, offer_id, image_url, merchant_customer_id,
           customers!merchant_customer_id (name, logo_url)
         `)
         .eq('user_id', user?.id)
