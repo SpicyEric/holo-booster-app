@@ -324,6 +324,11 @@ const AppMessageDetail = () => {
         <Card className="p-5">
           <h1 className="text-xl font-bold text-foreground mb-2">{message.title}</h1>
           <p className="text-foreground/80 whitespace-pre-wrap leading-relaxed">{message.body}</p>
+          {message.image_url && (
+            <div className="mt-4 rounded-xl overflow-hidden">
+              <img src={message.image_url} alt="" className="w-full object-cover rounded-xl" />
+            </div>
+          )}
           {message.sent_at && (
             <p className="text-xs text-muted-foreground mt-4">
               {format(new Date(message.sent_at), "dd. MMMM yyyy 'um' HH:mm 'Uhr'", { locale: de })}

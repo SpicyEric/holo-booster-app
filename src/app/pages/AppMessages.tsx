@@ -250,6 +250,11 @@ export const AppMessages = () => {
                     <ChevronRight className="h-5 w-5 text-muted-foreground flex-shrink-0" />
                   </div>
                   <p className="text-sm text-muted-foreground truncate">{message.body}</p>
+                  {message.image_url && (
+                    <div className="mt-2 rounded-lg overflow-hidden max-h-32">
+                      <img src={message.image_url} alt="" className="w-full h-full object-cover rounded-lg max-h-32" />
+                    </div>
+                  )}
                   <div className="flex items-center gap-2 mt-1">
                     {message.sent_at && (
                       <p className="text-xs text-muted-foreground">
