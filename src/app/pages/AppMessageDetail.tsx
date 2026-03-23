@@ -26,6 +26,7 @@ interface MessageDetail {
   read_at: string | null;
   offer_id: string | null;
   offer_redeemed_at: string | null;
+  image_url: string | null;
   merchant_customer_id: string;
   customer?: {
     name: string;
