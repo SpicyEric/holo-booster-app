@@ -85,6 +85,7 @@ const App = () => (
           <Route path="/impressum" element={<Impressum />} />
           <Route path="/datenschutz" element={<Datenschutz />} />
           <Route path="/delete" element={<Delete />} />
+          <Route path="/konto-loeschen" element={<KontoLoeschen />} />
           <Route path="/auth" element={<Auth />} />
           
           {/* Admin Dashboard (role: admin) */}
