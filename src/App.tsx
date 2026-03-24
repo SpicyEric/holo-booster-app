@@ -11,6 +11,7 @@ import Kontakt from "./pages/Kontakt";
 import Impressum from "./pages/Impressum";
 import Datenschutz from "./pages/Datenschutz";
 import Delete from "./pages/Delete";
+import KontoLoeschen from "./pages/KontoLoeschen";
 import Auth from "./pages/Auth";
 import AdminDashboard from "./pages/admin/Dashboard";
 import Overview from "./pages/admin/Overview";
@@ -84,6 +85,7 @@ const App = () => (
           <Route path="/impressum" element={<Impressum />} />
           <Route path="/datenschutz" element={<Datenschutz />} />
           <Route path="/delete" element={<Delete />} />
+          <Route path="/konto-loeschen" element={<KontoLoeschen />} />
           <Route path="/auth" element={<Auth />} />
           
           {/* Admin Dashboard (role: admin) */}
