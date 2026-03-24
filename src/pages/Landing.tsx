@@ -49,6 +49,7 @@ const Landing = () => {
     { label: 'Kontakt', href: '/kontakt' },
     { label: 'Datenschutz', href: '/datenschutz' },
     { label: 'Impressum', href: '/impressum' },
+    { label: 'Konto löschen', href: '/konto-loeschen' },
     { label: 'Login', href: '/auth' }
   ];
 
