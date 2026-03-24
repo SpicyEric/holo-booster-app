@@ -224,13 +224,10 @@ export default function AppSettings() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="birthDate">Geburtsdatum</Label>
-              <Input
-                id="birthDate"
-                type="date"
-                value={birthDate}
-                onChange={(e) => setBirthDate(e.target.value)}
-              />
+              <Label>Geburtsdatum</Label>
+              <div className="p-3 rounded-md bg-muted text-muted-foreground">
+                {formatBirthDate(birthDate)}
+              </div>
             </div>
 
             <div className="space-y-2">
