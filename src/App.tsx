@@ -11,6 +11,7 @@ import Kontakt from "./pages/Kontakt";
 import Impressum from "./pages/Impressum";
 import Datenschutz from "./pages/Datenschutz";
 import Delete from "./pages/Delete";
+import KontoLoeschen from "./pages/KontoLoeschen";
 import Auth from "./pages/Auth";
 import AdminDashboard from "./pages/admin/Dashboard";
 import Overview from "./pages/admin/Overview";
