@@ -36,6 +36,7 @@ interface UserAccount {
   full_name: string;
   role: AppRole;
   created_at: string;
+  last_active: string | null;
 }
 
 const Accounts = () => {
