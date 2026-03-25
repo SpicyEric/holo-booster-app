@@ -583,6 +583,7 @@ const Accounts = () => {
                 <TableHead>E-Mail</TableHead>
                 <TableHead>Rolle</TableHead>
                 <TableHead>Erstellt am</TableHead>
+                <TableHead>Zuletzt aktiv</TableHead>
                 <TableHead className="text-right">Aktionen</TableHead>
               </TableRow>
             </TableHeader>
