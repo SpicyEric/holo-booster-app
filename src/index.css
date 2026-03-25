@@ -113,10 +113,34 @@ All colors MUST be HSL.
     color-scheme: only light !important;
   }
 
+  html[data-app-route='false'],
+  html.dark[data-app-route='false'] {
+    --background: 0 0% 100% !important;
+    --foreground: 0 0% 10% !important;
+    --card: 0 0% 98% !important;
+    --card-foreground: 0 0% 10% !important;
+    --popover: 0 0% 100% !important;
+    --popover-foreground: 0 0% 10% !important;
+    --muted: 0 0% 96% !important;
+    --muted-foreground: 0 0% 40% !important;
+    --border: 0 0% 90% !important;
+    --input: 0 0% 98% !important;
+    forced-color-adjust: none;
+  }
+
   html[data-app-route='false'] body,
-  html.dark[data-app-route='false'] body {
+  html.dark[data-app-route='false'] body,
+  html[data-app-route='false'] #root,
+  html.dark[data-app-route='false'] #root {
     background-color: hsl(var(--background)) !important;
     color: hsl(var(--foreground)) !important;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    html[data-app-route='false'],
+    html.dark[data-app-route='false'] {
+      color-scheme: only light !important;
+    }
   }
 
   body {
