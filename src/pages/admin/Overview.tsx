@@ -258,7 +258,7 @@ const Overview = () => {
         </Card>
 
         {/* New Customers */}
-        <Card className="p-6 border-border">
+        <Card className="p-6 bg-white rounded-2xl border-border/30 shadow-[0_1px_3px_hsl(262,30%,80%/0.3)]">
           <div className="flex items-center gap-2 mb-4">
             <UserPlus className="w-5 h-5 text-primary" />
             <h2 className="text-xl font-semibold">Neue Kunden</h2>
