@@ -109,7 +109,15 @@ All colors MUST be HSL.
 
   html[data-app-route='false'],
   html.dark[data-app-route='false'] {
-    color-scheme: light !important;
+    color-scheme: only light !important;
+    background-color: hsl(var(--background)) !important;
+    forced-color-adjust: none;
+  }
+
+  html[data-app-route='false'] body,
+  html.dark[data-app-route='false'] body {
+    background-color: hsl(var(--background)) !important;
+    color: hsl(var(--foreground)) !important;
   }
 
   body {
