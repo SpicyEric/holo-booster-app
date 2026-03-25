@@ -602,6 +602,13 @@ const Accounts = () => {
                   <TableCell>
                     {account.created_at ? new Date(account.created_at).toLocaleDateString('de-DE') : "—"}
                   </TableCell>
+                  <TableCell>
+                    {account.last_active ? (
+                      <span className="text-sm">{new Date(account.last_active).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
+                    ) : (
+                      <span className="text-muted-foreground text-sm">—</span>
+                    )}
+                  </TableCell>
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end gap-2">
                       <Button
