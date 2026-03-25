@@ -451,8 +451,8 @@ const Accounts = () => {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-4xl font-bold">Account-Verwaltung</h1>
-          <p className="text-muted-foreground mt-2">
+          <h1 className="text-3xl font-bold text-foreground">Account-Verwaltung</h1>
+          <p className="text-muted-foreground mt-1">
             {accounts.length} Accounts insgesamt • {roleCounts.admin} Admins • {roleCounts.merchant} Kunden • {roleCounts.end_customer} Endkunden
           </p>
         </div>
@@ -536,7 +536,7 @@ const Accounts = () => {
       </div>
 
       {/* Filter Section */}
-      <Card className="p-4">
+      <Card className="p-4 bg-white rounded-2xl border-border/30 shadow-[0_1px_3px_hsl(262,30%,80%/0.3)]">
         <div className="flex flex-col md:flex-row gap-4">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -564,7 +564,7 @@ const Accounts = () => {
         </div>
       </Card>
 
-      <Card className="p-6">
+      <Card className="p-6 bg-white rounded-2xl border-border/30 shadow-[0_1px_3px_hsl(262,30%,80%/0.3)]">
         {loading ? (
           <div className="flex items-center justify-center py-8">
             <div className="w-8 h-8 rounded-full bg-gradient-primary animate-pulse-glow" />

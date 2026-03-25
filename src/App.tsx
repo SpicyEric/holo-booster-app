@@ -101,9 +101,8 @@ const App = () => (
             <Route path="checkout" element={<Checkout />} />
             <Route path="boxes" element={<BoxManagement />} />
             <Route path="settings" element={<Settings />} />
+            <Route path="map" element={<CustomerMap />} />
           </Route>
-          
-          <Route path="/admin/map" element={<CustomerMap />} />
           
           {/* Händler Dashboard (role: merchant) */}
           <Route path="/kunde/setup" element={<MerchantSetup />} />

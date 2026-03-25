@@ -1,6 +1,4 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
-import { AdminTopNav } from '@/components/AdminTopNav';
-import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { supabase } from '@/integrations/supabase/client';
 import { useGoogleMapsApiKey } from '@/hooks/useGoogleMapsApiKey';
 import { Button } from '@/components/ui/button';
@@ -477,27 +475,20 @@ function CustomerMapContent({ googleMapsApiKey }: { googleMapsApiKey: string }) 
 
   if (loadError) {
     return (
-      <ProtectedRoute allowedRoles={['admin']}>
-        <div className="min-h-screen bg-background">
-          <AdminTopNav />
-          <div className="p-6">
-            <div className="bg-card border rounded-lg p-8 text-center">
-              <MapPin className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-              <h2 className="text-xl font-semibold mb-2">Fehler beim Laden von Google Maps</h2>
-              <p className="text-muted-foreground">Bitte überprüfe den Google Maps API-Schlüssel.</p>
-            </div>
-          </div>
+      <div className="p-6">
+        <div className="bg-card border rounded-lg p-8 text-center">
+          <MapPin className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+          <h2 className="text-xl font-semibold mb-2">Fehler beim Laden von Google Maps</h2>
+          <p className="text-muted-foreground">Bitte überprüfe den Google Maps API-Schlüssel.</p>
         </div>
-      </ProtectedRoute>
+      </div>
     );
   }
 
   return (
-    <ProtectedRoute allowedRoles={['admin']}>
-      <div className="min-h-screen bg-background">
-        <AdminTopNav />
-        
-        <div className="flex h-[calc(100vh-64px)]">
+    <div className="flex h-[calc(100vh-3rem)] -m-6">
+      {/* Full-height map layout */}
+      <div className="flex w-full h-full">
           {/* Sidebar */}
           <div className="w-80 border-r bg-background overflow-y-auto flex flex-col">
             {/* Tab Switcher */}
@@ -1015,10 +1006,9 @@ function CustomerMapContent({ googleMapsApiKey }: { googleMapsApiKey: string }) 
                 </div>
               </div>
             )}
-          </div>
         </div>
       </div>
-    </ProtectedRoute>
+    </div>
   );
 }
 
@@ -1027,35 +1017,25 @@ export default function CustomerMap() {
 
   if (loading) {
     return (
-      <ProtectedRoute allowedRoles={['admin']}>
-        <div className="min-h-screen bg-background">
-          <AdminTopNav />
-          <div className="p-6">
-            <div className="bg-card border rounded-lg p-8 text-center">
-              <Loader2 className="h-12 w-12 mx-auto mb-4 text-muted-foreground animate-spin" />
-              <h2 className="text-xl font-semibold mb-2">Google Maps wird vorbereitet</h2>
-              <p className="text-muted-foreground">API-Key wird geladen...</p>
-            </div>
-          </div>
+      <div className="p-6">
+        <div className="bg-card border rounded-lg p-8 text-center">
+          <Loader2 className="h-12 w-12 mx-auto mb-4 text-muted-foreground animate-spin" />
+          <h2 className="text-xl font-semibold mb-2">Google Maps wird vorbereitet</h2>
+          <p className="text-muted-foreground">API-Key wird geladen...</p>
         </div>
-      </ProtectedRoute>
+      </div>
     );
   }
 
   if (!apiKey) {
     return (
-      <ProtectedRoute allowedRoles={['admin']}>
-        <div className="min-h-screen bg-background">
-          <AdminTopNav />
-          <div className="p-6">
-            <div className="bg-card border rounded-lg p-8 text-center">
-              <MapPin className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-              <h2 className="text-xl font-semibold mb-2">Google Maps API Key fehlt</h2>
-              <p className="text-muted-foreground">{error || 'Bitte Google Maps API Key in Lovable Cloud hinterlegen.'}</p>
-            </div>
-          </div>
+      <div className="p-6">
+        <div className="bg-card border rounded-lg p-8 text-center">
+          <MapPin className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+          <h2 className="text-xl font-semibold mb-2">Google Maps API Key fehlt</h2>
+          <p className="text-muted-foreground">{error || 'Bitte Google Maps API Key in Lovable Cloud hinterlegen.'}</p>
         </div>
-      </ProtectedRoute>
+      </div>
     );
   }
 

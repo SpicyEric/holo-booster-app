@@ -1,9 +1,8 @@
 import { useEffect } from "react";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
-import { AdminTopNav } from "@/components/AdminTopNav";
 import { Outlet } from "react-router-dom";
+import AdminSidebar from "@/components/admin/AdminSidebar";
 
-// Admin Dashboard - nur für User mit App-Rolle 'admin'
 const AdminDashboard = () => {
   useEffect(() => {
     document.body.classList.add('ccm19-right');
@@ -12,9 +11,9 @@ const AdminDashboard = () => {
 
   return (
     <ProtectedRoute allowedRoles={['admin']}>
-      <div className="min-h-screen w-full bg-background">
-        <AdminTopNav />
-        <main className="p-6">
+      <div className="flex min-h-screen w-full bg-[hsl(262,40%,93%)]">
+        <AdminSidebar />
+        <main className="flex-1 min-w-0 overflow-x-hidden p-6">
           <div className="max-w-7xl mx-auto">
             <Outlet />
           </div>

@@ -152,17 +152,17 @@ const Overview = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-4xl font-bold">
+          <h1 className="text-3xl font-bold text-foreground">
             Dashboard
           </h1>
-          <p className="text-muted-foreground mt-2">
+          <p className="text-muted-foreground mt-1">
             Übersicht aller Aktivitäten
           </p>
         </div>
         <Button 
           onClick={loadStats} 
           variant="outline"
-          className="gap-2"
+          className="gap-2 bg-white"
         >
           <RefreshCw className="w-4 h-4" />
           Aktualisieren
@@ -170,7 +170,7 @@ const Overview = () => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <Card className="p-6 border-border hover:shadow-lg transition-shadow">
+        <Card className="p-6 bg-white rounded-2xl border-border/30 shadow-[0_1px_3px_hsl(262,30%,80%/0.3)] hover:shadow-[0_4px_12px_hsl(262,30%,80%/0.4)] transition-shadow">
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 rounded-xl bg-gradient-primary flex items-center justify-center">
               <Users className="w-6 h-6 text-white" />
@@ -182,7 +182,7 @@ const Overview = () => {
           </div>
         </Card>
 
-        <Card className="p-6 border-border hover:shadow-lg transition-shadow">
+        <Card className="p-6 bg-white rounded-2xl border-border/30 shadow-[0_1px_3px_hsl(262,30%,80%/0.3)] hover:shadow-[0_4px_12px_hsl(262,30%,80%/0.4)] transition-shadow">
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 rounded-xl bg-gradient-primary flex items-center justify-center">
               <Stamp className="w-6 h-6 text-white" />
@@ -194,7 +194,7 @@ const Overview = () => {
           </div>
         </Card>
 
-        <Card className="p-6 border-border hover:shadow-lg transition-shadow">
+        <Card className="p-6 bg-white rounded-2xl border-border/30 shadow-[0_1px_3px_hsl(262,30%,80%/0.3)] hover:shadow-[0_4px_12px_hsl(262,30%,80%/0.4)] transition-shadow">
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 rounded-xl bg-gradient-primary flex items-center justify-center">
               <BarChart3 className="w-6 h-6 text-white" />
@@ -207,7 +207,7 @@ const Overview = () => {
         </Card>
 
         <Card 
-          className="p-6 border-border hover:shadow-lg transition-shadow cursor-pointer"
+          className="p-6 bg-white rounded-2xl border-border/30 shadow-[0_1px_3px_hsl(262,30%,80%/0.3)] hover:shadow-[0_4px_12px_hsl(262,30%,80%/0.4)] transition-shadow cursor-pointer"
           onClick={() => navigate("/admin/orders")}
         >
           <div className="flex items-center gap-4">
@@ -229,7 +229,7 @@ const Overview = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Recent Stamps */}
-        <Card className="p-6 border-border">
+        <Card className="p-6 bg-white rounded-2xl border-border/30 shadow-[0_1px_3px_hsl(262,30%,80%/0.3)]">
           <div className="flex items-center gap-2 mb-4">
             <Clock className="w-5 h-5 text-primary" />
             <h2 className="text-xl font-semibold">Letzte Aktivitäten</h2>
@@ -258,7 +258,7 @@ const Overview = () => {
         </Card>
 
         {/* New Customers */}
-        <Card className="p-6 border-border">
+        <Card className="p-6 bg-white rounded-2xl border-border/30 shadow-[0_1px_3px_hsl(262,30%,80%/0.3)]">
           <div className="flex items-center gap-2 mb-4">
             <UserPlus className="w-5 h-5 text-primary" />
             <h2 className="text-xl font-semibold">Neue Kunden</h2>
@@ -288,7 +288,7 @@ const Overview = () => {
 
       {/* Critical Events */}
       {criticalEvents.length > 0 && (
-        <Card className="p-6 border-border border-destructive/50">
+        <Card className="p-6 bg-white rounded-2xl border-border/30 border-destructive/50 shadow-[0_1px_3px_hsl(262,30%,80%/0.3)]">
           <div className="flex items-center gap-2 mb-4">
             <AlertTriangle className="w-5 h-5 text-destructive" />
             <h2 className="text-xl font-semibold text-destructive">Kritische Events</h2>
