@@ -564,7 +564,7 @@ const Accounts = () => {
         </div>
       </Card>
 
-      <Card className="p-6">
+      <Card className="p-6 bg-white rounded-2xl border-border/30 shadow-[0_1px_3px_hsl(262,30%,80%/0.3)]">
         {loading ? (
           <div className="flex items-center justify-center py-8">
             <div className="w-8 h-8 rounded-full bg-gradient-primary animate-pulse-glow" />
