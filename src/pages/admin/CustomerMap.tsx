@@ -1017,35 +1017,25 @@ export default function CustomerMap() {
 
   if (loading) {
     return (
-      <ProtectedRoute allowedRoles={['admin']}>
-        <div className="min-h-screen bg-background">
-          <AdminTopNav />
-          <div className="p-6">
-            <div className="bg-card border rounded-lg p-8 text-center">
-              <Loader2 className="h-12 w-12 mx-auto mb-4 text-muted-foreground animate-spin" />
-              <h2 className="text-xl font-semibold mb-2">Google Maps wird vorbereitet</h2>
-              <p className="text-muted-foreground">API-Key wird geladen...</p>
-            </div>
-          </div>
+      <div className="p-6">
+        <div className="bg-card border rounded-lg p-8 text-center">
+          <Loader2 className="h-12 w-12 mx-auto mb-4 text-muted-foreground animate-spin" />
+          <h2 className="text-xl font-semibold mb-2">Google Maps wird vorbereitet</h2>
+          <p className="text-muted-foreground">API-Key wird geladen...</p>
         </div>
-      </ProtectedRoute>
+      </div>
     );
   }
 
   if (!apiKey) {
     return (
-      <ProtectedRoute allowedRoles={['admin']}>
-        <div className="min-h-screen bg-background">
-          <AdminTopNav />
-          <div className="p-6">
-            <div className="bg-card border rounded-lg p-8 text-center">
-              <MapPin className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-              <h2 className="text-xl font-semibold mb-2">Google Maps API Key fehlt</h2>
-              <p className="text-muted-foreground">{error || 'Bitte Google Maps API Key in Lovable Cloud hinterlegen.'}</p>
-            </div>
-          </div>
+      <div className="p-6">
+        <div className="bg-card border rounded-lg p-8 text-center">
+          <MapPin className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+          <h2 className="text-xl font-semibold mb-2">Google Maps API Key fehlt</h2>
+          <p className="text-muted-foreground">{error || 'Bitte Google Maps API Key in Lovable Cloud hinterlegen.'}</p>
         </div>
-      </ProtectedRoute>
+      </div>
     );
   }
 
