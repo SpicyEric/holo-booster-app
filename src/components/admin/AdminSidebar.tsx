@@ -3,7 +3,7 @@ import { signOut } from "@/lib/auth";
 import { toast } from "sonner";
 import {
   LayoutDashboard, Users, Box, Package, UserCog, BarChart3,
-  ShoppingCart, Settings, LogOut, ChevronLeft, Menu, X, Map, Handshake,
+  ShoppingCart, Settings, LogOut, ChevronLeft, Menu, X, Map, GitBranch,
 } from "lucide-react";
 import eloyoLogo from "@/assets/eloyo-logo.png";
 import { cn } from "@/lib/utils";
@@ -32,25 +32,25 @@ const NAV_GROUPS: NavGroup[] = [
     ],
   },
   {
-    label: "VERWALTUNG",
+    label: "SALES",
     items: [
+      { path: "/admin/pipeline", label: "Pipeline", icon: GitBranch },
       { path: "/admin/customers", label: "Kunden", icon: Users },
       { path: "/admin/map", label: "Kundenkarte", icon: Map },
-      { path: "/admin/boxes", label: "Box-IDs", icon: Box },
-      { path: "/admin/orders", label: "Nachrichten", icon: Package },
-      { path: "/admin/leads", label: "Leads", icon: Handshake },
-    ],
-  },
-  {
-    label: "ACCOUNTS",
-    items: [
-      { path: "/admin/accounts", label: "Accountverwaltung", icon: UserCog },
       { path: "/admin/checkout", label: "Kunde abschließen", icon: ShoppingCart },
     ],
   },
   {
-    label: "EINSTELLUNGEN",
+    label: "OPERATIONS",
     items: [
+      { path: "/admin/boxes", label: "Box-IDs", icon: Box },
+      { path: "/admin/orders", label: "Nachrichten", icon: Package },
+    ],
+  },
+  {
+    label: "SYSTEM",
+    items: [
+      { path: "/admin/accounts", label: "Accounts", icon: UserCog },
       { path: "/admin/settings", label: "Einstellungen", icon: Settings },
     ],
   },
@@ -120,7 +120,6 @@ function SidebarNav({ collapsed, onNavigate }: { collapsed: boolean; onNavigate?
         ))}
       </nav>
 
-      {/* Bottom section */}
       <div className="border-t border-white/10 p-3 space-y-2">
         {!collapsed && (
           <div className="px-3 py-2">
