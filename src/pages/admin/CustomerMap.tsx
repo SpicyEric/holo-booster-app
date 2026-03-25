@@ -1006,10 +1006,9 @@ function CustomerMapContent({ googleMapsApiKey }: { googleMapsApiKey: string }) 
                 </div>
               </div>
             )}
-          </div>
         </div>
       </div>
-    </ProtectedRoute>
+    </div>
   );
 }
 
