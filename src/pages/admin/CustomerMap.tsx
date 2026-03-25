@@ -1,6 +1,5 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
-import { AdminTopNav } from '@/components/AdminTopNav';
-import { ProtectedRoute } from '@/components/ProtectedRoute';
+import { supabase } from '@/integrations/supabase/client';
 import { supabase } from '@/integrations/supabase/client';
 import { useGoogleMapsApiKey } from '@/hooks/useGoogleMapsApiKey';
 import { Button } from '@/components/ui/button';
