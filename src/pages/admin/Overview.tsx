@@ -229,7 +229,7 @@ const Overview = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Recent Stamps */}
-        <Card className="p-6 border-border">
+        <Card className="p-6 bg-white rounded-2xl border-border/30 shadow-[0_1px_3px_hsl(262,30%,80%/0.3)]">
           <div className="flex items-center gap-2 mb-4">
             <Clock className="w-5 h-5 text-primary" />
             <h2 className="text-xl font-semibold">Letzte Aktivitäten</h2>
