@@ -486,11 +486,9 @@ function CustomerMapContent({ googleMapsApiKey }: { googleMapsApiKey: string }) 
   }
 
   return (
-    <ProtectedRoute allowedRoles={['admin']}>
-      <div className="min-h-screen bg-background">
-        <AdminTopNav />
-        
-        <div className="flex h-[calc(100vh-64px)]">
+    <div className="flex h-[calc(100vh-3rem)] -m-6">
+      {/* Full-height map layout */}
+      <div className="flex w-full h-full">
           {/* Sidebar */}
           <div className="w-80 border-r bg-background overflow-y-auto flex flex-col">
             {/* Tab Switcher */}
