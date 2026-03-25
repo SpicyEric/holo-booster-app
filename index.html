@@ -3,7 +3,9 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-    <meta name="color-scheme" content="light" />
+    <meta name="color-scheme" content="light only" />
+    <meta name="supported-color-schemes" content="light" />
+    <meta name="theme-color" content="#ffffff" />
     <link rel="icon" href="/eloyo-logo.png" type="image/png">
     <title>Eloyo | Modernes Kundenbindungssystem</title>
     <meta name="description" content="Das moderne NFC-Stempelsystem für lokale Geschäfte. Digitale Bonuskarten, automatische Kundengewinnung und Echtzeit-Statistiken. DSGVO-konform." />
@@ -17,11 +19,29 @@
       const isAppRoute = window.location.pathname.startsWith('/app');
 
       // Website immer im Light Mode halten (auch bei aggressiven Mobile-Dark-Mode-Overlays)
+      const enforceWebsiteLightMode = () => {
+        const root = document.documentElement;
+        if (root.getAttribute('data-app-route') === 'true') return;
+
+        root.classList.remove('dark');
+        root.classList.add('light');
+        root.setAttribute('data-app-route', 'false');
+        root.style.colorScheme = 'only light';
+      };
+
       if (!isAppRoute) {
-        document.documentElement.classList.remove('dark');
-        document.documentElement.classList.add('light');
-        document.documentElement.style.colorScheme = 'light';
-        document.documentElement.setAttribute('data-app-route', 'false');
+        enforceWebsiteLightMode();
+
+        const observer = new MutationObserver(() => {
+          enforceWebsiteLightMode();
+        });
+
+        observer.observe(document.documentElement, {
+          attributes: true,
+          attributeFilter: ['class', 'style', 'data-app-route'],
+        });
+
+        window.addEventListener('load', enforceWebsiteLightMode, { once: true });
       } else {
         document.documentElement.setAttribute('data-app-route', 'true');
       }
