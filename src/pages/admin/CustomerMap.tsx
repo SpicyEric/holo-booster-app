@@ -475,18 +475,13 @@ function CustomerMapContent({ googleMapsApiKey }: { googleMapsApiKey: string }) 
 
   if (loadError) {
     return (
-      <ProtectedRoute allowedRoles={['admin']}>
-        <div className="min-h-screen bg-background">
-          <AdminTopNav />
-          <div className="p-6">
-            <div className="bg-card border rounded-lg p-8 text-center">
-              <MapPin className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-              <h2 className="text-xl font-semibold mb-2">Fehler beim Laden von Google Maps</h2>
-              <p className="text-muted-foreground">Bitte überprüfe den Google Maps API-Schlüssel.</p>
-            </div>
-          </div>
+      <div className="p-6">
+        <div className="bg-card border rounded-lg p-8 text-center">
+          <MapPin className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+          <h2 className="text-xl font-semibold mb-2">Fehler beim Laden von Google Maps</h2>
+          <p className="text-muted-foreground">Bitte überprüfe den Google Maps API-Schlüssel.</p>
         </div>
-      </ProtectedRoute>
+      </div>
     );
   }
 
