@@ -1,6 +1,5 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { supabase } from '@/integrations/supabase/client';
 import { useGoogleMapsApiKey } from '@/hooks/useGoogleMapsApiKey';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
