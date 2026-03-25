@@ -152,17 +152,17 @@ const Overview = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-4xl font-bold">
+          <h1 className="text-3xl font-bold text-foreground">
             Dashboard
           </h1>
-          <p className="text-muted-foreground mt-2">
+          <p className="text-muted-foreground mt-1">
             Übersicht aller Aktivitäten
           </p>
         </div>
         <Button 
           onClick={loadStats} 
           variant="outline"
-          className="gap-2"
+          className="gap-2 bg-white"
         >
           <RefreshCw className="w-4 h-4" />
           Aktualisieren
