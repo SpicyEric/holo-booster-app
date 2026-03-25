@@ -451,8 +451,8 @@ const Accounts = () => {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-4xl font-bold">Account-Verwaltung</h1>
-          <p className="text-muted-foreground mt-2">
+          <h1 className="text-3xl font-bold text-foreground">Account-Verwaltung</h1>
+          <p className="text-muted-foreground mt-1">
             {accounts.length} Accounts insgesamt • {roleCounts.admin} Admins • {roleCounts.merchant} Kunden • {roleCounts.end_customer} Endkunden
           </p>
         </div>
