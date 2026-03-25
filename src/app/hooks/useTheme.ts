@@ -12,9 +12,17 @@ export const useTheme = () => {
     }
   });
 
-  // Apply class to <html> on mount and change
+  // Apply class to <html> on mount and change — only for /app routes
   useEffect(() => {
     const root = document.documentElement;
+    const isAppRoute = window.location.pathname.startsWith('/app');
+
+    if (!isAppRoute) {
+      // Website must always be light mode
+      root.classList.remove('dark');
+      return;
+    }
+
     if (isDark) {
       root.classList.add('dark');
     } else {
