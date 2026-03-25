@@ -536,7 +536,7 @@ const Accounts = () => {
       </div>
 
       {/* Filter Section */}
-      <Card className="p-4">
+      <Card className="p-4 bg-white rounded-2xl border-border/30 shadow-[0_1px_3px_hsl(262,30%,80%/0.3)]">
         <div className="flex flex-col md:flex-row gap-4">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
