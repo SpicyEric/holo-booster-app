@@ -288,7 +288,7 @@ const Overview = () => {
 
       {/* Critical Events */}
       {criticalEvents.length > 0 && (
-        <Card className="p-6 border-border border-destructive/50">
+        <Card className="p-6 bg-white rounded-2xl border-border/30 border-destructive/50 shadow-[0_1px_3px_hsl(262,30%,80%/0.3)]">
           <div className="flex items-center gap-2 mb-4">
             <AlertTriangle className="w-5 h-5 text-destructive" />
             <h2 className="text-xl font-semibold text-destructive">Kritische Events</h2>
