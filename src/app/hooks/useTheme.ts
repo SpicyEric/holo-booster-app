@@ -17,17 +17,19 @@ export const useTheme = () => {
     const root = document.documentElement;
     const isAppRoute = window.location.pathname.startsWith('/app');
 
+    root.setAttribute('data-app-route', isAppRoute ? 'true' : 'false');
+
     if (!isAppRoute) {
       // Website must always be light mode
       root.classList.remove('dark');
+      root.classList.add('light');
+      root.style.colorScheme = 'light';
       return;
     }
 
-    if (isDark) {
-      root.classList.add('dark');
-    } else {
-      root.classList.remove('dark');
-    }
+    root.classList.toggle('dark', isDark);
+    root.classList.toggle('light', !isDark);
+    root.style.colorScheme = isDark ? 'dark' : 'light';
 
     // Update native status bar
     if (Capacitor.isNativePlatform()) {

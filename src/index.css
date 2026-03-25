@@ -56,8 +56,8 @@ All colors MUST be HSL.
     --shadow-card: 0 2px 8px hsl(0 0% 0% / 0.1);
   }
 
-  /* Dark mode */
-  .dark {
+  /* Dark mode nur für echte App-Routes */
+  html.dark[data-app-route='true'] {
     --background: 0 0% 13%;           /* #212121 - dark gray, not pure black */
     --foreground: 0 0% 93%;           /* #ededed - near-white text */
 
@@ -103,8 +103,13 @@ All colors MUST be HSL.
     color-scheme: light;
   }
 
-  html.dark {
+  html.dark[data-app-route='true'] {
     color-scheme: dark;
+  }
+
+  html[data-app-route='false'],
+  html.dark[data-app-route='false'] {
+    color-scheme: light !important;
   }
 
   body {
