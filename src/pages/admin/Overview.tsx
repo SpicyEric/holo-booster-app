@@ -170,7 +170,7 @@ const Overview = () => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <Card className="p-6 border-border hover:shadow-lg transition-shadow">
+        <Card className="p-6 bg-white rounded-2xl border-border/30 shadow-[0_1px_3px_hsl(262,30%,80%/0.3)] hover:shadow-[0_4px_12px_hsl(262,30%,80%/0.4)] transition-shadow">
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 rounded-xl bg-gradient-primary flex items-center justify-center">
               <Users className="w-6 h-6 text-white" />
