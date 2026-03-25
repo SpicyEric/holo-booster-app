@@ -207,7 +207,7 @@ const Overview = () => {
         </Card>
 
         <Card 
-          className="p-6 border-border hover:shadow-lg transition-shadow cursor-pointer"
+          className="p-6 bg-white rounded-2xl border-border/30 shadow-[0_1px_3px_hsl(262,30%,80%/0.3)] hover:shadow-[0_4px_12px_hsl(262,30%,80%/0.4)] transition-shadow cursor-pointer"
           onClick={() => navigate("/admin/orders")}
         >
           <div className="flex items-center gap-4">
