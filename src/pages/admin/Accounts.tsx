@@ -36,6 +36,7 @@ interface UserAccount {
   full_name: string;
   role: AppRole;
   created_at: string;
+  last_active: string | null;
 }
 
 const Accounts = () => {
@@ -110,7 +111,7 @@ const Accounts = () => {
       // Get profiles for these users
       const { data: profilesData, error: profilesError } = await supabase
         .from("profiles")
-        .select("user_id, first_name, last_name, full_name, created_at");
+        .select("user_id, first_name, last_name, full_name, created_at, updated_at");
 
       if (profilesError) {
         console.error("Profiles error:", profilesError);
@@ -135,7 +136,54 @@ const Accounts = () => {
           console.error("Email fetch failed:", e);
         }
       }
-      
+
+      // Fetch last activity data for each user
+      const lastActivityMap: Record<string, string> = {};
+
+      // Get latest point_transactions per user
+      const { data: ptData } = await supabase
+        .from("point_transactions")
+        .select("loyalty_account_id, created_at")
+        .order("created_at", { ascending: false });
+
+      if (ptData && ptData.length > 0) {
+        // Need loyalty_account -> user_id mapping
+        const { data: laData } = await supabase
+          .from("loyalty_accounts")
+          .select("id, user_id");
+        
+        const laMap: Record<string, string> = {};
+        (laData || []).forEach(la => { laMap[la.id] = la.user_id; });
+
+        for (const pt of ptData) {
+          const userId = laMap[pt.loyalty_account_id];
+          if (userId && !lastActivityMap[userId]) {
+            lastActivityMap[userId] = pt.created_at;
+          }
+        }
+      }
+
+      // Get latest app_messages read_at per user
+      const { data: msgData } = await supabase
+        .from("app_messages")
+        .select("user_id, read_at")
+        .not("read_at", "is", null)
+        .order("read_at", { ascending: false });
+
+      for (const msg of (msgData || [])) {
+        if (!lastActivityMap[msg.user_id] || new Date(msg.read_at!) > new Date(lastActivityMap[msg.user_id])) {
+          lastActivityMap[msg.user_id] = msg.read_at!;
+        }
+      }
+
+      // Use profiles.updated_at as fallback activity signal
+      for (const p of profiles) {
+        const updated = (p as any).updated_at;
+        if (updated && (!lastActivityMap[p.user_id] || new Date(updated) > new Date(lastActivityMap[p.user_id]))) {
+          lastActivityMap[p.user_id] = updated;
+        }
+      }
+
       const accountsData = roles.map(role => {
         const profile = profiles.find(p => p.user_id === role.user_id);
         const fullName = profile?.full_name || 
@@ -148,6 +196,7 @@ const Accounts = () => {
           full_name: fullName,
           role: role.role as AppRole,
           created_at: role.created_at || profile?.created_at || "",
+          last_active: lastActivityMap[role.user_id] || null,
         };
       });
 
@@ -534,6 +583,7 @@ const Accounts = () => {
                 <TableHead>E-Mail</TableHead>
                 <TableHead>Rolle</TableHead>
                 <TableHead>Erstellt am</TableHead>
+                <TableHead>Zuletzt aktiv</TableHead>
                 <TableHead className="text-right">Aktionen</TableHead>
               </TableRow>
             </TableHeader>
@@ -551,6 +601,13 @@ const Accounts = () => {
                   <TableCell>{getRoleBadge(account.role)}</TableCell>
                   <TableCell>
                     {account.created_at ? new Date(account.created_at).toLocaleDateString('de-DE') : "—"}
+                  </TableCell>
+                  <TableCell>
+                    {account.last_active ? (
+                      <span className="text-sm">{new Date(account.last_active).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
+                    ) : (
+                      <span className="text-muted-foreground text-sm">—</span>
+                    )}
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end gap-2">
