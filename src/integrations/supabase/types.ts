@@ -14,6 +14,44 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_merchant_messages: {
+        Row: {
+          body: string
+          created_at: string
+          customer_id: string
+          id: string
+          read_at: string | null
+          sent_by_user_id: string | null
+          subject: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          customer_id: string
+          id?: string
+          read_at?: string | null
+          sent_by_user_id?: string | null
+          subject: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          customer_id?: string
+          id?: string
+          read_at?: string | null
+          sent_by_user_id?: string | null
+          subject?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "admin_merchant_messages_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       app_messages: {
         Row: {
           body: string
@@ -1498,6 +1536,110 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      pipeline_lead_notes: {
+        Row: {
+          created_at: string
+          created_by_user_id: string | null
+          id: string
+          lead_id: string
+          note: string
+        }
+        Insert: {
+          created_at?: string
+          created_by_user_id?: string | null
+          id?: string
+          lead_id: string
+          note: string
+        }
+        Update: {
+          created_at?: string
+          created_by_user_id?: string | null
+          id?: string
+          lead_id?: string
+          note?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pipeline_lead_notes_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "pipeline_leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pipeline_leads: {
+        Row: {
+          churned_customer_id: string | null
+          city: string | null
+          contact_person: string | null
+          created_at: string
+          email: string | null
+          house_number: string | null
+          id: string
+          industry: string | null
+          last_contact_date: string | null
+          latitude: number | null
+          longitude: number | null
+          next_contact_date: string | null
+          notes: string | null
+          phone: string | null
+          postal_code: string | null
+          priority: string | null
+          shop_name: string
+          source: string | null
+          status: string
+          street: string | null
+          updated_at: string
+        }
+        Insert: {
+          churned_customer_id?: string | null
+          city?: string | null
+          contact_person?: string | null
+          created_at?: string
+          email?: string | null
+          house_number?: string | null
+          id?: string
+          industry?: string | null
+          last_contact_date?: string | null
+          latitude?: number | null
+          longitude?: number | null
+          next_contact_date?: string | null
+          notes?: string | null
+          phone?: string | null
+          postal_code?: string | null
+          priority?: string | null
+          shop_name: string
+          source?: string | null
+          status?: string
+          street?: string | null
+          updated_at?: string
+        }
+        Update: {
+          churned_customer_id?: string | null
+          city?: string | null
+          contact_person?: string | null
+          created_at?: string
+          email?: string | null
+          house_number?: string | null
+          id?: string
+          industry?: string | null
+          last_contact_date?: string | null
+          latitude?: number | null
+          longitude?: number | null
+          next_contact_date?: string | null
+          notes?: string | null
+          phone?: string | null
+          postal_code?: string | null
+          priority?: string | null
+          shop_name?: string
+          source?: string | null
+          status?: string
+          street?: string | null
+          updated_at?: string
+        }
+        Relationships: []
       }
       point_transactions: {
         Row: {
