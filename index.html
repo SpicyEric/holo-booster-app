@@ -4,7 +4,6 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
     <meta name="color-scheme" content="light" />
-    <meta name="supported-color-schemes" content="light" />
     <link rel="icon" href="/eloyo-logo.png" type="image/png">
     <title>Eloyo | Modernes Kundenbindungssystem</title>
     <meta name="description" content="Das moderne NFC-Stempelsystem für lokale Geschäfte. Digitale Bonuskarten, automatische Kundengewinnung und Echtzeit-Statistiken. DSGVO-konform." />
@@ -17,21 +16,12 @@
       );
       const isAppRoute = window.location.pathname.startsWith('/app');
 
-      const enforceWebsiteLightMode = () => {
-        if (window.location.pathname.startsWith('/app')) return;
+      // Website immer im Light Mode halten (auch bei aggressiven Mobile-Dark-Mode-Overlays)
+      if (!isAppRoute) {
         document.documentElement.classList.remove('dark');
         document.documentElement.classList.add('light');
-        document.documentElement.style.colorScheme = 'only light';
+        document.documentElement.style.colorScheme = 'light';
         document.documentElement.setAttribute('data-app-route', 'false');
-      };
-
-      // Website immer im Light Mode halten (auch wenn externe Skripte Klassen ändern)
-      if (!isAppRoute) {
-        enforceWebsiteLightMode();
-        new MutationObserver(enforceWebsiteLightMode).observe(document.documentElement, {
-          attributes: true,
-          attributeFilter: ['class', 'style', 'data-app-route'],
-        });
       } else {
         document.documentElement.setAttribute('data-app-route', 'true');
       }
@@ -64,7 +54,7 @@
 
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:site" content="@Eloyo" />
-    <meta name="twitter:image" content="/og-image.jpg" /> <!-- v3 -->
+    <meta name="twitter:image" content="/og-image.jpg" />
   </head>
 
   <body>

@@ -18,7 +18,7 @@ if (isAppRoute) {
   // Force light mode for website
   root.classList.remove('dark');
   root.classList.add('light');
-  root.style.colorScheme = 'only light';
+  root.style.colorScheme = 'light';
 }
 
 createRoot(document.getElementById("root")!).render(

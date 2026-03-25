@@ -23,7 +23,7 @@ export const useTheme = () => {
       // Website must always be light mode
       root.classList.remove('dark');
       root.classList.add('light');
-      root.style.colorScheme = 'only light';
+      root.style.colorScheme = 'light';
       return;
     }
 
