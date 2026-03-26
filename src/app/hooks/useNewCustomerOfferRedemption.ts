@@ -215,8 +215,8 @@ export const useNewCustomerOfferRedemption = ({
           return;
         }
 
-        // Validate the NFC chip belongs to the correct merchant
-        const isValid = await validateNfcChip(result.chipData);
+        // Validate the NFC chip belongs to the correct merchant (hardware UID only)
+        const isValid = await validateNfcChip(result.hardwareUid);
         
         if (!isValid) {
           setState(prev => ({
