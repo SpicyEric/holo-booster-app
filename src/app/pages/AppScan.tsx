@@ -71,8 +71,8 @@ export const AppScan = () => {
     }
   }, [searchParams, checkingNfc, nfcSupported, nfcEnabled]);
 
-  const handleChipScan = useCallback(async (chipData: string, hardwareUid?: string) => {
-    console.log('[AppScan] handleChipScan called, chipData:', chipData, 'user from hook:', user?.id, 'online:', isOnline);
+  const handleChipScan = useCallback(async (hardwareUid: string) => {
+    console.log('[AppScan] handleChipScan called, hardwareUid:', hardwareUid, 'user from hook:', user?.id, 'online:', isOnline);
     
     // Re-check session directly to avoid stale hook state (e.g. during token refresh)
     let currentUserId = user?.id;
@@ -100,16 +100,16 @@ export const AppScan = () => {
     if (!navigator.onLine) {
       console.log('[AppScan] OFFLINE - queuing stamp locally');
       
-      if (offlineQueueService.hasPendingStampForBox(chipData)) {
+      if (offlineQueueService.hasPendingStampForUid(hardwareUid)) {
         setResult({
           success: false,
-          error: 'Du hast bereits einen Offline-Stempel für dieses Geschäft in der Warteschlange. Dieser wird gutgeschrieben sobald du wieder Internet hast.',
+          error: 'Du hast bereits einen Offline-Stempel für diesen Chip in der Warteschlange. Dieser wird gutgeschrieben sobald du wieder Internet hast.',
         });
         setScanning(false);
         return;
       }
 
-      const pendingStamp = offlineQueueService.addStamp(chipData, hardwareUid || null, currentUserId);
+      const pendingStamp = offlineQueueService.addStamp(hardwareUid, currentUserId);
       
       if (pendingStamp) {
         setResult({
@@ -128,12 +128,11 @@ export const AppScan = () => {
       return;
     }
 
-    // ONLINE MODE: Normal flow
+    // ONLINE MODE: Normal flow - use hardware UID only
     try {
       const { data, error } = await supabase.rpc('award_points_via_nfc', {
-        p_chip_data: chipData,
+        p_hardware_uid: hardwareUid,
         p_user_id: currentUserId,
-        p_hardware_uid: hardwareUid || null,
       });
 
       if (error) throw error;
@@ -186,13 +185,13 @@ export const AppScan = () => {
       if (error.message?.includes('fetch') || error.message?.includes('network') || error.message?.includes('Failed')) {
         console.log('[AppScan] Network error detected - falling back to offline mode');
         
-        if (offlineQueueService.hasPendingStampForBox(chipData)) {
+        if (offlineQueueService.hasPendingStampForUid(hardwareUid)) {
           setResult({
             success: false,
-            error: 'Du hast bereits einen Offline-Stempel für dieses Geschäft in der Warteschlange.',
+            error: 'Du hast bereits einen Offline-Stempel für diesen Chip in der Warteschlange.',
           });
         } else {
-          const pendingStamp = offlineQueueService.addStamp(chipData, hardwareUid || null, currentUserId);
+          const pendingStamp = offlineQueueService.addStamp(hardwareUid, currentUserId);
           if (pendingStamp) {
             setResult({
               success: true,
@@ -217,9 +216,9 @@ export const AppScan = () => {
   }, [user, navigate, isOnline]);
 
   const handleNfcRead = useCallback((nfcResult: NfcReadResult) => {
-    if (nfcResult.success && nfcResult.chipData) {
-      // Pass hardware UID along for security verification
-      handleChipScan(nfcResult.chipData, nfcResult.hardwareUid);
+    if (nfcResult.success && nfcResult.hardwareUid) {
+      // Use hardware UID only for identification (TAG-only mode for iOS compatibility)
+      handleChipScan(nfcResult.hardwareUid);
     } else if (nfcResult.error) {
       const errorLower = nfcResult.error.toLowerCase();
       if (errorLower.includes('permission') || 

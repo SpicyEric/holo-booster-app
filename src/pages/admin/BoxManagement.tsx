@@ -218,7 +218,7 @@ const BoxManagement = () => {
       const handleReading = async ({ serialNumber }: { serialNumber: string }) => {
         clearTimeout(timeout);
         ndef.removeEventListener('reading', handleReading);
-        const hardwareUid = serialNumber || null;
+        const hardwareUid = serialNumber ? serialNumber.toLowerCase() : null;
         try { await ndef.write({ records: [{ recordType: "text", data: ndefText, lang: "de" }] }); toast.success(`NFC-Chip beschrieben: ${ndefText}`); } catch { toast.error("Chip konnte nicht beschrieben werden"); }
         try {
           const { data: existing } = await supabase.from("nfc_chips").select("id").eq("chip_uid", boxId).eq("stamp_color", color).maybeSingle();

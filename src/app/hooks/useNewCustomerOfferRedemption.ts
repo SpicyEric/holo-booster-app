@@ -37,44 +37,23 @@ export const useNewCustomerOfferRedemption = ({
     permissionDialogType: 'disabled',
   });
 
-  const validateNfcChip = async (chipData: string): Promise<boolean> => {
-    const parts = chipData.split(':');
-    if (parts.length !== 2) {
-      return false;
-    }
+  const validateNfcChip = async (hardwareUid?: string): Promise<boolean> => {
+    if (!hardwareUid) return false;
 
-    const [boxId] = parts;
-
-    // Check if this NFC chip belongs to the correct merchant
-    const { data: nfcChip, error } = await supabase
+    // Look up the NFC chip directly by hardware UID
+    const { data: nfcChip } = await supabase
       .from('nfc_chips')
       .select('merchant_customer_id, is_active')
-      .eq('chip_uid', chipData)
+      .eq('hardware_uid', hardwareUid.toLowerCase())
+      .eq('is_active', true)
       .maybeSingle();
 
-    if (error || !nfcChip) {
-      // Try looking up by box_id pattern
-      const { data: box } = await supabase
-        .from('boxes')
-        .select('id')
-        .eq('box_id', boxId)
-        .maybeSingle();
-
-      if (box) {
-        const { data: customerBox } = await supabase
-          .from('customer_boxes')
-          .select('customer_id')
-          .eq('box_id', box.id)
-          .maybeSingle();
-
-        if (customerBox && customerBox.customer_id === merchantId) {
-          return true;
-        }
-      }
+    if (!nfcChip) {
+      console.log('[NewCustomerOffer] NFC chip not found for hardware UID:', hardwareUid);
       return false;
     }
 
-    return nfcChip.merchant_customer_id === merchantId && nfcChip.is_active;
+    return nfcChip.merchant_customer_id === merchantId;
   };
 
   const processNewCustomerOffer = async (): Promise<boolean> => {
@@ -236,8 +215,8 @@ export const useNewCustomerOfferRedemption = ({
           return;
         }
 
-        // Validate the NFC chip belongs to the correct merchant
-        const isValid = await validateNfcChip(result.chipData);
+        // Validate the NFC chip belongs to the correct merchant (hardware UID only)
+        const isValid = await validateNfcChip(result.hardwareUid);
         
         if (!isValid) {
           setState(prev => ({

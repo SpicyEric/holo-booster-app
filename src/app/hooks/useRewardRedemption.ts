@@ -33,57 +33,23 @@ export const useRewardRedemption = ({ userId, merchantId, merchantName, rewardTi
   
   const [pendingReward, setPendingReward] = useState<{ id: string; points: number } | null>(null);
 
-  const validateNfcChip = async (chipData: string, hardwareUid?: string): Promise<boolean> => {
-    // chipData format: "BOXID:farbe" (e.g., "T3K8M-N2P5R-W7Y9Q:grün")
-    const parts = chipData.split(':');
-    if (parts.length !== 2) {
-      return false;
-    }
+  const validateNfcChip = async (hardwareUid?: string): Promise<boolean> => {
+    if (!hardwareUid) return false;
 
-    const [boxId, color] = parts;
-
-    // Step 1: Find the box in the registry
-    const { data: box } = await supabase
-      .from('boxes')
-      .select('id')
-      .eq('box_id', boxId.toUpperCase())
-      .maybeSingle();
-
-    if (!box) {
-      console.log('[RewardRedemption] Box not found:', boxId);
-      return false;
-    }
-
-    // Step 2: Check if this box is assigned to the correct merchant
-    const { data: customerBox } = await supabase
-      .from('customer_boxes')
-      .select('customer_id')
-      .eq('box_id', box.id)
-      .maybeSingle();
-
-    if (!customerBox || customerBox.customer_id !== merchantId) {
-      console.log('[RewardRedemption] Box not assigned to merchant:', merchantId);
-      return false;
-    }
-
-    // Step 3: Find NFC chip config for this merchant + color and verify hardware UID
+    // Look up the NFC chip directly by hardware UID
     const { data: nfcChip } = await supabase
       .from('nfc_chips')
-      .select('hardware_uid, is_active')
-      .eq('merchant_customer_id', merchantId)
-      .ilike('stamp_color', color)
+      .select('merchant_customer_id, is_active')
+      .eq('hardware_uid', hardwareUid.toLowerCase())
       .eq('is_active', true)
       .maybeSingle();
 
-    if (nfcChip && nfcChip.hardware_uid) {
-      // Verify hardware UID if one is registered
-      if (!hardwareUid || hardwareUid.toLowerCase() !== nfcChip.hardware_uid.toLowerCase()) {
-        console.log('[RewardRedemption] Hardware UID mismatch');
-        return false;
-      }
+    if (!nfcChip) {
+      console.log('[RewardRedemption] NFC chip not found for hardware UID:', hardwareUid);
+      return false;
     }
 
-    return true;
+    return nfcChip.merchant_customer_id === merchantId;
   };
 
   const redeemReward = async (rewardId: string, pointsRequired: number): Promise<boolean> => {
@@ -243,8 +209,8 @@ export const useRewardRedemption = ({ userId, merchantId, merchantName, rewardTi
           return;
         }
 
-        // Validate the NFC chip belongs to the correct merchant
-        const isValid = await validateNfcChip(result.chipData, result.hardwareUid);
+        // Validate the NFC chip belongs to the correct merchant (hardware UID only)
+        const isValid = await validateNfcChip(result.hardwareUid);
         
         if (!isValid) {
           setState(prev => ({

@@ -219,7 +219,6 @@ const AppMessageDetail = () => {
           const { data, error } = await supabase.rpc('redeem_message_offer_via_nfc', {
             p_message_id: message.id,
             p_user_id: user.id,
-            p_chip_data: result.chipData,
             p_hardware_uid: result.hardwareUid || null,
           });
 

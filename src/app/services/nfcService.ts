@@ -1,12 +1,14 @@
 // NFC Service for Eloyo App
 // 
 // Uses @capawesome-team/capacitor-nfc (Premium Plugin) for native Android/iOS NFC
-// Format on NFC chip: "XXXXX-XXXXX-XXXXX:grün" (Box-ID:StampColor)
+// Identification is based SOLELY on the chip's hardware UID (TAG-only mode for iOS compatibility).
+// NDEF text data is still written during registration (for external readers) but NOT read by the app.
 
 import { Capacitor } from '@capacitor/core';
 import { Nfc } from '@capawesome-team/capacitor-nfc';
 
 export interface NfcReadResult {
+  /** @deprecated No longer used for identification. Use hardwareUid instead. */
   chipData: string;
   hardwareUid?: string;
   success: boolean;
@@ -243,6 +245,7 @@ class NfcService {
     await this.stopScan();
   }
 
+  /** @deprecated Only used for legacy web NFC flow. Native uses hardware UID only. */
   private validateChipData(data: string): boolean {
     const pattern = /^[A-HJ-KM-NP-Z1-9]{5}-[A-HJ-KM-NP-Z1-9]{5}-[A-HJ-KM-NP-Z1-9]{5}:(grün|blau|rot)$/i;
     return pattern.test(data);
@@ -324,56 +327,23 @@ class NfcService {
     try {
       console.log('[NFC] Processing tag:', JSON.stringify(nfcTag));
       
-      // Extract hardware UID for security verification
+      // Extract hardware UID - this is the ONLY identification method (TAG-only mode)
       const hardwareUid = this.extractHardwareUid(nfcTag);
       
-      const message = nfcTag?.message;
-      const records = message?.records || [];
-      
-      for (const record of records) {
-        const tnf = record?.tnf;
-        const type = record?.type;
-        
-        const isTextRecord = 
-          tnf === 1 && 
-          Array.isArray(type) && 
-          type.length === 1 && 
-          type[0] === 84;
-        
-        if (isTextRecord && record.payload) {
-          const text = this.decodeNdefTextPayload(record.payload);
-          
-          console.log('[NFC] Text payload:', text);
-          
-          let cleanText = text.trim();
-          
-          if (cleanText.length > 2 && !cleanText.match(/^[A-HJ-KM-NP-Z1-9]{5}-/i)) {
-            cleanText = cleanText.substring(2);
-          }
-          
-          if (this.validateChipData(cleanText)) {
-            console.log('[NFC] Valid Eloyo chip data:', cleanText, 'UID:', hardwareUid);
-            onRead({ chipData: cleanText, hardwareUid, success: true });
-            this.stopScan();
-            return;
-          }
-          
-          if (this.validateChipData(text)) {
-            console.log('[NFC] Valid Eloyo chip data (raw):', text, 'UID:', hardwareUid);
-            onRead({ chipData: text, hardwareUid, success: true });
-            this.stopScan();
-            return;
-          }
-        }
+      if (!hardwareUid) {
+        console.log('[NFC] No hardware UID found on tag');
+        onRead({
+          chipData: '',
+          success: false,
+          error: 'NFC-Chip konnte nicht identifiziert werden. Bitte versuche es erneut.'
+        });
+        return;
       }
-      
-      console.log('[NFC] No valid Eloyo data in tag');
-      onRead({
-        chipData: '',
-        hardwareUid,
-        success: false,
-        error: 'Kein gültiger Eloyo-Stempel erkannt. Bitte versuche es erneut.'
-      });
+
+      console.log('[NFC] Tag identified by hardware UID:', hardwareUid);
+      // chipData is kept empty - identification is purely via hardwareUid
+      onRead({ chipData: '', hardwareUid, success: true });
+      this.stopScan();
       
     } catch (error: any) {
       console.error('[NFC] Error processing tag:', error);
@@ -533,6 +503,7 @@ class NfcService {
     return this.isScanning;
   }
 
+  /** @deprecated No longer used. Identification is via hardware UID only. */
   parseChipData(chipData: string): { boxId: string; color: string } | null {
     if (!this.validateChipData(chipData)) {
       return null;
