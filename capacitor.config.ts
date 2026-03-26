@@ -13,6 +13,7 @@ const config: CapacitorConfig = {
   ios: {
     contentInset: 'automatic',
     allowsLinkPreview: true,
+    scheme: 'Eloyio',
   },
   android: {
     // Deep Links für Android
