@@ -19,14 +19,24 @@
       const isAppRoute = window.location.pathname.startsWith('/app');
 
       // Website immer im Light Mode halten (auch bei aggressiven Mobile-Dark-Mode-Overlays)
+      let isApplyingWebsiteLightMode = false;
       const enforceWebsiteLightMode = () => {
         const root = document.documentElement;
-        if (root.getAttribute('data-app-route') === 'true') return;
+        if (root.getAttribute('data-app-route') === 'true' || isApplyingWebsiteLightMode) return;
 
-        root.classList.remove('dark');
-        root.classList.add('light');
-        root.setAttribute('data-app-route', 'false');
-        root.style.colorScheme = 'only light';
+        isApplyingWebsiteLightMode = true;
+        try {
+          if (root.classList.contains('dark')) root.classList.remove('dark');
+          if (!root.classList.contains('light')) root.classList.add('light');
+          if (root.getAttribute('data-app-route') !== 'false') {
+            root.setAttribute('data-app-route', 'false');
+          }
+          if (root.style.colorScheme !== 'only light') {
+            root.style.colorScheme = 'only light';
+          }
+        } finally {
+          isApplyingWebsiteLightMode = false;
+        }
       };
 
       if (!isAppRoute) {
@@ -38,7 +48,7 @@
 
         observer.observe(document.documentElement, {
           attributes: true,
-          attributeFilter: ['class', 'style', 'data-app-route'],
+          attributeFilter: ['class', 'data-app-route'],
         });
 
         window.addEventListener('load', enforceWebsiteLightMode, { once: true });
