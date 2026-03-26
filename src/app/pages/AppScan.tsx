@@ -185,13 +185,13 @@ export const AppScan = () => {
       if (error.message?.includes('fetch') || error.message?.includes('network') || error.message?.includes('Failed')) {
         console.log('[AppScan] Network error detected - falling back to offline mode');
         
-        if (offlineQueueService.hasPendingStampForBox(chipData)) {
+        if (offlineQueueService.hasPendingStampForUid(hardwareUid)) {
           setResult({
             success: false,
-            error: 'Du hast bereits einen Offline-Stempel für dieses Geschäft in der Warteschlange.',
+            error: 'Du hast bereits einen Offline-Stempel für diesen Chip in der Warteschlange.',
           });
         } else {
-          const pendingStamp = offlineQueueService.addStamp(chipData, hardwareUid || null, currentUserId);
+          const pendingStamp = offlineQueueService.addStamp(hardwareUid, currentUserId);
           if (pendingStamp) {
             setResult({
               success: true,
