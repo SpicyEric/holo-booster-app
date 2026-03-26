@@ -2401,11 +2401,7 @@ export type Database = {
     }
     Functions: {
       award_points_via_nfc: {
-        Args: {
-          p_chip_data: string
-          p_hardware_uid?: string
-          p_user_id: string
-        }
+        Args: { p_hardware_uid: string; p_user_id: string }
         Returns: Json
       }
       generate_customer_number: { Args: never; Returns: string }
@@ -2418,8 +2414,7 @@ export type Database = {
       }
       redeem_message_offer_via_nfc: {
         Args: {
-          p_chip_data: string
-          p_hardware_uid?: string
+          p_hardware_uid: string
           p_message_id: string
           p_user_id: string
         }
