@@ -166,6 +166,7 @@ const App = () => (
           
           <Route path="/design-variants" element={<DesignVariants />} />
           <Route path="/test-wizard" element={<TestWizard />} />
+          <Route path="/download" element={<Download />} />
         <Route path="*" element={<NotFound />} />
         </Routes>
         </DeepLinkProvider>
