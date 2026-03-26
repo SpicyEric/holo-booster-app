@@ -245,6 +245,7 @@ class NfcService {
     await this.stopScan();
   }
 
+  /** @deprecated Only used for legacy web NFC flow. Native uses hardware UID only. */
   private validateChipData(data: string): boolean {
     const pattern = /^[A-HJ-KM-NP-Z1-9]{5}-[A-HJ-KM-NP-Z1-9]{5}-[A-HJ-KM-NP-Z1-9]{5}:(grün|blau|rot)$/i;
     return pattern.test(data);
