@@ -216,9 +216,9 @@ export const AppScan = () => {
   }, [user, navigate, isOnline]);
 
   const handleNfcRead = useCallback((nfcResult: NfcReadResult) => {
-    if (nfcResult.success && nfcResult.chipData) {
-      // Pass hardware UID along for security verification
-      handleChipScan(nfcResult.chipData, nfcResult.hardwareUid);
+    if (nfcResult.success && nfcResult.hardwareUid) {
+      // Use hardware UID only for identification (TAG-only mode for iOS compatibility)
+      handleChipScan(nfcResult.hardwareUid);
     } else if (nfcResult.error) {
       const errorLower = nfcResult.error.toLowerCase();
       if (errorLower.includes('permission') || 
