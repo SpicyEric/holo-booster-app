@@ -29,7 +29,7 @@ const NFC_CONFIG = {
   NFCReaderUsageDescription: 'Diese App nutzt NFC um Treuepunkte bei teilnehmenden Händlern zu sammeln.',
   iso7816SelectIdentifiers: ['D276000085010100'],
   felicaSystemCodes: ['0000'],
-  readerSessionFormats: ['NDEF', 'TAG'],
+  readerSessionFormats: ['TAG'],
 };
 
 // Geolocation Configuration
