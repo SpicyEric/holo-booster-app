@@ -1,12 +1,14 @@
 // NFC Service for Eloyo App
 // 
 // Uses @capawesome-team/capacitor-nfc (Premium Plugin) for native Android/iOS NFC
-// Format on NFC chip: "XXXXX-XXXXX-XXXXX:grün" (Box-ID:StampColor)
+// Identification is based SOLELY on the chip's hardware UID (TAG-only mode for iOS compatibility).
+// NDEF text data is still written during registration (for external readers) but NOT read by the app.
 
 import { Capacitor } from '@capacitor/core';
 import { Nfc } from '@capawesome-team/capacitor-nfc';
 
 export interface NfcReadResult {
+  /** @deprecated No longer used for identification. Use hardwareUid instead. */
   chipData: string;
   hardwareUid?: string;
   success: boolean;
