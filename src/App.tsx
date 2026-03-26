@@ -44,6 +44,7 @@ import NotFound from "./pages/NotFound";
 import CheckoutSuccess from "./pages/CheckoutSuccess";
 import CheckoutCancel from "./pages/CheckoutCancel";
 import DesignVariants from "./pages/DesignVariants";
+import Download from "./pages/Download";
 import TestWizard from "./pages/TestWizard";
 
 // App (End Customer) imports
