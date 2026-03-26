@@ -1,7 +1,8 @@
 /**
  * Offline Queue Service
  * Manages offline NFC stamp queue with fraud prevention.
- * Max 1 pending stamp per merchant until synced.
+ * Max 1 pending stamp per hardware UID until synced.
+ * Identification is based solely on hardware UID (TAG-only mode).
  */
 
 const QUEUE_KEY = 'eloyo_offline_stamp_queue';
@@ -9,11 +10,9 @@ const CACHE_KEY_PREFIX = 'eloyo_cache_';
 
 export interface PendingStamp {
   id: string;
-  chipData: string;
-  hardwareUid: string | null;
+  hardwareUid: string;
   userId: string;
   timestamp: number;
-  merchantCustomerId?: string; // extracted from chipData if possible
   synced: boolean;
   error?: string;
 }
@@ -35,37 +34,27 @@ function saveQueue(queue: PendingStamp[]) {
   localStorage.setItem(QUEUE_KEY, JSON.stringify(queue));
 }
 
-/**
- * Extract merchant box ID from chip data (format: "BOXID:color")
- */
-function extractBoxId(chipData: string): string | null {
-  const parts = chipData.split(':');
-  return parts.length >= 2 ? parts[0].toUpperCase() : null;
-}
-
 export const offlineQueueService = {
   /**
-   * Check if there's already a pending (unsynced) stamp for the same box/merchant
+   * Check if there's already a pending (unsynced) stamp for the same hardware UID
    */
-  hasPendingStampForBox(chipData: string): boolean {
-    const boxId = extractBoxId(chipData);
-    if (!boxId) return false;
+  hasPendingStampForUid(hardwareUid: string): boolean {
+    if (!hardwareUid) return false;
     const queue = getQueue();
-    return queue.some(s => !s.synced && !s.error && extractBoxId(s.chipData) === boxId);
+    return queue.some(s => !s.synced && !s.error && s.hardwareUid.toLowerCase() === hardwareUid.toLowerCase());
   },
 
   /**
    * Add a stamp to the offline queue. Returns the pending stamp or null if blocked.
    */
-  addStamp(chipData: string, hardwareUid: string | null, userId: string): PendingStamp | null {
-    // Fraud prevention: max 1 pending stamp per merchant/box
-    if (this.hasPendingStampForBox(chipData)) {
+  addStamp(hardwareUid: string, userId: string): PendingStamp | null {
+    // Fraud prevention: max 1 pending stamp per hardware UID
+    if (this.hasPendingStampForUid(hardwareUid)) {
       return null;
     }
 
     const stamp: PendingStamp = {
       id: generateId(),
-      chipData,
       hardwareUid,
       userId,
       timestamp: Date.now(),
