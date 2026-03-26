@@ -327,56 +327,23 @@ class NfcService {
     try {
       console.log('[NFC] Processing tag:', JSON.stringify(nfcTag));
       
-      // Extract hardware UID for security verification
+      // Extract hardware UID - this is the ONLY identification method (TAG-only mode)
       const hardwareUid = this.extractHardwareUid(nfcTag);
       
-      const message = nfcTag?.message;
-      const records = message?.records || [];
-      
-      for (const record of records) {
-        const tnf = record?.tnf;
-        const type = record?.type;
-        
-        const isTextRecord = 
-          tnf === 1 && 
-          Array.isArray(type) && 
-          type.length === 1 && 
-          type[0] === 84;
-        
-        if (isTextRecord && record.payload) {
-          const text = this.decodeNdefTextPayload(record.payload);
-          
-          console.log('[NFC] Text payload:', text);
-          
-          let cleanText = text.trim();
-          
-          if (cleanText.length > 2 && !cleanText.match(/^[A-HJ-KM-NP-Z1-9]{5}-/i)) {
-            cleanText = cleanText.substring(2);
-          }
-          
-          if (this.validateChipData(cleanText)) {
-            console.log('[NFC] Valid Eloyo chip data:', cleanText, 'UID:', hardwareUid);
-            onRead({ chipData: cleanText, hardwareUid, success: true });
-            this.stopScan();
-            return;
-          }
-          
-          if (this.validateChipData(text)) {
-            console.log('[NFC] Valid Eloyo chip data (raw):', text, 'UID:', hardwareUid);
-            onRead({ chipData: text, hardwareUid, success: true });
-            this.stopScan();
-            return;
-          }
-        }
+      if (!hardwareUid) {
+        console.log('[NFC] No hardware UID found on tag');
+        onRead({
+          chipData: '',
+          success: false,
+          error: 'NFC-Chip konnte nicht identifiziert werden. Bitte versuche es erneut.'
+        });
+        return;
       }
-      
-      console.log('[NFC] No valid Eloyo data in tag');
-      onRead({
-        chipData: '',
-        hardwareUid,
-        success: false,
-        error: 'Kein gültiger Eloyo-Stempel erkannt. Bitte versuche es erneut.'
-      });
+
+      console.log('[NFC] Tag identified by hardware UID:', hardwareUid);
+      // chipData is kept empty - identification is purely via hardwareUid
+      onRead({ chipData: '', hardwareUid, success: true });
+      this.stopScan();
       
     } catch (error: any) {
       console.error('[NFC] Error processing tag:', error);
