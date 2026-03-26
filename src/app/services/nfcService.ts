@@ -503,6 +503,7 @@ class NfcService {
     return this.isScanning;
   }
 
+  /** @deprecated No longer used. Identification is via hardware UID only. */
   parseChipData(chipData: string): { boxId: string; color: string } | null {
     if (!this.validateChipData(chipData)) {
       return null;
