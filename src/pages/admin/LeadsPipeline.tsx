@@ -556,7 +556,7 @@ export default function LeadsPipeline() {
                         stage.color,
                         mapStatus(selected.status) === stage.key ? 'opacity-100 ring-2 ring-offset-2 ring-offset-background' : 'opacity-60 hover:opacity-100'
                       )}
-                      style={mapStatus(selected.status) === stage.key ? { ringColor: undefined } : {}}
+                      
                     >
                       {stage.label}
                     </button>
