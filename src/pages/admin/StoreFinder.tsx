@@ -633,12 +633,7 @@ export default function StoreFinder() {
             </CardContent>
           </Card>
         ) : (
-          <Card>
-            <CardContent className="p-4 text-center text-muted-foreground py-24">
-              <MapIcon className="h-12 w-12 mx-auto mb-3 opacity-30" />
-              <p>Kartenansicht wird in Kürze verfügbar sein</p>
-            </CardContent>
-          </Card>
+          <StoreMapView stores={savedStores} searchResults={searchResults} searchCenter={searchCenter} onAddStore={addStore} />
         )}
       </div>
     </div>
