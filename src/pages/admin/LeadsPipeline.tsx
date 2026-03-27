@@ -634,8 +634,6 @@ function DropZone({
   stageKey: string;
   dragOverStage: string | null;
 }) {
-  const draggedIdRef = useRef<string | null>(null);
-
   return (
     <div
       onDragOver={(e) => { e.preventDefault(); setDragOverStage(stageKey); }}
@@ -643,12 +641,8 @@ function DropZone({
       onDrop={async (e) => {
         e.preventDefault();
         setDragOverStage(null);
-        // Get the id from the global ref via a data attribute workaround
-        const target = e.currentTarget;
-        // We need the dragged id — it's on the parent component's ref
-        // Use dataTransfer as fallback
         const id = e.dataTransfer.getData('text/plain');
-        // Since we didn't set data, we use the parent's ref pattern
+        if (id) await onDrop(id);
       }}
       className={cn(
         'border-2 border-dashed rounded-xl py-3 text-center text-sm font-semibold transition-all cursor-default',
