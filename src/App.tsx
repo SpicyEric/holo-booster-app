@@ -65,6 +65,7 @@ import AppVerifyEmail from "./app/pages/AppVerifyEmail";
 import AppRewards from "./app/pages/AppRewards";
 import AppMessageDetail from "./app/pages/AppMessageDetail";
 import Leads from "./pages/admin/Leads";
+import StoreFinder from "./pages/admin/StoreFinder";
 import Pipeline from "./pages/admin/Pipeline";
 
 const queryClient = new QueryClient();
@@ -99,6 +100,7 @@ const App = () => (
             <Route path="accounts" element={<Accounts />} />
             <Route path="orders" element={<Orders />} />
             <Route path="leads" element={<Leads />} />
+            <Route path="store-finder" element={<StoreFinder />} />
             <Route path="pipeline" element={<Pipeline />} />
             <Route path="stats" element={<Stats />} />
             <Route path="checkout" element={<Checkout />} />
