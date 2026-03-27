@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Slider } from '@/components/ui/slider';
 import { toast } from 'sonner';
 import {
-  Search, MapPin, Phone, Globe, Star, Plus, LayoutGrid, List, Map as MapIcon,
+  Search, MapPin, Phone, Globe, Star, Plus,
   Loader2, Sparkles, Building2, Mail, User, ExternalLink, Trash2,
 } from 'lucide-react';
 import { useGoogleMapsApiKey } from '@/hooks/useGoogleMapsApiKey';
