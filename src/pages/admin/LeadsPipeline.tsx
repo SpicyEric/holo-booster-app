@@ -230,6 +230,7 @@ export default function LeadsPipeline() {
   /* ---- Drag & drop ---- */
   const handleDragStart = (id: string) => (e: React.DragEvent) => {
     draggedId.current = id;
+    e.dataTransfer.setData('text/plain', id);
     e.dataTransfer.effectAllowed = 'move';
   };
 
