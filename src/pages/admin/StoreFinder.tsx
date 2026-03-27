@@ -59,7 +59,7 @@ interface DiscoveredStore {
   created_at: string;
 }
 
-type ViewMode = 'grid' | 'list' | 'map';
+
 
 const CATEGORIES = [
   { value: 'bakery', label: 'Bäckerei' },
