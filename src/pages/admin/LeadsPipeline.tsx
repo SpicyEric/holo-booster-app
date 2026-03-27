@@ -108,7 +108,8 @@ function DealCard({
   onDragStart: (e: React.DragEvent) => void;
   onClick: () => void;
 }) {
-  const shortAddr = [store.postal_code, store.city].filter(Boolean).join(' ');
+  const shortAddr = [store.street, store.house_number].filter(Boolean).join(' ');
+  const cityLine = [store.postal_code, store.city].filter(Boolean).join(' ');
 
   return (
     <div
@@ -123,59 +124,103 @@ function DealCard({
           <img
             src={store.google_photo_url}
             alt=""
-            className="h-9 w-9 rounded-lg object-cover shrink-0"
+            className="h-10 w-10 rounded-lg object-cover shrink-0"
           />
         ) : (
-          <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+          <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
             <span className="text-sm font-bold text-primary">
               {store.name.charAt(0)}
             </span>
           </div>
         )}
-        <div className="min-w-0">
+        <div className="min-w-0 flex-1">
           <p className="font-semibold text-sm leading-tight truncate">{store.name}</p>
           {store.industry && (
-            <p className="text-[11px] text-muted-foreground truncate">{store.industry}</p>
+            <Badge variant="secondary" className="text-[10px] mt-0.5 h-4">{store.industry}</Badge>
           )}
         </div>
+        {store.enrichment_status === 'done' && (
+          <Badge variant="outline" className="text-[9px] h-4 px-1.5 bg-emerald-500/10 text-emerald-600 border-emerald-500/20 shrink-0">
+            ✓ KI
+          </Badge>
+        )}
       </div>
 
       {/* Contact person */}
       {store.contact_person && (
-        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-          <User className="h-3 w-3 shrink-0" />
-          <span className="truncate">{store.contact_person}</span>
+        <div className="flex items-center gap-1.5 text-xs">
+          <User className="h-3 w-3 shrink-0 text-primary" />
+          <span className="font-medium truncate">{store.contact_person}</span>
         </div>
       )}
 
-      {/* Notes preview */}
-      {store.notes && (
+      {/* Address */}
+      {(shortAddr || cityLine) && (
         <div className="flex items-start gap-1.5 text-xs text-muted-foreground">
-          <MessageSquare className="h-3 w-3 shrink-0 mt-0.5" />
-          <span className="line-clamp-2">{store.notes}</span>
+          <MapPin className="h-3 w-3 shrink-0 mt-0.5" />
+          <div className="min-w-0">
+            {shortAddr && <span className="block truncate">{shortAddr}</span>}
+            {cityLine && <span className="block truncate">{cityLine}</span>}
+          </div>
+        </div>
+      )}
+
+      {/* Phone */}
+      {store.phone && (
+        <div className="flex items-center gap-1.5 text-xs">
+          <Phone className="h-3 w-3 shrink-0 text-muted-foreground" />
+          <a href={`tel:${store.phone}`} className="hover:underline text-primary truncate" onClick={e => e.stopPropagation()}>
+            {store.phone}
+          </a>
+        </div>
+      )}
+
+      {/* Email */}
+      {store.email && (
+        <div className="flex items-center gap-1.5 text-xs">
+          <Mail className="h-3 w-3 shrink-0 text-muted-foreground" />
+          <a href={`mailto:${store.email}`} className="hover:underline text-primary truncate" onClick={e => e.stopPropagation()}>
+            {store.email}
+          </a>
+        </div>
+      )}
+
+      {/* Website */}
+      {store.website && (
+        <div className="flex items-center gap-1.5 text-xs">
+          <Globe className="h-3 w-3 shrink-0 text-muted-foreground" />
+          <a href={store.website} target="_blank" rel="noreferrer" className="hover:underline text-primary truncate flex items-center gap-0.5" onClick={e => e.stopPropagation()}>
+            {(() => { try { return new URL(store.website).hostname; } catch { return store.website; } })()}
+            <ExternalLink className="h-2.5 w-2.5 shrink-0" />
+          </a>
         </div>
       )}
 
       {/* Rating */}
       <Stars rating={store.google_rating} />
 
-      {/* Footer */}
-      <div className="flex items-center justify-between text-[11px] text-muted-foreground pt-1">
-        <span>{format(new Date(store.created_at), 'dd.MM.yyyy', { locale: de })}</span>
-        {shortAddr && (
-          <span className="flex items-center gap-0.5">
-            <MapPin className="h-2.5 w-2.5" />
-            {shortAddr}
-          </span>
-        )}
-      </div>
-
-      {/* Enrichment badge */}
-      {store.enrichment_status === 'done' && (
-        <Badge variant="outline" className="text-[10px] h-5 bg-emerald-500/10 text-emerald-600 border-emerald-500/20">
-          KI-recherchiert
-        </Badge>
+      {/* AI Summary */}
+      {store.ai_summary && (
+        <p className="text-[11px] text-muted-foreground line-clamp-2 bg-muted/50 rounded-md px-2 py-1.5 leading-relaxed">
+          {store.ai_summary}
+        </p>
       )}
+
+      {/* Notes preview */}
+      {store.notes && (
+        <div className="flex items-start gap-1.5 text-[11px] text-muted-foreground">
+          <MessageSquare className="h-3 w-3 shrink-0 mt-0.5" />
+          <span className="line-clamp-2 italic">{store.notes}</span>
+        </div>
+      )}
+
+      {/* Footer */}
+      <div className="flex items-center justify-between text-[10px] text-muted-foreground/70 pt-0.5 border-t border-border/30">
+        <span>{format(new Date(store.created_at), 'dd.MM.yyyy', { locale: de })}</span>
+        {store.google_reviews_count ? (
+          <span>{store.google_reviews_count} Bewertungen</span>
+        ) : null}
+      </div>
     </div>
   );
 }
