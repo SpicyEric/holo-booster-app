@@ -101,6 +101,7 @@ const App = () => (
             <Route path="accounts" element={<Accounts />} />
             <Route path="orders" element={<Orders />} />
             <Route path="leads" element={<Leads />} />
+            <Route path="lead-pipeline" element={<LeadsPipeline />} />
             <Route path="store-finder" element={<StoreFinder />} />
             <Route path="pipeline" element={<Pipeline />} />
             <Route path="stats" element={<Stats />} />
