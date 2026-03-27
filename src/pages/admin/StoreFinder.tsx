@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Slider } from '@/components/ui/slider';
 import { toast } from 'sonner';
 import {
-  Search, MapPin, Phone, Globe, Star, Plus, LayoutGrid, List, Map as MapIcon,
+  Search, MapPin, Phone, Globe, Star, Plus,
   Loader2, Sparkles, Building2, Mail, User, ExternalLink, Trash2,
 } from 'lucide-react';
 import { useGoogleMapsApiKey } from '@/hooks/useGoogleMapsApiKey';
@@ -59,7 +59,7 @@ interface DiscoveredStore {
   created_at: string;
 }
 
-type ViewMode = 'grid' | 'list' | 'map';
+
 
 const CATEGORIES = [
   { value: 'bakery', label: 'Bäckerei' },
@@ -94,322 +94,11 @@ function RatingStars({ rating }: { rating: number | null }) {
   );
 }
 
-// ── Store Card ─────────────────────────────────────────────────────────────────
 
-function StoreCard({
-  store,
-  onEnrich,
-  onDelete,
-  enriching,
-}: {
-  store: DiscoveredStore;
-  onEnrich: (id: string) => void;
-  onDelete: (id: string) => void;
-  enriching: boolean;
-}) {
-  return (
-    <Card className="overflow-hidden hover:shadow-lg transition-shadow">
-      <CardContent className="p-0">
-        {/* Header with photo */}
-        <div className="h-24 bg-gradient-to-br from-primary/20 to-primary/5 relative flex items-center px-4 gap-4">
-          {store.google_photo_url ? (
-            <img
-              src={store.google_photo_url}
-              alt={store.name}
-              className="h-16 w-16 rounded-xl object-cover shadow-md border-2 border-background"
-            />
-          ) : (
-            <div className="h-16 w-16 rounded-xl bg-primary/10 flex items-center justify-center border-2 border-background shadow-md">
-              <Building2 className="h-7 w-7 text-primary" />
-            </div>
-          )}
-          <div className="flex-1 min-w-0">
-            <h3 className="font-semibold text-sm truncate">{store.name}</h3>
-            {store.industry && (
-              <Badge variant="secondary" className="text-[10px] mt-1">
-                {store.industry}
-              </Badge>
-            )}
-          </div>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="absolute top-2 right-2 h-7 w-7 text-muted-foreground hover:text-destructive"
-            onClick={() => onDelete(store.id)}
-          >
-            <Trash2 className="h-3.5 w-3.5" />
-          </Button>
-        </div>
-
-        {/* Info */}
-        <div className="p-4 space-y-2">
-          <RatingStars rating={store.google_rating} />
-
-          {store.contact_person && (
-            <div className="flex items-center gap-2 text-xs">
-              <User className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-              <span className="truncate">{store.contact_person}</span>
-            </div>
-          )}
-
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <MapPin className="h-3.5 w-3.5 shrink-0" />
-            <span className="truncate">{store.address || 'Keine Adresse'}</span>
-          </div>
-
-          {store.phone && (
-            <div className="flex items-center gap-2 text-xs">
-              <Phone className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-              <a href={`tel:${store.phone}`} className="hover:underline truncate">
-                {store.phone}
-              </a>
-            </div>
-          )}
-
-          {store.email && (
-            <div className="flex items-center gap-2 text-xs">
-              <Mail className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-              <a href={`mailto:${store.email}`} className="hover:underline truncate">
-                {store.email}
-              </a>
-            </div>
-          )}
-
-          {store.website && (
-            <div className="flex items-center gap-2 text-xs">
-              <Globe className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-              <a href={store.website} target="_blank" rel="noopener noreferrer" className="hover:underline truncate flex items-center gap-1">
-                {new URL(store.website).hostname}
-                <ExternalLink className="h-3 w-3" />
-              </a>
-            </div>
-          )}
-
-          {store.ai_summary && (
-            <p className="text-xs text-muted-foreground mt-2 line-clamp-3 bg-muted/50 rounded-lg p-2">
-              {store.ai_summary}
-            </p>
-          )}
-
-          {/* Enrichment button */}
-          {store.enrichment_status === 'pending' && (
-            <Button
-              size="sm"
-              variant="outline"
-              className="w-full mt-2 text-xs"
-              onClick={() => onEnrich(store.id)}
-              disabled={enriching}
-            >
-              {enriching ? (
-                <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" />
-              ) : (
-                <Sparkles className="h-3.5 w-3.5 mr-1" />
-              )}
-              KI-Recherche starten
-            </Button>
-          )}
-
-          {store.enrichment_status === 'enriching' && (
-            <div className="flex items-center gap-2 text-xs text-primary mt-2">
-              <Loader2 className="h-3.5 w-3.5 animate-spin" />
-              Wird recherchiert…
-            </div>
-          )}
-
-          {store.enrichment_status === 'done' && (
-            <Badge variant="secondary" className="text-[10px] mt-2">
-              ✓ KI-Recherche abgeschlossen
-            </Badge>
-          )}
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
-
-// ── Map View ───────────────────────────────────────────────────────────────────
-
-const DEFAULT_CENTER = { lat: 48.137154, lng: 11.576124 };
-const MAP_CONTAINER = { width: '100%', height: '600px' };
-
-function StoreMapView({
-  stores,
-  searchResults,
-  searchCenter,
-  onAddStore,
-}: {
-  stores: DiscoveredStore[];
-  searchResults: PlaceResult[];
-  searchCenter: { lat: number; lng: number } | null;
-  onAddStore: (place: PlaceResult) => void;
-}) {
-  const { apiKey, loading: keyLoading } = useGoogleMapsApiKey();
-  const [selectedStore, setSelectedStore] = useState<DiscoveredStore | null>(null);
-  const [selectedResult, setSelectedResult] = useState<PlaceResult | null>(null);
-  const mapRef = useRef<google.maps.Map | null>(null);
-
-  const { isLoaded } = useJsApiLoader({
-    googleMapsApiKey: apiKey || '',
-    libraries: GMAP_LIBRARIES,
-  });
-
-  const onMapLoad = useCallback((map: google.maps.Map) => {
-    mapRef.current = map;
-  }, []);
-
-  const center = searchCenter || DEFAULT_CENTER;
-
-  if (keyLoading || !isLoaded) {
-    return (
-      <Card>
-        <CardContent className="flex items-center justify-center py-24">
-          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-        </CardContent>
-      </Card>
-    );
-  }
-
-  return (
-    <Card className="overflow-hidden">
-      <CardContent className="p-0 relative">
-        <GoogleMap
-          mapContainerStyle={MAP_CONTAINER}
-          center={center}
-          zoom={searchCenter ? 13 : 10}
-          onLoad={onMapLoad}
-          options={{
-            streetViewControl: false,
-            mapTypeControl: false,
-            fullscreenControl: true,
-            styles: [
-              { featureType: 'poi', stylers: [{ visibility: 'off' }] },
-              { featureType: 'transit', stylers: [{ visibility: 'off' }] },
-            ],
-          }}
-        >
-          {/* Saved stores - purple markers */}
-          {stores.filter(s => s.latitude && s.longitude).map((store) => (
-            <OverlayView
-              key={store.id}
-              position={{ lat: store.latitude!, lng: store.longitude! }}
-              mapPaneName={OverlayView.OVERLAY_MOUSE_TARGET}
-            >
-              <div
-                className="cursor-pointer transform -translate-x-1/2 -translate-y-full"
-                onClick={() => { setSelectedStore(store); setSelectedResult(null); }}
-              >
-                <div className="bg-primary text-primary-foreground rounded-full h-8 w-8 flex items-center justify-center shadow-lg border-2 border-background text-xs font-bold">
-                  {store.enrichment_status === 'done' ? '✓' : <Building2 className="h-4 w-4" />}
-                </div>
-                <div className="w-0 h-0 border-l-[6px] border-r-[6px] border-t-[8px] border-l-transparent border-r-transparent border-t-primary mx-auto -mt-0.5" />
-              </div>
-            </OverlayView>
-          ))}
-
-          {/* Search results - blue markers */}
-          {searchResults.filter(p => p.latitude && p.longitude).map((place) => (
-            <OverlayView
-              key={place.place_id}
-              position={{ lat: place.latitude, lng: place.longitude }}
-              mapPaneName={OverlayView.OVERLAY_MOUSE_TARGET}
-            >
-              <div
-                className="cursor-pointer transform -translate-x-1/2 -translate-y-full"
-                onClick={() => { setSelectedResult(place); setSelectedStore(null); }}
-              >
-                <div className="bg-blue-500 text-white rounded-full h-7 w-7 flex items-center justify-center shadow-lg border-2 border-background">
-                  <Plus className="h-3.5 w-3.5" />
-                </div>
-                <div className="w-0 h-0 border-l-[5px] border-r-[5px] border-t-[7px] border-l-transparent border-r-transparent border-t-blue-500 mx-auto -mt-0.5" />
-              </div>
-            </OverlayView>
-          ))}
-
-          {/* Info window for selected saved store */}
-          {selectedStore && selectedStore.latitude && selectedStore.longitude && (
-            <OverlayView
-              position={{ lat: selectedStore.latitude, lng: selectedStore.longitude }}
-              mapPaneName={OverlayView.FLOAT_PANE}
-            >
-              <div className="bg-card rounded-xl shadow-xl border p-3 w-64 -translate-x-1/2 -translate-y-[calc(100%+40px)]">
-                <button className="absolute top-2 right-2 text-muted-foreground hover:text-foreground" onClick={() => setSelectedStore(null)}>✕</button>
-                <div className="flex items-center gap-3 mb-2">
-                  {selectedStore.google_photo_url ? (
-                    <img src={selectedStore.google_photo_url} alt="" className="h-10 w-10 rounded-lg object-cover" />
-                  ) : (
-                    <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                      <Building2 className="h-5 w-5 text-primary" />
-                    </div>
-                  )}
-                  <div className="min-w-0">
-                    <p className="font-semibold text-sm truncate">{selectedStore.name}</p>
-                    {selectedStore.industry && <Badge variant="secondary" className="text-[10px]">{selectedStore.industry}</Badge>}
-                  </div>
-                </div>
-                <RatingStars rating={selectedStore.google_rating} />
-                {selectedStore.address && (
-                  <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
-                    <MapPin className="h-3 w-3 shrink-0" /> {selectedStore.address}
-                  </p>
-                )}
-                {selectedStore.phone && (
-                  <p className="text-xs mt-1 flex items-center gap-1">
-                    <Phone className="h-3 w-3 shrink-0 text-muted-foreground" />
-                    <a href={`tel:${selectedStore.phone}`} className="hover:underline">{selectedStore.phone}</a>
-                  </p>
-                )}
-                {selectedStore.contact_person && (
-                  <p className="text-xs mt-1 flex items-center gap-1">
-                    <User className="h-3 w-3 shrink-0 text-muted-foreground" /> {selectedStore.contact_person}
-                  </p>
-                )}
-              </div>
-            </OverlayView>
-          )}
-
-          {/* Info window for search result */}
-          {selectedResult && (
-            <OverlayView
-              position={{ lat: selectedResult.latitude, lng: selectedResult.longitude }}
-              mapPaneName={OverlayView.FLOAT_PANE}
-            >
-              <div className="bg-card rounded-xl shadow-xl border p-3 w-56 -translate-x-1/2 -translate-y-[calc(100%+36px)]">
-                <button className="absolute top-2 right-2 text-muted-foreground hover:text-foreground" onClick={() => setSelectedResult(null)}>✕</button>
-                <p className="font-semibold text-sm pr-4">{selectedResult.name}</p>
-                <p className="text-xs text-muted-foreground mt-1">{selectedResult.address}</p>
-                <RatingStars rating={selectedResult.rating} />
-                <Button
-                  size="sm"
-                  className="w-full mt-2 h-7 text-xs"
-                  onClick={() => { onAddStore(selectedResult); setSelectedResult(null); }}
-                >
-                  <Plus className="h-3.5 w-3.5 mr-1" /> Hinzufügen
-                </Button>
-              </div>
-            </OverlayView>
-          )}
-        </GoogleMap>
-
-        {/* Legend */}
-        <div className="absolute bottom-4 left-4 bg-card/90 backdrop-blur rounded-lg shadow-md border p-2 flex items-center gap-4 text-xs">
-          <div className="flex items-center gap-1.5">
-            <div className="h-3 w-3 rounded-full bg-primary" />
-            <span>Gespeichert</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <div className="h-3 w-3 rounded-full bg-blue-500" />
-            <span>Suchergebnis</span>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
 
 // ── Main Component ─────────────────────────────────────────────────────────────
 
 export default function StoreFinder() {
-  const [viewMode, setViewMode] = useState<ViewMode>('grid');
   const [searchResults, setSearchResults] = useState<PlaceResult[]>([]);
   const [savedStores, setSavedStores] = useState<DiscoveredStore[]>([]);
   const [searching, setSearching] = useState(false);
@@ -587,12 +276,56 @@ export default function StoreFinder() {
     loadSavedStores();
   };
 
+  // Manual add mode
+  const [manualAddMode, setManualAddMode] = useState(false);
+  const [manualName, setManualName] = useState('');
+  const [manualLatLng, setManualLatLng] = useState<{ lat: number; lng: number } | null>(null);
+  const mapRef = useRef<google.maps.Map | null>(null);
+
+  const { apiKey, loading: keyLoading } = useGoogleMapsApiKey();
+  const { isLoaded } = useJsApiLoader({
+    googleMapsApiKey: apiKey || '',
+    libraries: GMAP_LIBRARIES,
+  });
+
+  const handleMapClick = useCallback((e: google.maps.MapMouseEvent) => {
+    if (!manualAddMode || !e.latLng) return;
+    setManualLatLng({ lat: e.latLng.lat(), lng: e.latLng.lng() });
+  }, [manualAddMode]);
+
+  const addManualStore = async () => {
+    if (!manualName.trim() || !manualLatLng) return;
+    try {
+      const { data: userData } = await supabase.auth.getUser();
+      const { error } = await supabase.from('discovered_stores').insert({
+        admin_user_id: userData.user!.id,
+        name: manualName.trim(),
+        latitude: manualLatLng.lat,
+        longitude: manualLatLng.lng,
+        enrichment_status: 'pending',
+        status: 'new',
+      } as any);
+      if (error) throw error;
+      toast.success(`${manualName} hinzugefügt`);
+      setManualAddMode(false);
+      setManualName('');
+      setManualLatLng(null);
+      loadSavedStores();
+    } catch (e: any) {
+      toast.error(e.message || 'Fehler');
+    }
+  };
+
+  const mapCenter = searchCenter || (savedStores.length > 0 && savedStores[0].latitude && savedStores[0].longitude
+    ? { lat: Number(savedStores[0].latitude), lng: Number(savedStores[0].longitude) }
+    : { lat: 48.137154, lng: 11.576124 });
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Header */}
       <div>
         <h1 className="text-2xl font-bold">Store Finder</h1>
-        <p className="text-muted-foreground">Finde und recherchiere potenzielle Kunden in deiner Umgebung</p>
+        <p className="text-muted-foreground text-sm">Finde und recherchiere potenzielle Kunden in deiner Umgebung</p>
       </div>
 
       {/* Search Controls */}
@@ -659,161 +392,227 @@ export default function StoreFinder() {
         </CardContent>
       </Card>
 
-      {/* Search Results */}
-      {searchResults.length > 0 && (
-        <div className="space-y-3">
-          <h2 className="text-lg font-semibold">Suchergebnisse ({searchResults.length})</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-            {searchResults.map((place) => (
-              <Card key={place.place_id} className="overflow-hidden">
-                <CardContent className="p-4 space-y-2">
-                  <div className="flex items-start justify-between gap-2">
-                    <h3 className="font-medium text-sm">{place.name}</h3>
-                    <Button size="sm" variant="default" className="shrink-0 h-7 text-xs" onClick={() => addStore(place)}>
-                      <Plus className="h-3.5 w-3.5 mr-1" />
-                      Hinzufügen
-                    </Button>
+      {/* Split-screen: Map + List */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4" style={{ minHeight: '600px' }}>
+        {/* Left side: Map */}
+        <Card className="overflow-hidden">
+          <CardContent className="p-0 relative h-full" style={{ minHeight: '600px' }}>
+            {keyLoading || !isLoaded ? (
+              <div className="flex items-center justify-center h-full">
+                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+              </div>
+            ) : (
+              <>
+                <GoogleMap
+                  mapContainerStyle={{ width: '100%', height: '100%' }}
+                  center={mapCenter}
+                  zoom={searchCenter ? 13 : 10}
+                  onLoad={(map) => { mapRef.current = map; }}
+                  onClick={handleMapClick}
+                  options={{
+                    streetViewControl: false,
+                    mapTypeControl: false,
+                    fullscreenControl: true,
+                    styles: [
+                      { featureType: 'poi', stylers: [{ visibility: 'off' }] },
+                      { featureType: 'transit', stylers: [{ visibility: 'off' }] },
+                    ],
+                    ...(manualAddMode ? { cursor: 'crosshair' } : {}),
+                  }}
+                >
+                  {/* Saved stores */}
+                  {savedStores.filter(s => s.latitude && s.longitude).map((store) => (
+                    <OverlayView
+                      key={store.id}
+                      position={{ lat: Number(store.latitude!), lng: Number(store.longitude!) }}
+                      mapPaneName={OverlayView.OVERLAY_MOUSE_TARGET}
+                    >
+                      <div className="cursor-pointer transform -translate-x-1/2 -translate-y-full">
+                        <div className="bg-primary text-primary-foreground rounded-full h-8 w-8 flex items-center justify-center shadow-lg border-2 border-background text-xs font-bold">
+                          {store.enrichment_status === 'done' ? '✓' : <Building2 className="h-4 w-4" />}
+                        </div>
+                        <div className="w-0 h-0 border-l-[6px] border-r-[6px] border-t-[8px] border-l-transparent border-r-transparent border-t-primary mx-auto -mt-0.5" />
+                      </div>
+                    </OverlayView>
+                  ))}
+
+                  {/* Search results */}
+                  {searchResults.filter(p => p.latitude && p.longitude).map((place) => (
+                    <OverlayView
+                      key={place.place_id}
+                      position={{ lat: place.latitude, lng: place.longitude }}
+                      mapPaneName={OverlayView.OVERLAY_MOUSE_TARGET}
+                    >
+                      <div
+                        className="cursor-pointer transform -translate-x-1/2 -translate-y-full"
+                        onClick={() => addStore(place)}
+                      >
+                        <div className="bg-blue-500 text-white rounded-full h-7 w-7 flex items-center justify-center shadow-lg border-2 border-background">
+                          <Plus className="h-3.5 w-3.5" />
+                        </div>
+                        <div className="w-0 h-0 border-l-[5px] border-r-[5px] border-t-[7px] border-l-transparent border-r-transparent border-t-blue-500 mx-auto -mt-0.5" />
+                      </div>
+                    </OverlayView>
+                  ))}
+
+                  {/* Manual pin */}
+                  {manualLatLng && (
+                    <OverlayView
+                      position={manualLatLng}
+                      mapPaneName={OverlayView.OVERLAY_MOUSE_TARGET}
+                    >
+                      <div className="transform -translate-x-1/2 -translate-y-full">
+                        <div className="bg-emerald-500 text-white rounded-full h-8 w-8 flex items-center justify-center shadow-lg border-2 border-background animate-bounce">
+                          <MapPin className="h-4 w-4" />
+                        </div>
+                        <div className="w-0 h-0 border-l-[6px] border-r-[6px] border-t-[8px] border-l-transparent border-r-transparent border-t-emerald-500 mx-auto -mt-0.5" />
+                      </div>
+                    </OverlayView>
+                  )}
+                </GoogleMap>
+
+                {/* Manual add bar */}
+                {manualAddMode ? (
+                  <div className="absolute top-3 left-3 right-3 bg-card/95 backdrop-blur rounded-xl shadow-lg border p-3 space-y-2">
+                    <p className="text-xs font-medium">📍 Klicke auf die Karte, um einen Standort zu wählen</p>
+                    <Input
+                      placeholder="Geschäftsname..."
+                      value={manualName}
+                      onChange={(e) => setManualName(e.target.value)}
+                      className="h-8 text-sm"
+                    />
+                    <div className="flex gap-2">
+                      <Button size="sm" className="h-7 text-xs" onClick={addManualStore} disabled={!manualName.trim() || !manualLatLng}>
+                        <Plus className="h-3 w-3 mr-1" /> Hinzufügen
+                      </Button>
+                      <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => { setManualAddMode(false); setManualLatLng(null); setManualName(''); }}>
+                        Abbrechen
+                      </Button>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                    <MapPin className="h-3.5 w-3.5 shrink-0" />
-                    <span className="truncate">{place.address}</span>
+                ) : (
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    className="absolute top-3 right-14 h-8 text-xs shadow-md"
+                    onClick={() => setManualAddMode(true)}
+                  >
+                    <MapPin className="h-3.5 w-3.5 mr-1" /> Manuell hinzufügen
+                  </Button>
+                )}
+
+                {/* Legend */}
+                <div className="absolute bottom-4 left-4 bg-card/90 backdrop-blur rounded-lg shadow-md border p-2 flex items-center gap-4 text-xs">
+                  <div className="flex items-center gap-1.5">
+                    <div className="h-3 w-3 rounded-full bg-primary" />
+                    <span>Gespeichert</span>
                   </div>
-                  <RatingStars rating={place.rating} />
+                  <div className="flex items-center gap-1.5">
+                    <div className="h-3 w-3 rounded-full bg-blue-500" />
+                    <span>Suchergebnis</span>
+                  </div>
+                </div>
+              </>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Right side: Results + Saved */}
+        <div className="space-y-4 overflow-y-auto" style={{ maxHeight: '600px' }}>
+          {/* Search results */}
+          {searchResults.length > 0 && (
+            <div className="space-y-2">
+              <h3 className="text-sm font-semibold flex items-center gap-2">
+                <Search className="h-4 w-4" />
+                Suchergebnisse ({searchResults.length})
+              </h3>
+              <div className="space-y-2">
+                {searchResults.map((place) => (
+                  <Card key={place.place_id} className="overflow-hidden">
+                    <CardContent className="p-3 flex items-center gap-3">
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-sm truncate">{place.name}</p>
+                        <p className="text-xs text-muted-foreground truncate flex items-center gap-1">
+                          <MapPin className="h-3 w-3 shrink-0" /> {place.address}
+                        </p>
+                        <RatingStars rating={place.rating} />
+                      </div>
+                      <Button size="sm" className="shrink-0 h-8 text-xs" onClick={() => addStore(place)}>
+                        <Plus className="h-3.5 w-3.5 mr-1" /> Hinzufügen
+                      </Button>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Saved stores */}
+          <div className="space-y-2">
+            <h3 className="text-sm font-semibold flex items-center gap-2">
+              <Building2 className="h-4 w-4" />
+              Meine Stores ({savedStores.length})
+            </h3>
+            {savedStores.length === 0 ? (
+              <Card>
+                <CardContent className="py-8 text-center text-muted-foreground text-sm">
+                  <Building2 className="h-8 w-8 mx-auto mb-2 opacity-30" />
+                  <p>Noch keine Stores gespeichert</p>
                 </CardContent>
               </Card>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Saved Stores */}
-      <div className="space-y-3">
-        <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold">Meine Stores ({savedStores.length})</h2>
-          <div className="flex items-center gap-1 bg-muted rounded-lg p-1">
-            <Button
-              variant={viewMode === 'grid' ? 'default' : 'ghost'}
-              size="sm"
-              className="h-8 w-8 p-0"
-              onClick={() => setViewMode('grid')}
-            >
-              <LayoutGrid className="h-4 w-4" />
-            </Button>
-            <Button
-              variant={viewMode === 'list' ? 'default' : 'ghost'}
-              size="sm"
-              className="h-8 w-8 p-0"
-              onClick={() => setViewMode('list')}
-            >
-              <List className="h-4 w-4" />
-            </Button>
-            <Button
-              variant={viewMode === 'map' ? 'default' : 'ghost'}
-              size="sm"
-              className="h-8 w-8 p-0"
-              onClick={() => setViewMode('map')}
-            >
-              <MapIcon className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
-
-        {savedStores.length === 0 ? (
-          <Card>
-            <CardContent className="py-12 text-center text-muted-foreground">
-              <Building2 className="h-12 w-12 mx-auto mb-3 opacity-30" />
-              <p>Noch keine Stores gespeichert</p>
-              <p className="text-sm">Nutze die Suche oben, um Geschäfte zu finden und hinzuzufügen.</p>
-            </CardContent>
-          </Card>
-        ) : viewMode === 'grid' ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {savedStores.map((store) => (
-              <StoreCard
-                key={store.id}
-                store={store}
-                onEnrich={enrichStore}
-                onDelete={deleteStore}
-                enriching={enrichingIds.has(store.id)}
-              />
-            ))}
-          </div>
-        ) : viewMode === 'list' ? (
-          <Card>
-            <CardContent className="p-0">
-              <table className="w-full">
-                <thead className="bg-muted/50 border-b">
-                  <tr>
-                    <th className="text-left p-3 text-xs font-medium">Name</th>
-                    <th className="text-left p-3 text-xs font-medium">Adresse</th>
-                    <th className="text-left p-3 text-xs font-medium">Telefon</th>
-                    <th className="text-left p-3 text-xs font-medium">Bewertung</th>
-                    <th className="text-left p-3 text-xs font-medium">Status</th>
-                    <th className="text-right p-3 text-xs font-medium">Aktionen</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {savedStores.map((store) => (
-                    <tr key={store.id} className="border-b hover:bg-muted/30">
-                      <td className="p-3">
-                        <div className="flex items-center gap-2">
-                          {store.google_photo_url ? (
-                            <img src={store.google_photo_url} alt="" className="h-8 w-8 rounded object-cover" />
-                          ) : (
-                            <div className="h-8 w-8 rounded bg-primary/10 flex items-center justify-center">
-                              <Building2 className="h-4 w-4 text-primary" />
-                            </div>
-                          )}
-                          <div>
-                            <p className="font-medium text-sm">{store.name}</p>
-                            {store.contact_person && (
-                              <p className="text-xs text-muted-foreground">{store.contact_person}</p>
-                            )}
-                          </div>
-                        </div>
-                      </td>
-                      <td className="p-3 text-sm text-muted-foreground">{store.address || '–'}</td>
-                      <td className="p-3 text-sm">{store.phone || '–'}</td>
-                      <td className="p-3">
-                        <RatingStars rating={store.google_rating} />
-                      </td>
-                      <td className="p-3">
-                        {store.enrichment_status === 'done' ? (
-                          <Badge variant="secondary" className="text-[10px]">Recherchiert</Badge>
-                        ) : store.enrichment_status === 'enriching' ? (
-                          <Badge className="text-[10px] bg-primary">Läuft…</Badge>
+            ) : (
+              <div className="space-y-2">
+                {savedStores.map((store) => (
+                  <Card key={store.id} className="overflow-hidden hover:shadow-md transition-shadow">
+                    <CardContent className="p-3 space-y-1.5">
+                      <div className="flex items-start gap-3">
+                        {store.google_photo_url ? (
+                          <img src={store.google_photo_url} alt="" className="h-10 w-10 rounded-lg object-cover shrink-0" />
                         ) : (
-                          <Badge variant="outline" className="text-[10px]">Ausstehend</Badge>
+                          <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                            <Building2 className="h-5 w-5 text-primary" />
+                          </div>
                         )}
-                      </td>
-                      <td className="p-3 text-right">
-                        <div className="flex items-center justify-end gap-1">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <p className="font-semibold text-sm truncate">{store.name}</p>
+                            {store.industry && <Badge variant="secondary" className="text-[10px] h-4 shrink-0">{store.industry}</Badge>}
+                          </div>
+                          <RatingStars rating={store.google_rating} />
+                        </div>
+                        <div className="flex items-center gap-1 shrink-0">
                           {store.enrichment_status === 'pending' && (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="h-7 text-xs"
-                              onClick={() => enrichStore(store.id)}
-                              disabled={enrichingIds.has(store.id)}
-                            >
-                              <Sparkles className="h-3.5 w-3.5 mr-1" />
-                              Recherche
+                            <Button variant="outline" size="icon" className="h-7 w-7" onClick={() => enrichStore(store.id)} disabled={enrichingIds.has(store.id)}>
+                              {enrichingIds.has(store.id) ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
                             </Button>
                           )}
-                          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => deleteStore(store.id)}>
-                            <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                          {store.enrichment_status === 'done' && (
+                            <Badge variant="outline" className="text-[9px] h-5 bg-emerald-500/10 text-emerald-600 border-emerald-500/20">✓ KI</Badge>
+                          )}
+                          <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive" onClick={() => deleteStore(store.id)}>
+                            <Trash2 className="h-3.5 w-3.5" />
                           </Button>
                         </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </CardContent>
-          </Card>
-        ) : (
-          <StoreMapView stores={savedStores} searchResults={searchResults} searchCenter={searchCenter} onAddStore={addStore} />
-        )}
+                      </div>
+                      {store.contact_person && (
+                        <p className="text-xs flex items-center gap-1.5"><User className="h-3 w-3 text-muted-foreground" /> {store.contact_person}</p>
+                      )}
+                      {store.address && (
+                        <p className="text-xs text-muted-foreground flex items-center gap-1.5"><MapPin className="h-3 w-3" /> {store.address}</p>
+                      )}
+                      {store.phone && (
+                        <p className="text-xs flex items-center gap-1.5"><Phone className="h-3 w-3 text-muted-foreground" /> <a href={`tel:${store.phone}`} className="hover:underline text-primary">{store.phone}</a></p>
+                      )}
+                      {store.ai_summary && (
+                        <p className="text-[11px] text-muted-foreground line-clamp-2 bg-muted/50 rounded-md px-2 py-1">{store.ai_summary}</p>
+                      )}
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );
