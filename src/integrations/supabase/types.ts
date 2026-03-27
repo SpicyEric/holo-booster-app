@@ -897,6 +897,96 @@ export type Database = {
         }
         Relationships: []
       }
+      discovered_stores: {
+        Row: {
+          address: string | null
+          admin_user_id: string
+          ai_summary: string | null
+          city: string | null
+          contact_person: string | null
+          created_at: string
+          email: string | null
+          enrichment_data: Json | null
+          enrichment_status: string
+          google_photo_url: string | null
+          google_rating: number | null
+          google_reviews_count: number | null
+          house_number: string | null
+          id: string
+          industry: string | null
+          latitude: number | null
+          longitude: number | null
+          name: string
+          notes: string | null
+          opening_hours: Json | null
+          phone: string | null
+          place_id: string | null
+          postal_code: string | null
+          status: string
+          street: string | null
+          updated_at: string
+          website: string | null
+        }
+        Insert: {
+          address?: string | null
+          admin_user_id: string
+          ai_summary?: string | null
+          city?: string | null
+          contact_person?: string | null
+          created_at?: string
+          email?: string | null
+          enrichment_data?: Json | null
+          enrichment_status?: string
+          google_photo_url?: string | null
+          google_rating?: number | null
+          google_reviews_count?: number | null
+          house_number?: string | null
+          id?: string
+          industry?: string | null
+          latitude?: number | null
+          longitude?: number | null
+          name: string
+          notes?: string | null
+          opening_hours?: Json | null
+          phone?: string | null
+          place_id?: string | null
+          postal_code?: string | null
+          status?: string
+          street?: string | null
+          updated_at?: string
+          website?: string | null
+        }
+        Update: {
+          address?: string | null
+          admin_user_id?: string
+          ai_summary?: string | null
+          city?: string | null
+          contact_person?: string | null
+          created_at?: string
+          email?: string | null
+          enrichment_data?: Json | null
+          enrichment_status?: string
+          google_photo_url?: string | null
+          google_rating?: number | null
+          google_reviews_count?: number | null
+          house_number?: string | null
+          id?: string
+          industry?: string | null
+          latitude?: number | null
+          longitude?: number | null
+          name?: string
+          notes?: string | null
+          opening_hours?: Json | null
+          phone?: string | null
+          place_id?: string | null
+          postal_code?: string | null
+          status?: string
+          street?: string | null
+          updated_at?: string
+          website?: string | null
+        }
+        Relationships: []
+      }
       events_processed: {
         Row: {
           processed_at: string | null

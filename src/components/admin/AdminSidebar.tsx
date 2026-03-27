@@ -32,6 +32,13 @@ const NAV_GROUPS: NavGroup[] = [
     ],
   },
   {
+    label: "LEADS",
+    items: [
+      { path: "/admin/store-finder", label: "Store Finder", icon: Search },
+      { path: "/admin/leads", label: "Shop-Vorschläge", icon: Lightbulb },
+    ],
+  },
+  {
     label: "SALES",
     items: [
       { path: "/admin/pipeline", label: "Pipeline", icon: GitBranch },
