@@ -67,6 +67,7 @@ import AppMessageDetail from "./app/pages/AppMessageDetail";
 import Leads from "./pages/admin/Leads";
 import StoreFinder from "./pages/admin/StoreFinder";
 import Pipeline from "./pages/admin/Pipeline";
+import LeadsPipeline from "./pages/admin/LeadsPipeline";
 
 const queryClient = new QueryClient();
 
@@ -100,6 +101,7 @@ const App = () => (
             <Route path="accounts" element={<Accounts />} />
             <Route path="orders" element={<Orders />} />
             <Route path="leads" element={<Leads />} />
+            <Route path="lead-pipeline" element={<LeadsPipeline />} />
             <Route path="store-finder" element={<StoreFinder />} />
             <Route path="pipeline" element={<Pipeline />} />
             <Route path="stats" element={<Stats />} />
