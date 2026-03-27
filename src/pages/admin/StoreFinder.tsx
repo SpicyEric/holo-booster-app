@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -12,6 +12,9 @@ import {
   Loader2, Sparkles, Building2, Mail, User, ExternalLink, Trash2,
 } from 'lucide-react';
 import { useGoogleMapsApiKey } from '@/hooks/useGoogleMapsApiKey';
+import { GoogleMap, useJsApiLoader, OverlayView } from '@react-google-maps/api';
+
+const GMAP_LIBRARIES: ('places')[] = ['places'];
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -218,6 +221,185 @@ function StoreCard({
               ✓ KI-Recherche abgeschlossen
             </Badge>
           )}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+// ── Map View ───────────────────────────────────────────────────────────────────
+
+const DEFAULT_CENTER = { lat: 48.137154, lng: 11.576124 };
+const MAP_CONTAINER = { width: '100%', height: '600px' };
+
+function StoreMapView({
+  stores,
+  searchResults,
+  searchCenter,
+  onAddStore,
+}: {
+  stores: DiscoveredStore[];
+  searchResults: PlaceResult[];
+  searchCenter: { lat: number; lng: number } | null;
+  onAddStore: (place: PlaceResult) => void;
+}) {
+  const { apiKey, loading: keyLoading } = useGoogleMapsApiKey();
+  const [selectedStore, setSelectedStore] = useState<DiscoveredStore | null>(null);
+  const [selectedResult, setSelectedResult] = useState<PlaceResult | null>(null);
+  const mapRef = useRef<google.maps.Map | null>(null);
+
+  const { isLoaded } = useJsApiLoader({
+    googleMapsApiKey: apiKey || '',
+    libraries: GMAP_LIBRARIES,
+  });
+
+  const onMapLoad = useCallback((map: google.maps.Map) => {
+    mapRef.current = map;
+  }, []);
+
+  const center = searchCenter || DEFAULT_CENTER;
+
+  if (keyLoading || !isLoaded) {
+    return (
+      <Card>
+        <CardContent className="flex items-center justify-center py-24">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <Card className="overflow-hidden">
+      <CardContent className="p-0 relative">
+        <GoogleMap
+          mapContainerStyle={MAP_CONTAINER}
+          center={center}
+          zoom={searchCenter ? 13 : 10}
+          onLoad={onMapLoad}
+          options={{
+            streetViewControl: false,
+            mapTypeControl: false,
+            fullscreenControl: true,
+            styles: [
+              { featureType: 'poi', stylers: [{ visibility: 'off' }] },
+              { featureType: 'transit', stylers: [{ visibility: 'off' }] },
+            ],
+          }}
+        >
+          {/* Saved stores - purple markers */}
+          {stores.filter(s => s.latitude && s.longitude).map((store) => (
+            <OverlayView
+              key={store.id}
+              position={{ lat: store.latitude!, lng: store.longitude! }}
+              mapPaneName={OverlayView.OVERLAY_MOUSE_TARGET}
+            >
+              <div
+                className="cursor-pointer transform -translate-x-1/2 -translate-y-full"
+                onClick={() => { setSelectedStore(store); setSelectedResult(null); }}
+              >
+                <div className="bg-primary text-primary-foreground rounded-full h-8 w-8 flex items-center justify-center shadow-lg border-2 border-background text-xs font-bold">
+                  {store.enrichment_status === 'done' ? '✓' : <Building2 className="h-4 w-4" />}
+                </div>
+                <div className="w-0 h-0 border-l-[6px] border-r-[6px] border-t-[8px] border-l-transparent border-r-transparent border-t-primary mx-auto -mt-0.5" />
+              </div>
+            </OverlayView>
+          ))}
+
+          {/* Search results - blue markers */}
+          {searchResults.filter(p => p.latitude && p.longitude).map((place) => (
+            <OverlayView
+              key={place.place_id}
+              position={{ lat: place.latitude, lng: place.longitude }}
+              mapPaneName={OverlayView.OVERLAY_MOUSE_TARGET}
+            >
+              <div
+                className="cursor-pointer transform -translate-x-1/2 -translate-y-full"
+                onClick={() => { setSelectedResult(place); setSelectedStore(null); }}
+              >
+                <div className="bg-blue-500 text-white rounded-full h-7 w-7 flex items-center justify-center shadow-lg border-2 border-background">
+                  <Plus className="h-3.5 w-3.5" />
+                </div>
+                <div className="w-0 h-0 border-l-[5px] border-r-[5px] border-t-[7px] border-l-transparent border-r-transparent border-t-blue-500 mx-auto -mt-0.5" />
+              </div>
+            </OverlayView>
+          ))}
+
+          {/* Info window for selected saved store */}
+          {selectedStore && selectedStore.latitude && selectedStore.longitude && (
+            <OverlayView
+              position={{ lat: selectedStore.latitude, lng: selectedStore.longitude }}
+              mapPaneName={OverlayView.FLOAT_PANE}
+            >
+              <div className="bg-card rounded-xl shadow-xl border p-3 w-64 -translate-x-1/2 -translate-y-[calc(100%+40px)]">
+                <button className="absolute top-2 right-2 text-muted-foreground hover:text-foreground" onClick={() => setSelectedStore(null)}>✕</button>
+                <div className="flex items-center gap-3 mb-2">
+                  {selectedStore.google_photo_url ? (
+                    <img src={selectedStore.google_photo_url} alt="" className="h-10 w-10 rounded-lg object-cover" />
+                  ) : (
+                    <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                      <Building2 className="h-5 w-5 text-primary" />
+                    </div>
+                  )}
+                  <div className="min-w-0">
+                    <p className="font-semibold text-sm truncate">{selectedStore.name}</p>
+                    {selectedStore.industry && <Badge variant="secondary" className="text-[10px]">{selectedStore.industry}</Badge>}
+                  </div>
+                </div>
+                <RatingStars rating={selectedStore.google_rating} />
+                {selectedStore.address && (
+                  <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
+                    <MapPin className="h-3 w-3 shrink-0" /> {selectedStore.address}
+                  </p>
+                )}
+                {selectedStore.phone && (
+                  <p className="text-xs mt-1 flex items-center gap-1">
+                    <Phone className="h-3 w-3 shrink-0 text-muted-foreground" />
+                    <a href={`tel:${selectedStore.phone}`} className="hover:underline">{selectedStore.phone}</a>
+                  </p>
+                )}
+                {selectedStore.contact_person && (
+                  <p className="text-xs mt-1 flex items-center gap-1">
+                    <User className="h-3 w-3 shrink-0 text-muted-foreground" /> {selectedStore.contact_person}
+                  </p>
+                )}
+              </div>
+            </OverlayView>
+          )}
+
+          {/* Info window for search result */}
+          {selectedResult && (
+            <OverlayView
+              position={{ lat: selectedResult.latitude, lng: selectedResult.longitude }}
+              mapPaneName={OverlayView.FLOAT_PANE}
+            >
+              <div className="bg-card rounded-xl shadow-xl border p-3 w-56 -translate-x-1/2 -translate-y-[calc(100%+36px)]">
+                <button className="absolute top-2 right-2 text-muted-foreground hover:text-foreground" onClick={() => setSelectedResult(null)}>✕</button>
+                <p className="font-semibold text-sm pr-4">{selectedResult.name}</p>
+                <p className="text-xs text-muted-foreground mt-1">{selectedResult.address}</p>
+                <RatingStars rating={selectedResult.rating} />
+                <Button
+                  size="sm"
+                  className="w-full mt-2 h-7 text-xs"
+                  onClick={() => { onAddStore(selectedResult); setSelectedResult(null); }}
+                >
+                  <Plus className="h-3.5 w-3.5 mr-1" /> Hinzufügen
+                </Button>
+              </div>
+            </OverlayView>
+          )}
+        </GoogleMap>
+
+        {/* Legend */}
+        <div className="absolute bottom-4 left-4 bg-card/90 backdrop-blur rounded-lg shadow-md border p-2 flex items-center gap-4 text-xs">
+          <div className="flex items-center gap-1.5">
+            <div className="h-3 w-3 rounded-full bg-primary" />
+            <span>Gespeichert</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <div className="h-3 w-3 rounded-full bg-blue-500" />
+            <span>Suchergebnis</span>
+          </div>
         </div>
       </CardContent>
     </Card>
@@ -630,12 +812,7 @@ export default function StoreFinder() {
             </CardContent>
           </Card>
         ) : (
-          <Card>
-            <CardContent className="p-4 text-center text-muted-foreground py-24">
-              <MapIcon className="h-12 w-12 mx-auto mb-3 opacity-30" />
-              <p>Kartenansicht wird in Kürze verfügbar sein</p>
-            </CardContent>
-          </Card>
+          <StoreMapView stores={savedStores} searchResults={searchResults} searchCenter={searchCenter} onAddStore={addStore} />
         )}
       </div>
     </div>
