@@ -67,6 +67,7 @@ import AppMessageDetail from "./app/pages/AppMessageDetail";
 import Leads from "./pages/admin/Leads";
 import StoreFinder from "./pages/admin/StoreFinder";
 import Pipeline from "./pages/admin/Pipeline";
+import LeadsPipeline from "./pages/admin/LeadsPipeline";
 
 const queryClient = new QueryClient();
 
