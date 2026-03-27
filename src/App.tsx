@@ -65,6 +65,7 @@ import AppVerifyEmail from "./app/pages/AppVerifyEmail";
 import AppRewards from "./app/pages/AppRewards";
 import AppMessageDetail from "./app/pages/AppMessageDetail";
 import Leads from "./pages/admin/Leads";
+import StoreFinder from "./pages/admin/StoreFinder";
 import Pipeline from "./pages/admin/Pipeline";
 
 const queryClient = new QueryClient();
