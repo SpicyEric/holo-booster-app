@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
@@ -263,6 +264,7 @@ function DealCard({
 /*  Main component                                                     */
 /* ------------------------------------------------------------------ */
 export default function LeadsPipeline() {
+  const navigate = useNavigate();
   const [stores, setStores] = useState<DiscoveredStore[]>([]);
   const [loading, setLoading] = useState(true);
   const [dragOverStage, setDragOverStage] = useState<string | null>(null);
@@ -276,17 +278,11 @@ export default function LeadsPipeline() {
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
 
-  // Schedule dialog
-  const [scheduleStore, setScheduleStore] = useState<DiscoveredStore | null>(null);
-  const [scheduleDate, setScheduleDate] = useState('');
-  const [scheduleTime, setScheduleTime] = useState('10:00');
-  const [scheduleTitle, setScheduleTitle] = useState('');
-  const [scheduleSaving, setScheduleSaving] = useState(false);
-
   // New deal dialog
   const [newDealStage, setNewDealStage] = useState<string | null>(null);
   const [newDealName, setNewDealName] = useState('');
   const [newDealLoading, setNewDealLoading] = useState(false);
+
 
   /* ---- Fetch ---- */
   const fetchStores = useCallback(async () => {
@@ -403,29 +399,8 @@ export default function LeadsPipeline() {
       .eq('id', id);
   };
 
-  const createAppointment = async () => {
-    if (!scheduleStore || !scheduleDate || !scheduleTitle.trim()) return;
-    setScheduleSaving(true);
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Nicht eingeloggt');
-      const scheduledAt = new Date(`${scheduleDate}T${scheduleTime}:00`);
-      const { error } = await supabase.from('pipeline_appointments').insert({
-        lead_id: scheduleStore.id,
-        title: scheduleTitle.trim(),
-        scheduled_at: scheduledAt.toISOString(),
-        duration_minutes: 60,
-        created_by_user_id: user.id,
-      } as any);
-      if (error) throw error;
-      toast.success('Termin erstellt');
-      setScheduleStore(null);
-      setScheduleTitle('');
-    } catch (err: any) {
-      toast.error(err.message || 'Fehler');
-    } finally {
-      setScheduleSaving(false);
-    }
+  const navigateToCalendar = (store: DiscoveredStore) => {
+    navigate(`/admin/calendar?leadId=${store.id}`);
   };
 
   const saveNotes = async () => {
@@ -582,11 +557,7 @@ export default function LeadsPipeline() {
                         onDragStart={handleDragStart(store.id)}
                         onClick={() => { setSelected(store); setEditNotes(store.notes || ''); setEditNoteTitle(store.note_title || ''); }}
                         onNoteTitleSave={saveNoteTitleInline}
-                        onSchedule={(s) => {
-                          setScheduleStore(s);
-                          setScheduleDate(format(new Date(), 'yyyy-MM-dd'));
-                          setScheduleTitle(`Termin: ${s.name}`);
-                        }}
+                        onSchedule={(s) => navigateToCalendar(s)}
                       />
                     ))}
                   </div>
@@ -746,43 +717,6 @@ export default function LeadsPipeline() {
         </DialogContent>
       </Dialog>
 
-      {/* ---- Schedule appointment dialog ---- */}
-      <Dialog open={!!scheduleStore} onOpenChange={() => setScheduleStore(null)}>
-        <DialogContent className="max-w-sm">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <CalendarPlus className="h-5 w-5 text-primary" />
-              Termin erstellen
-            </DialogTitle>
-          </DialogHeader>
-          <div className="space-y-3">
-            <p className="text-sm text-muted-foreground">
-              Termin für <strong>{scheduleStore?.name}</strong>
-            </p>
-            <div className="space-y-1.5">
-              <label className="text-xs font-medium">Titel</label>
-              <Input value={scheduleTitle} onChange={(e) => setScheduleTitle(e.target.value)} placeholder="Termin mit..." />
-            </div>
-            <div className="grid grid-cols-2 gap-2">
-              <div className="space-y-1.5">
-                <label className="text-xs font-medium">Datum</label>
-                <Input type="date" value={scheduleDate} onChange={(e) => setScheduleDate(e.target.value)} />
-              </div>
-              <div className="space-y-1.5">
-                <label className="text-xs font-medium">Uhrzeit</label>
-                <Input type="time" value={scheduleTime} onChange={(e) => setScheduleTime(e.target.value)} />
-              </div>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setScheduleStore(null)}>Abbrechen</Button>
-            <Button onClick={createAppointment} disabled={!scheduleTitle.trim() || !scheduleDate || scheduleSaving}>
-              {scheduleSaving && <Loader2 className="h-4 w-4 mr-1 animate-spin" />}
-              Erstellen
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
 
       {/* ---- Delete confirmation ---- */}
       <ConfirmActionDialog

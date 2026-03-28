@@ -1,0 +1,1 @@
+ALTER TABLE public.pipeline_appointments ADD COLUMN address text;

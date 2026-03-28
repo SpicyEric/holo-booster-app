@@ -1632,6 +1632,7 @@ export type Database = {
       }
       pipeline_appointments: {
         Row: {
+          address: string | null
           created_at: string | null
           created_by_user_id: string
           description: string | null
@@ -1643,6 +1644,7 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          address?: string | null
           created_at?: string | null
           created_by_user_id: string
           description?: string | null
@@ -1654,6 +1656,7 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          address?: string | null
           created_at?: string | null
           created_by_user_id?: string
           description?: string | null

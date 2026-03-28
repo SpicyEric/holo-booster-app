@@ -1,10 +1,11 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isSameMonth, addMonths, subMonths, startOfWeek, endOfWeek, parseISO } from 'date-fns';
 import { de } from 'date-fns/locale';
 import {
-  ChevronLeft, ChevronRight, Plus, Loader2, Clock, Trash2, X, CalendarDays,
+  ChevronLeft, ChevronRight, Plus, Loader2, Clock, Trash2, CalendarDays, MapPin, X, Navigation,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -19,6 +20,7 @@ interface Appointment {
   lead_id: string;
   title: string;
   description: string | null;
+  address: string | null;
   scheduled_at: string;
   duration_minutes: number;
   created_at: string;
@@ -33,26 +35,67 @@ interface Appointment {
     email: string | null;
     address: string | null;
     contact_person: string | null;
+    latitude: number | null;
+    longitude: number | null;
   };
 }
 
+interface PreSelectedLead {
+  id: string;
+  name: string;
+  google_photo_url: string | null;
+  address: string | null;
+}
+
 const WEEKDAYS = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
+const DURATION_OPTIONS = [15, 30, 60];
 
 export default function AdminCalendar() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
 
+  // Pre-selected lead from pipeline
+  const [preSelectedLead, setPreSelectedLead] = useState<PreSelectedLead | null>(null);
+
   // New appointment dialog
   const [newDialogOpen, setNewDialogOpen] = useState(false);
   const [newTitle, setNewTitle] = useState('');
-  const [newDescription, setNewDescription] = useState('');
+  const [newNotes, setNewNotes] = useState('');
+  const [newAddress, setNewAddress] = useState('');
   const [newTime, setNewTime] = useState('10:00');
   const [newDuration, setNewDuration] = useState(60);
   const [newDate, setNewDate] = useState('');
   const [saving, setSaving] = useState(false);
+
+  // Load pre-selected lead from URL
+  useEffect(() => {
+    const leadId = searchParams.get('leadId');
+    if (!leadId) {
+      setPreSelectedLead(null);
+      return;
+    }
+    (async () => {
+      const { data } = await supabase
+        .from('discovered_stores')
+        .select('id, name, google_photo_url, address')
+        .eq('id', leadId)
+        .single();
+      if (data) {
+        setPreSelectedLead(data as PreSelectedLead);
+      }
+    })();
+  }, [searchParams]);
+
+  const clearPreSelectedLead = () => {
+    setPreSelectedLead(null);
+    searchParams.delete('leadId');
+    setSearchParams(searchParams, { replace: true });
+  };
 
   const fetchAppointments = useCallback(async () => {
     try {
@@ -68,13 +111,12 @@ export default function AdminCalendar() {
 
       if (error) throw error;
 
-      // Fetch lead details for each appointment
       const leadIds = [...new Set((data || []).map((a: any) => a.lead_id))];
       let leadsMap: Record<string, any> = {};
       if (leadIds.length > 0) {
         const { data: leads } = await supabase
           .from('discovered_stores')
-          .select('id, name, google_photo_url, status, note_title, notes, phone, email, address, contact_person')
+          .select('id, name, google_photo_url, status, note_title, notes, phone, email, address, contact_person, latitude, longitude')
           .in('id', leadIds);
         if (leads) {
           leadsMap = Object.fromEntries(leads.map((l: any) => [l.id, l]));
@@ -112,6 +154,21 @@ export default function AdminCalendar() {
     return map;
   }, [appointments]);
 
+  const openNewDialog = (dateStr: string) => {
+    setNewDate(dateStr);
+    setNewTime('10:00');
+    setNewDuration(60);
+    setNewNotes('');
+    if (preSelectedLead) {
+      setNewTitle(`Termin mit ${preSelectedLead.name}`);
+      setNewAddress(preSelectedLead.address || '');
+    } else {
+      setNewTitle('');
+      setNewAddress('');
+    }
+    setNewDialogOpen(true);
+  };
+
   const handleCreateAppointment = async () => {
     if (!newTitle.trim() || !newDate) return;
     setSaving(true);
@@ -121,20 +178,25 @@ export default function AdminCalendar() {
 
       const scheduledAt = new Date(`${newDate}T${newTime}:00`);
 
+      const leadId = preSelectedLead?.id || '00000000-0000-0000-0000-000000000000';
+
       const { error } = await supabase.from('pipeline_appointments').insert({
         title: newTitle.trim(),
-        description: newDescription.trim() || null,
+        description: newNotes.trim() || null,
+        address: newAddress.trim() || null,
         scheduled_at: scheduledAt.toISOString(),
         duration_minutes: newDuration,
         created_by_user_id: user.id,
-        lead_id: '00000000-0000-0000-0000-000000000000', // placeholder, will be linked from pipeline
+        lead_id: leadId,
       } as any);
 
       if (error) throw error;
       toast.success('Termin erstellt');
       setNewDialogOpen(false);
       setNewTitle('');
-      setNewDescription('');
+      setNewNotes('');
+      setNewAddress('');
+      clearPreSelectedLead();
       fetchAppointments();
     } catch (err: any) {
       toast.error(err.message || 'Fehler');
@@ -154,6 +216,15 @@ export default function AdminCalendar() {
     }
   };
 
+  const navigateToStoreOnMap = (appointment: Appointment) => {
+    const lead = appointment.lead;
+    if (lead?.latitude && lead?.longitude) {
+      navigate(`/admin/store-finder?lat=${lead.latitude}&lng=${lead.longitude}&name=${encodeURIComponent(lead.name)}`);
+    } else if (appointment.address || lead?.address) {
+      navigate(`/admin/store-finder?address=${encodeURIComponent(appointment.address || lead?.address || '')}`);
+    }
+  };
+
   const dayAppointments = selectedDate
     ? appointmentsByDay[format(selectedDate, 'yyyy-MM-dd')] || []
     : [];
@@ -168,15 +239,32 @@ export default function AdminCalendar() {
 
   return (
     <div className="space-y-4">
+      {/* Pre-selected lead banner */}
+      {preSelectedLead && (
+        <div className="flex items-center gap-3 bg-primary/10 border border-primary/20 rounded-xl px-4 py-3">
+          {preSelectedLead.google_photo_url ? (
+            <img src={preSelectedLead.google_photo_url} alt="" className="h-9 w-9 rounded-lg object-cover shrink-0" />
+          ) : (
+            <div className="h-9 w-9 rounded-lg bg-primary/20 flex items-center justify-center shrink-0">
+              <CalendarDays className="h-4 w-4 text-primary" />
+            </div>
+          )}
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold truncate">{preSelectedLead.name}</p>
+            <p className="text-xs text-muted-foreground">Vorgemerkt – wähle einen Tag, um einen Termin zu erstellen</p>
+          </div>
+          <Button variant="ghost" size="icon" className="shrink-0 h-7 w-7" onClick={clearPreSelectedLead}>
+            <X className="h-4 w-4" />
+          </Button>
+        </div>
+      )}
+
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">Kalender</h1>
           <p className="text-muted-foreground text-sm">Termine und Wiedervorlagen</p>
         </div>
-        <Button onClick={() => {
-          setNewDate(format(new Date(), 'yyyy-MM-dd'));
-          setNewDialogOpen(true);
-        }}>
+        <Button onClick={() => openNewDialog(format(new Date(), 'yyyy-MM-dd'))}>
           <Plus className="h-4 w-4 mr-1" /> Neuer Termin
         </Button>
       </div>
@@ -184,7 +272,6 @@ export default function AdminCalendar() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Calendar grid */}
         <div className="lg:col-span-2 bg-card border rounded-xl p-4">
-          {/* Month navigation */}
           <div className="flex items-center justify-between mb-4">
             <Button variant="ghost" size="icon" onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}>
               <ChevronLeft className="h-5 w-5" />
@@ -197,14 +284,12 @@ export default function AdminCalendar() {
             </Button>
           </div>
 
-          {/* Weekday headers */}
           <div className="grid grid-cols-7 gap-1 mb-1">
             {WEEKDAYS.map((d) => (
               <div key={d} className="text-center text-xs font-medium text-muted-foreground py-1">{d}</div>
             ))}
           </div>
 
-          {/* Days */}
           <div className="grid grid-cols-7 gap-1">
             {calendarDays.map((day) => {
               const key = format(day, 'yyyy-MM-dd');
@@ -270,10 +355,7 @@ export default function AdminCalendar() {
               size="sm"
               variant="outline"
               className="w-full"
-              onClick={() => {
-                setNewDate(format(selectedDate, 'yyyy-MM-dd'));
-                setNewDialogOpen(true);
-              }}
+              onClick={() => openNewDialog(format(selectedDate, 'yyyy-MM-dd'))}
             >
               <Plus className="h-3.5 w-3.5 mr-1" /> Termin hinzufügen
             </Button>
@@ -343,8 +425,29 @@ export default function AdminCalendar() {
                   {' · '}{selectedAppointment.duration_minutes} Min.
                 </span>
               </div>
+
+              {/* Address with navigation */}
+              {(selectedAppointment.address || selectedAppointment.lead?.address) && (
+                <div className="flex items-center gap-2">
+                  <MapPin className="h-4 w-4 text-muted-foreground shrink-0" />
+                  <span className="flex-1 text-muted-foreground">{selectedAppointment.address || selectedAppointment.lead?.address}</span>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7 shrink-0"
+                    onClick={() => navigateToStoreOnMap(selectedAppointment)}
+                    title="Auf Karte anzeigen"
+                  >
+                    <Navigation className="h-3.5 w-3.5 text-primary" />
+                  </Button>
+                </div>
+              )}
+
               {selectedAppointment.description && (
-                <p className="text-muted-foreground">{selectedAppointment.description}</p>
+                <div className="bg-muted/50 rounded-lg p-2.5">
+                  <p className="text-xs font-medium">Notizen</p>
+                  <p className="text-sm whitespace-pre-wrap">{selectedAppointment.description}</p>
+                </div>
               )}
               {selectedAppointment.lead?.note_title && (
                 <div className="bg-muted/50 rounded-lg p-2.5">
@@ -354,7 +457,7 @@ export default function AdminCalendar() {
               )}
               {selectedAppointment.lead?.notes && (
                 <div className="bg-muted/50 rounded-lg p-2.5">
-                  <p className="text-xs font-medium">Notizen</p>
+                  <p className="text-xs font-medium">Lead-Notizen</p>
                   <p className="text-sm whitespace-pre-wrap">{selectedAppointment.lead.notes}</p>
                 </div>
               )}
@@ -377,6 +480,20 @@ export default function AdminCalendar() {
             <DialogTitle>Neuer Termin</DialogTitle>
           </DialogHeader>
           <div className="space-y-3">
+            {/* Show pre-selected lead info */}
+            {preSelectedLead && (
+              <div className="flex items-center gap-2 bg-primary/5 border border-primary/10 rounded-lg px-3 py-2">
+                {preSelectedLead.google_photo_url ? (
+                  <img src={preSelectedLead.google_photo_url} alt="" className="h-7 w-7 rounded-md object-cover shrink-0" />
+                ) : (
+                  <div className="h-7 w-7 rounded-md bg-primary/10 flex items-center justify-center shrink-0">
+                    <CalendarDays className="h-3.5 w-3.5 text-primary" />
+                  </div>
+                )}
+                <span className="text-xs font-medium truncate">{preSelectedLead.name}</span>
+              </div>
+            )}
+
             <div className="space-y-1.5">
               <label className="text-xs font-medium">Titel</label>
               <Input value={newTitle} onChange={(e) => setNewTitle(e.target.value)} placeholder="Termin mit..." autoFocus />
@@ -392,12 +509,32 @@ export default function AdminCalendar() {
               </div>
             </div>
             <div className="space-y-1.5">
-              <label className="text-xs font-medium">Dauer (Minuten)</label>
-              <Input type="number" value={newDuration} onChange={(e) => setNewDuration(Number(e.target.value))} min={15} step={15} />
+              <label className="text-xs font-medium">Dauer</label>
+              <div className="flex gap-2">
+                {DURATION_OPTIONS.map((d) => (
+                  <button
+                    key={d}
+                    type="button"
+                    onClick={() => setNewDuration(d)}
+                    className={cn(
+                      'flex-1 py-1.5 rounded-lg text-xs font-medium border transition-all',
+                      newDuration === d
+                        ? 'bg-primary text-primary-foreground border-primary'
+                        : 'bg-muted/50 text-muted-foreground border-border hover:bg-muted'
+                    )}
+                  >
+                    {d} Min.
+                  </button>
+                ))}
+              </div>
             </div>
             <div className="space-y-1.5">
-              <label className="text-xs font-medium">Beschreibung</label>
-              <Textarea value={newDescription} onChange={(e) => setNewDescription(e.target.value)} rows={2} placeholder="Optional..." />
+              <label className="text-xs font-medium">Adresse</label>
+              <Input value={newAddress} onChange={(e) => setNewAddress(e.target.value)} placeholder="Straße, PLZ Ort..." />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium">Notizen</label>
+              <Textarea value={newNotes} onChange={(e) => setNewNotes(e.target.value)} rows={2} placeholder="Optional..." />
             </div>
           </div>
           <DialogFooter>
