@@ -37,7 +37,7 @@ const NAV_GROUPS: NavGroup[] = [
       { path: "/admin/store-finder", label: "Store Finder", icon: Search },
       { path: "/admin/leads", label: "Kontakte", icon: Users },
       { path: "/admin/lead-pipeline", label: "Pipeline", icon: GitBranch },
-      { path: "/admin/calendar", label: "Kalender", icon: LayoutDashboard },
+      { path: "/admin/calendar", label: "Kalender", icon: CalendarDays },
       { path: "/admin/customers", label: "Meine Kunden", icon: Users },
       { path: "/admin/checkout", label: "Kunde abschließen", icon: ShoppingCart },
     ],

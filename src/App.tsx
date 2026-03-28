@@ -105,6 +105,7 @@ const App = () => (
             <Route path="lead-pipeline" element={<LeadsPipeline />} />
             <Route path="store-finder" element={<StoreFinder />} />
             <Route path="pipeline" element={<Pipeline />} />
+            <Route path="calendar" element={<AdminCalendar />} />
             <Route path="stats" element={<Stats />} />
             <Route path="checkout" element={<Checkout />} />
             <Route path="boxes" element={<BoxManagement />} />
