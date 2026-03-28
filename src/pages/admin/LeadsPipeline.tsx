@@ -402,34 +402,46 @@ export default function LeadsPipeline() {
             const isActive = activeStage === stage.key;
             const isDragOver = dragOverStage === stage.key;
 
-            if (!isActive) {
-              // Collapsed column: just a colored strip with count + thumbnails
-              return (
+            return (
+              <div
+                key={stage.key}
+                onClick={() => !isActive && setActiveStage(stage.key)}
+                onDragOver={handleDragOver(stage.key)}
+                onDragLeave={handleDragLeave}
+                onDrop={handleDrop(stage.key)}
+                className="flex flex-col rounded-xl overflow-hidden"
+                style={{
+                  width: isActive ? 400 : (isDragOver ? 80 : 52),
+                  minWidth: isActive ? 280 : (isDragOver ? 80 : 52),
+                  maxWidth: isActive ? 400 : (isDragOver ? 80 : 52),
+                  cursor: isActive ? 'default' : 'pointer',
+                  transition: 'width 400ms cubic-bezier(0.4, 0, 0.2, 1), min-width 400ms cubic-bezier(0.4, 0, 0.2, 1), max-width 400ms cubic-bezier(0.4, 0, 0.2, 1)',
+                }}
+              >
+                {/* Collapsed overlay - visible when not active */}
                 <div
-                  key={stage.key}
-                  onClick={() => setActiveStage(stage.key)}
-                  onDragOver={handleDragOver(stage.key)}
-                  onDragLeave={handleDragLeave}
-                  onDrop={handleDrop(stage.key)}
-                  className="flex flex-col items-center cursor-pointer transition-all shrink-0 rounded-xl overflow-hidden"
+                  className="flex flex-col items-center shrink-0 overflow-hidden"
                   style={{
-                    width: isDragOver ? 80 : 52,
                     backgroundColor: stage.bgColor,
+                    height: isActive ? 0 : '100%',
+                    opacity: isActive ? 0 : 1,
+                    transition: 'height 400ms cubic-bezier(0.4, 0, 0.2, 1), opacity 300ms ease',
+                    position: isActive ? 'absolute' : 'relative',
+                    pointerEvents: isActive ? 'none' : 'auto',
+                    width: '100%',
                   }}
                 >
-                  {/* Count badge */}
-                  <div className="py-3 flex flex-col items-center gap-1">
+                  <div className="py-3 flex flex-col items-center gap-1 shrink-0">
                     <span className="text-white font-bold text-lg leading-none">{items.length}</span>
-                    <span className="text-white/70 text-[9px] font-medium writing-mode-vertical"
+                    <span className="text-white/70 text-[9px] font-medium"
                       style={{ writingMode: 'vertical-rl', textOrientation: 'mixed' }}>
                       {stage.label}
                     </span>
                   </div>
-
-                  {/* Thumbnails */}
                   <div className="flex-1 overflow-y-auto w-full px-1.5 pb-2 space-y-1.5">
                     {items.map((store) => (
                       <div key={store.id} className="w-full aspect-square rounded-lg overflow-hidden bg-white/20 flex items-center justify-center"
+                        style={{ maxWidth: 52, maxHeight: 52 }}
                         title={store.name}>
                         {store.google_photo_url ? (
                           <img src={store.google_photo_url} alt="" className="w-full h-full object-cover" />
@@ -440,53 +452,53 @@ export default function LeadsPipeline() {
                     ))}
                   </div>
                 </div>
-              );
-            }
 
-            // Expanded column
-            return (
-              <div
-                key={stage.key}
-                className="flex-1 flex flex-col shrink-0 min-w-[280px] max-w-[400px]"
-                onDragOver={handleDragOver(stage.key)}
-                onDragLeave={handleDragLeave}
-                onDrop={handleDrop(stage.key)}
-              >
-                {/* Column header */}
-                <div className="rounded-t-xl px-4 py-2.5 flex items-center gap-3" style={{ backgroundColor: stage.bgColor }}>
-                  <span className="text-white font-semibold text-sm">{stage.label}</span>
-                  <span className="text-white/80 text-xs font-medium bg-white/20 rounded-full px-2 py-0.5">
-                    {items.length}
-                  </span>
-                </div>
-
-                {/* + Neuer Deal */}
-                <button
-                  onClick={() => { setNewDealStage(stage.key); setNewDealName(''); }}
-                  className="w-full border border-dashed border-border rounded-none py-2 text-sm text-muted-foreground hover:text-foreground hover:border-foreground/30 transition-colors flex items-center justify-center gap-1.5 bg-muted/30"
-                >
-                  <Plus className="h-4 w-4" />
-                  Neuer Deal
-                </button>
-
-                {/* Cards */}
+                {/* Expanded content - visible when active */}
                 <div
-                  className={cn(
-                    'flex-1 rounded-b-xl border border-t-0 border-border/40 p-2 space-y-2 overflow-y-auto transition-colors',
-                    isDragOver ? 'bg-primary/5 border-primary/30' : 'bg-muted/20'
-                  )}
+                  className="flex flex-col flex-1 overflow-hidden"
+                  style={{
+                    opacity: isActive ? 1 : 0,
+                    transition: 'opacity 350ms ease 100ms',
+                    pointerEvents: isActive ? 'auto' : 'none',
+                    display: isActive ? 'flex' : 'none',
+                  }}
                 >
-                  {items.length === 0 && !isDragOver && (
-                    <p className="text-center text-xs text-muted-foreground/50 py-8">Keine Deals</p>
-                  )}
-                  {items.map((store) => (
-                    <DealCard
-                      key={store.id}
-                      store={store}
-                      onDragStart={handleDragStart(store.id)}
-                      onClick={() => { setSelected(store); setEditNotes(store.notes || ''); }}
-                    />
-                  ))}
+                  {/* Column header */}
+                  <div className="rounded-t-xl px-4 py-2.5 flex items-center gap-3 shrink-0" style={{ backgroundColor: stage.bgColor }}>
+                    <span className="text-white font-semibold text-sm">{stage.label}</span>
+                    <span className="text-white/80 text-xs font-medium bg-white/20 rounded-full px-2 py-0.5">
+                      {items.length}
+                    </span>
+                  </div>
+
+                  {/* + Neuer Deal */}
+                  <button
+                    onClick={(e) => { e.stopPropagation(); setNewDealStage(stage.key); setNewDealName(''); }}
+                    className="w-full border border-dashed border-border rounded-none py-2 text-sm text-muted-foreground hover:text-foreground hover:border-foreground/30 transition-colors flex items-center justify-center gap-1.5 bg-muted/30 shrink-0"
+                  >
+                    <Plus className="h-4 w-4" />
+                    Neuer Deal
+                  </button>
+
+                  {/* Cards */}
+                  <div
+                    className={cn(
+                      'flex-1 rounded-b-xl border border-t-0 border-border/40 p-2 space-y-2 overflow-y-auto transition-colors',
+                      isDragOver ? 'bg-primary/5 border-primary/30' : 'bg-muted/20'
+                    )}
+                  >
+                    {items.length === 0 && !isDragOver && (
+                      <p className="text-center text-xs text-muted-foreground/50 py-8">Keine Deals</p>
+                    )}
+                    {items.map((store) => (
+                      <DealCard
+                        key={store.id}
+                        store={store}
+                        onDragStart={handleDragStart(store.id)}
+                        onClick={() => { setSelected(store); setEditNotes(store.notes || ''); }}
+                      />
+                    ))}
+                  </div>
                 </div>
               </div>
             );
