@@ -399,26 +399,67 @@ export default function LeadsPipeline() {
         </div>
       </div>
 
-      {/* Kanban board */}
-      <div className="flex-1 overflow-x-auto pb-4">
-        <div className="flex gap-4 min-w-max h-full">
+      {/* Accordion-style pipeline */}
+      <div className="flex-1 overflow-hidden pb-4">
+        <div className="flex h-full gap-0">
           {STAGES.map((stage) => {
             const items = storesByStage[stage.key] || [];
+            const isActive = activeStage === stage.key;
             const isDragOver = dragOverStage === stage.key;
 
+            if (!isActive) {
+              // Collapsed column: just a colored strip with count + thumbnails
+              return (
+                <div
+                  key={stage.key}
+                  onClick={() => setActiveStage(stage.key)}
+                  onDragOver={handleDragOver(stage.key)}
+                  onDragLeave={handleDragLeave}
+                  onDrop={handleDrop(stage.key)}
+                  className={cn(
+                    'flex flex-col items-center cursor-pointer transition-all shrink-0 rounded-xl overflow-hidden',
+                    isDragOver ? 'w-[80px] ring-2 ring-white/50' : 'w-[52px]',
+                    stage.color
+                  )}
+                >
+                  {/* Count badge */}
+                  <div className="py-3 flex flex-col items-center gap-1">
+                    <span className="text-white font-bold text-lg leading-none">{items.length}</span>
+                    <span className="text-white/70 text-[9px] font-medium writing-mode-vertical"
+                      style={{ writingMode: 'vertical-rl', textOrientation: 'mixed' }}>
+                      {stage.label}
+                    </span>
+                  </div>
+
+                  {/* Thumbnails */}
+                  <div className="flex-1 overflow-y-auto w-full px-1.5 pb-2 space-y-1.5">
+                    {items.map((store) => (
+                      <div key={store.id} className="w-full aspect-square rounded-lg overflow-hidden bg-white/20 flex items-center justify-center"
+                        title={store.name}>
+                        {store.google_photo_url ? (
+                          <img src={store.google_photo_url} alt="" className="w-full h-full object-cover" />
+                        ) : (
+                          <span className="text-white font-bold text-sm">{store.name.charAt(0)}</span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              );
+            }
+
+            // Expanded column
             return (
               <div
                 key={stage.key}
-                className="w-[280px] flex flex-col shrink-0"
+                className="flex-1 flex flex-col shrink-0 min-w-[280px]"
                 onDragOver={handleDragOver(stage.key)}
                 onDragLeave={handleDragLeave}
                 onDrop={handleDrop(stage.key)}
               >
                 {/* Column header */}
                 <div className={cn('rounded-t-xl px-4 py-2.5 flex items-center justify-between', stage.color)}>
-                  <div className="flex items-center gap-2">
-                    <span className="text-white font-semibold text-sm">{stage.label}</span>
-                  </div>
+                  <span className="text-white font-semibold text-sm">{stage.label}</span>
                   <span className="text-white/80 text-xs font-medium bg-white/20 rounded-full px-2 py-0.5">
                     {items.length}
                   </span>
@@ -436,24 +477,19 @@ export default function LeadsPipeline() {
                 {/* Cards */}
                 <div
                   className={cn(
-                    'flex-1 rounded-b-xl border border-t-0 border-border/40 p-2 space-y-2 overflow-y-auto transition-colors min-h-[200px]',
+                    'flex-1 rounded-b-xl border border-t-0 border-border/40 p-2 space-y-2 overflow-y-auto transition-colors',
                     isDragOver ? 'bg-primary/5 border-primary/30' : 'bg-muted/20'
                   )}
                 >
                   {items.length === 0 && !isDragOver && (
-                    <p className="text-center text-xs text-muted-foreground/50 py-8">
-                      Keine Deals
-                    </p>
+                    <p className="text-center text-xs text-muted-foreground/50 py-8">Keine Deals</p>
                   )}
                   {items.map((store) => (
                     <DealCard
                       key={store.id}
                       store={store}
                       onDragStart={handleDragStart(store.id)}
-                      onClick={() => {
-                        setSelected(store);
-                        setEditNotes(store.notes || '');
-                      }}
+                      onClick={() => { setSelected(store); setEditNotes(store.notes || ''); }}
                     />
                   ))}
                 </div>
