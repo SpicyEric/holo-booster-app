@@ -745,6 +745,56 @@ export default function LeadsPipeline() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* ---- Schedule appointment dialog ---- */}
+      <Dialog open={!!scheduleStore} onOpenChange={() => setScheduleStore(null)}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <CalendarPlus className="h-5 w-5 text-primary" />
+              Termin erstellen
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <p className="text-sm text-muted-foreground">
+              Termin für <strong>{scheduleStore?.name}</strong>
+            </p>
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium">Titel</label>
+              <Input value={scheduleTitle} onChange={(e) => setScheduleTitle(e.target.value)} placeholder="Termin mit..." />
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium">Datum</label>
+                <Input type="date" value={scheduleDate} onChange={(e) => setScheduleDate(e.target.value)} />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium">Uhrzeit</label>
+                <Input type="time" value={scheduleTime} onChange={(e) => setScheduleTime(e.target.value)} />
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setScheduleStore(null)}>Abbrechen</Button>
+            <Button onClick={createAppointment} disabled={!scheduleTitle.trim() || !scheduleDate || scheduleSaving}>
+              {scheduleSaving && <Loader2 className="h-4 w-4 mr-1 animate-spin" />}
+              Erstellen
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* ---- Delete confirmation ---- */}
+      <ConfirmActionDialog
+        open={deleteConfirmOpen}
+        onOpenChange={setDeleteConfirmOpen}
+        onConfirm={handleConfirmDelete}
+        title="Kontakt löschen"
+        description="Bist du sicher, dass du diesen Kontakt aus der Pipeline löschen möchtest? Diese Aktion kann nicht rückgängig gemacht werden."
+        confirmText="Endgültig löschen"
+        confirmPhrase="LÖSCHEN"
+        destructive
+      />
     </div>
   );
 }
