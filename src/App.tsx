@@ -139,9 +139,8 @@ const App = () => (
             <Route path="calendar" element={<AdminCalendar />} />
             <Route path="stats" element={<Stats />} />
             <Route path="checkout" element={<Checkout />} />
-            <Route path="boxes" element={<BoxManagement />} />
-            <Route path="orders" element={<Orders />} />
-            <Route path="settings" element={<Settings />} />
+            <Route path="messages" element={<SalesRepMessages />} />
+            <Route path="settings" element={<SalesRepSettings />} />
             <Route path="map" element={<CustomerMap />} />
           </Route>
           
