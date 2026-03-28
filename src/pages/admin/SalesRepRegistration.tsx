@@ -17,7 +17,6 @@ const SalesRepRegistration = () => {
     first_name: "",
     last_name: "",
     email: "",
-    password: "",
     phone: "",
     street: "",
     house_number: "",
