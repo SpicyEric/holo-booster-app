@@ -5,7 +5,7 @@ import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
 import {
   Plus, Star, User, MapPin, Phone, Mail, Globe, MessageSquare,
-  Trash2, X, Search, Loader2, ExternalLink,
+  Trash2, X, Search, Loader2, ExternalLink, CalendarPlus,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -14,6 +14,7 @@ import { Badge } from '@/components/ui/badge';
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from '@/components/ui/dialog';
+import { ConfirmActionDialog } from '@/components/ConfirmActionDialog';
 import { cn } from '@/lib/utils';
 
 /* ------------------------------------------------------------------ */
