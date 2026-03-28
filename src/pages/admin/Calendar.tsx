@@ -5,8 +5,9 @@ import { toast } from 'sonner';
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isSameMonth, addMonths, subMonths, startOfWeek, endOfWeek, parseISO } from 'date-fns';
 import { de } from 'date-fns/locale';
 import {
-  ChevronLeft, ChevronRight, Plus, Loader2, Clock, Trash2, CalendarDays, MapPin, X, Navigation,
+  ChevronLeft, ChevronRight, Plus, Loader2, Clock, Trash2, CalendarDays, MapPin, X, Navigation, Phone,
 } from 'lucide-react';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
