@@ -33,11 +33,7 @@ import MeinKonto from "./pages/merchant/MeinKonto";
 import Nachrichten from "./pages/merchant/Nachrichten";
 import Transaktionen from "./pages/merchant/Transaktionen";
 import Marketing from "./pages/merchant/Marketing";
-import PartnerLayout from "./pages/partner/PartnerLayout";
-import PartnerDashboardHome from "./pages/partner/PartnerDashboardHome";
-import PartnerLeads from "./pages/partner/PartnerLeads";
-import PartnerProvisionen from "./pages/partner/PartnerProvisionen";
-import PartnerCheckout from "./pages/partner/PartnerCheckout";
+import SalesRepDashboard from "./pages/salesrep/SalesRepDashboard";
 import MerchantSetup from "./pages/merchant/MerchantSetup";
 import Scan from "./pages/Scan";
 import NotFound from "./pages/NotFound";
@@ -129,14 +125,26 @@ const App = () => (
             <Route path="transaktionen" element={<Navigate to="/kunde/kunden" replace />} />
           </Route>
           
-          {/* Partner Dashboard */}
-          <Route path="/partner" element={<PartnerLayout />}>
-            <Route index element={<Navigate to="/partner/dashboard" replace />} />
-            <Route path="dashboard" element={<PartnerDashboardHome />} />
-            <Route path="leads" element={<PartnerLeads />} />
-            <Route path="provisionen" element={<PartnerProvisionen />} />
-            <Route path="checkout" element={<PartnerCheckout />} />
+          {/* Vertriebler Dashboard (role: partner/sales_partner) */}
+          <Route path="/vertriebler" element={<SalesRepDashboard />}>
+            <Route index element={<Overview />} />
+            <Route path="customers" element={<Customers />} />
+            <Route path="customers/new" element={<CustomerNew />} />
+            <Route path="customers/:id" element={<CustomerDetail />} />
+            <Route path="leads" element={<Leads />} />
+            <Route path="lead-pipeline" element={<LeadsPipeline />} />
+            <Route path="store-finder" element={<StoreFinder />} />
+            <Route path="calendar" element={<AdminCalendar />} />
+            <Route path="stats" element={<Stats />} />
+            <Route path="checkout" element={<Checkout />} />
+            <Route path="boxes" element={<BoxManagement />} />
+            <Route path="orders" element={<Orders />} />
+            <Route path="settings" element={<Settings />} />
+            <Route path="map" element={<CustomerMap />} />
           </Route>
+          
+          {/* Legacy partner redirects */}
+          <Route path="/partner/*" element={<Navigate to="/vertriebler" replace />} />
           
           {/* ===== APP ROUTES (End Customer) - Swipeable main pages ===== */}
           <Route path="/app/auth" element={<AppAuth />} />

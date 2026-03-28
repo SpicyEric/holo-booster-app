@@ -26,7 +26,7 @@ export const ProtectedRoute = ({ children, allowedRoles }: ProtectedRouteProps) 
             navigate('/kunde');
             break;
           case 'partner':
-            navigate('/partner/dashboard');
+            navigate('/vertriebler');
             break;
           default:
             navigate('/auth');
