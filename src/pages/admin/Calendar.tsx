@@ -402,9 +402,22 @@ export default function AdminCalendar() {
           <h1 className="text-2xl font-bold">Kalender</h1>
           <p className="text-muted-foreground text-sm">Termine und Wiedervorlagen</p>
         </div>
-        <Button onClick={() => openNewDialog(format(new Date(), 'yyyy-MM-dd'))}>
-          <Plus className="h-4 w-4 mr-1" /> Neuer Termin
-        </Button>
+        <div className="flex items-center gap-2">
+          {gcalConnected ? (
+            <Button variant="outline" size="sm" onClick={disconnectGoogleCalendar} disabled={gcalLoading} className="text-xs gap-1.5">
+              {gcalLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Unlink className="h-3.5 w-3.5" />}
+              Google Calendar trennen
+            </Button>
+          ) : (
+            <Button variant="outline" size="sm" onClick={connectGoogleCalendar} disabled={gcalLoading} className="text-xs gap-1.5">
+              {gcalLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Link2 className="h-3.5 w-3.5" />}
+              Google Calendar verbinden
+            </Button>
+          )}
+          <Button onClick={() => openNewDialog(format(new Date(), 'yyyy-MM-dd'))}>
+            <Plus className="h-4 w-4 mr-1" /> Neuer Termin
+          </Button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
