@@ -453,7 +453,7 @@ export default function LeadsPipeline() {
                 onDrop={handleDrop(stage.key)}
               >
                 {/* Column header */}
-                <div className={cn('rounded-t-xl px-4 py-2.5 flex items-center justify-between', stage.color)}>
+                <div className="rounded-t-xl px-4 py-2.5 flex items-center gap-3" style={{ backgroundColor: stage.bgColor }}>
                   <span className="text-white font-semibold text-sm">{stage.label}</span>
                   <span className="text-white/80 text-xs font-medium bg-white/20 rounded-full px-2 py-0.5">
                     {items.length}
