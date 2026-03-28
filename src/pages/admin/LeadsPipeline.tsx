@@ -292,6 +292,13 @@ export default function LeadsPipeline() {
   const [newDealName, setNewDealName] = useState('');
   const [newDealLoading, setNewDealLoading] = useState(false);
 
+  // Customer linking dialog (when dropping to "gewonnen"/Kunde)
+  const [linkDialogOpen, setLinkDialogOpen] = useState(false);
+  const [linkingStoreId, setLinkingStoreId] = useState<string | null>(null);
+  const [customers, setCustomers] = useState<CustomerOption[]>([]);
+  const [customerSearch, setCustomerSearch] = useState('');
+  const [customersLoading, setCustomersLoading] = useState(false);
+
 
   /* ---- Fetch ---- */
   const fetchStores = useCallback(async () => {
