@@ -52,8 +52,22 @@ const Overview = () => {
 
   const loadDashboard = async () => {
     setLoading(true);
-    await Promise.all([loadAlerts(), loadKPIs(), loadChart(), loadLiveFeed()]);
+    await Promise.all([loadAlerts(), loadKPIs(), loadChart(), loadLiveFeed(), loadAppointments()]);
     setLoading(false);
+  };
+
+  const loadAppointments = async () => {
+    try {
+      const now = new Date().toISOString();
+      const { data, count } = await supabase
+        .from("pipeline_appointments")
+        .select("id, title, scheduled_at, duration_minutes, lead_id, address, pipeline_leads!inner(shop_name, phone)", { count: "exact" })
+        .gte("scheduled_at", now)
+        .order("scheduled_at", { ascending: true })
+        .limit(5);
+      setUpcomingAppointments(data || []);
+      setAppointmentCount(count || 0);
+    } catch (e) { console.error(e); }
   };
 
   const loadAlerts = async () => {
