@@ -231,6 +231,7 @@ export default function LeadsPipeline() {
   const [loading, setLoading] = useState(true);
   const [dragOverStage, setDragOverStage] = useState<string | null>(null);
   const draggedId = useRef<string | null>(null);
+  const [activeStage, setActiveStage] = useState<string>('neu');
 
   // Detail dialog
   const [selected, setSelected] = useState<DiscoveredStore | null>(null);
