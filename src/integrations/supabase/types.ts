@@ -2276,6 +2276,78 @@ export type Database = {
           },
         ]
       }
+      sales_rep_profiles: {
+        Row: {
+          account_holder: string | null
+          bank_name: string | null
+          bic: string | null
+          city: string | null
+          country: string | null
+          created_at: string
+          email: string
+          first_name: string
+          house_number: string | null
+          iban: string | null
+          id: string
+          is_active: boolean
+          last_name: string
+          notes: string | null
+          phone: string | null
+          postal_code: string | null
+          street: string | null
+          tax_number: string | null
+          updated_at: string
+          user_id: string
+          vat_id: string | null
+        }
+        Insert: {
+          account_holder?: string | null
+          bank_name?: string | null
+          bic?: string | null
+          city?: string | null
+          country?: string | null
+          created_at?: string
+          email?: string
+          first_name?: string
+          house_number?: string | null
+          iban?: string | null
+          id?: string
+          is_active?: boolean
+          last_name?: string
+          notes?: string | null
+          phone?: string | null
+          postal_code?: string | null
+          street?: string | null
+          tax_number?: string | null
+          updated_at?: string
+          user_id: string
+          vat_id?: string | null
+        }
+        Update: {
+          account_holder?: string | null
+          bank_name?: string | null
+          bic?: string | null
+          city?: string | null
+          country?: string | null
+          created_at?: string
+          email?: string
+          first_name?: string
+          house_number?: string | null
+          iban?: string | null
+          id?: string
+          is_active?: boolean
+          last_name?: string
+          notes?: string | null
+          phone?: string | null
+          postal_code?: string | null
+          street?: string | null
+          tax_number?: string | null
+          updated_at?: string
+          user_id?: string
+          vat_id?: string | null
+        }
+        Relationships: []
+      }
       scans: {
         Row: {
           contact_id: string | null

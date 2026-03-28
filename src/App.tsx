@@ -69,6 +69,7 @@ import StoreFinder from "./pages/admin/StoreFinder";
 import Pipeline from "./pages/admin/Pipeline";
 import LeadsPipeline from "./pages/admin/LeadsPipeline";
 import AdminCalendar from "./pages/admin/Calendar";
+import SalesRepRegistration from "./pages/admin/SalesRepRegistration";
 
 const queryClient = new QueryClient();
 
@@ -109,6 +110,7 @@ const App = () => (
             <Route path="stats" element={<Stats />} />
             <Route path="checkout" element={<Checkout />} />
             <Route path="boxes" element={<BoxManagement />} />
+            <Route path="sales-rep-register" element={<SalesRepRegistration />} />
             <Route path="settings" element={<Settings />} />
             <Route path="map" element={<CustomerMap />} />
           </Route>
