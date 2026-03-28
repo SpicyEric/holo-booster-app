@@ -68,12 +68,6 @@ const SalesRepRegistration = () => {
             postal_code: form.postal_code,
             city: form.city,
             country: form.country,
-            tax_number: form.tax_number,
-            vat_id: form.vat_id,
-            iban: form.iban,
-            bic: form.bic,
-            bank_name: form.bank_name,
-            account_holder: form.account_holder,
             notes: form.notes,
           },
         ]);
