@@ -660,14 +660,24 @@ export default function LeadsPipeline() {
               <Stars rating={selected.google_rating} />
 
 
+              {/* Note Title */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Notiztitel</label>
+                <Input
+                  value={editNoteTitle}
+                  onChange={(e) => setEditNoteTitle(e.target.value)}
+                  placeholder="Kurzer Notiztitel (wird auf dem Kärtchen angezeigt)..."
+                />
+              </div>
+
               {/* Notes */}
               <div className="space-y-2">
                 <label className="text-sm font-medium">Notizen</label>
                 <Textarea
                   value={editNotes}
                   onChange={(e) => setEditNotes(e.target.value)}
-                  rows={3}
-                  placeholder="Interne Notizen hinzufügen..."
+                  rows={4}
+                  placeholder="Ausführliche Notizen: Mit wem gesprochen, was besprochen..."
                 />
               </div>
 
@@ -689,7 +699,6 @@ export default function LeadsPipeline() {
                         'px-3 py-1.5 rounded-lg text-xs font-medium text-white transition-opacity',
                         mapStatus(selected.status) === stage.key ? 'opacity-100 ring-2 ring-offset-2 ring-offset-background' : 'opacity-60 hover:opacity-100'
                       )}
-                      
                     >
                       {stage.label}
                     </button>
@@ -700,17 +709,9 @@ export default function LeadsPipeline() {
           )}
 
           <DialogFooter className="flex-col sm:flex-row gap-2">
-            <div className="flex gap-2">
-              <Button variant="destructive" size="sm" onClick={() => selected && deleteStore(selected.id)}>
-                <Trash2 className="h-4 w-4 mr-1" /> Löschen
-              </Button>
-              <Button variant="outline" size="sm" className="text-rose-500 border-rose-500/30" onClick={() => selected && moveToArchive(selected.id, 'verloren')}>
-                Verloren
-              </Button>
-              <Button variant="outline" size="sm" className="text-emerald-500 border-emerald-500/30" onClick={() => selected && moveToArchive(selected.id, 'gewonnen')}>
-                Gewonnen
-              </Button>
-            </div>
+            <Button variant="destructive" size="sm" onClick={() => selected && confirmDelete(selected.id)}>
+              <Trash2 className="h-4 w-4 mr-1" /> Löschen
+            </Button>
             <Button onClick={saveNotes}>Speichern</Button>
           </DialogFooter>
         </DialogContent>
