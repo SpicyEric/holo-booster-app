@@ -394,11 +394,45 @@ export default function LeadsPipeline() {
     }
   };
 
+  const saveNoteTitleInline = async (id: string, value: string) => {
+    // Optimistic update
+    setStores(prev => prev.map(s => s.id === id ? { ...s, note_title: value || null } : s));
+    await supabase
+      .from('discovered_stores')
+      .update({ note_title: value || null, updated_at: new Date().toISOString() } as any)
+      .eq('id', id);
+  };
+
+  const createAppointment = async () => {
+    if (!scheduleStore || !scheduleDate || !scheduleTitle.trim()) return;
+    setScheduleSaving(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Nicht eingeloggt');
+      const scheduledAt = new Date(`${scheduleDate}T${scheduleTime}:00`);
+      const { error } = await supabase.from('pipeline_appointments').insert({
+        lead_id: scheduleStore.id,
+        title: scheduleTitle.trim(),
+        scheduled_at: scheduledAt.toISOString(),
+        duration_minutes: 60,
+        created_by_user_id: user.id,
+      } as any);
+      if (error) throw error;
+      toast.success('Termin erstellt');
+      setScheduleStore(null);
+      setScheduleTitle('');
+    } catch (err: any) {
+      toast.error(err.message || 'Fehler');
+    } finally {
+      setScheduleSaving(false);
+    }
+  };
+
   const saveNotes = async () => {
     if (!selected) return;
     const { error } = await supabase
       .from('discovered_stores')
-      .update({ notes: editNotes || null, updated_at: new Date().toISOString() })
+      .update({ notes: editNotes || null, note_title: editNoteTitle || null, updated_at: new Date().toISOString() } as any)
       .eq('id', selected.id);
 
     if (error) {
