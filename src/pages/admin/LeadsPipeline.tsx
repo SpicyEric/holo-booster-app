@@ -397,9 +397,9 @@ export default function LeadsPipeline() {
       {/* Header */}
       <div className="flex items-center justify-between shrink-0">
         <div>
-          <h1 className="text-2xl font-bold">Lead Pipeline</h1>
+          <h1 className="text-2xl font-bold">Pipeline</h1>
           <p className="text-muted-foreground text-sm">
-            {stores.length} Leads · {wonCount} gewonnen
+            {stores.length} Leads
           </p>
         </div>
       </div>
