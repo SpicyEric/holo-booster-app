@@ -64,17 +64,26 @@ serve(async (req) => {
       });
     }
 
+    // Remove auto-assigned end_customer role (from trigger)
+    const assignedRole = role || 'merchant';
+    if (assignedRole !== 'end_customer') {
+      await supabase
+        .from('user_roles')
+        .delete()
+        .eq('user_id', newUser.user.id)
+        .eq('role', 'end_customer');
+    }
+
     // Assign role
     const { error: roleInsertError } = await supabase
       .from('user_roles')
-      .insert({
+      .upsert({
         user_id: newUser.user.id,
-        role: role || 'merchant',
-      });
+        role: assignedRole,
+      }, { onConflict: 'user_id,role' });
 
     if (roleInsertError) {
       console.error('Error assigning role:', roleInsertError);
-      // Clean up user if role assignment fails
       await supabase.auth.admin.deleteUser(newUser.user.id);
       return new Response(JSON.stringify({ error: 'Failed to assign role' }), {
         status: 500,
