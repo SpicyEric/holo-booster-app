@@ -917,6 +917,7 @@ export type Database = {
           latitude: number | null
           longitude: number | null
           name: string
+          note_title: string | null
           notes: string | null
           opening_hours: Json | null
           phone: string | null
@@ -946,6 +947,7 @@ export type Database = {
           latitude?: number | null
           longitude?: number | null
           name: string
+          note_title?: string | null
           notes?: string | null
           opening_hours?: Json | null
           phone?: string | null
@@ -975,6 +977,7 @@ export type Database = {
           latitude?: number | null
           longitude?: number | null
           name?: string
+          note_title?: string | null
           notes?: string | null
           opening_hours?: Json | null
           phone?: string | null
@@ -1623,6 +1626,50 @@ export type Database = {
             columns: ["customer_id"]
             isOneToOne: false
             referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pipeline_appointments: {
+        Row: {
+          created_at: string | null
+          created_by_user_id: string
+          description: string | null
+          duration_minutes: number | null
+          id: string
+          lead_id: string
+          scheduled_at: string
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          created_by_user_id: string
+          description?: string | null
+          duration_minutes?: number | null
+          id?: string
+          lead_id: string
+          scheduled_at: string
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          created_by_user_id?: string
+          description?: string | null
+          duration_minutes?: number | null
+          id?: string
+          lead_id?: string
+          scheduled_at?: string
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pipeline_appointments_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "discovered_stores"
             referencedColumns: ["id"]
           },
         ]

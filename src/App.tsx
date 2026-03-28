@@ -68,6 +68,7 @@ import Leads from "./pages/admin/Leads";
 import StoreFinder from "./pages/admin/StoreFinder";
 import Pipeline from "./pages/admin/Pipeline";
 import LeadsPipeline from "./pages/admin/LeadsPipeline";
+import AdminCalendar from "./pages/admin/Calendar";
 
 const queryClient = new QueryClient();
 
@@ -104,6 +105,7 @@ const App = () => (
             <Route path="lead-pipeline" element={<LeadsPipeline />} />
             <Route path="store-finder" element={<StoreFinder />} />
             <Route path="pipeline" element={<Pipeline />} />
+            <Route path="calendar" element={<AdminCalendar />} />
             <Route path="stats" element={<Stats />} />
             <Route path="checkout" element={<Checkout />} />
             <Route path="boxes" element={<BoxManagement />} />

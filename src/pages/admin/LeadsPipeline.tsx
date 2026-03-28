@@ -5,7 +5,7 @@ import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
 import {
   Plus, Star, User, MapPin, Phone, Mail, Globe, MessageSquare,
-  Trash2, X, Search, Loader2, ExternalLink,
+  Trash2, X, Search, Loader2, ExternalLink, CalendarPlus,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -14,6 +14,7 @@ import { Badge } from '@/components/ui/badge';
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from '@/components/ui/dialog';
+import { ConfirmActionDialog } from '@/components/ConfirmActionDialog';
 import { cn } from '@/lib/utils';
 
 /* ------------------------------------------------------------------ */
@@ -39,6 +40,7 @@ interface DiscoveredStore {
   ai_summary: string | null;
   enrichment_status: string;
   notes: string | null;
+  note_title: string | null;
   status: string;
   created_at: string;
   latitude: number | null;
@@ -107,11 +109,17 @@ function DealCard({
   store,
   onDragStart,
   onClick,
+  onNoteTitleSave,
+  onSchedule,
 }: {
   store: DiscoveredStore;
   onDragStart: (e: React.DragEvent) => void;
   onClick: () => void;
+  onNoteTitleSave: (id: string, value: string) => void;
+  onSchedule: (store: DiscoveredStore) => void;
 }) {
+  const [editingNoteTitle, setEditingNoteTitle] = useState(false);
+  const [localNoteTitle, setLocalNoteTitle] = useState(store.note_title || '');
   const shortAddr = [store.street, store.house_number].filter(Boolean).join(' ');
   const cityLine = [store.postal_code, store.city].filter(Boolean).join(' ');
 
@@ -143,6 +151,14 @@ function DealCard({
             <Badge variant="secondary" className="text-[10px] mt-0.5 h-4">{store.industry}</Badge>
           )}
         </div>
+        {/* Schedule button */}
+        <button
+          onClick={(e) => { e.stopPropagation(); onSchedule(store); }}
+          className="shrink-0 h-7 w-7 rounded-lg bg-primary/10 hover:bg-primary/20 flex items-center justify-center transition-colors"
+          title="Termin erstellen"
+        >
+          <CalendarPlus className="h-3.5 w-3.5 text-primary" />
+        </button>
       </div>
 
       {/* Contact person */}
@@ -198,14 +214,39 @@ function DealCard({
       {/* Rating */}
       <Stars rating={store.google_rating} />
 
-
-      {/* Notes preview */}
-      {store.notes && (
-        <div className="flex items-start gap-1.5 text-[11px] text-muted-foreground">
-          <MessageSquare className="h-3 w-3 shrink-0 mt-0.5" />
-          <span className="line-clamp-2 italic">{store.notes}</span>
-        </div>
-      )}
+      {/* Inline note title */}
+      <div
+        className="mt-1"
+        onClick={(e) => { e.stopPropagation(); setEditingNoteTitle(true); }}
+      >
+        {editingNoteTitle ? (
+          <input
+            autoFocus
+            value={localNoteTitle}
+            onChange={(e) => setLocalNoteTitle(e.target.value)}
+            onBlur={() => {
+              setEditingNoteTitle(false);
+              onNoteTitleSave(store.id, localNoteTitle);
+            }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                setEditingNoteTitle(false);
+                onNoteTitleSave(store.id, localNoteTitle);
+              }
+            }}
+            className="w-full text-xs bg-muted/50 border border-border rounded px-2 py-1 outline-none focus:ring-1 focus:ring-primary"
+            placeholder="Notiztitel eingeben..."
+            onClick={(e) => e.stopPropagation()}
+          />
+        ) : (
+          <div className="flex items-start gap-1.5 text-[11px] min-h-[24px] px-2 py-1 rounded bg-muted/30 hover:bg-muted/50 transition-colors cursor-text">
+            <MessageSquare className="h-3 w-3 shrink-0 mt-0.5 text-muted-foreground" />
+            <span className={cn('line-clamp-2', store.note_title ? 'text-foreground' : 'text-muted-foreground/50 italic')}>
+              {store.note_title || 'Notiztitel...'}
+            </span>
+          </div>
+        )}
+      </div>
 
       {/* Footer */}
       <div className="flex items-center justify-between text-[10px] text-muted-foreground/70 pt-0.5 border-t border-border/30">
@@ -231,6 +272,16 @@ export default function LeadsPipeline() {
   // Detail dialog
   const [selected, setSelected] = useState<DiscoveredStore | null>(null);
   const [editNotes, setEditNotes] = useState('');
+  const [editNoteTitle, setEditNoteTitle] = useState('');
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
+
+  // Schedule dialog
+  const [scheduleStore, setScheduleStore] = useState<DiscoveredStore | null>(null);
+  const [scheduleDate, setScheduleDate] = useState('');
+  const [scheduleTime, setScheduleTime] = useState('10:00');
+  const [scheduleTitle, setScheduleTitle] = useState('');
+  const [scheduleSaving, setScheduleSaving] = useState(false);
 
   // New deal dialog
   const [newDealStage, setNewDealStage] = useState<string | null>(null);
@@ -330,11 +381,58 @@ export default function LeadsPipeline() {
     }
   };
 
+  const confirmDelete = (id: string) => {
+    setDeleteTargetId(id);
+    setDeleteConfirmOpen(true);
+  };
+
+  const handleConfirmDelete = () => {
+    if (deleteTargetId) {
+      deleteStore(deleteTargetId);
+      setDeleteConfirmOpen(false);
+      setDeleteTargetId(null);
+    }
+  };
+
+  const saveNoteTitleInline = async (id: string, value: string) => {
+    // Optimistic update
+    setStores(prev => prev.map(s => s.id === id ? { ...s, note_title: value || null } : s));
+    await supabase
+      .from('discovered_stores')
+      .update({ note_title: value || null, updated_at: new Date().toISOString() } as any)
+      .eq('id', id);
+  };
+
+  const createAppointment = async () => {
+    if (!scheduleStore || !scheduleDate || !scheduleTitle.trim()) return;
+    setScheduleSaving(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Nicht eingeloggt');
+      const scheduledAt = new Date(`${scheduleDate}T${scheduleTime}:00`);
+      const { error } = await supabase.from('pipeline_appointments').insert({
+        lead_id: scheduleStore.id,
+        title: scheduleTitle.trim(),
+        scheduled_at: scheduledAt.toISOString(),
+        duration_minutes: 60,
+        created_by_user_id: user.id,
+      } as any);
+      if (error) throw error;
+      toast.success('Termin erstellt');
+      setScheduleStore(null);
+      setScheduleTitle('');
+    } catch (err: any) {
+      toast.error(err.message || 'Fehler');
+    } finally {
+      setScheduleSaving(false);
+    }
+  };
+
   const saveNotes = async () => {
     if (!selected) return;
     const { error } = await supabase
       .from('discovered_stores')
-      .update({ notes: editNotes || null, updated_at: new Date().toISOString() })
+      .update({ notes: editNotes || null, note_title: editNoteTitle || null, updated_at: new Date().toISOString() } as any)
       .eq('id', selected.id);
 
     if (error) {
@@ -482,7 +580,13 @@ export default function LeadsPipeline() {
                         key={store.id}
                         store={store}
                         onDragStart={handleDragStart(store.id)}
-                        onClick={() => { setSelected(store); setEditNotes(store.notes || ''); }}
+                        onClick={() => { setSelected(store); setEditNotes(store.notes || ''); setEditNoteTitle(store.note_title || ''); }}
+                        onNoteTitleSave={saveNoteTitleInline}
+                        onSchedule={(s) => {
+                          setScheduleStore(s);
+                          setScheduleDate(format(new Date(), 'yyyy-MM-dd'));
+                          setScheduleTitle(`Termin: ${s.name}`);
+                        }}
                       />
                     ))}
                   </div>
@@ -556,14 +660,24 @@ export default function LeadsPipeline() {
               <Stars rating={selected.google_rating} />
 
 
+              {/* Note Title */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Notiztitel</label>
+                <Input
+                  value={editNoteTitle}
+                  onChange={(e) => setEditNoteTitle(e.target.value)}
+                  placeholder="Kurzer Notiztitel (wird auf dem Kärtchen angezeigt)..."
+                />
+              </div>
+
               {/* Notes */}
               <div className="space-y-2">
                 <label className="text-sm font-medium">Notizen</label>
                 <Textarea
                   value={editNotes}
                   onChange={(e) => setEditNotes(e.target.value)}
-                  rows={3}
-                  placeholder="Interne Notizen hinzufügen..."
+                  rows={4}
+                  placeholder="Ausführliche Notizen: Mit wem gesprochen, was besprochen..."
                 />
               </div>
 
@@ -585,7 +699,6 @@ export default function LeadsPipeline() {
                         'px-3 py-1.5 rounded-lg text-xs font-medium text-white transition-opacity',
                         mapStatus(selected.status) === stage.key ? 'opacity-100 ring-2 ring-offset-2 ring-offset-background' : 'opacity-60 hover:opacity-100'
                       )}
-                      
                     >
                       {stage.label}
                     </button>
@@ -596,17 +709,9 @@ export default function LeadsPipeline() {
           )}
 
           <DialogFooter className="flex-col sm:flex-row gap-2">
-            <div className="flex gap-2">
-              <Button variant="destructive" size="sm" onClick={() => selected && deleteStore(selected.id)}>
-                <Trash2 className="h-4 w-4 mr-1" /> Löschen
-              </Button>
-              <Button variant="outline" size="sm" className="text-rose-500 border-rose-500/30" onClick={() => selected && moveToArchive(selected.id, 'verloren')}>
-                Verloren
-              </Button>
-              <Button variant="outline" size="sm" className="text-emerald-500 border-emerald-500/30" onClick={() => selected && moveToArchive(selected.id, 'gewonnen')}>
-                Gewonnen
-              </Button>
-            </div>
+            <Button variant="destructive" size="sm" onClick={() => selected && confirmDelete(selected.id)}>
+              <Trash2 className="h-4 w-4 mr-1" /> Löschen
+            </Button>
             <Button onClick={saveNotes}>Speichern</Button>
           </DialogFooter>
         </DialogContent>
@@ -640,6 +745,56 @@ export default function LeadsPipeline() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* ---- Schedule appointment dialog ---- */}
+      <Dialog open={!!scheduleStore} onOpenChange={() => setScheduleStore(null)}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <CalendarPlus className="h-5 w-5 text-primary" />
+              Termin erstellen
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <p className="text-sm text-muted-foreground">
+              Termin für <strong>{scheduleStore?.name}</strong>
+            </p>
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium">Titel</label>
+              <Input value={scheduleTitle} onChange={(e) => setScheduleTitle(e.target.value)} placeholder="Termin mit..." />
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium">Datum</label>
+                <Input type="date" value={scheduleDate} onChange={(e) => setScheduleDate(e.target.value)} />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium">Uhrzeit</label>
+                <Input type="time" value={scheduleTime} onChange={(e) => setScheduleTime(e.target.value)} />
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setScheduleStore(null)}>Abbrechen</Button>
+            <Button onClick={createAppointment} disabled={!scheduleTitle.trim() || !scheduleDate || scheduleSaving}>
+              {scheduleSaving && <Loader2 className="h-4 w-4 mr-1 animate-spin" />}
+              Erstellen
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* ---- Delete confirmation ---- */}
+      <ConfirmActionDialog
+        open={deleteConfirmOpen}
+        onOpenChange={setDeleteConfirmOpen}
+        onConfirm={handleConfirmDelete}
+        title="Kontakt löschen"
+        description="Bist du sicher, dass du diesen Kontakt aus der Pipeline löschen möchtest? Diese Aktion kann nicht rückgängig gemacht werden."
+        confirmText="Endgültig löschen"
+        confirmPhrase="LÖSCHEN"
+        destructive
+      />
     </div>
   );
 }

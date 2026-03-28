@@ -471,24 +471,45 @@ export default function StoreFinder() {
                     );
                   })}
 
-                  {/* Search results */}
-                  {searchResults.filter(p => p.latitude && p.longitude).map((place) => (
-                    <OverlayView
-                      key={place.place_id}
-                      position={{ lat: place.latitude, lng: place.longitude }}
-                      mapPaneName={OverlayView.OVERLAY_MOUSE_TARGET}
-                    >
-                      <div
-                        className="cursor-pointer transform -translate-x-1/2 -translate-y-full"
-                        onClick={() => addStore(place)}
+                  {/* Search results - circular photo markers with blue border */}
+                  {searchResults.filter(p => p.latitude && p.longitude).map((place) => {
+                    const size = 40;
+                    return (
+                      <OverlayView
+                        key={place.place_id}
+                        position={{ lat: place.latitude, lng: place.longitude }}
+                        mapPaneName={OverlayView.OVERLAY_MOUSE_TARGET}
                       >
-                        <div className="bg-blue-500 text-white rounded-full h-7 w-7 flex items-center justify-center shadow-lg border-2 border-background">
-                          <Plus className="h-3.5 w-3.5" />
+                        <div
+                          className="cursor-pointer"
+                          style={{ width: size, height: size, marginLeft: -size/2, marginTop: -size/2 }}
+                          onClick={() => addStore(place)}
+                          title={`${place.name} – Klicken zum Hinzufügen`}
+                        >
+                          <div className="rounded-full overflow-hidden flex items-center justify-center"
+                            style={{
+                              width: size, height: size,
+                              border: '3px solid hsl(220, 90%, 50%)',
+                              backgroundColor: 'rgba(255,255,255,0.9)',
+                              boxShadow: '0 2px 8px rgba(0,0,0,0.25)',
+                            }}>
+                            {place.photo_reference ? (
+                              <img
+                                src={`https://maps.googleapis.com/maps/api/place/photo?maxwidth=80&photo_reference=${place.photo_reference}&key=${apiKey}`}
+                                alt=""
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center font-bold text-sm"
+                                style={{ backgroundColor: 'hsl(220, 90%, 50%)', color: 'white' }}>
+                                {place.name.charAt(0)}
+                              </div>
+                            )}
+                          </div>
                         </div>
-                        <div className="w-0 h-0 border-l-[5px] border-r-[5px] border-t-[7px] border-l-transparent border-r-transparent border-t-blue-500 mx-auto -mt-0.5" />
-                      </div>
-                    </OverlayView>
-                  ))}
+                      </OverlayView>
+                    );
+                  })}
 
                   {/* Manual pin */}
                   {manualLatLng && (
