@@ -50,23 +50,27 @@ interface DiscoveredStore {
 /* ------------------------------------------------------------------ */
 
 const STAGES = [
-  { key: 'kontaktaufnahme', label: 'Kontaktaufnahme', color: 'bg-orange-500', border: 'border-orange-500/30', dot: 'bg-orange-400' },
-  { key: 'telefonanruf', label: 'Telefonanruf', color: 'bg-rose-500', border: 'border-rose-500/30', dot: 'bg-rose-400' },
-  { key: 'vor_ort_besuch', label: 'Vor-Ort Besuch', color: 'bg-sky-500', border: 'border-sky-500/30', dot: 'bg-sky-400' },
-  { key: 'produktbesprechung', label: 'Produktbesprechung', color: 'bg-emerald-500', border: 'border-emerald-500/30', dot: 'bg-emerald-400' },
-  { key: 'in_verhandlung', label: 'In Verhandlung', color: 'bg-violet-500', border: 'border-violet-500/30', dot: 'bg-violet-400' },
+  { key: 'neu', label: 'Neu', color: 'bg-blue-500', border: 'border-blue-500/30', dot: 'bg-blue-400' },
+  { key: 'angerufen', label: 'Angerufen', color: 'bg-rose-500', border: 'border-rose-500/30', dot: 'bg-rose-400' },
+  { key: 'terminiert', label: 'Terminiert', color: 'bg-yellow-500', border: 'border-yellow-500/30', dot: 'bg-yellow-400' },
+  { key: 'besucht', label: 'Besucht', color: 'bg-orange-500', border: 'border-orange-500/30', dot: 'bg-orange-400' },
+  { key: 'gewonnen', label: 'Gewonnen', color: 'bg-green-500', border: 'border-green-500/30', dot: 'bg-green-400' },
+  { key: 'verloren', label: 'Verloren', color: 'bg-red-500', border: 'border-red-500/30', dot: 'bg-red-400' },
+  { key: 'standby', label: 'Standby', color: 'bg-gray-500', border: 'border-gray-500/30', dot: 'bg-gray-400' },
 ] as const;
 
-const ARCHIVE_STAGES = ['gewonnen', 'verloren'] as const;
+const ARCHIVE_STAGES = ['gewonnen', 'verloren', 'standby'] as const;
 
 /* ------------------------------------------------------------------ */
 /*  Helper: map old statuses to pipeline stage                         */
 /* ------------------------------------------------------------------ */
 function mapStatus(s: string): string {
-  if (s === 'new' || s === 'kontaktaufnahme') return 'kontaktaufnahme';
+  if (s === 'new' || s === 'kontaktaufnahme') return 'neu';
+  if (s === 'telefonanruf') return 'angerufen';
+  if (s === 'vor_ort_besuch') return 'besucht';
+  if (s === 'produktbesprechung' || s === 'in_verhandlung') return 'terminiert';
   if (STAGES.some(st => st.key === s)) return s;
-  if (ARCHIVE_STAGES.includes(s as any)) return s;
-  return 'kontaktaufnahme';
+  return 'neu';
 }
 
 /* ------------------------------------------------------------------ */
