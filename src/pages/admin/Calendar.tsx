@@ -482,6 +482,16 @@ export default function AdminCalendar() {
                 </div>
               )}
 
+              {/* Phone number */}
+              {selectedAppointment.lead?.phone && (
+                <div className="flex items-center gap-2">
+                  <Phone className="h-4 w-4 text-muted-foreground shrink-0" />
+                  <a href={`tel:${selectedAppointment.lead.phone}`} className="text-muted-foreground hover:text-foreground transition-colors">
+                    {selectedAppointment.lead.phone}
+                  </a>
+                </div>
+              )}
+
               {selectedAppointment.description && (
                 <div className="bg-muted/50 rounded-lg p-2.5">
                   <p className="text-xs font-medium">Notizen</p>
