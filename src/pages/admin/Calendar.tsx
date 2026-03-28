@@ -63,6 +63,10 @@ export default function AdminCalendar() {
   // Pre-selected lead from pipeline
   const [preSelectedLead, setPreSelectedLead] = useState<PreSelectedLead | null>(null);
 
+  // Google Calendar connection
+  const [gcalConnected, setGcalConnected] = useState(false);
+  const [gcalLoading, setGcalLoading] = useState(false);
+
   // New appointment dialog
   const [newDialogOpen, setNewDialogOpen] = useState(false);
   const [newTitle, setNewTitle] = useState('');
@@ -72,6 +76,122 @@ export default function AdminCalendar() {
   const [newDuration, setNewDuration] = useState(60);
   const [newDate, setNewDate] = useState('');
   const [saving, setSaving] = useState(false);
+
+  // Check Google Calendar connection status
+  const checkGcalStatus = useCallback(async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+
+      const { data, error } = await supabase.functions.invoke('google-calendar-auth', {
+        body: { action: 'status' },
+      });
+
+      if (!error && data) {
+        setGcalConnected(data.connected);
+      }
+    } catch (err) {
+      console.error('GCal status check failed:', err);
+    }
+  }, []);
+
+  useEffect(() => { checkGcalStatus(); }, [checkGcalStatus]);
+
+  // Handle OAuth callback
+  useEffect(() => {
+    const code = searchParams.get('code');
+    const state = searchParams.get('state');
+    if (!code) return;
+
+    (async () => {
+      setGcalLoading(true);
+      try {
+        const redirectUri = `${window.location.origin}/admin/calendar`;
+        const { data, error } = await supabase.functions.invoke('google-calendar-auth', {
+          body: { action: 'exchange_code', code, redirect_uri: redirectUri },
+        });
+
+        if (error) throw error;
+        if (data?.error) throw new Error(data.error);
+
+        setGcalConnected(true);
+        toast.success('Google Calendar verbunden!');
+      } catch (err: any) {
+        toast.error('Verbindung fehlgeschlagen: ' + (err.message || 'Fehler'));
+      } finally {
+        setGcalLoading(false);
+        // Remove code/state from URL
+        searchParams.delete('code');
+        searchParams.delete('state');
+        searchParams.delete('scope');
+        setSearchParams(searchParams, { replace: true });
+      }
+    })();
+  }, [searchParams]);
+
+  const connectGoogleCalendar = async () => {
+    setGcalLoading(true);
+    try {
+      const redirectUri = `${window.location.origin}/admin/calendar`;
+      const { data, error } = await supabase.functions.invoke('google-calendar-auth', {
+        body: { action: 'get_auth_url', redirect_uri: redirectUri },
+      });
+
+      if (error) throw error;
+      if (data?.url) {
+        window.location.href = data.url;
+      }
+    } catch (err: any) {
+      toast.error('Fehler: ' + (err.message || 'Unbekannt'));
+      setGcalLoading(false);
+    }
+  };
+
+  const disconnectGoogleCalendar = async () => {
+    setGcalLoading(true);
+    try {
+      await supabase.functions.invoke('google-calendar-auth', {
+        body: { action: 'disconnect' },
+      });
+      setGcalConnected(false);
+      toast.success('Google Calendar getrennt');
+    } catch (err: any) {
+      toast.error('Fehler beim Trennen');
+    } finally {
+      setGcalLoading(false);
+    }
+  };
+
+  // Sync appointment to Google Calendar
+  const syncToGoogleCalendar = async (appointmentData: any) => {
+    if (!gcalConnected) return;
+    try {
+      const { data, error } = await supabase.functions.invoke('google-calendar-sync', {
+        body: { action: 'create', appointment: appointmentData },
+      });
+      if (error) throw error;
+      if (data?.error === 'not_connected') {
+        setGcalConnected(false);
+        return;
+      }
+      if (data?.success) {
+        console.log('Synced to Google Calendar:', data.google_event_id);
+      }
+    } catch (err) {
+      console.error('GCal sync failed:', err);
+    }
+  };
+
+  const deleteFromGoogleCalendar = async (appointment: Appointment) => {
+    if (!gcalConnected) return;
+    try {
+      await supabase.functions.invoke('google-calendar-sync', {
+        body: { action: 'delete', appointment: { google_calendar_event_id: (appointment as any).google_calendar_event_id } },
+      });
+    } catch (err) {
+      console.error('GCal delete failed:', err);
+    }
+  };
 
   // Load pre-selected lead from URL
   useEffect(() => {
