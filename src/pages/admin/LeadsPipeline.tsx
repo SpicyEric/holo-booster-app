@@ -802,6 +802,63 @@ export default function LeadsPipeline() {
       </Dialog>
 
 
+      {/* ---- Customer Linking Dialog ---- */}
+      <Dialog open={linkDialogOpen} onOpenChange={(open) => { if (!open) { setLinkDialogOpen(false); setLinkingStoreId(null); } }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Link2 className="h-5 w-5 text-primary" />
+              🎉 Kunde gewonnen! Jetzt verknüpfen
+            </DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">Wähle den registrierten Kunden aus, der zu diesem Kontakt gehört:</p>
+          <div className="relative">
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+            <Input
+              placeholder="Kunden suchen..."
+              value={customerSearch}
+              onChange={(e) => setCustomerSearch(e.target.value)}
+              className="pl-8 h-8 text-sm"
+              autoFocus
+            />
+          </div>
+          <div className="max-h-[300px] overflow-y-auto space-y-1">
+            {customersLoading ? (
+              <div className="flex justify-center py-6"><Loader2 className="h-5 w-5 animate-spin text-primary" /></div>
+            ) : (
+              customers
+                .filter(c => !customerSearch || c.name.toLowerCase().includes(customerSearch.toLowerCase()) || c.city?.toLowerCase().includes(customerSearch.toLowerCase()))
+                .map(c => (
+                  <button
+                    key={c.id}
+                    onClick={() => linkCustomer(c.id)}
+                    className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-muted/50 transition-colors text-left border border-transparent hover:border-border"
+                  >
+                    <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                      <span className="text-sm font-bold text-primary">{c.name.charAt(0)}</span>
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium truncate">{c.name}</p>
+                      {c.city && <p className="text-xs text-muted-foreground">{c.city}</p>}
+                    </div>
+                    <Badge variant="outline" className="text-[10px] shrink-0">
+                      {c.status === 'active' ? 'Aktiv' : c.status || '—'}
+                    </Badge>
+                  </button>
+                ))
+            )}
+            {!customersLoading && customers.filter(c => !customerSearch || c.name.toLowerCase().includes(customerSearch.toLowerCase())).length === 0 && (
+              <p className="text-center text-sm text-muted-foreground py-6">Keine Kunden gefunden</p>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => { setLinkDialogOpen(false); setLinkingStoreId(null); }}>
+              Später verknüpfen
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* ---- Delete confirmation ---- */}
       <ConfirmActionDialog
         open={deleteConfirmOpen}
