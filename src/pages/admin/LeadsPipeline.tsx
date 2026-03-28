@@ -273,7 +273,7 @@ export default function LeadsPipeline() {
     return acc;
   }, {} as Record<string, DiscoveredStore[]>);
 
-  const wonCount = stores.filter(s => s.status === 'gewonnen').length;
+  
 
   /* ---- Drag & drop ---- */
   const handleDragStart = (id: string) => (e: React.DragEvent) => {
