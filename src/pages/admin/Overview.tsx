@@ -5,7 +5,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
   Users, AlertTriangle, RefreshCw,
-  TrendingUp, Activity, Stamp, ArrowRight, UserPlus,
+  TrendingUp, Activity, Stamp, ArrowRight, UserPlus, CalendarDays,
 } from "lucide-react";
 import { format } from "date-fns";
 import { de } from "date-fns/locale";
@@ -34,6 +34,8 @@ const Overview = () => {
   const [newCustomersList, setNewCustomersList] = useState<Array<{ name: string; created_at: string; industry: string | null }>>([]);
   const [chartData, setChartData] = useState<any[]>([]);
   const [liveFeed, setLiveFeed] = useState<any[]>([]);
+  const [upcomingAppointments, setUpcomingAppointments] = useState<any[]>([]);
+  const [appointmentCount, setAppointmentCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [expandedKpi, setExpandedKpi] = useState<string | null>(null);
 
@@ -50,8 +52,22 @@ const Overview = () => {
 
   const loadDashboard = async () => {
     setLoading(true);
-    await Promise.all([loadAlerts(), loadKPIs(), loadChart(), loadLiveFeed()]);
+    await Promise.all([loadAlerts(), loadKPIs(), loadChart(), loadLiveFeed(), loadAppointments()]);
     setLoading(false);
+  };
+
+  const loadAppointments = async () => {
+    try {
+      const now = new Date().toISOString();
+      const { data, count } = await supabase
+        .from("pipeline_appointments")
+        .select("id, title, scheduled_at, duration_minutes, lead_id, address, pipeline_leads!inner(shop_name, phone)", { count: "exact" })
+        .gte("scheduled_at", now)
+        .order("scheduled_at", { ascending: true })
+        .limit(5);
+      setUpcomingAppointments(data || []);
+      setAppointmentCount(count || 0);
+    } catch (e) { console.error(e); }
   };
 
   const loadAlerts = async () => {
@@ -195,7 +211,7 @@ const Overview = () => {
       )}
 
       {/* Core KPIs with expandable hover details */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         {/* Aktive Kunden */}
         <div>
           <Card
@@ -280,7 +296,57 @@ const Overview = () => {
                 <p className="text-xs text-muted-foreground">Aktivitätsrate (mit Stempel)</p>
                 <p className="text-2xl font-bold">{kpis.activityRate}%</p>
               </div>
+
+        {/* Anstehende Termine */}
+        <div>
+          <Card
+            className="p-5 bg-white rounded-2xl border-border/30 shadow-[0_1px_3px_hsl(262,30%,80%/0.3)] cursor-pointer hover:shadow-md transition-shadow"
+            onMouseEnter={() => toggleKpi("appointments")}
+            onMouseLeave={() => setExpandedKpi(null)}
+            onClick={() => navigate("/admin/calendar")}
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-[hsl(30,80%,50%)] flex items-center justify-center">
+                <CalendarDays className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">Anstehende Termine</p>
+                <p className="text-2xl font-bold">{appointmentCount}</p>
+              </div>
             </div>
+          </Card>
+          {expandedKpi === "appointments" && (
+            <Card className="mt-1 p-4 bg-white rounded-xl border-border/30 shadow-lg animate-in fade-in slide-in-from-top-2 duration-200 z-10 relative">
+              <h4 className="text-xs font-semibold mb-2 text-muted-foreground">Nächste Termine</h4>
+              {upcomingAppointments.length > 0 ? (
+                <div className="space-y-2">
+                  {upcomingAppointments.map((apt) => (
+                    <div
+                      key={apt.id}
+                      className="flex items-center justify-between text-sm py-1.5 border-b border-border/20 last:border-0 cursor-pointer hover:bg-muted/30 rounded px-1 -mx-1"
+                      onClick={() => navigate("/admin/calendar")}
+                    >
+                      <div className="min-w-0">
+                        <p className="font-medium truncate">{apt.title}</p>
+                        <p className="text-xs text-muted-foreground truncate">
+                          {(apt as any).pipeline_leads?.shop_name}
+                          {(apt as any).pipeline_leads?.phone && ` · ${(apt as any).pipeline_leads.phone}`}
+                        </p>
+                      </div>
+                      <div className="text-right shrink-0 ml-2">
+                        <p className="text-xs font-medium">{format(new Date(apt.scheduled_at), "dd.MM.", { locale: de })}</p>
+                        <p className="text-[11px] text-muted-foreground">{format(new Date(apt.scheduled_at), "HH:mm", { locale: de })} Uhr</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">Keine anstehenden Termine</p>
+              )}
+            </Card>
+          )}
+        </div>
+      </div>
           </Card>
           {expandedKpi === "activity" && (
             <Card className="mt-1 p-4 bg-white rounded-xl border-border/30 shadow-lg animate-in fade-in slide-in-from-top-2 duration-200 z-10 relative">
