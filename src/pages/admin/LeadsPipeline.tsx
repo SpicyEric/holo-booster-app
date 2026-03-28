@@ -203,12 +203,6 @@ function DealCard({
       {/* Rating */}
       <Stars rating={store.google_rating} />
 
-      {/* AI Summary */}
-      {store.ai_summary && (
-        <p className="text-[11px] text-muted-foreground line-clamp-2 bg-muted/50 rounded-md px-2 py-1.5 leading-relaxed">
-          {store.ai_summary}
-        </p>
-      )}
 
       {/* Notes preview */}
       {store.notes && (
