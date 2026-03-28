@@ -143,11 +143,6 @@ function DealCard({
             <Badge variant="secondary" className="text-[10px] mt-0.5 h-4">{store.industry}</Badge>
           )}
         </div>
-        {store.enrichment_status === 'done' && (
-          <Badge variant="outline" className="text-[9px] h-4 px-1.5 bg-emerald-500/10 text-emerald-600 border-emerald-500/20 shrink-0">
-            ✓ KI
-          </Badge>
-        )}
       </div>
 
       {/* Contact person */}
