@@ -2282,14 +2282,20 @@ export type Database = {
           bank_name: string | null
           bic: string | null
           city: string | null
+          contract_deadline: string | null
+          contract_file_path: string | null
+          contract_status: string | null
+          contract_uploaded_at: string | null
           country: string | null
           created_at: string
           email: string
+          employee_number: number | null
           first_name: string
           house_number: string | null
           iban: string | null
           id: string
           is_active: boolean
+          is_small_business: boolean | null
           last_name: string
           notes: string | null
           phone: string | null
@@ -2305,14 +2311,20 @@ export type Database = {
           bank_name?: string | null
           bic?: string | null
           city?: string | null
+          contract_deadline?: string | null
+          contract_file_path?: string | null
+          contract_status?: string | null
+          contract_uploaded_at?: string | null
           country?: string | null
           created_at?: string
           email?: string
+          employee_number?: number | null
           first_name?: string
           house_number?: string | null
           iban?: string | null
           id?: string
           is_active?: boolean
+          is_small_business?: boolean | null
           last_name?: string
           notes?: string | null
           phone?: string | null
@@ -2328,14 +2340,20 @@ export type Database = {
           bank_name?: string | null
           bic?: string | null
           city?: string | null
+          contract_deadline?: string | null
+          contract_file_path?: string | null
+          contract_status?: string | null
+          contract_uploaded_at?: string | null
           country?: string | null
           created_at?: string
           email?: string
+          employee_number?: number | null
           first_name?: string
           house_number?: string | null
           iban?: string | null
           id?: string
           is_active?: boolean
+          is_small_business?: boolean | null
           last_name?: string
           notes?: string | null
           phone?: string | null
