@@ -915,6 +915,7 @@ export type Database = {
           id: string
           industry: string | null
           latitude: number | null
+          linked_customer_id: string | null
           longitude: number | null
           name: string
           note_title: string | null
@@ -945,6 +946,7 @@ export type Database = {
           id?: string
           industry?: string | null
           latitude?: number | null
+          linked_customer_id?: string | null
           longitude?: number | null
           name: string
           note_title?: string | null
@@ -975,6 +977,7 @@ export type Database = {
           id?: string
           industry?: string | null
           latitude?: number | null
+          linked_customer_id?: string | null
           longitude?: number | null
           name?: string
           note_title?: string | null
@@ -988,7 +991,15 @@ export type Database = {
           updated_at?: string
           website?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "discovered_stores_linked_customer_id_fkey"
+            columns: ["linked_customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       events_processed: {
         Row: {
