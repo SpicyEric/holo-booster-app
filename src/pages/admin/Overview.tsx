@@ -5,7 +5,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
   Users, AlertTriangle, RefreshCw,
-  TrendingUp, Activity, Stamp, ArrowRight, UserPlus,
+  TrendingUp, Activity, Stamp, ArrowRight, UserPlus, CalendarDays,
 } from "lucide-react";
 import { format } from "date-fns";
 import { de } from "date-fns/locale";
