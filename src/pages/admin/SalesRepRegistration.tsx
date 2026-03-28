@@ -128,13 +128,10 @@ const SalesRepRegistration = () => {
             <Input type="email" value={form.email} onChange={(e) => update("email", e.target.value)} className="h-9" />
           </div>
           <div>
-            <Label className="text-xs">Passwort *</Label>
-            <Input type="password" value={form.password} onChange={(e) => update("password", e.target.value)} className="h-9" placeholder="Min. 6 Zeichen" />
-          </div>
-          <div>
             <Label className="text-xs">Telefonnummer</Label>
             <Input value={form.phone} onChange={(e) => update("phone", e.target.value)} className="h-9" placeholder="+49 ..." />
           </div>
+          <p className="text-xs text-muted-foreground">Der Vertriebler erhält eine E-Mail mit Zugangsdaten zur Passwortvergabe.</p>
         </Card>
 
         {/* Anschrift */}
