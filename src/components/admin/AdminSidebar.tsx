@@ -32,18 +32,12 @@ const NAV_GROUPS: NavGroup[] = [
     ],
   },
   {
-    label: "LEADS",
-    items: [
-      { path: "/admin/store-finder", label: "Store Finder", icon: Search },
-      { path: "/admin/lead-pipeline", label: "Lead Pipeline", icon: GitBranch },
-      { path: "/admin/leads", label: "Shop-Vorschläge", icon: Lightbulb },
-    ],
-  },
-  {
     label: "SALES",
     items: [
-      { path: "/admin/pipeline", label: "Pipeline", icon: GitBranch },
-      { path: "/admin/customers", label: "Kunden", icon: Users },
+      { path: "/admin/store-finder", label: "Store Finder", icon: Search },
+      { path: "/admin/leads", label: "Kontakte", icon: Users },
+      { path: "/admin/lead-pipeline", label: "Pipeline", icon: GitBranch },
+      { path: "/admin/customers", label: "Meine Kunden", icon: Users },
       { path: "/admin/map", label: "Kundenkarte", icon: Map },
       { path: "/admin/checkout", label: "Kunde abschließen", icon: ShoppingCart },
     ],
