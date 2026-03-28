@@ -25,21 +25,24 @@ interface UnifiedContact {
   status: string;
   source: 'pipeline' | 'customer';
   created_at: string;
+  linked_customer_id: string | null;
 }
 
 const STATUS_MAP: Record<string, { label: string; color: string; textColor: string; bgLight: string }> = {
   neu: { label: 'Neu', color: 'bg-blue-500', textColor: 'text-blue-700', bgLight: 'bg-blue-50' },
   new: { label: 'Neu', color: 'bg-blue-500', textColor: 'text-blue-700', bgLight: 'bg-blue-50' },
+  angerufen: { label: 'Angerufen', color: 'bg-yellow-500', textColor: 'text-yellow-700', bgLight: 'bg-yellow-50' },
   kontaktiert: { label: 'Kontaktiert', color: 'bg-yellow-500', textColor: 'text-yellow-700', bgLight: 'bg-yellow-50' },
   contacted: { label: 'Kontaktiert', color: 'bg-yellow-500', textColor: 'text-yellow-700', bgLight: 'bg-yellow-50' },
-  terminiert: { label: 'Termin', color: 'bg-orange-500', textColor: 'text-orange-700', bgLight: 'bg-orange-50' },
+  terminiert: { label: 'Terminiert', color: 'bg-orange-500', textColor: 'text-orange-700', bgLight: 'bg-orange-50' },
   appointment: { label: 'Termin', color: 'bg-orange-500', textColor: 'text-orange-700', bgLight: 'bg-orange-50' },
+  besucht: { label: 'Besucht', color: 'bg-purple-500', textColor: 'text-purple-700', bgLight: 'bg-purple-50' },
+  gewonnen: { label: 'Kunde', color: 'bg-green-600', textColor: 'text-green-700', bgLight: 'bg-green-50' },
+  won: { label: 'Kunde', color: 'bg-green-600', textColor: 'text-green-700', bgLight: 'bg-green-50' },
+  active: { label: 'Kunde', color: 'bg-green-600', textColor: 'text-green-700', bgLight: 'bg-green-50' },
   standby: { label: 'Standby', color: 'bg-cyan-500', textColor: 'text-cyan-700', bgLight: 'bg-cyan-50' },
-  gewonnen: { label: 'Gewonnen', color: 'bg-green-500', textColor: 'text-green-700', bgLight: 'bg-green-50' },
-  won: { label: 'Gewonnen', color: 'bg-green-500', textColor: 'text-green-700', bgLight: 'bg-green-50' },
   verloren: { label: 'Verloren', color: 'bg-red-500', textColor: 'text-red-700', bgLight: 'bg-red-50' },
   lost: { label: 'Verloren', color: 'bg-red-500', textColor: 'text-red-700', bgLight: 'bg-red-50' },
-  active: { label: 'Aktiv', color: 'bg-green-500', textColor: 'text-green-700', bgLight: 'bg-green-50' },
   inactive: { label: 'Inaktiv', color: 'bg-gray-400', textColor: 'text-gray-600', bgLight: 'bg-gray-50' },
   paused: { label: 'Pausiert', color: 'bg-yellow-500', textColor: 'text-yellow-700', bgLight: 'bg-yellow-50' },
   cancelled: { label: 'Gekündigt', color: 'bg-red-500', textColor: 'text-red-700', bgLight: 'bg-red-50' },
@@ -55,7 +58,6 @@ export default function Leads() {
   const [plzFilter, setPlzFilter] = useState('');
   const [radiusKm, setRadiusKm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
-  const [sourceFilter, setSourceFilter] = useState<string>('all');
   const [sortField, setSortField] = useState<SortField>('shop_name');
   const [sortAsc, setSortAsc] = useState(true);
 
@@ -64,15 +66,54 @@ export default function Leads() {
   const fetchContacts = async () => {
     try {
       const [storesRes, customersRes] = await Promise.all([
-        supabase.from('discovered_stores').select('id, name, contact_person, phone, email, street, house_number, postal_code, city, industry, status, created_at'),
+        supabase.from('discovered_stores').select('id, name, contact_person, phone, email, street, house_number, postal_code, city, industry, status, created_at, linked_customer_id'),
         supabase.from('customers').select('id, name, contact_person, phone, email, street, house_number, postal_code, city, industry, status, created_at'),
       ]);
       if (storesRes.error) throw storesRes.error;
       if (customersRes.error) throw customersRes.error;
 
+      // Get IDs of customers that are already linked to a pipeline contact
+      const linkedCustomerIds = new Set(
+        (storesRes.data || []).map(s => (s as any).linked_customer_id).filter(Boolean)
+      );
+
       const all: UnifiedContact[] = [
-        ...(storesRes.data || []).map(s => ({ id: s.id, shop_name: s.name, contact_person: s.contact_person, phone: s.phone, email: s.email, street: s.street, house_number: s.house_number, postal_code: s.postal_code, city: s.city, industry: s.industry, status: s.status, source: 'pipeline' as const, created_at: s.created_at })),
-        ...(customersRes.data || []).map(c => ({ id: c.id, shop_name: c.name, contact_person: c.contact_person, phone: c.phone, email: c.email, street: c.street, house_number: c.house_number, postal_code: c.postal_code, city: c.city, industry: c.industry, status: c.status || 'active', source: 'customer' as const, created_at: c.created_at })),
+        // All pipeline contacts
+        ...(storesRes.data || []).map(s => ({
+          id: s.id,
+          shop_name: s.name,
+          contact_person: s.contact_person,
+          phone: s.phone,
+          email: s.email,
+          street: s.street,
+          house_number: s.house_number,
+          postal_code: s.postal_code,
+          city: s.city,
+          industry: s.industry,
+          status: s.status,
+          source: 'pipeline' as const,
+          created_at: s.created_at,
+          linked_customer_id: (s as any).linked_customer_id,
+        })),
+        // Only customers that are NOT linked to a pipeline contact (avoid duplicates)
+        ...(customersRes.data || [])
+          .filter(c => !linkedCustomerIds.has(c.id))
+          .map(c => ({
+            id: c.id,
+            shop_name: c.name,
+            contact_person: c.contact_person,
+            phone: c.phone,
+            email: c.email,
+            street: c.street,
+            house_number: c.house_number,
+            postal_code: c.postal_code,
+            city: c.city,
+            industry: c.industry,
+            status: c.status || 'active',
+            source: 'customer' as const,
+            created_at: c.created_at,
+            linked_customer_id: null,
+          })),
       ];
       setContacts(all);
     } catch (error) {
@@ -85,7 +126,6 @@ export default function Leads() {
 
   const filteredAndSorted = useMemo(() => {
     let result = [...contacts];
-    if (sourceFilter !== 'all') result = result.filter(l => l.source === sourceFilter);
     if (statusFilter !== 'all') result = result.filter(l => l.status === statusFilter);
     if (searchTerm) {
       const lower = searchTerm.toLowerCase();
@@ -109,7 +149,7 @@ export default function Leads() {
       return sortAsc ? cmp : -cmp;
     });
     return result;
-  }, [contacts, statusFilter, sourceFilter, searchTerm, plzFilter, radiusKm, sortField, sortAsc]);
+  }, [contacts, statusFilter, searchTerm, plzFilter, radiusKm, sortField, sortAsc]);
 
   const uniqueStatuses = useMemo(() => Array.from(new Set(contacts.map(c => c.status))), [contacts]);
 
@@ -153,14 +193,6 @@ export default function Leads() {
             </Select>
           )}
         </div>
-        <Select value={sourceFilter} onValueChange={setSourceFilter}>
-          <SelectTrigger className="w-[130px] h-8 text-sm"><SelectValue placeholder="Quelle" /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Alle Quellen</SelectItem>
-            <SelectItem value="customer">Kunden</SelectItem>
-            <SelectItem value="pipeline">Pipeline</SelectItem>
-          </SelectContent>
-        </Select>
         <Select value={statusFilter} onValueChange={setStatusFilter}>
           <SelectTrigger className="w-[140px] h-8 text-sm"><SelectValue placeholder="Status" /></SelectTrigger>
           <SelectContent>
@@ -199,7 +231,8 @@ export default function Leads() {
                 className="p-4 cursor-pointer hover:shadow-md transition-shadow border-border/40"
                 onClick={() => {
                   if (l.source === 'customer') navigate(`/admin/customers/${l.id}`);
-                  else navigate('/admin/pipeline');
+                  else if (l.linked_customer_id) navigate(`/admin/customers/${l.linked_customer_id}`);
+                  else navigate('/admin/lead-pipeline');
                 }}
               >
                 <div className="flex items-start justify-between mb-3">
@@ -241,12 +274,7 @@ export default function Leads() {
                 </div>
 
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-1.5">
-                    <Badge className={`${stage.color} text-white text-[10px] px-2`}>{stage.label}</Badge>
-                    <Badge variant="outline" className={`text-[10px] px-1.5 ${l.source === 'customer' ? 'border-green-400 text-green-600' : 'border-blue-400 text-blue-600'}`}>
-                      {l.source === 'customer' ? 'Kunde' : 'Pipeline'}
-                    </Badge>
-                  </div>
+                  <Badge className={`${stage.color} text-white text-[10px] px-2`}>{stage.label}</Badge>
                   <span className="text-[10px] text-muted-foreground">
                     {format(new Date(l.created_at), 'dd.MM.yy', { locale: de })}
                   </span>
