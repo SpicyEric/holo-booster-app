@@ -50,13 +50,13 @@ interface DiscoveredStore {
 /* ------------------------------------------------------------------ */
 
 const STAGES = [
-  { key: 'neu', label: 'Neu', color: 'bg-blue-500', border: 'border-blue-500/30', dot: 'bg-blue-400' },
-  { key: 'angerufen', label: 'Angerufen', color: 'bg-rose-500', border: 'border-rose-500/30', dot: 'bg-rose-400' },
-  { key: 'terminiert', label: 'Terminiert', color: 'bg-yellow-500', border: 'border-yellow-500/30', dot: 'bg-yellow-400' },
-  { key: 'besucht', label: 'Besucht', color: 'bg-orange-500', border: 'border-orange-500/30', dot: 'bg-orange-400' },
-  { key: 'gewonnen', label: 'Gewonnen', color: 'bg-green-500', border: 'border-green-500/30', dot: 'bg-green-400' },
-  { key: 'verloren', label: 'Verloren', color: 'bg-red-500', border: 'border-red-500/30', dot: 'bg-red-400' },
-  { key: 'standby', label: 'Standby', color: 'bg-gray-500', border: 'border-gray-500/30', dot: 'bg-gray-400' },
+  { key: 'neu', label: 'Neu', bgColor: 'hsl(262, 40%, 82%)' },
+  { key: 'angerufen', label: 'Angerufen', bgColor: 'hsl(262, 45%, 72%)' },
+  { key: 'terminiert', label: 'Terminiert', bgColor: 'hsl(262, 48%, 62%)' },
+  { key: 'besucht', label: 'Besucht', bgColor: 'hsl(262, 50%, 52%)' },
+  { key: 'gewonnen', label: 'Gewonnen', bgColor: 'hsl(262, 55%, 45%)' },
+  { key: 'verloren', label: 'Verloren', bgColor: 'hsl(262, 45%, 30%)' },
+  { key: 'standby', label: 'Standby', bgColor: 'hsl(262, 15%, 55%)' },
 ] as const;
 
 const ARCHIVE_STAGES = ['gewonnen', 'verloren', 'standby'] as const;
@@ -411,11 +411,11 @@ export default function LeadsPipeline() {
                   onDragOver={handleDragOver(stage.key)}
                   onDragLeave={handleDragLeave}
                   onDrop={handleDrop(stage.key)}
-                  className={cn(
-                    'flex flex-col items-center cursor-pointer transition-all shrink-0 rounded-xl overflow-hidden',
-                    isDragOver ? 'w-[80px] ring-2 ring-white/50' : 'w-[52px]',
-                    stage.color
-                  )}
+                  className="flex flex-col items-center cursor-pointer transition-all shrink-0 rounded-xl overflow-hidden"
+                  style={{
+                    width: isDragOver ? 80 : 52,
+                    backgroundColor: stage.bgColor,
+                  }}
                 >
                   {/* Count badge */}
                   <div className="py-3 flex flex-col items-center gap-1">
@@ -447,13 +447,13 @@ export default function LeadsPipeline() {
             return (
               <div
                 key={stage.key}
-                className="flex-1 flex flex-col shrink-0 min-w-[280px]"
+                className="flex-1 flex flex-col shrink-0 min-w-[280px] max-w-[400px]"
                 onDragOver={handleDragOver(stage.key)}
                 onDragLeave={handleDragLeave}
                 onDrop={handleDrop(stage.key)}
               >
                 {/* Column header */}
-                <div className={cn('rounded-t-xl px-4 py-2.5 flex items-center justify-between', stage.color)}>
+                <div className="rounded-t-xl px-4 py-2.5 flex items-center gap-3" style={{ backgroundColor: stage.bgColor }}>
                   <span className="text-white font-semibold text-sm">{stage.label}</span>
                   <span className="text-white/80 text-xs font-medium bg-white/20 rounded-full px-2 py-0.5">
                     {items.length}
@@ -580,9 +580,9 @@ export default function LeadsPipeline() {
                         setSelected(null);
                         fetchStores();
                       }}
+                      style={{ backgroundColor: stage.bgColor }}
                       className={cn(
                         'px-3 py-1.5 rounded-lg text-xs font-medium text-white transition-opacity',
-                        stage.color,
                         mapStatus(selected.status) === stage.key ? 'opacity-100 ring-2 ring-offset-2 ring-offset-background' : 'opacity-60 hover:opacity-100'
                       )}
                       
