@@ -350,6 +350,28 @@ export default function LeadsPipeline() {
     if (!id) return;
     draggedId.current = null;
 
+    // If dropping to "gewonnen" (Kunde), show confetti + linking dialog
+    if (stage === 'gewonnen') {
+      // Fire confetti!
+      confetti({
+        particleCount: 150,
+        spread: 80,
+        origin: { y: 0.3 },
+        colors: ['#7c3aed', '#a78bfa', '#10b981', '#fbbf24', '#f43f5e'],
+      });
+
+      // Optimistic status update
+      setStores(prev => prev.map(s => (s.id === id ? { ...s, status: 'gewonnen' } : s)));
+      await supabase.from('discovered_stores').update({ status: 'gewonnen', updated_at: new Date().toISOString() }).eq('id', id);
+
+      // Open customer linking dialog
+      setLinkingStoreId(id);
+      setCustomerSearch('');
+      setLinkDialogOpen(true);
+      fetchCustomers();
+      return;
+    }
+
     // Optimistic update
     setStores(prev =>
       prev.map(s => (s.id === id ? { ...s, status: stage } : s))
@@ -364,6 +386,40 @@ export default function LeadsPipeline() {
       toast.error('Fehler beim Verschieben');
       fetchStores();
     }
+  };
+
+  const fetchCustomers = async () => {
+    setCustomersLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('customers')
+        .select('id, name, city, status')
+        .order('name');
+      if (error) throw error;
+      setCustomers(data || []);
+    } catch {
+      toast.error('Fehler beim Laden der Kunden');
+    } finally {
+      setCustomersLoading(false);
+    }
+  };
+
+  const linkCustomer = async (customerId: string) => {
+    if (!linkingStoreId) return;
+    const { error } = await supabase
+      .from('discovered_stores')
+      .update({ linked_customer_id: customerId, updated_at: new Date().toISOString() } as any)
+      .eq('id', linkingStoreId);
+
+    if (error) {
+      toast.error('Fehler beim Verknüpfen');
+    } else {
+      const customer = customers.find(c => c.id === customerId);
+      toast.success(`Verknüpft mit ${customer?.name || 'Kunde'}`);
+      setStores(prev => prev.map(s => s.id === linkingStoreId ? { ...s, linked_customer_id: customerId } : s));
+    }
+    setLinkDialogOpen(false);
+    setLinkingStoreId(null);
   };
 
   /* ---- Actions ---- */
