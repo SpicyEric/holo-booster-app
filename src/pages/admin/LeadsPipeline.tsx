@@ -487,6 +487,7 @@ export default function LeadsPipeline() {
                     ))}
                   </div>
                 </div>
+                )}
               </div>
             );
           })}
