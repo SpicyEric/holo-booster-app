@@ -447,7 +447,7 @@ export default function LeadsPipeline() {
             return (
               <div
                 key={stage.key}
-                className="flex-1 flex flex-col shrink-0 min-w-[280px]"
+                className="flex-1 flex flex-col shrink-0 min-w-[280px] max-w-[400px]"
                 onDragOver={handleDragOver(stage.key)}
                 onDragLeave={handleDragLeave}
                 onDrop={handleDrop(stage.key)}
