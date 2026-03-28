@@ -343,7 +343,7 @@ export default function AdminCalendar() {
           </div>
         </div>
 
-        {/* Day detail sidebar */}
+        {/* Day detail sidebar - Timeline */}
         <div className="bg-card border rounded-xl p-4 space-y-3">
           <h3 className="font-semibold text-sm">
             {selectedDate
@@ -362,37 +362,75 @@ export default function AdminCalendar() {
             </Button>
           )}
 
-          {dayAppointments.length === 0 && selectedDate && (
-            <p className="text-xs text-muted-foreground text-center py-4">Keine Termine</p>
-          )}
+          {selectedDate ? (
+            <ScrollArea className="h-[500px] pr-2">
+              <div className="relative">
+                {/* Timeline slots from 6:00 to 22:00 = 32 half-hour slots */}
+                {Array.from({ length: 33 }, (_, i) => {
+                  const hour = Math.floor(i / 2) + 6;
+                  const minute = (i % 2) * 30;
+                  const timeLabel = `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
+                  const isFullHour = minute === 0;
 
-          <div className="space-y-2">
-            {dayAppointments.map((a) => (
-              <div
-                key={a.id}
-                onClick={() => setSelectedAppointment(a)}
-                className="p-3 border rounded-lg hover:shadow-sm transition-shadow cursor-pointer space-y-1.5"
-              >
-                <div className="flex items-center gap-2">
-                  {a.lead?.google_photo_url ? (
-                    <img src={a.lead.google_photo_url} alt="" className="h-8 w-8 rounded-lg object-cover shrink-0" />
-                  ) : (
-                    <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                      <CalendarDays className="h-4 w-4 text-primary" />
+                  return (
+                    <div
+                      key={i}
+                      className={cn(
+                        'relative h-[40px] flex items-start',
+                        isFullHour ? 'border-t border-border' : 'border-t border-border/30'
+                      )}
+                    >
+                      <span className={cn(
+                        'text-[10px] w-10 shrink-0 -mt-[7px] select-none',
+                        isFullHour ? 'text-muted-foreground font-medium' : 'text-muted-foreground/50'
+                      )}>
+                        {timeLabel}
+                      </span>
+                      <div className="flex-1 relative" />
                     </div>
-                  )}
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-medium truncate">{a.title}</p>
-                    {a.lead && <p className="text-[11px] text-muted-foreground truncate">{a.lead.name}</p>}
-                  </div>
-                </div>
-                <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
-                  <Clock className="h-3 w-3" />
-                  <span>{format(parseISO(a.scheduled_at), 'HH:mm')} Uhr · {a.duration_minutes} Min.</span>
-                </div>
+                  );
+                })}
+
+                {/* Overlay appointments on the timeline */}
+                {dayAppointments.map((a) => {
+                  const apptDate = parseISO(a.scheduled_at);
+                  const apptHour = apptDate.getHours();
+                  const apptMinute = apptDate.getMinutes();
+                  const startSlot = (apptHour - 6) * 2 + apptMinute / 30;
+                  const durationSlots = (a.duration_minutes || 60) / 30;
+                  const topPx = startSlot * 40;
+                  const heightPx = Math.max(durationSlots * 40 - 2, 28);
+
+                  if (apptHour < 6 || apptHour >= 22) return null;
+
+                  return (
+                    <div
+                      key={a.id}
+                      className="absolute left-10 right-0 bg-primary/10 border border-primary/20 rounded-lg px-2 py-1 cursor-pointer hover:bg-primary/20 transition-colors overflow-hidden z-10"
+                      style={{ top: `${topPx}px`, height: `${heightPx}px` }}
+                      onClick={() => setSelectedAppointment(a)}
+                    >
+                      <div className="flex items-center gap-1.5">
+                        {a.lead?.google_photo_url ? (
+                          <img src={a.lead.google_photo_url} alt="" className="h-5 w-5 rounded object-cover shrink-0" />
+                        ) : (
+                          <CalendarDays className="h-3.5 w-3.5 text-primary shrink-0" />
+                        )}
+                        <span className="text-[11px] font-medium truncate">{a.title}</span>
+                      </div>
+                      {heightPx > 36 && (
+                        <p className="text-[10px] text-muted-foreground truncate mt-0.5">
+                          {format(apptDate, 'HH:mm')} – {format(new Date(apptDate.getTime() + (a.duration_minutes || 60) * 60000), 'HH:mm')} Uhr
+                        </p>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
-            ))}
-          </div>
+            </ScrollArea>
+          ) : (
+            <p className="text-xs text-muted-foreground text-center py-4">Tag auswählen, um den Zeitstrahl zu sehen</p>
+          )}
         </div>
       </div>
 
