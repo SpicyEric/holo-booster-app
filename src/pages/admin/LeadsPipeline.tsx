@@ -253,7 +253,6 @@ export default function LeadsPipeline() {
       const { data, error } = await supabase
         .from('discovered_stores')
         .select('*')
-        .not('status', 'in', '("verloren")')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
