@@ -49,7 +49,7 @@ export const getRoleDefaultPath = (role: UserRole | null): string => {
     case 'admin':
       return '/admin';
     case 'sales_partner':
-      return '/partner/dashboard';
+      return '/vertriebler';
     case 'merchant':
       return '/kunde';
     case 'end_customer':
