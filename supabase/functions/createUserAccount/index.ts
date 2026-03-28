@@ -107,7 +107,23 @@ serve(async (req) => {
     const resendApiKey = Deno.env.get('RESEND_API_KEY');
     if (resendApiKey) {
       try {
-        const passwordSetupUrl = `${supabaseUrl}/functions/v1/password-setup-redirect?email=${encodeURIComponent(email)}`;
+        // Generate a recovery link directly (works for all user types)
+        const { data: linkData, error: linkError } = await supabase.auth.admin.generateLink({
+          type: "recovery",
+          email: email,
+          options: {
+            redirectTo: "https://eloyo.de/auth",
+          },
+        });
+
+        let passwordSetupUrl: string;
+        if (linkError || !linkData?.properties?.action_link) {
+          console.error('Failed to generate recovery link, using redirect fallback:', linkError);
+          passwordSetupUrl = `${supabaseUrl}/functions/v1/password-setup-redirect?email=${encodeURIComponent(email)}`;
+        } else {
+          passwordSetupUrl = linkData.properties.action_link as string;
+        }
+
         const roleName = role === 'partner' ? 'Vertriebspartner' : 'Benutzer';
         
         const response = await fetch('https://api.resend.com/emails', {
@@ -117,24 +133,39 @@ serve(async (req) => {
             'Authorization': `Bearer ${resendApiKey}`,
           },
           body: JSON.stringify({
-            from: 'QRait <kontakt@qrait.de>',
+            from: 'Eloyo <support@eloyo.de>',
             to: [email],
-            subject: 'Willkommen bei QRait - Passwort festlegen',
+            subject: 'Willkommen bei Eloyo - Passwort festlegen',
             html: `
-              <h1>Willkommen bei QRait!</h1>
-              <p>Ihr Account als ${roleName} wurde erfolgreich erstellt.</p>
-              <p><strong>Ihre E-Mail-Adresse:</strong> ${email}</p>
-              <p>Bitte klicken Sie auf den folgenden Link, um Ihr Passwort festzulegen:</p>
-              <p><a href="${passwordSetupUrl}" style="display:inline-block;padding:12px 24px;background:#000;color:#fff;text-decoration:none;border-radius:6px;">Passwort festlegen</a></p>
-              <p style="color:#666;font-size:12px;">Falls der Button nicht funktioniert, kopieren Sie diesen Link:<br>${passwordSetupUrl}</p>
-              <p>Mit freundlichen Grüßen,<br>
-              Ihr QRait Team</p>
+              <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #ffffff;">
+                <div style="background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); padding: 40px 30px; text-align: center; border-radius: 12px 12px 0 0;">
+                  <h1 style="margin: 0; color: #ffffff; font-size: 24px; font-weight: 700;">Willkommen bei Eloyo! 🎉</h1>
+                </div>
+                <div style="padding: 40px 30px;">
+                  <p style="color: #374151; font-size: 16px; line-height: 1.6;">
+                    Ihr Account als ${roleName} wurde erfolgreich erstellt.
+                  </p>
+                  <p style="color: #374151; font-size: 15px;"><strong>Ihre E-Mail-Adresse:</strong> ${email}</p>
+                  <div style="background-color: #f3f4f6; padding: 25px; border-radius: 8px; margin: 30px 0; text-align: center;">
+                    <p style="margin: 0 0 15px 0; color: #374151; font-weight: 600;">Bitte legen Sie Ihr Passwort fest:</p>
+                    <a href="${passwordSetupUrl}" style="display: inline-block; background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); color: white; padding: 14px 32px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px;">🔑 Passwort festlegen</a>
+                  </div>
+                  <p style="color: #6b7280; font-size: 14px;"><strong>Hinweis:</strong> Dieser Link ist 24 Stunden gültig.</p>
+                  <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 30px 0;" />
+                  <p style="color: #374151; font-size: 15px;">Herzliche Grüße,<br/><strong>Ihr Eloyo Team</strong></p>
+                </div>
+                <div style="background-color: #f9fafb; padding: 25px 30px; border-top: 1px solid #e5e7eb; text-align: center; border-radius: 0 0 12px 12px;">
+                  <p style="margin: 0; color: #9ca3af; font-size: 13px;">E-Mail: <a href="mailto:support@eloyo.de" style="color: #6366f1; text-decoration: none;">support@eloyo.de</a></p>
+                </div>
+              </div>
             `,
           }),
         });
 
         if (!response.ok) {
           console.error('Failed to send email:', await response.text());
+        } else {
+          console.log('Welcome email sent successfully to:', email);
         }
       } catch (emailError) {
         console.error('Error sending email:', emailError);
