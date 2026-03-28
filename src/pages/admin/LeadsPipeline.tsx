@@ -40,6 +40,7 @@ interface DiscoveredStore {
   ai_summary: string | null;
   enrichment_status: string;
   notes: string | null;
+  note_title: string | null;
   status: string;
   created_at: string;
   latitude: number | null;
