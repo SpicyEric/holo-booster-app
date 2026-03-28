@@ -272,6 +272,16 @@ export default function LeadsPipeline() {
   // Detail dialog
   const [selected, setSelected] = useState<DiscoveredStore | null>(null);
   const [editNotes, setEditNotes] = useState('');
+  const [editNoteTitle, setEditNoteTitle] = useState('');
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
+
+  // Schedule dialog
+  const [scheduleStore, setScheduleStore] = useState<DiscoveredStore | null>(null);
+  const [scheduleDate, setScheduleDate] = useState('');
+  const [scheduleTime, setScheduleTime] = useState('10:00');
+  const [scheduleTitle, setScheduleTitle] = useState('');
+  const [scheduleSaving, setScheduleSaving] = useState(false);
 
   // New deal dialog
   const [newDealStage, setNewDealStage] = useState<string | null>(null);
