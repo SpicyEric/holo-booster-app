@@ -381,6 +381,19 @@ export default function LeadsPipeline() {
     }
   };
 
+  const confirmDelete = (id: string) => {
+    setDeleteTargetId(id);
+    setDeleteConfirmOpen(true);
+  };
+
+  const handleConfirmDelete = () => {
+    if (deleteTargetId) {
+      deleteStore(deleteTargetId);
+      setDeleteConfirmOpen(false);
+      setDeleteTargetId(null);
+    }
+  };
+
   const saveNotes = async () => {
     if (!selected) return;
     const { error } = await supabase
