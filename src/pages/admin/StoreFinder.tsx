@@ -637,14 +637,6 @@ export default function StoreFinder() {
                           <RatingStars rating={store.google_rating} />
                         </div>
                         <div className="flex items-center gap-1 shrink-0">
-                          {store.enrichment_status === 'pending' && (
-                            <Button variant="outline" size="icon" className="h-7 w-7" onClick={() => enrichStore(store.id)} disabled={enrichingIds.has(store.id)}>
-                              {enrichingIds.has(store.id) ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
-                            </Button>
-                          )}
-                          {store.enrichment_status === 'done' && (
-                            <Badge variant="outline" className="text-[9px] h-5 bg-emerald-500/10 text-emerald-600 border-emerald-500/20">✓ KI</Badge>
-                          )}
                           <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive" onClick={() => deleteStore(store.id)}>
                             <Trash2 className="h-3.5 w-3.5" />
                           </Button>
