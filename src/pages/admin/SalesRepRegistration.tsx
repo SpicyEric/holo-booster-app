@@ -151,40 +151,6 @@ const SalesRepRegistration = () => {
           </div>
         </Card>
 
-        {/* Steuer */}
-        <Card className="p-4 space-y-3">
-          <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Steuerdaten</h2>
-          <div>
-            <Label className="text-xs">Steuernummer</Label>
-            <Input value={form.tax_number} onChange={(e) => update("tax_number", e.target.value)} className="h-9" placeholder="z.B. 12/345/67890" />
-          </div>
-          <div>
-            <Label className="text-xs">USt-IdNr.</Label>
-            <Input value={form.vat_id} onChange={(e) => update("vat_id", e.target.value)} className="h-9" placeholder="z.B. DE123456789" />
-          </div>
-        </Card>
-
-        {/* Kontodaten */}
-        <Card className="p-4 space-y-3">
-          <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Kontodaten</h2>
-          <div>
-            <Label className="text-xs">Kontoinhaber</Label>
-            <Input value={form.account_holder} onChange={(e) => update("account_holder", e.target.value)} className="h-9" />
-          </div>
-          <div>
-            <Label className="text-xs">IBAN</Label>
-            <Input value={form.iban} onChange={(e) => update("iban", e.target.value)} className="h-9" placeholder="DE89 3704 0044 0532 0130 00" />
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <Label className="text-xs">BIC</Label>
-              <Input value={form.bic} onChange={(e) => update("bic", e.target.value)} className="h-9" />
-            </div>
-            <div>
-              <Label className="text-xs">Bank</Label>
-              <Input value={form.bank_name} onChange={(e) => update("bank_name", e.target.value)} className="h-9" />
-            </div>
-          </div>
         </Card>
       </div>
 
