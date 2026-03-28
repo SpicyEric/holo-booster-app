@@ -560,13 +560,6 @@ export default function LeadsPipeline() {
 
               <Stars rating={selected.google_rating} />
 
-              {/* AI summary */}
-              {selected.ai_summary && (
-                <div className="bg-muted/50 rounded-lg p-3 text-sm">
-                  <p className="text-xs font-medium text-muted-foreground mb-1">KI-Zusammenfassung</p>
-                  <p>{selected.ai_summary}</p>
-                </div>
-              )}
 
               {/* Notes */}
               <div className="space-y-2">
