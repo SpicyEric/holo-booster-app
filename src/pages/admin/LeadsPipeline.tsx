@@ -561,11 +561,7 @@ export default function LeadsPipeline() {
                         onDragStart={handleDragStart(store.id)}
                         onClick={() => { setSelected(store); setEditNotes(store.notes || ''); setEditNoteTitle(store.note_title || ''); }}
                         onNoteTitleSave={saveNoteTitleInline}
-                        onSchedule={(s) => {
-                          setScheduleStore(s);
-                          setScheduleDate(format(new Date(), 'yyyy-MM-dd'));
-                          setScheduleTitle(`Termin: ${s.name}`);
-                        }}
+                        onSchedule={(s) => navigateToCalendar(s)}
                       />
                     ))}
                   </div>
