@@ -34,6 +34,8 @@ import Nachrichten from "./pages/merchant/Nachrichten";
 import Transaktionen from "./pages/merchant/Transaktionen";
 import Marketing from "./pages/merchant/Marketing";
 import SalesRepDashboard from "./pages/salesrep/SalesRepDashboard";
+import SalesRepSettings from "./pages/salesrep/SalesRepSettings";
+import SalesRepMessages from "./pages/salesrep/SalesRepMessages";
 import MerchantSetup from "./pages/merchant/MerchantSetup";
 import Scan from "./pages/Scan";
 import NotFound from "./pages/NotFound";
