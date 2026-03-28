@@ -468,45 +468,6 @@ export default function LeadsPipeline() {
         </div>
       </div>
 
-      {/* Bottom action bar */}
-      <div className="grid grid-cols-4 gap-2 shrink-0 border-t border-border pt-3">
-        <DropZone
-          label="Löschen"
-          className="text-muted-foreground border-muted-foreground/30 hover:border-destructive hover:text-destructive"
-          onDrop={async (id) => { await deleteStore(id); }}
-          setDragOverStage={setDragOverStage}
-          stageKey="__delete"
-          dragOverStage={dragOverStage}
-        />
-        <DropZone
-          label="Verloren"
-          className="text-rose-500 border-rose-500/30 hover:border-rose-500 hover:bg-rose-500/5"
-          onDrop={async (id) => { await moveToArchive(id, 'verloren'); }}
-          setDragOverStage={setDragOverStage}
-          stageKey="__verloren"
-          dragOverStage={dragOverStage}
-        />
-        <DropZone
-          label="Gewonnen"
-          className="text-emerald-500 border-emerald-500/30 hover:border-emerald-500 hover:bg-emerald-500/5"
-          onDrop={async (id) => { await moveToArchive(id, 'gewonnen'); }}
-          setDragOverStage={setDragOverStage}
-          stageKey="__gewonnen"
-          dragOverStage={dragOverStage}
-        />
-        <DropZone
-          label="Wiedervorlage"
-          className="text-amber-500 border-amber-500/30 hover:border-amber-500 hover:bg-amber-500/5"
-          onDrop={async (id) => {
-            await supabase.from('discovered_stores').update({ status: 'kontaktaufnahme', updated_at: new Date().toISOString() }).eq('id', id);
-            toast.success('Zurück zu Kontaktaufnahme');
-            fetchStores();
-          }}
-          setDragOverStage={setDragOverStage}
-          stageKey="__wiedervorlage"
-          dragOverStage={dragOverStage}
-        />
-      </div>
 
       {/* ---- Detail dialog ---- */}
       <Dialog open={!!selected} onOpenChange={() => setSelected(null)}>
