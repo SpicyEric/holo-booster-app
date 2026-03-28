@@ -94,6 +94,25 @@ function RatingStars({ rating }: { rating: number | null }) {
   );
 }
 
+// ── Pipeline stage colors (matching LeadsPipeline) ─────────────────────────────
+function getStageColor(status: string): string {
+  const map: Record<string, string> = {
+    neu: 'hsl(262, 40%, 82%)',
+    new: 'hsl(262, 40%, 82%)',
+    kontaktaufnahme: 'hsl(262, 40%, 82%)',
+    angerufen: 'hsl(262, 45%, 72%)',
+    telefonanruf: 'hsl(262, 45%, 72%)',
+    terminiert: 'hsl(262, 48%, 62%)',
+    produktbesprechung: 'hsl(262, 48%, 62%)',
+    in_verhandlung: 'hsl(262, 48%, 62%)',
+    besucht: 'hsl(262, 50%, 52%)',
+    vor_ort_besuch: 'hsl(262, 50%, 52%)',
+    gewonnen: 'hsl(262, 55%, 45%)',
+    verloren: 'hsl(0, 0%, 25%)',
+    standby: 'hsl(262, 15%, 55%)',
+  };
+  return map[status] || 'hsl(262, 40%, 82%)';
+}
 
 
 // ── Main Component ─────────────────────────────────────────────────────────────
@@ -421,20 +440,36 @@ export default function StoreFinder() {
                   }}
                 >
                   {/* Saved stores */}
-                  {savedStores.filter(s => s.latitude && s.longitude).map((store) => (
-                    <OverlayView
-                      key={store.id}
-                      position={{ lat: Number(store.latitude!), lng: Number(store.longitude!) }}
-                      mapPaneName={OverlayView.OVERLAY_MOUSE_TARGET}
-                    >
-                      <div className="cursor-pointer transform -translate-x-1/2 -translate-y-full">
-                        <div className="bg-primary text-primary-foreground rounded-full h-8 w-8 flex items-center justify-center shadow-lg border-2 border-background text-xs font-bold">
-                          {store.enrichment_status === 'done' ? '✓' : <Building2 className="h-4 w-4" />}
+                  {savedStores.filter(s => s.latitude && s.longitude).map((store) => {
+                    const stageColor = getStageColor(store.status);
+                    const size = 40;
+                    return (
+                      <OverlayView
+                        key={store.id}
+                        position={{ lat: Number(store.latitude!), lng: Number(store.longitude!) }}
+                        mapPaneName={OverlayView.OVERLAY_MOUSE_TARGET}
+                      >
+                        <div className="cursor-pointer" style={{ width: size, height: size, marginLeft: -size/2, marginTop: -size/2 }}>
+                          <div className="rounded-full overflow-hidden flex items-center justify-center"
+                            style={{
+                              width: size, height: size,
+                              border: `3px solid ${stageColor}`,
+                              backgroundColor: 'rgba(255,255,255,0.9)',
+                              boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
+                            }}>
+                            {store.google_photo_url ? (
+                              <img src={store.google_photo_url} alt="" className="w-full h-full object-cover" />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center text-white font-bold text-sm"
+                                style={{ backgroundColor: stageColor }}>
+                                {store.name.charAt(0)}
+                              </div>
+                            )}
+                          </div>
                         </div>
-                        <div className="w-0 h-0 border-l-[6px] border-r-[6px] border-t-[8px] border-l-transparent border-r-transparent border-t-primary mx-auto -mt-0.5" />
-                      </div>
-                    </OverlayView>
-                  ))}
+                      </OverlayView>
+                    );
+                  })}
 
                   {/* Search results */}
                   {searchResults.filter(p => p.latitude && p.longitude).map((place) => (
