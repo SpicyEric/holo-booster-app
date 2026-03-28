@@ -301,7 +301,7 @@ export default function AdminCalendar() {
 
       const leadId = preSelectedLead?.id || '00000000-0000-0000-0000-000000000000';
 
-      const { error } = await supabase.from('pipeline_appointments').insert({
+      const { data: inserted, error } = await supabase.from('pipeline_appointments').insert({
         title: newTitle.trim(),
         description: newNotes.trim() || null,
         address: newAddress.trim() || null,
@@ -309,9 +309,22 @@ export default function AdminCalendar() {
         duration_minutes: newDuration,
         created_by_user_id: user.id,
         lead_id: leadId,
-      } as any);
+      } as any).select().single();
 
       if (error) throw error;
+
+      // Sync to Google Calendar
+      if (inserted) {
+        syncToGoogleCalendar({
+          id: inserted.id,
+          title: newTitle.trim(),
+          description: newNotes.trim() || null,
+          address: newAddress.trim() || null,
+          scheduled_at: scheduledAt.toISOString(),
+          duration_minutes: newDuration,
+        });
+      }
+
       toast.success('Termin erstellt');
       setNewDialogOpen(false);
       setNewTitle('');
@@ -327,6 +340,10 @@ export default function AdminCalendar() {
   };
 
   const deleteAppointment = async (id: string) => {
+    const appt = appointments.find(a => a.id === id);
+    if (appt) {
+      deleteFromGoogleCalendar(appt);
+    }
     const { error } = await supabase.from('pipeline_appointments').delete().eq('id', id);
     if (error) {
       toast.error('Fehler beim Löschen');
