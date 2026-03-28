@@ -36,42 +36,30 @@ const SalesRepRegistration = () => {
     setForm((prev) => ({ ...prev, [key]: value }));
 
   const handleSubmit = async () => {
-    if (!form.first_name || !form.last_name || !form.email || !form.password) {
-      toast.error("Bitte Vorname, Nachname, E-Mail und Passwort ausfüllen");
-      return;
-    }
-    if (form.password.length < 6) {
-      toast.error("Passwort muss mindestens 6 Zeichen lang sein");
+    if (!form.first_name || !form.last_name || !form.email) {
+      toast.error("Bitte Vorname, Nachname und E-Mail ausfüllen");
       return;
     }
 
     setSaving(true);
     try {
-      // 1. Create auth user
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: form.email,
-        password: form.password,
-        options: {
-          data: {
-            first_name: form.first_name,
-            last_name: form.last_name,
-            full_name: `${form.first_name} ${form.last_name}`,
-          },
+      // 1. Create user via edge function (auto-generates password, sends email)
+      const { data: session } = await supabase.auth.getSession();
+      const { data, error } = await supabase.functions.invoke("createUserAccount", {
+        body: {
+          email: form.email,
+          full_name: `${form.first_name} ${form.last_name}`,
+          role: "partner",
         },
       });
 
-      if (authError) throw authError;
-      if (!authData.user) throw new Error("Benutzer konnte nicht erstellt werden");
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
 
-      const userId = authData.user.id;
+      const userId = data.user?.id;
+      if (!userId) throw new Error("Benutzer konnte nicht erstellt werden");
 
-      // 2. Assign partner role
-      const { error: roleError } = await supabase
-        .from("user_roles")
-        .insert([{ user_id: userId, role: "partner" }]);
-      if (roleError) throw roleError;
-
-      // 3. Create sales rep profile
+      // 2. Create sales rep profile
       const { error: profileError } = await supabase
         .from("sales_rep_profiles" as any)
         .insert([
@@ -95,9 +83,11 @@ const SalesRepRegistration = () => {
             notes: form.notes,
           },
         ]);
-      if (profileError) throw profileError;
+      if (profileError) {
+        console.error("Fehler beim Erstellen des Vertriebsprofils:", profileError);
+      }
 
-      toast.success(`Vertriebler ${form.first_name} ${form.last_name} wurde erfolgreich registriert!`);
+      toast.success(`Vertriebler ${form.first_name} ${form.last_name} wurde registriert! Eine E-Mail mit Zugangsdaten wurde versendet.`);
       navigate("/admin/accounts");
     } catch (error: any) {
       console.error("Fehler:", error);
