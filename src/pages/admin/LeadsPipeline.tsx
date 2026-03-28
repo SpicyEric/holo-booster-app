@@ -403,29 +403,8 @@ export default function LeadsPipeline() {
       .eq('id', id);
   };
 
-  const createAppointment = async () => {
-    if (!scheduleStore || !scheduleDate || !scheduleTitle.trim()) return;
-    setScheduleSaving(true);
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Nicht eingeloggt');
-      const scheduledAt = new Date(`${scheduleDate}T${scheduleTime}:00`);
-      const { error } = await supabase.from('pipeline_appointments').insert({
-        lead_id: scheduleStore.id,
-        title: scheduleTitle.trim(),
-        scheduled_at: scheduledAt.toISOString(),
-        duration_minutes: 60,
-        created_by_user_id: user.id,
-      } as any);
-      if (error) throw error;
-      toast.success('Termin erstellt');
-      setScheduleStore(null);
-      setScheduleTitle('');
-    } catch (err: any) {
-      toast.error(err.message || 'Fehler');
-    } finally {
-      setScheduleSaving(false);
-    }
+  const navigateToCalendar = (store: DiscoveredStore) => {
+    navigate(`/admin/calendar?leadId=${store.id}`);
   };
 
   const saveNotes = async () => {
