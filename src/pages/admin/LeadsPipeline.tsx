@@ -264,6 +264,7 @@ function DealCard({
 /*  Main component                                                     */
 /* ------------------------------------------------------------------ */
 export default function LeadsPipeline() {
+  const navigate = useNavigate();
   const [stores, setStores] = useState<DiscoveredStore[]>([]);
   const [loading, setLoading] = useState(true);
   const [dragOverStage, setDragOverStage] = useState<string | null>(null);
@@ -277,12 +278,10 @@ export default function LeadsPipeline() {
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
 
-  // Schedule dialog
-  const [scheduleStore, setScheduleStore] = useState<DiscoveredStore | null>(null);
-  const [scheduleDate, setScheduleDate] = useState('');
-  const [scheduleTime, setScheduleTime] = useState('10:00');
-  const [scheduleTitle, setScheduleTitle] = useState('');
-  const [scheduleSaving, setScheduleSaving] = useState(false);
+  // New deal dialog
+  const [newDealStage, setNewDealStage] = useState<string | null>(null);
+  const [newDealName, setNewDealName] = useState('');
+  const [newDealLoading, setNewDealLoading] = useState(false);
 
   // New deal dialog
   const [newDealStage, setNewDealStage] = useState<string | null>(null);
