@@ -50,23 +50,27 @@ interface DiscoveredStore {
 /* ------------------------------------------------------------------ */
 
 const STAGES = [
-  { key: 'kontaktaufnahme', label: 'Kontaktaufnahme', color: 'bg-orange-500', border: 'border-orange-500/30', dot: 'bg-orange-400' },
-  { key: 'telefonanruf', label: 'Telefonanruf', color: 'bg-rose-500', border: 'border-rose-500/30', dot: 'bg-rose-400' },
-  { key: 'vor_ort_besuch', label: 'Vor-Ort Besuch', color: 'bg-sky-500', border: 'border-sky-500/30', dot: 'bg-sky-400' },
-  { key: 'produktbesprechung', label: 'Produktbesprechung', color: 'bg-emerald-500', border: 'border-emerald-500/30', dot: 'bg-emerald-400' },
-  { key: 'in_verhandlung', label: 'In Verhandlung', color: 'bg-violet-500', border: 'border-violet-500/30', dot: 'bg-violet-400' },
+  { key: 'neu', label: 'Neu', color: 'bg-blue-500', border: 'border-blue-500/30', dot: 'bg-blue-400' },
+  { key: 'angerufen', label: 'Angerufen', color: 'bg-rose-500', border: 'border-rose-500/30', dot: 'bg-rose-400' },
+  { key: 'terminiert', label: 'Terminiert', color: 'bg-yellow-500', border: 'border-yellow-500/30', dot: 'bg-yellow-400' },
+  { key: 'besucht', label: 'Besucht', color: 'bg-orange-500', border: 'border-orange-500/30', dot: 'bg-orange-400' },
+  { key: 'gewonnen', label: 'Gewonnen', color: 'bg-green-500', border: 'border-green-500/30', dot: 'bg-green-400' },
+  { key: 'verloren', label: 'Verloren', color: 'bg-red-500', border: 'border-red-500/30', dot: 'bg-red-400' },
+  { key: 'standby', label: 'Standby', color: 'bg-gray-500', border: 'border-gray-500/30', dot: 'bg-gray-400' },
 ] as const;
 
-const ARCHIVE_STAGES = ['gewonnen', 'verloren'] as const;
+const ARCHIVE_STAGES = ['gewonnen', 'verloren', 'standby'] as const;
 
 /* ------------------------------------------------------------------ */
 /*  Helper: map old statuses to pipeline stage                         */
 /* ------------------------------------------------------------------ */
 function mapStatus(s: string): string {
-  if (s === 'new' || s === 'kontaktaufnahme') return 'kontaktaufnahme';
+  if (s === 'new' || s === 'kontaktaufnahme') return 'neu';
+  if (s === 'telefonanruf') return 'angerufen';
+  if (s === 'vor_ort_besuch') return 'besucht';
+  if (s === 'produktbesprechung' || s === 'in_verhandlung') return 'terminiert';
   if (STAGES.some(st => st.key === s)) return s;
-  if (ARCHIVE_STAGES.includes(s as any)) return s;
-  return 'kontaktaufnahme';
+  return 'neu';
 }
 
 /* ------------------------------------------------------------------ */
@@ -249,7 +253,6 @@ export default function LeadsPipeline() {
       const { data, error } = await supabase
         .from('discovered_stores')
         .select('*')
-        .not('status', 'in', '("verloren")')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -270,7 +273,7 @@ export default function LeadsPipeline() {
     return acc;
   }, {} as Record<string, DiscoveredStore[]>);
 
-  const wonCount = stores.filter(s => s.status === 'gewonnen').length;
+  
 
   /* ---- Drag & drop ---- */
   const handleDragStart = (id: string) => (e: React.DragEvent) => {
@@ -394,9 +397,9 @@ export default function LeadsPipeline() {
       {/* Header */}
       <div className="flex items-center justify-between shrink-0">
         <div>
-          <h1 className="text-2xl font-bold">Lead Pipeline</h1>
+          <h1 className="text-2xl font-bold">Pipeline</h1>
           <p className="text-muted-foreground text-sm">
-            {stores.length} Leads · {wonCount} gewonnen
+            {stores.length} Leads
           </p>
         </div>
       </div>
@@ -465,45 +468,6 @@ export default function LeadsPipeline() {
         </div>
       </div>
 
-      {/* Bottom action bar */}
-      <div className="grid grid-cols-4 gap-2 shrink-0 border-t border-border pt-3">
-        <DropZone
-          label="Löschen"
-          className="text-muted-foreground border-muted-foreground/30 hover:border-destructive hover:text-destructive"
-          onDrop={async (id) => { await deleteStore(id); }}
-          setDragOverStage={setDragOverStage}
-          stageKey="__delete"
-          dragOverStage={dragOverStage}
-        />
-        <DropZone
-          label="Verloren"
-          className="text-rose-500 border-rose-500/30 hover:border-rose-500 hover:bg-rose-500/5"
-          onDrop={async (id) => { await moveToArchive(id, 'verloren'); }}
-          setDragOverStage={setDragOverStage}
-          stageKey="__verloren"
-          dragOverStage={dragOverStage}
-        />
-        <DropZone
-          label="Gewonnen"
-          className="text-emerald-500 border-emerald-500/30 hover:border-emerald-500 hover:bg-emerald-500/5"
-          onDrop={async (id) => { await moveToArchive(id, 'gewonnen'); }}
-          setDragOverStage={setDragOverStage}
-          stageKey="__gewonnen"
-          dragOverStage={dragOverStage}
-        />
-        <DropZone
-          label="Wiedervorlage"
-          className="text-amber-500 border-amber-500/30 hover:border-amber-500 hover:bg-amber-500/5"
-          onDrop={async (id) => {
-            await supabase.from('discovered_stores').update({ status: 'kontaktaufnahme', updated_at: new Date().toISOString() }).eq('id', id);
-            toast.success('Zurück zu Kontaktaufnahme');
-            fetchStores();
-          }}
-          setDragOverStage={setDragOverStage}
-          stageKey="__wiedervorlage"
-          dragOverStage={dragOverStage}
-        />
-      </div>
 
       {/* ---- Detail dialog ---- */}
       <Dialog open={!!selected} onOpenChange={() => setSelected(null)}>
