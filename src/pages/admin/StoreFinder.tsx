@@ -94,6 +94,25 @@ function RatingStars({ rating }: { rating: number | null }) {
   );
 }
 
+// ── Pipeline stage colors (matching LeadsPipeline) ─────────────────────────────
+function getStageColor(status: string): string {
+  const map: Record<string, string> = {
+    neu: 'hsl(262, 40%, 82%)',
+    new: 'hsl(262, 40%, 82%)',
+    kontaktaufnahme: 'hsl(262, 40%, 82%)',
+    angerufen: 'hsl(262, 45%, 72%)',
+    telefonanruf: 'hsl(262, 45%, 72%)',
+    terminiert: 'hsl(262, 48%, 62%)',
+    produktbesprechung: 'hsl(262, 48%, 62%)',
+    in_verhandlung: 'hsl(262, 48%, 62%)',
+    besucht: 'hsl(262, 50%, 52%)',
+    vor_ort_besuch: 'hsl(262, 50%, 52%)',
+    gewonnen: 'hsl(262, 55%, 45%)',
+    verloren: 'hsl(0, 0%, 25%)',
+    standby: 'hsl(262, 15%, 55%)',
+  };
+  return map[status] || 'hsl(262, 40%, 82%)';
+}
 
 
 // ── Main Component ─────────────────────────────────────────────────────────────
