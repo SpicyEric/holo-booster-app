@@ -283,10 +283,6 @@ export default function LeadsPipeline() {
   const [newDealName, setNewDealName] = useState('');
   const [newDealLoading, setNewDealLoading] = useState(false);
 
-  // New deal dialog
-  const [newDealStage, setNewDealStage] = useState<string | null>(null);
-  const [newDealName, setNewDealName] = useState('');
-  const [newDealLoading, setNewDealLoading] = useState(false);
 
   /* ---- Fetch ---- */
   const fetchStores = useCallback(async () => {
