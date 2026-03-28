@@ -296,6 +296,24 @@ const Overview = () => {
                 <p className="text-xs text-muted-foreground">Aktivitätsrate (mit Stempel)</p>
                 <p className="text-2xl font-bold">{kpis.activityRate}%</p>
               </div>
+            </div>
+          </Card>
+          {expandedKpi === "activity" && (
+            <Card className="mt-1 p-4 bg-white rounded-xl border-border/30 shadow-lg animate-in fade-in slide-in-from-top-2 duration-200 z-10 relative">
+              <h4 className="text-xs font-semibold mb-2 text-muted-foreground">Berechnung der Aktivitätsrate</h4>
+              <div className="space-y-1.5 text-sm">
+                <div className="flex justify-between"><span>Aktive Kunden gesamt</span><span className="font-bold">{kpis.activeCustomers}</span></div>
+                <div className="flex justify-between"><span>Davon mit Stempelaktivität (7 Tage)</span><span className="font-bold text-green-600">{kpis.activeWithStamps}</span></div>
+                <div className="flex justify-between"><span>Ohne Stempelaktivität</span><span className="font-bold text-amber-600">{kpis.activeCustomers - kpis.activeWithStamps}</span></div>
+                <div className="border-t pt-1.5 mt-1.5">
+                  <p className="text-xs text-muted-foreground">
+                    Formel: {kpis.activeWithStamps} von {kpis.activeCustomers} aktiven Kunden haben in den letzten 7 Tagen mindestens eine Stempeltransaktion (NFC) durchgeführt = <strong>{kpis.activityRate}%</strong>
+                  </p>
+                </div>
+              </div>
+            </Card>
+          )}
+        </div>
 
         {/* Anstehende Termine */}
         <div>
@@ -343,24 +361,6 @@ const Overview = () => {
               ) : (
                 <p className="text-sm text-muted-foreground">Keine anstehenden Termine</p>
               )}
-            </Card>
-          )}
-        </div>
-      </div>
-          </Card>
-          {expandedKpi === "activity" && (
-            <Card className="mt-1 p-4 bg-white rounded-xl border-border/30 shadow-lg animate-in fade-in slide-in-from-top-2 duration-200 z-10 relative">
-              <h4 className="text-xs font-semibold mb-2 text-muted-foreground">Berechnung der Aktivitätsrate</h4>
-              <div className="space-y-1.5 text-sm">
-                <div className="flex justify-between"><span>Aktive Kunden gesamt</span><span className="font-bold">{kpis.activeCustomers}</span></div>
-                <div className="flex justify-between"><span>Davon mit Stempelaktivität (7 Tage)</span><span className="font-bold text-green-600">{kpis.activeWithStamps}</span></div>
-                <div className="flex justify-between"><span>Ohne Stempelaktivität</span><span className="font-bold text-amber-600">{kpis.activeCustomers - kpis.activeWithStamps}</span></div>
-                <div className="border-t pt-1.5 mt-1.5">
-                  <p className="text-xs text-muted-foreground">
-                    Formel: {kpis.activeWithStamps} von {kpis.activeCustomers} aktiven Kunden haben in den letzten 7 Tagen mindestens eine Stempeltransaktion (NFC) durchgeführt = <strong>{kpis.activityRate}%</strong>
-                  </p>
-                </div>
-              </div>
             </Card>
           )}
         </div>
