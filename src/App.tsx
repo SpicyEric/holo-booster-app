@@ -69,6 +69,7 @@ import StoreFinder from "./pages/admin/StoreFinder";
 import Pipeline from "./pages/admin/Pipeline";
 import LeadsPipeline from "./pages/admin/LeadsPipeline";
 import AdminCalendar from "./pages/admin/Calendar";
+import SalesRepRegistration from "./pages/admin/SalesRepRegistration";
 
 const queryClient = new QueryClient();
 
