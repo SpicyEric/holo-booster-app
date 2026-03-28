@@ -418,51 +418,38 @@ export default function LeadsPipeline() {
                   transition: 'width 400ms cubic-bezier(0.4, 0, 0.2, 1), min-width 400ms cubic-bezier(0.4, 0, 0.2, 1), max-width 400ms cubic-bezier(0.4, 0, 0.2, 1)',
                 }}
               >
-                {/* Collapsed overlay - visible when not active */}
-                <div
-                  className="flex flex-col items-center shrink-0 overflow-hidden"
-                  style={{
-                    backgroundColor: stage.bgColor,
-                    height: isActive ? 0 : '100%',
-                    opacity: isActive ? 0 : 1,
-                    transition: 'height 400ms cubic-bezier(0.4, 0, 0.2, 1), opacity 300ms ease',
-                    position: isActive ? 'absolute' : 'relative',
-                    pointerEvents: isActive ? 'none' : 'auto',
-                    width: '100%',
-                  }}
-                >
-                  <div className="py-3 flex flex-col items-center gap-1 shrink-0">
-                    <span className="text-white font-bold text-lg leading-none">{items.length}</span>
-                    <span className="text-white/70 text-[9px] font-medium"
-                      style={{ writingMode: 'vertical-rl', textOrientation: 'mixed' }}>
-                      {stage.label}
-                    </span>
+                {/* Collapsed view - no height/position animation, just instant show/hide */}
+                {!isActive && (
+                  <div
+                    className="flex flex-col items-center w-full h-full overflow-hidden"
+                    style={{ backgroundColor: stage.bgColor }}
+                  >
+                    <div className="py-3 flex flex-col items-center gap-1 shrink-0">
+                      <span className="text-white font-bold text-lg leading-none">{items.length}</span>
+                      <span className="text-white/70 text-[9px] font-medium"
+                        style={{ writingMode: 'vertical-rl', textOrientation: 'mixed' }}>
+                        {stage.label}
+                      </span>
+                    </div>
+                    <div className="flex-1 overflow-y-auto w-full px-1.5 pb-2 space-y-1.5">
+                      {items.map((store) => (
+                        <div key={store.id} className="w-full aspect-square rounded-lg overflow-hidden bg-white/20 flex items-center justify-center"
+                          style={{ maxWidth: 52, maxHeight: 52 }}
+                          title={store.name}>
+                          {store.google_photo_url ? (
+                            <img src={store.google_photo_url} alt="" className="w-full h-full object-cover" />
+                          ) : (
+                            <span className="text-white font-bold text-sm">{store.name.charAt(0)}</span>
+                          )}
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                  <div className="flex-1 overflow-y-auto w-full px-1.5 pb-2 space-y-1.5">
-                    {items.map((store) => (
-                      <div key={store.id} className="w-full aspect-square rounded-lg overflow-hidden bg-white/20 flex items-center justify-center"
-                        style={{ maxWidth: 52, maxHeight: 52 }}
-                        title={store.name}>
-                        {store.google_photo_url ? (
-                          <img src={store.google_photo_url} alt="" className="w-full h-full object-cover" />
-                        ) : (
-                          <span className="text-white font-bold text-sm">{store.name.charAt(0)}</span>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </div>
+                )}
 
-                {/* Expanded content - visible when active */}
-                <div
-                  className="flex flex-col flex-1 overflow-hidden"
-                  style={{
-                    opacity: isActive ? 1 : 0,
-                    transition: 'opacity 350ms ease 100ms',
-                    pointerEvents: isActive ? 'auto' : 'none',
-                    display: isActive ? 'flex' : 'none',
-                  }}
-                >
+                {/* Expanded content */}
+                {isActive && (
+                  <div className="flex flex-col flex-1 overflow-hidden animate-fade-in">
                   {/* Column header */}
                   <div className="rounded-t-xl px-4 py-2.5 flex items-center gap-3 shrink-0" style={{ backgroundColor: stage.bgColor }}>
                     <span className="text-white font-semibold text-sm">{stage.label}</span>
