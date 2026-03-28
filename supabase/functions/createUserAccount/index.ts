@@ -94,10 +94,13 @@ serve(async (req) => {
       console.error('Error creating profile:', profileError);
     }
 
-    // Send welcome email with credentials
+    // Send welcome email with password setup link
     const resendApiKey = Deno.env.get('RESEND_API_KEY');
     if (resendApiKey) {
       try {
+        const passwordSetupUrl = `${supabaseUrl}/functions/v1/password-setup-redirect?email=${encodeURIComponent(email)}`;
+        const roleName = role === 'partner' ? 'Vertriebspartner' : 'Benutzer';
+        
         const response = await fetch('https://api.resend.com/emails', {
           method: 'POST',
           headers: {
@@ -107,16 +110,14 @@ serve(async (req) => {
           body: JSON.stringify({
             from: 'QRait <kontakt@qrait.de>',
             to: [email],
-            subject: 'Willkommen bei QRait - Ihre Zugangsdaten',
+            subject: 'Willkommen bei QRait - Passwort festlegen',
             html: `
               <h1>Willkommen bei QRait!</h1>
-              <p>Ihr Account wurde erfolgreich erstellt.</p>
-              <p><strong>Ihre Zugangsdaten:</strong></p>
-              <p>E-Mail: ${email}<br>
-              Passwort: ${password}</p>
-              <p><strong>Login-Link:</strong><br>
-              <a href="${supabaseUrl.replace('supabase.co', 'lovable.app')}/auth">${supabaseUrl.replace('supabase.co', 'lovable.app')}/auth</a></p>
-              <p>Bitte ändern Sie Ihr Passwort nach dem ersten Login.</p>
+              <p>Ihr Account als ${roleName} wurde erfolgreich erstellt.</p>
+              <p><strong>Ihre E-Mail-Adresse:</strong> ${email}</p>
+              <p>Bitte klicken Sie auf den folgenden Link, um Ihr Passwort festzulegen:</p>
+              <p><a href="${passwordSetupUrl}" style="display:inline-block;padding:12px 24px;background:#000;color:#fff;text-decoration:none;border-radius:6px;">Passwort festlegen</a></p>
+              <p style="color:#666;font-size:12px;">Falls der Button nicht funktioniert, kopieren Sie diesen Link:<br>${passwordSetupUrl}</p>
               <p>Mit freundlichen Grüßen,<br>
               Ihr QRait Team</p>
             `,
