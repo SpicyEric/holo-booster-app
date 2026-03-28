@@ -5,7 +5,7 @@ import { toast } from 'sonner';
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isSameMonth, addMonths, subMonths, startOfWeek, endOfWeek, parseISO } from 'date-fns';
 import { de } from 'date-fns/locale';
 import {
-  ChevronLeft, ChevronRight, Plus, Loader2, Clock, Trash2, CalendarDays, MapPin, X, Navigation, Phone,
+  ChevronLeft, ChevronRight, Plus, Loader2, Clock, Trash2, CalendarDays, MapPin, X, Navigation, Phone, Link2, Unlink,
 } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
@@ -63,6 +63,10 @@ export default function AdminCalendar() {
   // Pre-selected lead from pipeline
   const [preSelectedLead, setPreSelectedLead] = useState<PreSelectedLead | null>(null);
 
+  // Google Calendar connection
+  const [gcalConnected, setGcalConnected] = useState(false);
+  const [gcalLoading, setGcalLoading] = useState(false);
+
   // New appointment dialog
   const [newDialogOpen, setNewDialogOpen] = useState(false);
   const [newTitle, setNewTitle] = useState('');
@@ -72,6 +76,122 @@ export default function AdminCalendar() {
   const [newDuration, setNewDuration] = useState(60);
   const [newDate, setNewDate] = useState('');
   const [saving, setSaving] = useState(false);
+
+  // Check Google Calendar connection status
+  const checkGcalStatus = useCallback(async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+
+      const { data, error } = await supabase.functions.invoke('google-calendar-auth', {
+        body: { action: 'status' },
+      });
+
+      if (!error && data) {
+        setGcalConnected(data.connected);
+      }
+    } catch (err) {
+      console.error('GCal status check failed:', err);
+    }
+  }, []);
+
+  useEffect(() => { checkGcalStatus(); }, [checkGcalStatus]);
+
+  // Handle OAuth callback
+  useEffect(() => {
+    const code = searchParams.get('code');
+    const state = searchParams.get('state');
+    if (!code) return;
+
+    (async () => {
+      setGcalLoading(true);
+      try {
+        const redirectUri = `${window.location.origin}/admin/calendar`;
+        const { data, error } = await supabase.functions.invoke('google-calendar-auth', {
+          body: { action: 'exchange_code', code, redirect_uri: redirectUri },
+        });
+
+        if (error) throw error;
+        if (data?.error) throw new Error(data.error);
+
+        setGcalConnected(true);
+        toast.success('Google Calendar verbunden!');
+      } catch (err: any) {
+        toast.error('Verbindung fehlgeschlagen: ' + (err.message || 'Fehler'));
+      } finally {
+        setGcalLoading(false);
+        // Remove code/state from URL
+        searchParams.delete('code');
+        searchParams.delete('state');
+        searchParams.delete('scope');
+        setSearchParams(searchParams, { replace: true });
+      }
+    })();
+  }, [searchParams]);
+
+  const connectGoogleCalendar = async () => {
+    setGcalLoading(true);
+    try {
+      const redirectUri = `${window.location.origin}/admin/calendar`;
+      const { data, error } = await supabase.functions.invoke('google-calendar-auth', {
+        body: { action: 'get_auth_url', redirect_uri: redirectUri },
+      });
+
+      if (error) throw error;
+      if (data?.url) {
+        window.location.href = data.url;
+      }
+    } catch (err: any) {
+      toast.error('Fehler: ' + (err.message || 'Unbekannt'));
+      setGcalLoading(false);
+    }
+  };
+
+  const disconnectGoogleCalendar = async () => {
+    setGcalLoading(true);
+    try {
+      await supabase.functions.invoke('google-calendar-auth', {
+        body: { action: 'disconnect' },
+      });
+      setGcalConnected(false);
+      toast.success('Google Calendar getrennt');
+    } catch (err: any) {
+      toast.error('Fehler beim Trennen');
+    } finally {
+      setGcalLoading(false);
+    }
+  };
+
+  // Sync appointment to Google Calendar
+  const syncToGoogleCalendar = async (appointmentData: any) => {
+    if (!gcalConnected) return;
+    try {
+      const { data, error } = await supabase.functions.invoke('google-calendar-sync', {
+        body: { action: 'create', appointment: appointmentData },
+      });
+      if (error) throw error;
+      if (data?.error === 'not_connected') {
+        setGcalConnected(false);
+        return;
+      }
+      if (data?.success) {
+        console.log('Synced to Google Calendar:', data.google_event_id);
+      }
+    } catch (err) {
+      console.error('GCal sync failed:', err);
+    }
+  };
+
+  const deleteFromGoogleCalendar = async (appointment: Appointment) => {
+    if (!gcalConnected) return;
+    try {
+      await supabase.functions.invoke('google-calendar-sync', {
+        body: { action: 'delete', appointment: { google_calendar_event_id: (appointment as any).google_calendar_event_id } },
+      });
+    } catch (err) {
+      console.error('GCal delete failed:', err);
+    }
+  };
 
   // Load pre-selected lead from URL
   useEffect(() => {
@@ -181,7 +301,7 @@ export default function AdminCalendar() {
 
       const leadId = preSelectedLead?.id || '00000000-0000-0000-0000-000000000000';
 
-      const { error } = await supabase.from('pipeline_appointments').insert({
+      const { data: inserted, error } = await supabase.from('pipeline_appointments').insert({
         title: newTitle.trim(),
         description: newNotes.trim() || null,
         address: newAddress.trim() || null,
@@ -189,9 +309,22 @@ export default function AdminCalendar() {
         duration_minutes: newDuration,
         created_by_user_id: user.id,
         lead_id: leadId,
-      } as any);
+      } as any).select().single();
 
       if (error) throw error;
+
+      // Sync to Google Calendar
+      if (inserted) {
+        syncToGoogleCalendar({
+          id: inserted.id,
+          title: newTitle.trim(),
+          description: newNotes.trim() || null,
+          address: newAddress.trim() || null,
+          scheduled_at: scheduledAt.toISOString(),
+          duration_minutes: newDuration,
+        });
+      }
+
       toast.success('Termin erstellt');
       setNewDialogOpen(false);
       setNewTitle('');
@@ -207,6 +340,10 @@ export default function AdminCalendar() {
   };
 
   const deleteAppointment = async (id: string) => {
+    const appt = appointments.find(a => a.id === id);
+    if (appt) {
+      deleteFromGoogleCalendar(appt);
+    }
     const { error } = await supabase.from('pipeline_appointments').delete().eq('id', id);
     if (error) {
       toast.error('Fehler beim Löschen');
@@ -265,9 +402,22 @@ export default function AdminCalendar() {
           <h1 className="text-2xl font-bold">Kalender</h1>
           <p className="text-muted-foreground text-sm">Termine und Wiedervorlagen</p>
         </div>
-        <Button onClick={() => openNewDialog(format(new Date(), 'yyyy-MM-dd'))}>
-          <Plus className="h-4 w-4 mr-1" /> Neuer Termin
-        </Button>
+        <div className="flex items-center gap-2">
+          {gcalConnected ? (
+            <Button variant="outline" size="sm" onClick={disconnectGoogleCalendar} disabled={gcalLoading} className="text-xs gap-1.5">
+              {gcalLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Unlink className="h-3.5 w-3.5" />}
+              Google Calendar trennen
+            </Button>
+          ) : (
+            <Button variant="outline" size="sm" onClick={connectGoogleCalendar} disabled={gcalLoading} className="text-xs gap-1.5">
+              {gcalLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Link2 className="h-3.5 w-3.5" />}
+              Google Calendar verbinden
+            </Button>
+          )}
+          <Button onClick={() => openNewDialog(format(new Date(), 'yyyy-MM-dd'))}>
+            <Plus className="h-4 w-4 mr-1" /> Neuer Termin
+          </Button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">

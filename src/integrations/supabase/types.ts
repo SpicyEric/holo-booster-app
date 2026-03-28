@@ -1069,6 +1069,39 @@ export type Database = {
           },
         ]
       }
+      google_calendar_tokens: {
+        Row: {
+          access_token: string
+          calendar_id: string
+          created_at: string
+          id: string
+          refresh_token: string
+          token_expires_at: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          access_token: string
+          calendar_id?: string
+          created_at?: string
+          id?: string
+          refresh_token: string
+          token_expires_at: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          access_token?: string
+          calendar_id?: string
+          created_at?: string
+          id?: string
+          refresh_token?: string
+          token_expires_at?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       google_review_claims: {
         Row: {
           claimed_at: string | null
@@ -1637,6 +1670,7 @@ export type Database = {
           created_by_user_id: string
           description: string | null
           duration_minutes: number | null
+          google_calendar_event_id: string | null
           id: string
           lead_id: string
           scheduled_at: string
@@ -1649,6 +1683,7 @@ export type Database = {
           created_by_user_id: string
           description?: string | null
           duration_minutes?: number | null
+          google_calendar_event_id?: string | null
           id?: string
           lead_id: string
           scheduled_at: string
@@ -1661,6 +1696,7 @@ export type Database = {
           created_by_user_id?: string
           description?: string | null
           duration_minutes?: number | null
+          google_calendar_event_id?: string | null
           id?: string
           lead_id?: string
           scheduled_at?: string
