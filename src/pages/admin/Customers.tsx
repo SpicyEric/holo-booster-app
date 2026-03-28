@@ -48,9 +48,9 @@ const CustomerMarker = ({ customer, isSelected, onClick }: { customer: Customer;
       <div className="rounded-full overflow-hidden flex items-center justify-center"
         style={{
           width: size, height: size,
-          border: `3px solid hsl(262, 50%, 40%)`,
+          border: `3px solid hsl(262, 55%, 45%)`,
           backgroundColor: 'rgba(255,255,255,0.9)',
-          boxShadow: isSelected ? '0 0 0 3px rgba(109,40,217,0.3)' : '0 2px 8px rgba(0,0,0,0.2)',
+          boxShadow: isSelected ? '0 0 0 3px hsla(262, 55%, 45%, 0.3)' : '0 2px 8px rgba(0,0,0,0.2)',
         }}>
         {customer.logo_url ? (
           <img src={customer.logo_url} alt={customer.name} className="w-full h-full object-cover"
