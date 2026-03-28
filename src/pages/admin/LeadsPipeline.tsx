@@ -47,6 +47,14 @@ interface DiscoveredStore {
   created_at: string;
   latitude: number | null;
   longitude: number | null;
+  linked_customer_id: string | null;
+}
+
+interface CustomerOption {
+  id: string;
+  name: string;
+  city: string | null;
+  status: string | null;
 }
 
 /* ------------------------------------------------------------------ */
