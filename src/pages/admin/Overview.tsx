@@ -211,7 +211,7 @@ const Overview = () => {
       )}
 
       {/* Core KPIs with expandable hover details */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         {/* Aktive Kunden */}
         <div>
           <Card
