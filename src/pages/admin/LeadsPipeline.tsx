@@ -411,11 +411,11 @@ export default function LeadsPipeline() {
                   onDragOver={handleDragOver(stage.key)}
                   onDragLeave={handleDragLeave}
                   onDrop={handleDrop(stage.key)}
-                  className={cn(
-                    'flex flex-col items-center cursor-pointer transition-all shrink-0 rounded-xl overflow-hidden',
-                    isDragOver ? 'w-[80px] ring-2 ring-white/50' : 'w-[52px]',
-                    stage.color
-                  )}
+                  className="flex flex-col items-center cursor-pointer transition-all shrink-0 rounded-xl overflow-hidden"
+                  style={{
+                    width: isDragOver ? 80 : 52,
+                    backgroundColor: stage.bgColor,
+                  }}
                 >
                   {/* Count badge */}
                   <div className="py-3 flex flex-col items-center gap-1">
