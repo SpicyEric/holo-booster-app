@@ -55,7 +55,7 @@ const STAGES = [
   { key: 'terminiert', label: 'Terminiert', bgColor: 'hsl(262, 48%, 62%)' },
   { key: 'besucht', label: 'Besucht', bgColor: 'hsl(262, 50%, 52%)' },
   { key: 'gewonnen', label: 'Gewonnen', bgColor: 'hsl(262, 55%, 45%)' },
-  { key: 'verloren', label: 'Verloren', bgColor: 'hsl(262, 45%, 30%)' },
+  { key: 'verloren', label: 'Verloren', bgColor: 'hsl(0, 0%, 25%)' },
   { key: 'standby', label: 'Standby', bgColor: 'hsl(262, 15%, 55%)' },
 ] as const;
 

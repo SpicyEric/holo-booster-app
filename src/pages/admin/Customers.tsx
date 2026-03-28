@@ -57,7 +57,7 @@ const CustomerMarker = ({ customer, isSelected, onClick }: { customer: Customer;
             onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
         ) : (
           <div className="w-full h-full flex items-center justify-center text-white font-bold"
-            style={{ backgroundColor: 'hsl(262, 50%, 40%)' }}>
+            style={{ backgroundColor: 'hsl(262, 55%, 45%)' }}>
             {customer.name.charAt(0).toUpperCase()}
           </div>
         )}
