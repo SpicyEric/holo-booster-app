@@ -23,12 +23,6 @@ const SalesRepRegistration = () => {
     postal_code: "",
     city: "",
     country: "Deutschland",
-    tax_number: "",
-    vat_id: "",
-    iban: "",
-    bic: "",
-    bank_name: "",
-    account_holder: "",
     notes: "",
   });
 
