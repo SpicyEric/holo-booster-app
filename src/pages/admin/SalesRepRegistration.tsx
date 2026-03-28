@@ -150,8 +150,6 @@ const SalesRepRegistration = () => {
             <Input value={form.country} onChange={(e) => update("country", e.target.value)} className="h-9" />
           </div>
         </Card>
-
-        </Card>
       </div>
 
       {/* Notizen */}
