@@ -4,9 +4,10 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
+import confetti from 'canvas-confetti';
 import {
   Plus, Star, User, MapPin, Phone, Mail, Globe, MessageSquare,
-  Trash2, X, Search, Loader2, ExternalLink, CalendarPlus,
+  Trash2, X, Search, Loader2, ExternalLink, CalendarPlus, Link2,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
