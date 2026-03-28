@@ -34,6 +34,8 @@ const Overview = () => {
   const [newCustomersList, setNewCustomersList] = useState<Array<{ name: string; created_at: string; industry: string | null }>>([]);
   const [chartData, setChartData] = useState<any[]>([]);
   const [liveFeed, setLiveFeed] = useState<any[]>([]);
+  const [upcomingAppointments, setUpcomingAppointments] = useState<any[]>([]);
+  const [appointmentCount, setAppointmentCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [expandedKpi, setExpandedKpi] = useState<string | null>(null);
 
