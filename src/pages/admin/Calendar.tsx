@@ -363,71 +363,90 @@ export default function AdminCalendar() {
           )}
 
           {selectedDate ? (
-            <ScrollArea className="h-[500px] pr-2">
-              <div className="relative">
-                {/* Timeline slots from 6:00 to 22:00 = 32 half-hour slots */}
-                {Array.from({ length: 33 }, (_, i) => {
-                  const hour = Math.floor(i / 2) + 6;
-                  const minute = (i % 2) * 30;
-                  const timeLabel = `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
-                  const isFullHour = minute === 0;
+            (() => {
+              // Dynamic timeline range based on appointments
+              const defaultStart = 8;
+              const defaultEnd = 20;
+              let timelineStart = defaultStart;
+              let timelineEnd = defaultEnd;
 
-                  return (
-                    <div
-                      key={i}
-                      className={cn(
-                        'relative h-[40px] flex items-start',
-                        isFullHour ? 'border-t border-border' : 'border-t border-border/30'
-                      )}
-                    >
-                      <span className={cn(
-                        'text-[10px] w-10 shrink-0 -mt-[7px] select-none',
-                        isFullHour ? 'text-muted-foreground font-medium' : 'text-muted-foreground/50'
-                      )}>
-                        {timeLabel}
-                      </span>
-                      <div className="flex-1 relative" />
-                    </div>
-                  );
-                })}
+              if (dayAppointments.length > 0) {
+                const earliestHour = Math.min(...dayAppointments.map(a => parseISO(a.scheduled_at).getHours()));
+                const latestEnd = Math.max(...dayAppointments.map(a => {
+                  const d = parseISO(a.scheduled_at);
+                  return d.getHours() + Math.ceil((d.getMinutes() + (a.duration_minutes || 60)) / 60);
+                }));
+                timelineStart = Math.min(defaultStart, earliestHour);
+                timelineEnd = Math.max(defaultEnd, latestEnd);
+              }
 
-                {/* Overlay appointments on the timeline */}
-                {dayAppointments.map((a) => {
-                  const apptDate = parseISO(a.scheduled_at);
-                  const apptHour = apptDate.getHours();
-                  const apptMinute = apptDate.getMinutes();
-                  const startSlot = (apptHour - 6) * 2 + apptMinute / 30;
-                  const durationSlots = (a.duration_minutes || 60) / 30;
-                  const topPx = startSlot * 40;
-                  const heightPx = Math.max(durationSlots * 40 - 2, 28);
+              const totalSlots = (timelineEnd - timelineStart) * 2 + 1;
 
-                  if (apptHour < 6 || apptHour >= 22) return null;
+              return (
+                <div className="h-[500px] overflow-y-auto overscroll-contain" style={{ scrollbarWidth: 'none' }}>
+                  <style>{`.timeline-scroll::-webkit-scrollbar { display: none; }`}</style>
+                  <div className="relative timeline-scroll">
+                    {Array.from({ length: totalSlots }, (_, i) => {
+                      const hour = Math.floor(i / 2) + timelineStart;
+                      const minute = (i % 2) * 30;
+                      const timeLabel = `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
+                      const isFullHour = minute === 0;
 
-                  return (
-                    <div
-                      key={a.id}
-                      className="absolute left-10 right-0 bg-primary/10 border border-primary/20 rounded-lg px-2 py-1 cursor-pointer hover:bg-primary/20 transition-colors overflow-hidden z-10"
-                      style={{ top: `${topPx}px`, height: `${heightPx}px` }}
-                      onClick={() => setSelectedAppointment(a)}
-                    >
-                      <div className="flex items-center gap-1.5">
-                        {a.lead?.google_photo_url ? (
-                          <img src={a.lead.google_photo_url} alt="" className="h-5 w-5 rounded object-cover shrink-0" />
-                        ) : (
-                          <CalendarDays className="h-3.5 w-3.5 text-primary shrink-0" />
-                        )}
-                        <span className="text-[11px] font-medium truncate">{a.title}</span>
-                      </div>
-                      {heightPx > 36 && (
-                        <p className="text-[10px] text-muted-foreground truncate mt-0.5">
-                          {format(apptDate, 'HH:mm')} – {format(new Date(apptDate.getTime() + (a.duration_minutes || 60) * 60000), 'HH:mm')} Uhr
-                        </p>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            </ScrollArea>
+                      return (
+                        <div
+                          key={i}
+                          className={cn(
+                            'relative h-[40px] flex items-start',
+                            isFullHour ? 'border-t border-border' : 'border-t border-border/30'
+                          )}
+                        >
+                          <span className={cn(
+                            'text-[10px] w-10 shrink-0 -mt-[7px] select-none',
+                            isFullHour ? 'text-muted-foreground font-medium' : 'text-muted-foreground/50'
+                          )}>
+                            {timeLabel}
+                          </span>
+                          <div className="flex-1 relative" />
+                        </div>
+                      );
+                    })}
+
+                    {dayAppointments.map((a) => {
+                      const apptDate = parseISO(a.scheduled_at);
+                      const apptHour = apptDate.getHours();
+                      const apptMinute = apptDate.getMinutes();
+                      const startSlot = (apptHour - timelineStart) * 2 + apptMinute / 30;
+                      const durationSlots = (a.duration_minutes || 60) / 30;
+                      const topPx = startSlot * 40;
+                      const heightPx = Math.max(durationSlots * 40 - 2, 28);
+
+                      return (
+                        <div
+                          key={a.id}
+                          className="absolute left-10 right-0 bg-primary/10 border border-primary/20 rounded-lg px-2 py-1 cursor-pointer hover:bg-primary/20 transition-colors overflow-hidden z-10"
+                          style={{ top: `${topPx}px`, height: `${heightPx}px` }}
+                          onClick={() => setSelectedAppointment(a)}
+                        >
+                          <div className="flex items-center gap-1.5">
+                            {a.lead?.google_photo_url ? (
+                              <img src={a.lead.google_photo_url} alt="" className="h-5 w-5 rounded object-cover shrink-0" />
+                            ) : (
+                              <CalendarDays className="h-3.5 w-3.5 text-primary shrink-0" />
+                            )}
+                            <span className="text-[11px] font-medium truncate">{a.title}</span>
+                          </div>
+                          {heightPx > 36 && (
+                            <p className="text-[10px] text-muted-foreground truncate mt-0.5">
+                              {format(apptDate, 'HH:mm')} – {format(new Date(apptDate.getTime() + (a.duration_minutes || 60) * 60000), 'HH:mm')} Uhr
+                            </p>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })()
           ) : (
             <p className="text-xs text-muted-foreground text-center py-4">Tag auswählen, um den Zeitstrahl zu sehen</p>
           )}
