@@ -580,9 +580,9 @@ export default function LeadsPipeline() {
                         setSelected(null);
                         fetchStores();
                       }}
+                      style={{ backgroundColor: stage.bgColor }}
                       className={cn(
                         'px-3 py-1.5 rounded-lg text-xs font-medium text-white transition-opacity',
-                        stage.color,
                         mapStatus(selected.status) === stage.key ? 'opacity-100 ring-2 ring-offset-2 ring-offset-background' : 'opacity-60 hover:opacity-100'
                       )}
                       
