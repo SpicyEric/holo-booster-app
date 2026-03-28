@@ -50,13 +50,13 @@ interface DiscoveredStore {
 /* ------------------------------------------------------------------ */
 
 const STAGES = [
-  { key: 'neu', label: 'Neu', color: 'bg-blue-500', border: 'border-blue-500/30', dot: 'bg-blue-400' },
-  { key: 'angerufen', label: 'Angerufen', color: 'bg-rose-500', border: 'border-rose-500/30', dot: 'bg-rose-400' },
-  { key: 'terminiert', label: 'Terminiert', color: 'bg-yellow-500', border: 'border-yellow-500/30', dot: 'bg-yellow-400' },
-  { key: 'besucht', label: 'Besucht', color: 'bg-orange-500', border: 'border-orange-500/30', dot: 'bg-orange-400' },
-  { key: 'gewonnen', label: 'Gewonnen', color: 'bg-green-500', border: 'border-green-500/30', dot: 'bg-green-400' },
-  { key: 'verloren', label: 'Verloren', color: 'bg-red-500', border: 'border-red-500/30', dot: 'bg-red-400' },
-  { key: 'standby', label: 'Standby', color: 'bg-gray-500', border: 'border-gray-500/30', dot: 'bg-gray-400' },
+  { key: 'neu', label: 'Neu', bgColor: 'hsl(262, 40%, 82%)' },
+  { key: 'angerufen', label: 'Angerufen', bgColor: 'hsl(262, 45%, 72%)' },
+  { key: 'terminiert', label: 'Terminiert', bgColor: 'hsl(262, 48%, 62%)' },
+  { key: 'besucht', label: 'Besucht', bgColor: 'hsl(262, 50%, 52%)' },
+  { key: 'gewonnen', label: 'Gewonnen', bgColor: 'hsl(262, 55%, 45%)' },
+  { key: 'verloren', label: 'Verloren', bgColor: 'hsl(262, 45%, 30%)' },
+  { key: 'standby', label: 'Standby', bgColor: 'hsl(262, 15%, 55%)' },
 ] as const;
 
 const ARCHIVE_STAGES = ['gewonnen', 'verloren', 'standby'] as const;
