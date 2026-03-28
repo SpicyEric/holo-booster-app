@@ -732,6 +732,18 @@ export default function LeadsPipeline() {
                     <button
                       key={stage.key}
                       onClick={async () => {
+                        if (stage.key === 'gewonnen') {
+                          // Confetti + linking
+                          confetti({ particleCount: 150, spread: 80, origin: { y: 0.3 }, colors: ['#7c3aed', '#a78bfa', '#10b981', '#fbbf24', '#f43f5e'] });
+                          await supabase.from('discovered_stores').update({ status: 'gewonnen', updated_at: new Date().toISOString() }).eq('id', selected.id);
+                          setStores(prev => prev.map(s => s.id === selected.id ? { ...s, status: 'gewonnen' } : s));
+                          setLinkingStoreId(selected.id);
+                          setCustomerSearch('');
+                          setLinkDialogOpen(true);
+                          fetchCustomers();
+                          setSelected(null);
+                          return;
+                        }
                         await supabase.from('discovered_stores').update({ status: stage.key, updated_at: new Date().toISOString() }).eq('id', selected.id);
                         toast.success(`Verschoben → ${stage.label}`);
                         setSelected(null);
