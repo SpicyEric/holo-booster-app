@@ -53,6 +53,7 @@ const NAV_GROUPS: NavGroup[] = [
     label: "SYSTEM",
     items: [
       { path: "/admin/accounts", label: "Accounts", icon: UserCog },
+      { path: "/admin/sales-rep-register", label: "Vertriebler registrieren", icon: UserPlus },
       { path: "/admin/settings", label: "Einstellungen", icon: Settings },
     ],
   },
