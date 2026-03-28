@@ -109,11 +109,17 @@ function DealCard({
   store,
   onDragStart,
   onClick,
+  onNoteTitleSave,
+  onSchedule,
 }: {
   store: DiscoveredStore;
   onDragStart: (e: React.DragEvent) => void;
   onClick: () => void;
+  onNoteTitleSave: (id: string, value: string) => void;
+  onSchedule: (store: DiscoveredStore) => void;
 }) {
+  const [editingNoteTitle, setEditingNoteTitle] = useState(false);
+  const [localNoteTitle, setLocalNoteTitle] = useState(store.note_title || '');
   const shortAddr = [store.street, store.house_number].filter(Boolean).join(' ');
   const cityLine = [store.postal_code, store.city].filter(Boolean).join(' ');
 
@@ -145,6 +151,14 @@ function DealCard({
             <Badge variant="secondary" className="text-[10px] mt-0.5 h-4">{store.industry}</Badge>
           )}
         </div>
+        {/* Schedule button */}
+        <button
+          onClick={(e) => { e.stopPropagation(); onSchedule(store); }}
+          className="shrink-0 h-7 w-7 rounded-lg bg-primary/10 hover:bg-primary/20 flex items-center justify-center transition-colors"
+          title="Termin erstellen"
+        >
+          <CalendarPlus className="h-3.5 w-3.5 text-primary" />
+        </button>
       </div>
 
       {/* Contact person */}
@@ -200,14 +214,39 @@ function DealCard({
       {/* Rating */}
       <Stars rating={store.google_rating} />
 
-
-      {/* Notes preview */}
-      {store.notes && (
-        <div className="flex items-start gap-1.5 text-[11px] text-muted-foreground">
-          <MessageSquare className="h-3 w-3 shrink-0 mt-0.5" />
-          <span className="line-clamp-2 italic">{store.notes}</span>
-        </div>
-      )}
+      {/* Inline note title */}
+      <div
+        className="mt-1"
+        onClick={(e) => { e.stopPropagation(); setEditingNoteTitle(true); }}
+      >
+        {editingNoteTitle ? (
+          <input
+            autoFocus
+            value={localNoteTitle}
+            onChange={(e) => setLocalNoteTitle(e.target.value)}
+            onBlur={() => {
+              setEditingNoteTitle(false);
+              onNoteTitleSave(store.id, localNoteTitle);
+            }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                setEditingNoteTitle(false);
+                onNoteTitleSave(store.id, localNoteTitle);
+              }
+            }}
+            className="w-full text-xs bg-muted/50 border border-border rounded px-2 py-1 outline-none focus:ring-1 focus:ring-primary"
+            placeholder="Notiztitel eingeben..."
+            onClick={(e) => e.stopPropagation()}
+          />
+        ) : (
+          <div className="flex items-start gap-1.5 text-[11px] min-h-[24px] px-2 py-1 rounded bg-muted/30 hover:bg-muted/50 transition-colors cursor-text">
+            <MessageSquare className="h-3 w-3 shrink-0 mt-0.5 text-muted-foreground" />
+            <span className={cn('line-clamp-2', store.note_title ? 'text-foreground' : 'text-muted-foreground/50 italic')}>
+              {store.note_title || 'Notiztitel...'}
+            </span>
+          </div>
+        )}
+      </div>
 
       {/* Footer */}
       <div className="flex items-center justify-between text-[10px] text-muted-foreground/70 pt-0.5 border-t border-border/30">
