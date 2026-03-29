@@ -235,6 +235,9 @@ serve(async (req) => {
       success_url: `${req.headers.get("origin")}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${req.headers.get("origin")}/checkout/cancel`,
       metadata,
+      subscription_data: {
+        metadata: { promoterId: partnerUserId || '', salesRepDiscountCents: String(salesRepDiscountCents) },
+      },
     };
 
     if (aboCouponId) {
