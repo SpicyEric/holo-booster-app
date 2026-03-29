@@ -56,11 +56,85 @@ export const useNewCustomerOfferRedemption = ({
     return nfcChip.merchant_customer_id === merchantId;
   };
 
-  const processNewCustomerOffer = async (): Promise<boolean> => {
-    if (!userId) return false;
+  const processNewCustomerOffer = async (hardwareUid?: string): Promise<{ success: boolean; totalPoints?: number }> => {
+    if (!userId) return { success: false };
 
     try {
-      // Check if user already has a stamp card for this merchant (shouldn't happen, but safety check)
+      let nfcPointsAwarded = 0;
+      let loyaltyAccountId: string | null = null;
+
+      // Step 1: Award NFC stamp points first (if hardware UID provided)
+      if (hardwareUid) {
+        const { data: nfcResult, error: nfcError } = await supabase.rpc(
+          'award_points_via_nfc',
+          { p_hardware_uid: hardwareUid, p_user_id: userId }
+        );
+
+        if (!nfcError && nfcResult?.success) {
+          nfcPointsAwarded = nfcResult.points_awarded || 0;
+          console.log('[NewCustomerOffer] NFC stamp points awarded:', nfcPointsAwarded);
+        } else {
+          console.warn('[NewCustomerOffer] NFC award failed, continuing with bonus only:', nfcError || nfcResult?.error);
+        }
+      }
+
+      // Step 2: Get or verify loyalty account exists (NFC RPC may have created it)
+      const { data: existingAccount } = await supabase
+        .from('loyalty_accounts')
+        .select('id, current_points_balance')
+        .eq('user_id', userId)
+        .eq('merchant_customer_id', merchantId)
+        .maybeSingle();
+
+      if (existingAccount) {
+        loyaltyAccountId = existingAccount.id;
+        
+        // Add bonus points on top
+        const { error: updateError } = await supabase
+          .from('loyalty_accounts')
+          .update({
+            current_points_balance: (existingAccount.current_points_balance || 0) + bonusStamps,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', existingAccount.id);
+
+        if (updateError) {
+          console.error('Error adding bonus points:', updateError);
+          setState(prev => ({ ...prev, error: 'Fehler beim Gutschreiben der Bonuspunkte' }));
+          return { success: false };
+        }
+      } else {
+        // No loyalty account yet (NFC didn't create one) — create with bonus points
+        const { data: newAccount, error: createError } = await supabase
+          .from('loyalty_accounts')
+          .insert({
+            user_id: userId,
+            merchant_customer_id: merchantId,
+            current_points_balance: bonusStamps,
+          })
+          .select()
+          .single();
+
+        if (createError) {
+          console.error('Error creating loyalty account:', createError);
+          setState(prev => ({ ...prev, error: 'Fehler beim Erstellen des Kontos' }));
+          return { success: false };
+        }
+        loyaltyAccountId = newAccount.id;
+      }
+
+      // Step 3: Record bonus transaction
+      await supabase
+        .from('point_transactions')
+        .insert({
+          loyalty_account_id: loyaltyAccountId,
+          merchant_customer_id: merchantId,
+          points_change: bonusStamps,
+          transaction_type: 'new_customer_bonus',
+          description: 'Neukundenprämie eingelöst',
+        });
+
+      // Step 4: Create user stamp card if needed
       const { data: existingCard } = await supabase
         .from('user_stamp_cards')
         .select('id')
@@ -68,64 +142,31 @@ export const useNewCustomerOfferRedemption = ({
         .eq('merchant_customer_id', merchantId)
         .maybeSingle();
 
-      if (existingCard) {
-        setState(prev => ({ ...prev, error: 'Du hast bereits Punkte bei diesem Geschäft gesammelt' }));
-        return false;
+      if (!existingCard) {
+        const { data: stampCard } = await supabase
+          .from('stamp_cards')
+          .select('id')
+          .eq('merchant_customer_id', merchantId)
+          .maybeSingle();
+
+        await supabase
+          .from('user_stamp_cards')
+          .insert({
+            user_id: userId,
+            merchant_customer_id: merchantId,
+            stamp_card_id: stampCard?.id || null,
+            current_points: nfcPointsAwarded + bonusStamps,
+          });
       }
 
-      // Get stamp card design for this merchant
-      const { data: stampCard } = await supabase
-        .from('stamp_cards')
-        .select('id')
-        .eq('merchant_customer_id', merchantId)
-        .maybeSingle();
+      const totalPoints = nfcPointsAwarded + bonusStamps;
+      pushNotificationService.notifyNewCustomerOfferRedeemed(totalPoints, merchantName);
 
-      // Create loyalty account with bonus points
-      const { data: loyaltyAccount, error: loyaltyError } = await supabase
-        .from('loyalty_accounts')
-        .insert({
-          user_id: userId,
-          merchant_customer_id: merchantId,
-          current_points_balance: bonusStamps,
-        })
-        .select()
-        .single();
-
-      if (loyaltyError) {
-        console.error('Error creating loyalty account:', loyaltyError);
-        setState(prev => ({ ...prev, error: 'Fehler beim Erstellen des Kontos' }));
-        return false;
-      }
-
-      // Create user stamp card
-      await supabase
-        .from('user_stamp_cards')
-        .insert({
-          user_id: userId,
-          merchant_customer_id: merchantId,
-          stamp_card_id: stampCard?.id || null,
-          current_points: bonusStamps,
-        });
-
-      // Record transaction
-      await supabase
-        .from('point_transactions')
-        .insert({
-          loyalty_account_id: loyaltyAccount.id,
-          merchant_customer_id: merchantId,
-          points_change: bonusStamps,
-          transaction_type: 'new_customer_bonus',
-          description: 'Neukundenprämie eingelöst',
-        });
-
-      // Send push notification
-      pushNotificationService.notifyNewCustomerOfferRedeemed(bonusStamps, merchantName);
-
-      return true;
+      return { success: true, totalPoints };
     } catch (error) {
       console.error('Error processing new customer offer:', error);
       setState(prev => ({ ...prev, error: 'Fehler beim Einlösen' }));
-      return false;
+      return { success: false };
     }
   };
 
