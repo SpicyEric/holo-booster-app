@@ -141,13 +141,22 @@ serve(async (req) => {
     // Build line items
     const lineItems: any[] = [];
 
-    // 1. First Startbox
+    // 1. First Startbox (apply salesRepDiscount + promo discount)
+    const startboxAfterSalesDiscount = STARTBOX_PRICE - salesRepDiscountCents;
     if (startboxPercentOff > 0) {
-      const discountedPrice = Math.round(STARTBOX_PRICE * (1 - startboxPercentOff / 100));
+      const discountedPrice = Math.round(startboxAfterSalesDiscount * (1 - startboxPercentOff / 100));
       lineItems.push({
         price_data: {
-          currency: 'eur', unit_amount: discountedPrice,
-          product_data: { name: 'Eloyo Startbox Basic', description: `${startboxPercentOff}% Rabatt (Original: €149,45)` },
+          currency: 'eur', unit_amount: Math.max(0, discountedPrice),
+          product_data: { name: 'Eloyo Startbox Basic', description: `${startboxPercentOff}% Rabatt${salesRepDiscountCents > 0 ? ` + ${salesRepDiscount}€ Partner-Rabatt` : ''} (Original: €149,45)` },
+        },
+        quantity: 1,
+      });
+    } else if (salesRepDiscountCents > 0) {
+      lineItems.push({
+        price_data: {
+          currency: 'eur', unit_amount: Math.max(0, startboxAfterSalesDiscount),
+          product_data: { name: 'Eloyo Startbox Basic', description: `${salesRepDiscount}€ Partner-Rabatt (Original: €149,45)` },
         },
         quantity: 1,
       });
