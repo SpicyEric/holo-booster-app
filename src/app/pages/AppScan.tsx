@@ -217,9 +217,9 @@ export const AppScan = () => {
   }, [user, navigate, isOnline]);
 
   const handleNfcRead = useCallback((nfcResult: NfcReadResult) => {
-    if (nfcResult.success && nfcResult.hardwareUid) {
-      // Use hardware UID only for identification (TAG-only mode for iOS compatibility)
-      handleChipScan(nfcResult.hardwareUid);
+    if (nfcResult.success && (nfcResult.hardwareUid || nfcResult.chipData)) {
+      // Send both hardware UID and NDEF chip data for backward compatibility
+      handleChipScan(nfcResult.hardwareUid || '', nfcResult.chipData || '');
     } else if (nfcResult.error) {
       const errorLower = nfcResult.error.toLowerCase();
       if (errorLower.includes('permission') || 

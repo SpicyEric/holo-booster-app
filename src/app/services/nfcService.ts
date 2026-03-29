@@ -327,11 +327,32 @@ class NfcService {
     try {
       console.log('[NFC] Processing tag:', JSON.stringify(nfcTag));
       
-      // Extract hardware UID - this is the ONLY identification method (TAG-only mode)
+      // Extract hardware UID
       const hardwareUid = this.extractHardwareUid(nfcTag);
       
-      if (!hardwareUid) {
-        console.log('[NFC] No hardware UID found on tag');
+      // Also extract NDEF text data for backward compatibility (chips without hardware_uid in DB)
+      let chipData = '';
+      try {
+        const messages = nfcTag?.message?.records || nfcTag?.messages?.[0]?.records || [];
+        for (const record of messages) {
+          if (record?.type === 'T' || record?.typeNameFormat === 1) {
+            const payload = record?.payload;
+            if (Array.isArray(payload) && payload.length > 0) {
+              const decoded = this.decodeNdefTextPayload(payload);
+              if (decoded && this.validateChipData(decoded.trim())) {
+                chipData = decoded.trim();
+                console.log('[NFC] NDEF text data extracted:', chipData);
+                break;
+              }
+            }
+          }
+        }
+      } catch (e) {
+        console.log('[NFC] No NDEF data extracted (TAG-only mode):', e);
+      }
+      
+      if (!hardwareUid && !chipData) {
+        console.log('[NFC] No hardware UID or NDEF data found on tag');
         onRead({
           chipData: '',
           success: false,
@@ -340,9 +361,8 @@ class NfcService {
         return;
       }
 
-      console.log('[NFC] Tag identified by hardware UID:', hardwareUid);
-      // chipData is kept empty - identification is purely via hardwareUid
-      onRead({ chipData: '', hardwareUid, success: true });
+      console.log('[NFC] Tag identified - hardwareUid:', hardwareUid, 'chipData:', chipData);
+      onRead({ chipData, hardwareUid, success: true });
       this.stopScan();
       
     } catch (error: any) {
