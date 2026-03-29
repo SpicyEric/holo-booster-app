@@ -64,8 +64,10 @@ serve(async (req) => {
       customerName, customerEmail, companyName, address,
       billingAddress, billingInterval, promoCodes,
       locationCount = 1, industry, vatId, contactPhone,
-      additionalContacts, partnerUserId,
+      additionalContacts, partnerUserId, salesRepDiscount,
     } = body;
+
+    const salesRepDiscountCents = Math.min((salesRepDiscount || 0) * 100, 5000); // max 50€
 
     const additionalLocations = Math.max(0, locationCount - 1);
     console.log("[CREATE-CHECKOUT] Request:", { billingInterval, locationCount, promoCodes });
