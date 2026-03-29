@@ -2,7 +2,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { signOut } from "@/lib/auth";
 import { toast } from "sonner";
 import {
-  LayoutDashboard, Users, Package, BarChart3,
+  LayoutDashboard, Users, Package, BarChart3, Euro,
   ShoppingCart, Settings, LogOut, ChevronLeft, Menu, X, Map, GitBranch, Search, CalendarDays,
 } from "lucide-react";
 import eloyoLogo from "@/assets/eloyo-logo.png";
@@ -28,6 +28,7 @@ const NAV_GROUPS: NavGroup[] = [
     label: "ÜBERSICHT",
     items: [
       { path: "/vertriebler", label: "Dashboard", icon: LayoutDashboard },
+      { path: "/vertriebler/provisionen", label: "Provisionen", icon: Euro },
       { path: "/vertriebler/stats", label: "Statistiken", icon: BarChart3 },
     ],
   },

@@ -36,6 +36,8 @@ interface CheckoutFormProps {
   partnerUserId?: string;
 }
 
+const DISCOUNT_OPTIONS = [0, 10, 20, 30, 40, 50];
+
 export default function CheckoutForm({ backPath, backLabel, partnerUserId }: CheckoutFormProps) {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
@@ -77,6 +79,7 @@ export default function CheckoutForm({ backPath, backLabel, partnerUserId }: Che
   // Promo
   const [promoCodeInput, setPromoCodeInput] = useState("");
   const [validatedDiscounts, setValidatedDiscounts] = useState<ValidatedDiscount[]>([]);
+  const [salesRepDiscount, setSalesRepDiscount] = useState(0); // in euros
 
   const additionalLocations = Math.max(0, locationCount - 1);
 
@@ -86,7 +89,7 @@ export default function CheckoutForm({ backPath, backLabel, partnerUserId }: Che
     const yearlyAbo = monthlyAbo * 11; // 11 months for each
     const baseAbo = isYearlyBilling ? yearlyAbo : monthlyAbo;
 
-    let startboxDiscount = 0, aboDiscount = 0;
+    let startboxDiscount = salesRepDiscount, aboDiscount = 0;
     for (const d of validatedDiscounts) {
       if (d.appliesTo === 'one_time' || d.appliesTo === 'both') {
         startboxDiscount += d.discountType === 'percentage' ? baseStartbox * (d.discountValue / 100) : d.discountValue;
@@ -98,7 +101,7 @@ export default function CheckoutForm({ backPath, backLabel, partnerUserId }: Che
 
     const finalStartbox = Math.max(0, baseStartbox - startboxDiscount);
     const finalAbo = Math.max(0, baseAbo - aboDiscount);
-    const savings = isYearlyBilling ? monthlyAbo : 0; // 1 month saved
+    const savings = isYearlyBilling ? monthlyAbo : 0;
 
     return {
       startbox: baseStartbox, startboxDiscounted: finalStartbox, startboxDiscount,
@@ -182,6 +185,7 @@ export default function CheckoutForm({ backPath, backLabel, partnerUserId }: Che
           contactPhone,
           additionalContacts,
           partnerUserId,
+          salesRepDiscount: salesRepDiscount > 0 ? salesRepDiscount : undefined,
         },
       });
 
@@ -456,6 +460,36 @@ export default function CheckoutForm({ backPath, backLabel, partnerUserId }: Che
           />
         </CardContent>
       </Card>
+
+      {/* Sales Rep Discount */}
+      {partnerUserId && (
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base">Kundenrabatt (von Provision)</CardTitle>
+            <CardDescription className="text-xs">Wird von deiner Einmalprovision abgezogen</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-wrap gap-2">
+              {DISCOUNT_OPTIONS.map(val => (
+                <Button
+                  key={val}
+                  type="button"
+                  variant={salesRepDiscount === val ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setSalesRepDiscount(val)}
+                >
+                  {val === 0 ? 'Kein Rabatt' : `${val} €`}
+                </Button>
+              ))}
+            </div>
+            {salesRepDiscount > 0 && (
+              <p className="text-xs text-muted-foreground mt-2">
+                Der Kunde erhält {salesRepDiscount} € Rabatt auf die Startbox. Deine Einmalprovision wird um {salesRepDiscount} € reduziert (von 50 € auf {50 - salesRepDiscount} €).
+              </p>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       {/* Promo codes - subtle single line */}
       <div className="flex gap-2 items-center">
