@@ -12,8 +12,23 @@ interface CheckoutRequest {
     postalCode: string;
     country: string;
   };
+  billingAddress?: {
+    name?: string;
+    street?: string;
+    houseNumber?: string;
+    city?: string;
+    postalCode?: string;
+    country?: string;
+    email?: string;
+  };
   billingInterval: 'monthly' | 'yearly';
   promoCodes?: string[];
+  locationCount?: number;
+  industry?: string;
+  vatId?: string;
+  contactPhone?: string;
+  additionalContacts?: string;
+  partnerUserId?: string;
 }
 
 const corsHeaders = {
@@ -21,15 +36,19 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Eloyo Stripe Price IDs
+// Stripe Price IDs
 const PRICE_IDS = {
   STARTBOX: "price_1SYPFvBhiBjCX9PmvCYIpxGd",
   ABO_MONTHLY: "price_1SYPBgBhiBjCX9PmImKaK2YC",
+  ADDITIONAL_STARTBOX: "price_1TGI0vBhiBjCX9PmlblKG1OW",
+  ADDITIONAL_ABO_MONTHLY: "price_1TGI0uBhiBjCX9PmtT9lzPrz",
 };
 
 // Prices in cents
-const STARTBOX_PRICE = 14945; // €149.45
-const ABO_YEARLY_AMOUNT = 54395; // €543.95 (11 months)
+const STARTBOX_PRICE = 14945;
+const ADDITIONAL_STARTBOX_PRICE = 9945;
+const ABO_MONTHLY = 4945;
+const ADDITIONAL_ABO_MONTHLY = 3945;
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -39,44 +58,53 @@ serve(async (req) => {
   try {
     console.log("[CREATE-CHECKOUT] Function started");
 
+    const body: CheckoutRequest = await req.json();
     const {
-      customerName,
-      customerEmail,
-      companyName,
-      address,
-      billingInterval,
-      promoCodes,
-    }: CheckoutRequest = await req.json();
+      customerName, customerEmail, companyName, address,
+      billingAddress, billingInterval, promoCodes,
+      locationCount = 1, industry, vatId, contactPhone,
+      additionalContacts, partnerUserId,
+    } = body;
 
-    console.log("[CREATE-CHECKOUT] Request data received", { billingInterval, promoCodes });
+    const additionalLocations = Math.max(0, locationCount - 1);
+    console.log("[CREATE-CHECKOUT] Request:", { billingInterval, locationCount, promoCodes });
 
     const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
       apiVersion: "2024-10-28.acacia",
     });
 
     // Create or retrieve Stripe customer
-    const existingCustomers = await stripe.customers.list({
-      email: customerEmail,
-      limit: 1,
-    });
-
+    const existingCustomers = await stripe.customers.list({ email: customerEmail, limit: 1 });
     let customerId: string;
+
+    const billingAddr = billingAddress || address;
+    const stripeAddress = billingAddr ? {
+      line1: [billingAddr.street, billingAddr.houseNumber].filter(Boolean).join(' ') || undefined,
+      city: billingAddr.city || undefined,
+      postal_code: billingAddr.postalCode || undefined,
+      country: billingAddr.country === 'Deutschland' ? 'DE' : billingAddr.country || undefined,
+    } : undefined;
+
     if (existingCustomers.data.length > 0) {
       customerId = existingCustomers.data[0].id;
-      console.log("[CREATE-CHECKOUT] Existing customer:", customerId);
+      // Update address
+      if (stripeAddress) {
+        await stripe.customers.update(customerId, {
+          address: stripeAddress,
+          metadata: { companyName, industry: industry || '', vatId: vatId || '', locationCount: String(locationCount) },
+        });
+      }
     } else {
       const customer = await stripe.customers.create({
         email: customerEmail,
-        name: customerName,
-        metadata: { companyName },
+        name: billingAddress?.name || companyName,
+        address: stripeAddress,
+        metadata: { companyName, industry: industry || '', vatId: vatId || '', locationCount: String(locationCount) },
       });
       customerId = customer.id;
-      console.log("[CREATE-CHECKOUT] Created new customer:", customerId);
     }
 
-    // Process promo codes - separate by type
-    // Type 1: Percentage + once = Startbox discount (applied via price adjustment)
-    // Type 2: Amount + repeating = Abo discount (applied via Stripe coupon)
+    // Process promo codes
     let startboxPercentOff = 0;
     let aboCouponId: string | null = null;
     const appliedCodes: string[] = [];
@@ -85,48 +113,24 @@ serve(async (req) => {
       for (const code of promoCodes.slice(0, 2)) {
         const trimmedCode = code.trim();
         if (!trimmedCode) continue;
-
         try {
-          const promoCodesList = await stripe.promotionCodes.list({
-            code: trimmedCode,
-            active: true,
-            limit: 1,
-          });
-
+          const promoCodesList = await stripe.promotionCodes.list({ code: trimmedCode, active: true, limit: 1 });
           if (promoCodesList.data.length > 0) {
             const promoCode = promoCodesList.data[0];
             const coupon = await stripe.coupons.retrieve(promoCode.coupon.id);
-
-            console.log("[CREATE-CHECKOUT] Promo code found:", trimmedCode, {
-              percent_off: coupon.percent_off,
-              amount_off: coupon.amount_off,
-              duration: coupon.duration,
-              duration_in_months: coupon.duration_in_months,
-            });
-
-            // Percentage + once = Startbox discount
             if (coupon.percent_off && coupon.duration === 'once') {
               startboxPercentOff = coupon.percent_off;
               appliedCodes.push(trimmedCode);
-              console.log("[CREATE-CHECKOUT] Startbox discount:", startboxPercentOff + "%");
-            }
-            // Amount/Percent + repeating = Abo discount (12 months)
-            else if (coupon.duration === 'repeating') {
+            } else if (coupon.duration === 'repeating') {
               aboCouponId = coupon.id;
               appliedCodes.push(trimmedCode);
-              console.log("[CREATE-CHECKOUT] Abo recurring coupon:", coupon.id);
-            }
-            // Fallback: any other coupon goes to subscription
-            else if (!aboCouponId) {
+            } else if (!aboCouponId) {
               aboCouponId = coupon.id;
               appliedCodes.push(trimmedCode);
-              console.log("[CREATE-CHECKOUT] Generic coupon applied:", coupon.id);
             }
-          } else {
-            console.log("[CREATE-CHECKOUT] Promo code not found:", trimmedCode);
           }
         } catch (error) {
-          console.log("[CREATE-CHECKOUT] Error looking up promo code:", trimmedCode, error);
+          console.log("[CREATE-CHECKOUT] Promo error:", trimmedCode, error);
         }
       }
     }
@@ -134,65 +138,82 @@ serve(async (req) => {
     // Build line items
     const lineItems: any[] = [];
 
-    // 1. Startbox - apply percentage discount directly to price if available
+    // 1. First Startbox
     if (startboxPercentOff > 0) {
       const discountedPrice = Math.round(STARTBOX_PRICE * (1 - startboxPercentOff / 100));
       lineItems.push({
         price_data: {
-          currency: 'eur',
-          unit_amount: discountedPrice,
-          product_data: {
-            name: 'Eloyo Startbox Basic',
-            description: `${startboxPercentOff}% Rabatt angewendet (Original: €149,45)`,
-          },
+          currency: 'eur', unit_amount: discountedPrice,
+          product_data: { name: 'Eloyo Startbox Basic', description: `${startboxPercentOff}% Rabatt (Original: €149,45)` },
         },
         quantity: 1,
       });
-      console.log("[CREATE-CHECKOUT] Startbox discounted:", discountedPrice, "cents");
     } else {
-      lineItems.push({
-        price: PRICE_IDS.STARTBOX,
-        quantity: 1,
-      });
+      lineItems.push({ price: PRICE_IDS.STARTBOX, quantity: 1 });
     }
 
-    // 2. Abo (subscription)
+    // 2. Additional Startboxes
+    if (additionalLocations > 0) {
+      if (startboxPercentOff > 0) {
+        const discountedAdditional = Math.round(ADDITIONAL_STARTBOX_PRICE * (1 - startboxPercentOff / 100));
+        lineItems.push({
+          price_data: {
+            currency: 'eur', unit_amount: discountedAdditional,
+            product_data: { name: 'Zusatzstandort Startbox', description: `${additionalLocations}× zusätzliche Standorte (${startboxPercentOff}% Rabatt)` },
+          },
+          quantity: additionalLocations,
+        });
+      } else {
+        lineItems.push({ price: PRICE_IDS.ADDITIONAL_STARTBOX, quantity: additionalLocations });
+      }
+    }
+
+    // 3. First location Abo
     if (billingInterval === 'yearly') {
+      const yearlyAmount = ABO_MONTHLY * 11; // 11 months
       lineItems.push({
         price_data: {
-          currency: 'eur',
-          unit_amount: ABO_YEARLY_AMOUNT,
-          recurring: {
-            interval: 'year',
-            interval_count: 1,
-          },
-          product_data: {
-            name: 'Eloyo Abo (Jährlich)',
-            description: 'Jährliche Zahlung - 11 Monate zahlen, 12 Monate nutzen',
-          },
+          currency: 'eur', unit_amount: yearlyAmount,
+          recurring: { interval: 'year' },
+          product_data: { name: 'Eloyo Abo (Jährlich)', description: '11 Monate zahlen, 12 Monate nutzen' },
         },
         quantity: 1,
       });
     } else {
-      lineItems.push({
-        price: PRICE_IDS.ABO_MONTHLY,
-        quantity: 1,
-      });
+      lineItems.push({ price: PRICE_IDS.ABO_MONTHLY, quantity: 1 });
     }
 
-    console.log("[CREATE-CHECKOUT] Line items built:", lineItems.length);
+    // 4. Additional location Abo
+    if (additionalLocations > 0) {
+      if (billingInterval === 'yearly') {
+        const additionalYearly = ADDITIONAL_ABO_MONTHLY * 11;
+        lineItems.push({
+          price_data: {
+            currency: 'eur', unit_amount: additionalYearly,
+            recurring: { interval: 'year' },
+            product_data: { name: 'Zusatzstandort Abo (Jährlich)', description: `${additionalLocations}× zusätzliche Standorte – 11 Monate zahlen` },
+          },
+          quantity: additionalLocations,
+        });
+      } else {
+        lineItems.push({ price: PRICE_IDS.ADDITIONAL_ABO_MONTHLY, quantity: additionalLocations });
+      }
+    }
 
-    // Create metadata
+    // Metadata
     const metadata: Record<string, string> = {
-      customerName,
-      customerEmail,
-      companyName,
-      billingInterval,
+      customerName, customerEmail, companyName, billingInterval,
       address: JSON.stringify(address || {}),
+      billingAddress: JSON.stringify(billingAddress || {}),
       appliedPromoCodes: appliedCodes.join(', '),
+      locationCount: String(locationCount),
+      industry: industry || '',
+      vatId: vatId || '',
+      contactPhone: contactPhone || '',
+      additionalContacts: additionalContacts || '',
+      partnerUserId: partnerUserId || '',
     };
 
-    // Build session params
     const sessionParams: any = {
       customer: customerId,
       mode: "subscription",
@@ -203,10 +224,8 @@ serve(async (req) => {
       metadata,
     };
 
-    // Apply Abo recurring coupon via Stripe discount
     if (aboCouponId) {
       sessionParams.discounts = [{ coupon: aboCouponId }];
-      console.log("[CREATE-CHECKOUT] Subscription discount applied:", aboCouponId);
     } else {
       sessionParams.allow_promotion_codes = true;
     }
@@ -214,22 +233,16 @@ serve(async (req) => {
     const session = await stripe.checkout.sessions.create(sessionParams);
     console.log("[CREATE-CHECKOUT] Session created:", session.id);
 
-    return new Response(
-      JSON.stringify({ url: session.url }),
-      {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 200,
-      }
-    );
+    return new Response(JSON.stringify({ url: session.url }), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      status: 200,
+    });
   } catch (error) {
     console.error("[CREATE-CHECKOUT] Error:", error);
     const errorMessage = error instanceof Error ? error.message : String(error);
-    return new Response(
-      JSON.stringify({ error: errorMessage }),
-      {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 500,
-      }
-    );
+    return new Response(JSON.stringify({ error: errorMessage }), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      status: 500,
+    });
   }
 });
