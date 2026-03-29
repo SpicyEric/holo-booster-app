@@ -460,6 +460,36 @@ export default function CheckoutForm({ backPath, backLabel, partnerUserId }: Che
         </CardContent>
       </Card>
 
+      {/* Sales Rep Discount */}
+      {partnerUserId && (
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base">Kundenrabatt (von Provision)</CardTitle>
+            <CardDescription className="text-xs">Wird von deiner Einmalprovision abgezogen</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-wrap gap-2">
+              {DISCOUNT_OPTIONS.map(val => (
+                <Button
+                  key={val}
+                  type="button"
+                  variant={salesRepDiscount === val ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setSalesRepDiscount(val)}
+                >
+                  {val === 0 ? 'Kein Rabatt' : `${val} €`}
+                </Button>
+              ))}
+            </div>
+            {salesRepDiscount > 0 && (
+              <p className="text-xs text-muted-foreground mt-2">
+                Der Kunde erhält {salesRepDiscount} € Rabatt auf die Startbox. Deine Einmalprovision wird um {salesRepDiscount} € reduziert (von 50 € auf {50 - salesRepDiscount} €).
+              </p>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
       {/* Promo codes - subtle single line */}
       <div className="flex gap-2 items-center">
         <Input
