@@ -71,8 +71,8 @@ export const AppScan = () => {
     }
   }, [searchParams, checkingNfc, nfcSupported, nfcEnabled]);
 
-  const handleChipScan = useCallback(async (hardwareUid: string) => {
-    console.log('[AppScan] handleChipScan called, hardwareUid:', hardwareUid, 'user from hook:', user?.id, 'online:', isOnline);
+  const handleChipScan = useCallback(async (hardwareUid: string, chipData?: string) => {
+    console.log('[AppScan] handleChipScan called, hardwareUid:', hardwareUid, 'chipData:', chipData, 'user from hook:', user?.id, 'online:', isOnline);
     
     // Re-check session directly to avoid stale hook state (e.g. during token refresh)
     let currentUserId = user?.id;
