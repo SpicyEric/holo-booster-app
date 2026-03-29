@@ -224,6 +224,7 @@ serve(async (req) => {
       contactPhone: contactPhone || '',
       additionalContacts: additionalContacts || '',
       partnerUserId: partnerUserId || '',
+      salesRepDiscountCents: String(salesRepDiscountCents),
     };
 
     const sessionParams: any = {
