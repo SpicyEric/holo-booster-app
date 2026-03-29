@@ -131,6 +131,7 @@ const App = () => (
           {/* Vertriebler Dashboard (role: partner/sales_partner) */}
           <Route path="/vertriebler" element={<SalesRepDashboard />}>
             <Route index element={<Overview />} />
+            <Route path="provisionen" element={<SalesRepProvisionen />} />
             <Route path="customers" element={<Customers />} />
             <Route path="customers/new" element={<CustomerNew />} />
             <Route path="customers/:id" element={<CustomerDetail />} />
