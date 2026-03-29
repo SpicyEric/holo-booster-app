@@ -28,6 +28,7 @@ const NAV_GROUPS: NavGroup[] = [
     label: "ÜBERSICHT",
     items: [
       { path: "/vertriebler", label: "Dashboard", icon: LayoutDashboard },
+      { path: "/vertriebler/provisionen", label: "Provisionen", icon: Euro },
       { path: "/vertriebler/stats", label: "Statistiken", icon: BarChart3 },
     ],
   },
