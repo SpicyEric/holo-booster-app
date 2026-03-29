@@ -223,7 +223,7 @@ serve(async (req) => {
       vatId: vatId || '',
       contactPhone: contactPhone || '',
       additionalContacts: additionalContacts || '',
-      partnerUserId: partnerUserId || '',
+      promoterId: partnerUserId || '',
       salesRepDiscountCents: String(salesRepDiscountCents),
     };
 
