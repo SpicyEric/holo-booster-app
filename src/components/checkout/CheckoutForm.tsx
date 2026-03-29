@@ -89,7 +89,7 @@ export default function CheckoutForm({ backPath, backLabel, partnerUserId }: Che
     const yearlyAbo = monthlyAbo * 11; // 11 months for each
     const baseAbo = isYearlyBilling ? yearlyAbo : monthlyAbo;
 
-    let startboxDiscount = 0, aboDiscount = 0;
+    let startboxDiscount = salesRepDiscount, aboDiscount = 0;
     for (const d of validatedDiscounts) {
       if (d.appliesTo === 'one_time' || d.appliesTo === 'both') {
         startboxDiscount += d.discountType === 'percentage' ? baseStartbox * (d.discountValue / 100) : d.discountValue;
@@ -101,7 +101,7 @@ export default function CheckoutForm({ backPath, backLabel, partnerUserId }: Che
 
     const finalStartbox = Math.max(0, baseStartbox - startboxDiscount);
     const finalAbo = Math.max(0, baseAbo - aboDiscount);
-    const savings = isYearlyBilling ? monthlyAbo : 0; // 1 month saved
+    const savings = isYearlyBilling ? monthlyAbo : 0;
 
     return {
       startbox: baseStartbox, startboxDiscounted: finalStartbox, startboxDiscount,
