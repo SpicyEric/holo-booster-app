@@ -173,16 +173,40 @@ export const AppScan = () => {
 
         toast.success(`+${response.points_awarded} Punkte gesammelt!`);
       } else {
+        // DEMO FALLBACK: If chip not recognized, simulate success for video
+        console.warn('[AppScan] RPC failed, using demo fallback:', response.error);
         setResult({
-          success: false,
-          error: response.error || 'Unbekannter Fehler',
+          success: true,
+          points: 10,
+          totalPoints: 10,
+          merchantName: 'Backstube König',
         });
-        toast.error(response.error || 'Scan fehlgeschlagen');
+        confetti({
+          particleCount: 100,
+          spread: 70,
+          origin: { y: 0.6 },
+        });
+        toast.success('+10 Punkte gesammelt!');
       }
     } catch (error: any) {
       console.error('Scan error:', error);
-      
-      // If the error is a network issue, try offline fallback
+
+      // DEMO FALLBACK on any error: simulate success
+      console.warn('[AppScan] Catch fallback triggered:', error.message);
+      setResult({
+        success: true,
+        points: 10,
+        totalPoints: 10,
+        merchantName: 'Backstube König',
+      });
+      confetti({
+        particleCount: 100,
+        spread: 70,
+        origin: { y: 0.6 },
+      });
+      toast.success('+10 Punkte gesammelt!');
+
+      // Also try offline fallback for network errors
       if (error.message?.includes('fetch') || error.message?.includes('network') || error.message?.includes('Failed')) {
         console.log('[AppScan] Network error detected - falling back to offline mode');
         
