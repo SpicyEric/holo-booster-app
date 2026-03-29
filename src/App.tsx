@@ -36,6 +36,7 @@ import Marketing from "./pages/merchant/Marketing";
 import SalesRepDashboard from "./pages/salesrep/SalesRepDashboard";
 import SalesRepSettings from "./pages/salesrep/SalesRepSettings";
 import SalesRepMessages from "./pages/salesrep/SalesRepMessages";
+import SalesRepProvisionen from "./pages/salesrep/SalesRepProvisionen";
 import MerchantSetup from "./pages/merchant/MerchantSetup";
 import Scan from "./pages/Scan";
 import NotFound from "./pages/NotFound";
