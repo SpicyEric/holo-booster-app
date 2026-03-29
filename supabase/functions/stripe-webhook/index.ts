@@ -665,49 +665,70 @@ serve(async (req) => {
         // Create commissions: 50€ initial + 12€ recurring (fixed amounts)
         if (customer.promoter_id) {
           const isFirstInvoice = invoice.billing_reason === 'subscription_create';
-          const salesRepDiscountCents = parseInt(metadata?.salesRepDiscountCents || '0') || 0;
           
-          if (isFirstInvoice) {
-            // Initial commission: 50€ minus salesRepDiscount, with 14-day hold
-            const initialAmount = 5000; // 50€ in cents
-            const availableAt = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString();
+          // Get salesRepDiscount from subscription metadata
+          let salesRepDiscountCents = 0;
+          try {
+            if (invoice.subscription) {
+              const sub = await stripe.subscriptions.retrieve(invoice.subscription as string);
+              salesRepDiscountCents = parseInt(sub.metadata?.salesRepDiscountCents || '0') || 0;
+            }
+          } catch (e) {
+            console.log("[WEBHOOK] Could not retrieve subscription metadata:", e);
+          }
+          
+          // Check for duplicate commission
+          const { data: existingCommission } = await supabase
+            .from("commissions")
+            .select("id")
+            .eq("stripe_event_id", event.id)
+            .limit(1);
+          
+          if (existingCommission && existingCommission.length > 0) {
+            console.log("[WEBHOOK] Commission already exists for event:", event.id);
+          } else {
+            if (isFirstInvoice) {
+              // Initial commission: 50€ minus salesRepDiscount, with 14-day hold
+              const initialAmount = 5000; // 50€ in cents
+              const availableAt = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString();
+              
+              await supabase.from("commissions").insert({
+                customer_id: customer.id,
+                promoter_id: customer.promoter_id,
+                stripe_event_id: event.id + '_initial',
+                amount_cents: initialAmount,
+                discount_cents: salesRepDiscountCents,
+                currency: 'EUR',
+                commission_type: 'initial',
+                status: 'pending',
+                available_at: availableAt,
+                customer_name: customer.company_name || customer.name,
+                metadata: { invoice_id: invoice.id },
+              });
+              console.log("[WEBHOOK] Initial commission created: 5000 cents, discount:", salesRepDiscountCents);
+            }
             
+            // Recurring commission: 12€ per month
+            const recurringStatus = isFirstInvoice ? 'pending' : 'available';
+            const recurringAvailableAt = isFirstInvoice 
+              ? new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString() 
+              : null;
+              
             await supabase.from("commissions").insert({
               customer_id: customer.id,
               promoter_id: customer.promoter_id,
-              stripe_event_id: event.id,
-              amount_cents: initialAmount,
-              discount_cents: salesRepDiscountCents,
+              stripe_event_id: event.id + '_recurring',
+              amount_cents: 1200, // 12€
+              discount_cents: 0,
               currency: 'EUR',
-              commission_type: 'initial',
-              status: 'pending',
-              available_at: availableAt,
+              commission_type: 'recurring',
+              status: recurringStatus,
+              available_at: recurringAvailableAt,
               customer_name: customer.company_name || customer.name,
               metadata: { invoice_id: invoice.id },
             });
-            console.log("[WEBHOOK] Initial commission created: 5000 cents, discount:", salesRepDiscountCents);
+            console.log("[WEBHOOK] Recurring commission created: 1200 cents, status:", recurringStatus);
           }
-          
-          // Recurring commission: 12€ per month, immediately available (except first which is held)
-          const recurringStatus = isFirstInvoice ? 'pending' : 'available';
-          const recurringAvailableAt = isFirstInvoice 
-            ? new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString() 
-            : null;
-            
-          await supabase.from("commissions").insert({
-            customer_id: customer.id,
-            promoter_id: customer.promoter_id,
-            stripe_event_id: event.id,
-            amount_cents: 1200, // 12€
-            discount_cents: 0,
-            currency: 'EUR',
-            commission_type: 'recurring',
-            status: recurringStatus,
-            available_at: recurringAvailableAt,
-            customer_name: customer.company_name || customer.name,
-            metadata: { invoice_id: invoice.id },
-          });
-          console.log("[WEBHOOK] Recurring commission created: 1200 cents, status:", recurringStatus);
         }
         break;
       }
