@@ -36,6 +36,8 @@ interface CheckoutFormProps {
   partnerUserId?: string;
 }
 
+const DISCOUNT_OPTIONS = [0, 10, 20, 30, 40, 50];
+
 export default function CheckoutForm({ backPath, backLabel, partnerUserId }: CheckoutFormProps) {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
