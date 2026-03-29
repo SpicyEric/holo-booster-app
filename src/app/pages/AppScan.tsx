@@ -71,8 +71,8 @@ export const AppScan = () => {
     }
   }, [searchParams, checkingNfc, nfcSupported, nfcEnabled]);
 
-  const handleChipScan = useCallback(async (hardwareUid: string) => {
-    console.log('[AppScan] handleChipScan called, hardwareUid:', hardwareUid, 'user from hook:', user?.id, 'online:', isOnline);
+  const handleChipScan = useCallback(async (hardwareUid: string, chipData?: string) => {
+    console.log('[AppScan] handleChipScan called, hardwareUid:', hardwareUid, 'chipData:', chipData, 'user from hook:', user?.id, 'online:', isOnline);
     
     // Re-check session directly to avoid stale hook state (e.g. during token refresh)
     let currentUserId = user?.id;
@@ -128,10 +128,11 @@ export const AppScan = () => {
       return;
     }
 
-    // ONLINE MODE: Normal flow - use hardware UID only
+    // ONLINE MODE: Use 3-param overload (sends both chip_data and hardware_uid for backward compat)
     try {
       const { data, error } = await supabase.rpc('award_points_via_nfc', {
-        p_hardware_uid: hardwareUid,
+        p_chip_data: chipData || '',
+        p_hardware_uid: hardwareUid || '',
         p_user_id: currentUserId,
       });
 
@@ -216,9 +217,9 @@ export const AppScan = () => {
   }, [user, navigate, isOnline]);
 
   const handleNfcRead = useCallback((nfcResult: NfcReadResult) => {
-    if (nfcResult.success && nfcResult.hardwareUid) {
-      // Use hardware UID only for identification (TAG-only mode for iOS compatibility)
-      handleChipScan(nfcResult.hardwareUid);
+    if (nfcResult.success && (nfcResult.hardwareUid || nfcResult.chipData)) {
+      // Send both hardware UID and NDEF chip data for backward compatibility
+      handleChipScan(nfcResult.hardwareUid || '', nfcResult.chipData || '');
     } else if (nfcResult.error) {
       const errorLower = nfcResult.error.toLowerCase();
       if (errorLower.includes('permission') || 

@@ -24,6 +24,7 @@ export const useOfflineSync = () => {
     for (const stamp of pending) {
       try {
         const { data, error } = await supabase.rpc('award_points_via_nfc', {
+          p_chip_data: '',
           p_hardware_uid: stamp.hardwareUid,
           p_user_id: stamp.userId,
         });
