@@ -185,6 +185,7 @@ export default function CheckoutForm({ backPath, backLabel, partnerUserId }: Che
           contactPhone,
           additionalContacts,
           partnerUserId,
+          salesRepDiscount: salesRepDiscount > 0 ? salesRepDiscount : undefined,
         },
       });
 

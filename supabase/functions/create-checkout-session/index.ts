@@ -29,6 +29,7 @@ interface CheckoutRequest {
   contactPhone?: string;
   additionalContacts?: string;
   partnerUserId?: string;
+  salesRepDiscount?: number; // in euros, deducted from startbox
 }
 
 const corsHeaders = {
