@@ -288,10 +288,13 @@ export type Database = {
       commissions: {
         Row: {
           amount_cents: number
+          available_at: string | null
           commission_type: string | null
           created_at: string | null
           currency: string | null
           customer_id: string | null
+          customer_name: string | null
+          discount_cents: number | null
           id: string
           metadata: Json | null
           promoter_id: string | null
@@ -300,10 +303,13 @@ export type Database = {
         }
         Insert: {
           amount_cents: number
+          available_at?: string | null
           commission_type?: string | null
           created_at?: string | null
           currency?: string | null
           customer_id?: string | null
+          customer_name?: string | null
+          discount_cents?: number | null
           id?: string
           metadata?: Json | null
           promoter_id?: string | null
@@ -312,10 +318,13 @@ export type Database = {
         }
         Update: {
           amount_cents?: number
+          available_at?: string | null
           commission_type?: string | null
           created_at?: string | null
           currency?: string | null
           customer_id?: string | null
+          customer_name?: string | null
+          discount_cents?: number | null
           id?: string
           metadata?: Json | null
           promoter_id?: string | null
