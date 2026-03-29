@@ -128,10 +128,11 @@ export const AppScan = () => {
       return;
     }
 
-    // ONLINE MODE: Normal flow - use hardware UID only
+    // ONLINE MODE: Use 3-param overload (sends both chip_data and hardware_uid for backward compat)
     try {
       const { data, error } = await supabase.rpc('award_points_via_nfc', {
-        p_hardware_uid: hardwareUid,
+        p_chip_data: chipData || '',
+        p_hardware_uid: hardwareUid || '',
         p_user_id: currentUserId,
       });
 
