@@ -188,8 +188,8 @@ export const useNewCustomerOfferRedemption = ({
       if (!nfcService.isNativeApp()) {
         toast.info('NFC nicht verfügbar - Simuliere Scan für Test...');
         setTimeout(async () => {
-          const success = await processNewCustomerOffer();
-          if (success) {
+          const result = await processNewCustomerOffer();
+          if (result.success) {
             setState({
               isRedeeming: true,
               isScanning: false,
