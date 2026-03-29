@@ -270,10 +270,10 @@ export const useNewCustomerOfferRedemption = ({
           return;
         }
 
-        // Process the new customer offer
-        const success = await processNewCustomerOffer();
+        // Process the new customer offer with NFC stamp points
+        const offerResult = await processNewCustomerOffer(result.hardwareUid);
         
-        if (success) {
+        if (offerResult.success) {
           setState({
             isRedeeming: true,
             isScanning: false,
