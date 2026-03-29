@@ -70,11 +70,12 @@ export const useNewCustomerOfferRedemption = ({
           { p_hardware_uid: hardwareUid, p_user_id: userId }
         );
 
-        if (!nfcError && nfcResult?.success) {
-          nfcPointsAwarded = nfcResult.points_awarded || 0;
+        const result = nfcResult as any;
+        if (!nfcError && result?.success) {
+          nfcPointsAwarded = result.points_awarded || 0;
           console.log('[NewCustomerOffer] NFC stamp points awarded:', nfcPointsAwarded);
         } else {
-          console.warn('[NewCustomerOffer] NFC award failed, continuing with bonus only:', nfcError || nfcResult?.error);
+          console.warn('[NewCustomerOffer] NFC award failed, continuing with bonus only:', nfcError || result?.error);
         }
       }
 
