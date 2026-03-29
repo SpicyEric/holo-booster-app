@@ -79,6 +79,7 @@ export default function CheckoutForm({ backPath, backLabel, partnerUserId }: Che
   // Promo
   const [promoCodeInput, setPromoCodeInput] = useState("");
   const [validatedDiscounts, setValidatedDiscounts] = useState<ValidatedDiscount[]>([]);
+  const [salesRepDiscount, setSalesRepDiscount] = useState(0); // in euros
 
   const additionalLocations = Math.max(0, locationCount - 1);
 
