@@ -678,6 +678,8 @@ export type Database = {
           city: string | null
           company_name: string | null
           contact_person: string | null
+          contact_person_email: string | null
+          contact_person_phone: string | null
           cover_image_url: string | null
           created_at: string
           customer_number: number | null
@@ -747,6 +749,8 @@ export type Database = {
           city?: string | null
           company_name?: string | null
           contact_person?: string | null
+          contact_person_email?: string | null
+          contact_person_phone?: string | null
           cover_image_url?: string | null
           created_at?: string
           customer_number?: number | null
@@ -816,6 +820,8 @@ export type Database = {
           city?: string | null
           company_name?: string | null
           contact_person?: string | null
+          contact_person_email?: string | null
+          contact_person_phone?: string | null
           cover_image_url?: string | null
           created_at?: string
           customer_number?: number | null
