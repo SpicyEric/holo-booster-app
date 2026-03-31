@@ -1362,6 +1362,38 @@ export type Database = {
           },
         ]
       }
+      merchant_badges: {
+        Row: {
+          badge_key: string
+          customer_id: string
+          earned_at: string
+          id: string
+          metadata: Json | null
+        }
+        Insert: {
+          badge_key: string
+          customer_id: string
+          earned_at?: string
+          id?: string
+          metadata?: Json | null
+        }
+        Update: {
+          badge_key?: string
+          customer_id?: string
+          earned_at?: string
+          id?: string
+          metadata?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "merchant_badges_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       merchant_boosts: {
         Row: {
           created_at: string
