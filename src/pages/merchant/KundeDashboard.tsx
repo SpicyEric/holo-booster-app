@@ -145,13 +145,91 @@ export default function KundeDashboard() {
         icon: UserPlus,
       },
     ];
-    // Check rewards count (need ≥5)
     const { count: rewardCount } = await supabase.from("rewards").select("*", { count: "exact", head: true }).eq("merchant_customer_id", cust.id).eq("is_active", true);
     m[1].completed = (rewardCount || 0) >= 5;
-    // Check NCO exists
     const { count: ncoCount } = await supabase.from("new_customer_offers").select("*", { count: "exact", head: true }).eq("merchant_customer_id", cust.id);
     m[4].completed = (ncoCount || 0) > 0;
     setMissions(m);
+
+    // Track when all missions were first completed
+    const allDone = m.every(mi => mi.completed);
+    const storageKey = `eloyo_missions_done_${cust.id}`;
+    if (allDone) {
+      const savedTs = localStorage.getItem(storageKey);
+      if (!savedTs) {
+        localStorage.setItem(storageKey, new Date().toISOString());
+      } else {
+        const elapsed = Date.now() - new Date(savedTs).getTime();
+        if (elapsed >= 24 * 60 * 60 * 1000) {
+          setAllMissionsDoneOver24h(true);
+          await loadNotifications(cust.id);
+        }
+      }
+    } else {
+      // Reset if missions are no longer all done
+      localStorage.removeItem(storageKey);
+      setAllMissionsDoneOver24h(false);
+    }
+  };
+
+  const loadNotifications = async (customerId: string) => {
+    try {
+      const now = new Date();
+      const items: { icon: React.ElementType; text: string; time: string; color: string }[] = [];
+
+      // Recent stamps (last 24h)
+      const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString();
+      const { count: recentStamps } = await supabase
+        .from("point_transactions")
+        .select("id", { count: "exact", head: true })
+        .eq("merchant_customer_id", customerId)
+        .eq("transaction_type", "nfc_stamp")
+        .gte("created_at", yesterday);
+      if (recentStamps && recentStamps > 0) {
+        items.push({ icon: Trophy, text: `${recentStamps} neue Stempel in den letzten 24 Stunden`, time: "Heute", color: "text-emerald-600" });
+      }
+
+      // Recent new customers (last 7 days)
+      const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString();
+      const { count: newCustomers } = await supabase
+        .from("loyalty_accounts")
+        .select("id", { count: "exact", head: true })
+        .eq("merchant_customer_id", customerId)
+        .gte("created_at", weekAgo);
+      if (newCustomers && newCustomers > 0) {
+        items.push({ icon: UserPlus, text: `${newCustomers} neue Kunden diese Woche`, time: "Diese Woche", color: "text-primary" });
+      }
+
+      // Recent redemptions (last 7 days)
+      const { count: recentRedemptions } = await supabase
+        .from("point_transactions")
+        .select("id", { count: "exact", head: true })
+        .eq("merchant_customer_id", customerId)
+        .in("transaction_type", ["reward_redeemed", "offer_redeemed"])
+        .gte("created_at", weekAgo);
+      if (recentRedemptions && recentRedemptions > 0) {
+        items.push({ icon: Gift, text: `${recentRedemptions} Prämien eingelöst diese Woche`, time: "Diese Woche", color: "text-amber-600" });
+      }
+
+      // Recent new customer bonuses
+      const { count: recentBonuses } = await supabase
+        .from("point_transactions")
+        .select("id", { count: "exact", head: true })
+        .eq("merchant_customer_id", customerId)
+        .eq("transaction_type", "new_customer_bonus")
+        .gte("created_at", weekAgo);
+      if (recentBonuses && recentBonuses > 0) {
+        items.push({ icon: Zap, text: `${recentBonuses} Neukundenprämien eingelöst`, time: "Diese Woche", color: "text-purple-600" });
+      }
+
+      if (items.length === 0) {
+        items.push({ icon: Sparkles, text: "Alles ruhig – keine neuen Aktivitäten", time: "Aktuell", color: "text-muted-foreground" });
+      }
+
+      setNotifications(items);
+    } catch (e) {
+      console.error("Error loading notifications:", e);
+    }
   };
 
   const loadDashboardStats = async (cid: string) => {
