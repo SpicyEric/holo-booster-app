@@ -69,6 +69,8 @@ export default function KundeDashboard() {
   const [subscriptionInfo, setSubscriptionInfo] = useState<SubscriptionInfo | null>(null);
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [missions, setMissions] = useState<Mission[]>([]);
+  const [notifications, setNotifications] = useState<{ icon: React.ElementType; text: string; time: string; color: string }[]>([]);
+  const [allMissionsDoneOver24h, setAllMissionsDoneOver24h] = useState(false);
 
   useEffect(() => { if (!authLoading && !user) navigate("/auth"); }, [user, authLoading, navigate]);
   useEffect(() => { if (user) loadData(); }, [user]);
