@@ -107,9 +107,9 @@ export default function Transaktionen() {
         setAgeData([{age:"14-17",count:96,male:58,female:38},{age:"18-24",count:384,male:245,female:139},{age:"25-34",count:720,male:468,female:252},{age:"35-44",count:576,male:374,female:202},{age:"45-54",count:384,male:250,female:134},{age:"55-64",count:168,male:109,female:59},{age:"65+",count:72,male:47,female:25}]);
         setSegments([
           { name: "Neu", label: "1 Besuch", count: 480, percentage: 20, color: "#22C55E" },
-          { name: "Selten", label: "2-5 Besuche", count: 720, percentage: 30, color: "#A855F7" },
-          { name: "Treu", label: "6-15 Besuche", count: 840, percentage: 35, color: "#3B82F6" },
-          { name: "VIP", label: "15+ Besuche", count: 360, percentage: 15, color: "#F97316" }
+          { name: "Kunden", label: "2-5 Besuche", count: 720, percentage: 30, color: "#A855F7" },
+          { name: "Stammkunden", label: "6-15 Besuche", count: 840, percentage: 35, color: "#3B82F6" },
+          { name: "VIP-Stammkunden", label: "15+ Besuche", count: 360, percentage: 15, color: "#F97316" }
         ]);
       } else {
         await Promise.all([
