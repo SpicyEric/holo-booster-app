@@ -1,0 +1,7 @@
+<svg width="96" height="96" viewBox="0 0 96 96" xmlns="http://www.w3.org/2000/svg">
+  <!-- Stimme erhoben: Google-Bewertung -->
+  <circle cx="48" cy="48" r="46" fill="#EEEDFE" stroke="#AFA9EC" stroke-width="2"/>
+  <path d="M20 28 Q20 20 28 20 L68 20 Q76 20 76 28 L76 56 Q76 64 68 64 L54 64 L48 74 L42 64 L28 64 Q20 64 20 56 Z" fill="#7F77DD"/>
+  <text x="48" y="47" text-anchor="middle" font-size="20" fill="#EEEDFE" font-family="sans-serif">★★★</text>
+  <text x="48" y="60" text-anchor="middle" font-size="10" fill="#CECBF6" font-family="sans-serif">Bewertet</text>
+</svg>
