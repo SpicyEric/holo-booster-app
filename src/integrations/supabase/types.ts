@@ -735,6 +735,7 @@ export type Database = {
           street: string | null
           stripe_customer_id: string | null
           stripe_subscription_id: string | null
+          three_day_email_sent_at: string | null
           twitter: string | null
           updated_at: string
           website: string | null
@@ -806,6 +807,7 @@ export type Database = {
           street?: string | null
           stripe_customer_id?: string | null
           stripe_subscription_id?: string | null
+          three_day_email_sent_at?: string | null
           twitter?: string | null
           updated_at?: string
           website?: string | null
@@ -877,6 +879,7 @@ export type Database = {
           street?: string | null
           stripe_customer_id?: string | null
           stripe_subscription_id?: string | null
+          three_day_email_sent_at?: string | null
           twitter?: string | null
           updated_at?: string
           website?: string | null

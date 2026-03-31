@@ -1,0 +1,1 @@
+ALTER TABLE public.customers ADD COLUMN IF NOT EXISTS three_day_email_sent_at timestamptz DEFAULT NULL;
