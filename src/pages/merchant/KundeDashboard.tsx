@@ -1,4 +1,5 @@
 import { useEffect, useState, useMemo } from "react";
+import MerchantBadges from "@/components/merchant/MerchantBadges";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -17,7 +18,7 @@ import {
   Tooltip, TooltipContent, TooltipProvider, TooltipTrigger
 } from "@/components/ui/tooltip";
 
-interface Customer { id: string; name: string; email: string; company_name: string | null; status: string; customer_number: number | null; }
+interface Customer { id: string; name: string; email: string; company_name: string | null; status: string; customer_number: number | null; created_at?: string; postal_code?: string | null; birthday_enabled?: boolean; }
 interface SubscriptionInfo { hasSubscription: boolean; status?: string; currentPeriodEnd?: string; cancelAtPeriodEnd?: boolean; cancelAt?: string | null; }
 interface DashboardStats { totalContacts: number; totalStamps: number; totalRedemptions: number; networkEffect: number; newContacts7Days: number; }
 
@@ -82,7 +83,7 @@ export default function KundeDashboard() {
         if (customerData) {
           const { count: boxCount } = await supabase.from("customer_boxes").select("id", { count: "exact", head: true }).eq("customer_id", customerData.id);
           if (!boxCount || boxCount === 0) { navigate("/kunde/setup"); return; }
-          setCustomer({ id: customerData.id, name: customerData.name, email: customerData.email || user.email || "", company_name: customerData.company_name, status: customerData.status || "active", customer_number: customerData.customer_number });
+          setCustomer({ id: customerData.id, name: customerData.name, email: customerData.email || user.email || "", company_name: customerData.company_name, status: customerData.status || "active", customer_number: customerData.customer_number, created_at: customerData.created_at, postal_code: customerData.postal_code, birthday_enabled: customerData.birthday_enabled });
         }
       }
       try { const { data: subInfo } = await supabase.functions.invoke("get-subscription-info"); if (subInfo) setSubscriptionInfo(subInfo); } catch {}
@@ -220,6 +221,14 @@ export default function KundeDashboard() {
                     <TrendingUp className="w-3 h-3 mr-1" /> +{stats.newContacts7Days} neue Kunden diese Woche
                   </Badge>
                 </div>
+              )}
+              {customer && (
+                <MerchantBadges
+                  customerId={customer.id}
+                  customerCreatedAt={customer.created_at}
+                  postalCode={customer.postal_code}
+                  birthdayEnabled={customer.birthday_enabled}
+                />
               )}
             </div>
           </div>

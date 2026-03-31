@@ -1,0 +1,7 @@
+<svg width="96" height="96" viewBox="0 0 96 96" xmlns="http://www.w3.org/2000/svg">
+  <!-- Stammgast: 5x beim selben Laden -->
+  <circle cx="48" cy="48" r="46" fill="#EEEDFE" stroke="#AFA9EC" stroke-width="2"/>
+  <path d="M48 68 C48 68 22 52 22 34 C22 24 30 18 38 20 C42 21 46 24 48 28 C50 24 54 21 58 20 C66 18 74 24 74 34 C74 52 48 68 48 68Z" fill="#7F77DD"/>
+  <path d="M48 62 C48 62 28 50 28 36 C28 30 33 27 38 28 C42 29 45 32 48 36 C51 32 54 29 58 28 C63 27 68 30 68 36 C68 50 48 62 48 62Z" fill="#AFA9EC" opacity="0.4"/>
+  <text x="48" y="42" text-anchor="middle" font-size="13" font-weight="700" fill="#EEEDFE" font-family="sans-serif">5×</text>
+</svg>

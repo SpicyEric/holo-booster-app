@@ -107,9 +107,9 @@ export default function Transaktionen() {
         setAgeData([{age:"14-17",count:96,male:58,female:38},{age:"18-24",count:384,male:245,female:139},{age:"25-34",count:720,male:468,female:252},{age:"35-44",count:576,male:374,female:202},{age:"45-54",count:384,male:250,female:134},{age:"55-64",count:168,male:109,female:59},{age:"65+",count:72,male:47,female:25}]);
         setSegments([
           { name: "Neu", label: "1 Besuch", count: 480, percentage: 20, color: "#22C55E" },
-          { name: "Selten", label: "2-5 Besuche", count: 720, percentage: 30, color: "#A855F7" },
-          { name: "Treu", label: "6-15 Besuche", count: 840, percentage: 35, color: "#3B82F6" },
-          { name: "VIP", label: "15+ Besuche", count: 360, percentage: 15, color: "#F97316" }
+          { name: "Kunden", label: "2-5 Besuche", count: 720, percentage: 30, color: "#A855F7" },
+          { name: "Stammkunden", label: "6-15 Besuche", count: 840, percentage: 35, color: "#3B82F6" },
+          { name: "VIP-Stammkunden", label: "15+ Besuche", count: 360, percentage: 15, color: "#F97316" }
         ]);
       } else {
         await Promise.all([
@@ -176,12 +176,12 @@ export default function Transaktionen() {
 
   const loadCustomerSegments = async (cid: string) => {
     const { data: la } = await supabase.from("loyalty_accounts").select("id, user_id").eq("merchant_customer_id", cid);
-    if (!la || la.length === 0) { setSegments([{ name: "Neu", label: "1 Besuch", count: 0, percentage: 0, color: "#22C55E" }, { name: "Selten", label: "2-5 Besuche", count: 0, percentage: 0, color: "#A855F7" }, { name: "Treu", label: "6-15 Besuche", count: 0, percentage: 0, color: "#3B82F6" }, { name: "VIP", label: "15+ Besuche", count: 0, percentage: 0, color: "#F97316" }]); return; }
+    if (!la || la.length === 0) { setSegments([{ name: "Neu", label: "1 Besuch", count: 0, percentage: 0, color: "#22C55E" }, { name: "Kunden", label: "2-5 Besuche", count: 0, percentage: 0, color: "#A855F7" }, { name: "Stammkunden", label: "6-15 Besuche", count: 0, percentage: 0, color: "#3B82F6" }, { name: "VIP-Stammkunden", label: "15+ Besuche", count: 0, percentage: 0, color: "#F97316" }]); return; }
     const utc: Record<string, number> = {};
     for (const acc of la) { const { count } = await supabase.from("point_transactions").select("*", { count: "exact", head: true }).eq("merchant_customer_id", cid).eq("loyalty_account_id", acc.id).eq("transaction_type", "nfc_stamp"); utc[acc.id] = count || 0; }
     let n = 0, s = 0, t2 = 0, v = 0; Object.values(utc).forEach(c => { if (c <= 1) n++; else if (c <= 5) s++; else if (c <= 15) t2++; else v++; });
     const tot = la.length;
-    setSegments([{ name: "Neu", label: "1 Besuch", count: n, percentage: tot > 0 ? Math.round(n / tot * 100) : 0, color: "#22C55E" }, { name: "Selten", label: "2-5 Besuche", count: s, percentage: tot > 0 ? Math.round(s / tot * 100) : 0, color: "#A855F7" }, { name: "Treu", label: "6-15 Besuche", count: t2, percentage: tot > 0 ? Math.round(t2 / tot * 100) : 0, color: "#3B82F6" }, { name: "VIP", label: "15+ Besuche", count: v, percentage: tot > 0 ? Math.round(v / tot * 100) : 0, color: "#F97316" }]);
+    setSegments([{ name: "Neu", label: "1 Besuch", count: n, percentage: tot > 0 ? Math.round(n / tot * 100) : 0, color: "#22C55E" }, { name: "Kunden", label: "2-5 Besuche", count: s, percentage: tot > 0 ? Math.round(s / tot * 100) : 0, color: "#A855F7" }, { name: "Stammkunden", label: "6-15 Besuche", count: t2, percentage: tot > 0 ? Math.round(t2 / tot * 100) : 0, color: "#3B82F6" }, { name: "VIP-Stammkunden", label: "15+ Besuche", count: v, percentage: tot > 0 ? Math.round(v / tot * 100) : 0, color: "#F97316" }]);
   };
 
   const filtered = useMemo(() => {
@@ -431,9 +431,9 @@ export default function Transaktionen() {
                 {segments.map(seg => {
                   const segTooltips: Record<string, string> = {
                     "Neu": "Kunden, die einmal gestempelt haben",
-                    "Selten": "Kunden, die 2–5 mal gestempelt haben",
-                    "Treu": "Kunden, die 6–15 mal gestempelt haben",
-                    "VIP": "Kunden, die mehr als 15 mal gestempelt haben",
+                    "Kunden": "Kunden, die 2–5 mal gestempelt haben",
+                    "Stammkunden": "Kunden, die 6–15 mal gestempelt haben",
+                    "VIP-Stammkunden": "Kunden, die mehr als 15 mal gestempelt haben",
                   };
                   return (
                     <Tooltip key={seg.name}>

@@ -1,0 +1,7 @@
+<svg width="96" height="96" viewBox="0 0 96 96" xmlns="http://www.w3.org/2000/svg">
+  <!-- Erster Stempel -->
+  <circle cx="48" cy="48" r="46" fill="#EEEDFE" stroke="#AFA9EC" stroke-width="2"/>
+  <circle cx="48" cy="48" r="38" fill="none" stroke="#CECBF6" stroke-width="1" stroke-dasharray="4 3"/>
+  <polygon points="48,18 52,38 72,38 56,50 62,70 48,58 34,70 40,50 24,38 44,38" fill="#7F77DD" opacity="0.9"/>
+  <polygon points="48,22 51,37 66,37 54,46 59,63 48,54 37,63 42,46 30,37 45,37" fill="#EEEDFE" opacity="0.5"/>
+</svg>
