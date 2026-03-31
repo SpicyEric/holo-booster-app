@@ -1,5 +1,6 @@
 import { useEffect, useState, useMemo, useCallback } from "react";
 import MerchantBadges from "@/components/merchant/MerchantBadges";
+import { BADGE_DEFS } from "@/components/merchant/MerchantBadges";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -11,7 +12,7 @@ import {
   Loader2, Users, Trophy, Gift, Zap, TrendingUp,
   AlertTriangle, Pause, Clock, Star, Image, MapPin, Megaphone,
   Sparkles, ChevronRight, Target, CheckCircle2, Circle,
-  Store, UserPlus, MessageSquare, Cake, Rocket, Bell
+  Store, UserPlus, MessageSquare, Cake, Rocket, Bell, X
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
@@ -20,12 +21,12 @@ import {
 
 interface Customer { id: string; name: string; email: string; company_name: string | null; status: string; customer_number: number | null; created_at?: string; postal_code?: string | null; birthday_enabled?: boolean; }
 interface SubscriptionInfo { hasSubscription: boolean; status?: string; currentPeriodEnd?: string; cancelAtPeriodEnd?: boolean; cancelAt?: string | null; }
-interface DashboardStats { totalContacts: number; totalStamps: number; totalRedemptions: number; networkEffect: number; newContacts7Days: number; }
+interface DashboardStats { totalContacts: number; totalStamps: number; totalRedemptions: number; networkEffect: number; newContactsThisWeek: number; }
 
 const DEMO_MERCHANT_ID = "e8e3db26-fd15-455a-ad47-50ed25081e3c";
-const DEMO_STATS: DashboardStats = { totalContacts: 2400, totalStamps: 93000, totalRedemptions: 800, networkEffect: 600, newContacts7Days: 47 };
+const DEMO_STATS: DashboardStats = { totalContacts: 2400, totalStamps: 93000, totalRedemptions: 800, networkEffect: 600, newContactsThisWeek: 47 };
 
-const KpiCard = ({ icon: Icon, label, value, sub, trend, iconBg, iconColor }: { icon: React.ElementType; label: string; value: string; sub?: string; trend?: string; iconBg: string; iconColor: string }) => (
+const KpiCard = ({ icon: Icon, label, value, sub, trend, iconBg, iconColor, bigNumber }: { icon: React.ElementType; label: string; value: string; sub?: string; trend?: string; iconBg: string; iconColor: string; bigNumber?: boolean }) => (
   <div className="bg-white rounded-2xl p-5 border border-border/30 shadow-[0_1px_3px_hsl(262,30%,80%/0.3)] hover:shadow-[0_4px_12px_hsl(262,30%,80%/0.4)] transition-all duration-300 group">
     <div className="flex items-center justify-between mb-3">
       <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center transition-transform duration-300 group-hover:scale-105", iconBg)}>
@@ -35,7 +36,7 @@ const KpiCard = ({ icon: Icon, label, value, sub, trend, iconBg, iconColor }: { 
         <span className="text-xs font-medium text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">{trend}</span>
       )}
     </div>
-    <p className="text-3xl font-bold text-foreground tracking-tight">{value}</p>
+    <p className={cn("font-bold text-foreground tracking-tight", bigNumber ? "text-5xl" : "text-3xl")}>{value}</p>
     <p className="text-sm text-muted-foreground mt-1">{label}</p>
     {sub && <p className="text-xs text-muted-foreground/70 mt-0.5">{sub}</p>}
   </div>
@@ -52,6 +53,15 @@ interface Mission {
 
 interface QuickWin { label: string; description: string; icon: React.ElementType; path: string; color: string; }
 
+interface NotificationItem {
+  id: string;
+  icon: React.ElementType;
+  text: string;
+  time: string;
+  color: string;
+  imageUrl?: string;
+}
+
 // Exploration tips shown when all missions are done
 const EXPLORATION_TIPS: QuickWin[] = [
   { label: "Nachrichtensystem entdecken", description: "Sende personalisierte Nachrichten an deine Kunden direkt über die App", icon: MessageSquare, path: "/kunde/marketing?tab=nachrichten", color: "text-blue-600" },
@@ -61,6 +71,17 @@ const EXPLORATION_TIPS: QuickWin[] = [
   { label: "Geschäftsprofil optimieren", description: "Aktualisiere dein Profil für eine bessere Sichtbarkeit in der App", icon: Store, path: "/kunde/mein-geschaeft", color: "text-emerald-600" },
 ];
 
+/** Get the most recent Monday at 00:00:00 local time */
+function getMondayOfCurrentWeek(): Date {
+  const now = new Date();
+  const day = now.getDay(); // 0=Sun, 1=Mon, ...
+  const diff = day === 0 ? 6 : day - 1; // days since Monday
+  const monday = new Date(now);
+  monday.setDate(now.getDate() - diff);
+  monday.setHours(0, 0, 0, 0);
+  return monday;
+}
+
 export default function KundeDashboard() {
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
@@ -69,12 +90,18 @@ export default function KundeDashboard() {
   const [subscriptionInfo, setSubscriptionInfo] = useState<SubscriptionInfo | null>(null);
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [missions, setMissions] = useState<Mission[]>([]);
-  const [notifications, setNotifications] = useState<{ icon: React.ElementType; text: string; time: string; color: string }[]>([]);
+  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
+  const [dismissedNotifications, setDismissedNotifications] = useState<Set<string>>(new Set());
   const [allMissionsDoneOver24h, setAllMissionsDoneOver24h] = useState(false);
 
   useEffect(() => { if (!authLoading && !user) navigate("/auth"); }, [user, authLoading, navigate]);
   useEffect(() => { if (user) loadData(); }, [user]);
 
+  const dismissNotification = (id: string) => {
+    setDismissedNotifications(prev => new Set(prev).add(id));
+  };
+
+  const visibleNotifications = notifications.filter(n => !dismissedNotifications.has(n.id));
 
   const loadData = async () => {
     try {
@@ -97,7 +124,7 @@ export default function KundeDashboard() {
         }
         await buildMissions(customerData);
       } else {
-        setStats({ totalContacts: 0, totalStamps: 0, totalRedemptions: 0, networkEffect: 0, newContacts7Days: 0 });
+        setStats({ totalContacts: 0, totalStamps: 0, totalRedemptions: 0, networkEffect: 0, newContactsThisWeek: 0 });
       }
     } catch (e) { console.error("Error loading data:", e); } finally { setLoading(false); }
   };
@@ -175,7 +202,33 @@ export default function KundeDashboard() {
   const loadNotifications = async (customerId: string) => {
     try {
       const now = new Date();
-      const items: { icon: React.ElementType; text: string; time: string; color: string }[] = [];
+      const items: NotificationItem[] = [];
+
+      // Load last earned badge as default notification
+      const { data: badgeData } = await supabase
+        .from("merchant_badges" as any)
+        .select("badge_key, earned_at")
+        .eq("customer_id", customerId)
+        .order("earned_at", { ascending: false })
+        .limit(1);
+
+      if (badgeData && (badgeData as any[]).length > 0) {
+        const lastBadge = (badgeData as any[])[0];
+        const badgeDef = BADGE_DEFS.find(b => b.key === lastBadge.badge_key);
+        if (badgeDef) {
+          const earnedDate = new Date(lastBadge.earned_at);
+          const daysAgo = Math.floor((now.getTime() - earnedDate.getTime()) / (1000 * 60 * 60 * 24));
+          const timeLabel = daysAgo === 0 ? "Heute" : daysAgo === 1 ? "Gestern" : `Vor ${daysAgo} Tagen`;
+          items.push({
+            id: `badge-${lastBadge.badge_key}`,
+            icon: Trophy,
+            text: `Erfolg abgeschlossen: ${badgeDef.label}`,
+            time: timeLabel,
+            color: "text-amber-600",
+            imageUrl: badgeDef.icon,
+          });
+        }
+      }
 
       // Recent stamps (last 24h)
       const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString();
@@ -186,7 +239,7 @@ export default function KundeDashboard() {
         .eq("transaction_type", "nfc_stamp")
         .gte("created_at", yesterday);
       if (recentStamps && recentStamps > 0) {
-        items.push({ icon: Trophy, text: `${recentStamps} neue Stempel in den letzten 24 Stunden`, time: "Heute", color: "text-emerald-600" });
+        items.push({ id: "stamps-24h", icon: Trophy, text: `${recentStamps} neue Stempel in den letzten 24 Stunden`, time: "Heute", color: "text-emerald-600" });
       }
 
       // Recent new customers (last 7 days)
@@ -197,7 +250,7 @@ export default function KundeDashboard() {
         .eq("merchant_customer_id", customerId)
         .gte("created_at", weekAgo);
       if (newCustomers && newCustomers > 0) {
-        items.push({ icon: UserPlus, text: `${newCustomers} neue Kunden diese Woche`, time: "Diese Woche", color: "text-primary" });
+        items.push({ id: "new-customers-7d", icon: UserPlus, text: `${newCustomers} neue Kunden diese Woche`, time: "Diese Woche", color: "text-primary" });
       }
 
       // Recent redemptions (last 7 days)
@@ -208,22 +261,7 @@ export default function KundeDashboard() {
         .in("transaction_type", ["reward_redeemed", "offer_redeemed"])
         .gte("created_at", weekAgo);
       if (recentRedemptions && recentRedemptions > 0) {
-        items.push({ icon: Gift, text: `${recentRedemptions} Prämien eingelöst diese Woche`, time: "Diese Woche", color: "text-amber-600" });
-      }
-
-      // Recent new customer bonuses
-      const { count: recentBonuses } = await supabase
-        .from("point_transactions")
-        .select("id", { count: "exact", head: true })
-        .eq("merchant_customer_id", customerId)
-        .eq("transaction_type", "new_customer_bonus")
-        .gte("created_at", weekAgo);
-      if (recentBonuses && recentBonuses > 0) {
-        items.push({ icon: Zap, text: `${recentBonuses} Neukundenprämien eingelöst`, time: "Diese Woche", color: "text-purple-600" });
-      }
-
-      if (items.length === 0) {
-        items.push({ icon: Sparkles, text: "Alles ruhig – keine neuen Aktivitäten", time: "Aktuell", color: "text-muted-foreground" });
+        items.push({ id: "redemptions-7d", icon: Gift, text: `${recentRedemptions} Prämien eingelöst diese Woche`, time: "Diese Woche", color: "text-amber-600" });
       }
 
       setNotifications(items);
@@ -234,16 +272,17 @@ export default function KundeDashboard() {
 
   const loadDashboardStats = async (cid: string) => {
     try {
+      const mondayIso = getMondayOfCurrentWeek().toISOString();
       const [c1, c2, c3, c4, c5] = await Promise.all([
         supabase.from("loyalty_accounts").select("*", { count: "exact", head: true }).eq("merchant_customer_id", cid),
         supabase.from("point_transactions").select("*", { count: "exact", head: true }).eq("merchant_customer_id", cid).eq("transaction_type", "nfc_stamp"),
         supabase.from("reward_redemptions").select("*", { count: "exact", head: true }).eq("merchant_customer_id", cid),
         supabase.from("point_transactions").select("*", { count: "exact", head: true }).eq("merchant_customer_id", cid).eq("transaction_type", "new_customer_bonus"),
-        (() => { const d = new Date(); d.setDate(d.getDate() - 7); return supabase.from("loyalty_accounts").select("*", { count: "exact", head: true }).eq("merchant_customer_id", cid).gte("created_at", d.toISOString()); })()
+        supabase.from("loyalty_accounts").select("*", { count: "exact", head: true }).eq("merchant_customer_id", cid).gte("created_at", mondayIso),
       ]);
       const offerRed = await supabase.from("point_transactions").select("*", { count: "exact", head: true }).eq("merchant_customer_id", cid).eq("transaction_type", "offer_redeemed");
-      setStats({ totalContacts: c1.count || 0, totalStamps: c2.count || 0, totalRedemptions: (c3.count || 0) + (offerRed.count || 0), networkEffect: c4.count || 0, newContacts7Days: c5.count || 0 });
-    } catch { setStats({ totalContacts: 0, totalStamps: 0, totalRedemptions: 0, networkEffect: 0, newContacts7Days: 0 }); }
+      setStats({ totalContacts: c1.count || 0, totalStamps: c2.count || 0, totalRedemptions: (c3.count || 0) + (offerRed.count || 0), networkEffect: c4.count || 0, newContactsThisWeek: c5.count || 0 });
+    } catch { setStats({ totalContacts: 0, totalStamps: 0, totalRedemptions: 0, networkEffect: 0, newContactsThisWeek: 0 }); }
   };
 
   const formatDate = (ds: string) => new Date(ds).toLocaleDateString("de-DE", { year: 'numeric', month: 'long', day: 'numeric' });
@@ -257,7 +296,6 @@ export default function KundeDashboard() {
   const quickWins = useMemo(() => {
     const incomplete = missions.filter(m => !m.completed);
     if (incomplete.length > 0) {
-      // Show up to 2 incomplete missions as recommended steps
       return incomplete.slice(0, 2).map(m => ({
         label: m.label,
         description: m.tooltip,
@@ -266,7 +304,6 @@ export default function KundeDashboard() {
         color: "text-primary",
       }));
     }
-    // All done: pick 2 random exploration tips
     const shuffled = [...EXPLORATION_TIPS].sort(() => Math.random() - 0.5);
     return shuffled.slice(0, 2);
   }, [missions]);
@@ -299,7 +336,10 @@ export default function KundeDashboard() {
                 {stats && (
                   <div className="flex items-center gap-3 mt-5">
                     <Badge className="bg-white/20 hover:bg-white/30 text-white border-0 rounded-full px-3 py-1 backdrop-blur-sm">
-                      <TrendingUp className="w-3 h-3 mr-1" /> +{stats.newContacts7Days} neue Kunden diese Woche
+                      <TrendingUp className="w-3 h-3 mr-1" />
+                      {stats.newContactsThisWeek > 0
+                        ? `+${stats.newContactsThisWeek} neue Kunden diese Woche`
+                        : "Du baust gerade deinen Stammkundenring auf"}
                     </Badge>
                   </div>
                 )}
@@ -333,10 +373,17 @@ export default function KundeDashboard() {
 
           {/* ====== KPI Cards ====== */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            <KpiCard icon={Users} label="Kunden gesamt" value={stats?.totalContacts?.toLocaleString('de-DE') || '0'} trend={stats && stats.newContacts7Days > 0 ? `+${stats.newContacts7Days} diese Woche` : undefined} iconBg="bg-primary/10" iconColor="text-primary" />
-            <KpiCard icon={Trophy} label="Stempel gesamt" value={stats?.totalStamps?.toLocaleString('de-DE') || '0'} sub="Gesamt seit Start" iconBg="bg-emerald-50" iconColor="text-emerald-600" />
+            <KpiCard icon={Users} label="Kunden gesamt" value={stats?.totalContacts?.toLocaleString('de-DE') || '0'} trend={stats && stats.newContactsThisWeek > 0 ? `+${stats.newContactsThisWeek} diese Woche` : undefined} iconBg="bg-primary/10" iconColor="text-primary" bigNumber />
+            <KpiCard icon={Trophy} label="Stempel gesamt" value={stats?.totalStamps?.toLocaleString('de-DE') || '0'} sub="Gesamt seit Start" iconBg="bg-emerald-50" iconColor="text-emerald-600" bigNumber />
             <KpiCard icon={Gift} label="Prämien eingelöst" value={stats?.totalRedemptions?.toLocaleString('de-DE') || '0'} iconBg="bg-amber-50" iconColor="text-amber-600" />
-            <KpiCard icon={Zap} label="Netzwerkeffekt" value={stats?.networkEffect?.toLocaleString('de-DE') || '0'} sub="Neukundenprämien eingelöst" iconBg="bg-purple-50" iconColor="text-purple-600" />
+            <KpiCard
+              icon={Zap}
+              label="Netzwerkeffekt"
+              value={stats && stats.networkEffect > 0 ? stats.networkEffect.toLocaleString('de-DE') : '–'}
+              sub={stats && stats.networkEffect > 0 ? "Neukundenprämien eingelöst" : "Noch keine Neukundenprämien"}
+              iconBg="bg-purple-50"
+              iconColor="text-purple-600"
+            />
           </div>
 
           {/* ====== Compact Gamification + Quick Wins side by side ====== */}
@@ -354,20 +401,38 @@ export default function KundeDashboard() {
                   </div>
                 </div>
                 <div className="space-y-2">
-                  {notifications.map((notif, i) => (
-                    <div
-                      key={i}
-                      className="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-muted/30 border border-border/20"
-                    >
-                      <div className="w-8 h-8 rounded-lg bg-primary/[0.06] flex items-center justify-center shrink-0">
-                        <notif.icon className={cn("w-4 h-4", notif.color)} />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-xs font-medium text-foreground">{notif.text}</p>
-                      </div>
-                      <span className="text-[10px] text-muted-foreground shrink-0">{notif.time}</span>
+                  {visibleNotifications.length === 0 ? (
+                    <div className="flex items-center gap-3 px-3 py-4 rounded-lg bg-muted/30 border border-border/20">
+                      <Sparkles className="w-4 h-4 text-muted-foreground" />
+                      <p className="text-xs text-muted-foreground">Alles ruhig hier.</p>
                     </div>
-                  ))}
+                  ) : (
+                    visibleNotifications.map((notif) => (
+                      <div
+                        key={notif.id}
+                        className="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-muted/30 border border-border/20"
+                      >
+                        {notif.imageUrl ? (
+                          <img src={notif.imageUrl} alt="" className="w-8 h-8 rounded-lg shrink-0" />
+                        ) : (
+                          <div className="w-8 h-8 rounded-lg bg-primary/[0.06] flex items-center justify-center shrink-0">
+                            <notif.icon className={cn("w-4 h-4", notif.color)} />
+                          </div>
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-medium text-foreground">{notif.text}</p>
+                        </div>
+                        <span className="text-[10px] text-muted-foreground shrink-0 mr-1">{notif.time}</span>
+                        <button
+                          onClick={() => dismissNotification(notif.id)}
+                          className="shrink-0 p-0.5 rounded hover:bg-muted/60 transition-colors"
+                          aria-label="Entfernen"
+                        >
+                          <X className="w-3.5 h-3.5 text-muted-foreground" />
+                        </button>
+                      </div>
+                    ))
+                  )}
                 </div>
               </div>
             ) : missions.length > 0 && (
