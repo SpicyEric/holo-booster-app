@@ -184,22 +184,25 @@ export default function MerchantBadges({ customerId, customerCreatedAt, postalCo
   if (earned.length === 0) return null;
 
   return (
-    <div className="flex items-center gap-2 flex-wrap justify-end">
-      {earned.map(badge => (
-        <Tooltip key={badge.key}>
-          <TooltipTrigger asChild>
-            <img
-              src={badge.icon}
-              alt={badge.label}
-              className="w-9 h-9 rounded-full cursor-pointer hover:scale-110 transition-transform duration-200 drop-shadow-sm"
-            />
-          </TooltipTrigger>
-          <TooltipContent side="bottom" className="max-w-[220px] text-xs leading-relaxed">
-            <p className="font-semibold">{badge.label}</p>
-            <p className="text-muted-foreground">{badge.getTooltip(earnedBadges[badge.key]?.metadata)}</p>
-          </TooltipContent>
-        </Tooltip>
-      ))}
+    <div className="flex flex-col items-end gap-1.5">
+      <p className="text-[11px] font-medium text-white/60 tracking-wide uppercase">Deine bisherigen Erfolge</p>
+      <div className="flex items-center gap-2 flex-wrap justify-end">
+        {earned.map(badge => (
+          <Tooltip key={badge.key}>
+            <TooltipTrigger asChild>
+              <img
+                src={badge.icon}
+                alt={badge.label}
+                className="w-9 h-9 rounded-full cursor-pointer hover:scale-110 transition-transform duration-200 drop-shadow-sm"
+              />
+            </TooltipTrigger>
+            <TooltipContent side="bottom" className="max-w-[220px] text-xs leading-relaxed">
+              <p className="font-semibold">{badge.label}</p>
+              <p className="text-muted-foreground">{badge.getTooltip(earnedBadges[badge.key]?.metadata)}</p>
+            </TooltipContent>
+          </Tooltip>
+        ))}
+      </div>
     </div>
   );
 }
