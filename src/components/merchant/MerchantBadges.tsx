@@ -182,7 +182,7 @@ export default function MerchantBadges({ customerId, customerCreatedAt, postalCo
   if (earned.length === 0) return null;
 
   return (
-    <div className="flex items-center gap-1.5 mt-4 flex-wrap">
+    <div className="flex items-center gap-2 flex-wrap justify-end">
       {earned.map(badge => (
         <Tooltip key={badge.key}>
           <TooltipTrigger asChild>
