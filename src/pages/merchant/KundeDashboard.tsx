@@ -222,6 +222,14 @@ export default function KundeDashboard() {
                   </Badge>
                 </div>
               )}
+              {customer && (
+                <MerchantBadges
+                  customerId={customer.id}
+                  customerCreatedAt={customer.created_at}
+                  postalCode={customer.postal_code}
+                  birthdayEnabled={customer.birthday_enabled}
+                />
+              )}
             </div>
           </div>
 
