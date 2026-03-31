@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import MerchantBadges from "@/components/merchant/MerchantBadges";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -11,7 +11,7 @@ import {
   Loader2, Users, Trophy, Gift, Zap, TrendingUp,
   AlertTriangle, Pause, Clock, Star, Image, MapPin, Megaphone,
   Sparkles, ChevronRight, Target, CheckCircle2, Circle,
-  Store, UserPlus, MessageSquare, Cake, Rocket
+  Store, UserPlus, MessageSquare, Cake, Rocket, Bell
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
