@@ -204,31 +204,35 @@ export default function KundeDashboard() {
           <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[hsl(262,60%,45%)] via-[hsl(262,70%,50%)] to-[hsl(230,70%,55%)] p-8 text-white shadow-[0_8px_30px_hsl(262,50%,40%/0.35)]">
             <div className="absolute -top-24 -right-24 w-72 h-72 bg-white/[0.06] rounded-full blur-3xl animate-[pulse_8s_ease-in-out_infinite]" />
             <div className="absolute -bottom-16 -left-16 w-48 h-48 bg-white/[0.04] rounded-full blur-3xl animate-[pulse_10s_ease-in-out_infinite_2s]" />
-            <div className="relative z-10">
-              <div className="flex items-center gap-2 mb-2">
-                <Sparkles className="h-5 w-5 opacity-70" />
-                <span className="text-sm font-medium opacity-70">Dein Eloyo-Dashboard</span>
-              </div>
-              <h1 className="text-3xl lg:text-4xl font-bold tracking-tight leading-[1.1]">
-                Willkommen zurück{customer?.company_name ? `, ${customer.company_name}` : ''}!
-              </h1>
-              <p className="mt-2 text-base opacity-75 max-w-xl">
-                Hier siehst du, wie dein Kundenbindungssystem läuft und wo du als Nächstes optimieren kannst.
-              </p>
-              {stats && (
-                <div className="flex items-center gap-3 mt-5">
-                  <Badge className="bg-white/20 hover:bg-white/30 text-white border-0 rounded-full px-3 py-1 backdrop-blur-sm">
-                    <TrendingUp className="w-3 h-3 mr-1" /> +{stats.newContacts7Days} neue Kunden diese Woche
-                  </Badge>
+            <div className="relative z-10 flex items-end justify-between gap-6">
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-2">
+                  <Sparkles className="h-5 w-5 opacity-70" />
+                  <span className="text-sm font-medium opacity-70">Dein Eloyo-Dashboard</span>
                 </div>
-              )}
+                <h1 className="text-3xl lg:text-4xl font-bold tracking-tight leading-[1.1]">
+                  Willkommen zurück{customer?.company_name ? `, ${customer.company_name}` : ''}!
+                </h1>
+                <p className="mt-2 text-base opacity-75 max-w-xl">
+                  Hier siehst du, wie dein Kundenbindungssystem läuft und wo du als Nächstes optimieren kannst.
+                </p>
+                {stats && (
+                  <div className="flex items-center gap-3 mt-5">
+                    <Badge className="bg-white/20 hover:bg-white/30 text-white border-0 rounded-full px-3 py-1 backdrop-blur-sm">
+                      <TrendingUp className="w-3 h-3 mr-1" /> +{stats.newContacts7Days} neue Kunden diese Woche
+                    </Badge>
+                  </div>
+                )}
+              </div>
               {customer && (
-                <MerchantBadges
-                  customerId={customer.id}
-                  customerCreatedAt={customer.created_at}
-                  postalCode={customer.postal_code}
-                  birthdayEnabled={customer.birthday_enabled}
-                />
+                <div className="shrink-0">
+                  <MerchantBadges
+                    customerId={customer.id}
+                    customerCreatedAt={customer.created_at}
+                    postalCode={customer.postal_code}
+                    birthdayEnabled={customer.birthday_enabled}
+                  />
+                </div>
               )}
             </div>
           </div>
