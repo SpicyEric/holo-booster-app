@@ -431,9 +431,9 @@ export default function Transaktionen() {
                 {segments.map(seg => {
                   const segTooltips: Record<string, string> = {
                     "Neu": "Kunden, die einmal gestempelt haben",
-                    "Selten": "Kunden, die 2–5 mal gestempelt haben",
-                    "Treu": "Kunden, die 6–15 mal gestempelt haben",
-                    "VIP": "Kunden, die mehr als 15 mal gestempelt haben",
+                    "Kunden": "Kunden, die 2–5 mal gestempelt haben",
+                    "Stammkunden": "Kunden, die 6–15 mal gestempelt haben",
+                    "VIP-Stammkunden": "Kunden, die mehr als 15 mal gestempelt haben",
                   };
                   return (
                     <Tooltip key={seg.name}>
