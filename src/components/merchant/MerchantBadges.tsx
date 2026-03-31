@@ -37,6 +37,8 @@ const BADGE_DEFS: BadgeDef[] = [
   { key: "rakete", label: "Rakete", icon: badgeRakete, getTooltip: () => "Über 300 Endkunden gesammelt!" },
 ];
 
+export { BADGE_DEFS };
+
 interface Props {
   customerId: string;
   customerCreatedAt?: string;
