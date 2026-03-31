@@ -1,4 +1,5 @@
 import { useEffect, useState, useMemo } from "react";
+import MerchantBadges from "@/components/merchant/MerchantBadges";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
