@@ -341,8 +341,36 @@ export default function KundeDashboard() {
 
           {/* ====== Compact Gamification + Quick Wins side by side ====== */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Fortschritt */}
-            {missions.length > 0 && (
+            {/* Fortschritt OR Benachrichtigungen */}
+            {allMissionsDoneOver24h ? (
+              <div className="bg-white rounded-2xl p-5 border border-border/30 shadow-[0_1px_3px_hsl(262,30%,80%/0.3)]">
+                <div className="flex items-center gap-2.5 mb-4">
+                  <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                    <Bell className="w-4 h-4 text-primary" />
+                  </div>
+                  <div>
+                    <h2 className="text-sm font-semibold text-foreground">Benachrichtigungen</h2>
+                    <p className="text-xs text-muted-foreground">Aktuelle Aktivitäten deines Geschäfts</p>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  {notifications.map((notif, i) => (
+                    <div
+                      key={i}
+                      className="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-muted/30 border border-border/20"
+                    >
+                      <div className="w-8 h-8 rounded-lg bg-primary/[0.06] flex items-center justify-center shrink-0">
+                        <notif.icon className={cn("w-4 h-4", notif.color)} />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-medium text-foreground">{notif.text}</p>
+                      </div>
+                      <span className="text-[10px] text-muted-foreground shrink-0">{notif.time}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : missions.length > 0 && (
               <div className="bg-white rounded-2xl p-5 border border-border/30 shadow-[0_1px_3px_hsl(262,30%,80%/0.3)]">
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-2.5">
