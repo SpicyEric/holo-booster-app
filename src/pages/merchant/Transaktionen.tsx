@@ -176,12 +176,12 @@ export default function Transaktionen() {
 
   const loadCustomerSegments = async (cid: string) => {
     const { data: la } = await supabase.from("loyalty_accounts").select("id, user_id").eq("merchant_customer_id", cid);
-    if (!la || la.length === 0) { setSegments([{ name: "Neu", label: "1 Besuch", count: 0, percentage: 0, color: "#22C55E" }, { name: "Selten", label: "2-5 Besuche", count: 0, percentage: 0, color: "#A855F7" }, { name: "Treu", label: "6-15 Besuche", count: 0, percentage: 0, color: "#3B82F6" }, { name: "VIP", label: "15+ Besuche", count: 0, percentage: 0, color: "#F97316" }]); return; }
+    if (!la || la.length === 0) { setSegments([{ name: "Neu", label: "1 Besuch", count: 0, percentage: 0, color: "#22C55E" }, { name: "Kunden", label: "2-5 Besuche", count: 0, percentage: 0, color: "#A855F7" }, { name: "Stammkunden", label: "6-15 Besuche", count: 0, percentage: 0, color: "#3B82F6" }, { name: "VIP-Stammkunden", label: "15+ Besuche", count: 0, percentage: 0, color: "#F97316" }]); return; }
     const utc: Record<string, number> = {};
     for (const acc of la) { const { count } = await supabase.from("point_transactions").select("*", { count: "exact", head: true }).eq("merchant_customer_id", cid).eq("loyalty_account_id", acc.id).eq("transaction_type", "nfc_stamp"); utc[acc.id] = count || 0; }
     let n = 0, s = 0, t2 = 0, v = 0; Object.values(utc).forEach(c => { if (c <= 1) n++; else if (c <= 5) s++; else if (c <= 15) t2++; else v++; });
     const tot = la.length;
-    setSegments([{ name: "Neu", label: "1 Besuch", count: n, percentage: tot > 0 ? Math.round(n / tot * 100) : 0, color: "#22C55E" }, { name: "Selten", label: "2-5 Besuche", count: s, percentage: tot > 0 ? Math.round(s / tot * 100) : 0, color: "#A855F7" }, { name: "Treu", label: "6-15 Besuche", count: t2, percentage: tot > 0 ? Math.round(t2 / tot * 100) : 0, color: "#3B82F6" }, { name: "VIP", label: "15+ Besuche", count: v, percentage: tot > 0 ? Math.round(v / tot * 100) : 0, color: "#F97316" }]);
+    setSegments([{ name: "Neu", label: "1 Besuch", count: n, percentage: tot > 0 ? Math.round(n / tot * 100) : 0, color: "#22C55E" }, { name: "Kunden", label: "2-5 Besuche", count: s, percentage: tot > 0 ? Math.round(s / tot * 100) : 0, color: "#A855F7" }, { name: "Stammkunden", label: "6-15 Besuche", count: t2, percentage: tot > 0 ? Math.round(t2 / tot * 100) : 0, color: "#3B82F6" }, { name: "VIP-Stammkunden", label: "15+ Besuche", count: v, percentage: tot > 0 ? Math.round(v / tot * 100) : 0, color: "#F97316" }]);
   };
 
   const filtered = useMemo(() => {
