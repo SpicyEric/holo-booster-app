@@ -220,9 +220,9 @@ export const AppScan = () => {
   }, [user, navigate, isOnline]);
 
   const handleNfcRead = useCallback((nfcResult: NfcReadResult) => {
-    if (nfcResult.success && (nfcResult.hardwareUid || nfcResult.chipData)) {
-      // Send both hardware UID and NDEF chip data for backward compatibility
-      handleChipScan(nfcResult.hardwareUid || '', nfcResult.chipData || '');
+    if (nfcResult.success && nfcResult.hardwareUid) {
+      // Only hardware UID is used for identification
+      handleChipScan(nfcResult.hardwareUid);
     } else if (nfcResult.error) {
       const errorLower = nfcResult.error.toLowerCase();
       if (errorLower.includes('permission') || 
