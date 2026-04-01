@@ -71,8 +71,8 @@ export const AppScan = () => {
     }
   }, [searchParams, checkingNfc, nfcSupported, nfcEnabled]);
 
-  const handleChipScan = useCallback(async (hardwareUid: string, chipData?: string) => {
-    console.log('[AppScan] handleChipScan called, hardwareUid:', hardwareUid, 'chipData:', chipData, 'user from hook:', user?.id, 'online:', isOnline);
+  const handleChipScan = useCallback(async (hardwareUid: string) => {
+    console.log('[AppScan] handleChipScan called, hardwareUid:', hardwareUid, 'user from hook:', user?.id, 'online:', isOnline);
     
     // Re-check session directly to avoid stale hook state (e.g. during token refresh)
     let currentUserId = user?.id;
@@ -128,11 +128,10 @@ export const AppScan = () => {
       return;
     }
 
-    // ONLINE MODE: Use 3-param overload (sends both chip_data and hardware_uid for backward compat)
+    // ONLINE MODE: Only hardware UID matters – no NDEF content used
     try {
       const { data, error } = await supabase.rpc('award_points_via_nfc', {
-        p_chip_data: chipData || '',
-        p_hardware_uid: hardwareUid || '',
+        p_hardware_uid: hardwareUid,
         p_user_id: currentUserId,
       });
 
@@ -142,13 +141,15 @@ export const AppScan = () => {
         success: boolean; 
         points_awarded?: number; 
         total_points?: number; 
-        merchant_customer_id?: string; 
-        error?: string 
+        merchant_customer_id?: string;
+        merchant_name?: string;
+        error?: string;
+        error_code?: string;
       };
 
       if (response.success) {
-        let merchantName = 'Händler';
-        if (response.merchant_customer_id) {
+        let merchantName = response.merchant_name || 'Händler';
+        if (!response.merchant_name && response.merchant_customer_id) {
           const { data: merchant } = await supabase
             .from('customers')
             .select('company_name, name')
@@ -173,42 +174,20 @@ export const AppScan = () => {
 
         toast.success(`+${response.points_awarded} Punkte gesammelt!`);
       } else {
-        // DEMO FALLBACK: If chip not recognized, simulate success for video
-        console.warn('[AppScan] RPC failed, using demo fallback:', response.error);
+        // Real error from server – show it to the user
+        console.warn('[AppScan] Server rejected stamp:', response.error, response.error_code);
         setResult({
-          success: true,
-          points: 10,
-          totalPoints: 10,
-          merchantName: 'Backstube König',
+          success: false,
+          error: response.error || 'Stempel konnte nicht verarbeitet werden.',
         });
-        confetti({
-          particleCount: 100,
-          spread: 70,
-          origin: { y: 0.6 },
-        });
-        toast.success('+10 Punkte gesammelt!');
+        toast.error(response.error || 'Stempel fehlgeschlagen');
       }
     } catch (error: any) {
-      console.error('Scan error:', error);
+      console.error('[AppScan] Scan error:', error);
 
-      // DEMO FALLBACK on any error: simulate success
-      console.warn('[AppScan] Catch fallback triggered:', error.message);
-      setResult({
-        success: true,
-        points: 10,
-        totalPoints: 10,
-        merchantName: 'Backstube König',
-      });
-      confetti({
-        particleCount: 100,
-        spread: 70,
-        origin: { y: 0.6 },
-      });
-      toast.success('+10 Punkte gesammelt!');
-
-      // Also try offline fallback for network errors
+      // Network error → try offline queue
       if (error.message?.includes('fetch') || error.message?.includes('network') || error.message?.includes('Failed')) {
-        console.log('[AppScan] Network error detected - falling back to offline mode');
+        console.log('[AppScan] Network error – falling back to offline mode');
         
         if (offlineQueueService.hasPendingStampForUid(hardwareUid)) {
           setResult({
@@ -241,9 +220,9 @@ export const AppScan = () => {
   }, [user, navigate, isOnline]);
 
   const handleNfcRead = useCallback((nfcResult: NfcReadResult) => {
-    if (nfcResult.success && (nfcResult.hardwareUid || nfcResult.chipData)) {
-      // Send both hardware UID and NDEF chip data for backward compatibility
-      handleChipScan(nfcResult.hardwareUid || '', nfcResult.chipData || '');
+    if (nfcResult.success && nfcResult.hardwareUid) {
+      // Only hardware UID is used for identification
+      handleChipScan(nfcResult.hardwareUid);
     } else if (nfcResult.error) {
       const errorLower = nfcResult.error.toLowerCase();
       if (errorLower.includes('permission') || 
