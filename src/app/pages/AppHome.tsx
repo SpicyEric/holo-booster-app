@@ -41,11 +41,30 @@ export const AppHome = () => {
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
 
   useEffect(() => {
-    navigator.geolocation?.getCurrentPosition(
-      (pos) => setUserLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
-      () => {},
-      { timeout: 5000, maximumAge: 60000 }
-    );
+    // Only try to get location silently if permission was already granted
+    // Do NOT trigger a permission prompt here
+    const tryGetLocation = async () => {
+      try {
+        const { Capacitor } = await import('@capacitor/core');
+        if (Capacitor.isNativePlatform()) {
+          const { Geolocation } = await import('@capacitor/geolocation');
+          const perm = await Geolocation.checkPermissions();
+          if (perm.location !== 'granted') return; // Don't prompt, just skip
+          const pos = await Geolocation.getCurrentPosition({ timeout: 5000, maximumAge: 60000 });
+          setUserLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+        } else {
+          // Web: also only use if already granted (no way to check without prompting, so just try)
+          navigator.geolocation?.getCurrentPosition(
+            (pos) => setUserLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+            () => {},
+            { timeout: 5000, maximumAge: 60000 }
+          );
+        }
+      } catch {
+        // Silently fail - location is optional for the home feed
+      }
+    };
+    tryGetLocation();
   }, []);
 
   useEffect(() => {
