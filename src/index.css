@@ -168,6 +168,15 @@ All colors MUST be HSL.
     forced-color-adjust: none !important;
   }
 
+  /* Colored text (primary/purple) gets a thin white outline for readability */
+  .text-primary,
+  [class*="text-primary"],
+  [class*="from-primary"],
+  .bg-clip-text {
+    -webkit-text-stroke: 0.3px #ffffff;
+    paint-order: stroke fill;
+  }
+
   /* Re-allow dark mode only for app routes */
   html.dark[data-app-route='true'],
   html.dark[data-app-route='true'] body {
@@ -177,5 +186,13 @@ All colors MUST be HSL.
 
   html.dark[data-app-route='true'] body {
     color: hsl(0 0% 93%) !important;
+  }
+
+  /* Don't apply text-stroke in app dark mode */
+  html.dark[data-app-route='true'] .text-primary,
+  html.dark[data-app-route='true'] [class*="text-primary"],
+  html.dark[data-app-route='true'] [class*="from-primary"],
+  html.dark[data-app-route='true'] .bg-clip-text {
+    -webkit-text-stroke: unset;
   }
 }
