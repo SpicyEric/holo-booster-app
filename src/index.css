@@ -97,15 +97,24 @@ All colors MUST be HSL.
 @layer base {
   * {
     @apply border-border;
+    forced-color-adjust: none;
   }
 
   :root,
   html {
     color-scheme: only light;
+    background-color: #ffffff;
+  }
+
+  html,
+  body {
+    color-scheme: only light !important;
+    background-color: #ffffff !important;
   }
 
   html.dark[data-app-route='true'] {
-    color-scheme: dark;
+    color-scheme: dark !important;
+    background-color: hsl(var(--background)) !important;
   }
 
   html[data-app-route='false'],
@@ -126,27 +135,6 @@ All colors MUST be HSL.
     padding-top: env(safe-area-inset-top, 0px);
     overscroll-behavior: none;
   }
-}
-
-/* Samsung Internet "Force Dark Mode" override */
-@media (prefers-color-scheme: dark) {
-  :root {
-    color-scheme: only light;
-    background-color: #ffffff !important;
-  }
-  body {
-    background-color: #ffffff !important;
-    color: #1a1a1a !important;
-  }
-  /* Re-allow dark mode only for app routes */
-  html.dark[data-app-route='true'] {
-    color-scheme: dark;
-    background-color: hsl(0 0% 13%) !important;
-  }
-  html.dark[data-app-route='true'] body {
-    background-color: hsl(0 0% 13%) !important;
-    color: hsl(0 0% 93%) !important;
-  }
 
   .safe-area-top-shield {
     position: fixed;
@@ -160,5 +148,30 @@ All colors MUST be HSL.
 
   .safe-area-pb {
     padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+}
+
+/* Samsung Internet "Force Dark Mode" override */
+@media (prefers-color-scheme: dark) {
+  :root,
+  html,
+  body {
+    color-scheme: only light !important;
+    background-color: #ffffff !important;
+  }
+
+  body {
+    color: #1a1a1a !important;
+  }
+
+  /* Re-allow dark mode only for app routes */
+  html.dark[data-app-route='true'],
+  html.dark[data-app-route='true'] body {
+    color-scheme: dark !important;
+    background-color: hsl(0 0% 13%) !important;
+  }
+
+  html.dark[data-app-route='true'] body {
+    color: hsl(0 0% 93%) !important;
   }
 }
