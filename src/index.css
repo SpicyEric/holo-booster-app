@@ -168,6 +168,12 @@ All colors MUST be HSL.
     forced-color-adjust: none !important;
   }
 
+  /* Brighten gradient buttons when Samsung forces dark */
+  html:not([data-app-route='true']) .bg-gradient-primary,
+  html:not([data-app-route='true']) [class*="bg-gradient-primary"] {
+    background: linear-gradient(135deg, hsl(262 83% 72%), hsl(217 91% 72%)) !important;
+  }
+
   /* Re-allow dark mode only for app routes */
   html.dark[data-app-route='true'],
   html.dark[data-app-route='true'] body {
