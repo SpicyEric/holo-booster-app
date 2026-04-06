@@ -141,7 +141,7 @@ const Karriere = () => {
           >
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-foreground">
               Werde Teil von{' '}
-              <span className="bg-gradient-primary bg-clip-text text-transparent">Eloyo</span>
+              <span className="text-secondary font-bold">Eloyo</span>
             </h1>
             <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
               Wir bauen die Zukunft der Kundenbindung für lokale Geschäfte. 

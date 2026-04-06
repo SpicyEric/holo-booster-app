@@ -158,7 +158,7 @@ const Landing = () => {
               {/* Left: Headline and Text */}
               <div className="space-y-6 pr-8">
                 <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-foreground leading-tight">
-                  Das moderne <span className="bg-gradient-primary bg-clip-text text-transparent">NFC-Stempelsystem</span> für maximale Kundenbindung
+                  Das moderne <span className="text-secondary font-bold">NFC-Stempelsystem</span> für maximale Kundenbindung
                 </h1>
                 <div className="flex flex-col sm:flex-row gap-4">
                   <Button
@@ -248,7 +248,7 @@ const Landing = () => {
               className="space-y-6"
             >
               <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-foreground">
-                Das Eloyo-Netzwerk: <span className="bg-gradient-primary bg-clip-text text-transparent">Deine neue Werbefläche</span>
+                Das Eloyo-Netzwerk: <span className="text-secondary font-bold">Deine neue Werbefläche</span>
               </h2>
               <p className="text-lg text-muted-foreground">
                 Das Besondere an Eloyo: Du profitierst automatisch von allen anderen Geschäften, die ebenfalls Eloyo nutzen. Kunden, die woanders einkaufen, sehen auch dein Geschäft in der App.
@@ -318,7 +318,7 @@ const Landing = () => {
               className="space-y-6 order-1 lg:order-2"
             >
               <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-foreground">
-                Gamification, die <span className="bg-gradient-primary bg-clip-text text-transparent">süchtig macht</span>
+                Gamification, die <span className="text-secondary font-bold">süchtig macht</span>
               </h2>
               <p className="text-lg text-muted-foreground">
                 Vergiss langweilige Stempelkarten, die niemand einlöst. Bei Eloyo entscheiden deine Kunden selbst, wie sie ihre Punkte ausgeben – das schafft echte Motivation und emotionale Bindung.

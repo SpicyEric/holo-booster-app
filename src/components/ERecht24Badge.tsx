@@ -27,12 +27,12 @@ const ERecht24Badge = () => {
       href="https://www.e-recht24.de"
       target="_blank"
       rel="noopener noreferrer"
-      className="fixed bottom-4 right-4 z-50 transition-opacity hover:opacity-80"
+      className="fixed bottom-3 right-3 z-50 transition-opacity hover:opacity-80"
     >
       <img
         src={src}
         alt={alt}
-        className="w-24 sm:w-28 h-auto rounded-lg shadow-lg"
+        className="w-16 sm:w-20 h-auto rounded-md shadow-md"
       />
     </a>
   );
