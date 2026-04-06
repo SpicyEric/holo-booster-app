@@ -99,8 +99,9 @@ All colors MUST be HSL.
     @apply border-border;
   }
 
+  :root,
   html {
-    color-scheme: light;
+    color-scheme: only light;
   }
 
   html.dark[data-app-route='true'] {
