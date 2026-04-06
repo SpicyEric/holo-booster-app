@@ -179,3 +179,11 @@ All colors MUST be HSL.
     color: hsl(0 0% 93%) !important;
   }
 }
+
+/* Shrink CCM19 cookie consent widget */
+.ccm-root .ccm-widget-icon,
+[class*="ccm-widget"],
+[id*="ccm19"] .ccm-widget-icon {
+  transform: scale(0.7) !important;
+  transform-origin: bottom left !important;
+}
