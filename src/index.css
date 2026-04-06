@@ -107,29 +107,17 @@ All colors MUST be HSL.
     color-scheme: dark;
   }
 
-  /* === Samsung Internet / aggressive dark mode prevention === */
   html[data-app-route='false'],
   html.dark[data-app-route='false'] {
     color-scheme: only light !important;
-    background-color: #ffffff !important;
-    forced-color-adjust: none !important;
+    background-color: hsl(var(--background)) !important;
+    forced-color-adjust: none;
   }
 
   html[data-app-route='false'] body,
   html.dark[data-app-route='false'] body {
-    background-color: #ffffff !important;
-  }
-
-  @media (prefers-color-scheme: dark) {
-    html[data-app-route='false'],
-    html.dark[data-app-route='false'] {
-      background-color: #ffffff !important;
-      color-scheme: only light !important;
-    }
-    html[data-app-route='false'] body,
-    html.dark[data-app-route='false'] body {
-      background-color: #ffffff !important;
-    }
+    background-color: hsl(var(--background)) !important;
+    color: hsl(var(--foreground)) !important;
   }
 
   body {
