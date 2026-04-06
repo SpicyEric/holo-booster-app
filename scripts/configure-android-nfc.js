@@ -543,36 +543,27 @@ function configureAndroidManifest() {
     modified = true;
   }
   
-  // Add NFC intent filters to MainActivity
-  if (!content.includes('android.nfc.action.NDEF_DISCOVERED')) {
-    content = content.replace(
-      /<activity[^>]*android:name="[^"]*MainActivity"[^>]*>([\s\S]*?)<\/activity>/,
-      (match) => {
-        if (match.includes('NDEF_DISCOVERED')) return match;
-        
-        const nfcFilters = `
-            <!-- NFC Intent Filters - Added by configure-android-nfc.js -->
-            <intent-filter>
-                <action android:name="android.nfc.action.NDEF_DISCOVERED" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <data android:mimeType="text/plain" />
-            </intent-filter>
-            <intent-filter>
-                <action android:name="android.nfc.action.TECH_DISCOVERED" />
-            </intent-filter>
-            <intent-filter>
-                <action android:name="android.nfc.action.TAG_DISCOVERED" />
-                <category android:name="android.intent.category.DEFAULT" />
-            </intent-filter>
-            <meta-data
-                android:name="android.nfc.action.TECH_DISCOVERED"
-                android:resource="@xml/nfc_tech_filter" />`;
-        
-        return match.replace('</activity>', nfcFilters + '\n        </activity>');
-      }
-    );
-    console.log('   ✅ Added NFC intent filters to MainActivity');
+  // NFC Intent Filters are intentionally NOT added to the manifest.
+  // The Capawesome NFC plugin uses Foreground Dispatch which only works
+  // when the app is in the foreground and actively scanning.
+  // Adding manifest-level intent filters (NDEF_DISCOVERED, TECH_DISCOVERED,
+  // TAG_DISCOVERED) would cause Android to auto-launch the app whenever
+  // ANY NFC tag is tapped — even when the app is closed. This is unwanted.
+  
+  // CLEANUP: Remove any previously added NFC intent filters from manifest
+  if (content.includes('android.nfc.action.NDEF_DISCOVERED') || 
+      content.includes('android.nfc.action.TECH_DISCOVERED') ||
+      content.includes('android.nfc.action.TAG_DISCOVERED')) {
+    // Remove NFC intent-filter blocks
+    content = content.replace(/\s*<!-- NFC Intent Filters[^>]*-->\s*/g, '');
+    content = content.replace(/\s*<intent-filter>\s*<action android:name="android\.nfc\.action\.NDEF_DISCOVERED"[^/]*\/>\s*<category android:name="android\.intent\.category\.DEFAULT"[^/]*\/>\s*<data android:mimeType="text\/plain"[^/]*\/>\s*<\/intent-filter>/g, '');
+    content = content.replace(/\s*<intent-filter>\s*<action android:name="android\.nfc\.action\.TECH_DISCOVERED"[^/]*\/>\s*<\/intent-filter>/g, '');
+    content = content.replace(/\s*<intent-filter>\s*<action android:name="android\.nfc\.action\.TAG_DISCOVERED"[^/]*\/>\s*<category android:name="android\.intent\.category\.DEFAULT"[^/]*\/>\s*<\/intent-filter>/g, '');
+    content = content.replace(/\s*<meta-data\s*android:name="android\.nfc\.action\.TECH_DISCOVERED"\s*android:resource="@xml\/nfc_tech_filter"[^/]*\/>/g, '');
+    console.log('   ✅ Removed old NFC intent filters from manifest (prevents auto-launch)');
     modified = true;
+  } else {
+    console.log('   ✅ No NFC intent filters in manifest (correct - prevents auto-launch)');
   }
 
   // Enforce portrait-only orientation on MainActivity
