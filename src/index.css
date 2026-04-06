@@ -160,13 +160,7 @@ All colors MUST be HSL.
     background-color: #ffffff !important;
   }
 
-  html {
-    filter: none !important;
-  }
-
   body {
-    filter: none !important;
-    background-color: #ffffff !important;
     color: #1a1a1a !important;
   }
 
@@ -181,12 +175,7 @@ All colors MUST be HSL.
     background-color: hsl(0 0% 13%) !important;
   }
 
-  html.dark[data-app-route='true'] {
-    filter: none !important;
-  }
-
   html.dark[data-app-route='true'] body {
-    filter: none !important;
     color: hsl(0 0% 93%) !important;
   }
 }
