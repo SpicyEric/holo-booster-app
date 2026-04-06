@@ -107,17 +107,51 @@ All colors MUST be HSL.
     color-scheme: dark;
   }
 
+  /* === Samsung Internet / aggressive dark mode prevention === */
   html[data-app-route='false'],
   html.dark[data-app-route='false'] {
     color-scheme: only light !important;
-    background-color: hsl(var(--background)) !important;
-    forced-color-adjust: none;
+    background-color: #ffffff !important;
+    forced-color-adjust: none !important;
+    -webkit-text-fill-color: initial !important;
+  }
+
+  html[data-app-route='false'] *,
+  html.dark[data-app-route='false'] * {
+    forced-color-adjust: none !important;
   }
 
   html[data-app-route='false'] body,
   html.dark[data-app-route='false'] body {
-    background-color: hsl(var(--background)) !important;
-    color: hsl(var(--foreground)) !important;
+    background-color: #ffffff !important;
+    color: #1a1a1a !important;
+    -webkit-text-fill-color: #1a1a1a !important;
+  }
+
+  /* Override Samsung Internet's injected dark styles on common elements */
+  html[data-app-route='false'] div,
+  html[data-app-route='false'] section,
+  html[data-app-route='false'] main,
+  html[data-app-route='false'] header,
+  html[data-app-route='false'] footer,
+  html[data-app-route='false'] nav,
+  html[data-app-route='false'] article {
+    background-color: inherit !important;
+    color: inherit !important;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    html[data-app-route='false'],
+    html.dark[data-app-route='false'] {
+      background-color: #ffffff !important;
+      color: #1a1a1a !important;
+      color-scheme: only light !important;
+    }
+    html[data-app-route='false'] body,
+    html.dark[data-app-route='false'] body {
+      background-color: #ffffff !important;
+      color: #1a1a1a !important;
+    }
   }
 
   body {
