@@ -125,6 +125,27 @@ All colors MUST be HSL.
     padding-top: env(safe-area-inset-top, 0px);
     overscroll-behavior: none;
   }
+}
+
+/* Samsung Internet "Force Dark Mode" override */
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: only light;
+    background-color: #ffffff !important;
+  }
+  body {
+    background-color: #ffffff !important;
+    color: #1a1a1a !important;
+  }
+  /* Re-allow dark mode only for app routes */
+  html.dark[data-app-route='true'] {
+    color-scheme: dark;
+    background-color: hsl(0 0% 13%) !important;
+  }
+  html.dark[data-app-route='true'] body {
+    background-color: hsl(0 0% 13%) !important;
+    color: hsl(0 0% 93%) !important;
+  }
 
   .safe-area-top-shield {
     position: fixed;
