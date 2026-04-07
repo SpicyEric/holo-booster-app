@@ -7,6 +7,8 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+const TAX_RATE_ID = "txr_1TJYQcBhiBjCX9Pm1iPiJe16";
+
 const PACKAGE_PRICES: Record<string, { price_id: string; amount_cents: number; name: string }> = {
   '100': { 
     price_id: 'price_1SSwOiBhiBjCX9PmJhUwc6d8', 
@@ -116,6 +118,7 @@ serve(async (req) => {
             unit_amount: packageInfo.amount_cents,
           },
           quantity: 1,
+          tax_rates: [TAX_RATE_ID],
         },
       ],
       mode: 'payment',

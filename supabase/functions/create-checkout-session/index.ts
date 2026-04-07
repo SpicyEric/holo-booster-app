@@ -45,6 +45,9 @@ const PRICE_IDS = {
   ADDITIONAL_ABO_MONTHLY: "price_1TGI0uBhiBjCX9PmtT9lzPrz",
 };
 
+// Tax Rate ID for 19% MwSt. (inclusive)
+const TAX_RATE_ID = "txr_1TJYQcBhiBjCX9Pm1iPiJe16";
+
 // Prices in cents
 const STARTBOX_PRICE = 14945;
 const ADDITIONAL_STARTBOX_PRICE = 9945;
@@ -153,6 +156,7 @@ serve(async (req) => {
           product_data: { name: 'Eloyo Startbox Basic', description: `${startboxPercentOff}% Rabatt${salesRepDiscountCents > 0 ? ` + ${salesRepDiscount}€ Partner-Rabatt` : ''} (Original: €149,45)` },
         },
         quantity: 1,
+        tax_rates: [TAX_RATE_ID],
       });
     } else if (salesRepDiscountCents > 0) {
       lineItems.push({
@@ -161,9 +165,10 @@ serve(async (req) => {
           product_data: { name: 'Eloyo Startbox Basic', description: `${salesRepDiscount}€ Partner-Rabatt (Original: €149,45)` },
         },
         quantity: 1,
+        tax_rates: [TAX_RATE_ID],
       });
     } else {
-      lineItems.push({ price: PRICE_IDS.STARTBOX, quantity: 1 });
+      lineItems.push({ price: PRICE_IDS.STARTBOX, quantity: 1, tax_rates: [TAX_RATE_ID] });
     }
 
     // 2. Additional Startboxes
@@ -176,9 +181,10 @@ serve(async (req) => {
             product_data: { name: 'Zusatzstandort Startbox', description: `${additionalLocations}× zusätzliche Standorte (${startboxPercentOff}% Rabatt)` },
           },
           quantity: additionalLocations,
+          tax_rates: [TAX_RATE_ID],
         });
       } else {
-        lineItems.push({ price: PRICE_IDS.ADDITIONAL_STARTBOX, quantity: additionalLocations });
+        lineItems.push({ price: PRICE_IDS.ADDITIONAL_STARTBOX, quantity: additionalLocations, tax_rates: [TAX_RATE_ID] });
       }
     }
 
@@ -192,9 +198,10 @@ serve(async (req) => {
           product_data: { name: 'Eloyo Abo (Jährlich)', description: '11 Monate zahlen, 12 Monate nutzen' },
         },
         quantity: 1,
+        tax_rates: [TAX_RATE_ID],
       });
     } else {
-      lineItems.push({ price: PRICE_IDS.ABO_MONTHLY, quantity: 1 });
+      lineItems.push({ price: PRICE_IDS.ABO_MONTHLY, quantity: 1, tax_rates: [TAX_RATE_ID] });
     }
 
     // 4. Additional location Abo
@@ -208,9 +215,10 @@ serve(async (req) => {
             product_data: { name: 'Zusatzstandort Abo (Jährlich)', description: `${additionalLocations}× zusätzliche Standorte – 11 Monate zahlen` },
           },
           quantity: additionalLocations,
+          tax_rates: [TAX_RATE_ID],
         });
       } else {
-        lineItems.push({ price: PRICE_IDS.ADDITIONAL_ABO_MONTHLY, quantity: additionalLocations });
+        lineItems.push({ price: PRICE_IDS.ADDITIONAL_ABO_MONTHLY, quantity: additionalLocations, tax_rates: [TAX_RATE_ID] });
       }
     }
 

@@ -199,6 +199,7 @@ const Settings = () => {
         </h2>
         <div className="space-y-4">
           <MigrateStripeLocalesButton />
+          <CreateTaxRateButton />
         </div>
       </GlassCard>
     </div>
@@ -231,6 +232,44 @@ function MigrateStripeLocalesButton() {
       <Button onClick={handleMigrate} disabled={running} variant="outline">
         {running ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Wird ausgeführt...</> : "Migration starten"}
       </Button>
+    </div>
+  );
+}
+
+function CreateTaxRateButton() {
+  const [running, setRunning] = useState(false);
+  const [taxRateId, setTaxRateId] = useState<string | null>(null);
+
+  const handleCreate = async () => {
+    setRunning(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('create-tax-rate');
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      setTaxRateId(data.taxRateId);
+      toast.success(data.message);
+    } catch (err: any) {
+      toast.error(err.message || "Fehler beim Erstellen der Tax Rate");
+    } finally {
+      setRunning(false);
+    }
+  };
+
+  return (
+    <div className="p-4 bg-muted/30 rounded-lg space-y-2">
+      <p className="font-medium">Stripe Tax Rate (19% MwSt.) anlegen</p>
+      <p className="text-sm text-muted-foreground">
+        Erstellt eine inklusive 19% MwSt.-Tax-Rate in Stripe (oder findet eine bestehende). Die ID wird für Rechnungen benötigt.
+      </p>
+      <Button onClick={handleCreate} disabled={running} variant="outline">
+        {running ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Wird erstellt...</> : "Tax Rate erstellen / finden"}
+      </Button>
+      {taxRateId && (
+        <div className="p-3 bg-green-50 dark:bg-green-900/20 rounded border border-green-200 dark:border-green-800">
+          <p className="text-sm font-medium text-green-800 dark:text-green-200">Tax Rate ID:</p>
+          <code className="text-sm font-mono select-all">{taxRateId}</code>
+        </div>
+      )}
     </div>
   );
 }
