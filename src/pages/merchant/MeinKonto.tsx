@@ -43,11 +43,17 @@ interface Invoice {
 }
 
 interface SubscriptionInfo {
+  hasSubscription: boolean;
   status: string;
-  current_period_end: string | null;
-  plan_name: string | null;
-  amount: number | null;
-  cancel_at_period_end: boolean;
+  currentPeriodEnd: string | null;
+  cancelAtPeriodEnd: boolean;
+  cancelAt: string | null;
+  plan?: {
+    name: string;
+    amount: number;
+    currency: string;
+    interval: string;
+  };
 }
 
 export default function MeinKonto() {
