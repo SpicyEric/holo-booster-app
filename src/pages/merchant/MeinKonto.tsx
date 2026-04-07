@@ -271,26 +271,51 @@ export default function MeinKonto() {
           <div className="space-y-4">
             <div className="flex items-center justify-between p-4 bg-muted/50 rounded-xl">
               <div>
-                <p className="font-semibold text-foreground">Eloyo Abo</p>
+                <p className="font-semibold text-foreground">
+                  {subscription?.plan?.name || 'Eloyo Abo'}
+                </p>
                 <p className="text-sm text-muted-foreground">
-                  {subscription?.current_period_end 
-                    ? `Nächste Zahlung: ${formatDate(subscription.current_period_end)}`
-                    : 'Keine aktive Subscription'}
+                  {subscription?.cancelAtPeriodEnd
+                    ? `Endet am: ${formatDate(subscription.currentPeriodEnd)}`
+                    : subscription?.currentPeriodEnd
+                      ? `Nächste Zahlung: ${formatDate(subscription.currentPeriodEnd)}`
+                      : 'Keine aktive Subscription'}
                 </p>
               </div>
               <Badge 
-                variant={customer?.status === 'active' ? 'default' : 'secondary'}
+                variant={subscription?.cancelAtPeriodEnd ? 'destructive' : customer?.status === 'active' ? 'default' : 'secondary'}
                 className="rounded-full"
               >
-                {customer?.status === 'active' ? 'Aktiv' : customer?.status === 'paused' ? 'Pausiert' : customer?.status || 'Unbekannt'}
+                {subscription?.cancelAtPeriodEnd ? 'Gekündigt' : customer?.status === 'active' ? 'Aktiv' : customer?.status === 'paused' ? 'Pausiert' : customer?.status || 'Unbekannt'}
               </Badge>
             </div>
+
+            {subscription?.cancelAtPeriodEnd && (
+              <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-xl p-4">
+                <div className="flex items-start gap-3">
+                  <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+                  <div className="space-y-1">
+                    <p className="font-semibold text-amber-900 dark:text-amber-200 text-sm">Kündigung vorgemerkt</p>
+                    <p className="text-sm text-amber-800 dark:text-amber-300">
+                      Ihr Abo wurde gekündigt und endet am <strong>{formatDate(subscription.currentPeriodEnd)}</strong>. 
+                      Bis dahin bleibt Ihr Geschäft in der App sichtbar und alle Funktionen stehen Ihnen weiterhin zur Verfügung.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
             <div className="flex flex-wrap gap-3">
               <Button variant="outline" onClick={openCustomerPortal} className="rounded-xl">
                 <ExternalLink className="h-4 w-4 mr-2" />
                 Zahlungsmethode ändern
               </Button>
-              {customer?.status === 'active' && (
+              {subscription?.cancelAtPeriodEnd ? (
+                <Button className="rounded-xl" onClick={handleReactivateSubscription} disabled={processingAction}>
+                  {processingAction && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
+                  Kündigung widerrufen
+                </Button>
+              ) : customer?.status === 'active' && (
                 <Button variant="outline" className="rounded-xl text-muted-foreground" onClick={() => { setCancelChoice('pause'); setShowCancelDialog(true); }}>
                   Abo kündigen
                 </Button>
