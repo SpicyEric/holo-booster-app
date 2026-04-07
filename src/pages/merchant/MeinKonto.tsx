@@ -187,6 +187,20 @@ export default function MeinKonto() {
     cancelChoice === 'pause' ? handlePauseSubscription() : handleCancelSubscription();
   };
 
+  const handleReactivateSubscription = async () => {
+    setProcessingAction(true);
+    try {
+      const { error } = await supabase.functions.invoke('reactivate-subscription');
+      if (error) throw error;
+      toast.success('Kündigung widerrufen – Ihr Abo läuft weiter');
+      loadData();
+    } catch (error) {
+      toast.error('Fehler beim Widerrufen der Kündigung');
+    } finally {
+      setProcessingAction(false);
+    }
+  };
+
   const formatAmount = (cents: number | null, currency: string | null) => {
     if (!cents) return '-';
     return new Intl.NumberFormat('de-DE', { style: 'currency', currency: currency || 'EUR' }).format(cents / 100);
