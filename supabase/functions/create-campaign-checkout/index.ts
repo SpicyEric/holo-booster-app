@@ -88,6 +88,7 @@ serve(async (req) => {
     if (!stripeCustomerId) {
       const stripeCustomer = await stripe.customers.create({
         email: campaign.customers.email || user.email,
+        preferred_locales: ['de'],
         metadata: {
           customer_id: campaign.customer_id
         }
