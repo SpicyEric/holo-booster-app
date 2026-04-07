@@ -2,7 +2,7 @@ import { useState } from "react";
 import { GlassCard } from "@/components/GlassCard";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { User, Lock, Mail } from "lucide-react";
+import { User, Lock, Mail, Wrench, Loader2 } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -190,8 +190,49 @@ const Settings = () => {
           </Button>
         </div>
       </GlassCard>
+
+      {/* Wartung / Migrationen */}
+      <GlassCard>
+        <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
+          <Wrench className="w-5 h-5" />
+          Wartung / Migrationen
+        </h2>
+        <div className="space-y-4">
+          <MigrateStripeLocalesButton />
+        </div>
+      </GlassCard>
     </div>
   );
 };
+
+function MigrateStripeLocalesButton() {
+  const [running, setRunning] = useState(false);
+
+  const handleMigrate = async () => {
+    setRunning(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('migrate-stripe-locales');
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      toast.success(`Migration abgeschlossen – alle Kunden auf Deutsch umgestellt (${data.updated} aktualisiert, ${data.skipped} bereits korrekt)`);
+    } catch (err: any) {
+      toast.error(err.message || "Fehler bei der Migration");
+    } finally {
+      setRunning(false);
+    }
+  };
+
+  return (
+    <div className="p-4 bg-muted/30 rounded-lg space-y-2">
+      <p className="font-medium">Stripe Rechnungssprache → Deutsch</p>
+      <p className="text-sm text-muted-foreground">
+        Setzt <code>preferred_locales: ['de']</code> für alle bestehenden Stripe-Kunden. Idempotent — kann mehrfach ausgeführt werden.
+      </p>
+      <Button onClick={handleMigrate} disabled={running} variant="outline">
+        {running ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Wird ausgeführt...</> : "Migration starten"}
+      </Button>
+    </div>
+  );
+}
 
 export default Settings;
