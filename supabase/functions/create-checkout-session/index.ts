@@ -45,6 +45,9 @@ const PRICE_IDS = {
   ADDITIONAL_ABO_MONTHLY: "price_1TGI0uBhiBjCX9PmtT9lzPrz",
 };
 
+// Tax Rate ID for 19% MwSt. (inclusive)
+const TAX_RATE_ID = "txr_1TJYQcBhiBjCX9Pm1iPiJe16";
+
 // Prices in cents
 const STARTBOX_PRICE = 14945;
 const ADDITIONAL_STARTBOX_PRICE = 9945;
