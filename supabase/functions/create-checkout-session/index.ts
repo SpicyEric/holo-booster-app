@@ -94,6 +94,7 @@ serve(async (req) => {
       if (stripeAddress) {
         await stripe.customers.update(customerId, {
           address: stripeAddress,
+          preferred_locales: ['de'],
           metadata: { companyName, industry: industry || '', vatId: vatId || '', locationCount: String(locationCount) },
         });
       }
@@ -102,6 +103,7 @@ serve(async (req) => {
         email: customerEmail,
         name: billingAddress?.name || companyName,
         address: stripeAddress,
+        preferred_locales: ['de'],
         metadata: { companyName, industry: industry || '', vatId: vatId || '', locationCount: String(locationCount) },
       });
       customerId = customer.id;
@@ -232,6 +234,7 @@ serve(async (req) => {
       mode: "subscription",
       line_items: lineItems,
       payment_method_types: ["card"],
+      billing_address_collection: 'required',
       success_url: `${req.headers.get("origin")}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${req.headers.get("origin")}/checkout/cancel`,
       metadata,
