@@ -101,12 +101,18 @@ serve(async (req) => {
           metadata: { companyName, industry: industry || '', vatId: vatId || '', locationCount: String(locationCount) },
         });
       }
+      // Ensure tax ID exists
+      const existingTaxIds = await stripe.customers.listTaxIds(customerId, { limit: 1 });
+      if (existingTaxIds.data.length === 0) {
+        await stripe.customers.createTaxId(customerId, { type: 'eu_vat', value: 'DE337756435' });
+      }
     } else {
       const customer = await stripe.customers.create({
         email: customerEmail,
         name: billingAddress?.name || companyName,
         address: stripeAddress,
         preferred_locales: ['de'],
+        tax_id_data: [{ type: 'eu_vat', value: 'DE337756435' }],
         metadata: { companyName, industry: industry || '', vatId: vatId || '', locationCount: String(locationCount) },
       });
       customerId = customer.id;
@@ -248,6 +254,10 @@ serve(async (req) => {
       metadata,
       subscription_data: {
         metadata: { promoterId: partnerUserId || '', salesRepDiscountCents: String(salesRepDiscountCents) },
+        invoice_settings: {
+          custom_fields: [{ name: 'USt-IdNr.', value: 'DE337756435' }],
+          footer: 'Eloyo | Fuggerstr. 2, 86836 Untermeitingen | USt-IdNr.: DE337756435 | Steuernummer: 102/257/91479 | support@eloyo.de',
+        },
       },
     };
 
