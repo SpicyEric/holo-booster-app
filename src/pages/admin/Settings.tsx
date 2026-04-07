@@ -199,6 +199,7 @@ const Settings = () => {
         </h2>
         <div className="space-y-4">
           <MigrateStripeLocalesButton />
+          <CreateTaxRateButton />
         </div>
       </GlassCard>
     </div>
