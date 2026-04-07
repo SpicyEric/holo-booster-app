@@ -251,7 +251,7 @@ serve(async (req) => {
       customer: customerId,
       mode: "subscription",
       line_items: lineItems,
-      payment_method_types: ["card", "sepa_debit", "link", "paypal"],
+      payment_method_types: ["card", "sepa_debit", "link"],
       billing_address_collection: 'required',
       success_url: `${req.headers.get("origin")}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${req.headers.get("origin")}/checkout/cancel`,
