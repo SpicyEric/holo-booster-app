@@ -290,10 +290,10 @@ export default function MeinKonto() {
                 </p>
                 <p className="text-sm text-muted-foreground">
                   {subscription?.cancelAtPeriodEnd
-                    ? `Endet am: ${formatDate(subscription.currentPeriodEnd)}`
+                    ? `Endet am: ${formatDate(subscription.cancelAt || subscription.currentPeriodEnd)}`
                     : subscription?.currentPeriodEnd
                       ? `Nächste Zahlung: ${formatDate(subscription.currentPeriodEnd)}`
-                      : 'Keine aktive Subscription'}
+                      : ''}
                 </p>
               </div>
               <Badge 
