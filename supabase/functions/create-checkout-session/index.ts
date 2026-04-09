@@ -111,7 +111,7 @@ serve(async (req) => {
         address: stripeAddress,
         preferred_locales: ['de'],
         invoice_settings: invoiceSettings,
-        tax_id_data: [{ type: 'eu_vat', value: 'DE337756435' }],
+        
         metadata: { companyName, industry: industry || '', vatId: vatId || '', locationCount: String(locationCount) },
       });
       customerId = customer.id;
