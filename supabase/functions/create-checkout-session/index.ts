@@ -104,11 +104,6 @@ serve(async (req) => {
         invoice_settings: invoiceSettings,
         metadata: { companyName, industry: industry || '', vatId: vatId || '', locationCount: String(locationCount) },
       });
-      // Ensure tax ID exists
-      const existingTaxIds = await stripe.customers.listTaxIds(customerId, { limit: 1 });
-      if (existingTaxIds.data.length === 0) {
-        await stripe.customers.createTaxId(customerId, { type: 'eu_vat', value: 'DE337756435' });
-      }
     } else {
       const customer = await stripe.customers.create({
         email: customerEmail,
