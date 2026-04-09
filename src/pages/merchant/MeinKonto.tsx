@@ -290,10 +290,10 @@ export default function MeinKonto() {
                 </p>
                 <p className="text-sm text-muted-foreground">
                   {subscription?.cancelAtPeriodEnd
-                    ? `Endet am: ${formatDate(subscription.currentPeriodEnd)}`
+                    ? `Endet am: ${formatDate(subscription.cancelAt || subscription.currentPeriodEnd)}`
                     : subscription?.currentPeriodEnd
                       ? `Nächste Zahlung: ${formatDate(subscription.currentPeriodEnd)}`
-                      : 'Keine aktive Subscription'}
+                      : ''}
                 </p>
               </div>
               <Badge 
@@ -311,7 +311,7 @@ export default function MeinKonto() {
                   <div className="space-y-1">
                     <p className="font-semibold text-amber-900 dark:text-amber-200 text-sm">Kündigung vorgemerkt</p>
                     <p className="text-sm text-amber-800 dark:text-amber-300">
-                      Ihr Abo wurde gekündigt und endet am <strong>{formatDate(subscription.currentPeriodEnd)}</strong>. 
+                      Ihr Abo wurde gekündigt und endet am <strong>{formatDate(subscription.cancelAt || subscription.currentPeriodEnd)}</strong>. 
                       Bis dahin bleibt Ihr Geschäft in der App sichtbar und alle Funktionen stehen Ihnen weiterhin zur Verfügung.
                     </p>
                   </div>

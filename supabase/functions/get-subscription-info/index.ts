@@ -86,14 +86,22 @@ serve(async (req) => {
     const price = item.price;
     const product = price.product as Stripe.Product;
 
+    // Period dates may be on subscription or on items (newer API versions)
+    const periodEnd = (subscription as any).current_period_end 
+      || (item as any).current_period_end 
+      || null;
+    const periodStart = (subscription as any).current_period_start 
+      || (item as any).current_period_start 
+      || null;
+
     const subscriptionInfo = {
       hasSubscription: true,
       status: subscription.status,
-      currentPeriodStart: subscription.current_period_start 
-        ? new Date(subscription.current_period_start * 1000).toISOString() 
+      currentPeriodStart: periodStart 
+        ? new Date(periodStart * 1000).toISOString() 
         : null,
-      currentPeriodEnd: subscription.current_period_end 
-        ? new Date(subscription.current_period_end * 1000).toISOString() 
+      currentPeriodEnd: periodEnd 
+        ? new Date(periodEnd * 1000).toISOString() 
         : null,
       cancelAtPeriodEnd: subscription.cancel_at_period_end || false,
       cancelAt: subscription.cancel_at ? new Date(subscription.cancel_at * 1000).toISOString() : null,
