@@ -43,8 +43,11 @@ let _nfcPlugin: NfcPlugin | null = null;
 async function getNfcPlugin(): Promise<NfcPlugin> {
   if (_nfcPlugin) return _nfcPlugin;
   try {
-    const mod = await import('@capawesome-team/capacitor-nfc');
-    _nfcPlugin = (mod as any).Nfc as NfcPlugin;
+    // Hide the import string from Vite's static analysis so it doesn't
+    // fail during dev/build when the package isn't installed.
+    const pkgName = ['@capawesome-team', 'capacitor-nfc'].join('/');
+    const mod = await (Function('p', 'return import(p)') as (p: string) => Promise<any>)(pkgName);
+    _nfcPlugin = mod.Nfc as NfcPlugin;
     return _nfcPlugin;
   } catch (e) {
     console.error('[NFC] Failed to load @capawesome-team/capacitor-nfc:', e);
