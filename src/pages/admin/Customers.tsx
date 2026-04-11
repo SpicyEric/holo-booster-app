@@ -69,6 +69,10 @@ const CustomerMarker = ({ customer, isSelected, onClick }: { customer: Customer;
 
 const Customers = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const { role, user } = useAuth();
+  const isPartner = role === 'sales_partner' || (role !== 'admin' && location.pathname.startsWith('/vertriebler'));
+  const basePath = isPartner ? '/vertriebler' : '/admin';
   const { apiKey, loading: apiKeyLoading } = useGoogleMapsApiKey();
   const [map, setMap] = useState<google.maps.Map | null>(null);
   const [customers, setCustomers] = useState<Customer[]>([]);
@@ -94,13 +98,40 @@ const Customers = () => {
   const loadCustomers = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
-        .from("customers")
-        .select("id, name, industry, street, house_number, postal_code, city, phone, created_at, active, logo_url, status, latitude, longitude")
-        .order("created_at", { ascending: false });
 
-      if (error) throw error;
-      setCustomers((data as Customer[]) || []);
+      if (isPartner && user) {
+        // Sales reps: only show customers they closed (via customer_subscriptions.created_by)
+        const { data: subs, error: subsError } = await supabase
+          .from("customer_subscriptions")
+          .select("customer_id")
+          .eq("created_by", user.id);
+
+        if (subsError) throw subsError;
+
+        const customerIds = [...new Set((subs || []).map(s => s.customer_id))];
+        if (customerIds.length === 0) {
+          setCustomers([]);
+          return;
+        }
+
+        const { data, error } = await supabase
+          .from("customers")
+          .select("id, name, industry, street, house_number, postal_code, city, phone, created_at, active, logo_url, status, latitude, longitude")
+          .in("id", customerIds)
+          .order("created_at", { ascending: false });
+
+        if (error) throw error;
+        setCustomers((data as Customer[]) || []);
+      } else {
+        // Admin: show all customers
+        const { data, error } = await supabase
+          .from("customers")
+          .select("id, name, industry, street, house_number, postal_code, city, phone, created_at, active, logo_url, status, latitude, longitude")
+          .order("created_at", { ascending: false });
+
+        if (error) throw error;
+        setCustomers((data as Customer[]) || []);
+      }
     } catch (error: any) {
       toast.error("Fehler beim Laden der Kunden");
       console.error(error);
