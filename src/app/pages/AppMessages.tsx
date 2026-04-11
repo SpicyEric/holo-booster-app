@@ -237,13 +237,16 @@ export const AppMessages = () => {
             >
               <div className="flex items-center gap-4">
                 {message.customer?.logo_url ? (
-                  <img src={message.customer.logo_url} alt={message.customer.name} className="w-12 h-12 rounded-full object-cover" />
+                  <img src={message.customer.logo_url} alt={message.customer.company_name || message.customer.name} className="w-12 h-12 rounded-full object-cover" />
                 ) : (
                   <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
                     <MessageSquare className="h-6 w-6 text-primary" />
                   </div>
                 )}
                 <div className="flex-1 min-w-0">
+                  <p className="text-xs font-medium text-muted-foreground truncate mb-0.5">
+                    {message.customer?.company_name || message.customer?.name || 'Unbekannt'}
+                  </p>
                   <div className="flex items-center justify-between">
                     <h3 className={`font-semibold truncate ${!message.read_at ? 'text-foreground' : 'text-muted-foreground'}`}>
                       {message.title}
