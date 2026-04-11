@@ -32,7 +32,7 @@ const CustomerDetail = () => {
   const [formData, setFormData] = useState({
     name: "", email: "", description: "", industry: "", street: "", house_number: "",
     postal_code: "", city: "", phone: "", website: "", instagram: "", facebook: "",
-    twitter: "", logo_url: "", cover_image_url: "", customer_number: null as number | null, created_at: "",
+    twitter: "", logo_url: "", cover_image_url: "", customer_number: null as number | null, created_at: "", status: "", cancelled_at: "",
   });
 
   useEffect(() => {
@@ -71,6 +71,7 @@ const CustomerDetail = () => {
         website: data.website || "", instagram: data.instagram || "", facebook: data.facebook || "",
         twitter: data.twitter || "", logo_url: data.logo_url || "", cover_image_url: data.cover_image_url || "",
         customer_number: data.customer_number, created_at: data.created_at || "",
+        status: data.status || "", cancelled_at: (data as any).cancelled_at || "",
       });
     } catch (error: any) { toast.error("Kunde nicht gefunden"); navigate("/admin/customers"); }
     finally { setLoading(false); }
@@ -124,7 +125,17 @@ const CustomerDetail = () => {
             <h1 className="text-xl font-semibold">{formData.name}</h1>
             {formData.customer_number && <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded font-mono">#{formData.customer_number}</span>}
           </div>
-          <p className="text-xs text-muted-foreground">Erstellt: {new Date(formData.created_at).toLocaleDateString("de-DE")}</p>
+           <div className="flex items-center gap-2">
+             <p className="text-xs text-muted-foreground">Erstellt: {new Date(formData.created_at).toLocaleDateString("de-DE")}</p>
+             {formData.status === 'canceled' && (
+               <span className="text-xs bg-destructive/10 text-destructive px-2 py-0.5 rounded font-medium">
+                 Gekündigt{formData.cancelled_at ? ` am ${new Date(formData.cancelled_at).toLocaleDateString("de-DE")}` : ''}
+               </span>
+             )}
+             {formData.status === 'active' && (
+               <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded font-medium">Aktiv</span>
+             )}
+           </div>
         </div>
         <div className="flex gap-2">
           <Button size="sm" variant="outline" onClick={handleSave} disabled={saving}><Save className="w-3 h-3 mr-1" />{saving ? "..." : "Speichern"}</Button>
