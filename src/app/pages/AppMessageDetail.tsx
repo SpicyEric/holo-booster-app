@@ -30,6 +30,7 @@ interface MessageDetail {
   merchant_customer_id: string;
   customer?: {
     name: string;
+    company_name: string | null;
     logo_url: string | null;
   };
   offer?: {
@@ -71,7 +72,7 @@ const AppMessageDetail = () => {
         .from('app_messages')
         .select(`
           id, title, body, sent_at, read_at, offer_id, offer_redeemed_at, image_url, merchant_customer_id,
-          customers!merchant_customer_id (name, logo_url)
+          customers!merchant_customer_id (name, company_name, logo_url)
         `)
         .eq('id', id!)
         .eq('user_id', user!.id)
@@ -314,7 +315,7 @@ const AppMessageDetail = () => {
           <img src={message.customer.logo_url} alt="" className="w-8 h-8 rounded-full object-cover" />
         ) : null}
         <span className="font-semibold text-foreground truncate">
-          {message.customer?.name || 'Nachricht'}
+          {message.customer?.company_name || message.customer?.name || 'Nachricht'}
         </span>
       </div>
 
@@ -428,7 +429,7 @@ const AppMessageDetail = () => {
           <DialogHeader>
             <DialogTitle className="text-center">Angebot einlösen</DialogTitle>
             <DialogDescription className="text-center">
-              Halte jetzt den NFC-Stempel von {message?.customer?.name || 'dem Geschäft'} an dein Handy, um das Angebot einzulösen.
+              Halte jetzt den NFC-Stempel von {message?.customer?.company_name || message?.customer?.name || 'dem Geschäft'} an dein Handy, um das Angebot einzulösen.
             </DialogDescription>
           </DialogHeader>
           <div className="flex flex-col items-center gap-4 py-6">
