@@ -69,7 +69,7 @@ const SalesRepRegistration = () => {
             city: form.city,
             country: form.country,
             notes: form.notes,
-            contract_deadline: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
+            contract_deadline: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
             contract_status: 'pending',
           },
         ]);
