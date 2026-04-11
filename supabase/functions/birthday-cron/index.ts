@@ -12,10 +12,9 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const supabase = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
-    );
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const supabase = createClient(supabaseUrl, supabaseKey);
 
     const today = new Date();
     const todayMonth = today.getMonth() + 1;
@@ -118,23 +117,15 @@ Deno.serve(async (req) => {
 
           if (offerData) offerId = offerData.id;
 
-          const { data: insertedMsg } = await supabase.from("app_messages").insert({
+          await supabase.from("app_messages").insert({
             merchant_customer_id: merchant.id,
             user_id: user.user_id,
             title: greeting,
             body: `${messageBody}\n\n🎁 Du hast ${bonusPoints} Bonus-Punkte als Geschenk! Tippe hier, um sie einzulösen.`,
             show_in_storefront: false,
             offer_id: offerId,
-          } as any).select("id, user_id, title, merchant_customer_id").single();
+          } as any);
 
-          // Send push notification
-          if (insertedMsg) {
-            await fetch(`${supabaseUrl}/functions/v1/on-new-app-message`, {
-              method: "POST",
-              headers: { "Content-Type": "application/json", Authorization: `Bearer ${supabaseKey}` },
-              body: JSON.stringify({ record: insertedMsg }),
-            }).catch(err => console.error("Push error:", err));
-          }
         } else {
           // Create an offer gift
           const offerTitle = (merchant as any).birthday_offer_title || "Geburtstags-Angebot";
@@ -158,23 +149,15 @@ Deno.serve(async (req) => {
 
           if (offerData) offerId = offerData.id;
 
-          const { data: insertedMsg2 } = await supabase.from("app_messages").insert({
+          await supabase.from("app_messages").insert({
             merchant_customer_id: merchant.id,
             user_id: user.user_id,
             title: greeting,
             body: `${messageBody}\n\n🎁 Wir haben ein besonderes Angebot für dich: ${offerTitle}`,
             show_in_storefront: false,
             offer_id: offerId,
-          } as any).select("id, user_id, title, merchant_customer_id").single();
+          } as any);
 
-          // Send push notification
-          if (insertedMsg2) {
-            await fetch(`${supabaseUrl}/functions/v1/on-new-app-message`, {
-              method: "POST",
-              headers: { "Content-Type": "application/json", Authorization: `Bearer ${supabaseKey}` },
-              body: JSON.stringify({ record: insertedMsg2 }),
-            }).catch(err => console.error("Push error:", err));
-          }
         }
 
         totalSent++;

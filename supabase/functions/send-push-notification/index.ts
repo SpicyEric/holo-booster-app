@@ -6,27 +6,45 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type",
 };
 
-// Get a Google OAuth2 access token from the service account
-async function getAccessToken(serviceAccount: any): Promise<string> {
+const textEncoder = new TextEncoder();
+
+function toBase64Url(input: string | Uint8Array): string {
+  const bytes = typeof input === "string" ? textEncoder.encode(input) : input;
+  let binary = "";
+
+  for (const byte of bytes) {
+    binary += String.fromCharCode(byte);
+  }
+
+  return btoa(binary)
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_")
+    .replace(/=+$/g, "");
+}
+
+async function getAccessToken(serviceAccount: {
+  client_email: string;
+  private_key: string;
+  token_uri: string;
+}): Promise<string> {
   const now = Math.floor(Date.now() / 1000);
-  const header = btoa(JSON.stringify({ alg: "RS256", typ: "JWT" }));
-  const claim = btoa(
-    JSON.stringify({
-      iss: serviceAccount.client_email,
-      scope: "https://www.googleapis.com/auth/firebase.messaging",
-      aud: serviceAccount.token_uri,
-      iat: now,
-      exp: now + 3600,
-    })
-  );
+  const unsignedToken = [
+    toBase64Url(JSON.stringify({ alg: "RS256", typ: "JWT" })),
+    toBase64Url(
+      JSON.stringify({
+        iss: serviceAccount.client_email,
+        scope: "https://www.googleapis.com/auth/firebase.messaging",
+        aud: serviceAccount.token_uri,
+        iat: now,
+        exp: now + 3600,
+      })
+    ),
+  ].join(".");
 
-  const unsignedToken = `${header}.${claim}`;
-
-  // Import the private key for signing
   const pemContents = serviceAccount.private_key
     .replace("-----BEGIN PRIVATE KEY-----", "")
     .replace("-----END PRIVATE KEY-----", "")
-    .replace(/\n/g, "");
+    .replace(/\s/g, "");
   const binaryKey = Uint8Array.from(atob(pemContents), (c) => c.charCodeAt(0));
 
   const cryptoKey = await crypto.subtle.importKey(
@@ -37,26 +55,37 @@ async function getAccessToken(serviceAccount: any): Promise<string> {
     ["sign"]
   );
 
-  const signature = await crypto.subtle.sign(
-    "RSASSA-PKCS1-v1_5",
-    cryptoKey,
-    new TextEncoder().encode(unsignedToken)
+  const signature = new Uint8Array(
+    await crypto.subtle.sign(
+      "RSASSA-PKCS1-v1_5",
+      cryptoKey,
+      textEncoder.encode(unsignedToken)
+    )
   );
 
-  const signedToken = `${unsignedToken}.${btoa(
-    String.fromCharCode(...new Uint8Array(signature))
-  )}`;
-
+  const signedToken = `${unsignedToken}.${toBase64Url(signature)}`;
   const tokenResponse = await fetch(serviceAccount.token_uri, {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: `grant_type=urn:ietf:params:oauth:grant-type:jwt-bearer&assertion=${signedToken}`,
+    body: new URLSearchParams({
+      grant_type: "urn:ietf:params:oauth:grant-type:jwt-bearer",
+      assertion: signedToken,
+    }),
   });
 
-  const tokenData = await tokenResponse.json();
-  if (!tokenData.access_token) {
-    throw new Error(`Failed to get access token: ${JSON.stringify(tokenData)}`);
+  const tokenText = await tokenResponse.text();
+  let tokenData: Record<string, unknown> = {};
+
+  try {
+    tokenData = tokenText ? JSON.parse(tokenText) : {};
+  } catch {
+    throw new Error(`Failed to parse access token response: ${tokenText}`);
   }
+
+  if (!tokenResponse.ok || typeof tokenData.access_token !== "string") {
+    throw new Error(`Failed to get access token: ${tokenText}`);
+  }
+
   return tokenData.access_token;
 }
 
