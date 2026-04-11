@@ -70,7 +70,7 @@ const CustomerMarker = ({ customer, isSelected, onClick }: { customer: Customer;
 const Customers = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { role, user } = useAuth();
+  const { role, user, loading: authLoading } = useAuth();
   const isPartner = role === 'partner' || (role !== 'admin' && location.pathname.startsWith('/vertriebler'));
   const basePath = isPartner ? '/vertriebler' : '/admin';
   const { apiKey, loading: apiKeyLoading } = useGoogleMapsApiKey();
@@ -95,11 +95,19 @@ const Customers = () => {
     libraries: LIBRARIES,
   });
 
-  const loadCustomers = async () => {
+  const loadCustomers = useCallback(async () => {
+    if (authLoading) return;
+
     try {
       setLoading(true);
 
-      if (isPartner && user) {
+      if (isPartner) {
+        if (!user) {
+          setCustomers([]);
+          setSelectedCustomerId(null);
+          return;
+        }
+
         // Sales reps: only show customers they closed (via customer_subscriptions.created_by)
         const { data: subs, error: subsError } = await supabase
           .from("customer_subscriptions")
@@ -111,6 +119,7 @@ const Customers = () => {
         const customerIds = [...new Set((subs || []).map(s => s.customer_id))];
         if (customerIds.length === 0) {
           setCustomers([]);
+          setSelectedCustomerId(null);
           return;
         }
 
@@ -138,9 +147,12 @@ const Customers = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [authLoading, isPartner, user]);
 
-  useEffect(() => { loadCustomers(); }, []);
+  useEffect(() => {
+    if (authLoading) return;
+    loadCustomers();
+  }, [authLoading, loadCustomers]);
   useEffect(() => { applyFilters(); }, [customers, searchTerm, categoryFilter, sortBy, activeTab]);
 
   // Fit map bounds to customers
