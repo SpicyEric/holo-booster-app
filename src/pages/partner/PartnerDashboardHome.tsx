@@ -38,9 +38,14 @@ export default function PartnerDashboardHome() {
         .select('contract_status, contract_deadline')
         .eq('user_id', user.id)
         .maybeSingle();
-      if (data && (data as any).contract_status === 'pending' && (data as any).contract_deadline) {
-        const daysLeft = Math.max(0, Math.ceil((new Date((data as any).contract_deadline).getTime() - Date.now()) / (1000 * 60 * 60 * 24)));
-        setContractWarning({ show: true, daysLeft });
+      if (data) {
+        const status = (data as any).contract_status;
+        if (status === 'pending' && (data as any).contract_deadline) {
+          const daysLeft = Math.max(0, Math.ceil((new Date((data as any).contract_deadline).getTime() - Date.now()) / (1000 * 60 * 60 * 24)));
+          setContractWarning({ show: true, daysLeft });
+        } else if (status === 'submitted') {
+          setContractWarning({ show: true, daysLeft: -1 }); // -1 = submitted
+        }
       }
     };
     checkContract();
