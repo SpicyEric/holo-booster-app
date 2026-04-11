@@ -164,9 +164,35 @@ export default function PartnerDashboardHome() {
           </div>
         </div>
       )}
+      {inactivityWarning.show && (
+        <div className={`flex items-start gap-3 p-4 rounded-lg ${
+          inactivityWarning.daysSince >= 60
+            ? 'bg-destructive/10 border border-destructive/20'
+            : 'bg-orange-50 border border-orange-200'
+        }`}>
+          <Clock className={`h-5 w-5 shrink-0 mt-0.5 ${
+            inactivityWarning.daysSince >= 60 ? 'text-destructive' : 'text-orange-600'
+          }`} />
+          <div>
+            <p className={`font-medium ${
+              inactivityWarning.daysSince >= 60 ? 'text-destructive' : 'text-orange-700'
+            }`}>
+              {inactivityWarning.daysSince >= 60
+                ? 'Provisionen pausiert – Inaktivität'
+                : 'Inaktivitäts-Warnung'}
+            </p>
+            <p className={`text-sm ${
+              inactivityWarning.daysSince >= 60 ? 'text-destructive/80' : 'text-orange-600'
+            }`}>
+              {inactivityWarning.daysSince >= 60
+                ? `Du hast seit ${inactivityWarning.daysSince} Tagen keinen neuen Abschluss. Deine Provisionen sind pausiert, bis ein neuer Abschluss erfolgt.`
+                : `Du hast seit ${inactivityWarning.daysSince} Tagen keinen neuen Abschluss. Ab 60 Tagen werden deine Provisionen pausiert.`}
+            </p>
+          </div>
+        </div>
+      )}
 
       <div>
-        <h1 className="text-2xl font-bold">Vertriebler Dashboard</h1>
         <p className="text-muted-foreground">Deine Pipeline & Performance auf einen Blick</p>
       </div>
 
