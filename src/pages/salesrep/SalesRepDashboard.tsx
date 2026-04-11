@@ -10,6 +10,7 @@ const SalesRepDashboard = () => {
   const { user } = useAuth();
   const [contractWarning, setContractWarning] = useState<{ show: boolean; daysLeft: number }>({ show: false, daysLeft: 0 });
   const [inactivityWarning, setInactivityWarning] = useState<{ show: boolean; daysSince: number }>({ show: false, daysSince: 0 });
+  const [deletionWarning, setDeletionWarning] = useState<{ show: boolean; daysLeft: number }>({ show: false, daysLeft: 0 });
 
   useEffect(() => {
     document.body.classList.add('ccm19-right');
@@ -44,6 +45,11 @@ const SalesRepDashboard = () => {
           const daysSince = Math.floor((Date.now() - new Date(lastConv).getTime()) / (1000 * 60 * 60 * 24));
           if (daysSince >= 45) {
             setInactivityWarning({ show: true, daysSince });
+          }
+          // 365-day deletion warning (show from day 300)
+          if (daysSince >= 300) {
+            const daysLeft = Math.max(0, 365 - daysSince);
+            setDeletionWarning({ show: true, daysLeft });
           }
         }
       }

@@ -30,7 +30,29 @@ Deno.serve(async (req) => {
       });
     }
 
-    if (!expiredReps || expiredReps.length === 0) {
+    // Also find sales reps inactive for 365+ days (based on last_conversion_at)
+    const cutoff365 = new Date(Date.now() - 365 * 24 * 60 * 60 * 1000).toISOString();
+    const { data: inactiveReps, error: inactiveError } = await supabase
+      .from("sales_rep_profiles")
+      .select("id, user_id, first_name, last_name, email, last_conversion_at")
+      .not("first_conversion_at", "is", null)
+      .lt("last_conversion_at", cutoff365);
+
+    if (inactiveError) {
+      console.error("Error fetching inactive reps:", inactiveError);
+    }
+
+    // Combine both lists, deduplicate by user_id
+    const allRepsToDelete = [...(expiredReps || [])];
+    const seenUserIds = new Set((expiredReps || []).map((r) => r.user_id));
+    for (const rep of inactiveReps || []) {
+      if (!seenUserIds.has(rep.user_id)) {
+        allRepsToDelete.push(rep);
+        seenUserIds.add(rep.user_id);
+      }
+    }
+
+    if (allRepsToDelete.length === 0) {
       return new Response(JSON.stringify({ message: "No expired accounts found", deleted: 0 }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -38,10 +60,9 @@ Deno.serve(async (req) => {
 
     const deleted: string[] = [];
 
-    for (const rep of expiredReps) {
-      console.log(`Deleting expired sales rep: ${rep.first_name} ${rep.last_name} (${rep.email})`);
+    for (const rep of allRepsToDelete) {
+      console.log(`Deleting sales rep: ${rep.first_name} ${rep.last_name} (${rep.email})`);
 
-      // Delete the sales rep profile
       const { error: deleteProfileError } = await supabase
         .from("sales_rep_profiles")
         .delete()
@@ -52,7 +73,6 @@ Deno.serve(async (req) => {
         continue;
       }
 
-      // Remove user role
       if (rep.user_id) {
         await supabase
           .from("user_roles")
@@ -60,7 +80,6 @@ Deno.serve(async (req) => {
           .eq("user_id", rep.user_id)
           .eq("role", "sales_partner");
 
-        // Delete the auth user
         const { error: deleteUserError } = await supabase.auth.admin.deleteUser(rep.user_id);
         if (deleteUserError) {
           console.error(`Error deleting auth user for ${rep.email}:`, deleteUserError);
@@ -71,7 +90,7 @@ Deno.serve(async (req) => {
     }
 
     return new Response(
-      JSON.stringify({ message: `Deleted ${deleted.length} expired accounts`, deleted }),
+      JSON.stringify({ message: `Deleted ${deleted.length} accounts`, deleted }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (err) {
