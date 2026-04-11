@@ -865,10 +865,10 @@ serve(async (req) => {
 
         await supabase
           .from("customers")
-          .update({ status: "canceled" })
+          .update({ status: "canceled", active: false, cancelled_at: new Date().toISOString() })
           .eq("stripe_subscription_id", subscription.id);
 
-        console.log("[WEBHOOK] Customer status updated to canceled");
+        console.log("[WEBHOOK] Customer status updated to canceled, hidden from app");
 
         // Send admin notification about cancellation
         const adminEmailCanceled = Deno.env.get('ADMIN_EMAIL');

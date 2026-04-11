@@ -684,6 +684,7 @@ export type Database = {
           birthday_offer_description: string | null
           birthday_offer_title: string | null
           box_id: string | null
+          cancelled_at: string | null
           city: string | null
           company_name: string | null
           contact_person: string | null
@@ -756,6 +757,7 @@ export type Database = {
           birthday_offer_description?: string | null
           birthday_offer_title?: string | null
           box_id?: string | null
+          cancelled_at?: string | null
           city?: string | null
           company_name?: string | null
           contact_person?: string | null
@@ -828,6 +830,7 @@ export type Database = {
           birthday_offer_description?: string | null
           birthday_offer_title?: string | null
           box_id?: string | null
+          cancelled_at?: string | null
           city?: string | null
           company_name?: string | null
           contact_person?: string | null
