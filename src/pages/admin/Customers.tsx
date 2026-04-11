@@ -71,7 +71,7 @@ const Customers = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { role, user } = useAuth();
-  const isPartner = role === 'sales_partner' || (role !== 'admin' && location.pathname.startsWith('/vertriebler'));
+  const isPartner = role === 'partner' || (role !== 'admin' && location.pathname.startsWith('/vertriebler'));
   const basePath = isPartner ? '/vertriebler' : '/admin';
   const { apiKey, loading: apiKeyLoading } = useGoogleMapsApiKey();
   const [map, setMap] = useState<google.maps.Map | null>(null);
