@@ -29,13 +29,14 @@ export default function PartnerDashboardHome() {
   const [overdueActivities, setOverdueActivities] = useState<ScheduledActivity[]>([]);
   const [loading, setLoading] = useState(true);
   const [contractWarning, setContractWarning] = useState<{ show: boolean; daysLeft: number }>({ show: false, daysLeft: 0 });
+  const [inactivityWarning, setInactivityWarning] = useState<{ show: boolean; daysSince: number }>({ show: false, daysSince: 0 });
 
   useEffect(() => {
     if (!user?.id) return;
-    const checkContract = async () => {
+    const checkProfile = async () => {
       const { data } = await supabase
         .from('sales_rep_profiles' as any)
-        .select('contract_status, contract_deadline')
+        .select('contract_status, contract_deadline, first_conversion_at, last_conversion_at')
         .eq('user_id', user.id)
         .maybeSingle();
       if (data) {
@@ -44,11 +45,21 @@ export default function PartnerDashboardHome() {
           const daysLeft = Math.max(0, Math.ceil((new Date((data as any).contract_deadline).getTime() - Date.now()) / (1000 * 60 * 60 * 24)));
           setContractWarning({ show: true, daysLeft });
         } else if (status === 'submitted') {
-          setContractWarning({ show: true, daysLeft: -1 }); // -1 = submitted
+          setContractWarning({ show: true, daysLeft: -1 });
+        }
+
+        // Inactivity check
+        const firstConv = (data as any).first_conversion_at;
+        const lastConv = (data as any).last_conversion_at;
+        if (firstConv && lastConv) {
+          const daysSince = Math.floor((Date.now() - new Date(lastConv).getTime()) / (1000 * 60 * 60 * 24));
+          if (daysSince >= 45) {
+            setInactivityWarning({ show: true, daysSince });
+          }
         }
       }
     };
-    checkContract();
+    checkProfile();
   }, [user?.id]);
 
   useEffect(() => {
