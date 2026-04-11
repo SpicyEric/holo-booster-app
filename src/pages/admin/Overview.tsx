@@ -23,7 +23,7 @@ interface Alert {
 
 const Overview = () => {
   const navigate = useNavigate();
-  const { role } = useAuth();
+  const { role, user } = useAuth();
   const isAdmin = role === 'admin';
   const [alerts, setAlerts] = useState<Alert[]>([]);
   const [kpis, setKpis] = useState({
