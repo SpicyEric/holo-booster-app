@@ -900,9 +900,25 @@ serve(async (req) => {
         const subscription = event.data.object as Stripe.Subscription;
         console.log("[WEBHOOK] Subscription updated:", subscription.id, "Status:", subscription.status);
 
+        const updateData: Record<string, any> = { status: subscription.status };
+
+        // If subscription becomes canceled or unpaid, also deactivate + set cancelled_at
+        if (subscription.status === "canceled" || subscription.status === "unpaid") {
+          updateData.active = false;
+          updateData.cancelled_at = new Date().toISOString();
+          console.log("[WEBHOOK] Subscription ended via update event, deactivating customer");
+        }
+
+        // If subscription is reactivated (e.g. payment recovered), re-enable
+        if (subscription.status === "active" && !subscription.cancel_at_period_end) {
+          updateData.active = true;
+          updateData.cancelled_at = null;
+          console.log("[WEBHOOK] Subscription reactivated, re-enabling customer");
+        }
+
         await supabase
           .from("customers")
-          .update({ status: subscription.status })
+          .update(updateData)
           .eq("stripe_subscription_id", subscription.id);
 
         console.log("[WEBHOOK] Customer status synced to:", subscription.status);
