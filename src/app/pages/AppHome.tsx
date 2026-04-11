@@ -125,6 +125,7 @@ export const AppHome = () => {
           const { data: merchants } = await supabase
             .from('customers')
             .select('id, name, company_name, logo_url, latitude, longitude')
+            .eq('active', true)
             .in('id', postMerchantIds);
 
           const postIds = posts.map(p => p.id);
@@ -142,6 +143,7 @@ export const AppHome = () => {
 
           posts.forEach(post => {
             const m = merchants?.find(m => m.id === post.merchant_customer_id);
+            if (!m) return; // Skip posts from inactive/deleted merchants
             let distance: number | undefined;
             if (userLocation && m?.latitude && m?.longitude) {
               distance = haversineDistance(userLocation.lat, userLocation.lng, m.latitude, m.longitude);
@@ -168,6 +170,7 @@ export const AppHome = () => {
         const { data: stampedMerchants } = await supabase
           .from('customers')
           .select('id, name, company_name, logo_url, cover_image_url, description, updated_at, latitude, longitude')
+          .eq('active', true)
           .in('id', stampedMerchantIds);
 
         const merchantsWithPosts = new Set(items.filter(i => i.type === 'post').map(i => i.merchant_customer_id));
