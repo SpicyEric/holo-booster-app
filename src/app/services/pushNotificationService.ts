@@ -36,8 +36,26 @@ class PushNotificationService {
       await PushNotifications.register();
       console.log('Push notifications: registration initiated');
 
-      // Initialize local notifications too
+      // Initialize local notifications + create Android channel
       await this.initializeLocalNotifications();
+
+      // Create Android notification channel
+      if (Capacitor.getPlatform() === 'android') {
+        try {
+          await PushNotifications.createChannel({
+            id: 'eloyo_messages',
+            name: 'Nachrichten',
+            description: 'Benachrichtigungen von Geschäften',
+            importance: 5, // MAX
+            visibility: 1, // PUBLIC
+            sound: 'default',
+            vibration: true,
+          });
+          console.log('Android notification channel created');
+        } catch (channelError) {
+          console.warn('Could not create notification channel:', channelError);
+        }
+      }
 
       this.initialized = true;
       console.log('Push notifications initialized successfully');
