@@ -21,6 +21,7 @@ interface Message {
   image_url: string | null;
   customer?: {
     name: string;
+    company_name: string | null;
     logo_url: string | null;
   };
 }
@@ -105,7 +106,7 @@ export const AppMessages = () => {
         .from('app_messages')
         .select(`
           id, title, body, sent_at, read_at, offer_id, image_url, merchant_customer_id,
-          customers!merchant_customer_id (name, logo_url)
+          customers!merchant_customer_id (name, company_name, logo_url)
         `)
         .eq('user_id', user?.id)
         .gte('sent_at', sevenDaysAgo.toISOString())
