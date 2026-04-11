@@ -123,12 +123,30 @@ Deno.serve(async (req) => {
               message: {
                 token: fcm_token,
                 notification: { title, body },
-                data: data || {},
+                data: data
+                  ? Object.fromEntries(
+                      Object.entries(data).map(([k, v]) => [k, String(v)])
+                    )
+                  : {},
                 android: {
                   priority: "high",
                   notification: {
                     sound: "default",
                     channel_id: "eloyo_messages",
+                  },
+                },
+                apns: {
+                  headers: {
+                    "apns-priority": "10",
+                    "apns-push-type": "alert",
+                  },
+                  payload: {
+                    aps: {
+                      alert: { title, body },
+                      sound: "default",
+                      badge: 1,
+                      "mutable-content": 1,
+                    },
                   },
                 },
               },
