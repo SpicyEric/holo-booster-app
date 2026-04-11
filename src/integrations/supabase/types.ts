@@ -2340,12 +2340,14 @@ export type Database = {
           created_at: string
           email: string
           employee_number: number | null
+          first_conversion_at: string | null
           first_name: string
           house_number: string | null
           iban: string | null
           id: string
           is_active: boolean
           is_small_business: boolean | null
+          last_conversion_at: string | null
           last_name: string
           notes: string | null
           phone: string | null
@@ -2369,12 +2371,14 @@ export type Database = {
           created_at?: string
           email?: string
           employee_number?: number | null
+          first_conversion_at?: string | null
           first_name?: string
           house_number?: string | null
           iban?: string | null
           id?: string
           is_active?: boolean
           is_small_business?: boolean | null
+          last_conversion_at?: string | null
           last_name?: string
           notes?: string | null
           phone?: string | null
@@ -2398,12 +2402,14 @@ export type Database = {
           created_at?: string
           email?: string
           employee_number?: number | null
+          first_conversion_at?: string | null
           first_name?: string
           house_number?: string | null
           iban?: string | null
           id?: string
           is_active?: boolean
           is_small_business?: boolean | null
+          last_conversion_at?: string | null
           last_name?: string
           notes?: string | null
           phone?: string | null
