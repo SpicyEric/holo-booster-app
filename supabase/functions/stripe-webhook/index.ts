@@ -22,6 +22,41 @@ const appSupabase = createClient(
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
+// Default package ID for customer_subscriptions tracking
+const DEFAULT_PACKAGE_ID = "4bd7f628-dcc9-44ce-8bca-7f97a51c19d4";
+
+// Helper: create customer_subscriptions entry for tracking
+async function createSubscriptionTracking(customerId: string, promoterId: string | null) {
+  try {
+    // Check if already exists
+    const { data: existing } = await supabase
+      .from("customer_subscriptions")
+      .select("id")
+      .eq("customer_id", customerId)
+      .limit(1);
+
+    if (existing && existing.length > 0) {
+      console.log("[WEBHOOK] customer_subscriptions already exists for:", customerId);
+      return;
+    }
+
+    const { error } = await supabase.from("customer_subscriptions").insert({
+      customer_id: customerId,
+      package_id: DEFAULT_PACKAGE_ID,
+      status: "active",
+      created_by: promoterId || null,
+    });
+
+    if (error) {
+      console.error("[WEBHOOK] Failed to create customer_subscriptions:", error);
+    } else {
+      console.log("[WEBHOOK] customer_subscriptions created for:", customerId, "by:", promoterId || "admin");
+    }
+  } catch (err) {
+    console.error("[WEBHOOK] Error in createSubscriptionTracking:", err);
+  }
+}
+
 // Helper function to create merchant in App-DB
 async function createAppMerchant(customerData: {
   id: string;
@@ -135,6 +170,9 @@ serve(async (req) => {
             })
             .eq("id", existingCustomer.id);
           console.log("[WEBHOOK] Updated existing customer:", existingCustomer.id);
+
+          // Track subscription
+          await createSubscriptionTracking(existingCustomer.id, metadata.promoterId || null);
         } else {
           // Create new customer entry
           // Parse address from metadata
@@ -177,6 +215,9 @@ serve(async (req) => {
             console.error("[WEBHOOK] Error creating customer:", error);
           } else {
             console.log("[WEBHOOK] Created new customer:", newCustomer.id);
+
+            // Track subscription
+            await createSubscriptionTracking(newCustomer.id, metadata.promoterId || null);
 
             // Geocode address if available
             if (parsedAddress?.street && parsedAddress?.city) {
@@ -449,6 +490,9 @@ serve(async (req) => {
             
             customer = newCustomer;
             console.log("[WEBHOOK] Created customer from Stripe data:", customer.id);
+
+            // Track subscription for fallback-created customer
+            await createSubscriptionTracking(customer.id, customer.promoter_id || null);
 
             // Also create merchant in App-Database for mobile app
             await createAppMerchant({
