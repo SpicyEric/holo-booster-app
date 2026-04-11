@@ -52,8 +52,41 @@ async function createSubscriptionTracking(customerId: string, promoterId: string
     } else {
       console.log("[WEBHOOK] customer_subscriptions created for:", customerId, "by:", promoterId || "admin");
     }
+
+    // Update sales rep inactivity tracking
+    if (promoterId) {
+      await updateSalesRepConversionTimestamps(promoterId);
+    }
   } catch (err) {
     console.error("[WEBHOOK] Error in createSubscriptionTracking:", err);
+  }
+}
+
+// Helper: update first/last conversion timestamps on sales_rep_profiles
+async function updateSalesRepConversionTimestamps(promoterId: string) {
+  try {
+    const now = new Date().toISOString();
+    const { data: profile } = await supabase
+      .from("sales_rep_profiles")
+      .select("first_conversion_at")
+      .eq("user_id", promoterId)
+      .maybeSingle();
+
+    if (!profile) return;
+
+    const updateData: Record<string, string> = { last_conversion_at: now };
+    if (!profile.first_conversion_at) {
+      updateData.first_conversion_at = now;
+    }
+
+    await supabase
+      .from("sales_rep_profiles")
+      .update(updateData)
+      .eq("user_id", promoterId);
+
+    console.log("[WEBHOOK] Updated conversion timestamps for promoter:", promoterId);
+  } catch (err) {
+    console.error("[WEBHOOK] Error updating conversion timestamps:", err);
   }
 }
 

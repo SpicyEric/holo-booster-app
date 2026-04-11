@@ -29,13 +29,14 @@ export default function PartnerDashboardHome() {
   const [overdueActivities, setOverdueActivities] = useState<ScheduledActivity[]>([]);
   const [loading, setLoading] = useState(true);
   const [contractWarning, setContractWarning] = useState<{ show: boolean; daysLeft: number }>({ show: false, daysLeft: 0 });
+  const [inactivityWarning, setInactivityWarning] = useState<{ show: boolean; daysSince: number }>({ show: false, daysSince: 0 });
 
   useEffect(() => {
     if (!user?.id) return;
-    const checkContract = async () => {
+    const checkProfile = async () => {
       const { data } = await supabase
         .from('sales_rep_profiles' as any)
-        .select('contract_status, contract_deadline')
+        .select('contract_status, contract_deadline, first_conversion_at, last_conversion_at')
         .eq('user_id', user.id)
         .maybeSingle();
       if (data) {
@@ -44,11 +45,21 @@ export default function PartnerDashboardHome() {
           const daysLeft = Math.max(0, Math.ceil((new Date((data as any).contract_deadline).getTime() - Date.now()) / (1000 * 60 * 60 * 24)));
           setContractWarning({ show: true, daysLeft });
         } else if (status === 'submitted') {
-          setContractWarning({ show: true, daysLeft: -1 }); // -1 = submitted
+          setContractWarning({ show: true, daysLeft: -1 });
+        }
+
+        // Inactivity check
+        const firstConv = (data as any).first_conversion_at;
+        const lastConv = (data as any).last_conversion_at;
+        if (firstConv && lastConv) {
+          const daysSince = Math.floor((Date.now() - new Date(lastConv).getTime()) / (1000 * 60 * 60 * 24));
+          if (daysSince >= 45) {
+            setInactivityWarning({ show: true, daysSince });
+          }
         }
       }
     };
-    checkContract();
+    checkProfile();
   }, [user?.id]);
 
   useEffect(() => {
@@ -153,9 +164,35 @@ export default function PartnerDashboardHome() {
           </div>
         </div>
       )}
+      {inactivityWarning.show && (
+        <div className={`flex items-start gap-3 p-4 rounded-lg ${
+          inactivityWarning.daysSince >= 60
+            ? 'bg-destructive/10 border border-destructive/20'
+            : 'bg-orange-50 border border-orange-200'
+        }`}>
+          <Clock className={`h-5 w-5 shrink-0 mt-0.5 ${
+            inactivityWarning.daysSince >= 60 ? 'text-destructive' : 'text-orange-600'
+          }`} />
+          <div>
+            <p className={`font-medium ${
+              inactivityWarning.daysSince >= 60 ? 'text-destructive' : 'text-orange-700'
+            }`}>
+              {inactivityWarning.daysSince >= 60
+                ? 'Provisionen pausiert – Inaktivität'
+                : 'Inaktivitäts-Warnung'}
+            </p>
+            <p className={`text-sm ${
+              inactivityWarning.daysSince >= 60 ? 'text-destructive/80' : 'text-orange-600'
+            }`}>
+              {inactivityWarning.daysSince >= 60
+                ? `Du hast seit ${inactivityWarning.daysSince} Tagen keinen neuen Abschluss. Deine Provisionen sind pausiert, bis ein neuer Abschluss erfolgt.`
+                : `Du hast seit ${inactivityWarning.daysSince} Tagen keinen neuen Abschluss. Ab 60 Tagen werden deine Provisionen pausiert.`}
+            </p>
+          </div>
+        </div>
+      )}
 
       <div>
-        <h1 className="text-2xl font-bold">Vertriebler Dashboard</h1>
         <p className="text-muted-foreground">Deine Pipeline & Performance auf einen Blick</p>
       </div>
 
