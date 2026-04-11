@@ -380,6 +380,25 @@ const Nachrichten = () => {
           .from('app_messages')
           .insert(messagesToInsert);
         if (error) throw error;
+
+        // Send push notifications to all recipients
+        for (const uid of recipientUserIds) {
+          try {
+            await supabase.functions.invoke('send-push-notification', {
+              body: {
+                user_id: uid,
+                title: `📬 ${merchantName || 'Neues Angebot'}`,
+                body: messageForm.title,
+                data: {
+                  type: 'message',
+                  merchant_customer_id: customerId,
+                },
+              },
+            });
+          } catch (pushErr) {
+            console.error('Push notification error for user', uid, pushErr);
+          }
+        }
         
         const offerNote = offerId ? ' (mit Angebot, 7 Tage gültig)' : '';
         toast.success(`Nachricht an ${recipientUserIds.length} Kunden gesendet!${offerNote}`);
