@@ -734,7 +734,7 @@ serve(async (req) => {
             if (isFirstInvoice) {
               // Initial commission: 50€ minus salesRepDiscount, with 14-day hold
               const initialAmount = 5000; // 50€ in cents
-              const availableAt = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString();
+              const availableAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
               
               await supabase.from("commissions").insert({
                 customer_id: customer.id,
@@ -755,7 +755,7 @@ serve(async (req) => {
             // Recurring commission: 12€ per month
             const recurringStatus = isFirstInvoice ? 'pending' : 'available';
             const recurringAvailableAt = isFirstInvoice 
-              ? new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString() 
+              ? new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString() 
               : null;
               
             await supabase.from("commissions").insert({
