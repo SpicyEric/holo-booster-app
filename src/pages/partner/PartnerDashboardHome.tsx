@@ -129,7 +129,19 @@ export default function PartnerDashboardHome() {
 
   return (
     <div className="space-y-6">
-      {contractWarning.show && (
+      {contractWarning.show && contractWarning.daysLeft === -1 && (
+        <div className="flex items-start gap-3 p-4 rounded-lg bg-blue-50 border border-blue-200">
+          <AlertTriangle className="h-5 w-5 text-blue-600 shrink-0 mt-0.5" />
+          <div>
+            <p className="font-medium text-blue-700">Vertrag eingereicht</p>
+            <p className="text-sm text-blue-600">
+              Dein Vertrag wird aktuell noch zur Freigabe geprüft. Du wirst benachrichtigt, sobald er freigegeben wurde.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {contractWarning.show && contractWarning.daysLeft >= 0 && (
         <div className="flex items-start gap-3 p-4 rounded-lg bg-destructive/10 border border-destructive/20">
           <AlertTriangle className="h-5 w-5 text-destructive shrink-0 mt-0.5" />
           <div>
