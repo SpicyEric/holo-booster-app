@@ -113,6 +113,19 @@ const SalesRepDashboard = () => {
                 </div>
               </div>
             )}
+            {deletionWarning.show && (
+              <div className="mb-6 flex items-start gap-3 p-4 rounded-lg bg-destructive/10 border border-destructive/20">
+                <AlertTriangle className="h-5 w-5 text-destructive shrink-0 mt-0.5" />
+                <div>
+                  <p className="font-medium text-destructive">Account-Löschung in {deletionWarning.daysLeft} Tagen</p>
+                  <p className="text-sm text-destructive/80">
+                    {deletionWarning.daysLeft === 0
+                      ? 'Dein Account wird in Kürze automatisch gelöscht, da seit über 365 Tagen kein Abschluss erfolgt ist.'
+                      : `Ohne neuen Kundenabschluss wird dein Account in ${deletionWarning.daysLeft} Tagen automatisch gelöscht.`}
+                  </p>
+                </div>
+              </div>
+            )}
             <Outlet />
           </div>
         </main>
