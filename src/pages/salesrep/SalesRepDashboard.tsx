@@ -10,6 +10,7 @@ const SalesRepDashboard = () => {
   const { user } = useAuth();
   const [contractWarning, setContractWarning] = useState<{ show: boolean; daysLeft: number }>({ show: false, daysLeft: 0 });
   const [inactivityWarning, setInactivityWarning] = useState<{ show: boolean; daysSince: number }>({ show: false, daysSince: 0 });
+  const [deletionWarning, setDeletionWarning] = useState<{ show: boolean; daysLeft: number }>({ show: false, daysLeft: 0 });
 
   useEffect(() => {
     document.body.classList.add('ccm19-right');
@@ -44,6 +45,11 @@ const SalesRepDashboard = () => {
           const daysSince = Math.floor((Date.now() - new Date(lastConv).getTime()) / (1000 * 60 * 60 * 24));
           if (daysSince >= 45) {
             setInactivityWarning({ show: true, daysSince });
+          }
+          // 365-day deletion warning (show from day 300)
+          if (daysSince >= 300) {
+            const daysLeft = Math.max(0, 365 - daysSince);
+            setDeletionWarning({ show: true, daysLeft });
           }
         }
       }
@@ -103,6 +109,19 @@ const SalesRepDashboard = () => {
                     {inactivityWarning.daysSince >= 60
                       ? `Du hast seit ${inactivityWarning.daysSince} Tagen keinen neuen Abschluss. Deine Provisionen sind pausiert, bis ein neuer Abschluss erfolgt.`
                       : `Du hast seit ${inactivityWarning.daysSince} Tagen keinen neuen Abschluss. Ab 60 Tagen werden deine Provisionen pausiert.`}
+                  </p>
+                </div>
+              </div>
+            )}
+            {deletionWarning.show && (
+              <div className="mb-6 flex items-start gap-3 p-4 rounded-lg bg-destructive/10 border border-destructive/20">
+                <AlertTriangle className="h-5 w-5 text-destructive shrink-0 mt-0.5" />
+                <div>
+                  <p className="font-medium text-destructive">Account-Löschung in {deletionWarning.daysLeft} Tagen</p>
+                  <p className="text-sm text-destructive/80">
+                    {deletionWarning.daysLeft === 0
+                      ? 'Dein Account wird in Kürze automatisch gelöscht, da seit über 365 Tagen kein Abschluss erfolgt ist.'
+                      : `Ohne neuen Kundenabschluss wird dein Account in ${deletionWarning.daysLeft} Tagen automatisch gelöscht.`}
                   </p>
                 </div>
               </div>
