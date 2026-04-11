@@ -46,6 +46,7 @@ const Marketing = () => {
   const [searchParams] = useSearchParams();
   const [loading, setLoading] = useState(true);
   const [customerId, setCustomerId] = useState<string | null>(null);
+  const [merchantDisplayName, setMerchantDisplayName] = useState('');
   const [activeTab, setActiveTab] = useState('praemien');
 
   // --- Rewards state ---
@@ -154,11 +155,12 @@ const Marketing = () => {
       const midPoints = chipMap.blue;
       setMiddleStampPoints(midPoints);
 
-      const { data: cd } = await supabase.from('customers').select('google_review_url, google_review_points_enabled, google_review_points_value, birthday_enabled, birthday_message, birthday_bonus_points, birthday_gift_type, birthday_offer_title, birthday_offer_description, industry, avg_revenue').eq('id', assignment.customer_id).maybeSingle();
+      const { data: cd } = await supabase.from('customers').select('google_review_url, google_review_points_enabled, google_review_points_value, birthday_enabled, birthday_message, birthday_bonus_points, birthday_gift_type, birthday_offer_title, birthday_offer_description, industry, avg_revenue, company_name, name').eq('id', assignment.customer_id).maybeSingle();
       if (cd) {
         setGoogleReviewUrl(cd.google_review_url || "");
         setReviewPointsEnabled(cd.google_review_points_enabled || false);
         setReviewPointsValue(cd.google_review_points_value || 5);
+        setMerchantDisplayName(cd.company_name || cd.name || '');
         setBirthdayEnabled(cd.birthday_enabled ?? false);
         if (cd.birthday_message) setBirthdayMessage(cd.birthday_message);
         // Default to middle stamp points if no birthday bonus was ever set
@@ -259,8 +261,36 @@ const Marketing = () => {
         image_url: messageForm.image_url || null,
         bonus_points: messageForm.attach_points && messageForm.bonus_points > 0 ? messageForm.bonus_points : null,
       } as any));
-      const { error } = await supabase.from('app_messages').insert(msgs);
+      const { data: insertedMessages, error } = await supabase.from('app_messages').insert(msgs).select('id, user_id');
       if (error) throw error;
+
+      const pushRecipients = insertedMessages ?? uids.map((user_id) => ({ user_id, id: undefined }));
+      const pushResults = await Promise.allSettled(
+        pushRecipients.map(async ({ user_id, id }) => {
+          const { error: pushError } = await supabase.functions.invoke('send-push-notification', {
+            body: {
+              user_id,
+              title: `📬 ${merchantDisplayName || 'Neues Angebot'}`,
+              body: messageForm.title,
+              data: {
+                type: 'message',
+                merchant_customer_id: customerId,
+                message_id: id,
+              },
+            },
+          });
+
+          if (pushError) {
+            throw pushError;
+          }
+        })
+      );
+
+      const failedPushCount = pushResults.filter((result) => result.status === 'rejected').length;
+      if (failedPushCount > 0) {
+        console.error('Push notifications failed for some recipients', { failedPushCount, totalRecipients: uids.length });
+      }
+
       toast.success(`Nachricht an ${uids.length} Kunden gesendet!`);
       setShowConfirmDialog(false); setShowMessageDialog(false); resetMessageForm(); loadData();
     } catch { toast.error('Fehler beim Senden'); } finally { setSaving(false); }
