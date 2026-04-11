@@ -43,13 +43,18 @@ const CustomerDetail = () => {
     try {
       const { data } = await supabase
         .from("customer_subscriptions")
-        .select("created_by, profiles:created_by(full_name)")
+        .select("created_by, created_at, profiles:created_by(full_name)")
         .eq("customer_id", id!)
         .order("created_at", { ascending: true })
         .limit(1);
 
       if (data && data.length > 0 && data[0].created_by) {
-        setClosedByName((data[0].profiles as any)?.full_name || "Admin");
+        const name = (data[0].profiles as any)?.full_name || "Admin";
+        const date = new Date(data[0].created_at).toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric" });
+        setClosedByName(`${name} (${date})`);
+      } else if (data && data.length > 0) {
+        const date = new Date(data[0].created_at).toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric" });
+        setClosedByName(`Admin (${date})`);
       }
     } catch (e) { console.error(e); }
   };
