@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
-import { Users, TrendingUp, Euro, Target, Clock, CalendarIcon, PhoneCall, AlertCircle } from 'lucide-react';
+import { Users, TrendingUp, Euro, Target, Clock, CalendarIcon, PhoneCall, AlertCircle, AlertTriangle } from 'lucide-react';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { Badge } from '@/components/ui/badge';
@@ -28,6 +28,23 @@ export default function PartnerDashboardHome() {
   const [upcomingActivities, setUpcomingActivities] = useState<ScheduledActivity[]>([]);
   const [overdueActivities, setOverdueActivities] = useState<ScheduledActivity[]>([]);
   const [loading, setLoading] = useState(true);
+  const [contractWarning, setContractWarning] = useState<{ show: boolean; daysLeft: number }>({ show: false, daysLeft: 0 });
+
+  useEffect(() => {
+    if (!user?.id) return;
+    const checkContract = async () => {
+      const { data } = await supabase
+        .from('sales_rep_profiles' as any)
+        .select('contract_status, contract_deadline')
+        .eq('user_id', user.id)
+        .maybeSingle();
+      if (data && (data as any).contract_status === 'pending' && (data as any).contract_deadline) {
+        const daysLeft = Math.max(0, Math.ceil((new Date((data as any).contract_deadline).getTime() - Date.now()) / (1000 * 60 * 60 * 24)));
+        setContractWarning({ show: true, daysLeft });
+      }
+    };
+    checkContract();
+  }, [user?.id]);
 
   useEffect(() => {
     if (!user?.id) return;
@@ -107,6 +124,19 @@ export default function PartnerDashboardHome() {
 
   return (
     <div className="space-y-6">
+      {contractWarning.show && (
+        <div className="flex items-start gap-3 p-4 rounded-lg bg-destructive/10 border border-destructive/20">
+          <AlertTriangle className="h-5 w-5 text-destructive shrink-0 mt-0.5" />
+          <div>
+            <p className="font-medium text-destructive">Vertrag noch nicht eingereicht</p>
+            <p className="text-sm text-destructive/80">
+              Bitte lade deinen unterschriebenen Vertrag unter Einstellungen → Steuern & Vertrag hoch.
+              Dein Account wird in <strong>{contractWarning.daysLeft} Tagen</strong> automatisch gelöscht, wenn kein Vertrag vorliegt.
+            </p>
+          </div>
+        </div>
+      )}
+
       <div>
         <h1 className="text-2xl font-bold">Vertriebler Dashboard</h1>
         <p className="text-muted-foreground">Deine Pipeline & Performance auf einen Blick</p>
