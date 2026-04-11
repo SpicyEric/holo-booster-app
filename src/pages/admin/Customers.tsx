@@ -286,7 +286,7 @@ const Customers = () => {
               <Button size="sm" variant="outline" onClick={loadCustomers} className="h-8">
                 <RefreshCw className="w-3 h-3" />
               </Button>
-              <Button size="sm" onClick={() => navigate("/admin/checkout")} className="h-8">
+              <Button size="sm" onClick={() => navigate(`${basePath}/checkout`)} className="h-8">
                 <Plus className="w-3 h-3 mr-1" /> Neu
               </Button>
             </div>
@@ -330,7 +330,7 @@ const Customers = () => {
                 <div
                   key={customer.id}
                   className={`flex items-center gap-3 px-4 py-2.5 cursor-pointer hover:bg-muted/50 transition-colors ${selectedCustomerId === customer.id ? 'bg-muted/70' : ''}`}
-                  onClick={() => navigate(`/admin/customers/${customer.id}`)}
+                  onClick={() => navigate(`${basePath}/customers/${customer.id}`)}
                 >
                   <div className="w-9 h-9 rounded-lg overflow-hidden border border-border/50 bg-muted/30 flex items-center justify-center shrink-0">
                     {customer.logo_url ? (
