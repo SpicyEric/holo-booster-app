@@ -23,7 +23,7 @@ interface Alert {
 
 const Overview = () => {
   const navigate = useNavigate();
-  const { role } = useAuth();
+  const { role, user } = useAuth();
   const isAdmin = role === 'admin';
   const [alerts, setAlerts] = useState<Alert[]>([]);
   const [kpis, setKpis] = useState({
@@ -75,19 +75,44 @@ const Overview = () => {
 
   const loadAlerts = async () => {
     const newAlerts: Alert[] = [];
+    const customersPath = isAdmin ? "/admin/customers" : "/vertriebler/customers";
+
+    // Stamp inactivity: 14 days
     try {
-      const fiveDaysAgo = new Date();
-      fiveDaysAgo.setDate(fiveDaysAgo.getDate() - 5);
+      const fourteenDaysAgo = new Date();
+      fourteenDaysAgo.setDate(fourteenDaysAgo.getDate() - 14);
       const { data: activeCustomers } = await supabase.from("customers").select("id, name").eq("active", true);
       if (activeCustomers && activeCustomers.length > 0) {
-        const { data: recentActivity } = await supabase.from("point_transactions").select("merchant_customer_id").eq("transaction_type", "nfc_stamp").gte("created_at", fiveDaysAgo.toISOString());
+        const { data: recentActivity } = await supabase.from("point_transactions").select("merchant_customer_id").eq("transaction_type", "nfc_stamp").gte("created_at", fourteenDaysAgo.toISOString());
         const activeIds = new Set((recentActivity || []).map((r) => r.merchant_customer_id));
         const inactive = activeCustomers.filter((c) => !activeIds.has(c.id));
         if (inactive.length > 0) {
-          newAlerts.push({ type: "warning", message: `${inactive.length} Kunde${inactive.length > 1 ? "n" : ""} ohne Stempelaktivität (5+ Tage)`, action: "Anzeigen", link: "/admin/customers" });
+          newAlerts.push({ type: "warning", message: `${inactive.length} Kunde${inactive.length > 1 ? "n" : ""} ohne Stempelaktivität (14+ Tage)`, action: "Anzeigen", link: customersPath });
         }
       }
     } catch (e) { console.error(e); }
+
+    // Contract warning for sales reps
+    if (!isAdmin && user) {
+      try {
+        const { data } = await supabase
+          .from('sales_rep_profiles' as any)
+          .select('contract_status, contract_deadline')
+          .eq('user_id', user.id)
+          .maybeSingle();
+        if (data) {
+          const status = (data as any).contract_status;
+          const deadline = (data as any).contract_deadline;
+          if (status === 'pending' && deadline) {
+            const daysLeft = Math.max(0, Math.ceil((new Date(deadline).getTime() - Date.now()) / (1000 * 60 * 60 * 24)));
+            newAlerts.push({ type: "error", message: `Vertrag noch nicht eingereicht! Dein Account wird in ${daysLeft} Tagen gelöscht.`, action: "Einstellungen", link: "/vertriebler/settings" });
+          } else if (status === 'submitted') {
+            newAlerts.push({ type: "info", message: "Dein Vertrag ist eingereicht und wird aktuell noch zur Freigabe geprüft." });
+          }
+        }
+      } catch (e) { console.error(e); }
+    }
+
     try {
       const { count } = await supabase.from("support_messages").select("id", { count: "exact", head: true }).eq("status", "new");
       if (count && count > 0) {
