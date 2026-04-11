@@ -27,6 +27,7 @@ import {
 } from "@/components/ui/select";
 import RichTextEditor from '@/components/merchant/RichTextEditor';
 import RewardSuggestionsPanel from '@/components/merchant/RewardSuggestionsPanel';
+import EmojiPicker from '@/components/EmojiPicker';
 import { cn } from '@/lib/utils';
 
 // ---- Types ----
@@ -881,7 +882,13 @@ const Marketing = () => {
                 )}
                 {estimatedRecipients !== null && <div className="flex items-center gap-2 text-sm"><Users className="h-4 w-4 text-primary" /><span className="font-medium">{estimatedRecipients} Empfänger</span></div>}
               </div>
-              <div><Label>Titel</Label><Input value={messageForm.title} onChange={e=>setMessageForm({...messageForm,title:e.target.value})} placeholder="Betreff..." className="rounded-xl mt-1" /></div>
+              <div>
+                <Label>Titel</Label>
+                <div className="flex items-center gap-1 mt-1">
+                  <Input value={messageForm.title} onChange={e=>setMessageForm({...messageForm,title:e.target.value})} placeholder="Betreff..." className="rounded-xl flex-1" />
+                  <EmojiPicker onEmojiSelect={(emoji) => setMessageForm(prev => ({...prev, title: prev.title + emoji}))} />
+                </div>
+              </div>
               <div>
                 <Label>Nachricht</Label>
                 <div className="mt-1">

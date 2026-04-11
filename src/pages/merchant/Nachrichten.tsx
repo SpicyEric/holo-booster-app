@@ -25,6 +25,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import EmojiPicker from '@/components/EmojiPicker';
 
 interface Segment {
   type: 'all' | 'last_stamped_days' | 'not_stamped_days' | 'stamped_between';
@@ -888,12 +889,15 @@ const Nachrichten = () => {
 
               <div>
                 <Label className="text-gray-700">Titel</Label>
-                <Input
-                  value={messageForm.title}
-                  onChange={(e) => setMessageForm({ ...messageForm, title: e.target.value })}
-                  placeholder="z.B. Wir vermissen Sie!"
-                  className="rounded-xl mt-1"
-                />
+                <div className="flex items-center gap-1 mt-1">
+                  <Input
+                    value={messageForm.title}
+                    onChange={(e) => setMessageForm({ ...messageForm, title: e.target.value })}
+                    placeholder="z.B. Wir vermissen Sie!"
+                    className="rounded-xl flex-1"
+                  />
+                  <EmojiPicker onEmojiSelect={(emoji) => setMessageForm(prev => ({...prev, title: prev.title + emoji}))} />
+                </div>
               </div>
 
               <div>
