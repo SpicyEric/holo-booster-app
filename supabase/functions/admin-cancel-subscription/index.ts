@@ -75,21 +75,32 @@ serve(async (req) => {
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
 
-    // Cancel the subscription immediately
-    const subscription = await stripe.subscriptions.cancel(subscriptionId);
+    // Cancel the subscription at period end (merchant stays visible until paid period expires)
+    const subscription = await stripe.subscriptions.update(subscriptionId, {
+      cancel_at_period_end: true,
+    });
     
-    logStep("Subscription cancelled in Stripe", { 
+    const periodEnd = (subscription as any).current_period_end 
+      || subscription.items?.data?.[0]?.current_period_end 
+      || null;
+    const cancelDate = periodEnd ? new Date(periodEnd * 1000).toISOString() : null;
+
+    logStep("Subscription set to cancel at period end", { 
       subscriptionId,
-      status: subscription.status
+      status: subscription.status,
+      cancelAt: cancelDate,
     });
 
-    // Update customer status in database
+    // Update customer status but keep active until period end
     await supabaseClient
       .from("customers")
-      .update({ status: "canceled" })
+      .update({ 
+        status: "canceled",
+        cancelled_at: new Date().toISOString(),
+      })
       .eq("id", customerId);
 
-    logStep("Customer status updated to canceled");
+    logStep("Customer status updated to canceled (remains visible until period end)");
 
     return new Response(JSON.stringify({ 
       success: true,

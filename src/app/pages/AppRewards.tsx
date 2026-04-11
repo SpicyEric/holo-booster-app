@@ -66,15 +66,16 @@ export const AppRewards = () => {
         .from('rewards')
         .select(`
           id, title, description, points_required, image_url, merchant_customer_id,
-          customer:customers!merchant_customer_id (name, company_name, logo_url)
+          customer:customers!merchant_customer_id (name, company_name, logo_url, active)
         `)
         .eq('is_active', true)
         .in('merchant_customer_id', merchantIds)
         .order('points_required', { ascending: true });
 
       if (rewardsData) {
-        // Only keep rewards the user can actually afford
-        const redeemable = (rewardsData as unknown as Reward[]).filter(r => 
+        // Only keep rewards from active merchants that the user can actually afford
+        const redeemable = (rewardsData as unknown as (Reward & { customer: Reward['customer'] & { active?: boolean } })[]).filter(r => 
+          (r.customer as any)?.active !== false &&
           (pointsMap.get(r.merchant_customer_id) || 0) >= r.points_required
         );
         setRewards(redeemable);
