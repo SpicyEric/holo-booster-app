@@ -4,7 +4,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Euro, TrendingUp, Clock, CheckCircle, Users, Search, Filter } from 'lucide-react';
+import { Euro, TrendingUp, Clock, Users, Search, Filter, Timer } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { format } from 'date-fns';
@@ -25,6 +25,8 @@ interface Commission {
 
 interface SalesRepProfile {
   is_small_business: boolean;
+  last_conversion_at: string | null;
+  first_conversion_at: string | null;
 }
 
 export default function SalesRepProvisionen() {
@@ -49,7 +51,7 @@ export default function SalesRepProvisionen() {
             .order('created_at', { ascending: false }),
           supabase
             .from('sales_rep_profiles')
-            .select('is_small_business')
+            .select('is_small_business, last_conversion_at, first_conversion_at')
             .eq('user_id', user.id)
             .maybeSingle(),
         ]);
@@ -90,9 +92,21 @@ export default function SalesRepProvisionen() {
     .filter(c => c.effectiveStatus === 'available')
     .reduce((sum, c) => sum + (c.amount_cents - (c.discount_cents || 0)), 0);
 
-  const paidTotal = computedCommissions
-    .filter(c => c.effectiveStatus === 'paid')
-    .reduce((sum, c) => sum + (c.amount_cents - (c.discount_cents || 0)), 0);
+  // Activity timer calculation
+  const activityDaysLeft = useMemo(() => {
+    if (!profile?.first_conversion_at) return null; // no sales yet, no timer
+    if (!profile?.last_conversion_at) return null;
+    const daysSince = Math.floor((Date.now() - new Date(profile.last_conversion_at).getTime()) / (1000 * 60 * 60 * 24));
+    return Math.max(0, 60 - daysSince);
+  }, [profile]);
+
+  const accountDeletionDaysLeft = useMemo(() => {
+    if (!profile?.first_conversion_at) return null;
+    if (!profile?.last_conversion_at) return null;
+    const daysSince = Math.floor((Date.now() - new Date(profile.last_conversion_at).getTime()) / (1000 * 60 * 60 * 24));
+    if (daysSince < 60) return null;
+    return Math.max(0, 365 - daysSince);
+  }, [profile]);
 
   // Active customers (unique customer_ids with recurring commissions)
   const activeCustomerIds = new Set(
@@ -180,16 +194,34 @@ export default function SalesRepProvisionen() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className={activityDaysLeft !== null && activityDaysLeft === 0 ? 'border-destructive' : ''}>
           <CardContent className="pt-5">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-blue-100">
-                <CheckCircle className="w-5 h-5 text-blue-600" />
+              <div className={`p-2 rounded-lg ${activityDaysLeft === null ? 'bg-muted' : activityDaysLeft === 0 ? 'bg-destructive/10' : activityDaysLeft <= 15 ? 'bg-orange-100' : 'bg-green-100'}`}>
+                <Timer className={`w-5 h-5 ${activityDaysLeft === null ? 'text-muted-foreground' : activityDaysLeft === 0 ? 'text-destructive' : activityDaysLeft <= 15 ? 'text-orange-600' : 'text-green-600'}`} />
               </div>
               <div>
-                <p className="text-2xl font-bold">{formatCents(paidTotal)} €</p>
-                {isVATLiable && <p className="text-xs text-muted-foreground">brutto: {formatBrutto(paidTotal)} €</p>}
-                <p className="text-xs text-muted-foreground mt-0.5">Bereits ausbezahlt</p>
+                {activityDaysLeft === null ? (
+                  <>
+                    <p className="text-lg font-bold text-muted-foreground">Kein Timer</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">Startet nach dem ersten Abschluss</p>
+                  </>
+                ) : activityDaysLeft === 0 ? (
+                  <>
+                    <p className="text-2xl font-bold text-destructive">Inaktiv</p>
+                    <p className="text-xs text-destructive/80 mt-0.5">Provisionen pausiert</p>
+                    {accountDeletionDaysLeft !== null && (
+                      <p className="text-xs text-destructive font-medium mt-1">
+                        Account-Löschung in {accountDeletionDaysLeft} Tagen
+                      </p>
+                    )}
+                  </>
+                ) : (
+                  <>
+                    <p className="text-2xl font-bold">{activityDaysLeft} <span className="text-base font-normal">Tage</span></p>
+                    <p className="text-xs text-muted-foreground mt-0.5">Aktivitätstimer</p>
+                  </>
+                )}
               </div>
             </div>
           </CardContent>
@@ -214,32 +246,6 @@ export default function SalesRepProvisionen() {
         </Card>
       </div>
 
-      {/* Provisionskonditionen */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base">
-            <Euro className="w-4 h-4 text-primary" />
-            Provisionsmodell
-          </CardTitle>
-          <CardDescription>Netto-Beträge{isVATLiable ? ', zzgl. 19 % MwSt.' : ' (Kleinunternehmerregelung)'}</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid sm:grid-cols-2 gap-4">
-            <div className="p-4 rounded-lg bg-primary/5 border border-primary/20">
-              <p className="text-sm font-medium text-muted-foreground mb-1">Einmalprovision</p>
-              <p className="text-2xl font-bold">50,00 €</p>
-              {isVATLiable && <p className="text-sm text-muted-foreground">brutto: 59,50 €</p>}
-              <p className="text-xs text-muted-foreground mt-2">Pro abgeschlossenem Kunden, verfügbar nach 7 Tagen</p>
-            </div>
-            <div className="p-4 rounded-lg bg-primary/5 border border-primary/20">
-              <p className="text-sm font-medium text-muted-foreground mb-1">Folgeprovision</p>
-              <p className="text-2xl font-bold">12,00 € <span className="text-base font-normal">/ Monat</span></p>
-              {isVATLiable && <p className="text-sm text-muted-foreground">brutto: 14,28 € / Monat</p>}
-              <p className="text-xs text-muted-foreground mt-2">Monatlich, solange der Kunde aktiv ist</p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
 
       {/* Commission History */}
       <Card>
