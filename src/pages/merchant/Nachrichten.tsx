@@ -389,7 +389,7 @@ const Nachrichten = () => {
             await supabase.functions.invoke('send-push-notification', {
               body: {
                 user_id: uid,
-                title: `📬 ${merchantName || 'Neues Angebot'}`,
+                title: `📬 ${merchantDisplayName || 'Neues Angebot'}`,
                 body: messageForm.title,
                 data: {
                   type: 'message',
