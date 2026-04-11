@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -22,6 +23,8 @@ interface Alert {
 
 const Overview = () => {
   const navigate = useNavigate();
+  const { role } = useAuth();
+  const isAdmin = role === 'admin';
   const [alerts, setAlerts] = useState<Alert[]>([]);
   const [kpis, setKpis] = useState({
     activeCustomers: 0,
@@ -91,15 +94,17 @@ const Overview = () => {
         newAlerts.push({ type: "error", message: `${count} Support-Nachricht${count > 1 ? "en" : ""} unbeantwortet`, action: "Öffnen", link: "/admin/orders" });
       }
     } catch (e) { console.error(e); }
-    try {
-      const { data: allBoxes } = await supabase.from("boxes").select("id");
-      const { data: assignedBoxes } = await supabase.from("customer_boxes").select("box_id");
-      const assignedIds = new Set((assignedBoxes || []).map((b) => b.box_id));
-      const available = (allBoxes || []).filter((b) => !assignedIds.has(b.id)).length;
-      if (available < 3) {
-        newAlerts.push({ type: available === 0 ? "error" : "warning", message: available === 0 ? "Keine Box-IDs mehr verfügbar!" : `Nur noch ${available} Box-ID${available > 1 ? "s" : ""} verfügbar`, action: "Box-IDs verwalten", link: "/admin/boxes" });
-      }
-    } catch (e) { console.error(e); }
+    if (isAdmin) {
+      try {
+        const { data: allBoxes } = await supabase.from("boxes").select("id");
+        const { data: assignedBoxes } = await supabase.from("customer_boxes").select("box_id");
+        const assignedIds = new Set((assignedBoxes || []).map((b) => b.box_id));
+        const available = (allBoxes || []).filter((b) => !assignedIds.has(b.id)).length;
+        if (available < 3) {
+          newAlerts.push({ type: available === 0 ? "error" : "warning", message: available === 0 ? "Keine Box-IDs mehr verfügbar!" : `Nur noch ${available} Box-ID${available > 1 ? "s" : ""} verfügbar`, action: "Box-IDs verwalten", link: "/admin/boxes" });
+        }
+      } catch (e) { console.error(e); }
+    }
     try {
       const { count } = await supabase.from("contact_submissions").select("id", { count: "exact", head: true }).eq("status", "new");
       if (count && count > 0) {
