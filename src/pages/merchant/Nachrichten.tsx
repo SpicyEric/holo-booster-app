@@ -69,6 +69,7 @@ const Nachrichten = () => {
   const [searchParams] = useSearchParams();
   const [loading, setLoading] = useState(true);
   const [customerId, setCustomerId] = useState<string | null>(null);
+  const [merchantDisplayName, setMerchantDisplayName] = useState<string>('');
   const [messages, setMessages] = useState<Message[]>([]);
   const [offers, setOffers] = useState<Offer[]>([]);
   const [newCustomerOffer, setNewCustomerOffer] = useState<NewCustomerOffer | null>(null);
@@ -137,11 +138,12 @@ const Nachrichten = () => {
       // Load automation settings from customer record
       const { data: customerData } = await supabase
         .from('customers')
-        .select('birthday_enabled, birthday_message, birthday_bonus_points, birthday_gift_type, birthday_offer_title, birthday_offer_description')
+        .select('company_name, name, birthday_enabled, birthday_message, birthday_bonus_points, birthday_gift_type, birthday_offer_title, birthday_offer_description')
         .eq('id', assignment.customer_id)
         .maybeSingle();
 
       if (customerData) {
+        setMerchantDisplayName(customerData.company_name || customerData.name || '');
         setBirthdayEnabled(customerData.birthday_enabled ?? false);
         if (customerData.birthday_message) setBirthdayMessage(customerData.birthday_message);
         setBirthdayBonusPoints((customerData as any).birthday_bonus_points ?? 5);
@@ -380,6 +382,25 @@ const Nachrichten = () => {
           .from('app_messages')
           .insert(messagesToInsert);
         if (error) throw error;
+
+        // Send push notifications to all recipients
+        for (const uid of recipientUserIds) {
+          try {
+            await supabase.functions.invoke('send-push-notification', {
+              body: {
+                user_id: uid,
+                title: `📬 ${merchantDisplayName || 'Neues Angebot'}`,
+                body: messageForm.title,
+                data: {
+                  type: 'message',
+                  merchant_customer_id: customerId,
+                },
+              },
+            });
+          } catch (pushErr) {
+            console.error('Push notification error for user', uid, pushErr);
+          }
+        }
         
         const offerNote = offerId ? ' (mit Angebot, 7 Tage gültig)' : '';
         toast.success(`Nachricht an ${recipientUserIds.length} Kunden gesendet!${offerNote}`);
