@@ -259,8 +259,14 @@ const Marketing = () => {
         image_url: messageForm.image_url || null,
         bonus_points: messageForm.attach_points && messageForm.bonus_points > 0 ? messageForm.bonus_points : null,
       } as any));
-      const { error } = await supabase.from('app_messages').insert(msgs);
+      const { data: insertedMsgs, error } = await supabase.from('app_messages').insert(msgs).select('id, user_id, title, merchant_customer_id');
       if (error) throw error;
+      // Send push notifications for each user
+      if (insertedMsgs) {
+        for (const msg of insertedMsgs) {
+          supabase.functions.invoke('on-new-app-message', { body: { record: msg } }).catch(err => console.error('Push error:', err));
+        }
+      }
       toast.success(`Nachricht an ${uids.length} Kunden gesendet!`);
       setShowConfirmDialog(false); setShowMessageDialog(false); resetMessageForm(); loadData();
     } catch { toast.error('Fehler beim Senden'); } finally { setSaving(false); }
