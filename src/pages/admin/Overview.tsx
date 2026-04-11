@@ -103,8 +103,10 @@ const Overview = () => {
         if (data) {
           const status = (data as any).contract_status;
           const deadline = (data as any).contract_deadline;
-          if (status === 'pending' && deadline) {
-            const daysLeft = Math.max(0, Math.ceil((new Date(deadline).getTime() - Date.now()) / (1000 * 60 * 60 * 24)));
+          if (status === 'pending') {
+            const daysLeft = deadline
+              ? Math.max(0, Math.ceil((new Date(deadline).getTime() - Date.now()) / (1000 * 60 * 60 * 24)))
+              : 30;
             newAlerts.push({ type: "error", message: `Vertrag noch nicht eingereicht! Dein Account wird in ${daysLeft} Tagen gelöscht.`, action: "Einstellungen", link: "/vertriebler/settings" });
           } else if (status === 'submitted') {
             newAlerts.push({ type: "info", message: "Dein Vertrag ist eingereicht und wird aktuell noch zur Freigabe geprüft." });
