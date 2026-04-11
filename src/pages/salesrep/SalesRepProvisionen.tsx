@@ -159,7 +159,7 @@ export default function SalesRepProvisionen() {
               <div>
                 <p className="text-2xl font-bold">{formatCents(pendingTotal)} €</p>
                 {isVATLiable && <p className="text-xs text-muted-foreground">brutto: {formatBrutto(pendingTotal)} €</p>}
-                <p className="text-xs text-muted-foreground mt-0.5">Vorgemerkt (14-Tage-Frist)</p>
+                <p className="text-xs text-muted-foreground mt-0.5">Vorgemerkt (7-Tage-Frist)</p>
               </div>
             </div>
           </CardContent>
@@ -229,7 +229,7 @@ export default function SalesRepProvisionen() {
               <p className="text-sm font-medium text-muted-foreground mb-1">Einmalprovision</p>
               <p className="text-2xl font-bold">50,00 €</p>
               {isVATLiable && <p className="text-sm text-muted-foreground">brutto: 59,50 €</p>}
-              <p className="text-xs text-muted-foreground mt-2">Pro abgeschlossenem Kunden, verfügbar nach 14 Tagen</p>
+              <p className="text-xs text-muted-foreground mt-2">Pro abgeschlossenem Kunden, verfügbar nach 7 Tagen</p>
             </div>
             <div className="p-4 rounded-lg bg-primary/5 border border-primary/20">
               <p className="text-sm font-medium text-muted-foreground mb-1">Folgeprovision</p>
