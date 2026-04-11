@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 import { Search, RefreshCw, Plus, Phone, MapPin, Send, Navigation } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -68,6 +69,10 @@ const CustomerMarker = ({ customer, isSelected, onClick }: { customer: Customer;
 
 const Customers = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const { role, user } = useAuth();
+  const isPartner = role === 'partner' || (role !== 'admin' && location.pathname.startsWith('/vertriebler'));
+  const basePath = isPartner ? '/vertriebler' : '/admin';
   const { apiKey, loading: apiKeyLoading } = useGoogleMapsApiKey();
   const [map, setMap] = useState<google.maps.Map | null>(null);
   const [customers, setCustomers] = useState<Customer[]>([]);
@@ -93,13 +98,40 @@ const Customers = () => {
   const loadCustomers = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
-        .from("customers")
-        .select("id, name, industry, street, house_number, postal_code, city, phone, created_at, active, logo_url, status, latitude, longitude")
-        .order("created_at", { ascending: false });
 
-      if (error) throw error;
-      setCustomers((data as Customer[]) || []);
+      if (isPartner && user) {
+        // Sales reps: only show customers they closed (via customer_subscriptions.created_by)
+        const { data: subs, error: subsError } = await supabase
+          .from("customer_subscriptions")
+          .select("customer_id")
+          .eq("created_by", user.id);
+
+        if (subsError) throw subsError;
+
+        const customerIds = [...new Set((subs || []).map(s => s.customer_id))];
+        if (customerIds.length === 0) {
+          setCustomers([]);
+          return;
+        }
+
+        const { data, error } = await supabase
+          .from("customers")
+          .select("id, name, industry, street, house_number, postal_code, city, phone, created_at, active, logo_url, status, latitude, longitude")
+          .in("id", customerIds)
+          .order("created_at", { ascending: false });
+
+        if (error) throw error;
+        setCustomers((data as Customer[]) || []);
+      } else {
+        // Admin: show all customers
+        const { data, error } = await supabase
+          .from("customers")
+          .select("id, name, industry, street, house_number, postal_code, city, phone, created_at, active, logo_url, status, latitude, longitude")
+          .order("created_at", { ascending: false });
+
+        if (error) throw error;
+        setCustomers((data as Customer[]) || []);
+      }
     } catch (error: any) {
       toast.error("Fehler beim Laden der Kunden");
       console.error(error);
@@ -254,7 +286,7 @@ const Customers = () => {
               <Button size="sm" variant="outline" onClick={loadCustomers} className="h-8">
                 <RefreshCw className="w-3 h-3" />
               </Button>
-              <Button size="sm" onClick={() => navigate("/admin/checkout")} className="h-8">
+              <Button size="sm" onClick={() => navigate(`${basePath}/checkout`)} className="h-8">
                 <Plus className="w-3 h-3 mr-1" /> Neu
               </Button>
             </div>
@@ -298,7 +330,7 @@ const Customers = () => {
                 <div
                   key={customer.id}
                   className={`flex items-center gap-3 px-4 py-2.5 cursor-pointer hover:bg-muted/50 transition-colors ${selectedCustomerId === customer.id ? 'bg-muted/70' : ''}`}
-                  onClick={() => navigate(`/admin/customers/${customer.id}`)}
+                  onClick={() => navigate(`${basePath}/customers/${customer.id}`)}
                 >
                   <div className="w-9 h-9 rounded-lg overflow-hidden border border-border/50 bg-muted/30 flex items-center justify-center shrink-0">
                     {customer.logo_url ? (
