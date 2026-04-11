@@ -30,6 +30,7 @@ interface MessageDetail {
   merchant_customer_id: string;
   customer?: {
     name: string;
+    company_name: string | null;
     logo_url: string | null;
   };
   offer?: {
@@ -71,7 +72,7 @@ const AppMessageDetail = () => {
         .from('app_messages')
         .select(`
           id, title, body, sent_at, read_at, offer_id, offer_redeemed_at, image_url, merchant_customer_id,
-          customers!merchant_customer_id (name, logo_url)
+          customers!merchant_customer_id (name, company_name, logo_url)
         `)
         .eq('id', id!)
         .eq('user_id', user!.id)
