@@ -180,9 +180,14 @@ All colors MUST be HSL.
   }
 }
 
-/* Shrink CCM19 cookie consent widget */
+/* Keep CCM19 compact without scaling the whole consent panel.
+   Scaling the full widget creates a shifted mobile hit-area and causes delayed/double scrolling. */
+.ccm-root [class*="ccm-widget"],
+[id*="ccm19"] [class*="ccm-widget"] {
+  transform: none !important;
+}
+
 .ccm-root .ccm-widget-icon,
-[class*="ccm-widget"],
 [id*="ccm19"] .ccm-widget-icon {
   transform: scale(0.7) !important;
   transform-origin: bottom left !important;
