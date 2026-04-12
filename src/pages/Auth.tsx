@@ -298,9 +298,9 @@ const Auth = () => {
                 </Button>
               </form>
             )}
-          </Card>
+          </div>
 
-          <p className="text-center text-sm text-muted-foreground mt-6">
+          <p className="text-center text-sm text-[#7b7487] mt-6">
             Zugang nur für registrierte Geschäftskunden
           </p>
         </motion.div>
