@@ -233,7 +233,7 @@ const Overview = () => {
       {alerts.length > 0 && (
         <div className="space-y-2">
           {alerts.map((alert, i) => (
-            <div key={i} className={`flex items-center gap-3 p-3 rounded-xl border ${alert.type === "error" ? "bg-red-50 border-red-200 text-red-800" : alert.type === "warning" ? "bg-amber-50 border-amber-200 text-amber-800" : "bg-blue-50 border-blue-200 text-blue-800"}`}>
+            <div key={i} className={`flex items-center gap-3 p-3 rounded-xl border backdrop-blur-sm ${alert.type === "error" ? "bg-red-50/80 border-red-200/50 text-red-800" : alert.type === "warning" ? "bg-amber-50/80 border-amber-200/50 text-amber-800" : "bg-blue-50/80 border-blue-200/50 text-blue-800"}`}>
               <AlertTriangle className="w-4 h-4 shrink-0" />
               <span className="flex-1 text-sm font-medium">{alert.message}</span>
               {alert.link && (
@@ -251,7 +251,7 @@ const Overview = () => {
         {/* Aktive Kunden */}
         <div>
           <Card
-            className="p-5 bg-white rounded-2xl border-border/30 shadow-[0_1px_3px_hsl(262,30%,80%/0.3)] cursor-pointer hover:shadow-md transition-shadow"
+            className={`p-5 ${glassCardHover}`}
             onMouseEnter={() => toggleKpi("active")}
             onMouseLeave={() => setExpandedKpi(null)}
           >
@@ -266,7 +266,7 @@ const Overview = () => {
             </div>
           </Card>
           {expandedKpi === "active" && (
-            <Card className="mt-1 p-4 bg-white rounded-xl border-border/30 shadow-lg animate-in fade-in slide-in-from-top-2 duration-200 z-10 relative">
+            <Card className={`mt-1 p-4 ${glassDetail} animate-in fade-in slide-in-from-top-2 duration-200 z-10 relative`}>
               <h4 className="text-xs font-semibold mb-2 text-muted-foreground">Details: Aktive Kunden</h4>
               <div className="space-y-1.5 text-sm">
                 <div className="flex justify-between"><span>Abschlüsse insgesamt</span><span className="font-bold">{kpis.totalCustomersEver}</span></div>
