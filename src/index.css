@@ -180,20 +180,27 @@ All colors MUST be HSL.
   }
 }
 
-/* CCM19 consent modal: prevent background page + modal from competing for scroll on mobile */
-html:has(body dialog[open]),
-body:has(dialog[open]) {
+/* CCM19 consent modal: lock background scrolling while the dialog is open */
+html.ccm19-modal-open,
+body.ccm19-modal-open {
   overflow: hidden !important;
 }
 
-body:has(dialog[open]) #root {
+body.ccm19-modal-open {
+  position: relative;
+  overscroll-behavior: none !important;
+}
+
+body.ccm19-modal-open #root {
   max-height: 100vh;
   overflow: hidden;
 }
 
-body dialog[open],
-body dialog[open] * {
+body.ccm19-modal-open dialog.ccm-dialog-open,
+body.ccm19-modal-open dialog.ccm-dialog-open .ccm-dialog-content,
+body.ccm19-modal-open dialog.ccm-dialog-open .ccm-dialog-content-inner {
   overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
 }
 
 /* Keep CCM19 compact without scaling the whole consent panel.

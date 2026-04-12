@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { DeepLinkProvider } from "@/app/components/DeepLinkProvider";
+import { useConsentDialogScrollLock } from "@/hooks/useConsentDialogScrollLock";
 import Landing from "./pages/Landing";
 import Index from "./pages/Index";
 import Karriere from "./pages/Karriere";
@@ -72,7 +73,11 @@ import SalesRepRegistration from "./pages/admin/SalesRepRegistration";
 
 const queryClient = new QueryClient();
 
-const App = () => (
+const App = () => {
+  useConsentDialogScrollLock();
+
+  return (
+
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <Toaster />
