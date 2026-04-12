@@ -1,7 +1,7 @@
 import ClassicNav from '@/components/ClassicNav';
 import ERecht24Badge from '@/components/ERecht24Badge';
 import Particles from '@/components/Particles';
-import { motion } from 'framer-motion';
+import { motion, type Variants } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { Star, CheckCircle } from 'lucide-react';
 import eloyoLogo from '@/assets/eloyo-logo.png';
@@ -13,11 +13,40 @@ import contactPerson from '@/assets/contact-person.png';
 import contactCtaButton from '@/assets/contact-cta-button.png';
 import { useEffect } from 'react';
 
-const fadeUp = {
-  initial: { opacity: 0, y: 20 },
-  whileInView: { opacity: 1, y: 0 },
-  viewport: { once: true },
-  transition: { duration: 0.6 },
+/* ─── Apple-style cubic-bezier ─── */
+const appleEase = [0.16, 1, 0.3, 1] as const;
+
+/* ─── Glassmorphism reveal: blur(12px) → blur(0) + y:30 → 0 ─── */
+const glassReveal: Variants = {
+  hidden: { opacity: 0, y: 30, filter: 'blur(12px)' },
+  visible: {
+    opacity: 1,
+    y: 0,
+    filter: 'blur(0px)',
+    transition: { duration: 0.7, ease: appleEase },
+  },
+};
+
+const viewportConfig = { once: true, margin: '-80px' as any };
+
+/* ─── Stagger container ─── */
+const staggerContainer: Variants = {
+  hidden: {},
+  visible: {
+    transition: { staggerChildren: 0.12 },
+  },
+};
+
+/* ─── Card hover spring ─── */
+const cardHover = {
+  whileHover: { y: -6, scale: 1.02 },
+  transition: { type: 'spring' as const, stiffness: 280, damping: 20 },
+};
+
+/* ─── Button interactions ─── */
+const buttonMotion = {
+  whileHover: { scale: 1.04 },
+  whileTap: { scale: 0.97 },
 };
 
 const Landing = () => {
@@ -62,12 +91,17 @@ const Landing = () => {
 
       {/* ═══════ HERO ═══════ */}
       <section className="relative z-10 px-6 pt-32 pb-20 overflow-hidden">
-        {/* Ambient glow blobs */}
         <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[60%] bg-gradient-to-br from-primary to-secondary blur-[120px] opacity-20 rounded-full pointer-events-none" />
         <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[60%] bg-blue-400 blur-[120px] opacity-10 rounded-full pointer-events-none" />
 
-        <div className="max-w-7xl mx-auto grid lg:grid-cols-2 gap-12 items-center relative z-10">
-          <motion.div {...fadeUp} className="text-left">
+        <motion.div
+          variants={staggerContainer}
+          initial="hidden"
+          whileInView="visible"
+          viewport={viewportConfig}
+          className="max-w-7xl mx-auto grid lg:grid-cols-2 gap-12 items-center relative z-10"
+        >
+          <motion.div variants={glassReveal} className="text-left">
             <div className="inline-flex items-center gap-2 bg-primary/10 text-primary px-4 py-1.5 rounded-full text-sm font-bold mb-6">
               <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
               Digitales Stempelsystem 2.0
@@ -79,31 +113,32 @@ const Landing = () => {
               Verwandle anonyme Laufkundschaft in loyale Fans. Mit unserem NFC-Stempelsystem kommunizierst du so einfach wie noch nie – direkt per Push-Nachricht.
             </p>
             <div className="flex flex-col sm:flex-row gap-4">
-              <button
+              <motion.button
+                {...buttonMotion}
                 onClick={() => navigate('/kontakt')}
-                className="bg-gradient-to-r from-primary to-blue-500 text-white px-8 py-4 rounded-xl text-lg font-bold shadow-xl shadow-primary/25 hover:scale-105 transition-transform active:scale-95"
+                className="bg-gradient-to-r from-primary to-blue-500 text-white px-8 py-4 rounded-xl text-lg font-bold shadow-xl shadow-primary/25 hover:shadow-[0_20px_60px_rgba(124,58,237,0.25)] transition-shadow"
               >
                 Jetzt Termin anfragen
-              </button>
-              <button
+              </motion.button>
+              <motion.button
+                {...buttonMotion}
                 onClick={() => {
                   document.getElementById('how-it-works')?.scrollIntoView({ behavior: 'smooth' });
                 }}
                 className="bg-[#f4f3fb] text-[#1a1b21] border border-[#ccc3d8]/30 px-8 py-4 rounded-xl text-lg font-bold hover:bg-[#eeedf5] transition-colors"
               >
                 Wie es funktioniert
-              </button>
+              </motion.button>
             </div>
           </motion.div>
 
-          <motion.div {...fadeUp} transition={{ duration: 0.6, delay: 0.2 }} className="relative">
+          <motion.div variants={glassReveal} className="relative">
             <div className="group">
               <img 
                 src={nfcStampHero} 
                 alt="Eloyo App Mockup" 
                 className="w-full h-[400px] sm:h-[500px] object-contain"
               />
-              {/* Notification card below image */}
               <div className="max-w-sm mx-auto mt-4">
                 <div className="bg-white/90 backdrop-blur-md rounded-xl p-3 shadow-lg border border-white flex items-start gap-3">
                   <div className="w-9 h-9 bg-primary rounded-lg flex items-center justify-center flex-shrink-0">
@@ -117,13 +152,19 @@ const Landing = () => {
               </div>
             </div>
           </motion.div>
-        </div>
+        </motion.div>
       </section>
 
       {/* ═══════ FLAGSHIP FEATURE: Push ═══════ */}
       <section className="relative z-10 bg-[#f4f3fb] py-24 px-6">
         <div className="max-w-7xl mx-auto">
-          <motion.div {...fadeUp} className="bg-white rounded-[3rem] overflow-hidden shadow-sm flex flex-col md:flex-row items-center">
+          <motion.div
+            variants={glassReveal}
+            initial="hidden"
+            whileInView="visible"
+            viewport={viewportConfig}
+            className="bg-white rounded-[3rem] overflow-hidden shadow-sm flex flex-col md:flex-row items-center"
+          >
             <div className="p-10 lg:p-20 md:w-1/2">
               <span className="text-primary font-bold tracking-widest uppercase text-xs font-headline">Flagship Feature</span>
               <h2 className="font-headline text-4xl md:text-5xl font-extrabold mt-4 mb-6 leading-tight tracking-[-0.02em]">
@@ -138,7 +179,6 @@ const Landing = () => {
               </div>
             </div>
             <div className="md:w-1/2 bg-[#eeedf5] min-h-[400px] relative flex items-center justify-center p-12">
-              {/* Phone mockup */}
               <div className="w-[260px] sm:w-[280px] h-[540px] sm:h-[580px] bg-slate-900 rounded-[3rem] p-3 shadow-2xl border-[8px] border-slate-800">
                 <div className="w-full h-full bg-slate-100 rounded-[2.2rem] overflow-hidden relative">
                   <img src={pushBg} alt="Eloyo App Push-Benachrichtigung" className="w-full h-full object-cover" />
@@ -164,21 +204,44 @@ const Landing = () => {
       {/* ═══════ HOW IT WORKS ═══════ */}
       <section id="how-it-works" className="relative z-10 py-24 px-6 bg-[#faf8ff]">
         <div className="max-w-7xl mx-auto text-center mb-20">
-          <motion.h2 {...fadeUp} className="font-headline text-4xl md:text-5xl font-extrabold mb-4 tracking-[-0.02em]">
+          <motion.h2
+            variants={glassReveal}
+            initial="hidden"
+            whileInView="visible"
+            viewport={viewportConfig}
+            className="font-headline text-4xl md:text-5xl font-extrabold mb-4 tracking-[-0.02em]"
+          >
             So einfach wie Händeschütteln
           </motion.h2>
-          <motion.p {...fadeUp} className="text-[#4a4455] text-lg">
+          <motion.p
+            variants={glassReveal}
+            initial="hidden"
+            whileInView="visible"
+            viewport={viewportConfig}
+            className="text-[#4a4455] text-lg"
+          >
             Drei Schritte zu mehr Umsatz und glücklicheren Kunden.
           </motion.p>
         </div>
-        <div className="max-w-7xl mx-auto grid md:grid-cols-3 gap-8 lg:gap-12">
+        <motion.div
+          variants={staggerContainer}
+          initial="hidden"
+          whileInView="visible"
+          viewport={viewportConfig}
+          className="max-w-7xl mx-auto grid md:grid-cols-3 gap-8 lg:gap-12"
+        >
           {[
             { step: '1', title: 'Kunde scannt Stempel', desc: 'Dein Mitarbeiter hält den Eloyo-Stempel ans Handy des Kunden – ein kurzer Tap und die Punkte sind sofort gutgeschrieben.', icon: '📱' },
             { step: '2', title: 'sammelt Punkte', desc: 'Jeder Besuch wird belohnt. Der Kunde sieht seinen Punktestand sofort in der Eloyo-App.', icon: '⭐' },
             { step: '3', title: 'Händler schickt Push', desc: 'Erreiche deine Kunden jederzeit mit persönlichen Angeboten, um sie wieder in den Laden zu holen.', icon: '🚀' },
           ].map((item, i) => (
-            <motion.div key={i} {...fadeUp} transition={{ duration: 0.5, delay: i * 0.15 }} className="relative group">
-              <div className="bg-[#e8e7ef] rounded-[2.5rem] p-10 h-full transition-transform group-hover:-translate-y-2">
+            <motion.div
+              key={i}
+              variants={glassReveal}
+              {...cardHover}
+              className="relative group cursor-default"
+            >
+              <div className="bg-[#e8e7ef] rounded-[2.5rem] p-10 h-full transition-shadow hover:shadow-[0_20px_60px_rgba(124,58,237,0.15)]">
                 <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center shadow-lg mb-8 text-2xl group-hover:bg-gradient-to-br group-hover:from-primary group-hover:to-blue-500 transition-colors">
                   <span className="group-hover:brightness-200">{item.icon}</span>
                 </div>
@@ -190,15 +253,25 @@ const Landing = () => {
               )}
             </motion.div>
           ))}
-        </div>
+        </motion.div>
       </section>
 
       {/* ═══════ BENTO GRID FEATURES ═══════ */}
       <section className="relative z-10 py-24 px-6 bg-[#f4f3fb]">
-        <div className="max-w-7xl mx-auto">
+        <motion.div
+          variants={staggerContainer}
+          initial="hidden"
+          whileInView="visible"
+          viewport={viewportConfig}
+          className="max-w-7xl mx-auto"
+        >
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {/* NFC - Wide */}
-            <motion.div {...fadeUp} className="md:col-span-2 bg-white/40 backdrop-blur-2xl rounded-[2rem] p-8 relative overflow-hidden group border border-[#ccc3d8]/15">
+            <motion.div
+              variants={glassReveal}
+              {...cardHover}
+              className="md:col-span-2 bg-white/40 backdrop-blur-2xl rounded-[2rem] p-8 relative overflow-hidden group border border-[#ccc3d8]/15 cursor-default transition-shadow hover:shadow-[0_20px_60px_rgba(124,58,237,0.15)]"
+            >
               <div className="relative z-10">
                 <span className="text-3xl mb-4 block">📡</span>
                 <h3 className="text-2xl font-bold mb-2 font-headline">Modernste NFC Technologie</h3>
@@ -208,34 +281,52 @@ const Landing = () => {
             </motion.div>
 
             {/* App */}
-            <motion.div {...fadeUp} transition={{ delay: 0.1 }} className="bg-white/40 backdrop-blur-2xl rounded-[2rem] p-8 border-l-4 border-l-primary border border-[#ccc3d8]/15">
+            <motion.div
+              variants={glassReveal}
+              {...cardHover}
+              className="bg-white/40 backdrop-blur-2xl rounded-[2rem] p-8 border-l-4 border-l-primary border border-[#ccc3d8]/15 cursor-default transition-shadow hover:shadow-[0_20px_60px_rgba(124,58,237,0.15)]"
+            >
               <span className="text-3xl mb-4 block">📲</span>
               <h3 className="text-2xl font-bold mb-2 font-headline">Die Eloyo-App</h3>
               <p className="text-[#4a4455]">Deine Kunden laden die kostenlose Eloyo-App herunter – einmal eingerichtet, sammeln sie automatisch Punkte bei jedem Besuch.</p>
             </motion.div>
 
             {/* Rewards */}
-            <motion.div {...fadeUp} transition={{ delay: 0.2 }} className="bg-white/40 backdrop-blur-2xl rounded-[2rem] p-8 border border-[#ccc3d8]/15">
+            <motion.div
+              variants={glassReveal}
+              {...cardHover}
+              className="bg-white/40 backdrop-blur-2xl rounded-[2rem] p-8 border border-[#ccc3d8]/15 cursor-default transition-shadow hover:shadow-[0_20px_60px_rgba(124,58,237,0.15)]"
+            >
               <span className="text-3xl mb-4 block">🎁</span>
               <h3 className="text-2xl font-bold mb-2 font-headline">Flexible Belohnungen</h3>
               <p className="text-[#4a4455]">Bestimme selbst, was deine Kunden für ihre Treue bekommen. Vom Kaffee bis zum Rabatt.</p>
             </motion.div>
 
             {/* Communication - Wide */}
-            <motion.div {...fadeUp} transition={{ delay: 0.3 }} className="md:col-span-2 bg-white/40 backdrop-blur-2xl rounded-[2rem] p-8 border border-[#ccc3d8]/15">
+            <motion.div
+              variants={glassReveal}
+              {...cardHover}
+              className="md:col-span-2 bg-white/40 backdrop-blur-2xl rounded-[2rem] p-8 border border-[#ccc3d8]/15 cursor-default transition-shadow hover:shadow-[0_20px_60px_rgba(124,58,237,0.15)]"
+            >
               <span className="text-3xl mb-4 block">💬</span>
               <h3 className="text-2xl font-bold mb-2 font-headline">Direkte Kommunikation</h3>
               <p className="text-[#4a4455] max-w-md">Schick deinen Stammkunden persönliche Angebote und Nachrichten direkt aufs Handy – ohne Umwege, ohne Mittelsmänner.</p>
             </motion.div>
           </div>
-        </div>
+        </motion.div>
       </section>
 
       {/* ═══════ NETZWERK ═══════ */}
       <section className="relative z-10 py-24 px-6 bg-[#faf8ff]">
-        <div className="max-w-7xl mx-auto">
+        <motion.div
+          variants={staggerContainer}
+          initial="hidden"
+          whileInView="visible"
+          viewport={viewportConfig}
+          className="max-w-7xl mx-auto"
+        >
           <div className="grid lg:grid-cols-2 gap-12 items-center">
-            <motion.div {...fadeUp} className="space-y-6">
+            <motion.div variants={glassReveal} className="space-y-6">
               <h2 className="font-headline text-4xl md:text-5xl font-extrabold leading-tight tracking-[-0.02em]">
                 Das Eloyo-Netzwerk: <span className="text-primary">Deine neue Werbefläche</span>
               </h2>
@@ -248,7 +339,11 @@ const Landing = () => {
                   { title: 'Neukundenprämien', desc: 'Biete Erstbesucher-Rabatte an und ziehe neue Kunden aktiv in dein Geschäft.' },
                   { title: 'Lokale Reichweite', desc: 'Je mehr Geschäfte in deiner Umgebung Eloyo nutzen, desto größer wird dein Kundenpotenzial.' },
                 ].map((b, i) => (
-                  <motion.div key={i} {...fadeUp} transition={{ duration: 0.4, delay: i * 0.1 }} className="flex items-start gap-4">
+                  <motion.div
+                    key={i}
+                    variants={glassReveal}
+                    className="flex items-start gap-4"
+                  >
                     <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-blue-500 flex items-center justify-center flex-shrink-0">
                       <CheckCircle className="h-5 w-5 text-white" />
                     </div>
@@ -260,17 +355,23 @@ const Landing = () => {
                 ))}
               </div>
             </motion.div>
-            <motion.div {...fadeUp} transition={{ delay: 0.2 }}>
+            <motion.div variants={glassReveal}>
               <img src={businessNetwork} alt="Eloyo Geschäftsnetzwerk" className="w-full h-auto rounded-2xl shadow-2xl" />
             </motion.div>
           </div>
-        </div>
+        </motion.div>
       </section>
 
       {/* ═══════ GOOGLE REVIEWS ═══════ */}
       <section className="relative z-10 py-24 px-6">
-        <div className="max-w-7xl mx-auto flex flex-col lg:flex-row items-center gap-16">
-          <motion.div {...fadeUp} className="lg:w-1/2">
+        <motion.div
+          variants={staggerContainer}
+          initial="hidden"
+          whileInView="visible"
+          viewport={viewportConfig}
+          className="max-w-7xl mx-auto flex flex-col lg:flex-row items-center gap-16"
+        >
+          <motion.div variants={glassReveal} className="lg:w-1/2">
             <div className="bg-primary/10 w-16 h-16 rounded-2xl flex items-center justify-center mb-6">
               <span className="text-3xl">⭐</span>
             </div>
@@ -285,9 +386,12 @@ const Landing = () => {
             </div>
           </motion.div>
 
-          <motion.div {...fadeUp} transition={{ delay: 0.2 }} className="lg:w-1/2 relative">
+          <motion.div variants={glassReveal} className="lg:w-1/2 relative">
             <div className="absolute inset-0 bg-primary/10 blur-[100px] rounded-full" />
-            <div className="relative bg-white rounded-3xl p-8 shadow-2xl space-y-6">
+            <motion.div
+              {...cardHover}
+              className="relative bg-white rounded-3xl p-8 shadow-2xl space-y-6 cursor-default transition-shadow hover:shadow-[0_20px_60px_rgba(124,58,237,0.15)]"
+            >
               <div className="flex justify-between items-end pb-4" style={{ borderBottom: '1px solid rgba(204,195,216,0.2)' }}>
                 <div>
                   <p className="text-sm font-bold text-[#4a4455]">Google Sichtbarkeit</p>
@@ -310,19 +414,25 @@ const Landing = () => {
                   </div>
                 ))}
               </div>
-            </div>
+            </motion.div>
           </motion.div>
-        </div>
+        </motion.div>
       </section>
 
       {/* ═══════ GAMIFICATION ═══════ */}
       <section className="relative z-10 py-24 px-6 bg-[#f4f3fb]">
-        <div className="max-w-7xl mx-auto">
+        <motion.div
+          variants={staggerContainer}
+          initial="hidden"
+          whileInView="visible"
+          viewport={viewportConfig}
+          className="max-w-7xl mx-auto"
+        >
           <div className="grid lg:grid-cols-2 gap-12 items-center">
-            <motion.div {...fadeUp} className="order-2 lg:order-1">
+            <motion.div variants={glassReveal} className="order-2 lg:order-1">
               <img src={eloyoAppMockup} alt="Eloyo App mit Gamification" className="w-full max-w-md mx-auto h-auto rounded-2xl shadow-2xl" />
             </motion.div>
-            <motion.div {...fadeUp} className="space-y-6 order-1 lg:order-2">
+            <motion.div variants={glassReveal} className="space-y-6 order-1 lg:order-2">
               <h2 className="font-headline text-4xl md:text-5xl font-extrabold leading-tight tracking-[-0.02em]">
                 Deine Kunden kommen <span className="text-primary">von selbst wieder</span>
               </h2>
@@ -336,7 +446,11 @@ const Landing = () => {
                   'Persönliche Belohnungen schaffen emotionale Bindung',
                   'Punkte können nicht verfallen – maximale Fairness'
                 ].map((point, i) => (
-                  <motion.li key={i} {...fadeUp} transition={{ duration: 0.4, delay: i * 0.1 }} className="flex items-center gap-3">
+                  <motion.li
+                    key={i}
+                    variants={glassReveal}
+                    className="flex items-center gap-3"
+                  >
                     <CheckCircle className="h-5 w-5 text-primary flex-shrink-0" />
                     <span className="text-[#1a1b21]">{point}</span>
                   </motion.li>
@@ -344,14 +458,17 @@ const Landing = () => {
               </ul>
             </motion.div>
           </div>
-        </div>
+        </motion.div>
       </section>
 
       {/* ═══════ FINAL CTA ═══════ */}
       <section className="relative z-10 py-24 px-6">
         <div className="max-w-7xl mx-auto">
           <motion.div
-            {...fadeUp}
+            variants={glassReveal}
+            initial="hidden"
+            whileInView="visible"
+            viewport={viewportConfig}
             className="bg-gradient-to-br from-primary to-blue-500 rounded-[3rem] p-12 lg:p-20 relative overflow-hidden text-white flex flex-col md:flex-row items-center gap-12"
           >
             <div className="md:w-3/5 relative z-10">
@@ -362,12 +479,13 @@ const Landing = () => {
                 Kostenlose Demo direkt in deinem Laden. Du siehst in 10 Minuten live wie Eloyo funktioniert.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
-                <button
+                <motion.button
+                  {...buttonMotion}
                   onClick={() => navigate('/kontakt')}
-                  className="bg-white text-primary px-10 py-5 rounded-2xl text-xl font-bold shadow-2xl hover:scale-105 transition-transform"
+                  className="bg-white text-primary px-10 py-5 rounded-2xl text-xl font-bold shadow-2xl hover:shadow-[0_20px_60px_rgba(255,255,255,0.3)] transition-shadow"
                 >
                   Jetzt Termin anfragen
-                </button>
+                </motion.button>
               </div>
             </div>
             <div className="md:w-2/5 flex items-center justify-center">
@@ -385,7 +503,13 @@ const Landing = () => {
       </section>
 
       {/* ═══════ FOOTER ═══════ */}
-      <footer className="relative z-10 bg-[#f9f8fc] py-12 px-6">
+      <motion.footer
+        variants={glassReveal}
+        initial="hidden"
+        whileInView="visible"
+        viewport={viewportConfig}
+        className="relative z-10 bg-[#f9f8fc] py-12 px-6"
+      >
         <div className="max-w-7xl mx-auto">
           <div className="flex flex-col md:flex-row justify-between items-center gap-8 mb-12">
             <img src={eloyoLogo} alt="Eloyo Logo" className="h-8 w-auto" />
@@ -401,7 +525,7 @@ const Landing = () => {
             © {new Date().getFullYear()} Eloyo. Kundenbindung für lokale Geschäfte – einfach, digital, direkt.
           </div>
         </div>
-      </footer>
+      </motion.footer>
 
       <ERecht24Badge />
     </div>
