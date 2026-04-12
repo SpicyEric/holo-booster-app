@@ -5,7 +5,7 @@ import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { Star, CheckCircle } from 'lucide-react';
 import eloyoLogo from '@/assets/eloyo-logo.png';
-import nfcStampHero from '@/assets/nfc-stamp-hero.png';
+import nfcStampHero from '@/assets/hero-app-mockup.png';
 import eloyoAppMockup from '@/assets/eloyo-app-mockup.jpg';
 import businessNetwork from '@/assets/business-network.png';
 import heroPersonQr from '@/assets/hero-person-qr.png';
