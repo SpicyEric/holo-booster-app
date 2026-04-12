@@ -180,6 +180,22 @@ All colors MUST be HSL.
   }
 }
 
+/* CCM19 consent modal: prevent background page + modal from competing for scroll on mobile */
+html:has(body dialog[open]),
+body:has(dialog[open]) {
+  overflow: hidden !important;
+}
+
+body:has(dialog[open]) #root {
+  max-height: 100vh;
+  overflow: hidden;
+}
+
+body dialog[open],
+body dialog[open] * {
+  overscroll-behavior: contain;
+}
+
 /* Keep CCM19 compact without scaling the whole consent panel.
    Scaling the full widget creates a shifted mobile hit-area and causes delayed/double scrolling. */
 .ccm-root [class*="ccm-widget"],
