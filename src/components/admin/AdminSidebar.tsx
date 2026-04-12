@@ -85,7 +85,7 @@ function SidebarNav({ collapsed, onNavigate }: { collapsed: boolean; onNavigate?
 
   return (
     <>
-      <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-6">
+      <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-6 scrollbar-hide">
         {NAV_GROUPS.map((group) => (
           <div key={group.label}>
             {!collapsed && (
@@ -165,7 +165,7 @@ export default function AdminSidebar() {
         </Button>
 
         <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
-          <SheetContent side="left" className="w-[280px] p-0 flex flex-col bg-[hsl(262,50%,28%,0.82)] backdrop-blur-2xl border-r border-white/10 shadow-xl">
+          <SheetContent side="left" className="w-[280px] p-0 flex flex-col bg-[hsl(262,50%,28%)] border-r border-white/10 shadow-xl">
             <div className="flex items-center justify-between h-16 border-b border-white/10 px-4">
               <img
                 src={eloyoLogo}
@@ -187,7 +187,7 @@ export default function AdminSidebar() {
   return (
     <aside
       className={cn(
-        "sticky top-0 h-screen flex flex-col border-r border-white/10 bg-[hsl(262,50%,28%,0.82)] backdrop-blur-2xl transition-all duration-300 z-20 shrink-0 shadow-lg",
+        "sticky top-0 h-screen flex flex-col border-r border-white/10 bg-[hsl(262,50%,28%)] transition-all duration-300 z-20 shrink-0 shadow-lg",
         collapsed ? "w-[68px]" : "w-[260px]"
       )}
     >
