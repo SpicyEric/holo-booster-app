@@ -374,7 +374,7 @@ const Landing = () => {
               <div className="relative group">
                 <div className="absolute -inset-4 bg-white/20 rounded-[3rem] blur-xl group-hover:blur-2xl transition-all" />
                 <img
-                  src={heroPersonQr}
+                  src={contactPerson}
                   alt="Eloyo Geschäftsinhaber"
                   className="rounded-[2.5rem] w-full aspect-square object-cover shadow-2xl relative z-10 border-4 border-white/10"
                 />
