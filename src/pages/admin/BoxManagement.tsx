@@ -209,6 +209,7 @@ const BoxManagement = () => {
     if (!stampDialogBox || !webNfcSupported) { toast.error("Web NFC nicht verfügbar"); return; }
     setScanningStampColor(color);
     const boxId = stampDialogBox.box_id;
+    const merchantCustomerId = stampDialogBox.assigned_customer?.customer_id || null;
     const ndefText = `${boxId}:${color}`;
     try {
       const ndef = new (window as any).NDEFReader();
@@ -222,8 +223,8 @@ const BoxManagement = () => {
         try { await ndef.write({ records: [{ recordType: "text", data: ndefText, lang: "de" }] }); toast.success(`NFC-Chip beschrieben: ${ndefText}`); } catch { toast.error("Chip konnte nicht beschrieben werden"); }
         try {
           const { data: existing } = await supabase.from("nfc_chips").select("id").eq("chip_uid", boxId).eq("stamp_color", color).maybeSingle();
-          if (existing) { await supabase.from("nfc_chips").update({ hardware_uid: hardwareUid }).eq("id", existing.id); }
-          else { await supabase.from("nfc_chips").insert({ chip_uid: boxId, stamp_color: color, stamp_name: color.charAt(0).toUpperCase() + color.slice(1), hardware_uid: hardwareUid, points_value: color === 'grün' ? 1 : color === 'blau' ? 2 : 3, is_active: true }); }
+          if (existing) { await supabase.from("nfc_chips").update({ hardware_uid: hardwareUid, merchant_customer_id: merchantCustomerId }).eq("id", existing.id); }
+          else { await supabase.from("nfc_chips").insert({ chip_uid: boxId, stamp_color: color, stamp_name: color.charAt(0).toUpperCase() + color.slice(1), hardware_uid: hardwareUid, points_value: color === 'grün' ? 1 : color === 'blau' ? 2 : 3, is_active: true, merchant_customer_id: merchantCustomerId }); }
           toast.success(`Stempel "${color}" registriert`);
           setRegisteredStamps(prev => {
             const filtered = prev.filter(s => s.stamp_color !== color);
