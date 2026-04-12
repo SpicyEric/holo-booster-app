@@ -1450,6 +1450,35 @@ export type Database = {
           },
         ]
       }
+      merchant_push_log: {
+        Row: {
+          id: string
+          merchant_customer_id: string
+          sent_at: string
+          sent_by_user_id: string
+        }
+        Insert: {
+          id?: string
+          merchant_customer_id: string
+          sent_at?: string
+          sent_by_user_id: string
+        }
+        Update: {
+          id?: string
+          merchant_customer_id?: string
+          sent_at?: string
+          sent_by_user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "merchant_push_log_merchant_customer_id_fkey"
+            columns: ["merchant_customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       new_customer_offers: {
         Row: {
           bonus_stamps: number | null
