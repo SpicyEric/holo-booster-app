@@ -12,11 +12,10 @@ const AdminDashboard = () => {
   return (
     <ProtectedRoute allowedRoles={['admin']}>
       <div className="flex min-h-screen w-full font-body" style={{
-        background: 'linear-gradient(135deg, hsl(262 83% 96%) 0%, hsl(0 0% 99%) 40%, hsl(220 60% 97%) 100%)',
+        background: 'linear-gradient(135deg, hsl(262 60% 92%) 0%, hsl(262 30% 96%) 40%, hsl(262 20% 97%) 100%)',
       }}>
-        {/* Subtle radial purple glow top-left */}
         <div className="pointer-events-none fixed inset-0 z-0" style={{
-          background: 'radial-gradient(ellipse 60% 50% at 0% 0%, hsl(262 70% 88% / 0.5) 0%, transparent 70%)',
+          background: 'radial-gradient(ellipse 50% 45% at 0% 0%, hsl(262 65% 78% / 0.55) 0%, transparent 70%)',
         }} />
         <AdminSidebar />
         <main className="relative z-10 flex-1 min-w-0 overflow-x-hidden p-6">
