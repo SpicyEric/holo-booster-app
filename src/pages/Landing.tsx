@@ -82,7 +82,7 @@ const Landing = () => {
                 onClick={() => navigate('/kontakt')}
                 className="bg-gradient-to-r from-primary to-blue-500 text-white px-8 py-4 rounded-xl text-lg font-bold shadow-xl shadow-primary/25 hover:scale-105 transition-transform active:scale-95"
               >
-                Jetzt Demo ansehen
+                Jetzt Termin anfragen
               </button>
               <button
                 onClick={() => {
@@ -111,8 +111,8 @@ const Landing = () => {
                       <Star className="h-5 w-5 text-white" fill="white" />
                     </div>
                     <div>
-                      <p className="font-bold text-[#1a1b21]">Neuer Stempel erhalten!</p>
-                      <p className="text-sm text-[#4a4455]">Noch 2 Stempel bis zum kostenlosen Haarschnitt bei Salon Müller.</p>
+                      <p className="font-bold text-[#1a1b21]">+10 Punkte gesammelt!</p>
+                      <p className="text-sm text-[#4a4455]">Noch 20 Punkte bis zu deinem kostenlosen Haarschnitt bei Salon Müller.</p>
                     </div>
                   </div>
                 </div>
@@ -153,7 +153,7 @@ const Landing = () => {
                         <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Eloyo · Jetzt</span>
                       </div>
                       <p className="text-sm font-bold text-slate-900">🎁 Deine Belohnung wartet!</p>
-                      <p className="text-xs text-slate-600">Hallo Markus, du hast 10 Punkte gesammelt. Hol dir heute dein Gratis-Brot ab!</p>
+                      <p className="text-xs text-slate-600">Heute doppelte Punkte – nur bis 18 Uhr. Komm vorbei! 🎉</p>
                     </div>
                   </div>
                 </div>
@@ -175,8 +175,8 @@ const Landing = () => {
         </div>
         <div className="max-w-7xl mx-auto grid md:grid-cols-3 gap-8 lg:gap-12">
           {[
-            { step: '1', title: 'Kunde scannt Stempel', desc: 'Ein einfacher Tap mit dem Handy auf dein NFC-Terminal genügt. Keine App-Installation nötig.', icon: '📱' },
-            { step: '2', title: 'sammelt Punkte', desc: 'Jeder Besuch wird belohnt. Der Fortschritt ist sofort auf dem digitalen Wallet sichtbar.', icon: '⭐' },
+            { step: '1', title: 'Kunde scannt Stempel', desc: 'Dein Mitarbeiter hält den Eloyo-Stempel ans Handy des Kunden – ein kurzer Tap und die Punkte sind sofort gutgeschrieben.', icon: '📱' },
+            { step: '2', title: 'sammelt Punkte', desc: 'Jeder Besuch wird belohnt. Der Kunde sieht seinen Punktestand sofort in der Eloyo-App.', icon: '⭐' },
             { step: '3', title: 'Händler schickt Push', desc: 'Erreiche deine Kunden jederzeit mit persönlichen Angeboten, um sie wieder in den Laden zu holen.', icon: '🚀' },
           ].map((item, i) => (
             <motion.div key={i} {...fadeUp} transition={{ duration: 0.5, delay: i * 0.15 }} className="relative group">
@@ -212,8 +212,8 @@ const Landing = () => {
             {/* App */}
             <motion.div {...fadeUp} transition={{ delay: 0.1 }} className="bg-white/40 backdrop-blur-2xl rounded-[2rem] p-8 border-l-4 border-l-primary border border-[#ccc3d8]/15">
               <span className="text-3xl mb-4 block">📲</span>
-              <h3 className="text-2xl font-bold mb-2 font-headline">Eigene Mini-App</h3>
-              <p className="text-[#4a4455]">Alles läuft im Browser oder Apple/Google Wallet. Deine Kunden brauchen keine neue App.</p>
+              <h3 className="text-2xl font-bold mb-2 font-headline">Die Eloyo-App</h3>
+              <p className="text-[#4a4455]">Deine Kunden laden die kostenlose Eloyo-App herunter – einmal eingerichtet, sammeln sie automatisch Punkte bei jedem Besuch.</p>
             </motion.div>
 
             {/* Rewards */}
@@ -224,17 +224,10 @@ const Landing = () => {
             </motion.div>
 
             {/* Communication - Wide */}
-            <motion.div {...fadeUp} transition={{ delay: 0.3 }} className="md:col-span-2 bg-white/40 backdrop-blur-2xl rounded-[2rem] p-8 flex flex-col md:flex-row gap-8 items-center border border-[#ccc3d8]/15">
-              <div className="md:w-1/2">
-                <span className="text-3xl mb-4 block">💬</span>
-                <h3 className="text-2xl font-bold mb-2 font-headline">Direkte Kommunikation</h3>
-                <p className="text-[#4a4455]">Baue eine echte Beziehung zu deinen Kunden auf. Direkt und ohne Mittelsmänner.</p>
-              </div>
-              <div className="md:w-1/2 grid grid-cols-2 gap-2">
-                {['1:1 Chat', 'Feedback', 'Events', 'Angebote'].map((label) => (
-                  <div key={label} className="bg-white/40 p-3 rounded-xl text-center text-xs font-bold">{label}</div>
-                ))}
-              </div>
+            <motion.div {...fadeUp} transition={{ delay: 0.3 }} className="md:col-span-2 bg-white/40 backdrop-blur-2xl rounded-[2rem] p-8 border border-[#ccc3d8]/15">
+              <span className="text-3xl mb-4 block">💬</span>
+              <h3 className="text-2xl font-bold mb-2 font-headline">Direkte Kommunikation</h3>
+              <p className="text-[#4a4455] max-w-md">Schick deinen Stammkunden persönliche Angebote und Nachrichten direkt aufs Handy – ohne Umwege, ohne Mittelsmänner.</p>
             </motion.div>
           </div>
         </div>
@@ -287,19 +280,10 @@ const Landing = () => {
             <p className="text-lg text-[#4a4455] leading-relaxed mb-8">
               Zufriedene Stammkunden sind deine besten Botschafter. Eloyo motiviert deine treuesten Fans, eine positive Bewertung bei Google zu hinterlassen und so dein Neukundengeschäft anzukurbeln.
             </p>
-            <div className="p-6 bg-[#e8e7ef] rounded-2xl border-l-4 border-l-yellow-400">
-              <p className="italic text-[#1a1b21] mb-4">
-                "Seit wir Eloyo nutzen, ist unsere Google-Bewertung von 4.2 auf 4.8 gestiegen. Das System zahlt sich von selbst aus."
+            <div className="p-6 bg-[#e8e7ef] rounded-2xl border-l-4 border-l-primary">
+              <p className="text-[#1a1b21] font-medium">
+                Push-Nachrichten erzielen bis zu 7x höhere Öffnungsraten als E-Mails – deine Botschaft kommt garantiert an.
               </p>
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-slate-300 flex items-center justify-center text-sm font-bold">SB</div>
-                <div>
-                  <p className="font-bold text-sm">Stefan B., Bäckermeister</p>
-                  <div className="flex text-yellow-400 text-xs gap-0.5">
-                    {[...Array(5)].map((_, i) => <Star key={i} className="h-3 w-3" fill="currentColor" />)}
-                  </div>
-                </div>
-              </div>
             </div>
           </motion.div>
 
@@ -342,7 +326,7 @@ const Landing = () => {
             </motion.div>
             <motion.div {...fadeUp} className="space-y-6 order-1 lg:order-2">
               <h2 className="font-headline text-4xl md:text-5xl font-extrabold leading-tight tracking-[-0.02em]">
-                Gamification, die <span className="text-primary">süchtig macht</span>
+                Deine Kunden kommen <span className="text-primary">von selbst wieder</span>
               </h2>
               <p className="text-lg text-[#4a4455]">
                 Vergiss langweilige Stempelkarten, die niemand einlöst. Bei Eloyo entscheiden deine Kunden selbst, wie sie ihre Punkte ausgeben – das schafft echte Motivation und emotionale Bindung.
@@ -365,25 +349,6 @@ const Landing = () => {
         </div>
       </section>
 
-      {/* ═══════ LÖSCHSERVICE ═══════ */}
-      <section className="relative z-10 py-12 px-6 bg-[#faf8ff]">
-        <div className="max-w-4xl mx-auto">
-          <motion.div {...fadeUp} className="flex flex-col md:flex-row items-center gap-6 text-center md:text-left">
-            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary to-blue-500 flex items-center justify-center flex-shrink-0">
-              <span className="text-2xl">🛡️</span>
-            </div>
-            <div>
-              <h3 className="text-xl font-bold text-[#1a1b21] mb-2 font-headline">
-                Löschservice für unfaire Google-Bewertungen
-              </h3>
-              <p className="text-[#4a4455]">
-                Wir helfen dir auch bei negativen Fake-Bewertungen. Unser Löschservice arbeitet rein erfolgsbasiert – du zahlst nur, wenn die Bewertung entfernt wird. Preiswert und transparent.
-              </p>
-            </div>
-          </motion.div>
-        </div>
-      </section>
-
       {/* ═══════ FINAL CTA ═══════ */}
       <section className="relative z-10 py-24 px-6">
         <div className="max-w-7xl mx-auto">
@@ -391,28 +356,20 @@ const Landing = () => {
             {...fadeUp}
             className="bg-gradient-to-br from-primary to-blue-500 rounded-[3rem] p-12 lg:p-20 relative overflow-hidden text-white flex flex-col md:flex-row items-center gap-12"
           >
-            {/* Decorative circle */}
-            <div className="absolute top-0 right-0 w-full h-full opacity-10 pointer-events-none">
-              <svg className="w-full h-full" viewBox="0 0 100 100"><circle cx="90" cy="10" r="40" fill="none" stroke="white" strokeWidth="0.5" /></svg>
-            </div>
             <div className="md:w-3/5 relative z-10">
               <h2 className="font-headline text-4xl md:text-6xl font-extrabold mb-8 leading-tight tracking-[-0.02em]">
-                Bereit für eine neue Art der Kundenbindung?
+                Wir kommen persönlich vorbei – und richten alles für dich ein.
               </h2>
               <p className="text-xl text-white/90 mb-12 max-w-lg">
-                Starte heute kostenlos und sieh selbst, wie einfach du deine Kunden begeistern kannst.
+                Kostenlose Demo direkt in deinem Laden. Du siehst in 10 Minuten live wie Eloyo funktioniert.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
                 <button
                   onClick={() => navigate('/kontakt')}
                   className="bg-white text-primary px-10 py-5 rounded-2xl text-xl font-bold shadow-2xl hover:scale-105 transition-transform"
                 >
-                  Kostenlos starten
+                  Jetzt Termin anfragen
                 </button>
-                <div className="flex items-center gap-3 px-6 py-2">
-                  <CheckCircle className="h-5 w-5 text-white/80" />
-                  <span className="text-sm font-medium">In 2 Min. einsatzbereit</span>
-                </div>
               </div>
             </div>
             <div className="md:w-2/5">
@@ -443,7 +400,7 @@ const Landing = () => {
             </div>
           </div>
           <div className="text-center text-[#7b7487] text-sm">
-            © {new Date().getFullYear()} Eloyo. Alle Rechte vorbehalten.
+            © {new Date().getFullYear()} Eloyo. Kundenbindung für lokale Geschäfte – einfach, digital, direkt.
           </div>
         </div>
       </footer>
