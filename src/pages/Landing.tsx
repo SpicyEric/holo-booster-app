@@ -96,13 +96,12 @@ const Landing = () => {
           </motion.div>
 
           <motion.div {...fadeUp} transition={{ duration: 0.6, delay: 0.2 }} className="relative">
-            <div className="bg-white/40 backdrop-blur-2xl rounded-[2.5rem] p-4 sm:p-8 lg:p-12 shadow-2xl relative overflow-hidden group border border-[#ccc3d8]/15">
-              <div className="absolute inset-0 bg-gradient-to-br from-primary to-blue-500 opacity-5 group-hover:opacity-10 transition-opacity" />
-              <div className="relative bg-white rounded-[2rem] p-2 shadow-inner border border-white/20">
+            <div className="relative overflow-hidden group">
+              <div className="relative">
                 <img 
                   src={nfcStampHero} 
-                  alt="Eloyo NFC-Holzstempel" 
-                  className="rounded-[1.8rem] w-full h-[400px] sm:h-[500px] object-cover"
+                  alt="Eloyo App Mockup" 
+                  className="w-full h-[400px] sm:h-[500px] object-contain"
                 />
                 {/* Floating notification card */}
                 <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[85%]">
