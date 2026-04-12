@@ -9,7 +9,7 @@ import nfcStampHero from '@/assets/hero-app-mockup.png';
 import eloyoAppMockup from '@/assets/eloyo-app-mockup.jpg';
 import pushBg from '@/assets/push-bg.jpeg';
 import businessNetwork from '@/assets/business-network.png';
-import heroPersonQr from '@/assets/hero-person-qr.png';
+import contactPerson from '@/assets/contact-person.png';
 import contactCtaButton from '@/assets/contact-cta-button.png';
 import { useEffect } from 'react';
 
