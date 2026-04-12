@@ -210,3 +210,12 @@ body.ccm19-modal-open dialog.ccm-dialog-open .ccm-dialog-content-inner {
   transform: scale(0.7) !important;
   transform-origin: bottom left !important;
 }
+
+/* Hide scrollbar utility */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
