@@ -7,6 +7,7 @@ import { Star, CheckCircle } from 'lucide-react';
 import eloyoLogo from '@/assets/eloyo-logo.png';
 import nfcStampHero from '@/assets/hero-app-mockup.png';
 import eloyoAppMockup from '@/assets/eloyo-app-mockup.jpg';
+import pushBg from '@/assets/push-bg.jpeg';
 import businessNetwork from '@/assets/business-network.png';
 import heroPersonQr from '@/assets/hero-person-qr.png';
 import contactCtaButton from '@/assets/contact-cta-button.png';
@@ -140,8 +141,8 @@ const Landing = () => {
               {/* Phone mockup */}
               <div className="w-[260px] sm:w-[280px] h-[540px] sm:h-[580px] bg-slate-900 rounded-[3rem] p-3 shadow-2xl border-[8px] border-slate-800">
                 <div className="w-full h-full bg-slate-100 rounded-[2.2rem] overflow-hidden relative">
-                  <img src={eloyoAppMockup} alt="Eloyo App Push-Benachrichtigung" className="w-full h-full object-cover opacity-50 grayscale" />
-                  <div className="absolute top-1/4 left-3 right-3 space-y-3">
+                  <img src={pushBg} alt="Eloyo App Push-Benachrichtigung" className="w-full h-full object-cover" />
+                  <div className="absolute bottom-8 left-3 right-3 space-y-3">
                     <div className="bg-white/80 backdrop-blur-md p-4 rounded-2xl shadow-lg animate-bounce">
                       <div className="flex items-center gap-2 mb-1">
                         <div className="w-5 h-5 bg-primary rounded-md flex items-center justify-center">
