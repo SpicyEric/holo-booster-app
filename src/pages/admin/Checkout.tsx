@@ -6,7 +6,7 @@ export default function Checkout() {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20 p-4 md:p-8">
+    <div className="min-h-screen p-4 md:p-8 font-body">
       <div className="max-w-5xl mx-auto">
         <Button variant="ghost" onClick={() => navigate("/admin/customers")} className="mb-6">
           ← Zurück zu Kunden
