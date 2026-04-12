@@ -166,14 +166,14 @@ export default function AdminSidebar() {
 
         <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
           <SheetContent side="left" className="w-[280px] p-0 flex flex-col bg-white/60 backdrop-blur-2xl border-r border-white/40 shadow-xl">
-            <div className="flex items-center justify-between h-16 border-b border-white/10 px-4">
+            <div className="flex items-center justify-between h-16 border-b border-black/5 px-4">
               <img
                 src={eloyoLogo}
                 alt="Eloyo"
-                className="h-7 w-auto cursor-pointer brightness-0 invert"
+                className="h-7 w-auto cursor-pointer"
                 onClick={() => { navigate("/admin"); setMobileOpen(false); }}
               />
-              <Button variant="ghost" size="icon" className="h-8 w-8 text-white/50 hover:text-white hover:bg-white/10" onClick={() => setMobileOpen(false)}>
+              <Button variant="ghost" size="icon" className="h-8 w-8 text-foreground/50 hover:text-foreground hover:bg-primary/8" onClick={() => setMobileOpen(false)}>
                 <X className="h-4 w-4" />
               </Button>
             </div>
@@ -192,21 +192,21 @@ export default function AdminSidebar() {
       )}
     >
       <div className={cn(
-        "flex items-center h-16 border-b border-white/10 px-4",
+        "flex items-center h-16 border-b border-black/5 px-4",
         collapsed ? "justify-center" : "justify-between"
       )}>
         {!collapsed && (
           <img
             src={eloyoLogo}
             alt="Eloyo"
-            className="h-7 w-auto cursor-pointer brightness-0 invert"
+            className="h-7 w-auto cursor-pointer"
             onClick={() => navigate("/admin")}
           />
         )}
         <Button
           variant="ghost"
           size="icon"
-          className="h-8 w-8 rounded-lg text-white/50 hover:text-white hover:bg-white/10"
+          className="h-8 w-8 rounded-lg text-foreground/50 hover:text-foreground hover:bg-primary/8"
           onClick={() => setCollapsed(!collapsed)}
         >
           <ChevronLeft className={cn("h-4 w-4 transition-transform duration-200", collapsed && "rotate-180")} />
