@@ -144,7 +144,7 @@ const Landing = () => {
   ];
 
   return (
-    <div className="bg-[#faf8ff] text-[#1a1b21] min-h-screen w-full overflow-x-hidden font-body">
+    <div className="landing-page-shell bg-[#faf8ff] text-[#1a1b21] min-h-screen w-full font-body">
       <Particles 
         particleColors={['#8B5CF6', '#3B82F6', '#8B5CF6']}
         particleCount={100}
