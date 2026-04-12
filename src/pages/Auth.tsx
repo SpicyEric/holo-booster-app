@@ -167,21 +167,22 @@ const Auth = () => {
         logo={<img src={eloyoLogo} alt="Eloyo Logo" className="h-10 w-auto" />}
       />
 
-      <div className="pt-32 pb-20 px-4 flex items-center justify-center min-h-screen">
+      <div className="relative z-10 pt-32 pb-20 px-4 flex items-center justify-center min-h-screen">
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
+          initial={{ opacity: 0, y: 30, filter: 'blur(12px)' }}
+          animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+          transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
           className="w-full max-w-md"
         >
           <div className="text-center mb-8">
             <img src={eloyoLogo} alt="Eloyo Logo" className="h-16 w-auto mx-auto mb-4" />
-            <h1 className="text-3xl font-bold">
+            <h1 className="font-headline text-3xl font-extrabold tracking-[-0.02em]">
               {isResetMode ? 'Passwort festlegen' : 'Anmelden'}
             </h1>
-            <p className="text-muted-foreground mt-2">{isResetMode ? 'Bitte neues Passwort wählen' : 'Zugang zu Ihrem Dashboard'}</p>
+            <p className="text-[#4a4455] mt-2">{isResetMode ? 'Bitte neues Passwort wählen' : 'Zugang zu Ihrem Dashboard'}</p>
           </div>
 
-          <Card className="p-6 border-border">
+          <div className="bg-white rounded-2xl p-8 shadow-sm">
             {isResetMode ? (
               <form onSubmit={handleSetPassword} className="space-y-4">
                 <div>
