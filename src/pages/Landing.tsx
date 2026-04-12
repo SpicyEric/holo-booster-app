@@ -1,7 +1,7 @@
 import ClassicNav from '@/components/ClassicNav';
 import ERecht24Badge from '@/components/ERecht24Badge';
 import Particles from '@/components/Particles';
-import { motion, type Variants } from 'framer-motion';
+import { motion, AnimatePresence, type Variants } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { Star, CheckCircle } from 'lucide-react';
 import eloyoLogo from '@/assets/eloyo-logo.png';
@@ -11,7 +11,7 @@ import pushBg from '@/assets/push-bg.jpeg';
 import businessNetwork from '@/assets/business-network.png';
 import contactPerson from '@/assets/contact-person.png';
 import contactCtaButton from '@/assets/contact-cta-button.png';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 /* ─── Apple-style cubic-bezier ─── */
 const appleEase = [0.16, 1, 0.3, 1] as const;
@@ -47,6 +47,80 @@ const cardHover = {
 const buttonMotion = {
   whileHover: { scale: 1.04 },
   whileTap: { scale: 0.97 },
+};
+
+/* ─── Rotating hero notifications ─── */
+const heroNotifications = [
+  { points: '+80 Punkte gesammelt!', text: 'Noch 20 Punkte bis zu deinem kostenlosen Haarschnitt bei Einfach Schön Salon.' },
+  { points: '+30 Punkte gesammelt!', text: 'Weiter so! Dein nächster Gratis-Kaffee bei Café Milano ist fast erreicht.' },
+  { points: '+50 Punkte gesammelt!', text: 'Noch 10 Punkte bis zu 20% Rabatt bei Blumen Kaiser.' },
+  { points: '+15 Punkte gesammelt!', text: 'Du bist auf dem besten Weg zur Gratis-Maniküre bei Beauty Lounge!' },
+];
+
+const notificationVariants: Variants = {
+  enter: { opacity: 0, y: 20, filter: 'blur(8px)', scale: 0.95 },
+  visible: { opacity: 1, y: 0, filter: 'blur(0px)', scale: 1, transition: { duration: 0.6, ease: appleEase } },
+  exit: { opacity: 0, y: -10, filter: 'blur(8px)', scale: 0.95, transition: { duration: 0.5, ease: appleEase } },
+};
+
+const HeroMockupWithNotifications = () => {
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [visible, setVisible] = useState(true);
+
+  useEffect(() => {
+    const cycle = () => {
+      // Show for 3s, then hide
+      setVisible(true);
+      const hideTimer = setTimeout(() => {
+        setVisible(false);
+        // After 1.5s hidden, advance and show next
+        const nextTimer = setTimeout(() => {
+          setCurrentIndex(prev => (prev + 1) % heroNotifications.length);
+        }, 1500);
+        return () => clearTimeout(nextTimer);
+      }, 3000);
+      return () => clearTimeout(hideTimer);
+    };
+
+    cycle();
+    const interval = setInterval(cycle, 5000); // 3s visible + 1.5s hidden + buffer
+    return () => clearInterval(interval);
+  }, []);
+
+  const note = heroNotifications[currentIndex];
+
+  return (
+    <div className="relative">
+      <img
+        src={nfcStampHero}
+        alt="Eloyo App Mockup"
+        className="w-full h-[480px] sm:h-[580px] lg:h-[620px] object-contain"
+      />
+      {/* Overlay notification */}
+      <div className="absolute inset-0 flex items-end justify-center pb-16 pointer-events-none">
+        <AnimatePresence mode="wait">
+          {visible && (
+            <motion.div
+              key={currentIndex}
+              variants={notificationVariants}
+              initial="enter"
+              animate="visible"
+              exit="exit"
+              className="bg-white/90 backdrop-blur-md rounded-xl p-3 shadow-lg border border-white/80 flex items-start gap-3 max-w-xs pointer-events-auto"
+            >
+              <div className="w-9 h-9 bg-primary rounded-lg flex items-center justify-center flex-shrink-0">
+                <Star className="h-4 w-4 text-white" fill="white" />
+              </div>
+              <div>
+                <p className="font-bold text-sm text-[#1a1b21]">{note.points}</p>
+                <p className="text-xs text-[#4a4455]">{note.text}</p>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+    </div>
+  );
 };
 
 const Landing = () => {
@@ -132,25 +206,8 @@ const Landing = () => {
             </div>
           </motion.div>
 
-          <motion.div variants={glassReveal} className="relative">
-            <div className="group">
-              <img 
-                src={nfcStampHero} 
-                alt="Eloyo App Mockup" 
-                className="w-full h-[400px] sm:h-[500px] object-contain"
-              />
-              <div className="max-w-sm mx-auto mt-4">
-                <div className="bg-white/90 backdrop-blur-md rounded-xl p-3 shadow-lg border border-white flex items-start gap-3">
-                  <div className="w-9 h-9 bg-primary rounded-lg flex items-center justify-center flex-shrink-0">
-                    <Star className="h-4 w-4 text-white" fill="white" />
-                  </div>
-                  <div>
-                    <p className="font-bold text-sm text-[#1a1b21]">+80 Punkte gesammelt!</p>
-                    <p className="text-xs text-[#4a4455]">Noch 20 Punkte bis zu deinem kostenlosen Haarschnitt bei Einfach Schön Salon.</p>
-                  </div>
-                </div>
-              </div>
-            </div>
+          <motion.div variants={glassReveal} className="relative flex justify-center">
+            <HeroMockupWithNotifications />
           </motion.div>
         </motion.div>
       </section>
