@@ -16,6 +16,8 @@ export default {
       fontFamily: {
         'sans': ['Nunito', 'system-ui', 'sans-serif'],
         'nunito': ['Nunito', 'system-ui', 'sans-serif'],
+        'headline': ['Plus Jakarta Sans', 'system-ui', 'sans-serif'],
+        'body': ['Manrope', 'system-ui', 'sans-serif'],
       },
       colors: {
         border: "hsl(var(--border))",
