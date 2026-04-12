@@ -77,126 +77,126 @@ const App = () => {
   useConsentDialogScrollLock();
 
   return (
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <DeepLinkProvider>
+            <Routes>
+              {/* ===== ROOT ROUTE - handles native vs web ===== */}
+              <Route path="/" element={<Index />} />
 
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <DeepLinkProvider>
-        <Routes>
-          {/* ===== ROOT ROUTE - handles native vs web ===== */}
-          <Route path="/" element={<Index />} />
-          
-          {/* ===== WEB ROUTES ===== */}
-          <Route path="/home" element={<Landing />} />
-          <Route path="/karriere" element={<Karriere />} />
-          <Route path="/kontakt" element={<Kontakt />} />
-          <Route path="/impressum" element={<Impressum />} />
-          <Route path="/datenschutz" element={<Datenschutz />} />
-          <Route path="/delete" element={<Delete />} />
-          <Route path="/konto-loeschen" element={<KontoLoeschen />} />
-          <Route path="/auth" element={<Auth />} />
-          
-          {/* Admin Dashboard (role: admin) */}
-          <Route path="/admin" element={<AdminDashboard />}>
-            <Route index element={<Overview />} />
-            <Route path="customers" element={<Customers />} />
-            <Route path="customers/new" element={<CustomerNew />} />
-            <Route path="customers/:id" element={<CustomerDetail />} />
-            <Route path="accounts" element={<Accounts />} />
-            <Route path="orders" element={<Orders />} />
-            <Route path="leads" element={<Leads />} />
-            <Route path="lead-pipeline" element={<LeadsPipeline />} />
-            <Route path="store-finder" element={<StoreFinder />} />
-            <Route path="pipeline" element={<Pipeline />} />
-            <Route path="calendar" element={<AdminCalendar />} />
-            <Route path="stats" element={<Stats />} />
-            <Route path="checkout" element={<Checkout />} />
-            <Route path="boxes" element={<BoxManagement />} />
-            <Route path="sales-rep-register" element={<SalesRepRegistration />} />
-            <Route path="settings" element={<Settings />} />
-            <Route path="map" element={<CustomerMap />} />
-          </Route>
-          
-          {/* Händler Dashboard (role: merchant) */}
-          <Route path="/kunde/setup" element={<MerchantSetup />} />
-          <Route path="/kunde" element={<MerchantLayout />}>
-            <Route index element={<KundeDashboard />} />
-            <Route path="mein-geschaeft" element={<MeinGeschaeft />} />
-            <Route path="kunden" element={<Transaktionen />} />
-            <Route path="marketing" element={<Marketing />} />
-            <Route path="konto" element={<MeinKonto />} />
-            {/* Legacy redirects for old routes */}
-            <Route path="google-bewertungen" element={<Navigate to="/kunde/marketing" replace />} />
-            <Route path="nachrichten" element={<Navigate to="/kunde/marketing" replace />} />
-            <Route path="transaktionen" element={<Navigate to="/kunde/kunden" replace />} />
-          </Route>
-          
-          {/* Vertriebler Dashboard (role: partner/sales_partner) */}
-          <Route path="/vertriebler" element={<SalesRepDashboard />}>
-            <Route index element={<Overview />} />
-            <Route path="provisionen" element={<SalesRepProvisionen />} />
-            <Route path="customers" element={<Customers />} />
-            <Route path="customers/new" element={<CustomerNew />} />
-            <Route path="customers/:id" element={<CustomerDetail />} />
-            <Route path="leads" element={<Leads />} />
-            <Route path="lead-pipeline" element={<LeadsPipeline />} />
-            <Route path="store-finder" element={<StoreFinder />} />
-            <Route path="calendar" element={<AdminCalendar />} />
-            <Route path="stats" element={<Stats />} />
-            <Route path="checkout" element={<Checkout />} />
-            <Route path="messages" element={<SalesRepMessages />} />
-            <Route path="settings" element={<SalesRepSettings />} />
-            <Route path="map" element={<CustomerMap />} />
-          </Route>
-          
-          {/* Legacy partner redirects */}
-          <Route path="/partner/*" element={<Navigate to="/vertriebler" replace />} />
-          
-          {/* ===== APP ROUTES (End Customer) - Swipeable main pages ===== */}
-          <Route path="/app/auth" element={<AppAuth />} />
-          {/* Permissions are now handled natively on-demand, redirect to app */}
-          <Route path="/app/permissions" element={<Navigate to="/app" replace />} />
-          <Route path="/app" element={<AppProtectedRoute><SwipeableAppContainer /></AppProtectedRoute>} />
-          <Route path="/app/messages" element={<AppProtectedRoute><SwipeableAppContainer /></AppProtectedRoute>} />
-          <Route path="/app/stores" element={<AppProtectedRoute><SwipeableAppContainer /></AppProtectedRoute>} />
-          <Route path="/app/profile" element={<AppProtectedRoute><SwipeableAppContainer /></AppProtectedRoute>} />
-          {/* Non-swipeable detail pages */}
-          <Route path="/app/history" element={<AppProtectedRoute><AppHistory /></AppProtectedRoute>} />
-          <Route path="/app/settings" element={<AppProtectedRoute><AppSettings /></AppProtectedRoute>} />
-          <Route path="/app/scan" element={<AppProtectedRoute><AppScan /></AppProtectedRoute>} />
-          <Route path="/app/merchant/:id" element={<AppProtectedRoute><AppMerchantDetail /></AppProtectedRoute>} />
-          <Route path="/app/suggest-shop" element={<AppProtectedRoute><AppSuggestShop /></AppProtectedRoute>} />
-          <Route path="/app/support" element={<AppProtectedRoute><AppSupport /></AppProtectedRoute>} />
-          <Route path="/app/terms" element={<AppProtectedRoute><AppTerms /></AppProtectedRoute>} />
-          <Route path="/app/privacy" element={<AppProtectedRoute><AppPrivacy /></AppProtectedRoute>} />
-          <Route path="/app/my-cards" element={<AppProtectedRoute><AppMyCards /></AppProtectedRoute>} />
-          <Route path="/app/rewards" element={<AppProtectedRoute><AppRewards /></AppProtectedRoute>} />
-          <Route path="/app/messages/:id" element={<AppProtectedRoute><AppMessageDetail /></AppProtectedRoute>} />
-          <Route path="/app/verify-email" element={<AppVerifyEmail />} />
-          
-          {/* Scan Route */}
-          <Route path="/s/:cid" element={<Scan />} />
-          
-          {/* Checkout Routes */}
-          <Route path="/checkout/success" element={<CheckoutSuccess />} />
-          <Route path="/checkout/cancel" element={<CheckoutCancel />} />
-          
-          {/* Legacy redirects */}
-          <Route path="/kunde/dashboard" element={<Navigate to="/kunde" replace />} />
-          <Route path="/merchant" element={<Navigate to="/kunde" replace />} />
-          <Route path="/customer" element={<Navigate to="/kunde" replace />} />
-          
-          <Route path="/design-variants" element={<DesignVariants />} />
-          <Route path="/test-wizard" element={<TestWizard />} />
-          <Route path="/download" element={<Download />} />
-        <Route path="*" element={<NotFound />} />
-        </Routes>
-        </DeepLinkProvider>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+              {/* ===== WEB ROUTES ===== */}
+              <Route path="/home" element={<Landing />} />
+              <Route path="/karriere" element={<Karriere />} />
+              <Route path="/kontakt" element={<Kontakt />} />
+              <Route path="/impressum" element={<Impressum />} />
+              <Route path="/datenschutz" element={<Datenschutz />} />
+              <Route path="/delete" element={<Delete />} />
+              <Route path="/konto-loeschen" element={<KontoLoeschen />} />
+              <Route path="/auth" element={<Auth />} />
+
+              {/* Admin Dashboard (role: admin) */}
+              <Route path="/admin" element={<AdminDashboard />}>
+                <Route index element={<Overview />} />
+                <Route path="customers" element={<Customers />} />
+                <Route path="customers/new" element={<CustomerNew />} />
+                <Route path="customers/:id" element={<CustomerDetail />} />
+                <Route path="accounts" element={<Accounts />} />
+                <Route path="orders" element={<Orders />} />
+                <Route path="leads" element={<Leads />} />
+                <Route path="lead-pipeline" element={<LeadsPipeline />} />
+                <Route path="store-finder" element={<StoreFinder />} />
+                <Route path="pipeline" element={<Pipeline />} />
+                <Route path="calendar" element={<AdminCalendar />} />
+                <Route path="stats" element={<Stats />} />
+                <Route path="checkout" element={<Checkout />} />
+                <Route path="boxes" element={<BoxManagement />} />
+                <Route path="sales-rep-register" element={<SalesRepRegistration />} />
+                <Route path="settings" element={<Settings />} />
+                <Route path="map" element={<CustomerMap />} />
+              </Route>
+
+              {/* Händler Dashboard (role: merchant) */}
+              <Route path="/kunde/setup" element={<MerchantSetup />} />
+              <Route path="/kunde" element={<MerchantLayout />}>
+                <Route index element={<KundeDashboard />} />
+                <Route path="mein-geschaeft" element={<MeinGeschaeft />} />
+                <Route path="kunden" element={<Transaktionen />} />
+                <Route path="marketing" element={<Marketing />} />
+                <Route path="konto" element={<MeinKonto />} />
+                {/* Legacy redirects for old routes */}
+                <Route path="google-bewertungen" element={<Navigate to="/kunde/marketing" replace />} />
+                <Route path="nachrichten" element={<Navigate to="/kunde/marketing" replace />} />
+                <Route path="transaktionen" element={<Navigate to="/kunde/kunden" replace />} />
+              </Route>
+
+              {/* Vertriebler Dashboard (role: partner/sales_partner) */}
+              <Route path="/vertriebler" element={<SalesRepDashboard />}>
+                <Route index element={<Overview />} />
+                <Route path="provisionen" element={<SalesRepProvisionen />} />
+                <Route path="customers" element={<Customers />} />
+                <Route path="customers/new" element={<CustomerNew />} />
+                <Route path="customers/:id" element={<CustomerDetail />} />
+                <Route path="leads" element={<Leads />} />
+                <Route path="lead-pipeline" element={<LeadsPipeline />} />
+                <Route path="store-finder" element={<StoreFinder />} />
+                <Route path="calendar" element={<AdminCalendar />} />
+                <Route path="stats" element={<Stats />} />
+                <Route path="checkout" element={<Checkout />} />
+                <Route path="messages" element={<SalesRepMessages />} />
+                <Route path="settings" element={<SalesRepSettings />} />
+                <Route path="map" element={<CustomerMap />} />
+              </Route>
+
+              {/* Legacy partner redirects */}
+              <Route path="/partner/*" element={<Navigate to="/vertriebler" replace />} />
+
+              {/* ===== APP ROUTES (End Customer) - Swipeable main pages ===== */}
+              <Route path="/app/auth" element={<AppAuth />} />
+              {/* Permissions are now handled natively on-demand, redirect to app */}
+              <Route path="/app/permissions" element={<Navigate to="/app" replace />} />
+              <Route path="/app" element={<AppProtectedRoute><SwipeableAppContainer /></AppProtectedRoute>} />
+              <Route path="/app/messages" element={<AppProtectedRoute><SwipeableAppContainer /></AppProtectedRoute>} />
+              <Route path="/app/stores" element={<AppProtectedRoute><SwipeableAppContainer /></AppProtectedRoute>} />
+              <Route path="/app/profile" element={<AppProtectedRoute><SwipeableAppContainer /></AppProtectedRoute>} />
+              {/* Non-swipeable detail pages */}
+              <Route path="/app/history" element={<AppProtectedRoute><AppHistory /></AppProtectedRoute>} />
+              <Route path="/app/settings" element={<AppProtectedRoute><AppSettings /></AppProtectedRoute>} />
+              <Route path="/app/scan" element={<AppProtectedRoute><AppScan /></AppProtectedRoute>} />
+              <Route path="/app/merchant/:id" element={<AppProtectedRoute><AppMerchantDetail /></AppProtectedRoute>} />
+              <Route path="/app/suggest-shop" element={<AppProtectedRoute><AppSuggestShop /></AppProtectedRoute>} />
+              <Route path="/app/support" element={<AppProtectedRoute><AppSupport /></AppProtectedRoute>} />
+              <Route path="/app/terms" element={<AppProtectedRoute><AppTerms /></AppProtectedRoute>} />
+              <Route path="/app/privacy" element={<AppProtectedRoute><AppPrivacy /></AppProtectedRoute>} />
+              <Route path="/app/my-cards" element={<AppProtectedRoute><AppMyCards /></AppProtectedRoute>} />
+              <Route path="/app/rewards" element={<AppProtectedRoute><AppRewards /></AppProtectedRoute>} />
+              <Route path="/app/messages/:id" element={<AppProtectedRoute><AppMessageDetail /></AppProtectedRoute>} />
+              <Route path="/app/verify-email" element={<AppVerifyEmail />} />
+
+              {/* Scan Route */}
+              <Route path="/s/:cid" element={<Scan />} />
+
+              {/* Checkout Routes */}
+              <Route path="/checkout/success" element={<CheckoutSuccess />} />
+              <Route path="/checkout/cancel" element={<CheckoutCancel />} />
+
+              {/* Legacy redirects */}
+              <Route path="/kunde/dashboard" element={<Navigate to="/kunde" replace />} />
+              <Route path="/merchant" element={<Navigate to="/kunde" replace />} />
+              <Route path="/customer" element={<Navigate to="/kunde" replace />} />
+
+              <Route path="/design-variants" element={<DesignVariants />} />
+              <Route path="/test-wizard" element={<TestWizard />} />
+              <Route path="/download" element={<Download />} />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </DeepLinkProvider>
+        </BrowserRouter>
+      </TooltipProvider>
+    </QueryClientProvider>
+  );
+};
 
 export default App;
