@@ -205,20 +205,24 @@ const Overview = () => {
     setExpandedKpi(expandedKpi === key ? null : key);
   };
 
+  const glassCard = "bg-white/60 backdrop-blur-xl rounded-2xl border border-white/50 shadow-[0_4px_24px_rgba(139,92,246,0.08)]";
+  const glassCardHover = `${glassCard} cursor-pointer hover:shadow-[0_8px_32px_rgba(139,92,246,0.15)] hover:bg-white/70 transition-all duration-300`;
+  const glassDetail = "bg-white/70 backdrop-blur-lg rounded-xl border border-white/50 shadow-[0_8px_32px_rgba(139,92,246,0.12)]";
+
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Command Center</h1>
-          <p className="text-sm text-muted-foreground">Dein täglicher Überblick</p>
+          <h1 className="text-2xl font-headline font-extrabold tracking-[-0.02em] text-[#1a1b21]">Command Center</h1>
+          <p className="text-sm text-[#7b7487]">Dein täglicher Überblick</p>
         </div>
         <div className="flex gap-2">
-          <Button onClick={() => navigate("/admin/checkout")} size="sm" className="gap-2">
+          <Button onClick={() => navigate("/admin/checkout")} size="sm" className="gap-2 bg-gradient-to-r from-[hsl(262,50%,55%)] to-[hsl(220,70%,55%)] text-white border-0 shadow-[0_4px_16px_rgba(139,92,246,0.3)] hover:shadow-[0_6px_24px_rgba(139,92,246,0.4)]">
             <UserPlus className="w-3.5 h-3.5" />
             Kunde abschließen
           </Button>
-          <Button onClick={loadDashboard} variant="outline" size="sm" className="gap-2 bg-white">
+          <Button onClick={loadDashboard} variant="outline" size="sm" className="gap-2 bg-white/60 backdrop-blur-sm border-white/50 hover:bg-white/80">
             <RefreshCw className="w-3.5 h-3.5" />
             Aktualisieren
           </Button>
