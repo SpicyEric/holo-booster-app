@@ -89,7 +89,7 @@ function SidebarNav({ collapsed, onNavigate }: { collapsed: boolean; onNavigate?
         {NAV_GROUPS.map((group) => (
           <div key={group.label}>
             {!collapsed && (
-              <p className="text-[10px] font-bold tracking-[0.12em] text-white/40 uppercase mb-2 px-3">
+              <p className="text-[10px] font-bold tracking-[0.12em] text-foreground/40 uppercase mb-2 px-3 font-headline">
                 {group.label}
               </p>
             )}
@@ -101,19 +101,19 @@ function SidebarNav({ collapsed, onNavigate }: { collapsed: boolean; onNavigate?
                     key={item.path}
                     onClick={() => handleNav(item.path)}
                     className={cn(
-                      "w-full flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200 relative",
-                      "hover:bg-white/10 active:scale-[0.97]",
+                      "w-full flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200 relative font-body",
+                      "hover:bg-primary/8 active:scale-[0.97]",
                       active
-                        ? "bg-white/15 text-white shadow-sm"
-                        : "text-white/60 hover:text-white",
+                        ? "bg-primary/10 text-primary shadow-sm"
+                        : "text-foreground/60 hover:text-foreground",
                       collapsed && "justify-center px-0"
                     )}
                     title={collapsed ? item.label : undefined}
                   >
                     {active && (
-                      <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 bg-white rounded-r-full" />
+                      <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 bg-primary rounded-r-full" />
                     )}
-                    <item.icon className={cn("h-[18px] w-[18px] shrink-0 transition-colors", active ? "text-white" : "text-white/50")} />
+                    <item.icon className={cn("h-[18px] w-[18px] shrink-0 transition-colors", active ? "text-primary" : "text-foreground/40")} />
                     {!collapsed && <span>{item.label}</span>}
                   </button>
                 );
@@ -123,17 +123,17 @@ function SidebarNav({ collapsed, onNavigate }: { collapsed: boolean; onNavigate?
         ))}
       </nav>
 
-      <div className="border-t border-white/10 p-3 space-y-2">
+      <div className="border-t border-black/5 p-3 space-y-2">
         {!collapsed && (
           <div className="px-3 py-2">
-            <p className="text-sm font-medium text-white/90">Admin Panel</p>
-            <p className="text-[11px] text-white/40">Systemverwaltung</p>
+            <p className="text-sm font-medium text-foreground/80 font-headline">Admin Panel</p>
+            <p className="text-[11px] text-foreground/40 font-body">Systemverwaltung</p>
           </div>
         )}
         <button
           onClick={handleLogout}
           className={cn(
-            "w-full flex items-center gap-3 rounded-xl px-3 py-2 text-[13px] font-medium text-white/40 hover:text-red-300 hover:bg-white/10 transition-all duration-200 active:scale-[0.97]",
+            "w-full flex items-center gap-3 rounded-xl px-3 py-2 text-[13px] font-medium text-foreground/40 hover:text-destructive hover:bg-destructive/8 transition-all duration-200 active:scale-[0.97] font-body",
             collapsed && "justify-center px-0"
           )}
           title={collapsed ? "Logout" : undefined}
