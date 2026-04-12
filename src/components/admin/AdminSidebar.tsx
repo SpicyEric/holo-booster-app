@@ -165,7 +165,7 @@ export default function AdminSidebar() {
         </Button>
 
         <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
-          <SheetContent side="left" className="w-[280px] p-0 flex flex-col bg-[hsl(262,50%,22%)] border-white/10">
+          <SheetContent side="left" className="w-[280px] p-0 flex flex-col bg-white/60 backdrop-blur-2xl border-r border-white/40 shadow-xl">
             <div className="flex items-center justify-between h-16 border-b border-white/10 px-4">
               <img
                 src={eloyoLogo}
@@ -187,7 +187,7 @@ export default function AdminSidebar() {
   return (
     <aside
       className={cn(
-        "sticky top-0 h-screen flex flex-col border-r border-white/5 bg-[hsl(262,50%,22%)] transition-all duration-300 z-20 shrink-0",
+        "sticky top-0 h-screen flex flex-col border-r border-black/5 bg-white/50 backdrop-blur-2xl transition-all duration-300 z-20 shrink-0 shadow-sm",
         collapsed ? "w-[68px]" : "w-[260px]"
       )}
     >
