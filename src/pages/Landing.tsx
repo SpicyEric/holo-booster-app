@@ -96,23 +96,21 @@ const Landing = () => {
           </motion.div>
 
           <motion.div {...fadeUp} transition={{ duration: 0.6, delay: 0.2 }} className="relative">
-            <div className="relative overflow-hidden group">
-              <div className="relative">
-                <img 
-                  src={nfcStampHero} 
-                  alt="Eloyo App Mockup" 
-                  className="w-full h-[400px] sm:h-[500px] object-contain"
-                />
-                {/* Floating notification card */}
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[85%]">
-                  <div className="bg-white/90 backdrop-blur-md rounded-2xl p-4 shadow-2xl border border-white flex items-start gap-4">
-                    <div className="w-12 h-12 bg-primary rounded-xl flex items-center justify-center flex-shrink-0">
-                      <Star className="h-5 w-5 text-white" fill="white" />
-                    </div>
-                    <div>
-                      <p className="font-bold text-[#1a1b21]">+10 Punkte gesammelt!</p>
-                      <p className="text-sm text-[#4a4455]">Noch 20 Punkte bis zu deinem kostenlosen Haarschnitt bei Salon Müller.</p>
-                    </div>
+            <div className="group">
+              <img 
+                src={nfcStampHero} 
+                alt="Eloyo App Mockup" 
+                className="w-full h-[400px] sm:h-[500px] object-contain"
+              />
+              {/* Notification card below image */}
+              <div className="max-w-sm mx-auto mt-4">
+                <div className="bg-white/90 backdrop-blur-md rounded-xl p-3 shadow-lg border border-white flex items-start gap-3">
+                  <div className="w-9 h-9 bg-primary rounded-lg flex items-center justify-center flex-shrink-0">
+                    <Star className="h-4 w-4 text-white" fill="white" />
+                  </div>
+                  <div>
+                    <p className="font-bold text-sm text-[#1a1b21]">+80 Punkte gesammelt!</p>
+                    <p className="text-xs text-[#4a4455]">Noch 20 Punkte bis zu deinem kostenlosen Haarschnitt bei Einfach Schön Salon.</p>
                   </div>
                 </div>
               </div>
