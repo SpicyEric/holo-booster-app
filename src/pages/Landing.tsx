@@ -469,13 +469,13 @@ const Landing = () => {
             initial="hidden"
             whileInView="visible"
             viewport={viewportConfig}
-            className="bg-gradient-to-r from-primary to-blue-500 rounded-2xl px-8 py-6 relative overflow-hidden text-white flex flex-col sm:flex-row items-center gap-6"
+            className="bg-gradient-to-r from-primary to-blue-500 rounded-2xl px-8 py-8 relative overflow-hidden text-white flex flex-col sm:flex-row items-center gap-6"
           >
-            <div className="flex items-center gap-4 shrink-0">
+            <div className="flex items-center gap-5 shrink-0">
               <img
                 src={contactPerson}
                 alt="Eloyo Geschäftsinhaber"
-                className="rounded-full w-14 h-14 object-cover object-top border-2 border-white/20"
+                className="rounded-full w-20 h-20 object-cover object-top border-2 border-white/20 shadow-lg"
               />
               <div>
                 <p className="font-headline text-lg font-bold leading-snug">
