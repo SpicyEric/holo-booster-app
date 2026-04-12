@@ -165,9 +165,9 @@ const Landing = () => {
             viewport={viewportConfig}
             className="bg-white rounded-[3rem] overflow-hidden shadow-sm flex flex-col md:flex-row items-center"
           >
-            <div className="p-10 lg:p-20 md:w-1/2">
+            <div className="p-6 sm:p-10 lg:p-20 md:w-1/2">
               <span className="text-primary font-bold tracking-widest uppercase text-xs font-headline">Flagship Feature</span>
-              <h2 className="font-headline text-4xl md:text-5xl font-extrabold mt-4 mb-6 leading-tight tracking-[-0.02em]">
+              <h2 className="font-headline text-2xl sm:text-4xl md:text-5xl font-extrabold mt-4 mb-6 leading-tight tracking-[-0.02em]">
                 Push-Benachrichtigungen, die gelesen werden
               </h2>
               <p className="text-lg text-[#4a4455] leading-relaxed mb-8">
