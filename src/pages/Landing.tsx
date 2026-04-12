@@ -1,7 +1,7 @@
 import ClassicNav from '@/components/ClassicNav';
 import ERecht24Badge from '@/components/ERecht24Badge';
 import Particles from '@/components/Particles';
-import { motion, type Variants } from 'framer-motion';
+import { motion, AnimatePresence, type Variants } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { Star, CheckCircle } from 'lucide-react';
 import eloyoLogo from '@/assets/eloyo-logo.png';
@@ -11,7 +11,7 @@ import pushBg from '@/assets/push-bg.jpeg';
 import businessNetwork from '@/assets/business-network.png';
 import contactPerson from '@/assets/contact-person.png';
 import contactCtaButton from '@/assets/contact-cta-button.png';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 /* ─── Apple-style cubic-bezier ─── */
 const appleEase = [0.16, 1, 0.3, 1] as const;
