@@ -462,41 +462,38 @@ const Landing = () => {
       </section>
 
       {/* ═══════ FINAL CTA ═══════ */}
-      <section className="relative z-10 py-24 px-6">
-        <div className="max-w-7xl mx-auto">
+      <section className="relative z-10 py-10 px-6">
+        <div className="max-w-5xl mx-auto">
           <motion.div
             variants={glassReveal}
             initial="hidden"
             whileInView="visible"
             viewport={viewportConfig}
-            className="bg-gradient-to-br from-primary to-blue-500 rounded-[3rem] p-12 lg:p-20 relative overflow-hidden text-white flex flex-col md:flex-row items-center gap-12"
+            className="bg-gradient-to-r from-primary to-blue-500 rounded-2xl px-8 py-6 relative overflow-hidden text-white flex flex-col sm:flex-row items-center gap-6"
           >
-            <div className="md:w-3/5 relative z-10">
-              <h2 className="font-headline text-4xl md:text-6xl font-extrabold mb-8 leading-tight tracking-[-0.02em]">
-                Wir kommen persönlich vorbei – und richten alles für dich ein.
-              </h2>
-              <p className="text-xl text-white/90 mb-12 max-w-lg">
-                Kostenlose Demo direkt in deinem Laden. Du siehst in 10 Minuten live wie Eloyo funktioniert.
-              </p>
-              <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
-                <motion.button
-                  {...buttonMotion}
-                  onClick={() => navigate('/kontakt')}
-                  className="bg-white text-primary px-10 py-5 rounded-2xl text-xl font-bold shadow-2xl hover:shadow-[0_20px_60px_rgba(255,255,255,0.3)] transition-shadow"
-                >
-                  Jetzt Termin anfragen
-                </motion.button>
+            <div className="flex items-center gap-4 shrink-0">
+              <img
+                src={contactPerson}
+                alt="Eloyo Geschäftsinhaber"
+                className="rounded-full w-14 h-14 object-cover object-top border-2 border-white/20"
+              />
+              <div>
+                <p className="font-headline text-lg font-bold leading-snug">
+                  Wir kommen persönlich vorbei & richten alles ein.
+                </p>
+                <p className="text-sm text-white/80">
+                  Kostenlose Demo – in 10 Min. live erleben.
+                </p>
               </div>
             </div>
-            <div className="md:w-2/5 flex items-center justify-center">
-              <div className="relative group w-56 h-56 lg:w-64 lg:h-64">
-                <div className="absolute -inset-4 bg-white/20 rounded-full blur-xl group-hover:blur-2xl transition-all" />
-                <img
-                  src={contactPerson}
-                  alt="Eloyo Geschäftsinhaber"
-                  className="rounded-full w-full h-full object-cover object-top shadow-2xl relative z-10 border-4 border-white/10"
-                />
-              </div>
+            <div className="sm:ml-auto shrink-0">
+              <motion.button
+                {...buttonMotion}
+                onClick={() => navigate('/kontakt')}
+                className="bg-white text-primary px-6 py-3 rounded-xl text-sm font-bold shadow-lg hover:shadow-[0_10px_30px_rgba(255,255,255,0.25)] transition-shadow whitespace-nowrap"
+              >
+                Jetzt Termin anfragen
+              </motion.button>
             </div>
           </motion.div>
         </div>
