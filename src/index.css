@@ -191,11 +191,6 @@ body.ccm19-modal-open {
   overscroll-behavior: none !important;
 }
 
-body.ccm19-modal-open #root {
-  max-height: 100vh;
-  overflow: hidden;
-}
-
 body.ccm19-modal-open dialog.ccm-dialog-open,
 body.ccm19-modal-open dialog.ccm-dialog-open .ccm-dialog-content,
 body.ccm19-modal-open dialog.ccm-dialog-open .ccm-dialog-content-inner {

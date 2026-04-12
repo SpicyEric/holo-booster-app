@@ -3,6 +3,17 @@
 #root {
   min-height: 100vh;
   width: 100%;
+  overflow: visible;
+}
+
+.landing-page-shell {
+  min-height: 100vh;
+  overflow: visible !important;
+}
+
+.landing-page-shell > section,
+.landing-page-shell > footer {
+  overflow: visible !important;
 }
 
 /* Smooth scrolling */
