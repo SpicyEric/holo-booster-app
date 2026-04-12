@@ -281,7 +281,7 @@ const Overview = () => {
         {/* Neue Kunden 7 Tage */}
         <div>
           <Card
-            className="p-5 bg-white rounded-2xl border-border/30 shadow-[0_1px_3px_hsl(262,30%,80%/0.3)] cursor-pointer hover:shadow-md transition-shadow"
+            className={`p-5 ${glassCardHover}`}
             onMouseEnter={() => toggleKpi("new7d")}
             onMouseLeave={() => setExpandedKpi(null)}
           >
@@ -296,7 +296,7 @@ const Overview = () => {
             </div>
           </Card>
           {expandedKpi === "new7d" && (
-            <Card className="mt-1 p-4 bg-white rounded-xl border-border/30 shadow-lg animate-in fade-in slide-in-from-top-2 duration-200 z-10 relative">
+            <Card className={`mt-1 p-4 ${glassDetail} animate-in fade-in slide-in-from-top-2 duration-200 z-10 relative`}>
               <h4 className="text-xs font-semibold mb-2 text-muted-foreground">Neue Kunden (letzte 7 Tage)</h4>
               {newCustomersList.length > 0 ? (
                 <div className="space-y-1.5 max-h-48 overflow-y-auto">
@@ -320,7 +320,7 @@ const Overview = () => {
         {/* Aktivitätsrate */}
         <div>
           <Card
-            className="p-5 bg-white rounded-2xl border-border/30 shadow-[0_1px_3px_hsl(262,30%,80%/0.3)] cursor-pointer hover:shadow-md transition-shadow"
+            className={`p-5 ${glassCardHover}`}
             onMouseEnter={() => toggleKpi("activity")}
             onMouseLeave={() => setExpandedKpi(null)}
           >
@@ -335,7 +335,7 @@ const Overview = () => {
             </div>
           </Card>
           {expandedKpi === "activity" && (
-            <Card className="mt-1 p-4 bg-white rounded-xl border-border/30 shadow-lg animate-in fade-in slide-in-from-top-2 duration-200 z-10 relative">
+            <Card className={`mt-1 p-4 ${glassDetail} animate-in fade-in slide-in-from-top-2 duration-200 z-10 relative`}>
               <h4 className="text-xs font-semibold mb-2 text-muted-foreground">Berechnung der Aktivitätsrate</h4>
               <div className="space-y-1.5 text-sm">
                 <div className="flex justify-between"><span>Aktive Kunden gesamt</span><span className="font-bold">{kpis.activeCustomers}</span></div>
@@ -354,7 +354,7 @@ const Overview = () => {
         {/* Anstehende Termine */}
         <div>
           <Card
-            className="p-5 bg-white rounded-2xl border-border/30 shadow-[0_1px_3px_hsl(262,30%,80%/0.3)] cursor-pointer hover:shadow-md transition-shadow"
+            className={`p-5 ${glassCardHover}`}
             onMouseEnter={() => toggleKpi("appointments")}
             onMouseLeave={() => setExpandedKpi(null)}
             onClick={() => navigate("/admin/calendar")}
@@ -370,7 +370,7 @@ const Overview = () => {
             </div>
           </Card>
           {expandedKpi === "appointments" && (
-            <Card className="mt-1 p-4 bg-white rounded-xl border-border/30 shadow-lg animate-in fade-in slide-in-from-top-2 duration-200 z-10 relative">
+            <Card className={`mt-1 p-4 ${glassDetail} animate-in fade-in slide-in-from-top-2 duration-200 z-10 relative`}>
               <h4 className="text-xs font-semibold mb-2 text-muted-foreground">Nächste Termine</h4>
               {upcomingAppointments.length > 0 ? (
                 <div className="space-y-2">
@@ -404,7 +404,7 @@ const Overview = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Growth Chart */}
-        <Card className="col-span-2 p-5 bg-white rounded-2xl border-border/30 shadow-[0_1px_3px_hsl(262,30%,80%/0.3)]">
+        <Card className={`col-span-2 p-5 ${glassCard}`}>
           <h2 className="text-sm font-semibold mb-4">Grow Insights (30 Tage)</h2>
           <ResponsiveContainer width="100%" height={240}>
             <LineChart data={chartData}>
@@ -420,7 +420,7 @@ const Overview = () => {
         </Card>
 
         {/* Live Feed */}
-        <Card className="p-5 bg-white rounded-2xl border-border/30 shadow-[0_1px_3px_hsl(262,30%,80%/0.3)]">
+        <Card className={`p-5 ${glassCard}`}>
           <div className="flex items-center gap-2 mb-4">
             <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
             <h2 className="text-sm font-semibold">Live Feed</h2>
