@@ -7,6 +7,7 @@ import { Star, CheckCircle } from 'lucide-react';
 import eloyoLogo from '@/assets/eloyo-logo.png';
 import nfcStampHero from '@/assets/hero-app-mockup.png';
 import eloyoAppMockup from '@/assets/eloyo-app-mockup.jpg';
+import pushBg from '@/assets/push-bg.jpeg';
 import businessNetwork from '@/assets/business-network.png';
 import heroPersonQr from '@/assets/hero-person-qr.png';
 import contactCtaButton from '@/assets/contact-cta-button.png';
