@@ -132,25 +132,8 @@ const Landing = () => {
             </div>
           </motion.div>
 
-          <motion.div variants={glassReveal} className="relative">
-            <div className="group">
-              <img 
-                src={nfcStampHero} 
-                alt="Eloyo App Mockup" 
-                className="w-full h-[400px] sm:h-[500px] object-contain"
-              />
-              <div className="max-w-sm mx-auto mt-4">
-                <div className="bg-white/90 backdrop-blur-md rounded-xl p-3 shadow-lg border border-white flex items-start gap-3">
-                  <div className="w-9 h-9 bg-primary rounded-lg flex items-center justify-center flex-shrink-0">
-                    <Star className="h-4 w-4 text-white" fill="white" />
-                  </div>
-                  <div>
-                    <p className="font-bold text-sm text-[#1a1b21]">+80 Punkte gesammelt!</p>
-                    <p className="text-xs text-[#4a4455]">Noch 20 Punkte bis zu deinem kostenlosen Haarschnitt bei Einfach Schön Salon.</p>
-                  </div>
-                </div>
-              </div>
-            </div>
+          <motion.div variants={glassReveal} className="relative flex justify-center">
+            <HeroMockupWithNotifications />
           </motion.div>
         </motion.div>
       </section>
