@@ -36,9 +36,11 @@ const Auth = () => {
   const location = useLocation();
   const navItems = [
     { label: 'Home', href: '/' },
+    { label: 'Karriere', href: '/karriere' },
     { label: 'Kontakt', href: '/kontakt' },
     { label: 'Datenschutz', href: '/datenschutz' },
     { label: 'Impressum', href: '/impressum' },
+    { label: 'Konto löschen', href: '/konto-loeschen' },
     { label: 'Login', href: '/auth' }
   ];
 
@@ -145,8 +147,8 @@ const Auth = () => {
   }
 
   return (
-    <div className="bg-background overflow-hidden" style={{ height: '100dvh' }}>
-    <div className="h-full overflow-y-auto" style={{ overscrollBehavior: 'contain', WebkitOverflowScrolling: 'touch' }}>
+    <div className="landing-page-shell bg-[#faf8ff] text-[#1a1b21] min-h-screen w-full font-body">
+    <div>
       <Particles 
         particleColors={['#8B5CF6', '#3B82F6', '#8B5CF6']}
         particleCount={100}
@@ -165,21 +167,22 @@ const Auth = () => {
         logo={<img src={eloyoLogo} alt="Eloyo Logo" className="h-10 w-auto" />}
       />
 
-      <div className="pt-32 pb-20 px-4 flex items-center justify-center min-h-screen">
+      <div className="relative z-10 pt-32 pb-20 px-4 flex items-center justify-center min-h-screen">
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
+          initial={{ opacity: 0, y: 30, filter: 'blur(12px)' }}
+          animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+          transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
           className="w-full max-w-md"
         >
           <div className="text-center mb-8">
             <img src={eloyoLogo} alt="Eloyo Logo" className="h-16 w-auto mx-auto mb-4" />
-            <h1 className="text-3xl font-bold">
+            <h1 className="font-headline text-3xl font-extrabold tracking-[-0.02em]">
               {isResetMode ? 'Passwort festlegen' : 'Anmelden'}
             </h1>
-            <p className="text-muted-foreground mt-2">{isResetMode ? 'Bitte neues Passwort wählen' : 'Zugang zu Ihrem Dashboard'}</p>
+            <p className="text-[#4a4455] mt-2">{isResetMode ? 'Bitte neues Passwort wählen' : 'Zugang zu Ihrem Dashboard'}</p>
           </div>
 
-          <Card className="p-6 border-border">
+          <div className="bg-white rounded-2xl p-8 shadow-sm">
             {isResetMode ? (
               <form onSubmit={handleSetPassword} className="space-y-4">
                 <div>
@@ -295,9 +298,9 @@ const Auth = () => {
                 </Button>
               </form>
             )}
-          </Card>
+          </div>
 
-          <p className="text-center text-sm text-muted-foreground mt-6">
+          <p className="text-center text-sm text-[#7b7487] mt-6">
             Zugang nur für registrierte Geschäftskunden
           </p>
         </motion.div>

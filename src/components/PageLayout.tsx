@@ -29,6 +29,7 @@ const navItems = [
   { label: 'Kontakt', href: '/kontakt' },
   { label: 'Datenschutz', href: '/datenschutz' },
   { label: 'Impressum', href: '/impressum' },
+  { label: 'Konto löschen', href: '/konto-loeschen' },
   { label: 'Login', href: '/auth' },
 ];
 
@@ -38,7 +39,7 @@ interface PageLayoutProps {
 
 const PageLayout = ({ children }: PageLayoutProps) => {
   return (
-    <div className="bg-[#faf8ff] text-[#1a1b21] min-h-screen font-body overflow-x-hidden">
+    <div className="landing-page-shell bg-[#faf8ff] text-[#1a1b21] min-h-screen w-full font-body">
       <Particles
         particleColors={['#8B5CF6', '#3B82F6', '#8B5CF6']}
         particleCount={100}
