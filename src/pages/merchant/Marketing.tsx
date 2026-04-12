@@ -29,6 +29,9 @@ import RichTextEditor from '@/components/merchant/RichTextEditor';
 import RewardSuggestionsPanel from '@/components/merchant/RewardSuggestionsPanel';
 import EmojiPicker from '@/components/EmojiPicker';
 import { cn } from '@/lib/utils';
+import { usePushLimit } from '@/hooks/usePushLimit';
+import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
+import { Bell, AlertTriangle } from 'lucide-react';
 
 // ---- Types ----
 interface Segment { type: 'all' | 'last_stamped_days' | 'not_stamped_days'; value?: number; }
@@ -49,7 +52,7 @@ const Marketing = () => {
   const [customerId, setCustomerId] = useState<string | null>(null);
   const [merchantDisplayName, setMerchantDisplayName] = useState('');
   const [activeTab, setActiveTab] = useState('praemien');
-
+  const pushLimit = usePushLimit(customerId);
   // --- Rewards state ---
   const [rewards, setRewards] = useState<Reward[]>([]);
   const [showRewardDialog, setShowRewardDialog] = useState(false);
@@ -291,6 +294,9 @@ const Marketing = () => {
       if (failedPushCount > 0) {
         console.error('Push notifications failed for some recipients', { failedPushCount, totalRecipients: uids.length });
       }
+
+      // Record push send for limit tracking
+      await pushLimit.recordPushSend(customerId);
 
       toast.success(`Nachricht an ${uids.length} Kunden gesendet!`);
       setShowConfirmDialog(false); setShowMessageDialog(false); resetMessageForm(); loadData();
@@ -708,7 +714,30 @@ const Marketing = () => {
           </TabsContent>
 
           {/* ========== NACHRICHTEN TAB ========== */}
-          <TabsContent value="messages" className="space-y-6 mt-6">
+           <TabsContent value="messages" className="space-y-6 mt-6">
+            {/* Push Limit Banner */}
+            {!pushLimit.loading && (
+              <div className={`p-4 rounded-2xl border ${pushLimit.isLimitReached ? 'bg-destructive/5 border-destructive/20' : 'bg-muted/30 border-border/50'}`}>
+                <div className="flex items-center gap-3">
+                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${pushLimit.isLimitReached ? 'bg-destructive/10' : 'bg-primary/10'}`}>
+                    <Bell className={`h-5 w-5 ${pushLimit.isLimitReached ? 'text-destructive' : 'text-primary'}`} />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-semibold">
+                      Push-Benachrichtigungen: {pushLimit.pushesUsed} / {pushLimit.pushLimit} diesen Monat genutzt
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {pushLimit.isLimitReached
+                        ? `Limit erreicht. Nächstes Zurücksetzen am ${pushLimit.resetDate?.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' })}`
+                        : `Noch ${pushLimit.remaining} Push-Nachricht${pushLimit.remaining !== 1 ? 'en' : ''} verfügbar. Zurücksetzen am ${pushLimit.resetDate?.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' })}`
+                      }
+                    </p>
+                  </div>
+                  {pushLimit.isLimitReached && <AlertTriangle className="h-5 w-5 text-destructive" />}
+                </div>
+              </div>
+            )}
+
             <Card className="rounded-2xl shadow-sm border border-border/50 bg-card">
               <CardHeader className="flex flex-row items-center justify-between pb-4">
                 <div className="flex items-center gap-3">
@@ -718,7 +747,20 @@ const Marketing = () => {
                     <CardDescription>Sende gezielte Nachrichten an deine Kunden</CardDescription>
                   </div>
                 </div>
-                <Button onClick={() => { resetMessageForm(); setShowMessageDialog(true); }} className="rounded-xl"><Plus className="h-4 w-4 mr-2" />Neue Nachricht</Button>
+                <Button
+                  onClick={() => {
+                    if (pushLimit.isLimitReached) {
+                      toast.error(`Du hast diesen Monat bereits ${pushLimit.pushLimit} Push-Benachrichtigungen versendet. Dein Limit wird am ${pushLimit.resetDate?.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' })} zurückgesetzt.`);
+                      return;
+                    }
+                    resetMessageForm();
+                    setShowMessageDialog(true);
+                  }}
+                  className="rounded-xl"
+                  variant={pushLimit.isLimitReached ? "outline" : "default"}
+                >
+                  <Plus className="h-4 w-4 mr-2" />Neue Nachricht
+                </Button>
               </CardHeader>
               <CardContent>
                 {messages.length === 0 ? (
