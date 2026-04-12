@@ -36,9 +36,11 @@ const Auth = () => {
   const location = useLocation();
   const navItems = [
     { label: 'Home', href: '/' },
+    { label: 'Karriere', href: '/karriere' },
     { label: 'Kontakt', href: '/kontakt' },
     { label: 'Datenschutz', href: '/datenschutz' },
     { label: 'Impressum', href: '/impressum' },
+    { label: 'Konto löschen', href: '/konto-loeschen' },
     { label: 'Login', href: '/auth' }
   ];
 
@@ -145,8 +147,8 @@ const Auth = () => {
   }
 
   return (
-    <div className="bg-background overflow-hidden" style={{ height: '100dvh' }}>
-    <div className="h-full overflow-y-auto" style={{ overscrollBehavior: 'contain', WebkitOverflowScrolling: 'touch' }}>
+    <div className="landing-page-shell bg-[#faf8ff] text-[#1a1b21] min-h-screen w-full font-body">
+    <div>
       <Particles 
         particleColors={['#8B5CF6', '#3B82F6', '#8B5CF6']}
         particleCount={100}
