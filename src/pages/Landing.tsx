@@ -116,7 +116,6 @@ const Landing = () => {
                   </div>
                 </div>
               </div>
-            </div>
           </motion.div>
         </div>
       </section>
