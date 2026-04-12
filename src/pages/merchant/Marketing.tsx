@@ -295,6 +295,9 @@ const Marketing = () => {
         console.error('Push notifications failed for some recipients', { failedPushCount, totalRecipients: uids.length });
       }
 
+      // Record push send for limit tracking
+      await pushLimit.recordPushSend(customerId);
+
       toast.success(`Nachricht an ${uids.length} Kunden gesendet!`);
       setShowConfirmDialog(false); setShowMessageDialog(false); resetMessageForm(); loadData();
     } catch { toast.error('Fehler beim Senden'); } finally { setSaving(false); }

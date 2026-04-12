@@ -407,6 +407,10 @@ const Nachrichten = () => {
         }
         
         const offerNote = offerId ? ' (mit Angebot, 7 Tage gültig)' : '';
+
+        // Record push send for limit tracking
+        await pushLimit.recordPushSend(customerId);
+
         toast.success(`Nachricht an ${recipientUserIds.length} Kunden gesendet!${offerNote}`);
 
       setShowConfirmDialog(false);
