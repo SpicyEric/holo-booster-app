@@ -571,19 +571,13 @@ export const AppScan = () => {
       setTransitionState(nextTransitionState);
       updatePreparingFlip(false);
 
-      // Arm → next frame → flip
+      // Arm → next frame → flip (navigation handled by the useEffect on flipPhase)
       setFlipPhase('armed');
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
           setFlipPhase('flipping');
         });
       });
-
-      // After flip animation, navigate
-      setTimeout(() => {
-        setFlipPhase('navigating');
-        navigateToMerchant(merchantId, { fallbackPoints: 25, state: nextTransitionState });
-      }, 900);
 
     } catch {
       setScanning(false);
@@ -634,7 +628,6 @@ export const AppScan = () => {
               transition: 'transform 0.7s ease-in-out',
               transform: showFrontCard ? 'rotateY(0deg)' : 'rotateY(180deg)',
               willChange: 'transform',
-              isolation: 'isolate',
             }}
           >
             {/* ── FRONT: Purple NFC card ── */}
@@ -643,7 +636,6 @@ export const AppScan = () => {
               style={{
                 backfaceVisibility: 'hidden',
                 WebkitBackfaceVisibility: 'hidden',
-                zIndex: 2,
               }}
             >
               <div className="absolute inset-0 flex items-center justify-center">
@@ -699,7 +691,6 @@ export const AppScan = () => {
                 backfaceVisibility: 'hidden',
                 WebkitBackfaceVisibility: 'hidden',
                 transform: 'rotateY(180deg)',
-                zIndex: 1,
                 backgroundImage: merchantImage ? `url("${merchantImage}")` : undefined,
                 backgroundPosition: 'center',
                 backgroundRepeat: 'no-repeat',
