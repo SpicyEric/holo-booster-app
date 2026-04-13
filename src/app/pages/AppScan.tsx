@@ -24,7 +24,7 @@ type ScanResult = {
   isOffline?: boolean;
 };
 
-type FlipPhase = 'idle' | 'flipping' | 'navigating';
+type FlipPhase = 'idle' | 'armed' | 'flipping' | 'navigating';
 
 type TransitionMerchant = {
   id: string;
@@ -59,6 +59,7 @@ type MerchantTransitionState = {
   initialMerchant: TransitionMerchant;
   initialRewards: TransitionReward[];
   initialUserPoints: number;
+  scanAwardedPoints?: number;
 };
 
 export const AppScan = () => {
@@ -207,6 +208,8 @@ export const AppScan = () => {
   useEffect(() => {
     if (result?.success && !result.isOffline && result.merchantCustomerId && flipPhase === 'idle' && !preparingFlipRef.current) {
       let cancelled = false;
+      let armFrame = 0;
+      let flipFrame = 0;
 
       const fetchAndFlip = async () => {
         updatePreparingFlip(true);
@@ -247,6 +250,7 @@ export const AppScan = () => {
               initialMerchant: merchant,
               initialRewards: rewards,
               initialUserPoints: result.totalPoints ?? 0,
+              scanAwardedPoints: result.points ?? 0,
             } satisfies MerchantTransitionState;
 
             if (!coverUrl) {
@@ -265,7 +269,14 @@ export const AppScan = () => {
             setMerchantDisplayName(displayName);
             setTransitionState(nextTransitionState);
             updatePreparingFlip(false);
-            setFlipPhase('flipping');
+            setFlipPhase('armed');
+
+            armFrame = window.requestAnimationFrame(() => {
+              flipFrame = window.requestAnimationFrame(() => {
+                if (cancelled) return;
+                setFlipPhase('flipping');
+              });
+            });
           } else {
             setMerchantImage(null);
             setMerchantDisplayName(result.merchantName || 'Händler');
@@ -295,6 +306,8 @@ export const AppScan = () => {
 
       return () => {
         cancelled = true;
+        window.cancelAnimationFrame(armFrame);
+        window.cancelAnimationFrame(flipFrame);
       };
     }
   }, [flipPhase, navigateToMerchant, preloadMerchantImage, result, updatePreparingFlip]);
@@ -338,6 +351,8 @@ export const AppScan = () => {
     setFlipPhase('idle');
     updatePreparingFlip(false);
     setTransitionState(null);
+    setMerchantImage(null);
+    setMerchantDisplayName('');
 
     if (!navigator.onLine) {
       if (offlineQueueService.hasPendingStampForUid(hardwareUid)) {
@@ -427,6 +442,8 @@ export const AppScan = () => {
     setFlipPhase('idle');
     updatePreparingFlip(false);
     setTransitionState(null);
+    setMerchantImage(null);
+    setMerchantDisplayName('');
     try {
       await nfcService.startScan(handleNfcRead);
     } catch (error: any) {
@@ -461,6 +478,10 @@ export const AppScan = () => {
     nfcService.stopScan();
     setScanning(false);
     updatePreparingFlip(false);
+    setFlipPhase('idle');
+    setTransitionState(null);
+    setMerchantImage(null);
+    setMerchantDisplayName('');
   };
 
   // ── DEMO: Simulate a successful scan ──
@@ -470,6 +491,8 @@ export const AppScan = () => {
     setFlipPhase('idle');
     updatePreparingFlip(false);
     setTransitionState(null);
+    setMerchantImage(null);
+    setMerchantDisplayName('');
 
     try {
       const { data: merchants } = await supabase
@@ -507,7 +530,7 @@ export const AppScan = () => {
   const isNfcUnavailable = !checkingNfc && !nfcSupported;
   const isNfcDisabled = !checkingNfc && nfcSupported && !nfcEnabled;
   const isIdle = !checkingNfc && nfcSupported && nfcEnabled && !scanning && !result;
-  const showFrontCard = flipPhase === 'idle';
+  const showFrontCard = flipPhase === 'idle' || flipPhase === 'armed';
 
   const bottomInsetOffset = 'calc(7rem + env(safe-area-inset-bottom, 0px))';
 
@@ -541,14 +564,21 @@ export const AppScan = () => {
             style={{
               aspectRatio: '1.55 / 1',
               transformStyle: 'preserve-3d',
+              WebkitTransformStyle: 'preserve-3d',
               transition: 'transform 0.7s ease-in-out',
               transform: showFrontCard ? 'rotateY(0deg)' : 'rotateY(180deg)',
+              willChange: 'transform',
+              isolation: 'isolate',
             }}
           >
             {/* ── FRONT: Purple NFC card ── */}
             <div
               className="absolute inset-0 rounded-2xl overflow-hidden bg-gradient-to-br from-primary to-secondary"
-              style={{ backfaceVisibility: 'hidden' }}
+              style={{
+                backfaceVisibility: 'hidden',
+                WebkitBackfaceVisibility: 'hidden',
+                transform: 'translateZ(1px)',
+              }}
             >
               <div className="absolute inset-0 flex items-center justify-center">
                 {(checkingNfc || scanning || preparingFlip) && (
@@ -597,17 +627,19 @@ export const AppScan = () => {
             {/* ── BACK: Merchant image card ── */}
             <div
               className="absolute inset-0 rounded-2xl overflow-hidden"
-              style={{ backfaceVisibility: 'hidden', transform: 'rotateY(180deg)' }}
+              role="img"
+              aria-label={merchantDisplayName || 'Geschäftskarte'}
+              style={{
+                backfaceVisibility: 'hidden',
+                WebkitBackfaceVisibility: 'hidden',
+                transform: 'rotateY(180deg) translateZ(1px)',
+                backgroundImage: merchantImage ? `url("${merchantImage}")` : undefined,
+                backgroundPosition: 'center',
+                backgroundRepeat: 'no-repeat',
+                backgroundSize: 'cover',
+              }}
             >
-              {merchantImage ? (
-                <img
-                  src={merchantImage}
-                  alt={merchantDisplayName}
-                  decoding="sync"
-                  fetchPriority="high"
-                  className="w-full h-full object-cover"
-                />
-              ) : (
+              {!merchantImage && (
                 <div className="w-full h-full bg-gradient-to-br from-primary to-secondary" />
               )}
               <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/60 via-black/25 to-transparent" />

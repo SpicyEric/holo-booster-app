@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ArrowLeft, MapPin, Phone, Globe, Instagram, Clock, Gift, Sparkles, History, Star } from 'lucide-react';
@@ -70,7 +70,10 @@ interface MerchantRouteState {
   initialMerchant?: Merchant;
   initialRewards?: Reward[];
   initialUserPoints?: number;
+  scanAwardedPoints?: number;
 }
+
+type MerchantTab = 'rewards' | 'info' | 'transactions';
 
 export const AppMerchantDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -83,14 +86,30 @@ export const AppMerchantDetail = () => {
     : null;
   const initialRewards = initialMerchant ? routeState?.initialRewards ?? [] : [];
   const initialUserPoints = initialMerchant ? routeState?.initialUserPoints ?? 0 : 0;
+  const scanAwardedPoints = initialMerchant ? routeState?.scanAwardedPoints ?? 0 : 0;
   const shouldAnimateFromScan = routeState?.fromScan === true && Boolean(initialMerchant);
   const [merchant, setMerchant] = useState<Merchant | null>(initialMerchant);
   const [rewards, setRewards] = useState<Reward[]>(initialRewards);
   const [newCustomerOffer, setNewCustomerOffer] = useState<NewCustomerOffer | null>(null);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [userPoints, setUserPoints] = useState(initialUserPoints);
+  const [displayPoints, setDisplayPoints] = useState(
+    shouldAnimateFromScan && scanAwardedPoints > 0
+      ? Math.max(initialUserPoints - scanAwardedPoints, 0)
+      : initialUserPoints,
+  );
   const [hasEverStamped, setHasEverStamped] = useState(initialUserPoints > 0);
   const [loading, setLoading] = useState(!initialMerchant);
+  const [activeTab, setActiveTab] = useState<MerchantTab>('rewards');
+  const [headerHeight, setHeaderHeight] = useState(0);
+  const [pulsePoints, setPulsePoints] = useState(false);
+  const [pointsAnimation, setPointsAnimation] = useState<{
+    startX: number;
+    startY: number;
+    deltaX: number;
+    deltaY: number;
+  } | null>(null);
+  const [showPointsBubble, setShowPointsBubble] = useState(false);
   const [googleReviewBonus, setGoogleReviewBonus] = useState<GoogleReviewBonus>({
     enabled: false,
     pointsValue: 5,
@@ -103,12 +122,100 @@ export const AppMerchantDetail = () => {
   const [selectedReward, setSelectedReward] = useState<Reward | null>(null);
   const [rewardDialogOpen, setRewardDialogOpen] = useState(false);
   const [newCustomerOfferDialogOpen, setNewCustomerOfferDialogOpen] = useState(false);
+  const headerRef = useRef<HTMLDivElement | null>(null);
+  const cardRef = useRef<HTMLDivElement | null>(null);
+  const pointsBadgeRef = useRef<HTMLDivElement | null>(null);
+  const scanAnimationPlayedRef = useRef(false);
 
   useEffect(() => {
     if (id) {
       loadMerchant(Boolean(initialMerchant));
     }
   }, [id, initialMerchant, user]);
+
+  useEffect(() => {
+    if (scanAnimationPlayedRef.current || !shouldAnimateFromScan || scanAwardedPoints <= 0) {
+      setDisplayPoints(userPoints);
+    }
+  }, [scanAwardedPoints, shouldAnimateFromScan, userPoints]);
+
+  useEffect(() => {
+    const updateHeaderHeight = () => {
+      setHeaderHeight(headerRef.current?.offsetHeight ?? 0);
+    };
+
+    updateHeaderHeight();
+
+    if (!headerRef.current || typeof ResizeObserver === 'undefined') {
+      return;
+    }
+
+    const observer = new ResizeObserver(() => updateHeaderHeight());
+    observer.observe(headerRef.current);
+    window.addEventListener('resize', updateHeaderHeight);
+
+    return () => {
+      observer.disconnect();
+      window.removeEventListener('resize', updateHeaderHeight);
+    };
+  }, [merchant]);
+
+  useEffect(() => {
+    if (!merchant || !shouldAnimateFromScan || scanAwardedPoints <= 0 || scanAnimationPlayedRef.current) {
+      return;
+    }
+
+    let frameOne = 0;
+    let frameTwo = 0;
+    let updateTimer = 0;
+    let pulseTimer = 0;
+
+    const startAnimation = () => {
+      const cardRect = cardRef.current?.getBoundingClientRect();
+      const badgeRect = pointsBadgeRef.current?.getBoundingClientRect();
+
+      if (!cardRect || !badgeRect) {
+        scanAnimationPlayedRef.current = true;
+        setDisplayPoints(initialUserPoints);
+        return;
+      }
+
+      const startX = cardRect.left + cardRect.width / 2;
+      const startY = cardRect.top + cardRect.height / 2;
+      const endX = badgeRect.left + badgeRect.width / 2;
+      const endY = badgeRect.top + badgeRect.height / 2;
+
+      setPointsAnimation({
+        startX,
+        startY,
+        deltaX: endX - startX,
+        deltaY: endY - startY,
+      });
+      setShowPointsBubble(true);
+
+      updateTimer = window.setTimeout(() => {
+        scanAnimationPlayedRef.current = true;
+        setShowPointsBubble(false);
+        setDisplayPoints(initialUserPoints);
+        setPulsePoints(true);
+
+        pulseTimer = window.setTimeout(() => {
+          setPulsePoints(false);
+        }, 280);
+      }, 760);
+    };
+
+    frameOne = window.requestAnimationFrame(() => {
+      frameTwo = window.requestAnimationFrame(startAnimation);
+    });
+
+    return () => {
+      window.cancelAnimationFrame(frameOne);
+      window.cancelAnimationFrame(frameTwo);
+      window.clearTimeout(updateTimer);
+      window.clearTimeout(pulseTimer);
+    };
+  }, [initialUserPoints, merchant, scanAwardedPoints, shouldAnimateFromScan]);
 
   const loadMerchant = async (keepVisible = false) => {
     if (!id) return;
@@ -307,6 +414,7 @@ export const AppMerchantDetail = () => {
 
   const handlePointsUpdated = (newPoints: number) => {
     setUserPoints(newPoints);
+    setDisplayPoints(newPoints);
     // Transaktionen sofort neu laden damit die Einlösung direkt sichtbar ist
     reloadTransactions();
   };
@@ -471,209 +579,242 @@ export const AppMerchantDetail = () => {
 
   return (
     <div className="bg-background overflow-hidden" style={{ height: '100dvh' }}>
-    <div className="h-full overflow-y-auto pb-32 overflow-x-hidden" style={{ overscrollBehavior: 'none', WebkitOverflowScrolling: 'touch', touchAction: 'pan-y' }}>
-      {/* Safe area shield */}
       <div className="fixed top-0 left-0 right-0 z-[60]" style={{ height: 'env(safe-area-inset-top, 0px)', background: 'hsl(var(--background))' }} />
 
-      {/* Cover Image Card */}
-      <div className="px-4 pt-4">
-        <div className="scan-merchant-card-transition relative rounded-2xl overflow-hidden shadow-lg" style={{ aspectRatio: '1.55 / 1' }}>
-          {merchant.cover_image_url ? (
-            <img src={merchant.cover_image_url} alt={merchant.name} className="w-full h-full object-cover" />
-          ) : (
-            <div className="w-full h-full bg-gradient-to-br from-primary to-secondary" />
-          )}
-          
-          <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/60 via-black/25 to-transparent" />
-          
-          {/* Back button */}
-          <motion.div
-            initial={shouldAnimateFromScan ? { opacity: 0 } : false}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.4, delay: shouldAnimateFromScan ? 0.2 : 0 }}
-            className="absolute top-3 left-3 z-10"
-          >
-            <Button
-              variant="ghost"
-              size="icon"
-              className="bg-black/40 text-white hover:bg-black/60 backdrop-blur-sm rounded-xl"
-              onClick={() => navigate('/app/scan')}
-            >
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
-          </motion.div>
+      {showPointsBubble && pointsAnimation && (
+        <motion.div
+          initial={{ scale: 0.72, opacity: 0, x: 0, y: 0 }}
+          animate={{ scale: 0.2, opacity: 0, x: pointsAnimation.deltaX, y: pointsAnimation.deltaY }}
+          transition={{ duration: 0.76, ease: [0.22, 1, 0.36, 1] }}
+          className="pointer-events-none fixed z-[70] flex h-28 w-28 items-center justify-center rounded-full border border-border/60 bg-background/45 shadow-xl backdrop-blur-xl"
+          style={{ left: pointsAnimation.startX, top: pointsAnimation.startY, transform: 'translate(-50%, -50%)' }}
+        >
+          <div className="text-center">
+            <p className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">Plus</p>
+            <p className="text-2xl font-bold text-foreground">+{scanAwardedPoints}</p>
+          </div>
+        </motion.div>
+      )}
 
-          {/* Points badge */}
+      <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as MerchantTab)} className="relative h-full">
+        <div ref={headerRef} className="pointer-events-none absolute inset-x-0 top-0 z-40">
+          <div className="pointer-events-auto px-4" style={{ paddingTop: 'calc(1rem + env(safe-area-inset-top, 0px))' }}>
+            <div ref={cardRef} className="scan-merchant-card-transition relative rounded-2xl overflow-hidden shadow-lg" style={{ aspectRatio: '1.55 / 1' }}>
+              {merchant.cover_image_url ? (
+                <img src={merchant.cover_image_url} alt={merchant.name} className="w-full h-full object-cover" />
+              ) : (
+                <div className="w-full h-full bg-gradient-to-br from-primary to-secondary" />
+              )}
+
+              <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/60 via-black/25 to-transparent" />
+
+              <motion.div
+                initial={shouldAnimateFromScan ? { opacity: 0 } : false}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.4, delay: shouldAnimateFromScan ? 0.2 : 0 }}
+                className="absolute top-3 left-3 z-10"
+              >
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="bg-black/40 text-white hover:bg-black/60 backdrop-blur-sm rounded-xl"
+                  onClick={() => navigate('/app/scan')}
+                >
+                  <ArrowLeft className="h-5 w-5" />
+                </Button>
+              </motion.div>
+
+              <motion.div
+                ref={pointsBadgeRef}
+                initial={shouldAnimateFromScan ? { opacity: 0 } : false}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.4, delay: shouldAnimateFromScan ? 0.3 : 0 }}
+                className="absolute top-3 right-3 z-10"
+              >
+                <motion.div
+                  animate={pulsePoints ? { scale: [1, 1.24, 1] } : { scale: 1 }}
+                  transition={{ duration: 0.34, ease: 'easeOut' }}
+                  className="bg-black/40 backdrop-blur-sm rounded-xl px-3 py-1.5 shadow-md"
+                >
+                  <span className="font-bold text-white">{displayPoints}</span>
+                  <span className="text-sm text-white/80 ml-1">Punkte</span>
+                </motion.div>
+              </motion.div>
+
+              <motion.div
+                initial={shouldAnimateFromScan ? { opacity: 0, y: 5 } : false}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4, delay: shouldAnimateFromScan ? 0.25 : 0 }}
+                className="absolute bottom-3 left-4 right-4"
+              >
+                <h1 className="text-lg font-bold text-white drop-shadow-md">{merchantName}</h1>
+              </motion.div>
+            </div>
+          </div>
+
           <motion.div
-            initial={shouldAnimateFromScan ? { opacity: 0 } : false}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.4, delay: shouldAnimateFromScan ? 0.3 : 0 }}
-            className="absolute top-3 right-3 z-10"
+            initial={shouldAnimateFromScan ? { opacity: 0, y: 20 } : false}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: shouldAnimateFromScan ? 0.4 : 0 }}
+            className="pointer-events-auto px-4 pt-3"
           >
-            <div className="bg-black/40 backdrop-blur-sm rounded-xl px-3 py-1.5 shadow-md">
-              <span className="font-bold text-white">{userPoints}</span>
-              <span className="text-sm text-white/80 ml-1">Punkte</span>
+            <div className="rounded-2xl border border-border/50 bg-background/85 p-1 shadow-lg backdrop-blur-xl">
+              <TabsList className="grid h-auto w-full grid-cols-3 gap-1 bg-transparent p-0">
+                <TabsTrigger value="rewards" className="rounded-xl py-2.5">Prämien</TabsTrigger>
+                <TabsTrigger value="info" className="rounded-xl py-2.5">Info</TabsTrigger>
+                <TabsTrigger value="transactions" className="rounded-xl py-2.5">Transaktionen</TabsTrigger>
+              </TabsList>
             </div>
           </motion.div>
-          
-          {/* Merchant Name */}
-          <motion.div
-            initial={shouldAnimateFromScan ? { opacity: 0, y: 5 } : false}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, delay: shouldAnimateFromScan ? 0.25 : 0 }}
-            className="absolute bottom-3 left-4 right-4"
-          >
-            <h1 className="text-lg font-bold text-white drop-shadow-md">{merchantName}</h1>
-          </motion.div>
+
+          <div className="pointer-events-none px-4">
+            <div className="h-10 bg-gradient-to-b from-background via-background/90 to-transparent" />
+          </div>
         </div>
-      </div>
 
-      {/* Tabs */}
-      <motion.div
-        initial={shouldAnimateFromScan ? { opacity: 0, y: 20 } : false}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: shouldAnimateFromScan ? 0.4 : 0 }}
-      >
-      <Tabs defaultValue="rewards" className="p-4">
-        <TabsList className="w-full grid grid-cols-3">
-          <TabsTrigger value="rewards">Prämien</TabsTrigger>
-          <TabsTrigger value="info">Info</TabsTrigger>
-          <TabsTrigger value="transactions">Transaktionen</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="rewards" className="mt-4 space-y-3">
-          {rewardItems.map((item, index) => (
-            <motion.div
-              key={item.key}
-              initial={shouldAnimateFromScan ? { opacity: 0, y: 15 } : false}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.4, delay: shouldAnimateFromScan ? 0.5 + index * 0.1 : 0 }}
-            >
-              {item.element}
-            </motion.div>
-          ))}
-        </TabsContent>
-
-        <TabsContent value="info" className="mt-4 space-y-4">
-          {merchant.description && (
-            <Card>
-              <CardContent className="p-4">
-                <p className="text-sm whitespace-pre-wrap">{merchant.description}</p>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Opening Hours */}
-          {openingHours && (
-            <Card>
-              <CardContent className="p-4">
-                <h3 className="font-medium mb-3 flex items-center gap-2">
-                  <Clock className="h-4 w-4" />
-                  Öffnungszeiten
-                </h3>
-                <div className="space-y-1 text-sm">
-                  {openingHours.map((h) => (
-                    <div key={h.day} className="flex justify-between">
-                      <span className="text-muted-foreground">{h.day}</span>
-                      <span>{h.time}</span>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Contact */}
-          <Card>
-            <CardContent className="p-4 space-y-3">
-              {address && (
-                <a 
-                  href={`https://maps.google.com/?q=${encodeURIComponent(address)}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-3 text-sm hover:text-primary"
+        <div className="relative h-full overflow-hidden">
+          <div
+            className="h-full overflow-y-auto px-4 overflow-x-hidden"
+            style={{
+              paddingTop: headerHeight ? `${Math.max(headerHeight - 12, 0)}px` : '0px',
+              paddingBottom: 'calc(8rem + env(safe-area-inset-bottom, 0px))',
+              overscrollBehavior: 'none',
+              WebkitOverflowScrolling: 'touch',
+              touchAction: 'pan-y',
+            }}
+          >
+            <TabsContent value="rewards" className="mt-0 space-y-3">
+              {rewardItems.map((item, index) => (
+                <motion.div
+                  key={item.key}
+                  initial={shouldAnimateFromScan ? { opacity: 0, y: 15 } : false}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.4, delay: shouldAnimateFromScan ? 0.5 + index * 0.1 : 0 }}
                 >
-                  <MapPin className="h-4 w-4 text-muted-foreground" />
-                  {address}
-                </a>
-              )}
-              {merchant.phone && (
-                <a href={`tel:${merchant.phone}`} className="flex items-center gap-3 text-sm hover:text-primary">
-                  <Phone className="h-4 w-4 text-muted-foreground" />
-                  {merchant.phone}
-                </a>
-              )}
-              {merchant.website && (
-                <a 
-                  href={merchant.website}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-3 text-sm hover:text-primary"
-                >
-                  <Globe className="h-4 w-4 text-muted-foreground" />
-                  Website
-                </a>
-              )}
-              {merchant.instagram && (
-                <a 
-                  href={merchant.instagram}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-3 text-sm hover:text-primary"
-                >
-                  <Instagram className="h-4 w-4 text-muted-foreground" />
-                  Instagram
-                </a>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
+                  {item.element}
+                </motion.div>
+              ))}
+            </TabsContent>
 
-        <TabsContent value="transactions" className="mt-4 space-y-3">
-          {transactions.length === 0 ? (
-            <Card>
-              <CardContent className="p-6 text-center text-muted-foreground">
-                <History className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                Noch keine Transaktionen
-              </CardContent>
-            </Card>
-          ) : (
-            transactions.map((tx) => {
-              const isPositive = tx.points_change > 0;
-              const date = tx.created_at
-                ? new Date(tx.created_at).toLocaleDateString('de-DE', {
-                    day: '2-digit',
-                    month: '2-digit',
-                    year: 'numeric',
-                    hour: '2-digit',
-                    minute: '2-digit',
-                  })
-                : '';
-              return (
-                <Card key={tx.id}>
-                  <CardContent className="p-4 flex items-center gap-3">
-                    <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                      isPositive ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
-                    }`}>
-                      {isPositive ? '+' : '−'}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium text-sm">{tx.description || (isPositive ? 'Punkte erhalten' : 'Punkte eingelöst')}</p>
-                      <p className="text-xs text-muted-foreground">{date}</p>
-                    </div>
-                    <span className={`font-bold text-sm ${isPositive ? 'text-green-700' : 'text-red-600'}`}>
-                      {isPositive ? '+' : ''}{tx.points_change}
-                    </span>
+            <TabsContent value="info" className="mt-0 space-y-4">
+              {merchant.description && (
+                <Card>
+                  <CardContent className="p-4">
+                    <p className="text-sm whitespace-pre-wrap">{merchant.description}</p>
                   </CardContent>
                 </Card>
-              );
-            })
-          )}
-        </TabsContent>
-      </Tabs>
-      </motion.div>
+              )}
 
-      {/* Reward Redemption Dialog */}
+              {openingHours && (
+                <Card>
+                  <CardContent className="p-4">
+                    <h3 className="font-medium mb-3 flex items-center gap-2">
+                      <Clock className="h-4 w-4" />
+                      Öffnungszeiten
+                    </h3>
+                    <div className="space-y-1 text-sm">
+                      {openingHours.map((h) => (
+                        <div key={h.day} className="flex justify-between gap-4">
+                          <span className="text-muted-foreground">{h.day}</span>
+                          <span>{h.time}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              <Card>
+                <CardContent className="p-4 space-y-3">
+                  {address && (
+                    <a
+                      href={`https://maps.google.com/?q=${encodeURIComponent(address)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-3 text-sm hover:text-primary"
+                    >
+                      <MapPin className="h-4 w-4 text-muted-foreground" />
+                      {address}
+                    </a>
+                  )}
+                  {merchant.phone && (
+                    <a href={`tel:${merchant.phone}`} className="flex items-center gap-3 text-sm hover:text-primary">
+                      <Phone className="h-4 w-4 text-muted-foreground" />
+                      {merchant.phone}
+                    </a>
+                  )}
+                  {merchant.website && (
+                    <a
+                      href={merchant.website}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-3 text-sm hover:text-primary"
+                    >
+                      <Globe className="h-4 w-4 text-muted-foreground" />
+                      Website
+                    </a>
+                  )}
+                  {merchant.instagram && (
+                    <a
+                      href={merchant.instagram}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-3 text-sm hover:text-primary"
+                    >
+                      <Instagram className="h-4 w-4 text-muted-foreground" />
+                      Instagram
+                    </a>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="transactions" className="mt-0 space-y-3">
+              {transactions.length === 0 ? (
+                <Card>
+                  <CardContent className="p-6 text-center text-muted-foreground">
+                    <History className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                    Noch keine Transaktionen
+                  </CardContent>
+                </Card>
+              ) : (
+                transactions.map((tx) => {
+                  const isPositive = tx.points_change > 0;
+                  const date = tx.created_at
+                    ? new Date(tx.created_at).toLocaleDateString('de-DE', {
+                        day: '2-digit',
+                        month: '2-digit',
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })
+                    : '';
+
+                  return (
+                    <Card key={tx.id}>
+                      <CardContent className="p-4 flex items-center gap-3">
+                        <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                          isPositive ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+                        }`}>
+                          {isPositive ? '+' : '−'}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-sm">{tx.description || (isPositive ? 'Punkte erhalten' : 'Punkte eingelöst')}</p>
+                          <p className="text-xs text-muted-foreground">{date}</p>
+                        </div>
+                        <span className={`font-bold text-sm ${isPositive ? 'text-green-700' : 'text-red-600'}`}>
+                          {isPositive ? '+' : ''}{tx.points_change}
+                        </span>
+                      </CardContent>
+                    </Card>
+                  );
+                })
+              )}
+            </TabsContent>
+          </div>
+        </div>
+      </Tabs>
+
       {selectedReward && id && (
         <RewardRedemptionDialog
           reward={selectedReward}
@@ -686,7 +827,6 @@ export const AppMerchantDetail = () => {
         />
       )}
 
-      {/* New Customer Offer Dialog */}
       {newCustomerOffer && merchant && (
         <NewCustomerOfferDialog
           offer={newCustomerOffer}
@@ -697,7 +837,6 @@ export const AppMerchantDetail = () => {
         />
       )}
 
-    </div>
       <BottomNav />
     </div>
   );
