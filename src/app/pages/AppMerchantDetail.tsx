@@ -672,10 +672,13 @@ export const AppMerchantDetail = () => {
             </div>
           </motion.div>
 
-          {/* Fade-out gradient at the bottom edge of header */}
-          <div className="relative pointer-events-none px-4">
-            <div className="h-10 bg-gradient-to-b from-background to-transparent" />
-          </div>
+        </div>
+
+        <div 
+          className="pointer-events-none absolute inset-x-0 z-30"
+          style={{ top: headerHeight ? `${headerHeight}px` : '0px', height: '48px' }}
+        >
+          <div className="h-full bg-gradient-to-b from-background to-transparent" />
         </div>
 
         <div className="relative h-full overflow-visible">
