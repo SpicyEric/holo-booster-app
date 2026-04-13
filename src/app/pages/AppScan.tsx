@@ -324,7 +324,7 @@ export const AppScan = () => {
             state: transitionState,
           });
         }
-      }, 2000); // temporarily 2s for debugging
+      }, 900);
 
       return () => clearTimeout(timer);
     }
@@ -566,19 +566,15 @@ export const AppScan = () => {
       }
 
       // Image ready - do the flip!
-      console.log('[DemoScan] Image preloaded:', coverUrl);
-      console.log('[DemoScan] Setting merchantImage, displayName, transitionState');
       setMerchantImage(coverUrl);
       setMerchantDisplayName(displayName);
       setTransitionState(nextTransitionState);
       updatePreparingFlip(false);
 
       // Arm → next frame → flip (navigation handled by the useEffect on flipPhase)
-      console.log('[DemoScan] Setting flipPhase to armed');
       setFlipPhase('armed');
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
-          console.log('[DemoScan] Setting flipPhase to flipping');
           setFlipPhase('flipping');
         });
       });
