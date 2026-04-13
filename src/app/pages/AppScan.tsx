@@ -135,7 +135,20 @@ export const AppScan = () => {
           if (merchant) {
             const displayName = merchant.company_name || merchant.name || result.merchantName || 'Händler';
 
-            setMerchantImage(merchant.cover_image_url || null);
+            // Preload the cover image before flipping so it's visible immediately
+            const coverUrl = merchant.cover_image_url || null;
+            if (coverUrl) {
+              await new Promise<void>((resolve) => {
+                const img = new Image();
+                img.onload = () => resolve();
+                img.onerror = () => resolve();
+                img.src = coverUrl;
+                // Fallback timeout in case load event never fires
+                setTimeout(resolve, 2000);
+              });
+            }
+
+            setMerchantImage(coverUrl);
             setMerchantDisplayName(displayName);
             setTransitionState({
               fromScan: true,
