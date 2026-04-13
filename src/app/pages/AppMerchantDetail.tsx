@@ -347,7 +347,7 @@ export const AppMerchantDetail = () => {
 
       {/* Cover Image Card */}
       <div className="px-4 pt-4">
-        <div className="relative rounded-2xl overflow-hidden shadow-lg" style={{ aspectRatio: '16 / 9' }}>
+        <div className="relative rounded-2xl overflow-hidden shadow-lg" style={{ aspectRatio: '1.55 / 1' }}>
           {merchant.cover_image_url ? (
             <img
               src={merchant.cover_image_url}
