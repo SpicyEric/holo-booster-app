@@ -92,13 +92,29 @@ const HeroMockupWithNotifications = () => {
 
   const note = heroNotifications[currentIndex];
 
+  const heroImages = [heroSlide1, heroSlide2, heroSlide3];
+  const [imgIndex, setImgIndex] = useState(0);
+
+  useEffect(() => {
+    const imgInterval = setInterval(() => {
+      setImgIndex(prev => (prev + 1) % heroImages.length);
+    }, 3000);
+    return () => clearInterval(imgInterval);
+  }, []);
+
   return (
     <div className="relative">
-      <img
-        src={nfcStampHero}
-        alt="Eloyo App Mockup"
-        className="w-full h-[480px] sm:h-[580px] lg:h-[620px] object-contain"
-      />
+      <div className="relative w-full h-[480px] sm:h-[580px] lg:h-[620px]">
+        {heroImages.map((src, i) => (
+          <img
+            key={i}
+            src={src}
+            alt="Eloyo App Mockup"
+            className="absolute inset-0 w-full h-full object-contain transition-opacity duration-1000 ease-in-out"
+            style={{ opacity: i === imgIndex ? 1 : 0 }}
+          />
+        ))}
+      </div>
       {/* Overlay notification */}
       <div className="absolute inset-0 flex items-end justify-center pb-16 pointer-events-none">
         <AnimatePresence mode="wait">
