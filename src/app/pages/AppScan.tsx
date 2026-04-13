@@ -566,21 +566,26 @@ export const AppScan = () => {
       }
 
       // Image ready - do the flip!
+      console.log('[DemoScan] Image preloaded:', coverUrl);
+      console.log('[DemoScan] Setting merchantImage, displayName, transitionState');
       setMerchantImage(coverUrl);
       setMerchantDisplayName(displayName);
       setTransitionState(nextTransitionState);
       updatePreparingFlip(false);
 
       // Arm → next frame → flip
+      console.log('[DemoScan] Setting flipPhase to armed');
       setFlipPhase('armed');
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
+          console.log('[DemoScan] Setting flipPhase to flipping');
           setFlipPhase('flipping');
         });
       });
 
       // After flip animation, navigate
       setTimeout(() => {
+        console.log('[DemoScan] Flip animation done, navigating');
         setFlipPhase('navigating');
         navigateToMerchant(merchantId, { fallbackPoints: 25, state: nextTransitionState });
       }, 900);
