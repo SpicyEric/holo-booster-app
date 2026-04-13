@@ -371,10 +371,10 @@ export const AppMerchantDetail = () => {
             <ArrowLeft className="h-5 w-5" />
           </Button>
 
-          {/* Points badge – top right on the card */}
-          <div className="absolute top-3 right-3 z-10 bg-white/60 backdrop-blur-md rounded-full px-3 py-1 shadow-md">
-            <span className="font-bold text-primary">{userPoints}</span>
-            <span className="text-sm text-muted-foreground ml-1">Punkte</span>
+          {/* Points badge – top right on the card, matching back button style */}
+          <div className="absolute top-3 right-3 z-10 bg-black/40 backdrop-blur-sm rounded-xl px-3 py-1.5 shadow-md">
+            <span className="font-bold text-white">{userPoints}</span>
+            <span className="text-sm text-white/80 ml-1">Punkte</span>
           </div>
           
           {/* Merchant Name on the card – bottom */}
