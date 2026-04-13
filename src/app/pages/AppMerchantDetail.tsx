@@ -678,7 +678,7 @@ export const AppMerchantDetail = () => {
           </div>
         </div>
 
-        <div className="relative h-full overflow-hidden">
+        <div className="relative h-full overflow-visible">
           <div
             className="h-full overflow-y-auto px-4 overflow-x-hidden"
             style={{
