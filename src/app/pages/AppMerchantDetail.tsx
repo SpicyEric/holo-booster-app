@@ -342,33 +342,137 @@ export const AppMerchantDetail = () => {
   const openingHours = formatOpeningHours(merchant.opening_hours);
   const merchantName = merchant.company_name || merchant.name;
 
+  // Build an array of all reward items for stagger animation
+  const rewardItems: { key: string; element: React.ReactNode }[] = [];
+  
+  if (newCustomerOffer && !hasEverStamped) {
+    rewardItems.push({
+      key: 'new-customer-offer',
+      element: (
+        <Card 
+          className="border-2 border-primary bg-primary/5 cursor-pointer hover:shadow-lg transition-shadow"
+          onClick={handleNewCustomerOfferClick}
+        >
+          <CardContent className="p-4 flex items-center gap-4">
+            <div className="w-12 h-12 rounded-lg bg-primary flex items-center justify-center">
+              <Sparkles className="h-6 w-6 text-primary-foreground" />
+            </div>
+            <div className="flex-1">
+              <Badge variant="default" className="mb-1 text-xs">Neukundenprämie</Badge>
+              <h3 className="font-medium">{newCustomerOffer.title}</h3>
+              {newCustomerOffer.description && (
+                <p className="text-sm text-muted-foreground line-clamp-1">{newCustomerOffer.description}</p>
+              )}
+            </div>
+            {newCustomerOffer.bonus_stamps > 0 && (
+              <Badge variant="secondary"><Gift className="h-3 w-3 mr-1" />+{newCustomerOffer.bonus_stamps}</Badge>
+            )}
+          </CardContent>
+        </Card>
+      ),
+    });
+  }
+
+  if (!loading && googleReviewBonus.enabled && !googleReviewBonus.alreadyClaimed && transactions.length === 1) {
+    rewardItems.push({
+      key: 'google-review',
+      element: (
+        <Card 
+          className="border-2 border-amber-400 bg-amber-50 dark:bg-amber-950/30 cursor-pointer hover:shadow-lg transition-shadow"
+          onClick={handleClaimGoogleReviewBonus}
+        >
+          <CardContent className="p-4 flex items-center gap-4">
+            <div className="w-12 h-12 rounded-lg bg-amber-100 dark:bg-amber-900/50 flex items-center justify-center">
+              <Star className="h-6 w-6 text-amber-600 fill-amber-500" />
+            </div>
+            <div className="flex-1">
+              <Badge className="mb-1 text-xs bg-amber-500 hover:bg-amber-600">Google-Bewertung</Badge>
+              <h3 className="font-medium">Bewerte uns & erhalte Bonuspunkte!</h3>
+              <p className="text-sm text-muted-foreground line-clamp-1">
+                Hinterlasse eine Google-Bewertung und erhalte {googleReviewBonus.pointsValue} Bonuspunkte
+              </p>
+            </div>
+            <Badge variant="secondary"><Star className="h-3 w-3 mr-1" />+{googleReviewBonus.pointsValue}</Badge>
+          </CardContent>
+        </Card>
+      ),
+    });
+  }
+
+  if (rewards.length === 0 && rewardItems.length === 0) {
+    rewardItems.push({
+      key: 'empty',
+      element: (
+        <Card>
+          <CardContent className="p-6 text-center text-muted-foreground">
+            <Gift className="h-8 w-8 mx-auto mb-2 opacity-50" />
+            Keine Prämien verfügbar
+          </CardContent>
+        </Card>
+      ),
+    });
+  } else {
+    rewards.forEach((reward) => {
+      const canRedeem = userPoints >= reward.points_required;
+      rewardItems.push({
+        key: reward.id,
+        element: (
+          <Card 
+            className={`cursor-pointer hover:shadow-lg transition-shadow ${canRedeem ? 'border-primary' : ''}`}
+            onClick={() => handleRewardClick(reward)}
+          >
+            <CardContent className="p-4 flex items-center gap-4">
+              {reward.image_url ? (
+                <img src={reward.image_url} alt={reward.title} className="w-12 h-12 rounded-lg object-cover" />
+              ) : (
+                <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center">
+                  <Gift className="h-6 w-6 text-primary" />
+                </div>
+              )}
+              <div className="flex-1">
+                <h3 className="font-medium">{reward.title}</h3>
+                {reward.description && (
+                  <p className="text-sm text-muted-foreground line-clamp-1">{reward.description}</p>
+                )}
+              </div>
+              <Badge variant={canRedeem ? 'default' : 'secondary'}>
+                {reward.points_required} Punkte
+              </Badge>
+            </CardContent>
+          </Card>
+        ),
+      });
+    });
+  }
+
   return (
-    <div className="bg-background overflow-hidden" style={{ height: '100dvh' }}>
+    <motion.div
+      className="bg-background overflow-hidden"
+      style={{ height: '100dvh' }}
+      initial={fromScan ? { opacity: 0 } : false}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.3 }}
+    >
     <div className="h-full overflow-y-auto pb-32 overflow-x-hidden" style={{ overscrollBehavior: 'none', WebkitOverflowScrolling: 'touch', touchAction: 'pan-y' }}>
-      {/* Safe area shield - must be outside scroll flow */}
+      {/* Safe area shield */}
       <div className="fixed top-0 left-0 right-0 z-[60]" style={{ height: 'env(safe-area-inset-top, 0px)', background: 'hsl(var(--background))' }} />
 
       {/* Cover Image Card */}
       <div className="px-4 pt-4">
         <div className="relative rounded-2xl overflow-hidden shadow-lg" style={{ aspectRatio: '1.55 / 1' }}>
           {merchant.cover_image_url ? (
-            <img
-              src={merchant.cover_image_url}
-              alt={merchant.name}
-              className="w-full h-full object-cover"
-            />
+            <img src={merchant.cover_image_url} alt={merchant.name} className="w-full h-full object-cover" />
           ) : (
             <div className="w-full h-full bg-gradient-to-br from-primary to-secondary" />
           )}
           
-          {/* Bottom gradient overlay for text readability */}
           <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/60 via-black/25 to-transparent" />
           
-          {/* Back button – top left on the card */}
+          {/* Back button */}
           <motion.div
             initial={fromScan ? { opacity: 0 } : false}
             animate={{ opacity: 1 }}
-            transition={{ duration: 0.4, delay: fromScan ? 0.1 : 0 }}
+            transition={{ duration: 0.4, delay: fromScan ? 0.2 : 0 }}
             className="absolute top-3 left-3 z-10"
           >
             <Button
@@ -381,11 +485,11 @@ export const AppMerchantDetail = () => {
             </Button>
           </motion.div>
 
-          {/* Points badge – top right on the card, matching back button style */}
+          {/* Points badge */}
           <motion.div
             initial={fromScan ? { opacity: 0 } : false}
             animate={{ opacity: 1 }}
-            transition={{ duration: 0.4, delay: fromScan ? 0.2 : 0 }}
+            transition={{ duration: 0.4, delay: fromScan ? 0.3 : 0 }}
             className="absolute top-3 right-3 z-10"
           >
             <div className="bg-black/40 backdrop-blur-sm rounded-xl px-3 py-1.5 shadow-md">
@@ -394,16 +498,14 @@ export const AppMerchantDetail = () => {
             </div>
           </motion.div>
           
-          {/* Merchant Name on the card – bottom */}
+          {/* Merchant Name */}
           <motion.div
             initial={fromScan ? { opacity: 0, y: 5 } : false}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, delay: fromScan ? 0.15 : 0 }}
+            transition={{ duration: 0.4, delay: fromScan ? 0.25 : 0 }}
             className="absolute bottom-3 left-4 right-4"
           >
-            <h1 className="text-lg font-bold text-white drop-shadow-md">
-              {merchantName}
-            </h1>
+            <h1 className="text-lg font-bold text-white drop-shadow-md">{merchantName}</h1>
           </motion.div>
         </div>
       </div>
@@ -412,7 +514,7 @@ export const AppMerchantDetail = () => {
       <motion.div
         initial={fromScan ? { opacity: 0, y: 20 } : false}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: fromScan ? 0.3 : 0 }}
+        transition={{ duration: 0.5, delay: fromScan ? 0.4 : 0 }}
       >
       <Tabs defaultValue="rewards" className="p-4">
         <TabsList className="w-full grid grid-cols-3">
@@ -422,105 +524,16 @@ export const AppMerchantDetail = () => {
         </TabsList>
 
         <TabsContent value="rewards" className="mt-4 space-y-3">
-          {/* New Customer Offer - shown at top if available */}
-          {newCustomerOffer && !hasEverStamped && (
-            <Card 
-              className="border-2 border-primary bg-primary/5 cursor-pointer hover:shadow-lg transition-shadow"
-              onClick={handleNewCustomerOfferClick}
+          {rewardItems.map((item, index) => (
+            <motion.div
+              key={item.key}
+              initial={fromScan ? { opacity: 0, y: 15 } : false}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4, delay: fromScan ? 0.5 + index * 0.1 : 0 }}
             >
-              <CardContent className="p-4 flex items-center gap-4">
-                <div className="w-12 h-12 rounded-lg bg-primary flex items-center justify-center">
-                  <Sparkles className="h-6 w-6 text-primary-foreground" />
-                </div>
-                <div className="flex-1">
-                  <Badge variant="default" className="mb-1 text-xs">Neukundenprämie</Badge>
-                  <h3 className="font-medium">{newCustomerOffer.title}</h3>
-                  {newCustomerOffer.description && (
-                    <p className="text-sm text-muted-foreground line-clamp-1">
-                      {newCustomerOffer.description}
-                    </p>
-                  )}
-                </div>
-                {newCustomerOffer.bonus_stamps > 0 && (
-                  <Badge variant="secondary">
-                    <Gift className="h-3 w-3 mr-1" />
-                    +{newCustomerOffer.bonus_stamps}
-                  </Badge>
-                )}
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Google Review Bonus - only show with exactly 1 transaction and not yet claimed */}
-          {!loading && googleReviewBonus.enabled && !googleReviewBonus.alreadyClaimed && transactions.length === 1 && (
-            <Card 
-              className="border-2 border-amber-400 bg-amber-50 dark:bg-amber-950/30 cursor-pointer hover:shadow-lg transition-shadow"
-              onClick={handleClaimGoogleReviewBonus}
-            >
-              <CardContent className="p-4 flex items-center gap-4">
-                <div className="w-12 h-12 rounded-lg bg-amber-100 dark:bg-amber-900/50 flex items-center justify-center">
-                  <Star className="h-6 w-6 text-amber-600 fill-amber-500" />
-                </div>
-                <div className="flex-1">
-                  <Badge className="mb-1 text-xs bg-amber-500 hover:bg-amber-600">Google-Bewertung</Badge>
-                  <h3 className="font-medium">Bewerte uns & erhalte Bonuspunkte!</h3>
-                  <p className="text-sm text-muted-foreground line-clamp-1">
-                    Hinterlasse eine Google-Bewertung und erhalte {googleReviewBonus.pointsValue} Bonuspunkte
-                  </p>
-                </div>
-                <Badge variant="secondary">
-                  <Star className="h-3 w-3 mr-1" />
-                  +{googleReviewBonus.pointsValue}
-                </Badge>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Regular Rewards */}
-          {rewards.length === 0 && !newCustomerOffer && !googleReviewBonus.enabled ? (
-            <Card>
-              <CardContent className="p-6 text-center text-muted-foreground">
-                <Gift className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                Keine Prämien verfügbar
-              </CardContent>
-            </Card>
-          ) : (
-            rewards.map((reward) => {
-              const canRedeem = userPoints >= reward.points_required;
-              return (
-                <Card 
-                  key={reward.id} 
-                  className={`cursor-pointer hover:shadow-lg transition-shadow ${canRedeem ? 'border-primary' : ''}`}
-                  onClick={() => handleRewardClick(reward)}
-                >
-                  <CardContent className="p-4 flex items-center gap-4">
-                    {reward.image_url ? (
-                      <img 
-                        src={reward.image_url} 
-                        alt={reward.title}
-                        className="w-12 h-12 rounded-lg object-cover"
-                      />
-                    ) : (
-                      <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center">
-                        <Gift className="h-6 w-6 text-primary" />
-                      </div>
-                    )}
-                    <div className="flex-1">
-                      <h3 className="font-medium">{reward.title}</h3>
-                      {reward.description && (
-                        <p className="text-sm text-muted-foreground line-clamp-1">
-                          {reward.description}
-                        </p>
-                      )}
-                    </div>
-                    <Badge variant={canRedeem ? 'default' : 'secondary'}>
-                      {reward.points_required} Punkte
-                    </Badge>
-                  </CardContent>
-                </Card>
-              );
-            })
-          )}
+              {item.element}
+            </motion.div>
+          ))}
         </TabsContent>
 
         <TabsContent value="info" className="mt-4 space-y-4">
