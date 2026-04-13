@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import { ArrowLeft, MapPin, Phone, Globe, Instagram, Clock, Gift, Sparkles, History, Star } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -68,6 +69,8 @@ export const AppMerchantDetail = () => {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const fromScan = (location.state as any)?.fromScan === true;
   const [merchant, setMerchant] = useState<Merchant | null>(null);
   const [rewards, setRewards] = useState<Reward[]>([]);
   const [newCustomerOffer, setNewCustomerOffer] = useState<NewCustomerOffer | null>(null);
@@ -362,31 +365,55 @@ export const AppMerchantDetail = () => {
           <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/60 via-black/25 to-transparent" />
           
           {/* Back button – top left on the card */}
-          <Button
-            variant="ghost"
-            size="icon"
-            className="absolute top-3 left-3 z-10 bg-black/40 text-white hover:bg-black/60 backdrop-blur-sm rounded-xl"
-            onClick={() => navigate(-1)}
+          <motion.div
+            initial={fromScan ? { opacity: 0 } : false}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.4, delay: fromScan ? 0.1 : 0 }}
+            className="absolute top-3 left-3 z-10"
           >
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="bg-black/40 text-white hover:bg-black/60 backdrop-blur-sm rounded-xl"
+              onClick={() => navigate('/app/scan')}
+            >
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
+          </motion.div>
 
           {/* Points badge – top right on the card, matching back button style */}
-          <div className="absolute top-3 right-3 z-10 bg-black/40 backdrop-blur-sm rounded-xl px-3 py-1.5 shadow-md">
-            <span className="font-bold text-white">{userPoints}</span>
-            <span className="text-sm text-white/80 ml-1">Punkte</span>
-          </div>
+          <motion.div
+            initial={fromScan ? { opacity: 0 } : false}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.4, delay: fromScan ? 0.2 : 0 }}
+            className="absolute top-3 right-3 z-10"
+          >
+            <div className="bg-black/40 backdrop-blur-sm rounded-xl px-3 py-1.5 shadow-md">
+              <span className="font-bold text-white">{userPoints}</span>
+              <span className="text-sm text-white/80 ml-1">Punkte</span>
+            </div>
+          </motion.div>
           
           {/* Merchant Name on the card – bottom */}
-          <div className="absolute bottom-3 left-4 right-4">
+          <motion.div
+            initial={fromScan ? { opacity: 0, y: 5 } : false}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: fromScan ? 0.15 : 0 }}
+            className="absolute bottom-3 left-4 right-4"
+          >
             <h1 className="text-lg font-bold text-white drop-shadow-md">
               {merchantName}
             </h1>
-          </div>
+          </motion.div>
         </div>
       </div>
 
       {/* Tabs */}
+      <motion.div
+        initial={fromScan ? { opacity: 0, y: 20 } : false}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: fromScan ? 0.3 : 0 }}
+      >
       <Tabs defaultValue="rewards" className="p-4">
         <TabsList className="w-full grid grid-cols-3">
           <TabsTrigger value="rewards">Prämien</TabsTrigger>
@@ -613,6 +640,7 @@ export const AppMerchantDetail = () => {
           )}
         </TabsContent>
       </Tabs>
+      </motion.div>
 
       {/* Reward Redemption Dialog */}
       {selectedReward && id && (
