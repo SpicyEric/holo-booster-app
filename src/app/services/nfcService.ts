@@ -7,7 +7,7 @@
 // The capawesome NFC package is NOT in package.json (private registry auth fails in CI).
 // It is installed locally via .npmrc and loaded dynamically at runtime on native platforms.
 
-import { Capacitor } from '@capacitor/core';
+import { Capacitor, registerPlugin } from '@capacitor/core';
 import type { NfcPlugin } from './nfcTypes';
 
 export interface NfcReadResult {
@@ -40,17 +40,67 @@ const getPlatform = (): string => {
 // Lazily-loaded reference to the native NFC plugin
 let _nfcPlugin: NfcPlugin | null = null;
 
+const NFC_PLUGIN_NAME_CANDIDATES = ['Nfc', 'CapacitorNfc', 'CapacitorNFC', 'NFC'] as const;
+
+type NativeNfcPluginName = (typeof NFC_PLUGIN_NAME_CANDIDATES)[number];
+
+const getErrorText = (rawError: unknown): string => {
+  if (typeof rawError === 'string') return rawError;
+  return (rawError as any)?.error?.message || (rawError as any)?.message || '';
+};
+
+const isMissingNativePluginError = (rawError: unknown): boolean => {
+  const errMsg = getErrorText(rawError).toLowerCase();
+
+  return (
+    errMsg.includes('plugin not available') ||
+    errMsg.includes('not implemented') ||
+    errMsg.includes('unimplemented') ||
+    errMsg.includes('could not find') ||
+    errMsg.includes('cannot find module')
+  );
+};
+
+function resolveNativeNfcPluginName(): NativeNfcPluginName | null {
+  const pluginHeaders = ((window as any)?.Capacitor?.PluginHeaders || []) as Array<{ name?: string }>;
+
+  for (const pluginName of NFC_PLUGIN_NAME_CANDIDATES) {
+    try {
+      if (Capacitor.isPluginAvailable(pluginName)) {
+        return pluginName;
+      }
+
+      if (pluginHeaders.some((header) => header?.name === pluginName)) {
+        return pluginName;
+      }
+    } catch {
+      // Ignore and try next candidate.
+    }
+  }
+
+  return null;
+}
+
 async function getNfcPlugin(): Promise<NfcPlugin> {
   if (_nfcPlugin) return _nfcPlugin;
+
+  const pluginName = resolveNativeNfcPluginName();
+
+  if (!pluginName) {
+    const availablePluginHeaders = (((window as any)?.Capacitor?.PluginHeaders || []) as Array<{ name?: string }>)
+      .map((header) => header?.name)
+      .filter(Boolean);
+
+    console.error('[NFC] Native NFC plugin header not found. Available plugin headers:', availablePluginHeaders);
+    throw new Error('NFC plugin not available');
+  }
+
   try {
-    // Hide the import string from Vite's static analysis so it doesn't
-    // fail during dev/build when the package isn't installed.
-    const pkgName = ['@capawesome-team', 'capacitor-nfc'].join('/');
-    const mod = await (Function('p', 'return import(p)') as (p: string) => Promise<any>)(pkgName);
-    _nfcPlugin = mod.Nfc as NfcPlugin;
+    _nfcPlugin = registerPlugin<NfcPlugin>(pluginName);
+    console.log('[NFC] Using native Capacitor plugin:', pluginName);
     return _nfcPlugin;
   } catch (e) {
-    console.error('[NFC] Failed to load @capawesome-team/capacitor-nfc:', e);
+    console.error('[NFC] Failed to initialize native NFC plugin proxy:', e);
     throw new Error('NFC plugin not available');
   }
 }
@@ -90,6 +140,12 @@ class NfcService {
         return result?.isSupported === true;
       } catch (error) {
         console.log('[NFC] isSupported check failed:', error);
+
+        if (isMissingNativePluginError(error)) {
+          console.log('[NFC] Native plugin missing on this build - reporting NFC as unavailable');
+          return false;
+        }
+
         console.log('[NFC] Assuming supported on native platform despite error');
         return true;
       }
@@ -120,6 +176,11 @@ class NfcService {
         console.warn('[NFC] isEnabled returned an unexpected result, assuming enabled on native platform');
         return true;
       } catch (error) {
+        if (isMissingNativePluginError(error)) {
+          console.log('[NFC] Native plugin missing while checking isEnabled:', error);
+          return false;
+        }
+
         console.log('[NFC] isEnabled check failed, assuming enabled on native platform:', error);
         return true;
       }
@@ -209,12 +270,13 @@ class NfcService {
 
   private buildNativeScanErrorMessage(rawError: unknown): string {
     const platform = getPlatform();
-    const errorText =
-      typeof rawError === 'string'
-        ? rawError
-        : (rawError as any)?.error?.message || (rawError as any)?.message || '';
+    const errorText = getErrorText(rawError);
 
     const errMsg = errorText.toLowerCase();
+
+    if (isMissingNativePluginError(rawError)) {
+      return 'NFC ist in dieser App-Version noch nicht korrekt eingebunden. Bitte die App nach dem neuesten Stand neu synchronisieren und installieren.';
+    }
 
     if (errMsg.includes('permission') || errMsg.includes('denied')) {
       return 'NFC-Berechtigung wird benötigt. Bitte aktiviere NFC in den Einstellungen.';
