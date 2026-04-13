@@ -639,7 +639,6 @@ export const AppScan = () => {
               transition: 'transform 0.7s ease-in-out',
               transform: showFrontCard ? 'rotateY(0deg)' : 'rotateY(180deg)',
               willChange: 'transform',
-              isolation: 'isolate',
             }}
           >
             {/* ── FRONT: Purple NFC card ── */}
@@ -648,7 +647,6 @@ export const AppScan = () => {
               style={{
                 backfaceVisibility: 'hidden',
                 WebkitBackfaceVisibility: 'hidden',
-                zIndex: 2,
               }}
             >
               <div className="absolute inset-0 flex items-center justify-center">
@@ -704,7 +702,6 @@ export const AppScan = () => {
                 backfaceVisibility: 'hidden',
                 WebkitBackfaceVisibility: 'hidden',
                 transform: 'rotateY(180deg)',
-                zIndex: 1,
                 backgroundImage: merchantImage ? `url("${merchantImage}")` : undefined,
                 backgroundPosition: 'center',
                 backgroundRepeat: 'no-repeat',
