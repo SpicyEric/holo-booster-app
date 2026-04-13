@@ -103,20 +103,19 @@ const HeroMockupWithNotifications = () => {
   }, []);
 
   return (
-    <div className="relative">
-      <div className="relative w-full h-[480px] sm:h-[580px] lg:h-[620px]">
-        {heroImages.map((src, i) => (
-          <img
-            key={i}
-            src={src}
-            alt="Eloyo App Mockup"
-            className="absolute inset-0 w-full h-full object-contain transition-opacity duration-1000 ease-in-out"
-            style={{ opacity: i === imgIndex ? 1 : 0 }}
-          />
-        ))}
-      </div>
-      {/* Overlay notification */}
-      <div className="absolute inset-0 flex items-end justify-center pb-16 pointer-events-none">
+    <div className="relative w-full h-[480px] sm:h-[580px] lg:h-[620px]">
+      {/* Sliding hero images */}
+      {heroImages.map((src, i) => (
+        <img
+          key={i}
+          src={src}
+          alt="Eloyo App Mockup"
+          className="absolute inset-0 w-full h-full object-contain transition-opacity duration-1000 ease-in-out"
+          style={{ opacity: i === imgIndex ? 1 : 0 }}
+        />
+      ))}
+      {/* Overlay notification – narrow horizontal toast */}
+      <div className="absolute bottom-12 left-1/2 -translate-x-1/2 pointer-events-none z-10">
         <AnimatePresence mode="wait">
           {visible && (
             <motion.div
@@ -125,14 +124,14 @@ const HeroMockupWithNotifications = () => {
               initial="enter"
               animate="visible"
               exit="exit"
-              className="bg-white/90 backdrop-blur-md rounded-xl p-3 shadow-lg border border-white/80 flex items-start gap-3 max-w-xs pointer-events-auto"
+              className="bg-white/90 backdrop-blur-md rounded-2xl px-4 py-2.5 shadow-lg border border-white/80 flex items-center gap-3 w-[320px] pointer-events-auto"
             >
-              <div className="w-9 h-9 bg-primary rounded-lg flex items-center justify-center flex-shrink-0">
-                <Star className="h-4 w-4 text-white" fill="white" />
+              <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center flex-shrink-0">
+                <Star className="h-3.5 w-3.5 text-white" fill="white" />
               </div>
-              <div>
-                <p className="font-bold text-sm text-[#1a1b21]">{note.points}</p>
-                <p className="text-xs text-[#4a4455]">{note.text}</p>
+              <div className="min-w-0">
+                <p className="font-bold text-xs text-[#1a1b21] truncate">{note.points}</p>
+                <p className="text-[11px] text-[#4a4455] line-clamp-1">{note.text}</p>
               </div>
             </motion.div>
           )}
