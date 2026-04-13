@@ -244,7 +244,7 @@ export default function AppStores() {
           </div>
         </div>
 
-        <TabsContent value="list" className="mt-4 space-y-3">
+        <TabsContent value="list" className="mt-4" style={{ overflow: 'visible' }}>
           {/* DEBUG: Force rebuild - v2 */}
           {stores.length === 0 ? (
             <Card className="p-6 text-center">
