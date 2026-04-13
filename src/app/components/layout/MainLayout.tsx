@@ -38,7 +38,7 @@ export const MainLayout = ({ children, title, showBack = false }: MainLayoutProp
       <OfflineBanner />
       <TopBar title={title} showBack={showBack} />
       <main
-        className="container mx-auto px-4 py-6 pb-16 max-w-2xl relative z-10 h-full overflow-y-auto"
+        className="container mx-auto px-4 py-6 pb-16 max-w-2xl relative z-10 h-full overflow-y-auto overflow-x-hidden"
         style={{ overscrollBehavior: 'none', WebkitOverflowScrolling: 'touch', touchAction: 'pan-y' }}
       >
         {children}
