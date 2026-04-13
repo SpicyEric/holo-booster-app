@@ -80,6 +80,7 @@ export const AppScan = () => {
   const [merchantImage, setMerchantImage] = useState<string | null>(null);
   const [merchantDisplayName, setMerchantDisplayName] = useState<string>('');
   const [transitionState, setTransitionState] = useState<MerchantTransitionState | null>(null);
+  const mainScrollRef = useRef<HTMLElement | null>(null);
 
   const updatePreparingFlip = useCallback((value: boolean) => {
     preparingFlipRef.current = value;
@@ -195,6 +196,11 @@ export const AppScan = () => {
     };
     checkNfcSupport();
     return () => { nfcService.stopScan(); };
+  }, []);
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+    mainScrollRef.current?.scrollTo({ top: 0, left: 0 });
   }, []);
 
   useEffect(() => {
@@ -614,7 +620,8 @@ export const AppScan = () => {
       <OfflineBanner />
 
       <main
-        className="relative z-10 h-full overflow-y-auto"
+        ref={mainScrollRef}
+        className="relative z-10 h-full overflow-y-auto overflow-x-hidden scrollbar-hide"
         style={{ overscrollBehavior: 'none', WebkitOverflowScrolling: 'touch', touchAction: 'pan-y' }}
       >
         {/* ── Flip Card Container ── */}

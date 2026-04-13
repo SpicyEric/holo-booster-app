@@ -1,6 +1,8 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
+import { Capacitor } from '@capacitor/core';
 import { pushNotificationService } from '@/app/services/pushNotificationService';
 import { useAuth } from '@/hooks/useAuth';
+import { checkLocationPermission, requestLocationPermission } from '@/app/services/geolocationService';
 
 /**
  * Hook to initialize push notifications when the app loads.
@@ -8,14 +10,36 @@ import { useAuth } from '@/hooks/useAuth';
  */
 export const usePushNotifications = () => {
   const { user } = useAuth();
+  const initializedForUserRef = useRef<string | null>(null);
 
   useEffect(() => {
-    if (!user?.id) return;
+    if (!user?.id || initializedForUserRef.current === user.id) return;
 
-    const initializePush = async () => {
-      await pushNotificationService.initialize(user.id);
+    initializedForUserRef.current = user.id;
+    let cancelled = false;
+
+    const initializePermissions = async () => {
+      try {
+        if (Capacitor.isNativePlatform()) {
+          const locationStatus = await checkLocationPermission();
+
+          if (!cancelled && locationStatus.location === 'prompt') {
+            await requestLocationPermission();
+          }
+        }
+
+        if (!cancelled) {
+          await pushNotificationService.initialize(user.id);
+        }
+      } catch (error) {
+        console.error('Error initializing app permissions:', error);
+      }
     };
 
-    initializePush();
+    void initializePermissions();
+
+    return () => {
+      cancelled = true;
+    };
   }, [user?.id]);
 };

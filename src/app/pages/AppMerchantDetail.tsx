@@ -125,7 +125,13 @@ export const AppMerchantDetail = () => {
   const headerRef = useRef<HTMLDivElement | null>(null);
   const cardRef = useRef<HTMLDivElement | null>(null);
   const pointsBadgeRef = useRef<HTMLDivElement | null>(null);
+  const contentScrollRef = useRef<HTMLDivElement | null>(null);
   const scanAnimationPlayedRef = useRef(false);
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+    contentScrollRef.current?.scrollTo({ top: 0, left: 0 });
+  }, [id]);
 
   useEffect(() => {
     if (id) {
@@ -603,7 +609,7 @@ export const AppMerchantDetail = () => {
           {/* Solid background layer so scrolled content is fully hidden behind header */}
           <div className="absolute inset-0 bg-background pointer-events-none" />
 
-          <div className="relative pointer-events-auto px-4" style={{ paddingTop: 'calc(1rem + env(safe-area-inset-top, 0px))' }}>
+          <div className="relative pointer-events-none px-4" style={{ paddingTop: '1rem' }}>
             <div ref={cardRef} className="scan-merchant-card-transition relative rounded-2xl overflow-hidden shadow-lg" style={{ aspectRatio: '1.55 / 1' }}>
               {merchant.cover_image_url ? (
                 <img src={merchant.cover_image_url} alt={merchant.name} className="w-full h-full object-cover" />
@@ -661,7 +667,7 @@ export const AppMerchantDetail = () => {
             initial={shouldAnimateFromScan ? { opacity: 0, y: 20 } : false}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: shouldAnimateFromScan ? 0.4 : 0 }}
-            className="relative pointer-events-auto px-4 pt-3"
+            className="relative pointer-events-none px-4 pt-3"
           >
             <div className="rounded-xl border border-border/50 bg-background/85 p-1 shadow-lg backdrop-blur-xl">
               <div className="relative grid h-auto w-full grid-cols-3 gap-1">
@@ -669,7 +675,7 @@ export const AppMerchantDetail = () => {
                   <button
                     key={tab}
                     onClick={() => setActiveTab(tab)}
-                    className={`relative z-10 rounded-lg py-2.5 text-sm transition-colors duration-200 ${
+                    className={`pointer-events-auto relative z-10 rounded-lg py-2.5 text-sm transition-colors duration-200 ${
                       activeTab === tab ? 'text-foreground font-medium' : 'text-muted-foreground'
                     }`}
                   >
@@ -699,7 +705,8 @@ export const AppMerchantDetail = () => {
 
         <div className="relative h-full overflow-visible">
           <div
-            className="h-full overflow-y-auto px-4 overflow-x-hidden"
+            ref={contentScrollRef}
+            className="h-full overflow-y-auto px-4 overflow-x-hidden scrollbar-hide"
             style={{
               paddingTop: headerHeight ? `${headerHeight + 15}px` : '15px',
               paddingBottom: 'calc(8rem + env(safe-area-inset-bottom, 0px))',
