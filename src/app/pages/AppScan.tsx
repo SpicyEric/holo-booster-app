@@ -620,7 +620,7 @@ export const AppScan = () => {
         {/* ── Flip Card Container ── */}
         <div className="px-4 pt-4" style={{ perspective: '1200px' }}>
           <div
-            className="scan-merchant-card-transition relative rounded-2xl shadow-lg"
+            className="relative rounded-2xl shadow-lg"
             style={{
               aspectRatio: '1.55 / 1',
               transformStyle: 'preserve-3d',
