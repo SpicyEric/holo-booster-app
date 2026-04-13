@@ -98,7 +98,7 @@ const HeroMockupWithNotifications = () => {
   useEffect(() => {
     const imgInterval = setInterval(() => {
       setImgIndex(prev => (prev + 1) % heroImages.length);
-    }, 3000);
+    }, 4500);
     return () => clearInterval(imgInterval);
   }, []);
 
@@ -231,8 +231,8 @@ const Landing = () => {
               </div>
             </div>
             <div className="md:w-1/2 bg-[#eeedf5] min-h-[400px] relative flex items-center justify-center p-12">
-              <div className="w-[260px] sm:w-[280px] h-[540px] sm:h-[580px] bg-slate-900 rounded-[3rem] p-3 shadow-2xl border-[8px] border-slate-800">
-                <div className="w-full h-full bg-slate-100 rounded-[2.2rem] overflow-hidden relative">
+              <div className="w-[260px] sm:w-[280px] h-[540px] sm:h-[580px] bg-slate-900 rounded-[3rem] p-1.5 shadow-2xl border-[3px] border-slate-700">
+                <div className="w-full h-full bg-slate-100 rounded-[2.6rem] overflow-hidden relative">
                   <img src={pushBg} alt="Eloyo App Push-Benachrichtigung" className="w-full h-full object-cover" />
                   <div className="absolute top-1/2 -translate-y-1/2 left-3 right-3 space-y-3">
                     <div className="bg-white/80 backdrop-blur-md p-4 rounded-2xl shadow-lg animate-bounce">
@@ -242,8 +242,8 @@ const Landing = () => {
                         </div>
                         <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Eloyo · Jetzt</span>
                       </div>
-                      <p className="text-sm font-bold text-slate-900">🎁 Deine Belohnung wartet!</p>
-                      <p className="text-xs text-slate-600">Heute doppelte Punkte – nur bis 18 Uhr. Komm vorbei! 🎉</p>
+                      <p className="text-sm font-bold text-slate-900">Backstube König:</p>
+                      <p className="text-xs text-slate-600">Morgen Frühstück für 1 Person – nur 10 €. Komm vorbei! 🥐</p>
                     </div>
                   </div>
                 </div>
