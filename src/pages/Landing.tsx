@@ -6,6 +6,9 @@ import { useNavigate } from 'react-router-dom';
 import { Star, CheckCircle } from 'lucide-react';
 import eloyoLogo from '@/assets/eloyo-logo.png';
 import nfcStampHero from '@/assets/hero-app-mockup.png';
+import heroApp2 from '@/assets/hero-app-2.png';
+import heroApp3 from '@/assets/hero-app-3.png';
+import heroApp4 from '@/assets/hero-app-4.png';
 import eloyoAppMockup from '@/assets/eloyo-app-mockup.jpg';
 import pushBg from '@/assets/push-bg.jpeg';
 import businessNetwork from '@/assets/business-network.png';
@@ -63,6 +66,39 @@ const notificationVariants: Variants = {
   exit: { opacity: 0, y: -10, filter: 'blur(8px)', scale: 0.95, transition: { duration: 0.5, ease: appleEase } },
 };
 
+const heroImages = [nfcStampHero, heroApp2, heroApp3, heroApp4];
+const heroTimings = [3000, 2000, 2000, 2000]; // first image 3s, rest 2s
+
+const HeroImageCarousel = () => {
+  const [activeIndex, setActiveIndex] = useState(0);
+
+  useEffect(() => {
+    let idx = 0;
+    let timeout: ReturnType<typeof setTimeout>;
+    const next = () => {
+      idx = (idx + 1) % heroImages.length;
+      setActiveIndex(idx);
+      timeout = setTimeout(next, heroTimings[idx]);
+    };
+    timeout = setTimeout(next, heroTimings[0]);
+    return () => clearTimeout(timeout);
+  }, []);
+
+  return (
+    <div className="relative w-full h-[480px] sm:h-[580px] lg:h-[620px]">
+      {heroImages.map((src, i) => (
+        <img
+          key={i}
+          src={src}
+          alt={`Eloyo App Mockup ${i + 1}`}
+          className="absolute inset-0 w-full h-full object-contain transition-opacity duration-1000 ease-in-out"
+          style={{ opacity: activeIndex === i ? 1 : 0 }}
+        />
+      ))}
+    </div>
+  );
+};
+
 const HeroMockupWithNotifications = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [visible, setVisible] = useState(true);
@@ -91,11 +127,7 @@ const HeroMockupWithNotifications = () => {
 
   return (
     <div className="relative">
-      <img
-        src={nfcStampHero}
-        alt="Eloyo App Mockup"
-        className="w-full h-[480px] sm:h-[580px] lg:h-[620px] object-contain"
-      />
+      <HeroImageCarousel />
       {/* Overlay notification */}
       <div className="absolute inset-0 flex items-end justify-center pb-16 pointer-events-none">
         <AnimatePresence mode="wait">
