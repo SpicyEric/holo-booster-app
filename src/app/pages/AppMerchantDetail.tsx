@@ -598,7 +598,10 @@ export const AppMerchantDetail = () => {
 
       <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as MerchantTab)} className="relative h-full">
         <div ref={headerRef} className="pointer-events-none absolute inset-x-0 top-0 z-40">
-          <div className="pointer-events-auto px-4" style={{ paddingTop: 'calc(1rem + env(safe-area-inset-top, 0px))' }}>
+          {/* Solid background layer so scrolled content is fully hidden behind header */}
+          <div className="absolute inset-0 bg-background pointer-events-none" />
+
+          <div className="relative pointer-events-auto px-4" style={{ paddingTop: 'calc(1rem + env(safe-area-inset-top, 0px))' }}>
             <div ref={cardRef} className="scan-merchant-card-transition relative rounded-2xl overflow-hidden shadow-lg" style={{ aspectRatio: '1.55 / 1' }}>
               {merchant.cover_image_url ? (
                 <img src={merchant.cover_image_url} alt={merchant.name} className="w-full h-full object-cover" />
@@ -656,7 +659,7 @@ export const AppMerchantDetail = () => {
             initial={shouldAnimateFromScan ? { opacity: 0, y: 20 } : false}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: shouldAnimateFromScan ? 0.4 : 0 }}
-            className="pointer-events-auto px-4 pt-3"
+            className="relative pointer-events-auto px-4 pt-3"
           >
             <div className="rounded-2xl border border-border/50 bg-background/85 p-1 shadow-lg backdrop-blur-xl">
               <TabsList className="grid h-auto w-full grid-cols-3 gap-1 bg-transparent p-0">
@@ -667,8 +670,9 @@ export const AppMerchantDetail = () => {
             </div>
           </motion.div>
 
-          <div className="pointer-events-none px-4">
-            <div className="h-10 bg-gradient-to-b from-background via-background/90 to-transparent" />
+          {/* Fade-out gradient at the bottom edge of header */}
+          <div className="relative pointer-events-none px-4">
+            <div className="h-6 bg-gradient-to-b from-background to-transparent" />
           </div>
         </div>
 
