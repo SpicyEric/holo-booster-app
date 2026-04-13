@@ -89,7 +89,7 @@ function resolveNativeNfcPluginName(): NativeNfcPluginName {
   return 'Nfc';
 }
 
-async function getNfcPlugin(): Promise<NfcPlugin> {
+function getNfcPlugin(): NfcPlugin {
   if (_nfcPlugin) return _nfcPlugin;
 
   const pluginName = resolveNativeNfcPluginName();
@@ -127,7 +127,7 @@ class NfcService {
         return true;
       }
       try {
-        const Nfc = await getNfcPlugin();
+        const Nfc = getNfcPlugin();
         const result = await Promise.race([
           Nfc.isSupported(),
           new Promise<NfcSupportedResult>((resolve) => setTimeout(() => {
@@ -165,7 +165,7 @@ class NfcService {
 
     if (platform === 'android') {
       try {
-        const Nfc = await getNfcPlugin();
+        const Nfc = getNfcPlugin();
         const result = await Promise.race([
           Nfc.isEnabled(),
           new Promise<{ isEnabled: boolean }>((resolve) => setTimeout(() => {
@@ -204,7 +204,7 @@ class NfcService {
     }
 
     try {
-      const Nfc = await getNfcPlugin();
+      const Nfc = getNfcPlugin();
       if (typeof Nfc.openSettings === 'function') {
         await Nfc.openSettings();
         console.log('[NFC] Opened NFC settings via Capawesome');
@@ -250,11 +250,11 @@ class NfcService {
   private async cleanupPreviousScan(): Promise<void> {
     await this.removeNativeListeners();
     try {
-      const Nfc = await getNfcPlugin();
+      const Nfc = getNfcPlugin();
       await Nfc.stopScanSession();
     } catch {}
     try {
-      const Nfc = await getNfcPlugin();
+      const Nfc = getNfcPlugin();
       await Nfc.removeAllListeners();
     } catch {}
   }
@@ -350,7 +350,7 @@ class NfcService {
   private async startNativeScan(onRead: NfcReadCallback): Promise<void> {
     try {
       console.log('[NFC] Setting up Capawesome NFC listener');
-      const Nfc = await getNfcPlugin();
+      const Nfc = getNfcPlugin();
 
       this.scanStartedAt = Date.now();
 
@@ -565,7 +565,7 @@ class NfcService {
     await this.removeNativeListeners();
 
     try {
-      const Nfc = await getNfcPlugin();
+      const Nfc = getNfcPlugin();
       await Nfc.stopScanSession();
       console.log('[NFC] Scan session stopped');
     } catch (error) {
