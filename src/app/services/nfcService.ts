@@ -89,7 +89,7 @@ function resolveNativeNfcPluginName(): NativeNfcPluginName {
   return 'Nfc';
 }
 
-async function getNfcPlugin(): Promise<NfcPlugin> {
+function getNfcPlugin(): NfcPlugin {
   if (_nfcPlugin) return _nfcPlugin;
 
   const pluginName = resolveNativeNfcPluginName();
