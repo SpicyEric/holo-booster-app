@@ -583,16 +583,18 @@ export const AppMerchantDetail = () => {
 
       {showPointsBubble && pointsAnimation && (
         <motion.div
-          initial={{ scale: 0.72, opacity: 0, x: 0, y: 0 }}
-          animate={{ scale: 0.2, opacity: 0, x: pointsAnimation.deltaX, y: pointsAnimation.deltaY }}
-          transition={{ duration: 0.76, ease: [0.22, 1, 0.36, 1] }}
-          className="pointer-events-none fixed z-[70] flex h-28 w-28 items-center justify-center rounded-full border border-border/60 bg-background/45 shadow-xl backdrop-blur-xl"
+          initial={{ scale: 1, opacity: 0, x: 0, y: 0 }}
+          animate={{
+            scale: [1, 1, 0.35],
+            opacity: [0, 1, 0],
+            x: [0, 0, pointsAnimation.deltaX],
+            y: [0, 0, pointsAnimation.deltaY],
+          }}
+          transition={{ duration: 0.85, times: [0, 0.25, 1], ease: [0.22, 1, 0.36, 1] }}
+          className="pointer-events-none fixed z-[70] flex h-16 w-16 items-center justify-center rounded-full bg-primary shadow-lg shadow-primary/40"
           style={{ left: pointsAnimation.startX, top: pointsAnimation.startY, transform: 'translate(-50%, -50%)' }}
         >
-          <div className="text-center">
-            <p className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">Plus</p>
-            <p className="text-2xl font-bold text-foreground">+{scanAwardedPoints}</p>
-          </div>
+          <span className="text-lg font-bold text-primary-foreground">+{scanAwardedPoints}</span>
         </motion.div>
       )}
 
