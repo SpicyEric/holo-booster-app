@@ -365,14 +365,14 @@ export const AppMerchantDetail = () => {
           <Button
             variant="ghost"
             size="icon"
-            className="absolute top-3 left-3 z-10 bg-black/40 text-white hover:bg-black/60 backdrop-blur-sm"
+            className="absolute top-3 left-3 z-10 bg-black/40 text-white hover:bg-black/60 backdrop-blur-sm rounded-xl"
             onClick={() => navigate(-1)}
           >
             <ArrowLeft className="h-5 w-5" />
           </Button>
 
           {/* Points badge – top right on the card */}
-          <div className="absolute top-3 right-3 z-10 bg-white/80 backdrop-blur-sm rounded-full px-3 py-1 shadow-md">
+          <div className="absolute top-3 right-3 z-10 bg-white/60 backdrop-blur-md rounded-full px-3 py-1 shadow-md">
             <span className="font-bold text-primary">{userPoints}</span>
             <span className="text-sm text-muted-foreground ml-1">Punkte</span>
           </div>
