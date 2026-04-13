@@ -104,12 +104,24 @@ class NfcService {
     if (platform === 'android') {
       try {
         const Nfc = await getNfcPlugin();
-        const result = await Nfc.isEnabled();
+        const result = await Promise.race([
+          Nfc.isEnabled(),
+          new Promise<{ isEnabled: boolean }>((resolve) => setTimeout(() => {
+            console.warn('[NFC] isEnabled timed out, assuming enabled on native platform');
+            resolve({ isEnabled: true });
+          }, 2500)),
+        ]);
         console.log('[NFC] isEnabled result:', result);
-        return result?.isEnabled === true;
+
+        if (typeof result?.isEnabled === 'boolean') {
+          return result.isEnabled;
+        }
+
+        console.warn('[NFC] isEnabled returned an unexpected result, assuming enabled on native platform');
+        return true;
       } catch (error) {
-        console.log('[NFC] isEnabled check failed:', error);
-        return false;
+        console.log('[NFC] isEnabled check failed, assuming enabled on native platform:', error);
+        return true;
       }
     }
 

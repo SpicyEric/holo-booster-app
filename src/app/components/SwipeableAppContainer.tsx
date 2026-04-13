@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState, useRef } from 'react';
+import { Capacitor } from '@capacitor/core';
 import useEmblaCarousel from 'embla-carousel-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Store, Gift, MessageSquare, Mail, Bell, MapPin, Search, User, History, LogOut, Shield, FileText, HelpCircle, ChevronRight, Sparkles, AlertCircle, TrendingUp, Trophy, Loader2, Heart } from 'lucide-react';
@@ -12,7 +13,7 @@ import { Input } from '@/components/ui/input';
 import { TopBar } from './layout/TopBar';
 import { BottomNav } from './layout/BottomNav';
 import Particles from '@/components/Particles';
-import { getCurrentLocation } from '@/app/services/geolocationService';
+import { checkLocationPermission, getCurrentLocation } from '@/app/services/geolocationService';
 import { toast } from 'sonner';
 import { usePushNotifications } from '@/app/hooks/usePushNotifications';
 import { useMessageNotifications } from '@/app/hooks/useMessageNotifications';
@@ -207,11 +208,28 @@ const AppHomeContent = () => {
   
 
   useEffect(() => {
-    navigator.geolocation?.getCurrentPosition(
-      (pos) => setUserLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
-      () => {},
-      { timeout: 5000, maximumAge: 60000 }
-    );
+    const loadInitialLocation = async () => {
+      try {
+        if (Capacitor.isNativePlatform()) {
+          const permission = await checkLocationPermission();
+          if (permission.location !== 'granted') return;
+
+          const location = await getCurrentLocation();
+          setUserLocation({ lat: location.latitude, lng: location.longitude });
+          return;
+        }
+
+        navigator.geolocation?.getCurrentPosition(
+          (pos) => setUserLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+          () => {},
+          { timeout: 5000, maximumAge: 60000 }
+        );
+      } catch {
+        // Standort ist optional für den Feed.
+      }
+    };
+
+    void loadInitialLocation();
   }, []);
 
   useEffect(() => {
