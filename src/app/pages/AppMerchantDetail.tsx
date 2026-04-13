@@ -680,7 +680,7 @@ export const AppMerchantDetail = () => {
           <div
             className="h-full overflow-y-auto px-4 overflow-x-hidden"
             style={{
-              paddingTop: headerHeight ? `${Math.max(headerHeight - 12, 0)}px` : '0px',
+              paddingTop: headerHeight ? `${headerHeight}px` : '0px',
               paddingBottom: 'calc(8rem + env(safe-area-inset-bottom, 0px))',
               overscrollBehavior: 'none',
               WebkitOverflowScrolling: 'touch',
