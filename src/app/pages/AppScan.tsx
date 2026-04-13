@@ -676,9 +676,6 @@ export const AppScan = () => {
                 )}
               </div>
 
-              <div className="absolute bottom-3 left-4 right-4">
-                <p className="text-white/80 text-sm font-medium drop-shadow-sm">Punkte sammeln</p>
-              </div>
             </div>
 
             {/* ── BACK: Merchant image card ── */}
