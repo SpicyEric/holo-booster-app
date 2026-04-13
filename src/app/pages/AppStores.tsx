@@ -251,23 +251,20 @@ export default function AppStores() {
               <p className="text-muted-foreground">Keine Stores gefunden</p>
             </Card>
           ) : (
-            <div className="space-y-0 pb-32">
+            <div style={{ paddingBottom: '8rem' }}>
               {stores.map((store, index) => (
                 <div
                   key={store.id}
                   style={{
                     position: 'sticky',
-                    top: `${80 + index * 12}px`,
-                    zIndex: stores.length - index,
-                    marginBottom: '-8px',
-                    transform: `scale(${1 - index * 0.02})`,
-                    transformOrigin: 'top center',
+                    top: `${64 + index * 8}px`,
+                    zIndex: index + 1,
                   }}
                 >
                   <button
                     onClick={() => window.location.href = `/app/merchant/${store.id}`}
-                    className="w-full rounded-xl overflow-hidden shadow-md text-left relative"
-                    style={{ aspectRatio: '1.55 / 1' }}
+                    className="w-full rounded-xl overflow-hidden shadow-md text-left relative block"
+                    style={{ aspectRatio: '1.55 / 1', display: 'block' }}
                   >
                     <div className="absolute inset-0">
                       {store.cover_image_url ? (
