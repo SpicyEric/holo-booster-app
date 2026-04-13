@@ -663,12 +663,28 @@ export const AppMerchantDetail = () => {
             transition={{ duration: 0.5, delay: shouldAnimateFromScan ? 0.4 : 0 }}
             className="relative pointer-events-auto px-4 pt-3"
           >
-            <div className="rounded-2xl border border-border/50 bg-background/85 p-1 shadow-lg backdrop-blur-xl">
-              <TabsList className="grid h-auto w-full grid-cols-3 gap-1 bg-transparent p-0">
-                <TabsTrigger value="rewards" className="rounded-xl py-2.5">Prämien</TabsTrigger>
-                <TabsTrigger value="info" className="rounded-xl py-2.5">Info</TabsTrigger>
-                <TabsTrigger value="transactions" className="rounded-xl py-2.5">Transaktionen</TabsTrigger>
-              </TabsList>
+            <div className="rounded-xl border border-border/50 bg-background/85 p-1 shadow-lg backdrop-blur-xl">
+              <div className="relative grid h-auto w-full grid-cols-3 gap-1">
+                {(['rewards', 'info', 'transactions'] as const).map((tab) => (
+                  <button
+                    key={tab}
+                    onClick={() => setActiveTab(tab)}
+                    className={`relative z-10 rounded-lg py-2.5 text-sm transition-colors duration-200 ${
+                      activeTab === tab ? 'text-foreground font-medium' : 'text-muted-foreground'
+                    }`}
+                  >
+                    {tab === 'rewards' ? 'Prämien' : tab === 'info' ? 'Info' : 'Transaktionen'}
+                    {activeTab === tab && (
+                      <motion.div
+                        layoutId="tab-indicator"
+                        className="absolute inset-0 rounded-lg bg-background shadow-sm"
+                        style={{ zIndex: -1 }}
+                        transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+                      />
+                    )}
+                  </button>
+                ))}
+              </div>
             </div>
           </motion.div>
 
@@ -685,7 +701,7 @@ export const AppMerchantDetail = () => {
           <div
             className="h-full overflow-y-auto px-4 overflow-x-hidden"
             style={{
-              paddingTop: headerHeight ? `${headerHeight}px` : '0px',
+              paddingTop: headerHeight ? `${headerHeight + 12}px` : '12px',
               paddingBottom: 'calc(8rem + env(safe-area-inset-bottom, 0px))',
               overscrollBehavior: 'none',
               WebkitOverflowScrolling: 'touch',
