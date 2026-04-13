@@ -345,25 +345,8 @@ export const AppMerchantDetail = () => {
       {/* Safe area shield - must be outside scroll flow */}
       <div className="fixed top-0 left-0 right-0 z-[60]" style={{ height: 'env(safe-area-inset-top, 0px)', background: 'hsl(var(--background))' }} />
 
-      {/* Fixed Back Button */}
-      <Button
-        variant="ghost"
-        size="icon"
-        className="fixed left-4 z-50 bg-black/40 text-white hover:bg-black/60 backdrop-blur-sm"
-        style={{ top: 'calc(env(safe-area-inset-top, 0px) + 0.75rem)' }}
-        onClick={() => navigate(-1)}
-      >
-        <ArrowLeft className="h-5 w-5" />
-      </Button>
-
-      {/* Fixed Points Badge - stays visible while scrolling */}
-      <div className="fixed right-4 z-50 bg-card/80 backdrop-blur-sm rounded-full px-3 py-1 shadow-md border border-border" style={{ top: 'calc(env(safe-area-inset-top, 0px) + 0.75rem)' }}>
-        <span className="font-bold text-primary">{userPoints}</span>
-        <span className="text-sm text-muted-foreground ml-1">Punkte</span>
-      </div>
-
       {/* Cover Image Card */}
-      <div className="px-4 pt-14">
+      <div className="px-4 pt-4">
         <div className="relative rounded-2xl overflow-hidden shadow-lg" style={{ aspectRatio: '16 / 9' }}>
           {merchant.cover_image_url ? (
             <img
@@ -376,19 +359,29 @@ export const AppMerchantDetail = () => {
           )}
           
           {/* Bottom gradient overlay for text readability */}
-          <div className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-black/60 via-black/30 to-transparent" />
+          <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/60 via-black/25 to-transparent" />
           
-          {/* Merchant Name & Location on the card */}
-          <div className="absolute bottom-4 left-4 right-4">
-            <h1 className="text-xl font-bold text-white drop-shadow-md">
+          {/* Back button – top left on the card */}
+          <Button
+            variant="ghost"
+            size="icon"
+            className="absolute top-3 left-3 z-10 bg-black/40 text-white hover:bg-black/60 backdrop-blur-sm"
+            onClick={() => navigate(-1)}
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
+
+          {/* Points badge – top right on the card */}
+          <div className="absolute top-3 right-3 z-10 bg-white/80 backdrop-blur-sm rounded-full px-3 py-1 shadow-md">
+            <span className="font-bold text-primary">{userPoints}</span>
+            <span className="text-sm text-muted-foreground ml-1">Punkte</span>
+          </div>
+          
+          {/* Merchant Name on the card – bottom */}
+          <div className="absolute bottom-3 left-4 right-4">
+            <h1 className="text-lg font-bold text-white drop-shadow-md">
               {merchantName}
             </h1>
-            {address && (
-              <p className="text-sm text-white/80 flex items-center gap-1 mt-0.5 drop-shadow-sm">
-                <MapPin className="h-3 w-3" />
-                {merchant.city}
-              </p>
-            )}
           </div>
         </div>
       </div>
