@@ -687,6 +687,8 @@ export const AppMerchantDetail = () => {
               overscrollBehavior: 'none',
               WebkitOverflowScrolling: 'touch',
               touchAction: 'pan-y',
+              maskImage: 'linear-gradient(to bottom, transparent 0%, black 48px, black 100%)',
+              WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 48px, black 100%)',
             }}
           >
             <TabsContent value="rewards" className="mt-0 space-y-3">
