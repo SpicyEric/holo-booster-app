@@ -169,7 +169,7 @@ const MerchantPreviewLive = ({
           <TabsTrigger value="info" className="text-xs py-1.5">Info</TabsTrigger>
         </TabsList>
 
-        <div ref={scrollContainerRef} className="flex-1 overflow-y-auto min-h-0">
+        <div ref={scrollContainerRef} className="flex-1 overflow-y-auto min-h-0" style={{ maskImage: 'linear-gradient(to bottom, transparent 0%, black 40px, black 100%)', WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 40px, black 100%)' }}>
           <TabsContent value="rewards" className="mt-2 px-3 pb-3 space-y-2">
             {rewards.length === 0 ? (
               <Card>
