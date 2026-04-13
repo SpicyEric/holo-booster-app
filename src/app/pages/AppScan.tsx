@@ -226,7 +226,7 @@ export const AppScan = () => {
   return (
     <div
       className="bg-gradient-to-b from-background to-muted/30 overflow-hidden"
-      style={{ height: '100dvh', paddingTop: topInsetOffset, paddingBottom: bottomInsetOffset }}
+      style={{ height: '100dvh', paddingBottom: bottomInsetOffset }}
     >
       <Particles
         particleColors={['#6366F1', '#8B5CF6', '#A855F7']}
@@ -243,7 +243,7 @@ export const AppScan = () => {
       <OfflineBanner />
 
       <main
-        className="container mx-auto max-w-2xl relative z-10 h-full overflow-y-auto"
+        className="relative z-10 h-full overflow-y-auto"
         style={{ overscrollBehavior: 'none', WebkitOverflowScrolling: 'touch', touchAction: 'pan-y' }}
       >
         {/* ── Purple Card ── */}
