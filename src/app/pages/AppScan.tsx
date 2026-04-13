@@ -596,7 +596,7 @@ export const AppScan = () => {
 
   return (
     <div
-      className="bg-gradient-to-b from-background to-muted/30 overflow-hidden"
+      className="bg-gradient-to-b from-background to-muted/30 overflow-visible"
       style={{ height: '100dvh', paddingBottom: bottomInsetOffset }}
     >
       <Particles
@@ -632,7 +632,7 @@ export const AppScan = () => {
           >
             {/* ── FRONT: Purple NFC card ── */}
             <div
-              className="absolute inset-0 rounded-2xl overflow-hidden bg-gradient-to-br from-primary to-secondary"
+              className="absolute inset-0 rounded-2xl bg-gradient-to-br from-primary to-secondary"
               style={{
                 backfaceVisibility: 'hidden',
                 WebkitBackfaceVisibility: 'hidden',
@@ -684,7 +684,7 @@ export const AppScan = () => {
 
             {/* ── BACK: Merchant image card ── */}
             <div
-              className="absolute inset-0 rounded-2xl overflow-hidden"
+              className="absolute inset-0 rounded-2xl"
               role="img"
               aria-label={merchantDisplayName || 'Geschäftskarte'}
               style={{
