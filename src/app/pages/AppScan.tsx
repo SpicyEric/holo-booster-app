@@ -583,12 +583,12 @@ export const AppScan = () => {
         });
       });
 
-      // After flip animation, navigate
+      // After flip animation, navigate (temporarily 3s for debugging)
       setTimeout(() => {
         console.log('[DemoScan] Flip animation done, navigating');
         setFlipPhase('navigating');
         navigateToMerchant(merchantId, { fallbackPoints: 25, state: nextTransitionState });
-      }, 900);
+      }, 3000);
 
     } catch {
       setScanning(false);
