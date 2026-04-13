@@ -643,7 +643,7 @@ export const AppScan = () => {
               style={{
                 backfaceVisibility: 'hidden',
                 WebkitBackfaceVisibility: 'hidden',
-                transform: 'translateZ(1px)',
+                zIndex: 2,
               }}
             >
               <div className="absolute inset-0 flex items-center justify-center">
@@ -698,7 +698,8 @@ export const AppScan = () => {
               style={{
                 backfaceVisibility: 'hidden',
                 WebkitBackfaceVisibility: 'hidden',
-                transform: 'rotateY(180deg) translateZ(1px)',
+                transform: 'rotateY(180deg)',
+                zIndex: 1,
                 backgroundImage: merchantImage ? `url("${merchantImage}")` : undefined,
                 backgroundPosition: 'center',
                 backgroundRepeat: 'no-repeat',
