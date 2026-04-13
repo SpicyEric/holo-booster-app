@@ -677,7 +677,7 @@ export const AppMerchantDetail = () => {
                     {activeTab === tab && (
                       <motion.div
                         layoutId="tab-indicator"
-                        className="absolute inset-0 rounded-lg bg-background shadow-sm"
+                        className="absolute inset-0 rounded-lg bg-foreground/10 shadow-md border border-border/60"
                         style={{ zIndex: -1 }}
                         transition={{ type: 'spring', stiffness: 400, damping: 30 }}
                       />
