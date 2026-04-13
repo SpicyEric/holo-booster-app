@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { MainLayout } from '@/app/components/layout/MainLayout';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
@@ -41,6 +41,12 @@ export default function AppStores() {
   const [locationLoading, setLocationLoading] = useState(false);
   const [showLocationDialog, setShowLocationDialog] = useState(false);
   const [permissionChecked, setPermissionChecked] = useState(false);
+  const [scrollY, setScrollY] = useState(0);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+
+  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    setScrollY(e.currentTarget.scrollTop);
+  };
 
   const isNative = Capacitor.isNativePlatform();
 
@@ -251,50 +257,64 @@ export default function AppStores() {
               <p className="text-muted-foreground">Keine Stores gefunden</p>
             </Card>
           ) : (
-            <div style={{ paddingBottom: '8rem' }}>
-              {stores.map((store, index) => (
-                <div
-                  key={store.id}
-                  style={{
-                    position: 'sticky',
-                    top: `${64 + index * 8}px`,
-                    zIndex: index + 1,
-                  }}
-                >
-                  <button
-                    onClick={() => window.location.href = `/app/merchant/${store.id}`}
-                    className="w-full rounded-xl overflow-hidden shadow-md text-left relative block"
-                    style={{ aspectRatio: '1.55 / 1', display: 'block' }}
+            <div
+              ref={scrollContainerRef}
+              onScroll={handleScroll}
+              style={{ paddingBottom: '8rem' }}
+            >
+              {stores.map((store, index) => {
+                const cardHeight = 200;
+                const cardOffset = index * cardHeight;
+                const distanceScrolled = Math.max(0, scrollY - cardOffset);
+                const stackScale = Math.max(0.85, 1 - index * 0.03);
+                const translateY = Math.min(0, -distanceScrolled * 0.3);
+
+                return (
+                  <div
+                    key={store.id}
+                    style={{
+                      transform: `scale(${stackScale}) translateY(${translateY}px)`,
+                      transformOrigin: 'top center',
+                      transition: 'transform 0.1s ease-out',
+                      zIndex: stores.length - index,
+                      marginBottom: '12px',
+                    }}
                   >
-                    <div className="absolute inset-0">
-                      {store.cover_image_url ? (
-                        <img src={store.cover_image_url} alt={store.name} className="w-full h-full object-cover" />
-                      ) : (
-                        <div className="w-full h-full bg-gradient-to-br from-purple-500 to-blue-500" />
-                      )}
-                    </div>
-                    <div className="absolute top-3 left-3 z-20 w-12 h-12 rounded-full bg-primary border-2 border-card shadow-lg flex items-center justify-center overflow-hidden">
-                      {store.logo_url ? (
-                        <img src={store.logo_url} alt={`${store.name} Logo`} className="w-full h-full object-cover" />
-                      ) : (
-                        <span className="text-lg font-bold text-white">{store.name?.charAt(0)?.toUpperCase() || '?'}</span>
-                      )}
-                    </div>
-                    {store.distance !== undefined && (
-                      <div className="absolute top-3 right-3 z-20">
-                        <span className="bg-card/95 backdrop-blur-sm text-foreground text-xs font-medium px-2 py-1 rounded-full shadow-sm">
-                          {store.distance < 1 ? `${Math.round(store.distance * 1000)}m` : `${store.distance.toFixed(1)}km`}
-                        </span>
+                    <button
+                      onClick={() => window.location.href = `/app/merchant/${store.id}`}
+                      className="w-full rounded-xl overflow-hidden shadow-md text-left relative block"
+                      style={{ aspectRatio: '1.55 / 1', display: 'block' }}
+                    >
+                      <div className="absolute inset-0">
+                        {store.cover_image_url ? (
+                          <img src={store.cover_image_url} alt={store.name} className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="w-full h-full bg-gradient-to-br from-purple-500 to-blue-500" />
+                        )}
                       </div>
-                    )}
-                    <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/70 via-black/40 to-transparent" />
-                    <div className="absolute bottom-3 left-3 right-3 z-10">
-                      <h3 className="text-white font-semibold text-xl truncate drop-shadow-md">{store.name}</h3>
-                      {store.category && <p className="text-white/80 text-sm truncate drop-shadow-md">{store.category}</p>}
-                    </div>
-                  </button>
-                </div>
-              ))}
+                      <div className="absolute top-3 left-3 z-20 w-12 h-12 rounded-full bg-primary border-2 border-card shadow-lg flex items-center justify-center overflow-hidden">
+                        {store.logo_url ? (
+                          <img src={store.logo_url} alt={`${store.name} Logo`} className="w-full h-full object-cover" />
+                        ) : (
+                          <span className="text-lg font-bold text-white">{store.name?.charAt(0)?.toUpperCase() || '?'}</span>
+                        )}
+                      </div>
+                      {store.distance !== undefined && (
+                        <div className="absolute top-3 right-3 z-20">
+                          <span className="bg-card/95 backdrop-blur-sm text-foreground text-xs font-medium px-2 py-1 rounded-full shadow-sm">
+                            {store.distance < 1 ? `${Math.round(store.distance * 1000)}m` : `${store.distance.toFixed(1)}km`}
+                          </span>
+                        </div>
+                      )}
+                      <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/70 via-black/40 to-transparent" />
+                      <div className="absolute bottom-3 left-3 right-3 z-10">
+                        <h3 className="text-white font-semibold text-xl truncate drop-shadow-md">{store.name}</h3>
+                        {store.category && <p className="text-white/80 text-sm truncate drop-shadow-md">{store.category}</p>}
+                      </div>
+                    </button>
+                  </div>
+                );
+              })}
             </div>
           )}
         </TabsContent>
