@@ -584,7 +584,7 @@ export const AppMerchantDetail = () => {
   }
 
   return (
-    <div className="bg-background overflow-hidden" style={{ height: '100dvh' }}>
+    <div className="bg-background overflow-hidden" style={{ height: '100dvh', overscrollBehavior: 'none', touchAction: 'pan-y' }}>
       <div className="fixed top-0 left-0 right-0 z-[60]" style={{ height: 'env(safe-area-inset-top, 0px)', background: 'hsl(var(--background))' }} />
 
       {showPointsBubble && pointsAnimation && (
@@ -609,7 +609,7 @@ export const AppMerchantDetail = () => {
           {/* Solid background layer so scrolled content is fully hidden behind header */}
           <div className="absolute inset-0 bg-background pointer-events-none" />
 
-          <div className="relative pointer-events-none px-4" style={{ paddingTop: '1rem' }}>
+          <div className="relative pointer-events-none px-4 pt-4" style={{ touchAction: 'none' }}>
             <div ref={cardRef} className="scan-merchant-card-transition relative rounded-2xl overflow-hidden shadow-lg" style={{ aspectRatio: '1.55 / 1' }}>
               {merchant.cover_image_url ? (
                 <img src={merchant.cover_image_url} alt={merchant.name} className="w-full h-full object-cover" />
@@ -623,7 +623,7 @@ export const AppMerchantDetail = () => {
                 initial={shouldAnimateFromScan ? { opacity: 0 } : false}
                 animate={{ opacity: 1 }}
                 transition={{ duration: 0.4, delay: shouldAnimateFromScan ? 0.2 : 0 }}
-                className="absolute top-3 left-3 z-10"
+                className="absolute top-3 left-3 z-10 pointer-events-auto"
               >
                 <Button
                   variant="ghost"
@@ -668,6 +668,7 @@ export const AppMerchantDetail = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: shouldAnimateFromScan ? 0.4 : 0 }}
             className="relative pointer-events-none px-4 pt-3"
+            style={{ touchAction: 'none' }}
           >
             <div className="rounded-xl border border-border/50 bg-background/85 p-1 shadow-lg backdrop-blur-xl">
               <div className="relative grid h-auto w-full grid-cols-3 gap-1">
