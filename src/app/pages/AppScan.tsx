@@ -416,9 +416,9 @@ export const AppScan = () => {
                 </h1>
               </div>
               {result?.points && (
-                <div className="absolute top-3 right-3 z-10 bg-white/60 backdrop-blur-md rounded-full px-3 py-1 shadow-md">
-                  <span className="font-bold text-primary">+{result.points}</span>
-                  <span className="text-sm text-muted-foreground ml-1">Punkte</span>
+                <div className="absolute top-3 right-3 z-10 bg-black/40 backdrop-blur-sm rounded-xl px-3 py-1.5 shadow-md">
+                  <span className="font-bold text-white">+{result.points}</span>
+                  <span className="text-sm text-white/80 ml-1">Punkte</span>
                 </div>
               )}
             </div>
