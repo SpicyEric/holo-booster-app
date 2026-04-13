@@ -584,11 +584,13 @@ export const AppMerchantDetail = () => {
       {showPointsBubble && pointsAnimation && (
         <motion.div
           initial={{ scale: 1, opacity: 0, x: 0, y: 0 }}
-          animate={[
-            { scale: 1, opacity: 1, x: 0, y: 0 },
-            { scale: 0.35, opacity: 0, x: pointsAnimation.deltaX, y: pointsAnimation.deltaY },
-          ]}
-          transition={{ duration: 0.85, times: [0.25, 1], ease: [0.22, 1, 0.36, 1] }}
+          animate={{
+            scale: [1, 1, 0.35],
+            opacity: [0, 1, 0],
+            x: [0, 0, pointsAnimation.deltaX],
+            y: [0, 0, pointsAnimation.deltaY],
+          }}
+          transition={{ duration: 0.85, times: [0, 0.25, 1], ease: [0.22, 1, 0.36, 1] }}
           className="pointer-events-none fixed z-[70] flex h-16 w-16 items-center justify-center rounded-full bg-primary shadow-lg shadow-primary/40"
           style={{ left: pointsAnimation.startX, top: pointsAnimation.startY, transform: 'translate(-50%, -50%)' }}
         >
