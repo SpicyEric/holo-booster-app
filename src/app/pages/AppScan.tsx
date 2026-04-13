@@ -573,7 +573,7 @@ export const AppScan = () => {
       setTransitionState(nextTransitionState);
       updatePreparingFlip(false);
 
-      // Arm → next frame → flip
+      // Arm → next frame → flip (navigation handled by the useEffect on flipPhase)
       console.log('[DemoScan] Setting flipPhase to armed');
       setFlipPhase('armed');
       requestAnimationFrame(() => {
@@ -582,13 +582,6 @@ export const AppScan = () => {
           setFlipPhase('flipping');
         });
       });
-
-      // After flip animation, navigate (temporarily 3s for debugging)
-      setTimeout(() => {
-        console.log('[DemoScan] Flip animation done, navigating');
-        setFlipPhase('navigating');
-        navigateToMerchant(merchantId, { fallbackPoints: 25, state: nextTransitionState });
-      }, 3000);
 
     } catch {
       setScanning(false);
