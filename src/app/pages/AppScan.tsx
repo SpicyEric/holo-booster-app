@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Nfc, XCircle, Settings, WifiOff } from 'lucide-react';
@@ -74,9 +74,106 @@ export const AppScan = () => {
   const [showPermissionDialog, setShowPermissionDialog] = useState(false);
   const [permissionDialogType, setPermissionDialogType] = useState<'disabled' | 'permission_denied'>('disabled');
   const [flipPhase, setFlipPhase] = useState<FlipPhase>('idle');
+  const [preparingFlip, setPreparingFlip] = useState(false);
+  const preparingFlipRef = useRef(false);
   const [merchantImage, setMerchantImage] = useState<string | null>(null);
   const [merchantDisplayName, setMerchantDisplayName] = useState<string>('');
   const [transitionState, setTransitionState] = useState<MerchantTransitionState | null>(null);
+
+  const updatePreparingFlip = useCallback((value: boolean) => {
+    preparingFlipRef.current = value;
+    setPreparingFlip(value);
+  }, []);
+
+  const resetTransitionState = useCallback(() => {
+    setFlipPhase('idle');
+    updatePreparingFlip(false);
+    setResult(null);
+    setMerchantImage(null);
+    setMerchantDisplayName('');
+    setTransitionState(null);
+  }, [updatePreparingFlip]);
+
+  const navigateToMerchant = useCallback((
+    merchantCustomerId: string,
+    options?: {
+      fallbackPoints?: number;
+      state?: MerchantTransitionState | null;
+    },
+  ) => {
+    const performNavigation = () => {
+      navigate(`/app/merchant/${merchantCustomerId}`, {
+        replace: true,
+        state: options?.state ?? {
+          fromScan: true,
+          initialUserPoints: options?.fallbackPoints ?? 0,
+        },
+      });
+    };
+
+    const transitionDocument = document as Document & {
+      startViewTransition?: (callback: () => void) => void;
+    };
+
+    if (transitionDocument.startViewTransition) {
+      transitionDocument.startViewTransition(() => {
+        performNavigation();
+      });
+    } else {
+      performNavigation();
+    }
+
+    window.setTimeout(() => {
+      resetTransitionState();
+    }, 100);
+  }, [navigate, resetTransitionState]);
+
+  const preloadMerchantImage = useCallback(async (imageUrl: string | null) => {
+    if (!imageUrl) return null;
+
+    const isLoaded = await new Promise<boolean>((resolve) => {
+      const img = new Image();
+      let settled = false;
+
+      const finalize = (loaded: boolean) => {
+        if (settled) return;
+        settled = true;
+        window.clearTimeout(timeoutId);
+        resolve(loaded);
+      };
+
+      const finishLoad = async () => {
+        try {
+          if (typeof img.decode === 'function') {
+            await img.decode();
+          }
+        } catch {
+          // Ignore decode issues and use the already loaded bitmap.
+        }
+
+        finalize(true);
+      };
+
+      const timeoutId = window.setTimeout(() => {
+        finalize(img.complete && img.naturalWidth > 0);
+      }, 8000);
+
+      img.onload = () => {
+        void finishLoad();
+      };
+      img.onerror = () => finalize(false);
+
+      const priorityImage = img as HTMLImageElement & { fetchPriority?: 'high' | 'low' | 'auto' };
+      priorityImage.fetchPriority = 'high';
+      img.src = imageUrl;
+
+      if (img.complete && img.naturalWidth > 0) {
+        void finishLoad();
+      }
+    });
+
+    return isLoaded ? imageUrl : null;
+  }, []);
 
   useEffect(() => {
     const checkNfcSupport = async () => {
@@ -108,8 +205,12 @@ export const AppScan = () => {
 
   // Trigger flip animation when we get a successful online result
   useEffect(() => {
-    if (result?.success && !result.isOffline && result.merchantCustomerId && flipPhase === 'idle') {
+    if (result?.success && !result.isOffline && result.merchantCustomerId && flipPhase === 'idle' && !preparingFlipRef.current) {
+      let cancelled = false;
+
       const fetchAndFlip = async () => {
+        updatePreparingFlip(true);
+
         try {
           const [merchantResponse, rewardsResponse] = await Promise.allSettled([
             supabase
@@ -132,47 +233,74 @@ export const AppScan = () => {
             ? rewardsResponse.value.data ?? []
             : [];
 
+          if (cancelled) return;
+
           if (merchant) {
             const displayName = merchant.company_name || merchant.name || result.merchantName || 'Händler';
+            const coverUrl = await preloadMerchantImage(merchant.cover_image_url || null);
 
-            // Preload the cover image before flipping so it's visible immediately
-            const coverUrl = merchant.cover_image_url || null;
-            if (coverUrl) {
-              await new Promise<void>((resolve) => {
-                const img = new Image();
-                img.onload = () => resolve();
-                img.onerror = () => resolve();
-                img.src = coverUrl;
-                // Fallback timeout in case load event never fires
-                setTimeout(resolve, 2000);
-              });
-            }
+            if (cancelled) return;
 
-            setMerchantImage(coverUrl);
             setMerchantDisplayName(displayName);
-            setTransitionState({
+            const nextTransitionState = {
               fromScan: true,
               initialMerchant: merchant,
               initialRewards: rewards,
               initialUserPoints: result.totalPoints ?? 0,
+            } satisfies MerchantTransitionState;
+            setTransitionState(nextTransitionState);
+
+            if (!coverUrl) {
+              setMerchantImage(null);
+              updatePreparingFlip(false);
+              navigateToMerchant(result.merchantCustomerId, {
+                fallbackPoints: result.totalPoints ?? 0,
+                state: nextTransitionState,
+              });
+              return;
+            }
+
+            setMerchantImage(coverUrl);
+
+            requestAnimationFrame(() => {
+              requestAnimationFrame(() => {
+                if (cancelled) return;
+                updatePreparingFlip(false);
+                setFlipPhase('flipping');
+              });
             });
           } else {
             setMerchantImage(null);
             setMerchantDisplayName(result.merchantName || 'Händler');
             setTransitionState(null);
+
+            updatePreparingFlip(false);
+            navigateToMerchant(result.merchantCustomerId, {
+              fallbackPoints: result.totalPoints ?? 0,
+            });
+            return;
           }
         } catch {
+          if (cancelled) return;
+
           setMerchantImage(null);
           setMerchantDisplayName(result.merchantName || 'Händler');
           setTransitionState(null);
+          updatePreparingFlip(false);
+          navigateToMerchant(result.merchantCustomerId, {
+            fallbackPoints: result.totalPoints ?? 0,
+          });
+          return;
         }
-
-        setFlipPhase('flipping');
       };
 
       fetchAndFlip();
+
+      return () => {
+        cancelled = true;
+      };
     }
-  }, [flipPhase, result]);
+  }, [flipPhase, navigateToMerchant, preloadMerchantImage, result, updatePreparingFlip]);
 
   // After flip completes, navigate to the real merchant page
   useEffect(() => {
@@ -181,41 +309,16 @@ export const AppScan = () => {
         setFlipPhase('navigating');
 
         if (result?.merchantCustomerId) {
-          const performNavigation = () => {
-            navigate(`/app/merchant/${result.merchantCustomerId}`, {
-              replace: true,
-              state: transitionState ?? {
-                fromScan: true,
-                initialUserPoints: result.totalPoints ?? 0,
-              },
-            });
-          };
-
-          const transitionDocument = document as Document & {
-            startViewTransition?: (callback: () => void) => void;
-          };
-
-          if (transitionDocument.startViewTransition) {
-            transitionDocument.startViewTransition(() => {
-              performNavigation();
-            });
-          } else {
-            performNavigation();
-          }
+          navigateToMerchant(result.merchantCustomerId, {
+            fallbackPoints: result.totalPoints ?? 0,
+            state: transitionState,
+          });
         }
-
-        setTimeout(() => {
-          setFlipPhase('idle');
-          setResult(null);
-          setMerchantImage(null);
-          setMerchantDisplayName('');
-          setTransitionState(null);
-        }, 100);
       }, 900);
 
       return () => clearTimeout(timer);
     }
-  }, [flipPhase, navigate, result, transitionState]);
+  }, [flipPhase, navigateToMerchant, result, transitionState]);
 
   const handleChipScan = useCallback(async (hardwareUid: string) => {
     let currentUserId = user?.id;
@@ -236,6 +339,7 @@ export const AppScan = () => {
     setScanning(true);
     setResult(null);
     setFlipPhase('idle');
+    updatePreparingFlip(false);
     setTransitionState(null);
 
     if (!navigator.onLine) {
@@ -324,6 +428,7 @@ export const AppScan = () => {
     setScanning(true);
     setResult(null);
     setFlipPhase('idle');
+    updatePreparingFlip(false);
     setTransitionState(null);
     try {
       await nfcService.startScan(handleNfcRead);
@@ -358,6 +463,7 @@ export const AppScan = () => {
   const cancelScan = () => {
     nfcService.stopScan();
     setScanning(false);
+    updatePreparingFlip(false);
   };
 
   // ── DEMO: Simulate a successful scan ──
@@ -365,6 +471,7 @@ export const AppScan = () => {
     setScanning(true);
     setResult(null);
     setFlipPhase('idle');
+    updatePreparingFlip(false);
     setTransitionState(null);
 
     try {
@@ -447,7 +554,7 @@ export const AppScan = () => {
               style={{ backfaceVisibility: 'hidden' }}
             >
               <div className="absolute inset-0 flex items-center justify-center">
-                {(checkingNfc || scanning) && (
+                {(checkingNfc || scanning || preparingFlip) && (
                   <motion.div
                     animate={{ scale: [1, 1.15, 1], opacity: [0.5, 1, 0.5] }}
                     transition={{ repeat: Infinity, duration: 2, ease: 'easeInOut' }}
@@ -463,7 +570,7 @@ export const AppScan = () => {
                   </motion.div>
                 )}
 
-                {(isIdle || isNfcUnavailable || isNfcDisabled) && !scanning && (
+                {(isIdle || isNfcUnavailable || isNfcDisabled) && !scanning && !preparingFlip && (
                   <motion.div
                     animate={{ scale: [1, 1.05, 1], opacity: [0.6, 0.9, 0.6] }}
                     transition={{ repeat: Infinity, duration: 3, ease: 'easeInOut' }}
@@ -499,6 +606,8 @@ export const AppScan = () => {
                 <img
                   src={merchantImage}
                   alt={merchantDisplayName}
+                  decoding="sync"
+                  fetchPriority="high"
                   className="w-full h-full object-cover"
                 />
               ) : (
@@ -563,6 +672,15 @@ export const AppScan = () => {
                   Halte jetzt die obere Rückseite deines Handys an den Eloyo-Stempel
                 </p>
                 <Button variant="outline" onClick={cancelScan}>Abbrechen</Button>
+              </motion.div>
+            )}
+
+            {preparingFlip && result?.success && !result.isOffline && flipPhase === 'idle' && (
+              <motion.div key="preparing-flip" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="text-center space-y-3">
+                <h2 className="text-xl font-bold">Geschäft wird geladen</h2>
+                <p className="text-muted-foreground text-sm max-w-xs mx-auto">
+                  Wir bereiten gerade das Ladenbild vor, dann dreht sich die Karte sauber weiter.
+                </p>
               </motion.div>
             )}
 
