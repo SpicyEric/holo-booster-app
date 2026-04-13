@@ -623,7 +623,7 @@ export const AppMerchantDetail = () => {
                   variant="ghost"
                   size="icon"
                   className="bg-black/40 text-white hover:bg-black/60 backdrop-blur-sm rounded-xl"
-                  onClick={() => navigate('/app/scan')}
+                  onClick={() => navigate('/app/stores')}
                 >
                   <ArrowLeft className="h-5 w-5" />
                 </Button>
