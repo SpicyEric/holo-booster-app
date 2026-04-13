@@ -218,27 +218,29 @@ export default function AppStores() {
   return (
     <MainLayout title="Stores">
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <div className="rounded-xl border border-border/50 bg-background/85 p-1 shadow-lg backdrop-blur-xl">
-          <div className="relative grid w-full grid-cols-2 gap-1">
-            {(['list', 'map'] as const).map((tab) => (
-              <button
-                key={tab}
-                onClick={() => setActiveTab(tab)}
-                className={`relative z-10 rounded-lg py-2.5 text-sm transition-colors duration-200 ${
-                  activeTab === tab ? 'text-foreground font-medium' : 'text-muted-foreground'
-                }`}
-              >
-                {tab === 'list' ? 'Liste' : 'Karte'}
-                {activeTab === tab && (
-                  <motion.div
-                    layoutId="stores-tab-indicator"
-                    className="absolute inset-0 rounded-lg bg-foreground/10 shadow-md border border-border/60"
-                    style={{ zIndex: -1 }}
-                    transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-                  />
-                )}
-              </button>
-            ))}
+        <div className="sticky top-0 z-20 bg-background pb-3">
+          <div className="rounded-xl border border-border/50 bg-background/85 p-1 shadow-lg backdrop-blur-xl">
+            <div className="relative grid w-full grid-cols-2 gap-1">
+              {(['list', 'map'] as const).map((tab) => (
+                <button
+                  key={tab}
+                  onClick={() => setActiveTab(tab)}
+                  className={`relative z-10 rounded-lg py-2.5 text-sm transition-colors duration-200 ${
+                    activeTab === tab ? 'text-foreground font-medium' : 'text-muted-foreground'
+                  }`}
+                >
+                  {tab === 'list' ? 'Liste' : 'Karte'}
+                  {activeTab === tab && (
+                    <motion.div
+                      layoutId="stores-tab-indicator"
+                      className="absolute inset-0 rounded-lg bg-foreground/10 shadow-md border border-border/60"
+                      style={{ zIndex: -1 }}
+                      transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+                    />
+                  )}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
 
