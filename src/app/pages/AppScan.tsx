@@ -347,6 +347,7 @@ export const AppScan = () => {
       }
     }
     if (!currentUserId) {
+      console.log('[AppScan] No user ID found, aborting');
       toast.error('Session konnte nicht geladen werden. Bitte versuche es erneut.');
       setScanning(false);
       return;
@@ -381,6 +382,7 @@ export const AppScan = () => {
         p_hardware_uid: hardwareUid,
         p_user_id: currentUserId,
       });
+      console.log('[AppScan] RPC result:', JSON.stringify(data), 'error:', error);
       if (error) throw error;
       const response = data as { success: boolean; points_awarded?: number; total_points?: number; merchant_customer_id?: string; merchant_name?: string; error?: string; error_code?: string; };
 
