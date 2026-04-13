@@ -2,7 +2,7 @@
 // The actual package is installed locally via .npmrc token and loaded dynamically at runtime.
 
 export interface NfcPlugin {
-  isSupported(): Promise<{ isSupported: boolean }>;
+  isSupported(): Promise<{ nfc?: boolean; isSupported?: boolean }>;
   isEnabled(): Promise<{ isEnabled: boolean }>;
   openSettings(): Promise<void>;
   startScanSession(options?: { alertMessage?: string }): Promise<void>;

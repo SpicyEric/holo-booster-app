@@ -43,6 +43,7 @@ let _nfcPlugin: NfcPlugin | null = null;
 const NFC_PLUGIN_NAME_CANDIDATES = ['Nfc', 'CapacitorNfc', 'CapacitorNFC', 'NFC'] as const;
 
 type NativeNfcPluginName = (typeof NFC_PLUGIN_NAME_CANDIDATES)[number];
+type NfcSupportedResult = { nfc?: boolean; isSupported?: boolean };
 
 const getErrorText = (rawError: unknown): string => {
   if (typeof rawError === 'string') return rawError;
@@ -61,7 +62,13 @@ const isMissingNativePluginError = (rawError: unknown): boolean => {
   );
 };
 
-function resolveNativeNfcPluginName(): NativeNfcPluginName | null {
+const parseSupportedResult = (result: NfcSupportedResult | null | undefined): boolean | null => {
+  if (typeof result?.nfc === 'boolean') return result.nfc;
+  if (typeof result?.isSupported === 'boolean') return result.isSupported;
+  return null;
+};
+
+function resolveNativeNfcPluginName(): NativeNfcPluginName {
   const pluginHeaders = ((window as any)?.Capacitor?.PluginHeaders || []) as Array<{ name?: string }>;
 
   for (const pluginName of NFC_PLUGIN_NAME_CANDIDATES) {
@@ -78,22 +85,14 @@ function resolveNativeNfcPluginName(): NativeNfcPluginName | null {
     }
   }
 
-  return null;
+  console.warn('[NFC] No native NFC plugin header reported, falling back to default plugin name: Nfc');
+  return 'Nfc';
 }
 
 async function getNfcPlugin(): Promise<NfcPlugin> {
   if (_nfcPlugin) return _nfcPlugin;
 
   const pluginName = resolveNativeNfcPluginName();
-
-  if (!pluginName) {
-    const availablePluginHeaders = (((window as any)?.Capacitor?.PluginHeaders || []) as Array<{ name?: string }>)
-      .map((header) => header?.name)
-      .filter(Boolean);
-
-    console.error('[NFC] Native NFC plugin header not found. Available plugin headers:', availablePluginHeaders);
-    throw new Error('NFC plugin not available');
-  }
 
   try {
     _nfcPlugin = registerPlugin<NfcPlugin>(pluginName);
@@ -131,13 +130,20 @@ class NfcService {
         const Nfc = await getNfcPlugin();
         const result = await Promise.race([
           Nfc.isSupported(),
-          new Promise<{ isSupported: boolean }>((resolve) => setTimeout(() => {
+          new Promise<NfcSupportedResult>((resolve) => setTimeout(() => {
             console.warn('[NFC] isSupported timed out, assuming supported on native platform');
-            resolve({ isSupported: true });
+            resolve({ nfc: true });
           }, 3000)),
         ]);
         console.log('[NFC] isSupported result:', result);
-        return result?.isSupported === true;
+
+        const supported = parseSupportedResult(result);
+        if (supported !== null) {
+          return supported;
+        }
+
+        console.warn('[NFC] isSupported returned an unexpected result, assuming supported on native platform');
+        return true;
       } catch (error) {
         console.log('[NFC] isSupported check failed:', error);
 
@@ -149,9 +155,9 @@ class NfcService {
         console.log('[NFC] Assuming supported on native platform despite error');
         return true;
       }
-    } else {
-      return 'NDEFReader' in window;
     }
+
+    return 'NDEFReader' in window;
   }
 
   async isEnabled(): Promise<boolean> {
