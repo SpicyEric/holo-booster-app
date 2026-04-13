@@ -220,7 +220,6 @@ export const AppScan = () => {
   const isNfcDisabled = !checkingNfc && nfcSupported && !nfcEnabled;
   const isIdle = !checkingNfc && nfcSupported && nfcEnabled && !scanning && !result;
 
-  const topInsetOffset = 'calc(0.25rem + env(safe-area-inset-top, 0px))';
   const bottomInsetOffset = 'calc(7rem + env(safe-area-inset-bottom, 0px))';
 
   return (
