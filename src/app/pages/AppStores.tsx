@@ -218,7 +218,7 @@ export default function AppStores() {
   return (
     <MainLayout title="Stores">
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <div className="sticky top-0 z-20 bg-background pb-3">
+        <div className="sticky top-0 z-10 bg-background pb-3 pt-1">
           <div className="rounded-xl border border-border/50 bg-background/85 p-1 shadow-lg backdrop-blur-xl">
             <div className="relative grid w-full grid-cols-2 gap-1">
               {(['list', 'map'] as const).map((tab) => (
@@ -251,41 +251,52 @@ export default function AppStores() {
               <p className="text-muted-foreground">Keine Stores gefunden</p>
             </Card>
           ) : (
-            <div className="space-y-3">
-              {stores.map((store) => (
-                <button
+            <div className="space-y-0 pb-32">
+              {stores.map((store, index) => (
+                <div
                   key={store.id}
-                  onClick={() => window.location.href = `/app/merchant/${store.id}`}
-                  className="w-full rounded-xl overflow-hidden shadow-md text-left relative"
-                  style={{ aspectRatio: '1.55 / 1' }}
+                  style={{
+                    position: 'sticky',
+                    top: `${80 + index * 12}px`,
+                    zIndex: stores.length - index,
+                    marginBottom: '-8px',
+                    transform: `scale(${1 - index * 0.02})`,
+                    transformOrigin: 'top center',
+                  }}
                 >
-                  <div className="absolute inset-0">
-                    {store.cover_image_url ? (
-                      <img src={store.cover_image_url} alt={store.name} className="w-full h-full object-cover" />
-                    ) : (
-                      <div className="w-full h-full bg-gradient-to-br from-purple-500 to-blue-500" />
-                    )}
-                  </div>
-                  <div className="absolute top-3 left-3 z-20 w-12 h-12 rounded-full bg-primary border-2 border-card shadow-lg flex items-center justify-center overflow-hidden">
-                    {store.logo_url ? (
-                      <img src={store.logo_url} alt={`${store.name} Logo`} className="w-full h-full object-cover" />
-                    ) : (
-                      <span className="text-lg font-bold text-white">{store.name?.charAt(0)?.toUpperCase() || '?'}</span>
-                    )}
-                  </div>
-                  {store.distance !== undefined && (
-                    <div className="absolute top-3 right-3 z-20">
-                      <span className="bg-card/95 backdrop-blur-sm text-foreground text-xs font-medium px-2 py-1 rounded-full shadow-sm">
-                        {store.distance < 1 ? `${Math.round(store.distance * 1000)}m` : `${store.distance.toFixed(1)}km`}
-                      </span>
+                  <button
+                    onClick={() => window.location.href = `/app/merchant/${store.id}`}
+                    className="w-full rounded-xl overflow-hidden shadow-md text-left relative"
+                    style={{ aspectRatio: '1.55 / 1' }}
+                  >
+                    <div className="absolute inset-0">
+                      {store.cover_image_url ? (
+                        <img src={store.cover_image_url} alt={store.name} className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full bg-gradient-to-br from-purple-500 to-blue-500" />
+                      )}
                     </div>
-                  )}
-                  <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/70 via-black/40 to-transparent" />
-                  <div className="absolute bottom-3 left-3 right-3 z-10">
-                    <h3 className="text-white font-semibold text-xl truncate drop-shadow-md">{store.name}</h3>
-                    {store.category && <p className="text-white/80 text-sm truncate drop-shadow-md">{store.category}</p>}
-                  </div>
-                </button>
+                    <div className="absolute top-3 left-3 z-20 w-12 h-12 rounded-full bg-primary border-2 border-card shadow-lg flex items-center justify-center overflow-hidden">
+                      {store.logo_url ? (
+                        <img src={store.logo_url} alt={`${store.name} Logo`} className="w-full h-full object-cover" />
+                      ) : (
+                        <span className="text-lg font-bold text-white">{store.name?.charAt(0)?.toUpperCase() || '?'}</span>
+                      )}
+                    </div>
+                    {store.distance !== undefined && (
+                      <div className="absolute top-3 right-3 z-20">
+                        <span className="bg-card/95 backdrop-blur-sm text-foreground text-xs font-medium px-2 py-1 rounded-full shadow-sm">
+                          {store.distance < 1 ? `${Math.round(store.distance * 1000)}m` : `${store.distance.toFixed(1)}km`}
+                        </span>
+                      </div>
+                    )}
+                    <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/70 via-black/40 to-transparent" />
+                    <div className="absolute bottom-3 left-3 right-3 z-10">
+                      <h3 className="text-white font-semibold text-xl truncate drop-shadow-md">{store.name}</h3>
+                      {store.category && <p className="text-white/80 text-sm truncate drop-shadow-md">{store.category}</p>}
+                    </div>
+                  </button>
+                </div>
               ))}
             </div>
           )}
