@@ -201,8 +201,8 @@ export const AppMerchantDetail = () => {
 
         pulseTimer = window.setTimeout(() => {
           setPulsePoints(false);
-        }, 280);
-      }, 760);
+        }, 350);
+      }, 3200);
     };
 
     frameOne = window.requestAnimationFrame(() => {
