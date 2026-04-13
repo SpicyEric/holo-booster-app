@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Nfc, XCircle, Sparkles, Settings, WifiOff, CloudUpload, ArrowLeft, Gift } from 'lucide-react';
+import { Nfc, XCircle, Settings, WifiOff } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
@@ -13,9 +13,6 @@ import { offlineQueueService } from '@/app/services/offlineQueueService';
 import { NfcPermissionDialog } from '@/app/components/NfcPermissionDialog';
 import { OfflineBanner } from '@/app/components/OfflineBanner';
 import Particles from '@/components/Particles';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 
 type ScanResult = {
   success: boolean;
@@ -27,15 +24,7 @@ type ScanResult = {
   isOffline?: boolean;
 };
 
-type FlipPhase = 'idle' | 'flipping' | 'revealed';
-
-interface MerchantReward {
-  id: string;
-  title: string;
-  description: string | null;
-  points_required: number;
-  image_url: string | null;
-}
+type FlipPhase = 'idle' | 'flipping' | 'navigating';
 
 export const AppScan = () => {
   const navigate = useNavigate();
@@ -52,8 +41,6 @@ export const AppScan = () => {
   const [flipPhase, setFlipPhase] = useState<FlipPhase>('idle');
   const [merchantImage, setMerchantImage] = useState<string | null>(null);
   const [merchantDisplayName, setMerchantDisplayName] = useState<string>('');
-  const [merchantRewards, setMerchantRewards] = useState<MerchantReward[]>([]);
-  const [revealReady, setRevealReady] = useState(false);
 
   useEffect(() => {
     const checkNfcSupport = async () => {
@@ -83,24 +70,21 @@ export const AppScan = () => {
     }
   }, [searchParams, checkingNfc, nfcSupported, nfcEnabled]);
 
-  // Trigger flip animation when we get a successful result
+  // Trigger flip animation when we get a successful online result
   useEffect(() => {
     if (result?.success && !result.isOffline && result.merchantCustomerId && flipPhase === 'idle') {
       const fetchAndFlip = async () => {
-        const merchantId = result.merchantCustomerId!;
         try {
-          // Fetch merchant info and rewards in parallel
-          const [merchantRes, rewardsRes] = await Promise.all([
-            supabase.from('customers').select('cover_image_url, company_name, name').eq('id', merchantId).single(),
-            supabase.from('rewards').select('id, title, description, points_required, image_url').eq('merchant_customer_id', merchantId).eq('is_active', true).order('points_required', { ascending: true }),
-          ]);
-          setMerchantImage(merchantRes.data?.cover_image_url || null);
-          setMerchantDisplayName(merchantRes.data?.company_name || merchantRes.data?.name || result.merchantName || 'Händler');
-          setMerchantRewards(rewardsRes.data || []);
+          const { data: merchant } = await supabase
+            .from('customers')
+            .select('cover_image_url, company_name, name')
+            .eq('id', result.merchantCustomerId!)
+            .single();
+          setMerchantImage(merchant?.cover_image_url || null);
+          setMerchantDisplayName(merchant?.company_name || merchant?.name || result.merchantName || 'Händler');
         } catch {
           setMerchantImage(null);
           setMerchantDisplayName(result.merchantName || 'Händler');
-          setMerchantRewards([]);
         }
         setFlipPhase('flipping');
       };
@@ -108,33 +92,29 @@ export const AppScan = () => {
     }
   }, [result]);
 
-  // Handle flip animation phases
+  // After flip completes, navigate to the real merchant page
   useEffect(() => {
     if (flipPhase === 'flipping') {
       const timer = setTimeout(() => {
-        setFlipPhase('revealed');
-        // Small delay before showing content to let flip finish visually
-        setTimeout(() => setRevealReady(true), 100);
-      }, 700);
+        setFlipPhase('navigating');
+        // Navigate to real merchant page with fromScan state for smooth entry
+        if (result?.merchantCustomerId) {
+          navigate(`/app/merchant/${result.merchantCustomerId}`, {
+            replace: true,
+            state: { fromScan: true, pointsAwarded: result.points },
+          });
+        }
+        // Reset scan state for next time
+        setTimeout(() => {
+          setFlipPhase('idle');
+          setResult(null);
+          setMerchantImage(null);
+          setMerchantDisplayName('');
+        }, 100);
+      }, 900); // Wait for flip to fully complete
       return () => clearTimeout(timer);
     }
-  }, [flipPhase]);
-
-  // Once revealed, silently update the URL after animations settle
-  useEffect(() => {
-    if (revealReady && result?.merchantCustomerId) {
-      const timer = setTimeout(() => {
-        window.history.replaceState(null, '', `/app/merchant/${result.merchantCustomerId}`);
-      }, 1500);
-      return () => clearTimeout(timer);
-    }
-  }, [revealReady, result]);
-
-  const handleGoToMerchant = () => {
-    if (result?.merchantCustomerId) {
-      navigate(`/app/merchant/${result.merchantCustomerId}`, { replace: true });
-    }
-  };
+  }, [flipPhase, result, navigate]);
 
   const handleChipScan = useCallback(async (hardwareUid: string) => {
     let currentUserId = user?.id;
@@ -155,7 +135,6 @@ export const AppScan = () => {
     setScanning(true);
     setResult(null);
     setFlipPhase('idle');
-    setRevealReady(false);
 
     if (!navigator.onLine) {
       if (offlineQueueService.hasPendingStampForUid(hardwareUid)) {
@@ -243,7 +222,6 @@ export const AppScan = () => {
     setScanning(true);
     setResult(null);
     setFlipPhase('idle');
-    setRevealReady(false);
     try {
       await nfcService.startScan(handleNfcRead);
     } catch (error: any) {
@@ -284,7 +262,6 @@ export const AppScan = () => {
     setScanning(true);
     setResult(null);
     setFlipPhase('idle');
-    setRevealReady(false);
 
     try {
       const { data: merchants } = await supabase
@@ -323,7 +300,6 @@ export const AppScan = () => {
   const isNfcDisabled = !checkingNfc && nfcSupported && !nfcEnabled;
   const isIdle = !checkingNfc && nfcSupported && nfcEnabled && !scanning && !result;
   const showFrontCard = flipPhase === 'idle';
-  const isRevealed = flipPhase === 'revealed' && revealReady;
 
   const bottomInsetOffset = 'calc(7rem + env(safe-area-inset-bottom, 0px))';
 
@@ -332,21 +308,18 @@ export const AppScan = () => {
       className="bg-gradient-to-b from-background to-muted/30 overflow-hidden"
       style={{ height: '100dvh', paddingBottom: bottomInsetOffset }}
     >
-      {/* Only show particles when not in revealed state */}
-      {!isRevealed && (
-        <Particles
-          particleColors={['#6366F1', '#8B5CF6', '#A855F7']}
-          particleCount={400}
-          particleSpread={10}
-          speed={0.03}
-          particleBaseSize={120}
-          sizeRandomness={1.8}
-          moveParticlesOnHover={true}
-          alphaParticles={true}
-          disableRotation={false}
-          cameraDistance={20}
-        />
-      )}
+      <Particles
+        particleColors={['#6366F1', '#8B5CF6', '#A855F7']}
+        particleCount={400}
+        particleSpread={10}
+        speed={0.03}
+        particleBaseSize={120}
+        sizeRandomness={1.8}
+        moveParticlesOnHover={true}
+        alphaParticles={true}
+        disableRotation={false}
+        cameraDistance={20}
+      />
       <OfflineBanner />
 
       <main
@@ -428,238 +401,95 @@ export const AppScan = () => {
                 <div className="w-full h-full bg-gradient-to-br from-primary to-secondary" />
               )}
               <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/60 via-black/25 to-transparent" />
-              
-              {/* Back button - fades in after flip */}
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: isRevealed ? 1 : 0 }}
-                transition={{ duration: 0.4, delay: 0.1 }}
-                className="absolute top-3 left-3 z-10"
-              >
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="bg-black/40 text-white hover:bg-black/60 backdrop-blur-sm rounded-xl"
-                  onClick={handleGoToMerchant}
-                >
-                  <ArrowLeft className="h-5 w-5" />
-                </Button>
-              </motion.div>
-
-              {/* Points badge - fades in after flip */}
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: isRevealed ? 1 : 0 }}
-                transition={{ duration: 0.4, delay: 0.2 }}
-                className="absolute top-3 right-3 z-10"
-              >
-                <div className="bg-black/40 backdrop-blur-sm rounded-xl px-3 py-1.5 shadow-md">
-                  <span className="font-bold text-white">{result?.totalPoints || 0}</span>
-                  <span className="text-sm text-white/80 ml-1">Punkte</span>
-                </div>
-              </motion.div>
-
-              {/* Merchant name - fades in at bottom */}
-              <motion.div
-                initial={{ opacity: 0, y: 5 }}
-                animate={{ opacity: isRevealed ? 1 : 0, y: isRevealed ? 0 : 5 }}
-                transition={{ duration: 0.4, delay: 0.15 }}
-                className="absolute bottom-3 left-4 right-4"
-              >
+              <div className="absolute bottom-3 left-4 right-4">
                 <h1 className="text-lg font-bold text-white drop-shadow-md">
                   {merchantDisplayName}
                 </h1>
-              </motion.div>
+              </div>
             </div>
           </div>
         </div>
 
         {/* ── Content below the card ── */}
-        {flipPhase === 'idle' ? (
-          <div className="px-4 pt-6 pb-8">
-            <AnimatePresence mode="wait">
-              {isNfcUnavailable && (
-                <motion.div key="unsupported" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="text-center space-y-3">
-                  <h2 className="text-xl font-bold">NFC nicht verfügbar</h2>
-                  <p className="text-muted-foreground text-sm">
-                    Dein Gerät unterstützt kein NFC. Um Eloyo zu nutzen, benötigst du ein Smartphone mit NFC-Funktion.
-                  </p>
-                  <Button variant="outline" onClick={() => navigate('/app')}>Zurück</Button>
-                  <Button onClick={handleDemoScan} variant="outline" className="w-full max-w-xs border-dashed border-2 border-primary/40 text-primary">
-                    🧪 Demo: Scannen
-                  </Button>
-                </motion.div>
-              )}
+        <div className="px-4 pt-6 pb-8">
+          <AnimatePresence mode="wait">
+            {isNfcUnavailable && flipPhase === 'idle' && (
+              <motion.div key="unsupported" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="text-center space-y-3">
+                <h2 className="text-xl font-bold">NFC nicht verfügbar</h2>
+                <p className="text-muted-foreground text-sm">
+                  Dein Gerät unterstützt kein NFC. Um Eloyo zu nutzen, benötigst du ein Smartphone mit NFC-Funktion.
+                </p>
+                <Button variant="outline" onClick={() => navigate('/app')}>Zurück</Button>
+                <Button onClick={handleDemoScan} variant="outline" className="w-full max-w-xs border-dashed border-2 border-primary/40 text-primary">
+                  🧪 Demo: Scannen
+                </Button>
+              </motion.div>
+            )}
 
-              {isNfcDisabled && (
-                <motion.div key="disabled" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="text-center space-y-3">
-                  <h2 className="text-xl font-bold">NFC deaktiviert</h2>
-                  <p className="text-muted-foreground text-sm">
-                    Bitte aktiviere NFC in deinen Geräteeinstellungen, um Punkte zu sammeln.
-                  </p>
-                  <Button onClick={handleOpenNfcSettings} className="w-full max-w-xs">NFC-Einstellungen öffnen</Button>
-                </motion.div>
-              )}
+            {isNfcDisabled && flipPhase === 'idle' && (
+              <motion.div key="disabled" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="text-center space-y-3">
+                <h2 className="text-xl font-bold">NFC deaktiviert</h2>
+                <p className="text-muted-foreground text-sm">
+                  Bitte aktiviere NFC in deinen Geräteeinstellungen, um Punkte zu sammeln.
+                </p>
+                <Button onClick={handleOpenNfcSettings} className="w-full max-w-xs">NFC-Einstellungen öffnen</Button>
+              </motion.div>
+            )}
 
-              {isIdle && (
-                <motion.div key="idle" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="text-center space-y-3">
-                  <h2 className="text-xl font-bold">Bereit zum Stempeln</h2>
-                  <p className="text-muted-foreground text-sm max-w-xs mx-auto">
-                    Tippe auf den Button und halte dein Handy an den Eloyo-Stempel
-                  </p>
-                  <Button onClick={startNFCScan} className="w-full max-w-xs">
-                    <Nfc className="h-4 w-4 mr-2" />
-                    Jetzt scannen
-                  </Button>
-                  <Button onClick={handleDemoScan} variant="outline" className="w-full max-w-xs border-dashed border-2 border-primary/40 text-primary">
-                    🧪 Demo: Scannen
-                  </Button>
-                </motion.div>
-              )}
+            {isIdle && flipPhase === 'idle' && (
+              <motion.div key="idle" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="text-center space-y-3">
+                <h2 className="text-xl font-bold">Bereit zum Stempeln</h2>
+                <p className="text-muted-foreground text-sm max-w-xs mx-auto">
+                  Tippe auf den Button und halte dein Handy an den Eloyo-Stempel
+                </p>
+                <Button onClick={startNFCScan} className="w-full max-w-xs">
+                  <Nfc className="h-4 w-4 mr-2" />
+                  Jetzt scannen
+                </Button>
+                <Button onClick={handleDemoScan} variant="outline" className="w-full max-w-xs border-dashed border-2 border-primary/40 text-primary">
+                  🧪 Demo: Scannen
+                </Button>
+              </motion.div>
+            )}
 
-              {scanning && !result && (
-                <motion.div key="scanning" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="text-center space-y-3">
-                  <h2 className="text-xl font-bold">Handy an Stempel halten</h2>
-                  <p className="text-muted-foreground text-sm max-w-xs mx-auto">
-                    Halte jetzt die obere Rückseite deines Handys an den Eloyo-Stempel
-                  </p>
-                  <Button variant="outline" onClick={cancelScan}>Abbrechen</Button>
-                </motion.div>
-              )}
+            {scanning && !result && flipPhase === 'idle' && (
+              <motion.div key="scanning" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="text-center space-y-3">
+                <h2 className="text-xl font-bold">Handy an Stempel halten</h2>
+                <p className="text-muted-foreground text-sm max-w-xs mx-auto">
+                  Halte jetzt die obere Rückseite deines Handys an den Eloyo-Stempel
+                </p>
+                <Button variant="outline" onClick={cancelScan}>Abbrechen</Button>
+              </motion.div>
+            )}
 
-              {checkingNfc && (
-                <motion.div key="checking" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="text-center space-y-3">
-                  <p className="text-muted-foreground">Prüfe NFC...</p>
-                </motion.div>
-              )}
+            {checkingNfc && (
+              <motion.div key="checking" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="text-center space-y-3">
+                <p className="text-muted-foreground">Prüfe NFC...</p>
+              </motion.div>
+            )}
 
-              {result && !result.success && (
-                <motion.div key="error-result" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="text-center space-y-3">
-                  <h2 className="text-xl font-bold">Fehler</h2>
-                  <p className="text-muted-foreground text-sm">{result.error}</p>
-                  <Button onClick={() => { setResult(null); setFlipPhase('idle'); }} className="w-full max-w-xs">
-                    Erneut versuchen
-                  </Button>
-                </motion.div>
-              )}
+            {result && !result.success && flipPhase === 'idle' && (
+              <motion.div key="error-result" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="text-center space-y-3">
+                <h2 className="text-xl font-bold">Fehler</h2>
+                <p className="text-muted-foreground text-sm">{result.error}</p>
+                <Button onClick={() => { setResult(null); }} className="w-full max-w-xs">
+                  Erneut versuchen
+                </Button>
+              </motion.div>
+            )}
 
-              {result?.isOffline && (
-                <motion.div key="offline-result" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="text-center space-y-3">
-                  <h2 className="text-xl font-bold">Stempel erkannt!</h2>
-                  <p className="text-muted-foreground text-sm">Du bist gerade offline. Dein Stempel wird automatisch gutgeschrieben, sobald du wieder Internet hast.</p>
-                  <div className="flex items-center justify-center gap-2 text-amber-600 font-medium">
-                    <WifiOff className="h-4 w-4" />
-                    Wird synchronisiert...
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-        ) : (
-          /* ── Revealed merchant content with stagger animations ── */
-          <div className="p-4">
-            {/* Tabs - fade in first */}
-            <motion.div
-              initial={{ opacity: 0, y: 15 }}
-              animate={{ opacity: isRevealed ? 1 : 0, y: isRevealed ? 0 : 15 }}
-              transition={{ duration: 0.5, delay: 0.3 }}
-            >
-              <Tabs defaultValue="rewards" className="w-full">
-                <TabsList className="w-full grid grid-cols-3">
-                  <TabsTrigger value="rewards">Prämien</TabsTrigger>
-                  <TabsTrigger value="info">Info</TabsTrigger>
-                  <TabsTrigger value="transactions">Transaktionen</TabsTrigger>
-                </TabsList>
-
-                <TabsContent value="rewards" className="mt-4 space-y-3">
-                  {/* Points earned banner */}
-                  <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: isRevealed ? 1 : 0, y: isRevealed ? 0 : 10 }}
-                    transition={{ duration: 0.4, delay: 0.5 }}
-                  >
-                    <Card className="border-2 border-primary bg-primary/5">
-                      <CardContent className="p-4 flex items-center justify-center gap-3">
-                        <Sparkles className="h-5 w-5 text-primary" />
-                        <span className="font-bold text-lg">+{result?.points} Punkte gesammelt!</span>
-                      </CardContent>
-                    </Card>
-                  </motion.div>
-
-                  {/* Rewards list with stagger */}
-                  {merchantRewards.length === 0 ? (
-                    <motion.div
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: isRevealed ? 1 : 0, y: isRevealed ? 0 : 10 }}
-                      transition={{ duration: 0.4, delay: 0.6 }}
-                    >
-                      <Card>
-                        <CardContent className="p-6 text-center text-muted-foreground">
-                          <Gift className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                          Keine Prämien verfügbar
-                        </CardContent>
-                      </Card>
-                    </motion.div>
-                  ) : (
-                    merchantRewards.map((reward, index) => {
-                      const canRedeem = (result?.totalPoints || 0) >= reward.points_required;
-                      return (
-                        <motion.div
-                          key={reward.id}
-                          initial={{ opacity: 0, y: 15 }}
-                          animate={{ opacity: isRevealed ? 1 : 0, y: isRevealed ? 0 : 15 }}
-                          transition={{ duration: 0.4, delay: 0.6 + index * 0.1 }}
-                        >
-                          <Card
-                            className={`cursor-pointer transition-shadow hover:shadow-md ${canRedeem ? 'border-primary/50' : ''}`}
-                            onClick={handleGoToMerchant}
-                          >
-                            <CardContent className="p-4 flex items-center gap-4">
-                              <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${canRedeem ? 'bg-primary' : 'bg-muted'}`}>
-                                <Gift className={`h-6 w-6 ${canRedeem ? 'text-primary-foreground' : 'text-muted-foreground'}`} />
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <h3 className="font-medium truncate">{reward.title}</h3>
-                                {reward.description && (
-                                  <p className="text-sm text-muted-foreground line-clamp-1">{reward.description}</p>
-                                )}
-                              </div>
-                              <Badge variant={canRedeem ? 'default' : 'secondary'}>
-                                {reward.points_required} P.
-                              </Badge>
-                            </CardContent>
-                          </Card>
-                        </motion.div>
-                      );
-                    })
-                  )}
-                </TabsContent>
-
-                <TabsContent value="info" className="mt-4">
-                  <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ duration: 0.3 }}
-                    className="text-center text-muted-foreground py-8"
-                  >
-                    <p>Tippe auf den Zurück-Pfeil für alle Details.</p>
-                  </motion.div>
-                </TabsContent>
-
-                <TabsContent value="transactions" className="mt-4">
-                  <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ duration: 0.3 }}
-                    className="text-center text-muted-foreground py-8"
-                  >
-                    <p>Tippe auf den Zurück-Pfeil für alle Details.</p>
-                  </motion.div>
-                </TabsContent>
-              </Tabs>
-            </motion.div>
-          </div>
-        )}
+            {result?.isOffline && flipPhase === 'idle' && (
+              <motion.div key="offline-result" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="text-center space-y-3">
+                <h2 className="text-xl font-bold">Stempel erkannt!</h2>
+                <p className="text-muted-foreground text-sm">Du bist gerade offline. Dein Stempel wird automatisch gutgeschrieben, sobald du wieder Internet hast.</p>
+                <div className="flex items-center justify-center gap-2 text-amber-600 font-medium">
+                  <WifiOff className="h-4 w-4" />
+                  Wird synchronisiert...
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
       </main>
 
       <BottomNav />
