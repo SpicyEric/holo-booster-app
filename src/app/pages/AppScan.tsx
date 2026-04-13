@@ -352,7 +352,6 @@ export const AppScan = () => {
       return;
     }
 
-    setScanning(true);
     setResult(null);
     setFlipPhase('idle');
     updatePreparingFlip(false);
@@ -415,7 +414,9 @@ export const AppScan = () => {
         toast.error('Scan fehlgeschlagen');
       }
     } finally {
-      setScanning(false);
+      if (!preparingFlipRef.current) {
+        setScanning(false);
+      }
     }
   }, [user, navigate, isOnline]);
 
