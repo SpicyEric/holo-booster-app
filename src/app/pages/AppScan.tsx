@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { flushSync } from 'react-dom';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Nfc, XCircle, Settings, WifiOff } from 'lucide-react';
@@ -76,6 +77,7 @@ export const AppScan = () => {
   const [flipPhase, setFlipPhase] = useState<FlipPhase>('idle');
   const [preparingFlip, setPreparingFlip] = useState(false);
   const preparingFlipRef = useRef(false);
+  const backFaceImageRef = useRef<HTMLImageElement | null>(null);
   const [merchantImage, setMerchantImage] = useState<string | null>(null);
   const [merchantDisplayName, setMerchantDisplayName] = useState<string>('');
   const [transitionState, setTransitionState] = useState<MerchantTransitionState | null>(null);
@@ -175,6 +177,59 @@ export const AppScan = () => {
     return isLoaded ? imageUrl : null;
   }, []);
 
+  const waitForBackFaceImagePaint = useCallback(async () => {
+    return await new Promise<boolean>((resolve) => {
+      let settled = false;
+      let frameId = 0;
+
+      const finalize = (ready: boolean) => {
+        if (settled) return;
+        settled = true;
+        if (frameId) {
+          cancelAnimationFrame(frameId);
+        }
+        window.clearTimeout(timeoutId);
+        resolve(ready);
+      };
+
+      const confirmPaint = async () => {
+        const img = backFaceImageRef.current;
+
+        if (!img) {
+          frameId = requestAnimationFrame(() => {
+            void confirmPaint();
+          });
+          return;
+        }
+
+        if (!img.complete || img.naturalWidth === 0) {
+          frameId = requestAnimationFrame(() => {
+            void confirmPaint();
+          });
+          return;
+        }
+
+        try {
+          if (typeof img.decode === 'function') {
+            await img.decode();
+          }
+        } catch {
+          // Ignore decode errors if the image has already loaded.
+        }
+
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => finalize(true));
+        });
+      };
+
+      const timeoutId = window.setTimeout(() => {
+        finalize(Boolean(backFaceImageRef.current?.complete && backFaceImageRef.current?.naturalWidth));
+      }, 4000);
+
+      void confirmPaint();
+    });
+  }, []);
+
   useEffect(() => {
     const checkNfcSupport = async () => {
       setCheckingNfc(true);
@@ -248,10 +303,10 @@ export const AppScan = () => {
               initialRewards: rewards,
               initialUserPoints: result.totalPoints ?? 0,
             } satisfies MerchantTransitionState;
-            setTransitionState(nextTransitionState);
 
             if (!coverUrl) {
               setMerchantImage(null);
+              setTransitionState(nextTransitionState);
               updatePreparingFlip(false);
               navigateToMerchant(result.merchantCustomerId, {
                 fallbackPoints: result.totalPoints ?? 0,
@@ -260,7 +315,25 @@ export const AppScan = () => {
               return;
             }
 
-            setMerchantImage(coverUrl);
+            flushSync(() => {
+              setMerchantDisplayName(displayName);
+              setTransitionState(nextTransitionState);
+              setMerchantImage(coverUrl);
+            });
+
+            const backFaceReady = await waitForBackFaceImagePaint();
+
+            if (cancelled) return;
+
+            if (!backFaceReady) {
+              setMerchantImage(null);
+              updatePreparingFlip(false);
+              navigateToMerchant(result.merchantCustomerId, {
+                fallbackPoints: result.totalPoints ?? 0,
+                state: nextTransitionState,
+              });
+              return;
+            }
 
             requestAnimationFrame(() => {
               requestAnimationFrame(() => {
@@ -300,7 +373,7 @@ export const AppScan = () => {
         cancelled = true;
       };
     }
-  }, [flipPhase, navigateToMerchant, preloadMerchantImage, result, updatePreparingFlip]);
+  }, [flipPhase, navigateToMerchant, preloadMerchantImage, result, updatePreparingFlip, waitForBackFaceImagePaint]);
 
   // After flip completes, navigate to the real merchant page
   useEffect(() => {
@@ -604,6 +677,7 @@ export const AppScan = () => {
             >
               {merchantImage ? (
                 <img
+                  ref={backFaceImageRef}
                   src={merchantImage}
                   alt={merchantDisplayName}
                   decoding="sync"
