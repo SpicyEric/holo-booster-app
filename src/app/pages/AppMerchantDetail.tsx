@@ -674,7 +674,7 @@ export const AppMerchantDetail = () => {
 
           {/* Fade-out gradient at the bottom edge of header */}
           <div className="relative pointer-events-none px-4">
-            <div className="h-3 bg-gradient-to-b from-background to-transparent" />
+            <div className="h-10 bg-gradient-to-b from-background to-transparent" />
           </div>
         </div>
 
@@ -687,8 +687,6 @@ export const AppMerchantDetail = () => {
               overscrollBehavior: 'none',
               WebkitOverflowScrolling: 'touch',
               touchAction: 'pan-y',
-              maskImage: 'linear-gradient(to bottom, transparent 0%, black 48px, black 100%)',
-              WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 48px, black 100%)',
             }}
           >
             <TabsContent value="rewards" className="mt-0 space-y-3">
