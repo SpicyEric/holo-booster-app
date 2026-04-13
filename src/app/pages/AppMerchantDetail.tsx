@@ -362,9 +362,9 @@ export const AppMerchantDetail = () => {
         <span className="text-sm text-muted-foreground ml-1">Punkte</span>
       </div>
 
-      {/* Cover Image with soft fade */}
-      <div className="relative">
-        <div className="h-56">
+      {/* Cover Image Card */}
+      <div className="px-4 pt-14">
+        <div className="relative rounded-2xl overflow-hidden shadow-lg" style={{ aspectRatio: '16 / 9' }}>
           {merchant.cover_image_url ? (
             <img
               src={merchant.cover_image_url}
@@ -374,24 +374,22 @@ export const AppMerchantDetail = () => {
           ) : (
             <div className="w-full h-full bg-gradient-to-br from-primary to-secondary" />
           )}
-        </div>
-        
-        {/* Soft gradient fade to white */}
-        <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-background via-background/80 to-transparent" />
-        
-        {/* Back button is now fixed above */}
-
-        {/* Merchant Name in the fade area */}
-        <div className="absolute bottom-4 left-4 right-4">
-          <h1 className="text-2xl font-bold text-foreground">
-            {merchantName}
-          </h1>
-          {address && (
-            <p className="text-sm text-muted-foreground flex items-center gap-1 mt-1">
-              <MapPin className="h-3 w-3" />
-              {merchant.city}
-            </p>
-          )}
+          
+          {/* Bottom gradient overlay for text readability */}
+          <div className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-black/60 via-black/30 to-transparent" />
+          
+          {/* Merchant Name & Location on the card */}
+          <div className="absolute bottom-4 left-4 right-4">
+            <h1 className="text-xl font-bold text-white drop-shadow-md">
+              {merchantName}
+            </h1>
+            {address && (
+              <p className="text-sm text-white/80 flex items-center gap-1 mt-0.5 drop-shadow-sm">
+                <MapPin className="h-3 w-3" />
+                {merchant.city}
+              </p>
+            )}
+          </div>
         </div>
       </div>
 
