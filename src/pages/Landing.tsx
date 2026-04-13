@@ -94,11 +94,7 @@ const HeroMockupWithNotifications = () => {
 
   return (
     <div className="relative">
-      <img
-        src={nfcStampHero}
-        alt="Eloyo App Mockup"
-        className="w-full h-[480px] sm:h-[580px] lg:h-[620px] object-contain"
-      />
+      <HeroImageCarousel />
       {/* Overlay notification */}
       <div className="absolute inset-0 flex items-end justify-center pb-16 pointer-events-none">
         <AnimatePresence mode="wait">
