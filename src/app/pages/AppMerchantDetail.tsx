@@ -585,12 +585,12 @@ export const AppMerchantDetail = () => {
         <motion.div
           initial={{ scale: 0, opacity: 0, x: 0, y: 0 }}
           animate={{
-            scale: [0, 1.2, 1, 1.08, 1, 1.06, 1, 1, 0.4],
-            opacity: [0, 1, 1, 1, 1, 1, 1, 1, 0],
-            x: [0, 0, 0, 0, 0, 0, 0, 0, pointsAnimation.deltaX],
-            y: [0, 0, 0, 0, 0, 0, 0, 0, pointsAnimation.deltaY],
+            scale: [0, 1.2, 1, 1.08, 1, 1.06, 1, 1, 0.4, 0.3],
+            opacity: [0, 1, 1, 1, 1, 1, 1, 1, 1, 0],
+            x: [0, 0, 0, 0, 0, 0, 0, 0, pointsAnimation.deltaX, pointsAnimation.deltaX],
+            y: [0, 0, 0, 0, 0, 0, 0, 0, pointsAnimation.deltaY, pointsAnimation.deltaY],
           }}
-          transition={{ duration: 5, times: [0, 0.08, 0.16, 0.3, 0.38, 0.5, 0.58, 0.78, 1], ease: [0.22, 1, 0.36, 1] }}
+          transition={{ duration: 5, times: [0, 0.08, 0.16, 0.3, 0.38, 0.5, 0.58, 0.78, 0.95, 1], ease: [0.22, 1, 0.36, 1] }}
           className="pointer-events-none fixed z-[70] flex h-24 w-24 items-center justify-center rounded-full bg-primary shadow-xl shadow-primary/50"
           style={{ left: pointsAnimation.startX, top: pointsAnimation.startY, transform: 'translate(-50%, -50%)' }}
         >
