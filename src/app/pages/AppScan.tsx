@@ -324,7 +324,7 @@ export const AppScan = () => {
             state: transitionState,
           });
         }
-      }, 900);
+      }, 2000); // temporarily 2s for debugging
 
       return () => clearTimeout(timer);
     }
