@@ -65,19 +65,32 @@ interface GoogleReviewBonus {
   alreadyClaimed: boolean;
 }
 
+interface MerchantRouteState {
+  fromScan?: boolean;
+  initialMerchant?: Merchant;
+  initialRewards?: Reward[];
+  initialUserPoints?: number;
+}
+
 export const AppMerchantDetail = () => {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const fromScan = (location.state as any)?.fromScan === true;
-  const [merchant, setMerchant] = useState<Merchant | null>(null);
-  const [rewards, setRewards] = useState<Reward[]>([]);
+  const routeState = location.state as MerchantRouteState | null;
+  const initialMerchant = routeState?.initialMerchant && routeState.initialMerchant.id === id
+    ? routeState.initialMerchant
+    : null;
+  const initialRewards = initialMerchant ? routeState?.initialRewards ?? [] : [];
+  const initialUserPoints = initialMerchant ? routeState?.initialUserPoints ?? 0 : 0;
+  const shouldAnimateFromScan = routeState?.fromScan === true && Boolean(initialMerchant);
+  const [merchant, setMerchant] = useState<Merchant | null>(initialMerchant);
+  const [rewards, setRewards] = useState<Reward[]>(initialRewards);
   const [newCustomerOffer, setNewCustomerOffer] = useState<NewCustomerOffer | null>(null);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [userPoints, setUserPoints] = useState(0);
-  const [hasEverStamped, setHasEverStamped] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [userPoints, setUserPoints] = useState(initialUserPoints);
+  const [hasEverStamped, setHasEverStamped] = useState(initialUserPoints > 0);
+  const [loading, setLoading] = useState(!initialMerchant);
   const [googleReviewBonus, setGoogleReviewBonus] = useState<GoogleReviewBonus>({
     enabled: false,
     pointsValue: 5,
@@ -93,38 +106,41 @@ export const AppMerchantDetail = () => {
 
   useEffect(() => {
     if (id) {
-      loadMerchant();
+      loadMerchant(Boolean(initialMerchant));
     }
-  }, [id, user]);
+  }, [id, initialMerchant, user]);
 
-  const loadMerchant = async () => {
-    setLoading(true);
+  const loadMerchant = async (keepVisible = false) => {
+    if (!id) return;
+
+    if (!keepVisible) {
+      setLoading(true);
+    }
+
     try {
-      // Load merchant
-      const { data: merchantData, error: merchantError } = await supabase
-        .from('customers')
-        .select('*')
-        .eq('id', id)
-        .single();
+      const [{ data: merchantData, error: merchantError }, { data: rewardsData }] = await Promise.all([
+        supabase
+          .from('customers')
+          .select('*')
+          .eq('id', id)
+          .single(),
+        supabase
+          .from('rewards')
+          .select('*')
+          .eq('merchant_customer_id', id)
+          .eq('is_active', true)
+          .order('points_required', { ascending: true }),
+      ]);
 
       if (merchantError) throw merchantError;
+
       setMerchant(merchantData);
+      setRewards(rewardsData ?? []);
 
-      // Load rewards
-      const { data: rewardsData } = await supabase
-        .from('rewards')
-        .select('*')
-        .eq('merchant_customer_id', id)
-        .eq('is_active', true)
-        .order('points_required', { ascending: true });
-
-      if (rewardsData) setRewards(rewardsData);
-
-      // Check Google review bonus settings
       const reviewEnabled = merchantData.google_review_points_enabled === true;
       const reviewPointsVal = merchantData.google_review_points_value || 5;
       const reviewUrl = merchantData.google_review_url || null;
-      // Load user points and check if ever stamped
+
       if (user) {
         const { data: loyaltyAccount } = await supabase
           .from('loyalty_accounts')
@@ -137,53 +153,53 @@ export const AppMerchantDetail = () => {
         setUserPoints(points);
         setHasEverStamped(points > 0);
 
-        // Load transactions for this merchant
-        if (loyaltyAccount) {
-          const { data: txData } = await supabase
-            .from('point_transactions')
-            .select('id, points_change, transaction_type, description, created_at')
-            .eq('loyalty_account_id', loyaltyAccount.id)
-            .order('created_at', { ascending: false });
+        const [transactionsResponse, offerResponse, claimResponse] = await Promise.all([
+          loyaltyAccount
+            ? supabase
+                .from('point_transactions')
+                .select('id, points_change, transaction_type, description, created_at')
+                .eq('loyalty_account_id', loyaltyAccount.id)
+                .order('created_at', { ascending: false })
+            : Promise.resolve(null),
+          points === 0
+            ? supabase
+                .from('new_customer_offers')
+                .select('*')
+                .eq('merchant_customer_id', id)
+                .eq('is_active', true)
+                .maybeSingle()
+            : Promise.resolve(null),
+          reviewEnabled && reviewUrl
+            ? supabase
+                .from('google_review_claims')
+                .select('id')
+                .eq('user_id', user.id)
+                .eq('merchant_customer_id', id)
+                .maybeSingle()
+            : Promise.resolve(null),
+        ]);
 
-          if (txData) setTransactions(txData);
-        }
+        setTransactions(transactionsResponse?.data ?? []);
+        setNewCustomerOffer(offerResponse?.data ?? null);
 
-        // Load new customer offer only if user has 0 points
-        if (points === 0) {
-          const { data: offerData } = await supabase
-            .from('new_customer_offers')
-            .select('*')
-            .eq('merchant_customer_id', id)
-            .eq('is_active', true)
-            .maybeSingle();
-
-          if (offerData) {
-            setNewCustomerOffer(offerData);
-          }
-        }
-
-        // Check if user already claimed Google review bonus
         if (reviewEnabled && reviewUrl) {
-          const { data: claimData } = await supabase
-            .from('google_review_claims')
-            .select('id')
-            .eq('user_id', user.id)
-            .eq('merchant_customer_id', id!)
-            .maybeSingle();
-
           setGoogleReviewBonus({
             enabled: true,
             pointsValue: reviewPointsVal,
             reviewUrl,
-            alreadyClaimed: !!claimData,
+            alreadyClaimed: !!claimResponse?.data,
           });
         } else {
           setGoogleReviewBonus({ enabled: false, pointsValue: 5, reviewUrl: null, alreadyClaimed: false });
         }
       } else {
-        // Not logged in - still set review bonus info for display
+        setTransactions([]);
+        setNewCustomerOffer(null);
+
         if (reviewEnabled && reviewUrl) {
           setGoogleReviewBonus({ enabled: true, pointsValue: reviewPointsVal, reviewUrl, alreadyClaimed: false });
+        } else {
+          setGoogleReviewBonus({ enabled: false, pointsValue: 5, reviewUrl: null, alreadyClaimed: false });
         }
       }
     } catch (err) {
@@ -321,14 +337,22 @@ export const AppMerchantDetail = () => {
 
   if (loading) {
     return (
-      <div className="bg-background overflow-hidden" style={{ height: '100dvh' }}><div className="h-full overflow-y-auto" style={{ overscrollBehavior: 'none', WebkitOverflowScrolling: 'touch', touchAction: 'pan-y' }}>
-        <Skeleton className="h-48 w-full" />
-        <div className="p-4 space-y-4">
-          <Skeleton className="h-8 w-48" />
-          <Skeleton className="h-4 w-32" />
-          <Skeleton className="h-32 w-full" />
+      <div className="bg-background overflow-hidden" style={{ height: '100dvh' }}>
+        <div className="h-full overflow-y-auto pb-32 overflow-x-hidden" style={{ overscrollBehavior: 'none', WebkitOverflowScrolling: 'touch', touchAction: 'pan-y' }}>
+          <div className="fixed top-0 left-0 right-0 z-[60]" style={{ height: 'env(safe-area-inset-top, 0px)', background: 'hsl(var(--background))' }} />
+          <div className="px-4 pt-4">
+            <div className="scan-merchant-card-transition relative rounded-2xl overflow-hidden shadow-lg" style={{ aspectRatio: '1.55 / 1' }}>
+              <Skeleton className="h-full w-full" />
+            </div>
+          </div>
+          <div className="p-4 space-y-4">
+            <Skeleton className="h-11 w-full rounded-xl" />
+            <Skeleton className="h-24 w-full rounded-2xl" />
+            <Skeleton className="h-24 w-full rounded-2xl" />
+          </div>
         </div>
-      </div></div>
+        <BottomNav />
+      </div>
     );
   }
 
@@ -446,20 +470,14 @@ export const AppMerchantDetail = () => {
   }
 
   return (
-    <motion.div
-      className="bg-background overflow-hidden"
-      style={{ height: '100dvh' }}
-      initial={fromScan ? { opacity: 0 } : false}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.3 }}
-    >
+    <div className="bg-background overflow-hidden" style={{ height: '100dvh' }}>
     <div className="h-full overflow-y-auto pb-32 overflow-x-hidden" style={{ overscrollBehavior: 'none', WebkitOverflowScrolling: 'touch', touchAction: 'pan-y' }}>
       {/* Safe area shield */}
       <div className="fixed top-0 left-0 right-0 z-[60]" style={{ height: 'env(safe-area-inset-top, 0px)', background: 'hsl(var(--background))' }} />
 
       {/* Cover Image Card */}
       <div className="px-4 pt-4">
-        <div className="relative rounded-2xl overflow-hidden shadow-lg" style={{ aspectRatio: '1.55 / 1' }}>
+        <div className="scan-merchant-card-transition relative rounded-2xl overflow-hidden shadow-lg" style={{ aspectRatio: '1.55 / 1' }}>
           {merchant.cover_image_url ? (
             <img src={merchant.cover_image_url} alt={merchant.name} className="w-full h-full object-cover" />
           ) : (
@@ -470,9 +488,9 @@ export const AppMerchantDetail = () => {
           
           {/* Back button */}
           <motion.div
-            initial={fromScan ? { opacity: 0 } : false}
+            initial={shouldAnimateFromScan ? { opacity: 0 } : false}
             animate={{ opacity: 1 }}
-            transition={{ duration: 0.4, delay: fromScan ? 0.2 : 0 }}
+            transition={{ duration: 0.4, delay: shouldAnimateFromScan ? 0.2 : 0 }}
             className="absolute top-3 left-3 z-10"
           >
             <Button
@@ -487,9 +505,9 @@ export const AppMerchantDetail = () => {
 
           {/* Points badge */}
           <motion.div
-            initial={fromScan ? { opacity: 0 } : false}
+            initial={shouldAnimateFromScan ? { opacity: 0 } : false}
             animate={{ opacity: 1 }}
-            transition={{ duration: 0.4, delay: fromScan ? 0.3 : 0 }}
+            transition={{ duration: 0.4, delay: shouldAnimateFromScan ? 0.3 : 0 }}
             className="absolute top-3 right-3 z-10"
           >
             <div className="bg-black/40 backdrop-blur-sm rounded-xl px-3 py-1.5 shadow-md">
@@ -500,9 +518,9 @@ export const AppMerchantDetail = () => {
           
           {/* Merchant Name */}
           <motion.div
-            initial={fromScan ? { opacity: 0, y: 5 } : false}
+            initial={shouldAnimateFromScan ? { opacity: 0, y: 5 } : false}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, delay: fromScan ? 0.25 : 0 }}
+            transition={{ duration: 0.4, delay: shouldAnimateFromScan ? 0.25 : 0 }}
             className="absolute bottom-3 left-4 right-4"
           >
             <h1 className="text-lg font-bold text-white drop-shadow-md">{merchantName}</h1>
@@ -512,9 +530,9 @@ export const AppMerchantDetail = () => {
 
       {/* Tabs */}
       <motion.div
-        initial={fromScan ? { opacity: 0, y: 20 } : false}
+        initial={shouldAnimateFromScan ? { opacity: 0, y: 20 } : false}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: fromScan ? 0.4 : 0 }}
+        transition={{ duration: 0.5, delay: shouldAnimateFromScan ? 0.4 : 0 }}
       >
       <Tabs defaultValue="rewards" className="p-4">
         <TabsList className="w-full grid grid-cols-3">
@@ -527,9 +545,9 @@ export const AppMerchantDetail = () => {
           {rewardItems.map((item, index) => (
             <motion.div
               key={item.key}
-              initial={fromScan ? { opacity: 0, y: 15 } : false}
+              initial={shouldAnimateFromScan ? { opacity: 0, y: 15 } : false}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.4, delay: fromScan ? 0.5 + index * 0.1 : 0 }}
+              transition={{ duration: 0.4, delay: shouldAnimateFromScan ? 0.5 + index * 0.1 : 0 }}
             >
               {item.element}
             </motion.div>
@@ -679,9 +697,9 @@ export const AppMerchantDetail = () => {
         />
       )}
 
+    </div>
       <BottomNav />
     </div>
-    </motion.div>
   );
 };
 

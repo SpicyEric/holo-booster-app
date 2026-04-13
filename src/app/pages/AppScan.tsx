@@ -26,6 +26,41 @@ type ScanResult = {
 
 type FlipPhase = 'idle' | 'flipping' | 'navigating';
 
+type TransitionMerchant = {
+  id: string;
+  name: string;
+  company_name: string | null;
+  description: string | null;
+  logo_url: string | null;
+  cover_image_url: string | null;
+  city: string | null;
+  street: string | null;
+  house_number: string | null;
+  postal_code: string | null;
+  phone: string | null;
+  website: string | null;
+  instagram: string | null;
+  opening_hours: any;
+  google_review_url: string | null;
+  latitude: number | null;
+  longitude: number | null;
+};
+
+type TransitionReward = {
+  id: string;
+  title: string;
+  description: string | null;
+  points_required: number;
+  image_url: string | null;
+};
+
+type MerchantTransitionState = {
+  fromScan: true;
+  initialMerchant: TransitionMerchant;
+  initialRewards: TransitionReward[];
+  initialUserPoints: number;
+};
+
 export const AppScan = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -41,6 +76,7 @@ export const AppScan = () => {
   const [flipPhase, setFlipPhase] = useState<FlipPhase>('idle');
   const [merchantImage, setMerchantImage] = useState<string | null>(null);
   const [merchantDisplayName, setMerchantDisplayName] = useState<string>('');
+  const [transitionState, setTransitionState] = useState<MerchantTransitionState | null>(null);
 
   useEffect(() => {
     const checkNfcSupport = async () => {
@@ -75,46 +111,98 @@ export const AppScan = () => {
     if (result?.success && !result.isOffline && result.merchantCustomerId && flipPhase === 'idle') {
       const fetchAndFlip = async () => {
         try {
-          const { data: merchant } = await supabase
-            .from('customers')
-            .select('cover_image_url, company_name, name')
-            .eq('id', result.merchantCustomerId!)
-            .single();
-          setMerchantImage(merchant?.cover_image_url || null);
-          setMerchantDisplayName(merchant?.company_name || merchant?.name || result.merchantName || 'Händler');
+          const [merchantResponse, rewardsResponse] = await Promise.allSettled([
+            supabase
+              .from('customers')
+              .select('id, name, company_name, description, logo_url, cover_image_url, city, street, house_number, postal_code, phone, website, instagram, opening_hours, google_review_url, latitude, longitude')
+              .eq('id', result.merchantCustomerId!)
+              .single(),
+            supabase
+              .from('rewards')
+              .select('id, title, description, points_required, image_url')
+              .eq('merchant_customer_id', result.merchantCustomerId!)
+              .eq('is_active', true)
+              .order('points_required', { ascending: true }),
+          ]);
+
+          const merchant = merchantResponse.status === 'fulfilled' && !merchantResponse.value.error
+            ? merchantResponse.value.data
+            : null;
+          const rewards = rewardsResponse.status === 'fulfilled' && !rewardsResponse.value.error
+            ? rewardsResponse.value.data ?? []
+            : [];
+
+          if (merchant) {
+            const displayName = merchant.company_name || merchant.name || result.merchantName || 'Händler';
+
+            setMerchantImage(merchant.cover_image_url || null);
+            setMerchantDisplayName(displayName);
+            setTransitionState({
+              fromScan: true,
+              initialMerchant: merchant,
+              initialRewards: rewards,
+              initialUserPoints: result.totalPoints ?? 0,
+            });
+          } else {
+            setMerchantImage(null);
+            setMerchantDisplayName(result.merchantName || 'Händler');
+            setTransitionState(null);
+          }
         } catch {
           setMerchantImage(null);
           setMerchantDisplayName(result.merchantName || 'Händler');
+          setTransitionState(null);
         }
+
         setFlipPhase('flipping');
       };
+
       fetchAndFlip();
     }
-  }, [result]);
+  }, [flipPhase, result]);
 
   // After flip completes, navigate to the real merchant page
   useEffect(() => {
     if (flipPhase === 'flipping') {
       const timer = setTimeout(() => {
         setFlipPhase('navigating');
-        // Navigate to real merchant page with fromScan state for smooth entry
+
         if (result?.merchantCustomerId) {
-          navigate(`/app/merchant/${result.merchantCustomerId}`, {
-            replace: true,
-            state: { fromScan: true, pointsAwarded: result.points },
-          });
+          const performNavigation = () => {
+            navigate(`/app/merchant/${result.merchantCustomerId}`, {
+              replace: true,
+              state: transitionState ?? {
+                fromScan: true,
+                initialUserPoints: result.totalPoints ?? 0,
+              },
+            });
+          };
+
+          const transitionDocument = document as Document & {
+            startViewTransition?: (callback: () => void) => void;
+          };
+
+          if (transitionDocument.startViewTransition) {
+            transitionDocument.startViewTransition(() => {
+              performNavigation();
+            });
+          } else {
+            performNavigation();
+          }
         }
-        // Reset scan state for next time
+
         setTimeout(() => {
           setFlipPhase('idle');
           setResult(null);
           setMerchantImage(null);
           setMerchantDisplayName('');
+          setTransitionState(null);
         }, 100);
-      }, 900); // Wait for flip to fully complete
+      }, 900);
+
       return () => clearTimeout(timer);
     }
-  }, [flipPhase, result, navigate]);
+  }, [flipPhase, navigate, result, transitionState]);
 
   const handleChipScan = useCallback(async (hardwareUid: string) => {
     let currentUserId = user?.id;
@@ -135,6 +223,7 @@ export const AppScan = () => {
     setScanning(true);
     setResult(null);
     setFlipPhase('idle');
+    setTransitionState(null);
 
     if (!navigator.onLine) {
       if (offlineQueueService.hasPendingStampForUid(hardwareUid)) {
@@ -222,6 +311,7 @@ export const AppScan = () => {
     setScanning(true);
     setResult(null);
     setFlipPhase('idle');
+    setTransitionState(null);
     try {
       await nfcService.startScan(handleNfcRead);
     } catch (error: any) {
@@ -262,6 +352,7 @@ export const AppScan = () => {
     setScanning(true);
     setResult(null);
     setFlipPhase('idle');
+    setTransitionState(null);
 
     try {
       const { data: merchants } = await supabase
@@ -329,7 +420,7 @@ export const AppScan = () => {
         {/* ── Flip Card Container ── */}
         <div className="px-4 pt-4" style={{ perspective: '1200px' }}>
           <div
-            className="relative rounded-2xl shadow-lg"
+            className="scan-merchant-card-transition relative rounded-2xl shadow-lg"
             style={{
               aspectRatio: '1.55 / 1',
               transformStyle: 'preserve-3d',

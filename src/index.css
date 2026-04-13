@@ -228,3 +228,22 @@ body.ccm19-modal-open dialog.ccm-dialog-open .ccm-dialog-content-inner {
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
 }
+
+.scan-merchant-card-transition {
+  view-transition-name: scan-merchant-card;
+}
+
+.app-bottom-nav-transition {
+  view-transition-name: app-bottom-nav;
+}
+
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+}
+
+::view-transition-group(scan-merchant-card),
+::view-transition-group(app-bottom-nav) {
+  animation-duration: 280ms;
+  animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+}
