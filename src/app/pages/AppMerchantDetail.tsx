@@ -640,6 +640,7 @@ export const AppMerchantDetail = () => {
           )}
         </TabsContent>
       </Tabs>
+      </motion.div>
 
       {/* Reward Redemption Dialog */}
       {selectedReward && id && (
