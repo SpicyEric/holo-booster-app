@@ -237,8 +237,8 @@ const Landing = () => {
                   <div className="absolute top-1/2 -translate-y-1/2 left-3 right-3 space-y-3">
                     <div className="bg-white/80 backdrop-blur-md p-4 rounded-2xl shadow-lg animate-bounce">
                       <div className="flex items-center gap-2 mb-1">
-                        <div className="w-5 h-5 bg-primary rounded-md flex items-center justify-center">
-                          <span className="text-[8px] text-white">🔔</span>
+                        <div className="w-5 h-5 rounded-md overflow-hidden flex-shrink-0">
+                          <img src={eloyoLogo} alt="Eloyo" className="w-full h-full object-contain" />
                         </div>
                         <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Eloyo · Jetzt</span>
                       </div>
