@@ -98,7 +98,7 @@ const HeroMockupWithNotifications = () => {
   useEffect(() => {
     const imgInterval = setInterval(() => {
       setImgIndex(prev => (prev + 1) % heroImages.length);
-    }, 3000);
+    }, 4500);
     return () => clearInterval(imgInterval);
   }, []);
 
@@ -114,29 +114,6 @@ const HeroMockupWithNotifications = () => {
           style={{ opacity: i === imgIndex ? 1 : 0 }}
         />
       ))}
-      {/* Overlay notification – narrow horizontal toast */}
-      <div className="absolute bottom-12 left-1/2 -translate-x-1/2 pointer-events-none z-10">
-        <AnimatePresence mode="wait">
-          {visible && (
-            <motion.div
-              key={currentIndex}
-              variants={notificationVariants}
-              initial="enter"
-              animate="visible"
-              exit="exit"
-              className="bg-white/90 backdrop-blur-md rounded-2xl px-4 py-2.5 shadow-lg border border-white/80 flex items-center gap-3 w-[320px] pointer-events-auto"
-            >
-              <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center flex-shrink-0">
-                <Star className="h-3.5 w-3.5 text-white" fill="white" />
-              </div>
-              <div className="min-w-0">
-                <p className="font-bold text-xs text-[#1a1b21] truncate">{note.points}</p>
-                <p className="text-[11px] text-[#4a4455] line-clamp-1">{note.text}</p>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
     </div>
   );
 };
@@ -254,8 +231,8 @@ const Landing = () => {
               </div>
             </div>
             <div className="md:w-1/2 bg-[#eeedf5] min-h-[400px] relative flex items-center justify-center p-12">
-              <div className="w-[260px] sm:w-[280px] h-[540px] sm:h-[580px] bg-slate-900 rounded-[3rem] p-3 shadow-2xl border-[8px] border-slate-800">
-                <div className="w-full h-full bg-slate-100 rounded-[2.2rem] overflow-hidden relative">
+              <div className="w-[260px] sm:w-[280px] h-[540px] sm:h-[580px] bg-slate-900 rounded-[3rem] p-1.5 shadow-2xl border-[3px] border-slate-700">
+                <div className="w-full h-full bg-slate-100 rounded-[2.6rem] overflow-hidden relative">
                   <img src={pushBg} alt="Eloyo App Push-Benachrichtigung" className="w-full h-full object-cover" />
                   <div className="absolute top-1/2 -translate-y-1/2 left-3 right-3 space-y-3">
                     <div className="bg-white/80 backdrop-blur-md p-4 rounded-2xl shadow-lg animate-bounce">
@@ -265,8 +242,8 @@ const Landing = () => {
                         </div>
                         <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Eloyo · Jetzt</span>
                       </div>
-                      <p className="text-sm font-bold text-slate-900">🎁 Deine Belohnung wartet!</p>
-                      <p className="text-xs text-slate-600">Heute doppelte Punkte – nur bis 18 Uhr. Komm vorbei! 🎉</p>
+                      <p className="text-sm font-bold text-slate-900">Backstube König:</p>
+                      <p className="text-xs text-slate-600">Morgen Frühstück für 1 Person – nur 10 €. Komm vorbei! 🥐</p>
                     </div>
                   </div>
                 </div>
