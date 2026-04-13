@@ -229,9 +229,6 @@ body.ccm19-modal-open dialog.ccm-dialog-open .ccm-dialog-content-inner {
   display: none;
 }
 
-.scan-merchant-card-transition {
-  view-transition-name: scan-merchant-card;
-}
 
 .app-bottom-nav-transition {
   view-transition-name: app-bottom-nav;
