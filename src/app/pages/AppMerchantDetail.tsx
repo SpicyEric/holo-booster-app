@@ -672,7 +672,7 @@ export const AppMerchantDetail = () => {
 
           {/* Fade-out gradient at the bottom edge of header */}
           <div className="relative pointer-events-none px-4">
-            <div className="h-6 bg-gradient-to-b from-background to-transparent" />
+            <div className="h-3 bg-gradient-to-b from-background to-transparent" />
           </div>
         </div>
 
