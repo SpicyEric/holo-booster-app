@@ -681,7 +681,7 @@ export const AppMerchantDetail = () => {
 
       <BottomNav />
     </div>
-    </div>
+    </motion.div>
   );
 };
 
