@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from 'react';
+import { motion } from 'framer-motion';
 import { MainLayout } from '@/app/components/layout/MainLayout';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { MapPin, AlertCircle, Settings } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -217,10 +218,29 @@ export default function AppStores() {
   return (
     <MainLayout title="Stores">
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="list">Liste</TabsTrigger>
-          <TabsTrigger value="map">Karte</TabsTrigger>
-        </TabsList>
+        <div className="rounded-xl border border-border/50 bg-background/85 p-1 shadow-lg backdrop-blur-xl">
+          <div className="relative grid w-full grid-cols-2 gap-1">
+            {(['list', 'map'] as const).map((tab) => (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                className={`relative z-10 rounded-lg py-2.5 text-sm transition-colors duration-200 ${
+                  activeTab === tab ? 'text-foreground font-medium' : 'text-muted-foreground'
+                }`}
+              >
+                {tab === 'list' ? 'Liste' : 'Karte'}
+                {activeTab === tab && (
+                  <motion.div
+                    layoutId="stores-tab-indicator"
+                    className="absolute inset-0 rounded-lg bg-foreground/10 shadow-md border border-border/60"
+                    style={{ zIndex: -1 }}
+                    transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+                  />
+                )}
+              </button>
+            ))}
+          </div>
+        </div>
 
         <TabsContent value="list" className="mt-4 space-y-3">
           {/* DEBUG: Force rebuild - v2 */}
