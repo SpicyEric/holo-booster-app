@@ -495,6 +495,7 @@ export const AppScan = () => {
     setMerchantDisplayName('');
 
     try {
+      // Fetch a real merchant
       const { data: merchants } = await supabase
         .from('customers')
         .select('id, company_name, name, cover_image_url')
@@ -502,28 +503,93 @@ export const AppScan = () => {
         .limit(1);
 
       const demoMerchant = merchants?.[0];
-      
-      setTimeout(() => {
-        setScanning(false);
-        setResult({
-          success: true,
-          points: 5,
-          totalPoints: 25,
-          merchantName: demoMerchant?.company_name || demoMerchant?.name || 'Backstube König',
-          merchantCustomerId: demoMerchant?.id || 'demo',
+      const merchantId = demoMerchant?.id || 'demo';
+      const displayName = demoMerchant?.company_name || demoMerchant?.name || 'Backstube König';
+
+      // Set the result (for UI state) but drive the flip directly
+      const demoResult: ScanResult = {
+        success: true,
+        points: 5,
+        totalPoints: 25,
+        merchantName: displayName,
+        merchantCustomerId: merchantId,
+      };
+
+      // Simulate brief scanning delay
+      await new Promise(r => setTimeout(r, 500));
+      setScanning(false);
+      setResult(demoResult);
+      updatePreparingFlip(true);
+
+      // Fetch full merchant data + rewards + preload image in parallel
+      const [merchantResponse, rewardsResponse] = await Promise.allSettled([
+        supabase
+          .from('customers')
+          .select('id, name, company_name, description, logo_url, cover_image_url, city, street, house_number, postal_code, phone, website, instagram, opening_hours, google_review_url, latitude, longitude')
+          .eq('id', merchantId)
+          .single(),
+        supabase
+          .from('rewards')
+          .select('id, title, description, points_required, image_url')
+          .eq('merchant_customer_id', merchantId)
+          .eq('is_active', true)
+          .order('points_required', { ascending: true }),
+      ]);
+
+      const merchant = merchantResponse.status === 'fulfilled' && !merchantResponse.value.error
+        ? merchantResponse.value.data : null;
+      const rewards = rewardsResponse.status === 'fulfilled' && !rewardsResponse.value.error
+        ? rewardsResponse.value.data ?? [] : [];
+
+      if (!merchant) {
+        updatePreparingFlip(false);
+        navigateToMerchant(merchantId, { fallbackPoints: 25 });
+        return;
+      }
+
+      const coverUrl = await preloadMerchantImage(merchant.cover_image_url || null);
+      const nextTransitionState: MerchantTransitionState = {
+        fromScan: true as const,
+        initialMerchant: merchant,
+        initialRewards: rewards,
+        initialUserPoints: 25,
+        scanAwardedPoints: 5,
+      };
+
+      if (!coverUrl) {
+        // No image - navigate directly
+        setMerchantDisplayName(displayName);
+        setTransitionState(nextTransitionState);
+        updatePreparingFlip(false);
+        navigateToMerchant(merchantId, { fallbackPoints: 25, state: nextTransitionState });
+        return;
+      }
+
+      // Image ready - do the flip!
+      setMerchantImage(coverUrl);
+      setMerchantDisplayName(displayName);
+      setTransitionState(nextTransitionState);
+      updatePreparingFlip(false);
+
+      // Arm → next frame → flip
+      setFlipPhase('armed');
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          setFlipPhase('flipping');
         });
-      }, 500);
+      });
+
+      // After flip animation, navigate
+      setTimeout(() => {
+        setFlipPhase('navigating');
+        navigateToMerchant(merchantId, { fallbackPoints: 25, state: nextTransitionState });
+      }, 900);
+
     } catch {
-      setTimeout(() => {
-        setScanning(false);
-        setResult({
-          success: true,
-          points: 5,
-          totalPoints: 25,
-          merchantName: 'Backstube König',
-          merchantCustomerId: 'demo',
-        });
-      }, 500);
+      setScanning(false);
+      updatePreparingFlip(false);
+      // Fallback: just navigate
+      navigateToMerchant('demo', { fallbackPoints: 25 });
     }
   };
 
