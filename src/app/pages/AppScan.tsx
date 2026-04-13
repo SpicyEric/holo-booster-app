@@ -627,7 +627,6 @@ export const AppScan = () => {
               WebkitTransformStyle: 'preserve-3d',
               transition: 'transform 0.7s ease-in-out',
               transform: showFrontCard ? 'rotateY(0deg)' : 'rotateY(180deg)',
-              willChange: 'transform',
             }}
           >
             {/* ── FRONT: Purple NFC card ── */}
