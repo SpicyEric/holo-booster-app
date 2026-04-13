@@ -220,13 +220,12 @@ export const AppScan = () => {
   const isNfcDisabled = !checkingNfc && nfcSupported && !nfcEnabled;
   const isIdle = !checkingNfc && nfcSupported && nfcEnabled && !scanning && !result;
 
-  const topInsetOffset = 'calc(0.25rem + env(safe-area-inset-top, 0px))';
   const bottomInsetOffset = 'calc(7rem + env(safe-area-inset-bottom, 0px))';
 
   return (
     <div
       className="bg-gradient-to-b from-background to-muted/30 overflow-hidden"
-      style={{ height: '100dvh', paddingTop: topInsetOffset, paddingBottom: bottomInsetOffset }}
+      style={{ height: '100dvh', paddingBottom: bottomInsetOffset }}
     >
       <Particles
         particleColors={['#6366F1', '#8B5CF6', '#A855F7']}
@@ -243,7 +242,7 @@ export const AppScan = () => {
       <OfflineBanner />
 
       <main
-        className="container mx-auto max-w-2xl relative z-10 h-full overflow-y-auto"
+        className="relative z-10 h-full overflow-y-auto"
         style={{ overscrollBehavior: 'none', WebkitOverflowScrolling: 'touch', touchAction: 'pan-y' }}
       >
         {/* ── Purple Card ── */}
