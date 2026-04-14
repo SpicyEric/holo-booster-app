@@ -42,7 +42,7 @@ interface CustomerSegment { name: string; label: string; count: number; percenta
 
 type DateRange = 7 | 14 | 30 | 90;
 
-const DEMO_MERCHANT_ID = "e8e3db26-fd15-455a-ad47-50ed25081e3c";
+const DEMO_MERCHANT_ID = "e828d21a-f7c5-4c8e-bc8d-6301e3e3ab45";
 
 const DateRangeSelector = ({ value, onChange }: { value: DateRange; onChange: (v: DateRange) => void }) => (
   <div className="flex gap-1">
@@ -98,18 +98,18 @@ export default function Transaktionen() {
       setRewards(rewardResult.data || []);
 
       if (isDemo) {
-        const p = [2,3,1,0,0,0,8,45,120,280,350,380,320,290,340,410,450,420,280,150,80,35,15,5];
+        const p = [1,2,1,0,0,0,5,28,75,160,210,230,195,175,205,250,270,255,170,90,48,20,9,3];
         setHourlyData(p.map((c,h) => ({ hour: `${h}:00`, count: c })));
-        const gd: GrowthData[] = []; let base = 2400 - Math.floor(7 * 6.5);
-        for (let i = 0; i < 7; i++) { const d = new Date(); d.setDate(d.getDate()-(6-i)); base += Math.floor(4+Math.random()*8); gd.push({ date: d.toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"}), total: base }); }
+        const gd: GrowthData[] = []; let base = 832 - Math.floor(7 * 16.7);
+        for (let i = 0; i < 7; i++) { const d = new Date(); d.setDate(d.getDate()-(6-i)); base += Math.floor(10+Math.random()*14); gd.push({ date: d.toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"}), total: base }); }
         setGrowthData(gd);
-        setGenderData([{ gender: "Männlich", count: 1560, percentage: 65 },{ gender: "Weiblich", count: 840, percentage: 35 }]);
-        setAgeData([{age:"14-17",count:96,male:58,female:38},{age:"18-24",count:384,male:245,female:139},{age:"25-34",count:720,male:468,female:252},{age:"35-44",count:576,male:374,female:202},{age:"45-54",count:384,male:250,female:134},{age:"55-64",count:168,male:109,female:59},{age:"65+",count:72,male:47,female:25}]);
+        setGenderData([{ gender: "Männlich", count: 408, percentage: 49 },{ gender: "Weiblich", count: 424, percentage: 51 }]);
+        setAgeData([{age:"14-17",count:42,male:20,female:22},{age:"18-24",count:125,male:60,female:65},{age:"25-34",count:216,male:106,female:110},{age:"35-44",count:192,male:95,female:97},{age:"45-54",count:141,male:70,female:71},{age:"55-64",count:75,male:37,female:38},{age:"65+",count:41,male:20,female:21}]);
         setSegments([
-          { name: "Neu", label: "1 Besuch", count: 480, percentage: 20, color: "#22C55E" },
-          { name: "Kunden", label: "2-5 Besuche", count: 720, percentage: 30, color: "#A855F7" },
-          { name: "Stammkunden", label: "6-15 Besuche", count: 840, percentage: 35, color: "#3B82F6" },
-          { name: "VIP-Stammkunden", label: "15+ Besuche", count: 360, percentage: 15, color: "#F97316" }
+          { name: "Neu", label: "1 Besuch", count: 183, percentage: 22, color: "#22C55E" },
+          { name: "Kunden", label: "2-5 Besuche", count: 258, percentage: 31, color: "#A855F7" },
+          { name: "Stammkunden", label: "6-15 Besuche", count: 266, percentage: 32, color: "#3B82F6" },
+          { name: "VIP-Stammkunden", label: "15+ Besuche", count: 125, percentage: 15, color: "#F97316" }
         ]);
       } else {
         await Promise.all([
