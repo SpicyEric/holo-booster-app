@@ -65,17 +65,8 @@ interface GoogleReviewBonus {
   alreadyClaimed: boolean;
 }
 
-interface SourceRect {
-  top: number;
-  left: number;
-  width: number;
-  height: number;
-}
-
 interface MerchantRouteState {
   fromScan?: boolean;
-  fromStores?: boolean;
-  sourceRect?: SourceRect;
   initialMerchant?: Merchant;
   initialRewards?: Reward[];
   initialUserPoints?: number;
@@ -605,7 +596,7 @@ export const AppMerchantDetail = () => {
             x: [0, 0, 0, 0, 0, 0, 0, 0, pointsAnimation.deltaX, pointsAnimation.deltaX],
             y: [0, 0, 0, 0, 0, 0, 0, 0, pointsAnimation.deltaY, pointsAnimation.deltaY],
           }}
-          transition={{ duration: 5, times: [0, 0.08, 0.16, 0.3, 0.38, 0.5, 0.58, 0.78, 1, 1], ease: [0.22, 1, 0.36, 1] }}
+          transition={{ duration: 5, times: [0, 0.08, 0.16, 0.3, 0.38, 0.5, 0.58, 0.78, 0.95, 1], ease: [0.22, 1, 0.36, 1] }}
           className="pointer-events-none fixed z-[70] flex h-24 w-24 items-center justify-center rounded-full bg-primary shadow-xl shadow-primary/50"
           style={{ left: pointsAnimation.startX, top: pointsAnimation.startY, transform: 'translate(-50%, -50%)' }}
         >
