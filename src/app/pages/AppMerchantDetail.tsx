@@ -97,6 +97,9 @@ export const AppMerchantDetail = () => {
   const initialUserPoints = initialMerchant ? routeState?.initialUserPoints ?? 0 : 0;
   const scanAwardedPoints = initialMerchant ? routeState?.scanAwardedPoints ?? 0 : 0;
   const shouldAnimateFromScan = routeState?.fromScan === true && Boolean(initialMerchant);
+  const shouldAnimateFromStores = routeState?.fromStores === true && Boolean(routeState?.sourceRect) && Boolean(initialMerchant);
+  const sourceRect = routeState?.sourceRect ?? null;
+  const [storeTransitionDone, setStoreTransitionDone] = useState(!shouldAnimateFromStores);
   const [merchant, setMerchant] = useState<Merchant | null>(initialMerchant);
   const [rewards, setRewards] = useState<Reward[]>(initialRewards);
   const [newCustomerOffer, setNewCustomerOffer] = useState<NewCustomerOffer | null>(null);
