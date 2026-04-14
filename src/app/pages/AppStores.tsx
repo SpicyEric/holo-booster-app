@@ -33,6 +33,7 @@ interface Store {
 }
 
 export default function AppStores() {
+  const navigate = useNavigate();
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState('list');
   const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
