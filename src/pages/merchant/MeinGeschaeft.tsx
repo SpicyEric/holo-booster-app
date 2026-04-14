@@ -1110,16 +1110,25 @@ const MeinGeschaeft = () => {
 
                {/* Stempel Tab */}
               <TabsContent value="stempel" className="space-y-6">
-                {/* Stamp System - Wizard-style with calculateSuggestion */}
+                {/* Automatisches Stempelsystem */}
                 <Card className="rounded-2xl shadow-sm border-0 bg-muted/40">
                   <CardHeader className="pb-4">
-                    <CardTitle className="flex items-center gap-3 text-lg font-semibold">
-                      <span className="text-lg">⚙️</span>
-                      Stempelsystem
-                    </CardTitle>
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="flex items-center gap-3 text-lg font-semibold">
+                        <span className="text-lg">⚙️</span>
+                        Automatisches Stempelsystem
+                        <Badge variant="outline" className={cn("text-xs", !manualMode ? "bg-emerald-50 text-emerald-700 border-emerald-300" : "bg-muted text-muted-foreground")}>
+                          {!manualMode ? "aktiviert" : "deaktiviert"}
+                        </Badge>
+                      </CardTitle>
+                      <Switch
+                        checked={!manualMode}
+                        onCheckedChange={(checked) => setManualMode(!checked)}
+                      />
+                    </div>
                   </CardHeader>
-                  <CardContent className="space-y-6">
-                    <div className={`space-y-6 transition-opacity ${manualMode ? 'opacity-30 pointer-events-none' : ''}`}>
+                  {!manualMode && (
+                    <CardContent className="space-y-6">
                       <div>
                         <p className="text-sm text-muted-foreground mb-4">
                           Wie viel gibt ein Kunde bei dir im Durchschnitt pro Besuch aus?
@@ -1274,85 +1283,73 @@ const MeinGeschaeft = () => {
                           ) : null;
                         })()}
                       </div>
-                    </div>
-                  </CardContent>
+                    </CardContent>
+                  )}
                 </Card>
 
-                {/* Stamp Colors & Points */}
-                {nfcChips.length > 0 && (
-                  <Card className="rounded-2xl shadow-sm border-0 bg-muted/40">
-                    <CardHeader className="pb-4">
+                {/* Manuelles Stempelsystem */}
+                <Card className="rounded-2xl shadow-sm border-0 bg-muted/40">
+                  <CardHeader className="pb-4">
+                    <div className="flex items-center justify-between">
                       <CardTitle className="flex items-center gap-3 text-lg font-semibold">
                         <span className="text-lg">🔖</span>
-                        Stempelfarben & Punkte {manualMode ? '(manuell)' : stampMode === 'revenue' ? '(automatisch berechnet)' : ''}
+                        Manuelles Stempelsystem
+                        <Badge variant="outline" className={cn("text-xs", manualMode ? "bg-emerald-50 text-emerald-700 border-emerald-300" : "bg-muted text-muted-foreground")}>
+                          {manualMode ? "aktiviert" : "deaktiviert"}
+                        </Badge>
                       </CardTitle>
-                    </CardHeader>
+                      <Switch
+                        checked={manualMode}
+                        onCheckedChange={setManualMode}
+                      />
+                    </div>
+                  </CardHeader>
+                  {manualMode && nfcChips.length > 0 && (
                     <CardContent className="space-y-4">
+                      <p className="text-sm text-muted-foreground">Punktzahl pro Stempelfarbe selbst festlegen</p>
                       {(() => {
-                        // Compute display values from suggestion when not manual
-                        const suggestion = !manualMode && stampMode === 'revenue'
-                          ? calculateSuggestion(avgRevenue, ['visits'], selectedVariant)
-                          : null;
-                        const dbColorMap: Record<string, string> = { green: 'grün', blue: 'blau', red: 'rot' };
-                        const pointsMap: Record<string, number> = {};
-                        if (suggestion?.type === 'tiered' && suggestion.tiers) {
-                          for (const tier of suggestion.tiers) {
-                            pointsMap[dbColorMap[tier.color] || tier.color] = tier.points;
-                          }
-                        }
-                        return nfcChips.map((chip) => {
-                          const displayPoints = !manualMode && stampMode === 'revenue' && pointsMap[chip.stamp_color?.toLowerCase() || '']
-                            ? pointsMap[chip.stamp_color?.toLowerCase() || '']
-                            : chip.points_value || 1;
-                          return (
-                            <div key={chip.id} className="flex items-center gap-4 p-4 bg-card rounded-xl border border-border">
-                              <div className={`h-10 w-10 rounded-full ${getColorBadge(chip.stamp_color)} shadow-sm flex-shrink-0`} />
-                              <div className="flex-1 grid grid-cols-2 gap-4">
-                                <div>
-                                  <Label className="text-xs text-muted-foreground">Farbe</Label>
-                                  <p className="text-sm font-medium text-foreground capitalize mt-1">{chip.stamp_color || '–'}</p>
-                                </div>
-                                <div>
-                                  <Label className="text-xs text-muted-foreground">Punkte</Label>
-                                  {manualMode ? (
-                                    <Input
-                                      type="number"
-                                      min={1}
-                                      value={chip.points_value || 1}
-                                      onChange={(e) => {
-                                        const val = parseInt(e.target.value) || 1;
-                                        setNfcChips(chips => chips.map(c => c.id === chip.id ? { ...c, points_value: val } : c));
-                                      }}
-                                      className="h-8 w-20 mt-1"
-                                    />
-                                  ) : (
-                                    <p className="text-sm font-bold text-foreground mt-1">{displayPoints}</p>
-                                  )}
-                                </div>
+                        const seen = new Set<string>();
+                        return nfcChips.filter((chip) => {
+                          const color = chip.stamp_color?.toLowerCase() || '';
+                          if (seen.has(color)) return false;
+                          seen.add(color);
+                          return true;
+                        }).map((chip) => (
+                          <div key={chip.id} className="flex items-center gap-4 p-4 bg-card rounded-xl border border-border">
+                            <div className={`h-10 w-10 rounded-full ${getColorBadge(chip.stamp_color)} shadow-sm flex-shrink-0`} />
+                            <div className="flex-1 grid grid-cols-2 gap-4">
+                              <div>
+                                <Label className="text-xs text-muted-foreground">Farbe</Label>
+                                <p className="text-sm font-medium text-foreground capitalize mt-1">{chip.stamp_color || '–'}</p>
+                              </div>
+                              <div>
+                                <Label className="text-xs text-muted-foreground">Punkte</Label>
+                                <Input
+                                  type="number"
+                                  min={1}
+                                  value={chip.points_value || 1}
+                                  onChange={(e) => {
+                                    const val = parseInt(e.target.value) || 1;
+                                    const color = chip.stamp_color?.toLowerCase() || '';
+                                    setNfcChips(chips => chips.map(c =>
+                                      c.stamp_color?.toLowerCase() === color ? { ...c, points_value: val } : c
+                                    ));
+                                  }}
+                                  className="h-8 w-20 mt-1"
+                                />
                               </div>
                             </div>
-                          );
-                        });
+                          </div>
+                        ));
                       })()}
 
-                      <div className="flex items-center justify-between p-4 bg-card rounded-xl border border-border">
-                        <div>
-                          <p className="text-sm font-medium">Manuell einstellen</p>
-                          <p className="text-xs text-muted-foreground">Punktzahl pro Farbe selbst festlegen</p>
-                        </div>
-                        <Switch
-                          checked={manualMode}
-                          onCheckedChange={setManualMode}
-                        />
-                      </div>
-
-                      <Button onClick={handleSaveChips} disabled={savingChips} className="rounded-xl">
+                      <Button onClick={handleSaveChips} disabled={savingChips} className="rounded-xl w-full">
                         {savingChips ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
                         Stempel speichern
                       </Button>
                     </CardContent>
-                  </Card>
-                )}
+                  )}
+                </Card>
 
                 {/* Box-IDs */}
                 <Card className="rounded-2xl shadow-sm border-0 bg-gray-50/80">
