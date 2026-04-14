@@ -309,8 +309,54 @@ const Landing = () => {
         </motion.div>
       </section>
 
-      {/* ═══════ BENTO GRID FEATURES ═══════ */}
+      {/* ═══════ NETZWERK ═══════ */}
       <section className="relative z-10 py-24 px-6 bg-[#f4f3fb]">
+        <motion.div
+          variants={staggerContainer}
+          initial="hidden"
+          whileInView="visible"
+          viewport={viewportConfig}
+          className="max-w-7xl mx-auto"
+        >
+          <div className="grid lg:grid-cols-2 gap-12 items-center">
+            <motion.div variants={glassReveal} className="space-y-6">
+              <h2 className="font-headline text-4xl md:text-5xl font-extrabold leading-tight tracking-[-0.02em]">
+                Das Eloyo-Netzwerk: <span className="text-primary">Deine neue Werbefläche</span>
+              </h2>
+              <p className="text-lg text-[#4a4455]">
+                Das Besondere an Eloyo: Du profitierst automatisch von allen anderen Geschäften, die ebenfalls Eloyo nutzen. Kunden, die woanders einkaufen, sehen auch dein Geschäft in der App.
+              </p>
+              <div className="space-y-4">
+                {[
+                  { title: 'Neukunden gewinnen', desc: 'Kunden, die bei anderen Eloyo-Geschäften einkaufen, sehen auch dein Angebot in der App.' },
+                  { title: 'Neukundenprämien', desc: 'Biete Erstbesucher-Rabatte an und ziehe neue Kunden aktiv in dein Geschäft.' },
+                  { title: 'Lokale Reichweite', desc: 'Je mehr Geschäfte in deiner Umgebung Eloyo nutzen, desto größer wird dein Kundenpotenzial.' },
+                ].map((b, i) => (
+                  <motion.div
+                    key={i}
+                    variants={glassReveal}
+                    className="flex items-start gap-4"
+                  >
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-blue-500 flex items-center justify-center flex-shrink-0">
+                      <CheckCircle className="h-5 w-5 text-white" />
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-[#1a1b21]">{b.title}</h3>
+                      <p className="text-[#4a4455] text-sm">{b.desc}</p>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            </motion.div>
+            <motion.div variants={glassReveal}>
+              <img src={businessNetwork} alt="Eloyo Geschäftsnetzwerk" className="w-full h-auto" />
+            </motion.div>
+          </div>
+        </motion.div>
+      </section>
+
+      {/* ═══════ BENTO GRID FEATURES ═══════ */}
+      <section className="relative z-10 py-24 px-6 bg-[#faf8ff]">
         <motion.div
           variants={staggerContainer}
           initial="hidden"
@@ -364,52 +410,6 @@ const Landing = () => {
               <span className="text-3xl mb-4 block">🎯</span>
               <h3 className="text-2xl font-bold mb-2 font-headline">Neukundenprämien</h3>
               <p className="text-[#4a4455]">Richte exklusive Willkommensangebote ein, die gezielt Kunden ansprechen, die zum ersten Mal in dein Geschäft kommen.</p>
-            </motion.div>
-          </div>
-        </motion.div>
-      </section>
-
-      {/* ═══════ NETZWERK ═══════ */}
-      <section className="relative z-10 py-24 px-6 bg-[#faf8ff]">
-        <motion.div
-          variants={staggerContainer}
-          initial="hidden"
-          whileInView="visible"
-          viewport={viewportConfig}
-          className="max-w-7xl mx-auto"
-        >
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
-            <motion.div variants={glassReveal} className="space-y-6">
-              <h2 className="font-headline text-4xl md:text-5xl font-extrabold leading-tight tracking-[-0.02em]">
-                Das Eloyo-Netzwerk: <span className="text-primary">Deine neue Werbefläche</span>
-              </h2>
-              <p className="text-lg text-[#4a4455]">
-                Das Besondere an Eloyo: Du profitierst automatisch von allen anderen Geschäften, die ebenfalls Eloyo nutzen. Kunden, die woanders einkaufen, sehen auch dein Geschäft in der App.
-              </p>
-              <div className="space-y-4">
-                {[
-                  { title: 'Neukunden gewinnen', desc: 'Kunden, die bei anderen Eloyo-Geschäften einkaufen, sehen auch dein Angebot in der App.' },
-                  { title: 'Neukundenprämien', desc: 'Biete Erstbesucher-Rabatte an und ziehe neue Kunden aktiv in dein Geschäft.' },
-                  { title: 'Lokale Reichweite', desc: 'Je mehr Geschäfte in deiner Umgebung Eloyo nutzen, desto größer wird dein Kundenpotenzial.' },
-                ].map((b, i) => (
-                  <motion.div
-                    key={i}
-                    variants={glassReveal}
-                    className="flex items-start gap-4"
-                  >
-                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-blue-500 flex items-center justify-center flex-shrink-0">
-                      <CheckCircle className="h-5 w-5 text-white" />
-                    </div>
-                    <div>
-                      <h3 className="font-bold text-[#1a1b21]">{b.title}</h3>
-                      <p className="text-[#4a4455] text-sm">{b.desc}</p>
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
-            </motion.div>
-            <motion.div variants={glassReveal}>
-              <img src={businessNetwork} alt="Eloyo Geschäftsnetzwerk" className="w-full h-auto" />
             </motion.div>
           </div>
         </motion.div>
