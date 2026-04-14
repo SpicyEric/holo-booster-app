@@ -184,15 +184,16 @@ const MeinGeschaeft = () => {
   const [manualMode, setManualMode] = useState(false);
   const [selectedVariant, setSelectedVariant] = useState<'balanced' | 'umsatzboost'>('balanced');
   const [stampSettingsLoaded, setStampSettingsLoaded] = useState(false);
+  const stampSettingsChangedByUser = useRef(false);
   const initialFormDataRef = useRef<typeof formData | null>(null);
   const [profileDirty, setProfileDirty] = useState(false);
   const autoSaveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Auto-save stamp settings whenever they change
+  // Auto-save stamp settings whenever they change (only after user interaction)
   const autoSaveStampSettings = async (
     mode: string, revenue: number, manual: boolean, variant: string
   ) => {
-    if (!customerId || !stampSettingsLoaded) return;
+    if (!customerId) return;
     try {
       // Compute chip values for auto mode
       let chipsToSave = [...nfcChips];
@@ -240,15 +241,15 @@ const MeinGeschaeft = () => {
     }
   };
 
-  // Debounced auto-save on stamp setting changes
+  // Debounced auto-save on stamp setting changes — only when user actually changed something
   useEffect(() => {
-    if (!stampSettingsLoaded) return;
+    if (!stampSettingsLoaded || !stampSettingsChangedByUser.current) return;
     if (autoSaveTimeoutRef.current) clearTimeout(autoSaveTimeoutRef.current);
     autoSaveTimeoutRef.current = setTimeout(() => {
       autoSaveStampSettings(stampMode, avgRevenue, manualMode, selectedVariant);
     }, 600);
     return () => { if (autoSaveTimeoutRef.current) clearTimeout(autoSaveTimeoutRef.current); };
-  }, [stampMode, avgRevenue, manualMode, selectedVariant, stampSettingsLoaded]);
+  }, [stampMode, avgRevenue, manualMode, selectedVariant]);
 
   const loadData = async () => {
     try {
@@ -1166,7 +1167,7 @@ const MeinGeschaeft = () => {
                       </CardTitle>
                       <Switch
                         checked={!manualMode}
-                        onCheckedChange={(checked) => setManualMode(!checked)}
+                        onCheckedChange={(checked) => { stampSettingsChangedByUser.current = true; setManualMode(!checked); }}
                       />
                     </div>
                   </CardHeader>
@@ -1184,6 +1185,7 @@ const MeinGeschaeft = () => {
                               key={val}
                               type="button"
                               onClick={() => {
+                                stampSettingsChangedByUser.current = true;
                                 setAvgRevenue(val);
                                 setStampMode('revenue');
                               }}
@@ -1214,6 +1216,7 @@ const MeinGeschaeft = () => {
                             step={1}
                             value={[avgRevenue]}
                             onValueChange={(val) => {
+                              stampSettingsChangedByUser.current = true;
                               setAvgRevenue(val[0]);
                               setStampMode('revenue');
                             }}
@@ -1231,7 +1234,7 @@ const MeinGeschaeft = () => {
                           <div className="flex gap-2 mt-4">
                             <button
                               type="button"
-                              onClick={() => setSelectedVariant('balanced')}
+                              onClick={() => { stampSettingsChangedByUser.current = true; setSelectedVariant('balanced'); }}
                               className={cn(
                                 "flex-1 py-2.5 px-3 rounded-lg border-2 text-sm font-medium transition-all",
                                 selectedVariant === 'balanced'
@@ -1243,7 +1246,7 @@ const MeinGeschaeft = () => {
                             </button>
                             <button
                               type="button"
-                              onClick={() => setSelectedVariant('umsatzboost')}
+                              onClick={() => { stampSettingsChangedByUser.current = true; setSelectedVariant('umsatzboost'); }}
                               className={cn(
                                 "flex-1 py-2.5 px-3 rounded-lg border-2 text-sm font-medium transition-all",
                                 selectedVariant === 'umsatzboost'
@@ -1337,7 +1340,7 @@ const MeinGeschaeft = () => {
                       </CardTitle>
                       <Switch
                         checked={manualMode}
-                        onCheckedChange={setManualMode}
+                        onCheckedChange={(v) => { stampSettingsChangedByUser.current = true; setManualMode(v); }}
                       />
                     </div>
                   </CardHeader>
