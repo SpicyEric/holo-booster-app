@@ -45,9 +45,50 @@ export default function AppStores() {
   const [permissionChecked, setPermissionChecked] = useState(false);
   const [scrollY, setScrollY] = useState(0);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const [flyingCard, setFlyingCard] = useState<{
+    store: Store;
+    rect: { top: number; left: number; width: number; height: number };
+  } | null>(null);
 
   const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
     setScrollY(e.currentTarget.scrollTop);
+  };
+
+  const handleCardClick = (store: Store, e: React.MouseEvent<HTMLButtonElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    setFlyingCard({
+      store,
+      rect: { top: rect.top, left: rect.left, width: rect.width, height: rect.height },
+    });
+  };
+
+  const handleFlyComplete = () => {
+    if (!flyingCard) return;
+    const { store } = flyingCard;
+    navigate(`/app/merchant/${store.id}`, {
+      state: {
+        fromStores: true,
+        initialMerchant: {
+          id: store.id,
+          name: store.name,
+          company_name: store.name,
+          cover_image_url: store.cover_image_url,
+          logo_url: store.logo_url,
+          description: null,
+          city: null,
+          street: null,
+          house_number: null,
+          postal_code: null,
+          phone: null,
+          website: null,
+          instagram: null,
+          opening_hours: null,
+          google_review_url: null,
+          latitude: store.lat,
+          longitude: store.lng,
+        },
+      },
+    });
   };
 
   const isNative = Capacitor.isNativePlatform();
