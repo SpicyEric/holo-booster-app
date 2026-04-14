@@ -474,6 +474,7 @@ export default function AppStores() {
           )}
         </TabsContent>
       </Tabs>
+      </div>
 
       {/* Location Permission Dialog */}
       <LocationPermissionDialog
