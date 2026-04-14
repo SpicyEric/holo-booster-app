@@ -643,7 +643,19 @@ export const AppScan = () => {
         style={{ overscrollBehavior: 'none', WebkitOverflowScrolling: 'touch', touchAction: 'pan-y' }}
       >
         {/* ── Flip Card Container ── */}
-        <div className="px-4 pt-4" style={{ perspective: '1200px' }}>
+        <motion.div
+          className="px-4 pt-4"
+          style={{ perspective: '1200px' }}
+          initial={{ y: '28vh', opacity: 0, scale: 0.92 }}
+          animate={{ y: 0, opacity: 1, scale: 1 }}
+          transition={{
+            type: 'spring',
+            stiffness: 120,
+            damping: 18,
+            mass: 0.8,
+            delay: 0.05,
+          }}
+        >
           <div
             className="relative rounded-2xl shadow-lg"
             style={{
@@ -729,10 +741,15 @@ export const AppScan = () => {
               </div>
             </div>
           </div>
-        </div>
+        </motion.div>
 
         {/* ── Content below the card ── */}
-        <div className="px-4 pt-6 pb-8">
+        <motion.div
+          className="px-4 pt-6 pb-8"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.35, duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+        >
           <AnimatePresence mode="wait">
             {isNfcUnavailable && flipPhase === 'idle' && (
               <motion.div key="unsupported" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="text-center space-y-3">
@@ -819,7 +836,7 @@ export const AppScan = () => {
               </motion.div>
             )}
           </AnimatePresence>
-        </div>
+        </motion.div>
       </main>
 
       <BottomNav />
