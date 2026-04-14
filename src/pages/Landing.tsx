@@ -11,7 +11,7 @@ import heroSlide2 from '@/assets/hero-slide-2.png';
 import heroSlide3 from '@/assets/hero-slide-3.png';
 import eloyoAppMockup from '@/assets/eloyo-app-mockup.jpg';
 import pushBg from '@/assets/push-bg.jpeg';
-import businessNetwork from '@/assets/business-network.png';
+import businessNetwork from '@/assets/business-network-v2.png';
 import contactPerson from '@/assets/contact-person.png';
 import contactCtaButton from '@/assets/contact-cta-button.png';
 import { useEffect, useState } from 'react';
@@ -317,52 +317,52 @@ const Landing = () => {
           viewport={viewportConfig}
           className="max-w-7xl mx-auto"
         >
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {/* NFC - Wide */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Die Eloyo-App */}
             <motion.div
               variants={glassReveal}
               {...cardHover}
-              className="md:col-span-2 bg-white/40 backdrop-blur-2xl rounded-[2rem] p-8 relative overflow-hidden group border border-[#ccc3d8]/15 cursor-default transition-shadow hover:shadow-[0_20px_60px_rgba(124,58,237,0.15)]"
+              className="bg-white/80 backdrop-blur-2xl rounded-[2rem] p-8 relative overflow-hidden group border border-[#ccc3d8]/30 cursor-default transition-shadow hover:shadow-[0_20px_60px_rgba(124,58,237,0.15)]"
             >
               <div className="relative z-10">
-                <span className="text-3xl mb-4 block">📡</span>
-                <h3 className="text-2xl font-bold mb-2 font-headline">Modernste NFC Technologie</h3>
-                <p className="text-[#4a4455] max-w-md">Keine QR-Codes, kein langes Warten. Ein Tap reicht aus, um die Kundenbindung zu starten.</p>
+                <span className="text-3xl mb-4 block">📲</span>
+                <h3 className="text-2xl font-bold mb-2 font-headline">Die Eloyo-App</h3>
+                <p className="text-[#4a4455]">Deine Kunden laden die kostenlose Eloyo-App einmal herunter – einmal eingerichtet, sammeln sie automatisch Punkte bei jedem Besuch.</p>
               </div>
               <div className="absolute bottom-[-20px] right-[-20px] w-48 h-48 bg-gradient-to-br from-primary to-blue-500 opacity-10 rounded-full blur-3xl group-hover:scale-150 transition-transform" />
             </motion.div>
 
-            {/* App */}
+            {/* Flexible Belohnungen */}
             <motion.div
               variants={glassReveal}
               {...cardHover}
-              className="bg-white/40 backdrop-blur-2xl rounded-[2rem] p-8 border-l-4 border-l-primary border border-[#ccc3d8]/15 cursor-default transition-shadow hover:shadow-[0_20px_60px_rgba(124,58,237,0.15)]"
-            >
-              <span className="text-3xl mb-4 block">📲</span>
-              <h3 className="text-2xl font-bold mb-2 font-headline">Die Eloyo-App</h3>
-              <p className="text-[#4a4455]">Deine Kunden laden die kostenlose Eloyo-App herunter – einmal eingerichtet, sammeln sie automatisch Punkte bei jedem Besuch.</p>
-            </motion.div>
-
-            {/* Rewards */}
-            <motion.div
-              variants={glassReveal}
-              {...cardHover}
-              className="bg-white/40 backdrop-blur-2xl rounded-[2rem] p-8 border border-[#ccc3d8]/15 cursor-default transition-shadow hover:shadow-[0_20px_60px_rgba(124,58,237,0.15)]"
+              className="bg-white/80 backdrop-blur-2xl rounded-[2rem] p-8 border border-[#ccc3d8]/30 cursor-default transition-shadow hover:shadow-[0_20px_60px_rgba(124,58,237,0.15)]"
             >
               <span className="text-3xl mb-4 block">🎁</span>
               <h3 className="text-2xl font-bold mb-2 font-headline">Flexible Belohnungen</h3>
-              <p className="text-[#4a4455]">Bestimme selbst, was deine Kunden für ihre Treue bekommen. Vom Kaffee bis zum Rabatt.</p>
+              <p className="text-[#4a4455]">Bestimme selbst, was deine Kunden für ihre Treue bekommen – vom kostenlosen Kaffee bis zum exklusiven Rabatt.</p>
             </motion.div>
 
-            {/* Communication - Wide */}
+            {/* Automationen */}
             <motion.div
               variants={glassReveal}
               {...cardHover}
-              className="md:col-span-2 bg-white/40 backdrop-blur-2xl rounded-[2rem] p-8 border border-[#ccc3d8]/15 cursor-default transition-shadow hover:shadow-[0_20px_60px_rgba(124,58,237,0.15)]"
+              className="bg-white/80 backdrop-blur-2xl rounded-[2rem] p-8 border border-[#ccc3d8]/30 cursor-default transition-shadow hover:shadow-[0_20px_60px_rgba(124,58,237,0.15)]"
             >
-              <span className="text-3xl mb-4 block">💬</span>
-              <h3 className="text-2xl font-bold mb-2 font-headline">Direkte Kommunikation</h3>
-              <p className="text-[#4a4455] max-w-md">Schick deinen Stammkunden persönliche Angebote und Nachrichten direkt aufs Handy – ohne Umwege, ohne Mittelsmänner.</p>
+              <span className="text-3xl mb-4 block">⚙️</span>
+              <h3 className="text-2xl font-bold mb-2 font-headline">Automationen</h3>
+              <p className="text-[#4a4455]">Einmal eingerichtet, erhalten deine Kunden zum Geburtstag automatisch einen persönlichen Gruß inklusive Geburtstagsangebot – ganz ohne Aufwand.</p>
+            </motion.div>
+
+            {/* Neukundenprämien */}
+            <motion.div
+              variants={glassReveal}
+              {...cardHover}
+              className="bg-white/80 backdrop-blur-2xl rounded-[2rem] p-8 border border-[#ccc3d8]/30 cursor-default transition-shadow hover:shadow-[0_20px_60px_rgba(124,58,237,0.15)]"
+            >
+              <span className="text-3xl mb-4 block">🎯</span>
+              <h3 className="text-2xl font-bold mb-2 font-headline">Neukundenprämien</h3>
+              <p className="text-[#4a4455]">Richte exklusive Willkommensangebote ein, die gezielt Kunden ansprechen, die zum ersten Mal in dein Geschäft kommen.</p>
             </motion.div>
           </div>
         </motion.div>
@@ -408,7 +408,7 @@ const Landing = () => {
               </div>
             </motion.div>
             <motion.div variants={glassReveal}>
-              <img src={businessNetwork} alt="Eloyo Geschäftsnetzwerk" className="w-full h-auto rounded-2xl shadow-2xl" />
+              <img src={businessNetwork} alt="Eloyo Geschäftsnetzwerk" className="w-full h-auto" />
             </motion.div>
           </div>
         </motion.div>
@@ -431,11 +431,6 @@ const Landing = () => {
             <p className="text-lg text-[#4a4455] leading-relaxed mb-8">
               Zufriedene Stammkunden sind deine besten Botschafter. Eloyo motiviert deine treuesten Fans, eine positive Bewertung bei Google zu hinterlassen und so dein Neukundengeschäft anzukurbeln.
             </p>
-            <div className="p-6 bg-[#e8e7ef] rounded-2xl border-l-4 border-l-primary">
-              <p className="text-[#1a1b21] font-medium">
-                Push-Nachrichten erzielen bis zu 7x höhere Öffnungsraten als E-Mails – deine Botschaft kommt garantiert an.
-              </p>
-            </div>
           </motion.div>
 
           <motion.div variants={glassReveal} className="lg:w-1/2 relative">
