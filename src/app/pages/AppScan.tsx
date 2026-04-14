@@ -308,6 +308,30 @@ export const AppScan = () => {
     }
   }, [flipPhase, navigateToMerchant, preloadMerchantImage, result, updatePreparingFlip]);
 
+  // Transition armed → flipping via rAF (separate effect so the main effect's cleanup doesn't cancel it)
+  useEffect(() => {
+    if (flipPhase !== 'armed') return;
+
+    let cancelled = false;
+    const armFrame = window.requestAnimationFrame(() => {
+      const flipFrame = window.requestAnimationFrame(() => {
+        if (cancelled) return;
+        console.log('[AppScan] armed → flipping');
+        setFlipPhase('flipping');
+      });
+      // store for cleanup
+      (cleanupRef as any).flipFrame = flipFrame;
+    });
+
+    const cleanupRef: any = { flipFrame: 0 };
+
+    return () => {
+      cancelled = true;
+      window.cancelAnimationFrame(armFrame);
+      window.cancelAnimationFrame(cleanupRef.flipFrame);
+    };
+  }, [flipPhase]);
+
   // After flip completes, navigate to the real merchant page
   useEffect(() => {
     if (flipPhase === 'flipping') {
