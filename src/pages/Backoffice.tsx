@@ -1,8 +1,9 @@
 import PageLayout from '@/components/PageLayout';
 import { motion, type Variants } from 'framer-motion';
-import { BarChart3, Users, TrendingUp, Gift, Activity, PieChart, Sparkles, MessageCircle, Star, Zap, CalendarHeart } from 'lucide-react';
+import { BarChart3, Users, TrendingUp, Gift, Activity, PieChart, Zap } from 'lucide-react';
 import dashboardImg from '@/assets/backoffice-dashboard.png';
 import transactionsImg from '@/assets/backoffice-transactions.png';
+import MarketingCarousel from '@/components/MarketingCarousel';
 
 const appleEase = [0.16, 1, 0.3, 1] as const;
 
@@ -166,56 +167,9 @@ const Backoffice = () => {
             initial="hidden"
             whileInView="visible"
             viewport={viewportConfig}
-            variants={staggerContainer}
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+            variants={glassReveal}
           >
-            <motion.div variants={glassReveal} className="bg-background/80 backdrop-blur-sm border border-border/40 rounded-2xl p-6">
-              <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center mb-4">
-                <Gift className="h-6 w-6 text-primary" />
-              </div>
-              <h3 className="font-semibold text-lg mb-2">Eigene Prämien</h3>
-              <p className="text-muted-foreground text-sm">Bestimme selbst, welche Belohnungen deine Kunden erhalten – ganz nach deinen Vorstellungen.</p>
-            </motion.div>
-
-            <motion.div variants={glassReveal} className="bg-background/80 backdrop-blur-sm border border-border/40 rounded-2xl p-6">
-              <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center mb-4">
-                <Sparkles className="h-6 w-6 text-primary" />
-              </div>
-              <h3 className="font-semibold text-lg mb-2">Neukundenaktionen</h3>
-              <p className="text-muted-foreground text-sm">Gezielt neue Kunden ansprechen, die noch nie in deinem Geschäft waren – mit attraktiven Willkommens-Angeboten.</p>
-            </motion.div>
-
-            <motion.div variants={glassReveal} className="bg-background/80 backdrop-blur-sm border border-border/40 rounded-2xl p-6">
-              <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center mb-4">
-                <Zap className="h-6 w-6 text-primary" />
-              </div>
-              <h3 className="font-semibold text-lg mb-2">Neukunden-Boost</h3>
-              <p className="text-muted-foreground text-sm">Maximale Sichtbarkeit für deine Neukundenprämie – ganz oben in der App sponsern lassen.</p>
-            </motion.div>
-
-            <motion.div variants={glassReveal} className="bg-background/80 backdrop-blur-sm border border-border/40 rounded-2xl p-6">
-              <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center mb-4">
-                <Star className="h-6 w-6 text-primary" />
-              </div>
-              <h3 className="font-semibold text-lg mb-2">Bewertungs-Bonus</h3>
-              <p className="text-muted-foreground text-sm">Kunden werden automatisch an Google-Bewertungen erinnert und dafür mit Punkten belohnt – vollautomatisch.</p>
-            </motion.div>
-
-            <motion.div variants={glassReveal} className="bg-background/80 backdrop-blur-sm border border-border/40 rounded-2xl p-6">
-              <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center mb-4">
-                <MessageCircle className="h-6 w-6 text-primary" />
-              </div>
-              <h3 className="font-semibold text-lg mb-2">Smarte Nachrichten</h3>
-              <p className="text-muted-foreground text-sm">Personalisierte Push-Nachrichten an bestimmte Gruppen oder alle Kunden – mit exklusiven Angeboten oder Bonuspunkten.</p>
-            </motion.div>
-
-            <motion.div variants={glassReveal} className="bg-background/80 backdrop-blur-sm border border-border/40 rounded-2xl p-6">
-              <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center mb-4">
-                <CalendarHeart className="h-6 w-6 text-primary" />
-              </div>
-              <h3 className="font-semibold text-lg mb-2">Geburtstags-Automation</h3>
-              <p className="text-muted-foreground text-sm">Automatische Geburtstagsgrüße mit Punkten oder personalisierten Angeboten – deine Kunden fühlen sich besonders.</p>
-            </motion.div>
+            <MarketingCarousel />
           </motion.div>
 
           <motion.div
