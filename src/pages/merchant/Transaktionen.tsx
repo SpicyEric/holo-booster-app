@@ -279,7 +279,7 @@ export default function Transaktionen() {
           {[
             { label: "Stempel heute", value: todayStamps, icon: Stamp, color: "text-primary", bg: "bg-primary/10" },
             { label: "Einlösungen heute", value: todayRedemptions, icon: Gift, color: "text-amber-600", bg: "bg-amber-100" },
-            { label: "Gesamt-Transaktionen", value: transactions.length, icon: Activity, color: "text-secondary", bg: "bg-secondary/10" },
+            { label: "Gesamt-Transaktionen", value: totalTxCount, icon: Activity, color: "text-secondary", bg: "bg-secondary/10" },
             { label: "Kunden-Segmente", value: segments.reduce((s, seg) => s + seg.count, 0), icon: Users, color: "text-blue-600", bg: "bg-blue-50" },
           ].map(kpi => (
             <Card key={kpi.label} className="rounded-xl border-border/30 shadow-[0_1px_3px_hsl(262,30%,80%/0.3)] bg-white">
