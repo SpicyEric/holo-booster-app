@@ -184,7 +184,7 @@ const MeinGeschaeft = () => {
   const [manualMode, setManualMode] = useState(false);
   const [selectedVariant, setSelectedVariant] = useState<'balanced' | 'umsatzboost'>('balanced');
   const [stampSettingsDirty, setStampSettingsDirty] = useState(false);
-  const [initialStampState, setInitialStampState] = useState<{ stampMode: string; avgRevenue: number; manualMode: boolean } | null>(null);
+  const [initialStampState, setInitialStampState] = useState<{ stampMode: string; avgRevenue: number; manualMode: boolean; selectedVariant: string } | null>(null);
   const initialFormDataRef = useRef<typeof formData | null>(null);
   const [profileDirty, setProfileDirty] = useState(false);
 
@@ -204,9 +204,9 @@ const MeinGeschaeft = () => {
   // Track dirty state for stamp settings
   useEffect(() => {
     if (!initialStampState) return;
-    const isDirty = stampMode !== initialStampState.stampMode || avgRevenue !== initialStampState.avgRevenue || manualMode !== initialStampState.manualMode;
+    const isDirty = stampMode !== initialStampState.stampMode || avgRevenue !== initialStampState.avgRevenue || manualMode !== initialStampState.manualMode || selectedVariant !== initialStampState.selectedVariant;
     setStampSettingsDirty(isDirty);
-  }, [stampMode, avgRevenue, manualMode, initialStampState]);
+  }, [stampMode, avgRevenue, manualMode, selectedVariant, initialStampState]);
 
   const loadData = async () => {
     try {
@@ -276,7 +276,7 @@ const MeinGeschaeft = () => {
         setStampMode(loadedStampMode);
         setAvgRevenue(loadedAvgRevenue);
         setManualMode(loadedManualMode);
-        setInitialStampState({ stampMode: loadedStampMode, avgRevenue: loadedAvgRevenue, manualMode: loadedManualMode });
+        setInitialStampState({ stampMode: loadedStampMode, avgRevenue: loadedAvgRevenue, manualMode: loadedManualMode, selectedVariant: 'balanced' });
         setStampSettingsDirty(false);
       }
 
@@ -655,7 +655,7 @@ const MeinGeschaeft = () => {
         } as any)
         .eq('id', customerId);
       setNfcChips(chipsToSave);
-      setInitialStampState({ stampMode, avgRevenue, manualMode });
+      setInitialStampState({ stampMode, avgRevenue, manualMode, selectedVariant });
       setStampSettingsDirty(false);
       toast.success('Stempel gespeichert');
     } catch {
@@ -1315,7 +1315,7 @@ const MeinGeschaeft = () => {
                           seen.add(color);
                           return true;
                         }).map((chip) => (
-                          <div key={chip.id} className="flex items-center gap-4 p-4 bg-card rounded-xl border border-border">
+                          <div key={chip.id} className="flex items-center gap-4 p-4 bg-background rounded-xl border-2 border-border shadow-sm">
                             <div className={`h-10 w-10 rounded-full ${getColorBadge(chip.stamp_color)} shadow-sm flex-shrink-0`} />
                             <div className="flex-1 grid grid-cols-2 gap-4">
                               <div>
@@ -1335,7 +1335,7 @@ const MeinGeschaeft = () => {
                                       c.stamp_color?.toLowerCase() === color ? { ...c, points_value: val } : c
                                     ));
                                   }}
-                                  className="h-8 w-20 mt-1"
+                                  className="h-8 w-20 mt-1 bg-background border-2 border-primary/30 font-bold text-foreground"
                                 />
                               </div>
                             </div>
@@ -1343,7 +1343,7 @@ const MeinGeschaeft = () => {
                         ));
                       })()}
 
-                      <Button onClick={handleSaveChips} disabled={savingChips} className="rounded-xl w-full">
+                      <Button onClick={handleSaveChips} disabled={savingChips} className="rounded-xl w-full animate-pulse">
                         {savingChips ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
                         Stempel speichern
                       </Button>
