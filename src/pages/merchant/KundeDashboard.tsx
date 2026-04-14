@@ -24,7 +24,7 @@ interface SubscriptionInfo { hasSubscription: boolean; status?: string; currentP
 interface DashboardStats { totalContacts: number; totalStamps: number; totalRedemptions: number; networkEffect: number; newContactsThisWeek: number; }
 
 const DEMO_MERCHANT_ID = "e828d21a-f7c5-4c8e-bc8d-6301e3e3ab45";
-const DEMO_STATS: DashboardStats = { totalContacts: 832, totalStamps: 13002, totalRedemptions: 402, networkEffect: 387, newContactsThisWeek: 117 };
+const DEMO_STATS: DashboardStats = { totalContacts: 832, totalStamps: 6102, totalRedemptions: 312, networkEffect: 387, newContactsThisWeek: 117 };
 
 const KpiCard = ({ icon: Icon, label, value, sub, trend, iconBg, iconColor, bigNumber }: { icon: React.ElementType; label: string; value: string; sub?: string; trend?: string; iconBg: string; iconColor: string; bigNumber?: boolean }) => (
   <div className="bg-white rounded-2xl p-5 border border-border/30 shadow-[0_1px_3px_hsl(262,30%,80%/0.3)] hover:shadow-[0_4px_12px_hsl(262,30%,80%/0.4)] transition-all duration-300 group">
