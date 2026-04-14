@@ -749,6 +749,9 @@ export const AppScan = () => {
                   Dein Gerät unterstützt kein NFC. Um Eloyo zu nutzen, benötigst du ein Smartphone mit NFC-Funktion.
                 </p>
                 <Button variant="outline" onClick={() => navigate('/app')}>Zurück</Button>
+                <Button onClick={handleDemoScan} variant="outline" className="w-full max-w-xs border-dashed border-2 border-primary/40 text-primary">
+                  🧪 Demo: Scannen
+                </Button>
               </motion.div>
             )}
 
@@ -771,6 +774,9 @@ export const AppScan = () => {
                 <Button onClick={startNFCScan} className="w-full max-w-xs">
                   <Nfc className="h-4 w-4 mr-2" />
                   Jetzt scannen
+                </Button>
+                <Button onClick={handleDemoScan} variant="outline" className="w-full max-w-xs border-dashed border-2 border-primary/40 text-primary">
+                  🧪 Demo: Scannen
                 </Button>
               </motion.div>
             )}
