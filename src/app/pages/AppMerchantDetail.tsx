@@ -676,9 +676,9 @@ export const AppMerchantDetail = () => {
           </div>
 
           <motion.div
-            initial={shouldAnimateFromScan || shouldAnimateFromStores ? { opacity: 0, y: 20 } : false}
-            animate={shouldAnimateFromStores ? (storeTransitionDone ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }) : { opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, delay: shouldAnimateFromScan ? 0.4 : 0 }}
+            initial={shouldAnimateFromScan ? { opacity: 0, y: 20 } : false}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: shouldAnimateFromScan ? 0.4 : 0 }}
             className="relative pointer-events-none px-4 pt-3"
             style={{ touchAction: 'none' }}
           >
