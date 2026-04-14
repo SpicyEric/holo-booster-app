@@ -731,7 +731,6 @@ export type Database = {
           sales_notes: string | null
           stamp_mode: string | null
           stamp_reward_text: string | null
-          stamp_variant: string | null
           stamps_required: number | null
           status: string | null
           street: string | null
@@ -805,7 +804,6 @@ export type Database = {
           sales_notes?: string | null
           stamp_mode?: string | null
           stamp_reward_text?: string | null
-          stamp_variant?: string | null
           stamps_required?: number | null
           status?: string | null
           street?: string | null
@@ -879,7 +877,6 @@ export type Database = {
           sales_notes?: string | null
           stamp_mode?: string | null
           stamp_reward_text?: string | null
-          stamp_variant?: string | null
           stamps_required?: number | null
           status?: string | null
           street?: string | null

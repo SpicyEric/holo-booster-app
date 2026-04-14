@@ -183,73 +183,30 @@ const MeinGeschaeft = () => {
   const [avgRevenue, setAvgRevenue] = useState(7);
   const [manualMode, setManualMode] = useState(false);
   const [selectedVariant, setSelectedVariant] = useState<'balanced' | 'umsatzboost'>('balanced');
-  const [stampSettingsLoaded, setStampSettingsLoaded] = useState(false);
-  const stampSettingsChangedByUser = useRef(false);
+  const [stampSettingsDirty, setStampSettingsDirty] = useState(false);
+  const [initialStampState, setInitialStampState] = useState<{ stampMode: string; avgRevenue: number; manualMode: boolean } | null>(null);
   const initialFormDataRef = useRef<typeof formData | null>(null);
   const [profileDirty, setProfileDirty] = useState(false);
-  const autoSaveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Auto-save stamp settings whenever they change (only after user interaction)
-  const autoSaveStampSettings = async (
-    mode: string, revenue: number, manual: boolean, variant: string
-  ) => {
-    if (!customerId) return;
-    try {
-      // Compute chip values for auto mode
-      let chipsToSave = [...nfcChips];
-      if (!manual && mode === 'revenue') {
-        const suggestion = calculateSuggestion(revenue, ['visits'], variant as any);
-        if (suggestion.type === 'tiered' && suggestion.tiers) {
-          const colorMap: Record<string, { points: number }> = {};
-          const dbColorMap: Record<string, string> = { green: 'grün', blue: 'blau', red: 'rot' };
-          for (const tier of suggestion.tiers) {
-            const dbColor = dbColorMap[tier.color] || tier.color;
-            colorMap[dbColor] = { points: tier.points };
-          }
-          chipsToSave = nfcChips.map(chip => {
-            const color = chip.stamp_color?.toLowerCase() || '';
-            if (colorMap[color]) return { ...chip, points_value: colorMap[color].points };
-            return chip;
-          });
-        }
-      }
-
-      for (const chip of chipsToSave) {
-        await supabase
-          .from('nfc_chips')
-          .update({
-            stamp_name: chip.stamp_name,
-            stamp_color: chip.stamp_color,
-            points_value: chip.points_value,
-            is_active: chip.is_active
-          })
-          .eq('id', chip.id);
-      }
-      await supabase
-        .from('customers')
-        .update({
-          stamp_mode: mode,
-          avg_revenue: revenue,
-          manual_stamp_mode: manual,
-          stamp_variant: variant,
-        } as any)
-        .eq('id', customerId);
-      setNfcChips(chipsToSave);
-      toast.success('Stempel gespeichert', { id: 'stamp-autosave' });
-    } catch {
-      toast.error('Fehler beim Speichern');
-    }
-  };
-
-  // Debounced auto-save on stamp setting changes — only when user actually changed something
   useEffect(() => {
-    if (!stampSettingsLoaded || !stampSettingsChangedByUser.current) return;
-    if (autoSaveTimeoutRef.current) clearTimeout(autoSaveTimeoutRef.current);
-    autoSaveTimeoutRef.current = setTimeout(() => {
-      autoSaveStampSettings(stampMode, avgRevenue, manualMode, selectedVariant);
-    }, 600);
-    return () => { if (autoSaveTimeoutRef.current) clearTimeout(autoSaveTimeoutRef.current); };
-  }, [stampMode, avgRevenue, manualMode, selectedVariant]);
+    if (user?.id) {
+      loadData();
+    }
+  }, [user?.id]);
+
+  // Track dirty state for profile info
+  useEffect(() => {
+    if (!initialFormDataRef.current) return;
+    const isDirty = JSON.stringify(formData) !== JSON.stringify(initialFormDataRef.current);
+    setProfileDirty(isDirty);
+  }, [formData]);
+
+  // Track dirty state for stamp settings
+  useEffect(() => {
+    if (!initialStampState) return;
+    const isDirty = stampMode !== initialStampState.stampMode || avgRevenue !== initialStampState.avgRevenue || manualMode !== initialStampState.manualMode;
+    setStampSettingsDirty(isDirty);
+  }, [stampMode, avgRevenue, manualMode, initialStampState]);
 
   const loadData = async () => {
     try {
@@ -316,13 +273,11 @@ const MeinGeschaeft = () => {
         const loadedStampMode = (customer as any).stamp_mode || 'classic';
         const loadedAvgRevenue = (customer as any).avg_revenue ?? 7;
         const loadedManualMode = (customer as any).manual_stamp_mode ?? false;
-        const loadedVariant = (customer as any).stamp_variant || 'balanced';
         setStampMode(loadedStampMode);
         setAvgRevenue(loadedAvgRevenue);
         setManualMode(loadedManualMode);
-        setSelectedVariant(loadedVariant);
-        // Mark loaded AFTER setting state so auto-save doesn't trigger on load
-        setTimeout(() => setStampSettingsLoaded(true), 100);
+        setInitialStampState({ stampMode: loadedStampMode, avgRevenue: loadedAvgRevenue, manualMode: loadedManualMode });
+        setStampSettingsDirty(false);
       }
 
       // Load rewards
@@ -700,7 +655,8 @@ const MeinGeschaeft = () => {
         } as any)
         .eq('id', customerId);
       setNfcChips(chipsToSave);
-      // auto-save handles persistence now
+      setInitialStampState({ stampMode, avgRevenue, manualMode });
+      setStampSettingsDirty(false);
       toast.success('Stempel gespeichert');
     } catch {
       toast.error('Fehler beim Speichern');
@@ -1167,7 +1123,7 @@ const MeinGeschaeft = () => {
                       </CardTitle>
                       <Switch
                         checked={!manualMode}
-                        onCheckedChange={(checked) => { stampSettingsChangedByUser.current = true; setManualMode(!checked); }}
+                        onCheckedChange={(checked) => setManualMode(!checked)}
                       />
                     </div>
                   </CardHeader>
@@ -1185,7 +1141,6 @@ const MeinGeschaeft = () => {
                               key={val}
                               type="button"
                               onClick={() => {
-                                stampSettingsChangedByUser.current = true;
                                 setAvgRevenue(val);
                                 setStampMode('revenue');
                               }}
@@ -1216,7 +1171,6 @@ const MeinGeschaeft = () => {
                             step={1}
                             value={[avgRevenue]}
                             onValueChange={(val) => {
-                              stampSettingsChangedByUser.current = true;
                               setAvgRevenue(val[0]);
                               setStampMode('revenue');
                             }}
@@ -1227,6 +1181,12 @@ const MeinGeschaeft = () => {
                             <span>50 €</span>
                           </div>
 
+                          {stampSettingsDirty && (
+                            <Button onClick={handleSaveChips} disabled={savingChips} className="rounded-xl w-full animate-pulse">
+                              {savingChips ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
+                              Stempel speichern
+                            </Button>
+                          )}
                         </div>
 
                         {/* Variant selector */}
@@ -1234,7 +1194,7 @@ const MeinGeschaeft = () => {
                           <div className="flex gap-2 mt-4">
                             <button
                               type="button"
-                              onClick={() => { stampSettingsChangedByUser.current = true; setSelectedVariant('balanced'); }}
+                              onClick={() => setSelectedVariant('balanced')}
                               className={cn(
                                 "flex-1 py-2.5 px-3 rounded-lg border-2 text-sm font-medium transition-all",
                                 selectedVariant === 'balanced'
@@ -1246,7 +1206,7 @@ const MeinGeschaeft = () => {
                             </button>
                             <button
                               type="button"
-                              onClick={() => { stampSettingsChangedByUser.current = true; setSelectedVariant('umsatzboost'); }}
+                              onClick={() => setSelectedVariant('umsatzboost')}
                               className={cn(
                                 "flex-1 py-2.5 px-3 rounded-lg border-2 text-sm font-medium transition-all",
                                 selectedVariant === 'umsatzboost'
@@ -1340,7 +1300,7 @@ const MeinGeschaeft = () => {
                       </CardTitle>
                       <Switch
                         checked={manualMode}
-                        onCheckedChange={(v) => { stampSettingsChangedByUser.current = true; setManualMode(v); }}
+                        onCheckedChange={setManualMode}
                       />
                     </div>
                   </CardHeader>
