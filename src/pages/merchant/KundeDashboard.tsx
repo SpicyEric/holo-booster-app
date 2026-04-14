@@ -23,7 +23,7 @@ interface Customer { id: string; name: string; email: string; company_name: stri
 interface SubscriptionInfo { hasSubscription: boolean; status?: string; currentPeriodEnd?: string; cancelAtPeriodEnd?: boolean; cancelAt?: string | null; }
 interface DashboardStats { totalContacts: number; totalStamps: number; totalRedemptions: number; networkEffect: number; newContactsThisWeek: number; }
 
-const DEMO_MERCHANT_ID = "e8e3db26-fd15-455a-ad47-50ed25081e3c";
+const DEMO_MERCHANT_ID = "e828d21a-f7c5-4c8e-bc8d-6301e3e3ab45";
 const DEMO_STATS: DashboardStats = { totalContacts: 832, totalStamps: 13002, totalRedemptions: 402, networkEffect: 387, newContactsThisWeek: 117 };
 
 const KpiCard = ({ icon: Icon, label, value, sub, trend, iconBg, iconColor, bigNumber }: { icon: React.ElementType; label: string; value: string; sub?: string; trend?: string; iconBg: string; iconColor: string; bigNumber?: boolean }) => (
