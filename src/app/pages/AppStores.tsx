@@ -1,7 +1,6 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { motion } from 'framer-motion';
 import { MainLayout } from '@/app/components/layout/MainLayout';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { MapPin, AlertCircle, Settings } from 'lucide-react';
