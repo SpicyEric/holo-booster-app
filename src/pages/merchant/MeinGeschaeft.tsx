@@ -204,9 +204,9 @@ const MeinGeschaeft = () => {
   // Track dirty state for stamp settings
   useEffect(() => {
     if (!initialStampState) return;
-    const isDirty = stampMode !== initialStampState.stampMode || avgRevenue !== initialStampState.avgRevenue || manualMode !== initialStampState.manualMode;
+    const isDirty = stampMode !== initialStampState.stampMode || avgRevenue !== initialStampState.avgRevenue || manualMode !== initialStampState.manualMode || selectedVariant !== initialStampState.selectedVariant;
     setStampSettingsDirty(isDirty);
-  }, [stampMode, avgRevenue, manualMode, initialStampState]);
+  }, [stampMode, avgRevenue, manualMode, selectedVariant, initialStampState]);
 
   const loadData = async () => {
     try {
@@ -276,7 +276,7 @@ const MeinGeschaeft = () => {
         setStampMode(loadedStampMode);
         setAvgRevenue(loadedAvgRevenue);
         setManualMode(loadedManualMode);
-        setInitialStampState({ stampMode: loadedStampMode, avgRevenue: loadedAvgRevenue, manualMode: loadedManualMode });
+        setInitialStampState({ stampMode: loadedStampMode, avgRevenue: loadedAvgRevenue, manualMode: loadedManualMode, selectedVariant: 'balanced' });
         setStampSettingsDirty(false);
       }
 
@@ -655,7 +655,7 @@ const MeinGeschaeft = () => {
         } as any)
         .eq('id', customerId);
       setNfcChips(chipsToSave);
-      setInitialStampState({ stampMode, avgRevenue, manualMode });
+      setInitialStampState({ stampMode, avgRevenue, manualMode, selectedVariant });
       setStampSettingsDirty(false);
       toast.success('Stempel gespeichert');
     } catch {
