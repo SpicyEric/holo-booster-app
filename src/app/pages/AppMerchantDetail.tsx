@@ -65,8 +65,17 @@ interface GoogleReviewBonus {
   alreadyClaimed: boolean;
 }
 
+interface SourceRect {
+  top: number;
+  left: number;
+  width: number;
+  height: number;
+}
+
 interface MerchantRouteState {
   fromScan?: boolean;
+  fromStores?: boolean;
+  sourceRect?: SourceRect;
   initialMerchant?: Merchant;
   initialRewards?: Reward[];
   initialUserPoints?: number;

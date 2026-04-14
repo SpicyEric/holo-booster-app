@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { MainLayout } from '@/app/components/layout/MainLayout';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
