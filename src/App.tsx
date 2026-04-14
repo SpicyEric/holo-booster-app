@@ -9,6 +9,7 @@ import Landing from "./pages/Landing";
 import Backoffice from "./pages/Backoffice";
 import Index from "./pages/Index";
 import Karriere from "./pages/Karriere";
+import Kontakt from "./pages/Kontakt";
 import Impressum from "./pages/Impressum";
 import Datenschutz from "./pages/Datenschutz";
 import Delete from "./pages/Delete";
