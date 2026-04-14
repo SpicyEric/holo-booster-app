@@ -643,7 +643,19 @@ export const AppScan = () => {
         style={{ overscrollBehavior: 'none', WebkitOverflowScrolling: 'touch', touchAction: 'pan-y' }}
       >
         {/* ── Flip Card Container ── */}
-        <div className="px-4 pt-4" style={{ perspective: '1200px' }}>
+        <motion.div
+          className="px-4 pt-4"
+          style={{ perspective: '1200px' }}
+          initial={{ y: '28vh', opacity: 0, scale: 0.92 }}
+          animate={{ y: 0, opacity: 1, scale: 1 }}
+          transition={{
+            type: 'spring',
+            stiffness: 120,
+            damping: 18,
+            mass: 0.8,
+            delay: 0.05,
+          }}
+        >
           <div
             className="relative rounded-2xl shadow-lg"
             style={{
