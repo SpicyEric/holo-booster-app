@@ -91,6 +91,7 @@ const App = () => {
               {/* ===== WEB ROUTES ===== */}
               <Route path="/home" element={<Landing />} />
               <Route path="/backoffice" element={<Backoffice />} />
+              <Route path="/karriere" element={<Karriere />} />
               <Route path="/kontakt" element={<Kontakt />} />
               <Route path="/impressum" element={<Impressum />} />
               <Route path="/datenschutz" element={<Datenschutz />} />
