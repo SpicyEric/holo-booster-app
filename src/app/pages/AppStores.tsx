@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { MainLayout } from '@/app/components/layout/MainLayout';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { MapPin, AlertCircle, Settings } from 'lucide-react';
@@ -45,9 +45,50 @@ export default function AppStores() {
   const [permissionChecked, setPermissionChecked] = useState(false);
   const [scrollY, setScrollY] = useState(0);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const [flyingCard, setFlyingCard] = useState<{
+    store: Store;
+    rect: { top: number; left: number; width: number; height: number };
+  } | null>(null);
 
   const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
     setScrollY(e.currentTarget.scrollTop);
+  };
+
+  const handleCardClick = (store: Store, e: React.MouseEvent<HTMLButtonElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    setFlyingCard({
+      store,
+      rect: { top: rect.top, left: rect.left, width: rect.width, height: rect.height },
+    });
+  };
+
+  const handleFlyComplete = () => {
+    if (!flyingCard) return;
+    const { store } = flyingCard;
+    navigate(`/app/merchant/${store.id}`, {
+      state: {
+        fromStores: true,
+        initialMerchant: {
+          id: store.id,
+          name: store.name,
+          company_name: store.name,
+          cover_image_url: store.cover_image_url,
+          logo_url: store.logo_url,
+          description: null,
+          city: null,
+          street: null,
+          house_number: null,
+          postal_code: null,
+          phone: null,
+          website: null,
+          instagram: null,
+          opening_hours: null,
+          google_review_url: null,
+          latitude: store.lat,
+          longitude: store.lng,
+        },
+      },
+    });
   };
 
   const isNative = Capacitor.isNativePlatform();
@@ -224,7 +265,44 @@ export default function AppStores() {
   }
 
   return (
-    <MainLayout title="Stores">
+    <MainLayout title={flyingCard ? '' : 'Stores'}>
+      {/* Flying card overlay */}
+      <AnimatePresence>
+        {flyingCard && (
+          <motion.div
+            key="flying-card"
+            className="fixed z-[100] rounded-2xl overflow-hidden shadow-xl"
+            initial={{
+              top: flyingCard.rect.top,
+              left: flyingCard.rect.left,
+              width: flyingCard.rect.width,
+              height: flyingCard.rect.height,
+            }}
+            animate={{
+              top: 16,
+              left: 16,
+              width: 'calc(100vw - 32px)',
+              height: 'calc((100vw - 32px) / 1.55)',
+            }}
+            transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+            onAnimationComplete={handleFlyComplete}
+          >
+            {flyingCard.store.cover_image_url ? (
+              <img src={flyingCard.store.cover_image_url} alt={flyingCard.store.name} className="w-full h-full object-cover" />
+            ) : (
+              <div className="w-full h-full bg-gradient-to-br from-primary to-secondary" />
+            )}
+            <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/70 via-black/40 to-transparent" />
+            <div className="absolute bottom-3 left-3 right-3 z-10">
+              <h3 className="text-white font-semibold text-xl truncate drop-shadow-md">{flyingCard.store.name}</h3>
+              {flyingCard.store.category && <p className="text-white/80 text-sm truncate drop-shadow-md">{flyingCard.store.category}</p>}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Hide all content when card is flying */}
+      <div style={{ opacity: flyingCard ? 0 : 1, transition: 'opacity 0.15s ease-out' }}>
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <div className="sticky top-0 z-10 bg-background pb-3 pt-1">
           <div className="rounded-xl border border-border/50 bg-background/85 p-1 shadow-lg backdrop-blur-xl">
@@ -283,34 +361,7 @@ export default function AppStores() {
                     }}
                   >
                     <button
-                      onClick={(e) => {
-                        const rect = e.currentTarget.getBoundingClientRect();
-                        navigate(`/app/merchant/${store.id}`, {
-                          state: {
-                            fromStores: true,
-                            sourceRect: { top: rect.top, left: rect.left, width: rect.width, height: rect.height },
-                            initialMerchant: {
-                              id: store.id,
-                              name: store.name,
-                              company_name: store.name,
-                              cover_image_url: store.cover_image_url,
-                              logo_url: store.logo_url,
-                              description: null,
-                              city: null,
-                              street: null,
-                              house_number: null,
-                              postal_code: null,
-                              phone: null,
-                              website: null,
-                              instagram: null,
-                              opening_hours: null,
-                              google_review_url: null,
-                              latitude: store.lat,
-                              longitude: store.lng,
-                            },
-                          },
-                        });
-                      }}
+                      onClick={(e) => handleCardClick(store, e)}
                       className="w-full rounded-xl overflow-hidden shadow-md text-left relative block"
                       style={{ aspectRatio: '1.55 / 1', display: 'block' }}
                     >
@@ -396,6 +447,7 @@ export default function AppStores() {
           )}
         </TabsContent>
       </Tabs>
+      </div>
 
       {/* Location Permission Dialog */}
       <LocationPermissionDialog
