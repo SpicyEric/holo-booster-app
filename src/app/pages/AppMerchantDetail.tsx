@@ -599,6 +599,37 @@ export const AppMerchantDetail = () => {
     <div className="bg-background overflow-hidden" style={{ height: '100dvh', overscrollBehavior: 'none', touchAction: 'pan-y' }}>
       <div className="fixed top-0 left-0 right-0 z-[60]" style={{ height: 'env(safe-area-inset-top, 0px)', background: 'hsl(var(--background))' }} />
 
+      {/* Shared-element transition overlay from stores list */}
+      {shouldAnimateFromStores && sourceRect && !storeTransitionDone && merchant && (
+        <motion.div
+          className="fixed z-[80] rounded-2xl overflow-hidden shadow-lg"
+          initial={{
+            top: sourceRect.top,
+            left: sourceRect.left,
+            width: sourceRect.width,
+            height: sourceRect.height,
+          }}
+          animate={{
+            top: 16,
+            left: 16,
+            width: `calc(100vw - 32px)`,
+            height: `calc((100vw - 32px) / 1.55)`,
+          }}
+          transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+          onAnimationComplete={() => setStoreTransitionDone(true)}
+        >
+          {merchant.cover_image_url ? (
+            <img src={merchant.cover_image_url} alt={merchant.name} className="w-full h-full object-cover" />
+          ) : (
+            <div className="w-full h-full bg-gradient-to-br from-primary to-secondary" />
+          )}
+          <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/60 via-black/25 to-transparent" />
+          <div className="absolute bottom-3 left-4 right-4">
+            <h1 className="text-lg font-bold text-white drop-shadow-md">{merchant.company_name || merchant.name}</h1>
+          </div>
+        </motion.div>
+      )}
+
       {showPointsBubble && pointsAnimation && (
         <motion.div
           initial={{ scale: 0, opacity: 0, x: 0, y: 0 }}
@@ -608,7 +639,7 @@ export const AppMerchantDetail = () => {
             x: [0, 0, 0, 0, 0, 0, 0, 0, pointsAnimation.deltaX, pointsAnimation.deltaX],
             y: [0, 0, 0, 0, 0, 0, 0, 0, pointsAnimation.deltaY, pointsAnimation.deltaY],
           }}
-          transition={{ duration: 5, times: [0, 0.08, 0.16, 0.3, 0.38, 0.5, 0.58, 0.78, 0.95, 1], ease: [0.22, 1, 0.36, 1] }}
+          transition={{ duration: 5, times: [0, 0.08, 0.16, 0.3, 0.38, 0.5, 0.58, 0.78, 1, 1], ease: [0.22, 1, 0.36, 1] }}
           className="pointer-events-none fixed z-[70] flex h-24 w-24 items-center justify-center rounded-full bg-primary shadow-xl shadow-primary/50"
           style={{ left: pointsAnimation.startX, top: pointsAnimation.startY, transform: 'translate(-50%, -50%)' }}
         >
