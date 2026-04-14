@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { DeepLinkProvider } from "@/app/components/DeepLinkProvider";
 import { useConsentDialogScrollLock } from "@/hooks/useConsentDialogScrollLock";
 import Landing from "./pages/Landing";
+import Backoffice from "./pages/Backoffice";
 import Index from "./pages/Index";
 import Karriere from "./pages/Karriere";
 import Kontakt from "./pages/Kontakt";
@@ -89,6 +90,7 @@ const App = () => {
 
               {/* ===== WEB ROUTES ===== */}
               <Route path="/home" element={<Landing />} />
+              <Route path="/backoffice" element={<Backoffice />} />
               <Route path="/karriere" element={<Karriere />} />
               <Route path="/kontakt" element={<Kontakt />} />
               <Route path="/impressum" element={<Impressum />} />

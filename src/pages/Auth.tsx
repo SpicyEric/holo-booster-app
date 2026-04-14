@@ -36,6 +36,7 @@ const Auth = () => {
   const location = useLocation();
   const navItems = [
     { label: 'Home', href: '/' },
+    { label: 'Backoffice', href: '/backoffice' },
     { label: 'Karriere', href: '/karriere' },
     { label: 'Kontakt', href: '/kontakt' },
     { label: 'Datenschutz', href: '/datenschutz' },
