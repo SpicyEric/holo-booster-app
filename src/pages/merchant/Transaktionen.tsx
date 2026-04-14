@@ -231,10 +231,12 @@ export default function Transaktionen() {
   const hasActiveFilters = search || typeFilter !== "all" || rewardFilter !== "all" || dateFrom || dateTo;
 
   // KPIs
+  const isDemo = customerId === DEMO_MERCHANT_ID;
   const todayStr = new Date().toISOString().slice(0, 10);
   const todayTx = transactions.filter(tx => tx.created_at.startsWith(todayStr));
-  const todayStamps = todayTx.filter(tx => tx.transaction_type === "nfc_stamp").reduce((s, tx) => s + tx.points_change, 0);
-  const todayRedemptions = todayTx.filter(tx => tx.points_change < 0).length;
+  const todayStamps = isDemo ? 52 : todayTx.filter(tx => tx.transaction_type === "nfc_stamp").reduce((s, tx) => s + tx.points_change, 0);
+  const todayRedemptions = isDemo ? 2 : todayTx.filter(tx => tx.points_change < 0).length;
+  const totalTxCount = isDemo ? 6700 : transactions.length;
 
   const getTypeLabel = (type: string | null) => {
     switch (type) {
