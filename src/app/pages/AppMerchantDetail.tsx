@@ -592,7 +592,7 @@ export const AppMerchantDetail = () => {
           initial={{ scale: 0, opacity: 0, x: 0, y: 0 }}
           animate={{
             scale: [0, 1.2, 1, 1.08, 1, 1.06, 1, 1, 0.4, 0.3],
-            opacity: [0, 1, 1, 1, 1, 1, 1, 1, 1, 0],
+            opacity: [0, 1, 1, 1, 1, 1, 1, 1, 1, 1],
             x: [0, 0, 0, 0, 0, 0, 0, 0, pointsAnimation.deltaX, pointsAnimation.deltaX],
             y: [0, 0, 0, 0, 0, 0, 0, 0, pointsAnimation.deltaY, pointsAnimation.deltaY],
           }}
