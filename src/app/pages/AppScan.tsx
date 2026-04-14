@@ -741,7 +741,7 @@ export const AppScan = () => {
               </div>
             </div>
           </div>
-        </div>
+        </motion.div>
 
         {/* ── Content below the card ── */}
         <div className="px-4 pt-6 pb-8">
