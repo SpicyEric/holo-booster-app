@@ -215,8 +215,6 @@ export const AppScan = () => {
     console.log('[AppScan] Flip useEffect triggered, result:', result?.success, result?.merchantCustomerId, 'flipPhase:', flipPhase, 'preparing:', preparingFlipRef.current);
     if (result?.success && !result.isOffline && result.merchantCustomerId && flipPhase === 'idle' && !preparingFlipRef.current) {
       let cancelled = false;
-      let armFrame = 0;
-      let flipFrame = 0;
 
       const fetchAndFlip = async () => {
         updatePreparingFlip(true);
@@ -306,8 +304,6 @@ export const AppScan = () => {
 
       return () => {
         cancelled = true;
-        window.cancelAnimationFrame(armFrame);
-        window.cancelAnimationFrame(flipFrame);
       };
     }
   }, [flipPhase, navigateToMerchant, preloadMerchantImage, result, updatePreparingFlip]);
