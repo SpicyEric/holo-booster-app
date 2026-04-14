@@ -98,10 +98,34 @@ export default function Transaktionen() {
       setRewards(rewardResult.data || []);
 
       if (isDemo) {
+        // Generate fake transactions for demo
+        const demoTx: Transaction[] = [];
+        const txTypes = ['nfc_stamp', 'nfc_stamp', 'nfc_stamp', 'nfc_stamp', 'nfc_stamp', 'reward_redeemed', 'offer_redeemed', 'google_review', 'birthday_bonus', 'welcome_bonus'];
+        const stampDescs = ['Stempel gesammelt', 'Punkte erhalten', 'NFC Stempel'];
+        const rewardDescs = ['Gratis Kaffee eingelöst', 'Rabatt 10% eingelöst', 'Gratis Brötchen eingelöst', 'Kuchen-Gutschein eingelöst', 'Frühstücks-Deal eingelöst'];
+        const now = new Date();
+        for (let i = 0; i < 200; i++) {
+          const ago = Math.floor(Math.random() * 30 * 24 * 60) * 60000;
+          const d = new Date(now.getTime() - ago);
+          // Only 6-22 Uhr
+          const h = 6 + Math.floor(Math.random() * 16);
+          d.setHours(h, Math.floor(Math.random() * 60), Math.floor(Math.random() * 60));
+          const type = txTypes[Math.floor(Math.random() * txTypes.length)];
+          const isRedemption = type === 'reward_redeemed' || type === 'offer_redeemed';
+          const pts = isRedemption ? -(Math.floor(Math.random() * 5 + 1) * 50) : Math.floor(Math.random() * 3 + 1) * 10;
+          const desc = isRedemption ? rewardDescs[Math.floor(Math.random() * rewardDescs.length)] : type === 'google_review' ? 'Google Bewertung Bonus' : type === 'birthday_bonus' ? 'Geburtstagsbonus' : type === 'welcome_bonus' ? 'Willkommensbonus' : stampDescs[Math.floor(Math.random() * stampDescs.length)];
+          demoTx.push({ id: `demo-${i}`, created_at: d.toISOString(), points_change: pts, transaction_type: type, description: desc });
+        }
+        demoTx.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+        setTransactions(demoTx);
+        setRewards(rewardResult.data || []);
+
         const p = [1,2,1,0,0,0,5,28,75,160,210,230,195,175,205,250,270,255,170,90,48,20,9,3];
         setHourlyData(p.map((c,h) => ({ hour: `${h}:00`, count: c })));
-        const gd: GrowthData[] = []; let base = 832 - Math.floor(7 * 16.7);
-        for (let i = 0; i < 7; i++) { const d = new Date(); d.setDate(d.getDate()-(6-i)); base += Math.floor(10+Math.random()*14); gd.push({ date: d.toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"}), total: base }); }
+        const gd: GrowthData[] = [];
+        const dailyAdds = [8, 22, 14, 19, 11, 25, 18];
+        let base = 832 - dailyAdds.reduce((s, v) => s + v, 0);
+        for (let i = 0; i < 7; i++) { const d = new Date(); d.setDate(d.getDate()-(6-i)); base += dailyAdds[i]; gd.push({ date: d.toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"}), total: base }); }
         setGrowthData(gd);
         setGenderData([{ gender: "Männlich", count: 408, percentage: 49 },{ gender: "Weiblich", count: 424, percentage: 51 }]);
         setAgeData([{age:"14-17",count:42,male:20,female:22},{age:"18-24",count:125,male:60,female:65},{age:"25-34",count:216,male:106,female:110},{age:"35-44",count:192,male:95,female:97},{age:"45-54",count:141,male:70,female:71},{age:"55-64",count:75,male:37,female:38},{age:"65+",count:41,male:20,female:21}]);
