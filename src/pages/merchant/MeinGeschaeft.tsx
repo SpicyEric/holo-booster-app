@@ -184,7 +184,7 @@ const MeinGeschaeft = () => {
   const [manualMode, setManualMode] = useState(false);
   const [selectedVariant, setSelectedVariant] = useState<'balanced' | 'umsatzboost'>('balanced');
   const [stampSettingsDirty, setStampSettingsDirty] = useState(false);
-  const [initialStampState, setInitialStampState] = useState<{ stampMode: string; avgRevenue: number; manualMode: boolean } | null>(null);
+  const [initialStampState, setInitialStampState] = useState<{ stampMode: string; avgRevenue: number; manualMode: boolean; selectedVariant: string } | null>(null);
   const initialFormDataRef = useRef<typeof formData | null>(null);
   const [profileDirty, setProfileDirty] = useState(false);
 
