@@ -1315,7 +1315,7 @@ const MeinGeschaeft = () => {
                           seen.add(color);
                           return true;
                         }).map((chip) => (
-                          <div key={chip.id} className="flex items-center gap-4 p-4 bg-card rounded-xl border border-border">
+                          <div key={chip.id} className="flex items-center gap-4 p-4 bg-background rounded-xl border-2 border-border shadow-sm">
                             <div className={`h-10 w-10 rounded-full ${getColorBadge(chip.stamp_color)} shadow-sm flex-shrink-0`} />
                             <div className="flex-1 grid grid-cols-2 gap-4">
                               <div>
@@ -1335,7 +1335,7 @@ const MeinGeschaeft = () => {
                                       c.stamp_color?.toLowerCase() === color ? { ...c, points_value: val } : c
                                     ));
                                   }}
-                                  className="h-8 w-20 mt-1"
+                                  className="h-8 w-20 mt-1 bg-background border-2 border-primary/30 font-bold text-foreground"
                                 />
                               </div>
                             </div>
@@ -1343,7 +1343,7 @@ const MeinGeschaeft = () => {
                         ));
                       })()}
 
-                      <Button onClick={handleSaveChips} disabled={savingChips} className="rounded-xl w-full">
+                      <Button onClick={handleSaveChips} disabled={savingChips} className="rounded-xl w-full animate-pulse">
                         {savingChips ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
                         Stempel speichern
                       </Button>
