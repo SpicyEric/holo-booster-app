@@ -507,7 +507,99 @@ export const AppScan = () => {
     setMerchantImage(null);
     setMerchantDisplayName('');
   };
+  // ── DEMO: Simulate a successful scan ──
+  const handleDemoScan = async () => {
+    setScanning(true);
+    setResult(null);
+    setFlipPhase('idle');
+    updatePreparingFlip(false);
+    setTransitionState(null);
+    setMerchantImage(null);
+    setMerchantDisplayName('');
 
+    try {
+      const { data: merchants } = await supabase
+        .from('customers')
+        .select('id, company_name, name, cover_image_url')
+        .eq('active', true)
+        .limit(1);
+
+      const demoMerchant = merchants?.[0];
+      const merchantId = demoMerchant?.id || 'demo';
+      const displayName = demoMerchant?.company_name || demoMerchant?.name || 'Backstube König';
+
+      const demoResult: ScanResult = {
+        success: true,
+        points: 5,
+        totalPoints: 25,
+        merchantName: displayName,
+        merchantCustomerId: merchantId,
+      };
+
+      await new Promise(r => setTimeout(r, 500));
+      setScanning(false);
+      setResult(demoResult);
+      updatePreparingFlip(true);
+
+      const [merchantResponse, rewardsResponse] = await Promise.allSettled([
+        supabase
+          .from('customers')
+          .select('id, name, company_name, description, logo_url, cover_image_url, city, street, house_number, postal_code, phone, website, instagram, opening_hours, google_review_url, latitude, longitude')
+          .eq('id', merchantId)
+          .single(),
+        supabase
+          .from('rewards')
+          .select('id, title, description, points_required, image_url')
+          .eq('merchant_customer_id', merchantId)
+          .eq('is_active', true)
+          .order('points_required', { ascending: true }),
+      ]);
+
+      const merchant = merchantResponse.status === 'fulfilled' && !merchantResponse.value.error
+        ? merchantResponse.value.data : null;
+      const rewards = rewardsResponse.status === 'fulfilled' && !rewardsResponse.value.error
+        ? rewardsResponse.value.data ?? [] : [];
+
+      if (!merchant) {
+        updatePreparingFlip(false);
+        navigateToMerchant(merchantId, { fallbackPoints: 25 });
+        return;
+      }
+
+      const coverUrl = await preloadMerchantImage(merchant.cover_image_url || null);
+      const nextTransitionState: MerchantTransitionState = {
+        fromScan: true as const,
+        initialMerchant: merchant,
+        initialRewards: rewards,
+        initialUserPoints: 25,
+        scanAwardedPoints: 5,
+      };
+
+      if (!coverUrl) {
+        setMerchantDisplayName(displayName);
+        setTransitionState(nextTransitionState);
+        updatePreparingFlip(false);
+        navigateToMerchant(merchantId, { fallbackPoints: 25, state: nextTransitionState });
+        return;
+      }
+
+      setMerchantImage(coverUrl);
+      setMerchantDisplayName(displayName);
+      setTransitionState(nextTransitionState);
+      updatePreparingFlip(false);
+      setFlipPhase('armed');
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          setFlipPhase('flipping');
+        });
+      });
+
+    } catch {
+      setScanning(false);
+      updatePreparingFlip(false);
+      navigateToMerchant('demo', { fallbackPoints: 25 });
+    }
+  };
 
 
   const isNfcUnavailable = !checkingNfc && !nfcSupported;
