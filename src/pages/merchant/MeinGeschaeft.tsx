@@ -1167,7 +1167,7 @@ const MeinGeschaeft = () => {
                       </CardTitle>
                       <Switch
                         checked={!manualMode}
-                        onCheckedChange={(checked) => setManualMode(!checked)}
+                        onCheckedChange={(checked) => { stampSettingsChangedByUser.current = true; setManualMode(!checked); }}
                       />
                     </div>
                   </CardHeader>
@@ -1185,6 +1185,7 @@ const MeinGeschaeft = () => {
                               key={val}
                               type="button"
                               onClick={() => {
+                                stampSettingsChangedByUser.current = true;
                                 setAvgRevenue(val);
                                 setStampMode('revenue');
                               }}
@@ -1215,6 +1216,7 @@ const MeinGeschaeft = () => {
                             step={1}
                             value={[avgRevenue]}
                             onValueChange={(val) => {
+                              stampSettingsChangedByUser.current = true;
                               setAvgRevenue(val[0]);
                               setStampMode('revenue');
                             }}
@@ -1232,7 +1234,7 @@ const MeinGeschaeft = () => {
                           <div className="flex gap-2 mt-4">
                             <button
                               type="button"
-                              onClick={() => setSelectedVariant('balanced')}
+                              onClick={() => { stampSettingsChangedByUser.current = true; setSelectedVariant('balanced'); }}
                               className={cn(
                                 "flex-1 py-2.5 px-3 rounded-lg border-2 text-sm font-medium transition-all",
                                 selectedVariant === 'balanced'
@@ -1244,7 +1246,7 @@ const MeinGeschaeft = () => {
                             </button>
                             <button
                               type="button"
-                              onClick={() => setSelectedVariant('umsatzboost')}
+                              onClick={() => { stampSettingsChangedByUser.current = true; setSelectedVariant('umsatzboost'); }}
                               className={cn(
                                 "flex-1 py-2.5 px-3 rounded-lg border-2 text-sm font-medium transition-all",
                                 selectedVariant === 'umsatzboost'
@@ -1338,7 +1340,7 @@ const MeinGeschaeft = () => {
                       </CardTitle>
                       <Switch
                         checked={manualMode}
-                        onCheckedChange={setManualMode}
+                        onCheckedChange={(v) => { stampSettingsChangedByUser.current = true; setManualMode(v); }}
                       />
                     </div>
                   </CardHeader>
