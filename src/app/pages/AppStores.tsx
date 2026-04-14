@@ -265,7 +265,44 @@ export default function AppStores() {
   }
 
   return (
-    <MainLayout title="Stores">
+    <MainLayout title={flyingCard ? '' : 'Stores'}>
+      {/* Flying card overlay */}
+      <AnimatePresence>
+        {flyingCard && (
+          <motion.div
+            key="flying-card"
+            className="fixed z-[100] rounded-2xl overflow-hidden shadow-xl"
+            initial={{
+              top: flyingCard.rect.top,
+              left: flyingCard.rect.left,
+              width: flyingCard.rect.width,
+              height: flyingCard.rect.height,
+            }}
+            animate={{
+              top: 16,
+              left: 16,
+              width: 'calc(100vw - 32px)',
+              height: 'calc((100vw - 32px) / 1.55)',
+            }}
+            transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+            onAnimationComplete={handleFlyComplete}
+          >
+            {flyingCard.store.cover_image_url ? (
+              <img src={flyingCard.store.cover_image_url} alt={flyingCard.store.name} className="w-full h-full object-cover" />
+            ) : (
+              <div className="w-full h-full bg-gradient-to-br from-primary to-secondary" />
+            )}
+            <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/70 via-black/40 to-transparent" />
+            <div className="absolute bottom-3 left-3 right-3 z-10">
+              <h3 className="text-white font-semibold text-xl truncate drop-shadow-md">{flyingCard.store.name}</h3>
+              {flyingCard.store.category && <p className="text-white/80 text-sm truncate drop-shadow-md">{flyingCard.store.category}</p>}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Hide all content when card is flying */}
+      <div style={{ opacity: flyingCard ? 0 : 1, transition: 'opacity 0.15s ease-out' }}>
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <div className="sticky top-0 z-10 bg-background pb-3 pt-1">
           <div className="rounded-xl border border-border/50 bg-background/85 p-1 shadow-lg backdrop-blur-xl">
