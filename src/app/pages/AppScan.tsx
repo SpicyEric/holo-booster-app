@@ -277,13 +277,6 @@ export const AppScan = () => {
             setTransitionState(nextTransitionState);
             updatePreparingFlip(false);
             setFlipPhase('armed');
-
-            armFrame = window.requestAnimationFrame(() => {
-              flipFrame = window.requestAnimationFrame(() => {
-                if (cancelled) return;
-                setFlipPhase('flipping');
-              });
-            });
           } else {
             setMerchantImage(null);
             setMerchantDisplayName(result.merchantName || 'Händler');
