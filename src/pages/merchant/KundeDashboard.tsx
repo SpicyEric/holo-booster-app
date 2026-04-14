@@ -24,7 +24,7 @@ interface SubscriptionInfo { hasSubscription: boolean; status?: string; currentP
 interface DashboardStats { totalContacts: number; totalStamps: number; totalRedemptions: number; networkEffect: number; newContactsThisWeek: number; }
 
 const DEMO_MERCHANT_ID = "e8e3db26-fd15-455a-ad47-50ed25081e3c";
-const DEMO_STATS: DashboardStats = { totalContacts: 2400, totalStamps: 93000, totalRedemptions: 800, networkEffect: 600, newContactsThisWeek: 47 };
+const DEMO_STATS: DashboardStats = { totalContacts: 832, totalStamps: 13002, totalRedemptions: 402, networkEffect: 387, newContactsThisWeek: 117 };
 
 const KpiCard = ({ icon: Icon, label, value, sub, trend, iconBg, iconColor, bigNumber }: { icon: React.ElementType; label: string; value: string; sub?: string; trend?: string; iconBg: string; iconColor: string; bigNumber?: boolean }) => (
   <div className="bg-white rounded-2xl p-5 border border-border/30 shadow-[0_1px_3px_hsl(262,30%,80%/0.3)] hover:shadow-[0_4px_12px_hsl(262,30%,80%/0.4)] transition-all duration-300 group">
@@ -119,6 +119,11 @@ export default function KundeDashboard() {
       if (customerData?.id) {
         if (customerData.id === DEMO_MERCHANT_ID) {
           setStats(DEMO_STATS);
+          setNotifications([
+            { id: "demo-stamps-24h", icon: Trophy, text: "50 neue Stempel in den letzten 24 Stunden", time: "Heute", color: "text-emerald-600" },
+            { id: "demo-customers-7d", icon: UserPlus, text: "117 neue Kunden diese Woche", time: "Diese Woche", color: "text-primary" },
+          ]);
+          setAllMissionsDoneOver24h(true);
         } else {
           await loadDashboardStats(customerData.id);
         }
