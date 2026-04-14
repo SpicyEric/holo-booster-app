@@ -212,6 +212,7 @@ export const AppScan = () => {
 
   // Trigger flip animation when we get a successful online result
   useEffect(() => {
+    console.log('[AppScan] Flip useEffect triggered, result:', result?.success, result?.merchantCustomerId, 'flipPhase:', flipPhase, 'preparing:', preparingFlipRef.current);
     if (result?.success && !result.isOffline && result.merchantCustomerId && flipPhase === 'idle' && !preparingFlipRef.current) {
       let cancelled = false;
       let armFrame = 0;
@@ -394,6 +395,7 @@ export const AppScan = () => {
         }
         setResult({ success: true, points: response.points_awarded, totalPoints: response.total_points, merchantName, merchantCustomerId: response.merchant_customer_id });
         toast.success(`+${response.points_awarded} Punkte gesammelt!`);
+        console.log('[AppScan] setResult called with merchantCustomerId:', response.merchant_customer_id);
       } else {
         setResult({ success: false, error: response.error || 'Stempel konnte nicht verarbeitet werden.' });
         toast.error(response.error || 'Stempel fehlgeschlagen');
