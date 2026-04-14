@@ -184,15 +184,16 @@ const MeinGeschaeft = () => {
   const [manualMode, setManualMode] = useState(false);
   const [selectedVariant, setSelectedVariant] = useState<'balanced' | 'umsatzboost'>('balanced');
   const [stampSettingsLoaded, setStampSettingsLoaded] = useState(false);
+  const stampSettingsChangedByUser = useRef(false);
   const initialFormDataRef = useRef<typeof formData | null>(null);
   const [profileDirty, setProfileDirty] = useState(false);
   const autoSaveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Auto-save stamp settings whenever they change
+  // Auto-save stamp settings whenever they change (only after user interaction)
   const autoSaveStampSettings = async (
     mode: string, revenue: number, manual: boolean, variant: string
   ) => {
-    if (!customerId || !stampSettingsLoaded) return;
+    if (!customerId) return;
     try {
       // Compute chip values for auto mode
       let chipsToSave = [...nfcChips];
@@ -240,15 +241,15 @@ const MeinGeschaeft = () => {
     }
   };
 
-  // Debounced auto-save on stamp setting changes
+  // Debounced auto-save on stamp setting changes — only when user actually changed something
   useEffect(() => {
-    if (!stampSettingsLoaded) return;
+    if (!stampSettingsLoaded || !stampSettingsChangedByUser.current) return;
     if (autoSaveTimeoutRef.current) clearTimeout(autoSaveTimeoutRef.current);
     autoSaveTimeoutRef.current = setTimeout(() => {
       autoSaveStampSettings(stampMode, avgRevenue, manualMode, selectedVariant);
     }, 600);
     return () => { if (autoSaveTimeoutRef.current) clearTimeout(autoSaveTimeoutRef.current); };
-  }, [stampMode, avgRevenue, manualMode, selectedVariant, stampSettingsLoaded]);
+  }, [stampMode, avgRevenue, manualMode, selectedVariant]);
 
   const loadData = async () => {
     try {
