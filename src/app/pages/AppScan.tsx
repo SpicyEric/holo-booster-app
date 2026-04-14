@@ -836,7 +836,7 @@ export const AppScan = () => {
               </motion.div>
             )}
           </AnimatePresence>
-        </div>
+        </motion.div>
       </main>
 
       <BottomNav />
