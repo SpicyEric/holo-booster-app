@@ -361,34 +361,7 @@ export default function AppStores() {
                     }}
                   >
                     <button
-                      onClick={(e) => {
-                        const rect = e.currentTarget.getBoundingClientRect();
-                        navigate(`/app/merchant/${store.id}`, {
-                          state: {
-                            fromStores: true,
-                            sourceRect: { top: rect.top, left: rect.left, width: rect.width, height: rect.height },
-                            initialMerchant: {
-                              id: store.id,
-                              name: store.name,
-                              company_name: store.name,
-                              cover_image_url: store.cover_image_url,
-                              logo_url: store.logo_url,
-                              description: null,
-                              city: null,
-                              street: null,
-                              house_number: null,
-                              postal_code: null,
-                              phone: null,
-                              website: null,
-                              instagram: null,
-                              opening_hours: null,
-                              google_review_url: null,
-                              latitude: store.lat,
-                              longitude: store.lng,
-                            },
-                          },
-                        });
-                      }}
+                      onClick={(e) => handleCardClick(store, e)}
                       className="w-full rounded-xl overflow-hidden shadow-md text-left relative block"
                       style={{ aspectRatio: '1.55 / 1', display: 'block' }}
                     >
