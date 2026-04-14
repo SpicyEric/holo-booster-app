@@ -315,11 +315,13 @@ const MeinGeschaeft = () => {
         const loadedStampMode = (customer as any).stamp_mode || 'classic';
         const loadedAvgRevenue = (customer as any).avg_revenue ?? 7;
         const loadedManualMode = (customer as any).manual_stamp_mode ?? false;
+        const loadedVariant = (customer as any).stamp_variant || 'balanced';
         setStampMode(loadedStampMode);
         setAvgRevenue(loadedAvgRevenue);
         setManualMode(loadedManualMode);
-        setInitialStampState({ stampMode: loadedStampMode, avgRevenue: loadedAvgRevenue, manualMode: loadedManualMode });
-        setStampSettingsDirty(false);
+        setSelectedVariant(loadedVariant);
+        // Mark loaded AFTER setting state so auto-save doesn't trigger on load
+        setTimeout(() => setStampSettingsLoaded(true), 100);
       }
 
       // Load rewards
@@ -697,8 +699,7 @@ const MeinGeschaeft = () => {
         } as any)
         .eq('id', customerId);
       setNfcChips(chipsToSave);
-      setInitialStampState({ stampMode, avgRevenue, manualMode });
-      setStampSettingsDirty(false);
+      // auto-save handles persistence now
       toast.success('Stempel gespeichert');
     } catch {
       toast.error('Fehler beim Speichern');
@@ -1223,12 +1224,6 @@ const MeinGeschaeft = () => {
                             <span>50 €</span>
                           </div>
 
-                          {stampSettingsDirty && (
-                            <Button onClick={handleSaveChips} disabled={savingChips} className="rounded-xl w-full animate-pulse">
-                              {savingChips ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
-                              Stempel speichern
-                            </Button>
-                          )}
                         </div>
 
                         {/* Variant selector */}
