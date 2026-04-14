@@ -663,9 +663,9 @@ export const AppMerchantDetail = () => {
               <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/60 via-black/25 to-transparent" />
 
               <motion.div
-                initial={shouldAnimateFromScan ? { opacity: 0 } : false}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.4, delay: shouldAnimateFromScan ? 0.2 : 0 }}
+                initial={shouldAnimateFromScan || shouldAnimateFromStores ? { opacity: 0 } : false}
+                animate={shouldAnimateFromStores ? (storeTransitionDone ? { opacity: 1 } : { opacity: 0 }) : { opacity: 1 }}
+                transition={{ duration: 0.3, delay: shouldAnimateFromScan ? 0.2 : 0 }}
                 className="absolute top-3 left-3 z-10 pointer-events-auto"
               >
                 <Button
@@ -680,9 +680,9 @@ export const AppMerchantDetail = () => {
 
               <motion.div
                 ref={pointsBadgeRef}
-                initial={shouldAnimateFromScan ? { opacity: 0 } : false}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.4, delay: shouldAnimateFromScan ? 0.3 : 0 }}
+                initial={shouldAnimateFromScan || shouldAnimateFromStores ? { opacity: 0 } : false}
+                animate={shouldAnimateFromStores ? (storeTransitionDone ? { opacity: 1 } : { opacity: 0 }) : { opacity: 1 }}
+                transition={{ duration: 0.3, delay: shouldAnimateFromScan ? 0.3 : 0 }}
                 className="absolute top-3 right-3 z-10"
               >
                 <motion.div
@@ -696,9 +696,9 @@ export const AppMerchantDetail = () => {
               </motion.div>
 
               <motion.div
-                initial={shouldAnimateFromScan ? { opacity: 0, y: 5 } : false}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.4, delay: shouldAnimateFromScan ? 0.25 : 0 }}
+                initial={shouldAnimateFromScan || shouldAnimateFromStores ? { opacity: 0, y: 5 } : false}
+                animate={shouldAnimateFromStores ? (storeTransitionDone ? { opacity: 1, y: 0 } : { opacity: 0, y: 5 }) : { opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, delay: shouldAnimateFromScan ? 0.25 : 0 }}
                 className="absolute bottom-3 left-4 right-4"
               >
                 <h1 className="text-lg font-bold text-white drop-shadow-md">{merchantName}</h1>
