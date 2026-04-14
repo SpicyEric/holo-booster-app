@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 
 // TODO: Replace with actual store URLs once available
-const APP_STORE_URL = 'https://apps.apple.com/app/eloyo/id000000000';
+const APP_STORE_URL = 'https://apps.apple.com/de/app/elovo/id6761170549';
 const PLAY_STORE_URL = 'https://play.google.com/store/apps/details?id=com.eloyo.app';
 
 type Platform = 'ios' | 'android' | 'unknown';
