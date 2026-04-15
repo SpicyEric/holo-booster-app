@@ -605,7 +605,14 @@ const BoxManagement = () => {
                           <div key={s.id} className="flex items-center justify-between p-2 rounded-lg border">
                             <div className="flex items-center gap-2">
                               <div className={`w-5 h-5 rounded-full ${colorConfig?.colorClass || "bg-gray-300"}`} />
-                              <span className="text-sm font-medium">{s.stamp_color}</span>
+                              <div>
+                                <span className="text-sm font-medium">{s.stamp_color}</span>
+                                {s.hardware_uid ? (
+                                  <p className="text-[10px] text-muted-foreground font-mono">UID: {s.hardware_uid}</p>
+                                ) : (
+                                  <p className="text-[10px] text-destructive">⚠ Keine Hardware-UID</p>
+                                )}
+                              </div>
                             </div>
                             <span className="text-xs text-muted-foreground">{s.points_value} Punkt{s.points_value !== 1 ? "e" : ""}</span>
                           </div>
