@@ -117,24 +117,24 @@ export type Database = {
       }
       boxes: {
         Row: {
-          box_id: string
           created_at: string
           id: string
           notes: string | null
+          stamp_id: string
           stamp_preset: string
         }
         Insert: {
-          box_id: string
           created_at?: string
           id?: string
           notes?: string | null
+          stamp_id: string
           stamp_preset?: string
         }
         Update: {
-          box_id?: string
           created_at?: string
           id?: string
           notes?: string | null
+          stamp_id?: string
           stamp_preset?: string
         }
         Relationships: []
@@ -683,7 +683,6 @@ export type Database = {
           birthday_message: string | null
           birthday_offer_description: string | null
           birthday_offer_title: string | null
-          box_id: string | null
           cancelled_at: string | null
           city: string | null
           company_name: string | null
@@ -729,6 +728,7 @@ export type Database = {
           promoter_id: string | null
           qr_code_url: string | null
           sales_notes: string | null
+          stamp_id: string | null
           stamp_mode: string | null
           stamp_reward_text: string | null
           stamp_variant: string | null
@@ -757,7 +757,6 @@ export type Database = {
           birthday_message?: string | null
           birthday_offer_description?: string | null
           birthday_offer_title?: string | null
-          box_id?: string | null
           cancelled_at?: string | null
           city?: string | null
           company_name?: string | null
@@ -803,6 +802,7 @@ export type Database = {
           promoter_id?: string | null
           qr_code_url?: string | null
           sales_notes?: string | null
+          stamp_id?: string | null
           stamp_mode?: string | null
           stamp_reward_text?: string | null
           stamp_variant?: string | null
@@ -831,7 +831,6 @@ export type Database = {
           birthday_message?: string | null
           birthday_offer_description?: string | null
           birthday_offer_title?: string | null
-          box_id?: string | null
           cancelled_at?: string | null
           city?: string | null
           company_name?: string | null
@@ -877,6 +876,7 @@ export type Database = {
           promoter_id?: string | null
           qr_code_url?: string | null
           sales_notes?: string | null
+          stamp_id?: string | null
           stamp_mode?: string | null
           stamp_reward_text?: string | null
           stamp_variant?: string | null
