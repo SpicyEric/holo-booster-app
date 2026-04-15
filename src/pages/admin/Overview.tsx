@@ -43,6 +43,9 @@ const Overview = () => {
   const [expandedKpi, setExpandedKpi] = useState<string | null>(null);
 
   useEffect(() => {
+    // Wait until auth is resolved before loading data
+    if (user === undefined || user === null) return;
+    
     loadDashboard();
     const channel = supabase
       .channel("dashboard-live")
@@ -51,7 +54,7 @@ const Overview = () => {
       })
       .subscribe();
     return () => { supabase.removeChannel(channel); };
-  }, []);
+  }, [user, role]);
 
   const loadDashboard = async () => {
     setLoading(true);
