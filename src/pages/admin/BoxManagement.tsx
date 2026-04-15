@@ -103,6 +103,13 @@ const BoxManagement = () => {
   const [detailStamps, setDetailStamps] = useState<RegisteredStamp[]>([]);
   const [loadingDetail, setLoadingDetail] = useState(false);
 
+  // Editable fields in detail dialog
+  const [editBoxId, setEditBoxId] = useState("");
+  const [editStempelId, setEditStempelId] = useState("");
+  const [boxIdError, setBoxIdError] = useState("");
+  const [stempelIdError, setStempelIdError] = useState("");
+  const [savingEdit, setSavingEdit] = useState(false);
+
   useEffect(() => { setWebNfcSupported('NDEFReader' in window); }, []);
 
   const loadRows = async () => {
