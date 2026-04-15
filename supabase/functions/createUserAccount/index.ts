@@ -195,8 +195,9 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({ 
         success: true, 
-        user: newUser.user,
-        temporary_password: password 
+        user: { id: userId, email },
+        isExistingUser,
+        temporary_password: isExistingUser ? undefined : password 
       }),
       {
         status: 200,
