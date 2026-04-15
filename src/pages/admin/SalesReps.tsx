@@ -53,6 +53,8 @@ const SalesReps = () => {
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<SalesRepAccount | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState("");
 
   useEffect(() => { loadReps(); }, []);
 
