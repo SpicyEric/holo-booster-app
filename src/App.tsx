@@ -120,6 +120,7 @@ const App = () => {
                 <Route path="checkout" element={<Checkout />} />
                 <Route path="boxes" element={<BoxManagement />} />
                 <Route path="sales-rep-register" element={<SalesRepRegistration />} />
+                <Route path="sales-reps" element={<SalesReps />} />
                 <Route path="box-orders" element={<BoxOrders />} />
                 <Route path="box-returns" element={<BoxReturns />} />
                 <Route path="settings" element={<Settings />} />
