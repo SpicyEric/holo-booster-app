@@ -1,11 +1,17 @@
 import { useEffect, useState, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
   Search, Users, Phone, MapPin, Calendar, Hash, Shield, Building2,
-  CreditCard, FileText, TrendingUp, Star, Loader2, ChevronRight,
+  CreditCard, FileText, TrendingUp, Star, Loader2, ChevronRight, Trash2, Mail,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -47,6 +53,8 @@ const SalesReps = () => {
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<SalesRepAccount | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState("");
 
   useEffect(() => { loadReps(); }, []);
 
@@ -155,6 +163,20 @@ const SalesReps = () => {
     }
   };
 
+  const confirmDeleteRep = async () => {
+    if (!selected) return;
+    if (deleteConfirmText.toLowerCase() !== "löschen") { toast.error('Bitte "löschen" eingeben'); return; }
+    try {
+      await supabase.from("sales_rep_profiles").delete().eq("user_id", selected.user_id);
+      await supabase.from("user_roles").delete().eq("user_id", selected.user_id).eq("role", "partner");
+      await supabase.from("profiles").delete().eq("user_id", selected.user_id);
+      await supabase.functions.invoke("deleteUserAccount", { body: { userId: selected.user_id } });
+      toast.success("Vertriebler gelöscht");
+      setDeleteDialogOpen(false);
+      setSelected(null);
+      loadReps();
+    } catch (e: any) { toast.error("Fehler beim Löschen: " + e.message); }
+  };
   const filtered = useMemo(() => {
     if (!searchTerm) return reps;
     const t = searchTerm.toLowerCase();
@@ -203,6 +225,7 @@ const SalesReps = () => {
   }
 
   return (
+    <>
     <div className="flex h-[calc(100vh-4rem)] overflow-hidden">
       {/* Left list */}
       <div className="w-[340px] border-r flex flex-col shrink-0">
@@ -283,10 +306,13 @@ const SalesReps = () => {
                   <Badge variant="outline" className="mt-1">MA-{selected.employee_number}</Badge>
                 )}
               </div>
-              <div className="ml-auto">
+              <div className="ml-auto flex items-center gap-2">
                 <Badge variant={selected.is_active ? "default" : "destructive"} className="text-sm">
                   {selected.is_active ? "Aktiv" : "Inaktiv"}
                 </Badge>
+                <Button size="sm" variant="destructive" className="h-8 text-xs" onClick={() => { setDeleteConfirmText(""); setDeleteDialogOpen(true); }}>
+                  <Trash2 className="w-3 h-3 mr-1" /> Löschen
+                </Button>
               </div>
             </div>
 
@@ -352,6 +378,27 @@ const SalesReps = () => {
         )}
       </div>
     </div>
+
+    {/* Delete Dialog */}
+    <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Vertriebler löschen?</AlertDialogTitle>
+          <AlertDialogDescription>
+            Account von <strong>{selected?.full_name}</strong> ({selected?.email}) wird unwiderruflich gelöscht.
+            <div className="mt-3">
+              <Label className="text-xs">Bitte "löschen" eingeben:</Label>
+              <Input value={deleteConfirmText} onChange={e => setDeleteConfirmText(e.target.value)} className="mt-1" />
+            </div>
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+          <AlertDialogAction onClick={confirmDeleteRep} className="bg-destructive hover:bg-destructive/90">Löschen</AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+    </>
   );
 };
 
