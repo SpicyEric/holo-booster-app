@@ -74,6 +74,40 @@ serve(async (req) => {
     let warnedCount = 0;
 
     for (const [userId, data] of Object.entries(grouped)) {
+      // Create in-app notification
+      const boxDetails = data.boxes.map(b => {
+        const days = Math.ceil((new Date(b.frist_ablauf!).getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+        return { box_id: b.box_id, days_remaining: days, frist_ablauf: b.frist_ablauf };
+      });
+
+      const notifTitle = `⚠️ ${data.boxes.length} Box${data.boxes.length > 1 ? 'en' : ''} ${data.boxes.length > 1 ? 'laufen' : 'läuft'} bald ab`;
+      const notifBody = boxDetails.map(b => 
+        `Box ${b.box_id}: noch ${b.days_remaining} Tag${b.days_remaining !== 1 ? 'e' : ''} (Frist: ${new Date(b.frist_ablauf!).toLocaleDateString('de-DE')})`
+      ).join('\n') + '\n\nBitte schließe die Boxen bei einem Kunden ab oder sende sie zurück. Nach Fristablauf werden pro Box 30,00 € in Rechnung gestellt.';
+
+      // Check if a notification already exists today
+      const todayStart = new Date(now);
+      todayStart.setHours(0, 0, 0, 0);
+      const { data: existingNotif } = await supabaseAdmin
+        .from("sales_rep_notifications")
+        .select("id")
+        .eq("user_id", userId)
+        .eq("notification_type", "box_frist_warnung")
+        .gte("created_at", todayStart.toISOString())
+        .limit(1);
+
+      if (!existingNotif || existingNotif.length === 0) {
+        await supabaseAdmin.from("sales_rep_notifications").insert({
+          user_id: userId,
+          notification_type: "box_frist_warnung",
+          title: notifTitle,
+          body: notifBody,
+          metadata: { boxes: boxDetails },
+        });
+        console.log(`[BOX-FRIST-WARNUNG] In-app notification created for ${userId}`);
+      }
+
+      // Send email
       if (!data.email || !resendKey) continue;
 
       const boxList = data.boxes.map(b => {
