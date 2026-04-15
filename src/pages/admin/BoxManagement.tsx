@@ -199,7 +199,7 @@ const BoxManagement = () => {
   const openDetailDialog = async (box: Box) => {
     setDetailBox(box); setLoadingDetail(true);
     try {
-      const { data } = await supabase.from("nfc_chips").select("id, stamp_color, hardware_uid, chip_uid, points_value").eq("chip_uid", box.box_id);
+      const { data } = await supabase.from("nfc_chips").select("id, stamp_color, hardware_uid, chip_uid, points_value").eq("chip_uid", box.stamp_id);
       setDetailStamps(data || []);
     } catch (e) { setDetailStamps([]); }
     finally { setLoadingDetail(false); }
@@ -208,7 +208,7 @@ const BoxManagement = () => {
   const startStampRegistration = async (color: string) => {
     if (!stampDialogBox || !webNfcSupported) { toast.error("Web NFC nicht verfügbar"); return; }
     setScanningStampColor(color);
-    const boxId = stampDialogBox.box_id;
+    const boxId = stampDialogBox.stamp_id;
     const merchantCustomerId = stampDialogBox.assigned_customer?.customer_id || null;
     const ndefText = `${boxId}:${color}`;
     try {
@@ -388,7 +388,7 @@ const BoxManagement = () => {
                           </TooltipContent>
                         </Tooltip>
                       </TableCell>
-                      <TableCell className="py-2 font-mono text-sm">{box.box_id}</TableCell>
+                      <TableCell className="py-2 font-mono text-sm">{box.stamp_id}</TableCell>
                       <TableCell className="py-2 text-sm">
                         {box.assigned_customer ? <span className="font-medium">{box.assigned_customer.customer_name}</span> : <span className="text-muted-foreground">—</span>}
                       </TableCell>
@@ -415,7 +415,7 @@ const BoxManagement = () => {
         <Dialog open={!!detailBox} onOpenChange={(open) => !open && setDetailBox(null)}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle className="flex items-center gap-2"><Package className="w-5 h-5" /> Stempel-ID: {detailBox?.box_id}</DialogTitle>
+              <DialogTitle className="flex items-center gap-2"><Package className="w-5 h-5" /> Stempel-ID: {detailBox?.stamp_id}</DialogTitle>
               <DialogDescription>Details und registrierte Stempel</DialogDescription>
             </DialogHeader>
             {detailBox && (
@@ -460,7 +460,7 @@ const BoxManagement = () => {
         <Dialog open={stampDialogOpen} onOpenChange={setStampDialogOpen}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle className="flex items-center gap-2"><Shield className="w-5 h-5" /> NFC-Stempel: {stampDialogBox?.box_id}</DialogTitle>
+              <DialogTitle className="flex items-center gap-2"><Shield className="w-5 h-5" /> NFC-Stempel: {stampDialogBox?.stamp_id}</DialogTitle>
               <DialogDescription>Registriere die NFC-Stempel für diese Stempel-ID</DialogDescription>
             </DialogHeader>
             {loadingStamps ? (
@@ -493,7 +493,7 @@ const BoxManagement = () => {
           </DialogContent>
         </Dialog>
 
-        <ConfirmActionDialog open={!!deleteBox} onOpenChange={(open) => !open && setDeleteBox(null)} onConfirm={handleDelete} title="Stempel-ID löschen?" description={`Die Stempel-ID "${deleteBox?.box_id}" wird dauerhaft gelöscht.`} confirmText="Löschen" confirmPhrase="LÖSCHEN" destructive />
+        <ConfirmActionDialog open={!!deleteBox} onOpenChange={(open) => !open && setDeleteBox(null)} onConfirm={handleDelete} title="Stempel-ID löschen?" description={`Die Stempel-ID "${deleteBox?.stamp_id}" wird dauerhaft gelöscht.`} confirmText="Löschen" confirmPhrase="LÖSCHEN" destructive />
       </div>
     </TooltipProvider>
   );

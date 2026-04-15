@@ -1369,7 +1369,7 @@ const MeinGeschaeft = () => {
                       <div className="space-y-3">
                         {customerBoxes.map((box) => (
                           <div key={box.id} className="flex items-center justify-between p-4 bg-white rounded-xl border border-gray-100">
-                            <code className="font-mono text-sm font-semibold text-gray-900">{box.box_code}</code>
+                            <code className="font-mono text-sm font-semibold text-gray-900">{box.stamp_code}</code>
                             <span className="text-xs text-gray-500">Hinzugefügt: {new Date(box.assigned_at).toLocaleDateString('de-DE')}</span>
                           </div>
                         ))}
