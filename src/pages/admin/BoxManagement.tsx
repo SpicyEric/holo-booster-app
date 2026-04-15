@@ -325,12 +325,12 @@ const BoxManagement = () => {
         if (error) throw error;
       }
       if (stempelIdChanged && detailRow.stempel_id) {
-        // Update in boxes table
-        const { error: boxErr } = await supabase.from("boxes").update({ stamp_id: editStempelId }).eq("stamp_id", detailRow.stempel_id);
-        if (boxErr) throw boxErr;
-        // Update in eloyo_boxes
+        // First update eloyo_boxes (has FK to boxes.stamp_id)
         const { error: eloyoErr } = await supabase.from("eloyo_boxes").update({ stempel_id: editStempelId }).eq("id", detailRow.id);
         if (eloyoErr) throw eloyoErr;
+        // Then update boxes table
+        const { error: boxErr } = await supabase.from("boxes").update({ stamp_id: editStempelId }).eq("stamp_id", detailRow.stempel_id);
+        if (boxErr) throw boxErr;
         // Update nfc_chips references
         await supabase.from("nfc_chips").update({ chip_uid: editStempelId }).eq("chip_uid", detailRow.stempel_id);
       }
