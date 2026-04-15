@@ -37,6 +37,7 @@ export default function SalesRepProvisionen() {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterType, setFilterType] = useState<string>('all');
   const [filterStatus, setFilterStatus] = useState<string>('all');
+  const [activeCustomerMap, setActiveCustomerMap] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     if (!user?.id) return;
@@ -57,8 +58,21 @@ export default function SalesRepProvisionen() {
         ]);
 
         if (commissionsRes.error) throw commissionsRes.error;
-        setCommissions((commissionsRes.data || []) as Commission[]);
+        const comms = (commissionsRes.data || []) as Commission[];
+        setCommissions(comms);
         if (profileRes.data) setProfile(profileRes.data as SalesRepProfile);
+
+        // Fetch active status for all customer_ids in commissions
+        const customerIds = [...new Set(comms.map(c => c.customer_id).filter(Boolean))] as string[];
+        if (customerIds.length > 0) {
+          const { data: customers } = await supabase
+            .from('customers')
+            .select('id, active')
+            .in('id', customerIds);
+          const map: Record<string, boolean> = {};
+          (customers || []).forEach((c: any) => { map[c.id] = c.active; });
+          setActiveCustomerMap(map);
+        }
       } catch (err) {
         console.error('Error fetching commissions:', err);
       } finally {
@@ -134,10 +148,18 @@ export default function SalesRepProvisionen() {
   const formatCents = (cents: number) => (cents / 100).toFixed(2).replace('.', ',');
   const formatBrutto = (netCents: number) => formatCents(Math.round(netCents * 1.19));
 
-  const getStatusBadge = (status: string | null) => {
+  const getStatusBadge = (status: string | null, commissionType: string | null, customerActive?: boolean) => {
+    if (commissionType === 'recurring') {
+      // Folgeprovision: show aktiv/nicht aktiv based on customer status
+      if (customerActive) {
+        return <Badge className="bg-green-100 text-green-800 hover:bg-green-100">Aktiv</Badge>;
+      }
+      return <Badge className="bg-red-100 text-red-800 hover:bg-red-100">Nicht aktiv</Badge>;
+    }
+    // Einmalprovision
     switch (status) {
       case 'available': return <Badge className="bg-green-100 text-green-800 hover:bg-green-100">Verfügbar</Badge>;
-      case 'paid': return <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-100">Ausbezahlt</Badge>;
+      case 'paid': return <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-100">Ausgezahlt</Badge>;
       case 'pending': return <Badge className="bg-yellow-100 text-yellow-800 hover:bg-yellow-100">Vorgemerkt</Badge>;
       default: return <Badge variant="outline">{status || '—'}</Badge>;
     }
@@ -331,7 +353,7 @@ export default function SalesRepProvisionen() {
                             {(c.discount_cents || 0) > 0 ? `-${formatCents(c.discount_cents || 0)} €` : '—'}
                           </TableCell>
                         )}
-                        <TableCell>{getStatusBadge(c.effectiveStatus)}</TableCell>
+                        <TableCell>{getStatusBadge(c.effectiveStatus, c.commission_type, c.customer_id ? activeCustomerMap[c.customer_id] : undefined)}</TableCell>
                         <TableCell className="text-sm text-muted-foreground whitespace-nowrap">
                           {c.effectiveStatus === 'pending' && c.available_at
                             ? format(new Date(c.available_at), 'dd.MM.yyyy', { locale: de })
