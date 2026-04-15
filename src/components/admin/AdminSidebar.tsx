@@ -45,7 +45,7 @@ const NAV_GROUPS: NavGroup[] = [
   {
     label: "OPERATIONS",
     items: [
-      { path: "/admin/boxes", label: "Box-IDs", icon: Box },
+      { path: "/admin/boxes", label: "Stempel-IDs", icon: Box },
       { path: "/admin/orders", label: "Nachrichten", icon: Package },
     ],
   },

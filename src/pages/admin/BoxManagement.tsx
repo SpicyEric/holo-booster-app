@@ -136,7 +136,7 @@ const BoxManagement = () => {
       });
 
       setBoxes(boxesWithAssignments);
-    } catch (error: any) { toast.error("Fehler beim Laden der Boxen"); console.error(error); }
+    } catch (error: any) { toast.error("Fehler beim Laden der Stempel-IDs"); console.error(error); }
     finally { setLoading(false); }
   };
 
@@ -162,14 +162,14 @@ const BoxManagement = () => {
 
   const addBox = async () => {
     const cleanId = newBoxId.replace(/-/g, "");
-    if (cleanId.length !== 15) { toast.error("Box-ID muss genau 15 Zeichen haben"); return; }
+    if (cleanId.length !== 15) { toast.error("Stempel-ID muss genau 15 Zeichen haben"); return; }
     setAdding(true);
     try {
       const { data: existing } = await supabase.from("boxes").select("id").eq("box_id", newBoxId).maybeSingle();
-      if (existing) { toast.error("Diese Box-ID existiert bereits"); return; }
+      if (existing) { toast.error("Diese Stempel-ID existiert bereits"); return; }
       const { error } = await supabase.from("boxes").insert({ box_id: newBoxId, notes: newBoxNotes.trim() || null, stamp_preset: newBoxPreset });
       if (error) throw error;
-      toast.success("Box-ID erfolgreich hinzugefügt");
+      toast.success("Stempel-ID erfolgreich hinzugefügt");
       setNewBoxId(""); setNewBoxNotes(""); setNewBoxPreset("standard_3");
       loadBoxes();
     } catch (error: any) { toast.error("Fehler beim Hinzufügen"); }
@@ -178,11 +178,11 @@ const BoxManagement = () => {
 
   const handleDelete = async () => {
     if (!deleteBox) return;
-    if (deleteBox.assigned_customer) { toast.error("Zugewiesene Boxen können nicht gelöscht werden"); setDeleteBox(null); return; }
+    if (deleteBox.assigned_customer) { toast.error("Zugewiesene Stempel-IDs können nicht gelöscht werden"); setDeleteBox(null); return; }
     try {
       const { error } = await supabase.from("boxes").delete().eq("id", deleteBox.id);
       if (error) throw error;
-      toast.success("Box-ID gelöscht"); loadBoxes();
+      toast.success("Stempel-ID gelöscht"); loadBoxes();
     } catch (error: any) { toast.error("Fehler beim Löschen"); }
     finally { setDeleteBox(null); }
   };
@@ -252,7 +252,7 @@ const BoxManagement = () => {
           dotColor: "bg-red-500",
           description: cs === "past_due"
             ? "Das Abo dieses Kunden ist überfällig. Die Zahlung konnte nicht eingezogen werden."
-            : "Dieser Kunde hat sein Abo gekündigt. Die Box bleibt 12 Monate zugewiesen.",
+            : "Dieser Kunde hat sein Abo gekündigt. Die Stempel-ID bleibt 12 Monate zugewiesen.",
         };
       }
       if (!box.assigned_customer.customer_active) {
@@ -260,7 +260,7 @@ const BoxManagement = () => {
           label: "Inaktiv",
           color: "bg-orange-50 text-orange-700 border-orange-200",
           dotColor: "bg-orange-500",
-          description: "Der Kunde ist nicht mehr aktiv. Die Box ist noch zugewiesen, wird aber nicht genutzt.",
+          description: "Der Kunde ist nicht mehr aktiv. Die Stempel-ID ist noch zugewiesen, wird aber nicht genutzt.",
         };
       }
       if (box.hasActivity) {
@@ -269,21 +269,21 @@ const BoxManagement = () => {
           label: "Aktiv genutzt",
           color: "bg-green-50 text-green-700 border-green-200",
           dotColor: "bg-green-500",
-          description: `Box ist zugewiesen und wird aktiv für Stempeltransaktionen genutzt.${daysInfo}`,
+          description: `Stempel-ID ist zugewiesen und wird aktiv für Stempeltransaktionen genutzt.${daysInfo}`,
         };
       }
       return {
         label: "Zugewiesen",
         color: "bg-yellow-50 text-yellow-700 border-yellow-200",
         dotColor: "bg-yellow-500",
-        description: `Box ist dem Kunden „${box.assigned_customer.customer_name}" zugewiesen, es gab aber bisher keine Stempeltransaktionen (NFC).`,
+        description: `Stempel-ID ist dem Kunden „${box.assigned_customer.customer_name}" zugewiesen, es gab aber bisher keine Stempeltransaktionen (NFC).`,
       };
     }
     return {
       label: "Verfügbar",
       color: "bg-blue-50 text-blue-700 border-blue-200",
       dotColor: "bg-blue-500",
-      description: "Diese Box ist noch keinem Kunden zugewiesen und kann vergeben werden.",
+      description: "Diese Stempel-ID ist noch keinem Kunden zugewiesen und kann vergeben werden.",
     };
   };
 
@@ -296,8 +296,8 @@ const BoxManagement = () => {
       <div className="space-y-4">
         <div className="flex justify-between items-center">
           <div>
-            <h1 className="text-xl font-semibold flex items-center gap-2"><Package className="w-5 h-5" /> Box-ID Verwaltung</h1>
-            <p className="text-xs text-muted-foreground">{boxes.length} Boxen · <span className="text-green-600">{activeCount} aktiv</span> · <span className="text-yellow-600">{assignedCount - activeCount} zugewiesen</span> · <span className="text-blue-600">{availableCount} verfügbar</span></p>
+            <h1 className="text-xl font-semibold flex items-center gap-2"><Package className="w-5 h-5" /> Stempel-ID Verwaltung</h1>
+            <p className="text-xs text-muted-foreground">{boxes.length} Stempel-IDs · <span className="text-green-600">{activeCount} aktiv</span> · <span className="text-yellow-600">{assignedCount - activeCount} zugewiesen</span> · <span className="text-blue-600">{availableCount} verfügbar</span></p>
           </div>
           <Button size="sm" variant="outline" onClick={loadBoxes}><RefreshCw className="w-3 h-3 mr-1" />Aktualisieren</Button>
         </div>
@@ -305,16 +305,16 @@ const BoxManagement = () => {
         {availableCount < 3 && (
           <div className={`flex items-center gap-2 p-3 rounded-xl border text-sm font-medium ${availableCount === 0 ? "bg-red-50 border-red-200 text-red-700" : "bg-amber-50 border-amber-200 text-amber-700"}`}>
             <Package className="w-4 h-4" />
-            {availableCount === 0 ? "Keine Box-IDs mehr verfügbar!" : `Nur noch ${availableCount} Box-ID${availableCount > 1 ? "s" : ""} verfügbar`}
+            {availableCount === 0 ? "Keine Stempel-IDs mehr verfügbar!" : `Nur noch ${availableCount} Stempel-ID${availableCount > 1 ? "s" : ""} verfügbar`}
           </div>
         )}
 
         <Card className="bg-white rounded-xl border-border/30">
-          <CardHeader className="py-3"><CardTitle className="text-sm">Neue Box-ID erstellen</CardTitle><CardDescription className="text-xs">Format: XXXXX-XXXXX-XXXXX</CardDescription></CardHeader>
+          <CardHeader className="py-3"><CardTitle className="text-sm">Neue Stempel-ID erstellen</CardTitle><CardDescription className="text-xs">Format: XXXXX-XXXXX-XXXXX</CardDescription></CardHeader>
           <CardContent className="py-3">
             <div className="flex flex-wrap gap-2 items-end">
               <div className="space-y-1">
-                <Label className="text-xs">Box-ID</Label>
+                <Label className="text-xs">Stempel-ID</Label>
                 <div className="flex gap-1">
                   <Input placeholder="XXXXX-XXXXX-XXXXX" value={newBoxId} onChange={(e) => setNewBoxId(formatBoxId(e.target.value))} className="font-mono w-48" maxLength={17} />
                   <Button variant="outline" size="icon" onClick={() => setNewBoxId(generateBoxId())} title="Zufällig"><Shuffle className="w-4 h-4" /></Button>
@@ -355,13 +355,13 @@ const BoxManagement = () => {
           {loading ? (
             <div className="text-center py-12 text-sm text-muted-foreground">Laden...</div>
           ) : filteredBoxes.length === 0 ? (
-            <div className="text-center py-12 text-sm text-muted-foreground">Keine Boxen gefunden</div>
+            <div className="text-center py-12 text-sm text-muted-foreground">Keine Stempel-IDs gefunden</div>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow className="bg-muted/30 hover:bg-muted/30">
                   <TableHead className="h-9 text-xs font-semibold">Status</TableHead>
-                  <TableHead className="h-9 text-xs font-semibold">Box-ID</TableHead>
+                  <TableHead className="h-9 text-xs font-semibold">Stempel-ID</TableHead>
                   <TableHead className="h-9 text-xs font-semibold">Zugewiesen an</TableHead>
                   <TableHead className="h-9 text-xs font-semibold">Preset</TableHead>
                   <TableHead className="h-9 text-xs font-semibold">Notiz</TableHead>
@@ -415,7 +415,7 @@ const BoxManagement = () => {
         <Dialog open={!!detailBox} onOpenChange={(open) => !open && setDetailBox(null)}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle className="flex items-center gap-2"><Package className="w-5 h-5" /> Box-ID: {detailBox?.box_id}</DialogTitle>
+              <DialogTitle className="flex items-center gap-2"><Package className="w-5 h-5" /> Stempel-ID: {detailBox?.box_id}</DialogTitle>
               <DialogDescription>Details und registrierte Stempel</DialogDescription>
             </DialogHeader>
             {detailBox && (
@@ -461,7 +461,7 @@ const BoxManagement = () => {
           <DialogContent>
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2"><Shield className="w-5 h-5" /> NFC-Stempel: {stampDialogBox?.box_id}</DialogTitle>
-              <DialogDescription>Registriere die NFC-Stempel für diese Box</DialogDescription>
+              <DialogDescription>Registriere die NFC-Stempel für diese Stempel-ID</DialogDescription>
             </DialogHeader>
             {loadingStamps ? (
               <div className="flex items-center justify-center py-8"><Loader2 className="h-6 w-6 animate-spin" /></div>
@@ -493,7 +493,7 @@ const BoxManagement = () => {
           </DialogContent>
         </Dialog>
 
-        <ConfirmActionDialog open={!!deleteBox} onOpenChange={(open) => !open && setDeleteBox(null)} onConfirm={handleDelete} title="Box-ID löschen?" description={`Die Box-ID "${deleteBox?.box_id}" wird dauerhaft gelöscht.`} confirmText="Löschen" confirmPhrase="LÖSCHEN" destructive />
+        <ConfirmActionDialog open={!!deleteBox} onOpenChange={(open) => !open && setDeleteBox(null)} onConfirm={handleDelete} title="Stempel-ID löschen?" description={`Die Stempel-ID "${deleteBox?.box_id}" wird dauerhaft gelöscht.`} confirmText="Löschen" confirmPhrase="LÖSCHEN" destructive />
       </div>
     </TooltipProvider>
   );

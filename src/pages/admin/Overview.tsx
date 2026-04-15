@@ -132,7 +132,7 @@ const Overview = () => {
         const assignedIds = new Set((assignedBoxes || []).map((b) => b.box_id));
         const available = (allBoxes || []).filter((b) => !assignedIds.has(b.id)).length;
         if (available < 3) {
-          newAlerts.push({ type: available === 0 ? "error" : "warning", message: available === 0 ? "Keine Box-IDs mehr verfügbar!" : `Nur noch ${available} Box-ID${available > 1 ? "s" : ""} verfügbar`, action: "Box-IDs verwalten", link: "/admin/boxes" });
+          newAlerts.push({ type: available === 0 ? "error" : "warning", message: available === 0 ? "Keine Stempel-IDs mehr verfügbar!" : `Nur noch ${available} Stempel-ID${available > 1 ? "s" : ""} verfügbar`, action: "Stempel-IDs verwalten", link: "/admin/boxes" });
         }
       } catch (e) { console.error(e); }
     }

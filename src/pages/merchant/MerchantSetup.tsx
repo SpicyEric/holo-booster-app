@@ -112,14 +112,14 @@ export default function MerchantSetup() {
         .eq("box_id", state.boxId)
         .maybeSingle();
 
-      if (!boxData) { toast.error("Box-ID existiert nicht"); return; }
+      if (!boxData) { toast.error("Stempel-ID existiert nicht"); return; }
 
       const { count } = await supabase
         .from("customer_boxes")
         .select("id", { count: "exact", head: true })
         .eq("box_id", boxData.id);
 
-      if (count && count > 0) { toast.error("Diese Box ist bereits vergeben"); return; }
+      if (count && count > 0) { toast.error("Diese Stempel-ID ist bereits vergeben"); return; }
 
       await supabase.from("customer_boxes").insert({
         customer_id: customerId,
@@ -153,7 +153,7 @@ export default function MerchantSetup() {
         });
       }
 
-      toast.success("Box erfolgreich verknüpft! 🎉");
+      toast.success("Stempel-ID erfolgreich verknüpft! 🎉");
       goNext();
     } catch {
       toast.error("Fehler beim Verknüpfen");
