@@ -500,11 +500,36 @@ const BoxManagement = () => {
         <Dialog open={!!detailRow} onOpenChange={(open) => !open && setDetailRow(null)}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle className="flex items-center gap-2"><Package className="w-5 h-5" /> Box: {detailRow?.box_id}</DialogTitle>
-              <DialogDescription>Stempel-ID: {detailRow?.stempel_id || '—'}</DialogDescription>
+              <DialogTitle className="flex items-center gap-2"><Package className="w-5 h-5" /> Box bearbeiten</DialogTitle>
+              <DialogDescription>Box-ID und Stempel-ID können manuell geändert werden.</DialogDescription>
             </DialogHeader>
             {detailRow && (
               <div className="space-y-4">
+                <div className="space-y-3">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="edit-box-id" className="text-xs font-medium">Box-ID</Label>
+                    <Input
+                      id="edit-box-id"
+                      value={editBoxId}
+                      onChange={(e) => { const v = e.target.value.toUpperCase(); setEditBoxId(v); }}
+                      onBlur={() => validateBoxId(editBoxId)}
+                      className={`font-mono ${boxIdError ? "border-destructive focus-visible:ring-destructive" : ""}`}
+                    />
+                    {boxIdError && <p className="text-xs text-destructive">{boxIdError}</p>}
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="edit-stempel-id" className="text-xs font-medium">Stempel-ID</Label>
+                    <Input
+                      id="edit-stempel-id"
+                      value={editStempelId}
+                      onChange={(e) => { const v = e.target.value.toUpperCase(); setEditStempelId(v); }}
+                      onBlur={() => validateStempelId(editStempelId)}
+                      className={`font-mono ${stempelIdError ? "border-destructive focus-visible:ring-destructive" : ""}`}
+                    />
+                    {stempelIdError && <p className="text-xs text-destructive">{stempelIdError}</p>}
+                  </div>
+                </div>
+
                 <div className="grid grid-cols-2 gap-3 text-sm">
                   <div>
                     <p className="text-xs text-muted-foreground">Box-Status</p>
@@ -543,6 +568,13 @@ const BoxManagement = () => {
                   ) : (
                     <p className="text-xs text-muted-foreground text-center py-3">Keine Stempel registriert</p>
                   )}
+                </div>
+                <div className="flex justify-end gap-2 pt-2">
+                  <Button variant="outline" size="sm" onClick={() => setDetailRow(null)}>Abbrechen</Button>
+                  <Button size="sm" onClick={handleSaveEdit} disabled={savingEdit || !!boxIdError || !!stempelIdError || !editBoxId.trim() || !editStempelId.trim()}>
+                    {savingEdit ? <Loader2 className="w-3 h-3 mr-1 animate-spin" /> : null}
+                    Speichern
+                  </Button>
                 </div>
               </div>
             )}
