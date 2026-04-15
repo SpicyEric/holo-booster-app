@@ -77,11 +77,15 @@ const Overview = () => {
     const newAlerts: Alert[] = [];
     const customersPath = isAdmin ? "/admin/customers" : "/vertriebler/customers";
 
-    // Stamp inactivity: 14 days
+    // Stamp inactivity: 14 days – partners only see their own customers
     try {
       const fourteenDaysAgo = new Date();
       fourteenDaysAgo.setDate(fourteenDaysAgo.getDate() - 14);
-      const { data: activeCustomers } = await supabase.from("customers").select("id, name").eq("active", true);
+      let customerQuery = supabase.from("customers").select("id, name").eq("active", true);
+      if (!isAdmin && user) {
+        customerQuery = customerQuery.eq("promoter_id", user.id);
+      }
+      const { data: activeCustomers } = await customerQuery;
       if (activeCustomers && activeCustomers.length > 0) {
         const { data: recentActivity } = await supabase.from("point_transactions").select("merchant_customer_id").eq("transaction_type", "nfc_stamp").gte("created_at", fourteenDaysAgo.toISOString());
         const activeIds = new Set((recentActivity || []).map((r) => r.merchant_customer_id));
