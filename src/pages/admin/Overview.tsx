@@ -150,16 +150,27 @@ const Overview = () => {
       const sevenDaysAgo = new Date();
       sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
+      const addPromoterFilter = (q: any) => (!isAdmin && user) ? q.eq("promoter_id", user.id) : q;
+
       const [activeRes, newRes, totalRes, stampActiveRes, newCustomersRes] = await Promise.all([
-        supabase.from("customers").select("id", { count: "exact", head: true }).eq("active", true),
-        supabase.from("customers").select("id", { count: "exact", head: true }).eq("active", true).gte("created_at", sevenDaysAgo.toISOString()),
-        supabase.from("customers").select("id", { count: "exact", head: true }),
+        addPromoterFilter(supabase.from("customers").select("id", { count: "exact", head: true }).eq("active", true)),
+        addPromoterFilter(supabase.from("customers").select("id", { count: "exact", head: true }).eq("active", true).gte("created_at", sevenDaysAgo.toISOString())),
+        addPromoterFilter(supabase.from("customers").select("id", { count: "exact", head: true })),
         supabase.from("point_transactions").select("merchant_customer_id").eq("transaction_type", "nfc_stamp").gte("created_at", sevenDaysAgo.toISOString()),
-        supabase.from("customers").select("name, created_at, industry").gte("created_at", sevenDaysAgo.toISOString()).order("created_at", { ascending: false }).limit(20),
+        addPromoterFilter(supabase.from("customers").select("name, created_at, industry").gte("created_at", sevenDaysAgo.toISOString()).order("created_at", { ascending: false }).limit(20)),
       ]);
 
+      // For partners, filter stamp activity to only their customers
+      let activeWithStamps = 0;
+      if (!isAdmin && user) {
+        const { data: myCustomers } = await supabase.from("customers").select("id").eq("promoter_id", user.id);
+        const myIds = new Set((myCustomers || []).map(c => c.id));
+        activeWithStamps = new Set((stampActiveRes.data || []).filter(r => myIds.has(r.merchant_customer_id)).map(r => r.merchant_customer_id)).size;
+      } else {
+        activeWithStamps = new Set((stampActiveRes.data || []).map((r) => r.merchant_customer_id)).size;
+      }
+
       const totalActive = activeRes.count || 0;
-      const activeWithStamps = new Set((stampActiveRes.data || []).map((r) => r.merchant_customer_id)).size;
       const rate = totalActive > 0 ? Math.round((activeWithStamps / totalActive) * 100) : 0;
 
       setKpis({
@@ -178,9 +189,21 @@ const Overview = () => {
     try {
       const thirtyDaysAgo = new Date();
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+      let customersQuery = supabase.from("customers").select("created_at").gte("created_at", thirtyDaysAgo.toISOString()).order("created_at");
+      if (!isAdmin && user) {
+        customersQuery = customersQuery.eq("promoter_id", user.id);
+      }
+
+      // For stamps, partners need to filter by their customer IDs
+      let myCustomerIds: string[] | null = null;
+      if (!isAdmin && user) {
+        const { data: myCustomers } = await supabase.from("customers").select("id").eq("promoter_id", user.id);
+        myCustomerIds = (myCustomers || []).map(c => c.id);
+      }
+
       const [customersRes, stampsRes] = await Promise.all([
-        supabase.from("customers").select("created_at").gte("created_at", thirtyDaysAgo.toISOString()).order("created_at"),
-        supabase.from("point_transactions").select("created_at").eq("transaction_type", "nfc_stamp").gte("created_at", thirtyDaysAgo.toISOString()).order("created_at"),
+        customersQuery,
+        supabase.from("point_transactions").select("created_at, merchant_customer_id").eq("transaction_type", "nfc_stamp").gte("created_at", thirtyDaysAgo.toISOString()).order("created_at"),
       ]);
       const dateMap: Record<string, { kunden: number; stempel: number }> = {};
       for (let i = 0; i < 30; i++) {
@@ -189,15 +212,31 @@ const Overview = () => {
         dateMap[key] = { kunden: 0, stempel: 0 };
       }
       (customersRes.data || []).forEach((c) => { const key = new Date(c.created_at).toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit" }); if (dateMap[key]) dateMap[key].kunden++; });
-      (stampsRes.data || []).forEach((s) => { const key = new Date(s.created_at).toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit" }); if (dateMap[key]) dateMap[key].stempel++; });
+      const filteredStamps = myCustomerIds ? (stampsRes.data || []).filter(s => myCustomerIds!.includes(s.merchant_customer_id)) : (stampsRes.data || []);
+      filteredStamps.forEach((s) => { const key = new Date(s.created_at).toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit" }); if (dateMap[key]) dateMap[key].stempel++; });
       setChartData(Object.entries(dateMap).map(([date, vals]) => ({ date, ...vals })));
     } catch (e) { console.error(e); }
   };
 
   const loadLiveFeed = async () => {
     try {
-      const { data } = await supabase.from("point_transactions").select("id, created_at, merchant_customer_id, points_change, transaction_type, description").eq("transaction_type", "nfc_stamp").order("created_at", { ascending: false }).limit(5);
-      if (!data || data.length === 0) { setLiveFeed([]); return; }
+      // For partners, first get their customer IDs, then filter transactions
+      let myCustomerIds: string[] | null = null;
+      if (!isAdmin && user) {
+        const { data: myCustomers } = await supabase.from("customers").select("id").eq("promoter_id", user.id);
+        myCustomerIds = (myCustomers || []).map(c => c.id);
+        if (myCustomerIds.length === 0) { setLiveFeed([]); return; }
+      }
+
+      let query = supabase.from("point_transactions").select("id, created_at, merchant_customer_id, points_change, transaction_type, description").eq("transaction_type", "nfc_stamp").order("created_at", { ascending: false }).limit(20);
+      const { data: allData } = await query;
+      let data = allData || [];
+      if (myCustomerIds) {
+        data = data.filter(d => myCustomerIds!.includes(d.merchant_customer_id)).slice(0, 5);
+      } else {
+        data = data.slice(0, 5);
+      }
+      if (data.length === 0) { setLiveFeed([]); return; }
       const merchantIds = [...new Set(data.map((d) => d.merchant_customer_id))];
       const { data: merchants } = await supabase.from("customers").select("id, name, industry").in("id", merchantIds);
       const merchantMap = new Map((merchants || []).map((m) => [m.id, m]));
