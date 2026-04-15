@@ -109,8 +109,19 @@ serve(async (req) => {
       });
     }
 
-    // Create profile (skip if existing user already has one)
-    if (!isExistingUser) {
+    // Create or update profile
+    if (isExistingUser) {
+      // Update existing profile with the new name if provided
+      if (full_name) {
+        const { error: profileUpdateError } = await supabase
+          .from('profiles')
+          .update({ full_name })
+          .eq('user_id', userId);
+        if (profileUpdateError) {
+          console.error('Error updating profile:', profileUpdateError);
+        }
+      }
+    } else {
       const { error: profileError } = await supabase
         .from('profiles')
         .insert({
