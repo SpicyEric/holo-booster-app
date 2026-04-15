@@ -180,6 +180,7 @@ const BoxManagement = () => {
           stempel_id: stempelId,
           status: eb.status,
           created_at: eb.created_at,
+          haendler_id: eb.haendler_id || null,
           stempel_status: stempelStatus,
           assigned_customer_name: customerData?.name || null,
           has_activity: stempelId ? activeStempelIds.has(stempelId) : false,
