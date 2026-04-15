@@ -18,7 +18,7 @@ import {
 import { Separator } from "@/components/ui/separator";
 import {
   UserPlus, Search, Shield, Users, Store, X, Trash2, RotateCcw, Mail,
-  Phone, MapPin, Calendar, Clock, CreditCard, ArrowUpDown, ChevronRight, Building2, Hash, Globe, Pencil, Save, XCircle,
+  Phone, MapPin, Calendar, Clock, CreditCard, ArrowUpDown, ChevronRight, Building2, Hash, Globe, Pencil, Save, XCircle, Star, Loader2,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -87,6 +87,10 @@ const Accounts = () => {
     email: "", full_name: "", role: "end_customer" as AppRole, password: "",
   });
 
+  // Loyalty points for selected user
+  const [loyaltyData, setLoyaltyData] = useState<{ merchant_name: string; points: number; merchant_customer_id: string }[]>([]);
+  const [loyaltyLoading, setLoyaltyLoading] = useState(false);
+
   useEffect(() => { loadAccounts(); }, []);
 
   // Load merchant stats when a merchant is selected
@@ -94,7 +98,42 @@ const Accounts = () => {
     if (selectedAccount?.merchantCustomerId && selectedAccount.role === "merchant") {
       loadMerchantStats(selectedAccount.merchantCustomerId);
     }
+    // Load loyalty data for any selected user
+    if (selectedAccount?.id) {
+      loadLoyaltyData(selectedAccount.id);
+    } else {
+      setLoyaltyData([]);
+    }
   }, [selectedAccount?.id]);
+
+  const loadLoyaltyData = async (userId: string) => {
+    setLoyaltyLoading(true);
+    try {
+      const { data: accounts } = await supabase
+        .from("loyalty_accounts")
+        .select("merchant_customer_id, current_points_balance")
+        .eq("user_id", userId);
+      if (!accounts || accounts.length === 0) { setLoyaltyData([]); return; }
+      const merchantIds = accounts.map(a => a.merchant_customer_id);
+      const { data: merchants } = await supabase
+        .from("customers")
+        .select("id, name")
+        .in("id", merchantIds);
+      const nameMap = new Map((merchants || []).map(m => [m.id, m.name]));
+      setLoyaltyData(
+        accounts.map(a => ({
+          merchant_customer_id: a.merchant_customer_id,
+          merchant_name: nameMap.get(a.merchant_customer_id) || "Unbekannt",
+          points: a.current_points_balance || 0,
+        })).sort((a, b) => b.points - a.points)
+      );
+    } catch (e) {
+      console.error(e);
+      setLoyaltyData([]);
+    } finally {
+      setLoyaltyLoading(false);
+    }
+  };
 
   const loadMerchantStats = async (customerId: string) => {
     try {
@@ -755,6 +794,30 @@ const Accounts = () => {
               )}
             </Section>
           )}
+
+          {/* Loyalty Points */}
+          <Section title="Treuepunkte">
+            {loyaltyLoading ? (
+              <div className="flex justify-center py-3"><Loader2 className="w-4 h-4 animate-spin text-muted-foreground" /></div>
+            ) : loyaltyData.length === 0 ? (
+              <p className="text-xs text-muted-foreground text-center py-2">Keine Punkte gesammelt</p>
+            ) : (
+              <div className="space-y-1.5">
+                {loyaltyData.map(ld => (
+                  <div key={ld.merchant_customer_id} className="flex items-center justify-between px-2 py-1.5 rounded-lg bg-muted/30 border border-border/30">
+                    <div className="flex items-center gap-2">
+                      <Store className="w-3.5 h-3.5 text-muted-foreground" />
+                      <span className="text-xs font-medium">{ld.merchant_name}</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <Star className="w-3 h-3 text-amber-500 fill-amber-500" />
+                      <span className="text-xs font-bold">{ld.points}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </Section>
         </div>
       </div>
     );
