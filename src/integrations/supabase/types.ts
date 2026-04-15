@@ -2914,6 +2914,92 @@ export type Database = {
           },
         ]
       }
+      vertriebler_gutschriften: {
+        Row: {
+          aktive_kunden_snapshot: number
+          ausgezahlt_am: string | null
+          created_at: string
+          direktprovision_details: Json | null
+          direktprovision_netto: number
+          erstelldatum: string
+          folgeprovision_netto: number
+          gesamt_brutto: number
+          gesamt_netto: number
+          gutschrift_nummer: string
+          id: string
+          pdf_url: string | null
+          periode: string
+          periode_jahr: number
+          periode_monat: number
+          sponsor_bonus_details: Json | null
+          sponsor_bonus_netto: number
+          status: string
+          updated_at: string
+          ust_betrag: number
+          ust_id: string | null
+          ust_pflichtig: boolean
+          vertriebler_id: string
+        }
+        Insert: {
+          aktive_kunden_snapshot?: number
+          ausgezahlt_am?: string | null
+          created_at?: string
+          direktprovision_details?: Json | null
+          direktprovision_netto?: number
+          erstelldatum?: string
+          folgeprovision_netto?: number
+          gesamt_brutto?: number
+          gesamt_netto?: number
+          gutschrift_nummer: string
+          id?: string
+          pdf_url?: string | null
+          periode: string
+          periode_jahr: number
+          periode_monat: number
+          sponsor_bonus_details?: Json | null
+          sponsor_bonus_netto?: number
+          status?: string
+          updated_at?: string
+          ust_betrag?: number
+          ust_id?: string | null
+          ust_pflichtig?: boolean
+          vertriebler_id: string
+        }
+        Update: {
+          aktive_kunden_snapshot?: number
+          ausgezahlt_am?: string | null
+          created_at?: string
+          direktprovision_details?: Json | null
+          direktprovision_netto?: number
+          erstelldatum?: string
+          folgeprovision_netto?: number
+          gesamt_brutto?: number
+          gesamt_netto?: number
+          gutschrift_nummer?: string
+          id?: string
+          pdf_url?: string | null
+          periode?: string
+          periode_jahr?: number
+          periode_monat?: number
+          sponsor_bonus_details?: Json | null
+          sponsor_bonus_netto?: number
+          status?: string
+          updated_at?: string
+          ust_betrag?: number
+          ust_id?: string | null
+          ust_pflichtig?: boolean
+          vertriebler_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vertriebler_gutschriften_vertriebler_id_fkey"
+            columns: ["vertriebler_id"]
+            isOneToOne: false
+            referencedRelation: "sales_rep_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never

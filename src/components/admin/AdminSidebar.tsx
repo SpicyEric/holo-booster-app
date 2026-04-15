@@ -3,7 +3,7 @@ import { signOut } from "@/lib/auth";
 import { toast } from "sonner";
 import {
   LayoutDashboard, Users, Box, Package, UserCog, BarChart3,
-  ShoppingCart, Settings, LogOut, ChevronLeft, Menu, X, Map, GitBranch, Search, Lightbulb, CalendarDays, UserPlus, Truck, RotateCcw,
+  ShoppingCart, Settings, LogOut, ChevronLeft, Menu, X, Map, GitBranch, Search, Lightbulb, CalendarDays, UserPlus, Truck, RotateCcw, Receipt,
 } from "lucide-react";
 import eloyoLogo from "@/assets/eloyo-logo.png";
 import { cn } from "@/lib/utils";
@@ -56,6 +56,7 @@ const NAV_GROUPS: NavGroup[] = [
       { path: "/admin/sales-rep-register", label: "Vertriebler registrieren", icon: UserPlus },
       { path: "/admin/box-orders", label: "Bestellungen", icon: Truck },
       { path: "/admin/box-returns", label: "Boxenrücknahme", icon: RotateCcw },
+      { path: "/admin/gutschriften", label: "Gutschriften", icon: Receipt },
     ],
   },
   {

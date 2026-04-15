@@ -76,6 +76,8 @@ import SalesRepRegistration from "./pages/admin/SalesRepRegistration";
 import BoxOrders from "./pages/admin/BoxOrders";
 import BoxReturns from "./pages/admin/BoxReturns";
 import SalesReps from "./pages/admin/SalesReps";
+import AdminGutschriften from "./pages/admin/Gutschriften";
+import SalesRepAbrechnungen from "./pages/salesrep/SalesRepAbrechnungen";
 
 const queryClient = new QueryClient();
 
@@ -124,6 +126,7 @@ const App = () => {
                 <Route path="sales-reps" element={<SalesReps />} />
                 <Route path="box-orders" element={<BoxOrders />} />
                 <Route path="box-returns" element={<BoxReturns />} />
+                <Route path="gutschriften" element={<AdminGutschriften />} />
                 <Route path="settings" element={<Settings />} />
                 <Route path="map" element={<CustomerMap />} />
               </Route>
@@ -158,6 +161,7 @@ const App = () => {
                 <Route path="messages" element={<SalesRepMessages />} />
                 <Route path="orders" element={<SalesRepOrders />} />
                 <Route path="settings" element={<SalesRepSettings />} />
+                <Route path="abrechnungen" element={<SalesRepAbrechnungen />} />
                 <Route path="map" element={<CustomerMap />} />
               </Route>
 
