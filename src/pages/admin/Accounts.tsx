@@ -794,6 +794,30 @@ const Accounts = () => {
               )}
             </Section>
           )}
+
+          {/* Loyalty Points */}
+          <Section title="Treuepunkte">
+            {loyaltyLoading ? (
+              <div className="flex justify-center py-3"><Loader2 className="w-4 h-4 animate-spin text-muted-foreground" /></div>
+            ) : loyaltyData.length === 0 ? (
+              <p className="text-xs text-muted-foreground text-center py-2">Keine Punkte gesammelt</p>
+            ) : (
+              <div className="space-y-1.5">
+                {loyaltyData.map(ld => (
+                  <div key={ld.merchant_customer_id} className="flex items-center justify-between px-2 py-1.5 rounded-lg bg-muted/30 border border-border/30">
+                    <div className="flex items-center gap-2">
+                      <Store className="w-3.5 h-3.5 text-muted-foreground" />
+                      <span className="text-xs font-medium">{ld.merchant_name}</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <Star className="w-3 h-3 text-amber-500 fill-amber-500" />
+                      <span className="text-xs font-bold">{ld.points}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </Section>
         </div>
       </div>
     );
