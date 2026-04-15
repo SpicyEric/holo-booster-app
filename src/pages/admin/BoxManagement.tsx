@@ -67,6 +67,7 @@ interface BoxRow {
   stempel_id: string | null;
   status: string;
   created_at: string;
+  haendler_id: string | null;
   // derived
   stempel_status: string;
   assigned_customer_name: string | null;
@@ -179,6 +180,7 @@ const BoxManagement = () => {
           stempel_id: stempelId,
           status: eb.status,
           created_at: eb.created_at,
+          haendler_id: eb.haendler_id || null,
           stempel_status: stempelStatus,
           assigned_customer_name: customerData?.name || null,
           has_activity: stempelId ? activeStempelIds.has(stempelId) : false,
@@ -408,9 +410,21 @@ const BoxManagement = () => {
         const hardwareUid = serialNumber ? serialNumber.toLowerCase() : null;
         try { await ndef.write({ records: [{ recordType: "text", data: ndefText, lang: "de" }] }); toast.success(`NFC-Chip beschrieben: ${ndefText}`); } catch { toast.error("Chip konnte nicht beschrieben werden"); }
         try {
-          const { data: existing } = await supabase.from("nfc_chips").select("id").eq("chip_uid", chipUid).eq("stamp_color", color).maybeSingle();
-          if (existing) { await supabase.from("nfc_chips").update({ hardware_uid: hardwareUid }).eq("id", existing.id); }
-          else { await supabase.from("nfc_chips").insert({ chip_uid: chipUid, stamp_color: color, stamp_name: color.charAt(0).toUpperCase() + color.slice(1), hardware_uid: hardwareUid, points_value: color === 'grün' ? 1 : color === 'blau' ? 2 : 3, is_active: true }); }
+          const merchantCustomerId = stampDialogRow?.haendler_id || null;
+          // First try to find by chip_uid + color (exact match for re-scan)
+          let existing: { id: string } | null = null;
+          const { data: byChipUid } = await supabase.from("nfc_chips").select("id").eq("chip_uid", chipUid).eq("stamp_color", color).maybeSingle();
+          existing = byChipUid;
+          // If not found, try by merchant + color (wizard may have created with different chip_uid)
+          if (!existing && merchantCustomerId) {
+            const { data: byMerchant } = await supabase.from("nfc_chips").select("id").eq("merchant_customer_id", merchantCustomerId).eq("stamp_color", color).maybeSingle();
+            existing = byMerchant;
+          }
+          if (existing) {
+            await supabase.from("nfc_chips").update({ hardware_uid: hardwareUid, chip_uid: chipUid, merchant_customer_id: merchantCustomerId }).eq("id", existing.id);
+          } else {
+            await supabase.from("nfc_chips").insert({ chip_uid: chipUid, stamp_color: color, stamp_name: color.charAt(0).toUpperCase() + color.slice(1), hardware_uid: hardwareUid, points_value: color === 'grün' ? 1 : color === 'blau' ? 2 : 3, is_active: true, merchant_customer_id: merchantCustomerId });
+          }
           toast.success(`Stempel "${color}" registriert`);
           setRegisteredStamps(prev => {
             const filtered = prev.filter(s => s.stamp_color !== color);
