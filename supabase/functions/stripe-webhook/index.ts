@@ -740,38 +740,57 @@ serve(async (req) => {
         }
 
         // Create commissions: 50€ initial + 12€ recurring (fixed amounts)
-        if (customer.promoter_id) {
+        // Resolve promoter_id: prefer customer record, fall back to subscription metadata
+        let effectivePromoterId = customer.promoter_id;
+        let salesRepDiscountCents = 0;
+        
+        try {
+          if (invoice.subscription) {
+            const sub = await stripe.subscriptions.retrieve(invoice.subscription as string);
+            const subPromoterId = sub.metadata?.promoterId;
+            salesRepDiscountCents = parseInt(sub.metadata?.salesRepDiscountCents || '0') || 0;
+            
+            // If customer has no promoter_id but subscription metadata does, backfill it
+            if (!effectivePromoterId && subPromoterId) {
+              effectivePromoterId = subPromoterId;
+              console.log("[WEBHOOK] Backfilling promoter_id from subscription metadata:", subPromoterId);
+              await supabase.from("customers").update({ promoter_id: subPromoterId }).eq("id", customer.id);
+              
+              // Also update conversion timestamps for the promoter
+              await updateSalesRepConversionTimestamps(subPromoterId);
+            }
+          }
+        } catch (e) {
+          console.log("[WEBHOOK] Could not retrieve subscription metadata:", e);
+        }
+        
+        if (effectivePromoterId) {
           const isFirstInvoice = invoice.billing_reason === 'subscription_create';
           
-          // Get salesRepDiscount from subscription metadata
-          let salesRepDiscountCents = 0;
-          try {
-            if (invoice.subscription) {
-              const sub = await stripe.subscriptions.retrieve(invoice.subscription as string);
-              salesRepDiscountCents = parseInt(sub.metadata?.salesRepDiscountCents || '0') || 0;
-            }
-          } catch (e) {
-            console.log("[WEBHOOK] Could not retrieve subscription metadata:", e);
-          }
-          
-          // Check for duplicate commission
+          // Check for duplicate commission (check both base event id and suffixed versions)
           const { data: existingCommission } = await supabase
             .from("commissions")
             .select("id")
-            .eq("stripe_event_id", event.id)
+            .eq("stripe_event_id", event.id + '_initial')
             .limit(1);
           
-          if (existingCommission && existingCommission.length > 0) {
+          const { data: existingRecurring } = await supabase
+            .from("commissions")
+            .select("id")
+            .eq("stripe_event_id", event.id + '_recurring')
+            .limit(1);
+          
+          if ((existingCommission && existingCommission.length > 0) || (existingRecurring && existingRecurring.length > 0)) {
             console.log("[WEBHOOK] Commission already exists for event:", event.id);
           } else {
             if (isFirstInvoice) {
-              // Initial commission: 50€ minus salesRepDiscount, with 14-day hold
+              // Initial commission: 50€ minus salesRepDiscount, with 7-day hold
               const initialAmount = 5000; // 50€ in cents
               const availableAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
               
-              await supabase.from("commissions").insert({
+              const { error: initErr } = await supabase.from("commissions").insert({
                 customer_id: customer.id,
-                promoter_id: customer.promoter_id,
+                promoter_id: effectivePromoterId,
                 stripe_event_id: event.id + '_initial',
                 amount_cents: initialAmount,
                 discount_cents: salesRepDiscountCents,
@@ -782,7 +801,11 @@ serve(async (req) => {
                 customer_name: customer.company_name || customer.name,
                 metadata: { invoice_id: invoice.id },
               });
-              console.log("[WEBHOOK] Initial commission created: 5000 cents, discount:", salesRepDiscountCents);
+              if (initErr) {
+                console.error("[WEBHOOK] Failed to create initial commission:", initErr);
+              } else {
+                console.log("[WEBHOOK] Initial commission created: 5000 cents, discount:", salesRepDiscountCents);
+              }
             }
             
             // Recurring commission: 12€ per month
@@ -791,9 +814,9 @@ serve(async (req) => {
               ? new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString() 
               : null;
               
-            await supabase.from("commissions").insert({
+            const { error: recErr } = await supabase.from("commissions").insert({
               customer_id: customer.id,
-              promoter_id: customer.promoter_id,
+              promoter_id: effectivePromoterId,
               stripe_event_id: event.id + '_recurring',
               amount_cents: 1200, // 12€
               discount_cents: 0,
@@ -804,8 +827,14 @@ serve(async (req) => {
               customer_name: customer.company_name || customer.name,
               metadata: { invoice_id: invoice.id },
             });
-            console.log("[WEBHOOK] Recurring commission created: 1200 cents, status:", recurringStatus);
+            if (recErr) {
+              console.error("[WEBHOOK] Failed to create recurring commission:", recErr);
+            } else {
+              console.log("[WEBHOOK] Recurring commission created: 1200 cents, status:", recurringStatus);
+            }
           }
+        } else {
+          console.log("[WEBHOOK] No promoter_id found for customer, skipping commissions");
         }
         break;
       }
