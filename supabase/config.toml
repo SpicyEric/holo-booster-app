@@ -68,3 +68,9 @@ verify_jwt = false
 
 [functions.box-frist-warnung]
 verify_jwt = false
+
+[functions.monatliche-gutschrift]
+verify_jwt = false
+
+[functions.monatliche-gutschrift-reset]
+verify_jwt = false
