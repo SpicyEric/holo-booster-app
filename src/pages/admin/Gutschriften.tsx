@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Euro, Download, Search, CheckCircle, FileText, Loader2 } from "lucide-react";
+import { Euro, Download, Search, CheckCircle, FileText, Loader2, Play } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { de } from "date-fns/locale";
@@ -50,6 +50,7 @@ export default function AdminGutschriften() {
   const [filterMonat, setFilterMonat] = useState<string>("all");
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [markingId, setMarkingId] = useState<string | null>(null);
+  const [triggering, setTriggering] = useState(false);
 
   useEffect(() => {
     fetchGutschriften();
@@ -90,6 +91,21 @@ export default function AdminGutschriften() {
     }
   };
 
+  const triggerGutschriften = async () => {
+    setTriggering(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("monatliche-gutschrift");
+      if (error) throw error;
+      toast.success("Gutschriften erfolgreich erstellt!");
+      console.log("Gutschrift results:", data);
+      fetchGutschriften();
+    } catch (err: any) {
+      toast.error("Fehler: " + err.message);
+    } finally {
+      setTriggering(false);
+    }
+  };
+
   const monate = useMemo(() => {
     const set = new Set(gutschriften.map((g) => `${g.periode_jahr}-${g.periode_monat}`));
     return Array.from(set).sort().reverse().map((key) => {
@@ -127,9 +143,15 @@ export default function AdminGutschriften() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold font-headline">Gutschriften</h1>
-        <p className="text-muted-foreground text-sm">Monatliche Abrechnungen der Vertriebler</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold font-headline">Gutschriften</h1>
+          <p className="text-muted-foreground text-sm">Monatliche Abrechnungen der Vertriebler</p>
+        </div>
+        <Button onClick={triggerGutschriften} disabled={triggering} variant="outline">
+          {triggering ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Play className="h-4 w-4 mr-2" />}
+          Gutschriften jetzt erstellen
+        </Button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
