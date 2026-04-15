@@ -377,6 +377,27 @@ const SalesReps = () => {
         )}
       </div>
     </div>
+
+    {/* Delete Dialog */}
+    <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Vertriebler löschen?</AlertDialogTitle>
+          <AlertDialogDescription>
+            Account von <strong>{selected?.full_name}</strong> ({selected?.email}) wird unwiderruflich gelöscht.
+            <div className="mt-3">
+              <Label className="text-xs">Bitte "löschen" eingeben:</Label>
+              <Input value={deleteConfirmText} onChange={e => setDeleteConfirmText(e.target.value)} className="mt-1" />
+            </div>
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+          <AlertDialogAction onClick={confirmDeleteRep} className="bg-destructive hover:bg-destructive/90">Löschen</AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+    </>
   );
 };
 
