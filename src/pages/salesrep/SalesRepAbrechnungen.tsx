@@ -43,7 +43,6 @@ export default function SalesRepAbrechnungen() {
 
   const fetchData = async () => {
     try {
-      // Get sales rep profile id
       const { data: profile } = await supabase
         .from("sales_rep_profiles")
         .select("id, is_small_business, vat_id")
@@ -55,7 +54,6 @@ export default function SalesRepAbrechnungen() {
         return;
       }
 
-      // Get gutschriften
       const { data, error } = await supabase
         .from("vertriebler_gutschriften")
         .select("*")
@@ -65,7 +63,6 @@ export default function SalesRepAbrechnungen() {
       if (error) throw error;
       setGutschriften((data || []) as unknown as Gutschrift[]);
 
-      // Calculate preview for current month
       const { count: activeKunden } = await supabase
         .from("customers")
         .select("id", { count: "exact", head: true })
@@ -95,6 +92,23 @@ export default function SalesRepAbrechnungen() {
     }
   };
 
+  const downloadPdf = async (pdfPath: string, gutschriftNummer: string) => {
+    try {
+      const { data, error } = await supabase.storage
+        .from("gutschriften")
+        .createSignedUrl(pdfPath, 60, {
+          download: `Gutschrift-${gutschriftNummer}.pdf`,
+        });
+
+      if (error) throw error;
+      if (data?.signedUrl) {
+        window.open(data.signedUrl, "_blank");
+      }
+    } catch (err: any) {
+      toast.error("Download fehlgeschlagen: " + err.message);
+    }
+  };
+
   const nextMonth = useMemo(() => {
     const d = new Date();
     d.setMonth(d.getMonth() + 1);
@@ -116,7 +130,6 @@ export default function SalesRepAbrechnungen() {
         <p className="text-muted-foreground text-sm">Deine monatlichen Gutschriften</p>
       </div>
 
-      {/* Preview */}
       {previewBetrag !== null && previewBetrag > 0 && (
         <GlassCard className="p-5 border-primary/20 bg-primary/5">
           <div className="flex items-center gap-4">
@@ -161,7 +174,6 @@ export default function SalesRepAbrechnungen() {
         </GlassCard>
       </div>
 
-      {/* Table */}
       <Card>
         <CardContent className="p-0">
           <Table>
@@ -196,10 +208,12 @@ export default function SalesRepAbrechnungen() {
                     </TableCell>
                     <TableCell className="text-right">
                       {g.pdf_url && (
-                        <Button variant="ghost" size="icon" asChild>
-                          <a href={g.pdf_url} target="_blank" rel="noopener noreferrer">
-                            <Download className="h-4 w-4" />
-                          </a>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => downloadPdf(g.pdf_url!, g.gutschrift_nummer)}
+                        >
+                          <Download className="h-4 w-4" />
                         </Button>
                       )}
                     </TableCell>

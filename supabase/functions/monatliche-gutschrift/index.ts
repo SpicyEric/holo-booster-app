@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import { jsPDF } from "https://esm.sh/jspdf@2.5.1";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -24,7 +25,6 @@ serve(async (req: Request) => {
     const jahr = now.getFullYear();
     const periodeLabel = `${MONATE[monat]} ${jahr}`;
 
-    // Get all active sales reps
     const { data: reps, error: repsErr } = await supabase
       .from("sales_rep_profiles")
       .select("id, user_id, first_name, last_name, email, street, house_number, postal_code, city, tax_number, vat_id, is_small_business")
@@ -37,7 +37,6 @@ serve(async (req: Request) => {
       });
     }
 
-    // Get next gutschrift number
     const { data: lastGs } = await supabase
       .from("vertriebler_gutschriften")
       .select("gutschrift_nummer")
@@ -56,7 +55,6 @@ serve(async (req: Request) => {
     const results: string[] = [];
 
     for (const rep of reps) {
-      // Check if already exists for this period
       const { data: existing } = await supabase
         .from("vertriebler_gutschriften")
         .select("id")
@@ -70,7 +68,6 @@ serve(async (req: Request) => {
         continue;
       }
 
-      // 1. Count active customers (snapshot)
       const { count: activeKunden } = await supabase
         .from("customers")
         .select("id", { count: "exact", head: true })
@@ -80,7 +77,6 @@ serve(async (req: Request) => {
       const aktiveKundenSnapshot = activeKunden || 0;
       const folgeprovisionNetto = aktiveKundenSnapshot * 12;
 
-      // 2. Get released direct commissions (status = 'available', type = 'initial')
       const { data: direktCommissions } = await supabase
         .from("commissions")
         .select("id, amount_cents, customer_name, created_at")
@@ -98,28 +94,24 @@ serve(async (req: Request) => {
         (sum, c) => sum + c.amount_cents / 100, 0
       );
 
-      // 3. Sponsor bonus (placeholder — no sponsor relationship yet)
       const sponsorBonusNetto = 0;
       const sponsorBonusDetails: unknown[] = [];
 
-      // 4. Calculate totals
       const gesamtNetto = folgeprovisionNetto + direktprovisionNetto + sponsorBonusNetto;
       const ustPflichtig = !rep.is_small_business && !!rep.vat_id;
       const ustBetrag = ustPflichtig ? Math.round(gesamtNetto * 19) / 100 : 0;
       const gesamtBrutto = gesamtNetto + ustBetrag;
 
-      // Skip if nothing to pay
       if (gesamtNetto === 0) {
         results.push(`${rep.first_name} ${rep.last_name}: 0€ — übersprungen`);
         continue;
       }
 
-      // 5. Generate gutschrift number
       const gsNummer = `GS-${jahr}-${String(monat).padStart(2, "0")}-${String(counter).padStart(3, "0")}`;
       counter++;
 
-      // 6. Generate PDF content
-      const pdfHtml = generatePdfHtml({
+      // Generate PDF with jsPDF
+      const pdfBytes = generatePdf({
         gsNummer,
         periodeLabel,
         rep,
@@ -128,7 +120,6 @@ serve(async (req: Request) => {
         direktDetails,
         direktprovisionNetto,
         sponsorBonusNetto,
-        sponsorBonusDetails,
         gesamtNetto,
         ustPflichtig,
         ustBetrag,
@@ -136,12 +127,11 @@ serve(async (req: Request) => {
         erstelldatum: now.toLocaleDateString("de-DE"),
       });
 
-      // Store PDF as HTML (can be converted to PDF client-side or via print)
-      const pdfPath = `${rep.id}/${gsNummer}.html`;
+      const pdfPath = `${rep.id}/${gsNummer}.pdf`;
       const { error: uploadErr } = await supabase.storage
         .from("gutschriften")
-        .upload(pdfPath, new Blob([pdfHtml], { type: "text/html" }), {
-          contentType: "text/html",
+        .upload(pdfPath, pdfBytes, {
+          contentType: "application/pdf",
           upsert: true,
         });
 
@@ -149,18 +139,9 @@ serve(async (req: Request) => {
         console.error(`Upload error for ${rep.email}:`, uploadErr);
       }
 
-      const { data: urlData } = supabase.storage
-        .from("gutschriften")
-        .getPublicUrl(pdfPath);
+      // Store the path for later signed URL generation (not a direct URL)
+      const pdfStoragePath = pdfPath;
 
-      // Since bucket is private, use signed URL
-      const { data: signedUrl } = await supabase.storage
-        .from("gutschriften")
-        .createSignedUrl(pdfPath, 60 * 60 * 24 * 365); // 1 year
-
-      const pdfUrl = signedUrl?.signedUrl || urlData?.publicUrl || null;
-
-      // 7. Insert gutschrift record
       const { error: insertErr } = await supabase
         .from("vertriebler_gutschriften")
         .insert({
@@ -180,7 +161,7 @@ serve(async (req: Request) => {
           ust_id: rep.vat_id || null,
           ust_betrag: ustBetrag,
           gesamt_brutto: gesamtBrutto,
-          pdf_url: pdfUrl,
+          pdf_url: pdfStoragePath,
         });
 
       if (insertErr) {
@@ -189,11 +170,11 @@ serve(async (req: Request) => {
         continue;
       }
 
-      // 8. Send email notification
+      // Send email notification
       try {
         const resendKey = Deno.env.get("RESEND_API_KEY");
         if (resendKey && rep.email) {
-          const emailRes = await fetch("https://api.resend.com/emails", {
+          await fetch("https://api.resend.com/emails", {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
@@ -213,13 +194,12 @@ serve(async (req: Request) => {
               `,
             }),
           });
-          console.log(`Email sent to ${rep.email}:`, emailRes.status);
         }
       } catch (emailErr) {
         console.error(`Email error for ${rep.email}:`, emailErr);
       }
 
-      // 9. Create in-app notification
+      // In-app notification
       await supabase.from("sales_rep_notifications").insert({
         user_id: rep.user_id,
         notification_type: "gutschrift",
@@ -261,7 +241,6 @@ interface PdfData {
   direktDetails: { kunden_name: string; betrag: string; datum: string }[];
   direktprovisionNetto: number;
   sponsorBonusNetto: number;
-  sponsorBonusDetails: unknown[];
   gesamtNetto: number;
   ustPflichtig: boolean;
   ustBetrag: number;
@@ -269,94 +248,174 @@ interface PdfData {
   erstelldatum: string;
 }
 
-function generatePdfHtml(d: PdfData): string {
-  const repAddr = [
-    `${d.rep.first_name} ${d.rep.last_name}`,
-    d.rep.street && d.rep.house_number ? `${d.rep.street} ${d.rep.house_number}` : "",
-    d.rep.postal_code && d.rep.city ? `${d.rep.postal_code} ${d.rep.city}` : "",
-  ].filter(Boolean).join("<br>");
+function generatePdf(d: PdfData): Uint8Array {
+  const doc = new jsPDF();
 
-  const steuernummerLine = d.rep.tax_number ? `Steuernummer: ${d.rep.tax_number}` : "";
-  const ustIdLine = d.rep.vat_id ? `USt-IdNr.: ${d.rep.vat_id}` : "";
+  // Header
+  doc.setFontSize(22);
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(107, 33, 168); // Purple
+  doc.text("GUTSCHRIFT", 20, 28);
 
-  const direktRows = d.direktDetails.map(
-    (dd) => `<tr><td style="padding:4px 8px;">– ${dd.kunden_name}</td><td style="padding:4px 8px;text-align:right;">${dd.betrag} €</td><td style="padding:4px 8px;text-align:right;">${dd.datum}</td></tr>`
-  ).join("");
+  doc.setTextColor(0, 0, 0);
+  doc.setFontSize(10);
+  doc.setFont("helvetica", "normal");
+  doc.text(d.gsNummer, 150, 20);
+  doc.text(d.periodeLabel, 150, 26);
+  doc.text(`Erstellt am: ${d.erstelldatum}`, 150, 32);
 
-  const ustBlock = d.ustPflichtig
-    ? `<tr><td style="padding:6px 8px;">zzgl. 19% Umsatzsteuer</td><td style="padding:6px 8px;text-align:right;"><strong>${d.ustBetrag.toFixed(2)} €</strong></td></tr>
-       <tr style="border-top:2px solid #333;"><td style="padding:8px;font-size:16px;"><strong>Gesamt brutto</strong></td><td style="padding:8px;text-align:right;font-size:16px;"><strong>${d.gesamtBrutto.toFixed(2)} €</strong></td></tr>`
-    : `<tr><td colspan="2" style="padding:8px;font-size:12px;color:#666;">Gemäß § 19 UStG wird keine Umsatzsteuer ausgewiesen.</td></tr>`;
+  // Separator
+  doc.setDrawColor(107, 33, 168);
+  doc.setLineWidth(0.5);
+  doc.line(20, 38, 190, 38);
 
-  return `<!DOCTYPE html>
-<html lang="de">
-<head><meta charset="UTF-8"><title>Gutschrift ${d.gsNummer}</title>
-<style>
-  @media print { body { margin: 0; } }
-  body { font-family: 'Helvetica Neue', Arial, sans-serif; color: #222; max-width: 800px; margin: 0 auto; padding: 40px; font-size: 14px; line-height: 1.6; }
-  .header { display: flex; justify-content: space-between; margin-bottom: 40px; }
-  .header h1 { font-size: 28px; color: #6B21A8; margin: 0; }
-  .header .meta { text-align: right; color: #666; }
-  .addresses { display: flex; justify-content: space-between; margin-bottom: 40px; }
-  .address { width: 45%; }
-  .address .label { font-size: 11px; color: #999; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
-  .section { margin: 24px 0; }
-  .section h3 { font-size: 14px; color: #6B21A8; border-bottom: 1px solid #E5E7EB; padding-bottom: 6px; margin-bottom: 8px; }
-  table { width: 100%; border-collapse: collapse; }
-  .totals { margin-top: 24px; border-top: 2px solid #6B21A8; padding-top: 12px; }
-  .footer { margin-top: 60px; text-align: center; font-size: 11px; color: #999; border-top: 1px solid #E5E7EB; padding-top: 16px; }
-</style></head>
-<body>
-  <div class="header">
-    <div><h1>GUTSCHRIFT</h1></div>
-    <div class="meta">${d.gsNummer}<br>${d.periodeLabel}</div>
-  </div>
+  // Addresses
+  doc.setFontSize(8);
+  doc.setTextColor(150);
+  doc.text("VON", 20, 48);
+  doc.text("AN", 120, 48);
 
-  <div class="addresses">
-    <div class="address">
-      <div class="label">Von</div>
-      ${repAddr}<br>
-      ${steuernummerLine ? steuernummerLine + "<br>" : ""}
-      ${ustIdLine ? ustIdLine + "<br>" : ""}
-    </div>
-    <div class="address">
-      <div class="label">An</div>
-      ELOYO, Inhaber Eric Pfadisch<br>
-      Fuggerstr. 2, 86836 Untermeitingen<br>
-      USt-IdNr.: DE337756435<br>
-      support@eloyo.de
-    </div>
-  </div>
+  doc.setFontSize(10);
+  doc.setTextColor(0);
+  doc.setFont("helvetica", "bold");
+  doc.text(`${d.rep.first_name} ${d.rep.last_name}`, 20, 55);
+  doc.setFont("helvetica", "normal");
 
-  <div class="section">
-    <h3>Position 1: Monatliche Folgeprovision</h3>
-    <table><tr><td>${d.aktiveKundenSnapshot} aktive Kunden × 12,00 €</td><td style="text-align:right;"><strong>${d.folgeprovisionNetto.toFixed(2)} €</strong></td></tr></table>
-  </div>
+  let leftY = 61;
+  if (d.rep.street && d.rep.house_number) {
+    doc.text(`${d.rep.street} ${d.rep.house_number}`, 20, leftY);
+    leftY += 5;
+  }
+  if (d.rep.postal_code && d.rep.city) {
+    doc.text(`${d.rep.postal_code} ${d.rep.city}`, 20, leftY);
+    leftY += 5;
+  }
+  if (d.rep.tax_number) {
+    doc.text(`Steuernummer: ${d.rep.tax_number}`, 20, leftY);
+    leftY += 5;
+  }
+  if (d.rep.vat_id) {
+    doc.text(`USt-IdNr.: ${d.rep.vat_id}`, 20, leftY);
+  }
 
-  ${d.direktDetails.length > 0 ? `
-  <div class="section">
-    <h3>Position 2: Einmalprovisionen</h3>
-    <table>${direktRows}
-      <tr style="border-top:1px solid #E5E7EB;"><td style="padding:6px 8px;"><strong>Summe Einmalprovisionen</strong></td><td style="padding:6px 8px;text-align:right;"><strong>${d.direktprovisionNetto.toFixed(2)} €</strong></td><td></td></tr>
-    </table>
-  </div>` : ""}
+  doc.setFont("helvetica", "bold");
+  doc.text("ELOYO, Inhaber Eric Pfadisch", 120, 55);
+  doc.setFont("helvetica", "normal");
+  doc.text("Fuggerstr. 2, 86836 Untermeitingen", 120, 61);
+  doc.text("USt-IdNr.: DE337756435", 120, 67);
+  doc.text("support@eloyo.de", 120, 73);
 
-  ${d.sponsorBonusNetto > 0 ? `
-  <div class="section">
-    <h3>Position 3: Sponsor-Bonus</h3>
-    <table><tr><td>Sponsor-Bonus</td><td style="text-align:right;"><strong>${d.sponsorBonusNetto.toFixed(2)} €</strong></td></tr></table>
-  </div>` : ""}
+  // Positions
+  let y = 90;
 
-  <div class="totals">
-    <table>
-      <tr><td style="padding:6px 8px;font-size:16px;"><strong>Gesamt netto</strong></td><td style="padding:6px 8px;text-align:right;font-size:16px;"><strong>${d.gesamtNetto.toFixed(2)} €</strong></td></tr>
-      ${ustBlock}
-    </table>
-  </div>
+  // Position header
+  doc.setDrawColor(200);
+  doc.setFillColor(245, 245, 250);
+  doc.rect(20, y - 5, 170, 8, "F");
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(9);
+  doc.text("Beschreibung", 22, y);
+  doc.text("Betrag", 185, y, { align: "right" });
+  y += 10;
 
-  <div class="footer">
-    Erstellt am: ${d.erstelldatum}<br>
-    ELOYO — Gutschriftverfahren
-  </div>
-</body></html>`;
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(10);
+
+  // Position 1: Folgeprovision
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(9);
+  doc.setTextColor(107, 33, 168);
+  doc.text("Position 1: Monatliche Folgeprovision", 22, y);
+  doc.setTextColor(0);
+  y += 7;
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(10);
+  doc.text(`${d.aktiveKundenSnapshot} aktive Kunden × 12,00 €`, 22, y);
+  doc.text(`${d.folgeprovisionNetto.toFixed(2)} €`, 185, y, { align: "right" });
+  y += 10;
+
+  // Position 2: Direktprovisionen
+  if (d.direktDetails.length > 0) {
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(9);
+    doc.setTextColor(107, 33, 168);
+    doc.text("Position 2: Einmalprovisionen", 22, y);
+    doc.setTextColor(0);
+    y += 7;
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(9);
+
+    for (const dd of d.direktDetails) {
+      doc.text(`– ${dd.kunden_name}`, 25, y);
+      doc.text(`${dd.betrag} €`, 155, y, { align: "right" });
+      doc.text(dd.datum, 185, y, { align: "right" });
+      y += 6;
+    }
+
+    doc.setDrawColor(220);
+    doc.line(22, y, 188, y);
+    y += 5;
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(10);
+    doc.text("Summe Einmalprovisionen", 22, y);
+    doc.text(`${d.direktprovisionNetto.toFixed(2)} €`, 185, y, { align: "right" });
+    y += 10;
+  }
+
+  // Position 3: Sponsor-Bonus
+  if (d.sponsorBonusNetto > 0) {
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(9);
+    doc.setTextColor(107, 33, 168);
+    doc.text("Position 3: Sponsor-Bonus", 22, y);
+    doc.setTextColor(0);
+    y += 7;
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(10);
+    doc.text("Sponsor-Bonus", 22, y);
+    doc.text(`${d.sponsorBonusNetto.toFixed(2)} €`, 185, y, { align: "right" });
+    y += 10;
+  }
+
+  // Totals
+  doc.setDrawColor(107, 33, 168);
+  doc.setLineWidth(0.5);
+  doc.line(20, y, 190, y);
+  y += 8;
+
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(11);
+  doc.text("Gesamt netto:", 120, y);
+  doc.text(`${d.gesamtNetto.toFixed(2)} €`, 185, y, { align: "right" });
+  y += 8;
+
+  if (d.ustPflichtig) {
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(10);
+    doc.text("zzgl. 19% Umsatzsteuer:", 120, y);
+    doc.text(`${d.ustBetrag.toFixed(2)} €`, 185, y, { align: "right" });
+    y += 8;
+
+    doc.setDrawColor(50);
+    doc.setLineWidth(0.3);
+    doc.line(118, y - 2, 190, y - 2);
+
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(12);
+    doc.text("Gesamt brutto:", 120, y + 3);
+    doc.text(`${d.gesamtBrutto.toFixed(2)} €`, 185, y + 3, { align: "right" });
+  } else {
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(9);
+    doc.setTextColor(100);
+    doc.text("Gemäß § 19 UStG wird keine Umsatzsteuer ausgewiesen.", 20, y);
+  }
+
+  // Footer
+  doc.setFontSize(8);
+  doc.setTextColor(150);
+  doc.text("ELOYO — Gutschriftverfahren — Fuggerstr. 2, 86836 Untermeitingen", 105, 285, { align: "center" });
+
+  const arrayBuffer = doc.output("arraybuffer");
+  return new Uint8Array(arrayBuffer);
 }
