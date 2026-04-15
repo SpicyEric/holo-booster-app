@@ -510,7 +510,7 @@ const BoxManagement = () => {
                 {filtered.map((row) => {
                   const bs = BOX_STATUS_BADGES[row.status] || BOX_STATUS_BADGES.offen;
                   const ss = STEMPEL_STATUS_BADGES[row.stempel_status] || STEMPEL_STATUS_BADGES.offen;
-                  const canChangeStatus = row.status === 'offen';
+                  const canChangeStatus = row.status === 'offen' || row.status === 'retourniert';
                   const canDelete = true;
 
                   return (
@@ -526,7 +526,12 @@ const BoxManagement = () => {
                               </button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent>
-                              <DropdownMenuItem onClick={() => handleStatusChange(row, 'verfuegbar')}>→ Verfügbar</DropdownMenuItem>
+                              {row.status === 'offen' && (
+                                <DropdownMenuItem onClick={() => handleStatusChange(row, 'verfuegbar')}>→ Verfügbar</DropdownMenuItem>
+                              )}
+                              {row.status === 'retourniert' && (
+                                <DropdownMenuItem onClick={() => handleStatusChange(row, 'verfuegbar')}>→ Verfügbar (wieder freigeben)</DropdownMenuItem>
+                              )}
                             </DropdownMenuContent>
                           </DropdownMenu>
                         ) : (
@@ -594,9 +599,19 @@ const BoxManagement = () => {
                 <div className="grid grid-cols-2 gap-3 text-sm">
                   <div>
                     <p className="text-xs text-muted-foreground">Box-Status</p>
-                    <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border mt-1 ${BOX_STATUS_BADGES[detailRow.status]?.color}`}>
-                      {BOX_STATUS_BADGES[detailRow.status]?.label}
-                    </span>
+                    <div className="flex items-center gap-2 mt-1">
+                      <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border ${BOX_STATUS_BADGES[detailRow.status]?.color}`}>
+                        {BOX_STATUS_BADGES[detailRow.status]?.label}
+                      </span>
+                      {detailRow.status === 'retourniert' && (
+                        <Button size="sm" variant="outline" className="h-6 text-[10px] px-2" onClick={async () => {
+                          await handleStatusChange(detailRow, 'verfuegbar');
+                          setDetailRow(null);
+                        }}>
+                          → Verfügbar
+                        </Button>
+                      )}
+                    </div>
                   </div>
                   <div>
                     <p className="text-xs text-muted-foreground">Stempel-Status</p>
