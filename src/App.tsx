@@ -40,6 +40,7 @@ import SalesRepSettings from "./pages/salesrep/SalesRepSettings";
 import SalesRepMessages from "./pages/salesrep/SalesRepMessages";
 import SalesRepProvisionen from "./pages/salesrep/SalesRepProvisionen";
 import SalesRepOrders from "./pages/salesrep/SalesRepOrders";
+import SalesRepCheckout from "./pages/salesrep/SalesRepCheckout";
 import MerchantSetup from "./pages/merchant/MerchantSetup";
 import Scan from "./pages/Scan";
 import NotFound from "./pages/NotFound";
@@ -153,7 +154,7 @@ const App = () => {
                 <Route path="store-finder" element={<StoreFinder />} />
                 <Route path="calendar" element={<AdminCalendar />} />
                 <Route path="stats" element={<Stats />} />
-                <Route path="checkout" element={<Checkout />} />
+                <Route path="checkout" element={<SalesRepCheckout />} />
                 <Route path="messages" element={<SalesRepMessages />} />
                 <Route path="orders" element={<SalesRepOrders />} />
                 <Route path="settings" element={<SalesRepSettings />} />
