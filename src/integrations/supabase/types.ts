@@ -2479,6 +2479,39 @@ export type Database = {
           },
         ]
       }
+      sales_rep_notifications: {
+        Row: {
+          body: string
+          created_at: string
+          id: string
+          metadata: Json | null
+          notification_type: string
+          read_at: string | null
+          title: string
+          user_id: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          notification_type?: string
+          read_at?: string | null
+          title: string
+          user_id: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          notification_type?: string
+          read_at?: string | null
+          title?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       sales_rep_profiles: {
         Row: {
           account_holder: string | null
