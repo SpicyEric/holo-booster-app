@@ -177,7 +177,7 @@ const SalesReps = () => {
       loadReps();
     } catch (e: any) { toast.error("Fehler beim Löschen: " + e.message); }
   };
-
+  const filtered = useMemo(() => {
     if (!searchTerm) return reps;
     const t = searchTerm.toLowerCase();
     return reps.filter(r =>
