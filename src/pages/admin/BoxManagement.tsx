@@ -245,7 +245,18 @@ const BoxManagement = () => {
 
   const handleStatusChange = async (row: BoxRow, newStatus: string) => {
     try {
-      const { error } = await supabase.from("eloyo_boxes").update({ status: newStatus }).eq("id", row.id);
+      const updateData: Record<string, any> = { status: newStatus };
+      // When resetting to verfügbar, clear related fields
+      if (newStatus === 'verfuegbar') {
+        updateData.haendler_id = null;
+        updateData.abschlussdatum = null;
+        updateData.retour_datum = null;
+        updateData.frist_ablauf = null;
+        updateData.versanddatum = null;
+        updateData.vertriebler_id = null;
+        updateData.paket_id = null;
+      }
+      const { error } = await supabase.from("eloyo_boxes").update(updateData).eq("id", row.id);
       if (error) throw error;
       toast.success(`Box-ID Status → ${BOX_STATUS_BADGES[newStatus]?.label || newStatus}`);
       loadRows();
