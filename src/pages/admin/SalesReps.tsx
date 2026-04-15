@@ -225,6 +225,7 @@ const SalesReps = () => {
   }
 
   return (
+    <>
     <div className="flex h-[calc(100vh-4rem)] overflow-hidden">
       {/* Left list */}
       <div className="w-[340px] border-r flex flex-col shrink-0">
