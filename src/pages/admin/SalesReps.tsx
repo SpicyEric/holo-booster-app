@@ -72,9 +72,16 @@ const SalesReps = () => {
       ]);
 
       const emailMap: Record<string, string> = {};
-      if (emailsRes.data?.emails) {
-        emailsRes.data.emails.forEach((e: any) => { emailMap[e.id] = e.email; });
+      const rawEmails = emailsRes.data?.emails;
+      if (rawEmails && typeof rawEmails === "object") {
+        if (Array.isArray(rawEmails)) {
+          rawEmails.forEach((e: any) => { emailMap[e.id] = e.email; });
+        } else {
+          Object.entries(rawEmails).forEach(([uid, email]) => { emailMap[uid] = email as string; });
+        }
       }
+      // Fallback: use email from sales_rep_profiles
+      srData.forEach(sr => { if (sr.email && !emailMap[sr.user_id]) emailMap[sr.user_id] = sr.email; });
 
       // Count conversions per user
       const convMap: Record<string, number> = {};
