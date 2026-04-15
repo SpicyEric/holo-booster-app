@@ -109,16 +109,18 @@ serve(async (req) => {
       });
     }
 
-    // Create profile
-    const { error: profileError } = await supabase
-      .from('profiles')
-      .insert({
-        user_id: newUser.user.id,
-        full_name: full_name || '',
-      });
+    // Create profile (skip if existing user already has one)
+    if (!isExistingUser) {
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .insert({
+          user_id: userId,
+          full_name: full_name || '',
+        });
 
-    if (profileError) {
-      console.error('Error creating profile:', profileError);
+      if (profileError) {
+        console.error('Error creating profile:', profileError);
+      }
     }
 
     // Send welcome email with password setup link
