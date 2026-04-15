@@ -62,3 +62,9 @@ verify_jwt = false
 
 [functions.cleanup-expired-sales-reps]
 verify_jwt = false
+
+[functions.box-frist-check]
+verify_jwt = false
+
+[functions.box-frist-warnung]
+verify_jwt = false
