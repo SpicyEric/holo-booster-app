@@ -809,10 +809,9 @@ serve(async (req) => {
             }
             
             // Recurring commission: 12€ per month
-            const recurringStatus = isFirstInvoice ? 'pending' : 'available';
-            const recurringAvailableAt = isFirstInvoice 
-              ? new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString() 
-              : null;
+            // Recurring commission: 12€ per month — always immediately available
+            const recurringStatus = 'available';
+            const recurringAvailableAt: string | null = null;
               
             const { error: recErr } = await supabase.from("commissions").insert({
               customer_id: customer.id,
