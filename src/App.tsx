@@ -153,7 +153,7 @@ const App = () => {
                 <Route path="store-finder" element={<StoreFinder />} />
                 <Route path="calendar" element={<AdminCalendar />} />
                 <Route path="stats" element={<Stats />} />
-                <Route path="checkout" element={<Checkout />} />
+                <Route path="checkout" element={<SalesRepCheckout />} />
                 <Route path="messages" element={<SalesRepMessages />} />
                 <Route path="orders" element={<SalesRepOrders />} />
                 <Route path="settings" element={<SalesRepSettings />} />
