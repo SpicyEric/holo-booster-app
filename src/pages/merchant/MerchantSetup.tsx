@@ -108,8 +108,8 @@ export default function MerchantSetup() {
     try {
       const { data: boxData } = await supabase
         .from("boxes")
-        .select("id, box_id, stamp_preset")
-        .eq("box_id", state.boxId)
+        .select("id, stamp_id, stamp_preset")
+        .eq("stamp_id", state.boxId)
         .maybeSingle();
 
       if (!boxData) { toast.error("Stempel-ID existiert nicht"); return; }

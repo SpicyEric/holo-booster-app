@@ -99,7 +99,7 @@ interface NfcChip {
 interface CustomerBox {
   id: string;
   box_id: string;
-  box_code: string;
+  stamp_code: string;
   assigned_at: string;
 }
 
@@ -323,7 +323,7 @@ const MeinGeschaeft = () => {
       // Load boxes
       const { data: boxes } = await supabase
         .from('customer_boxes')
-        .select(`id, box_id, assigned_at, boxes:box_id (box_id, stamp_preset)`)
+        .select(`id, box_id, assigned_at, boxes:box_id (stamp_id, stamp_preset)`)
         .eq('customer_id', assignment.customer_id)
         .order('assigned_at', { ascending: false });
 
@@ -331,7 +331,7 @@ const MeinGeschaeft = () => {
         const mappedBoxes: CustomerBox[] = boxes.map((b: any) => ({
           id: b.id,
           box_id: b.box_id,
-          box_code: b.boxes?.box_id || 'Unbekannt',
+          stamp_code: b.boxes?.stamp_id || 'Unbekannt',
           assigned_at: b.assigned_at
         }));
         setCustomerBoxes(mappedBoxes);
@@ -722,8 +722,8 @@ const MeinGeschaeft = () => {
     try {
       const { data: boxData } = await supabase
         .from('boxes')
-        .select('id, box_id, stamp_preset')
-        .eq('box_id', newBoxId.trim().toUpperCase())
+        .select('id, stamp_id, stamp_preset')
+        .eq('stamp_id', newBoxId.trim().toUpperCase())
         .maybeSingle();
 
       if (!boxData) {
@@ -1369,7 +1369,7 @@ const MeinGeschaeft = () => {
                       <div className="space-y-3">
                         {customerBoxes.map((box) => (
                           <div key={box.id} className="flex items-center justify-between p-4 bg-white rounded-xl border border-gray-100">
-                            <code className="font-mono text-sm font-semibold text-gray-900">{box.box_code}</code>
+                            <code className="font-mono text-sm font-semibold text-gray-900">{box.stamp_code}</code>
                             <span className="text-xs text-gray-500">Hinzugefügt: {new Date(box.assigned_at).toLocaleDateString('de-DE')}</span>
                           </div>
                         ))}

@@ -31,7 +31,7 @@ const STAMP_COLORS = [
 
 interface Box {
   id: string;
-  box_id: string;
+  stamp_id: string;
   notes: string | null;
   stamp_preset: string;
   created_at: string;
@@ -97,7 +97,7 @@ const BoxManagement = () => {
       const { data: assignmentsData, error: assignmentsError } = await supabase.from("customer_boxes").select(`box_id, customer_id, assigned_at, customers:customer_id (name, active, status)`);
       if (assignmentsError) throw assignmentsError;
 
-      const boxIds = (boxesData || []).map((b) => b.box_id);
+      const boxIds = (boxesData || []).map((b) => b.stamp_id);
       const { data: nfcChips } = await supabase.from("nfc_chips").select("chip_uid").in("chip_uid", boxIds);
       const activeBoxIds = new Set((nfcChips || []).map((c: any) => c.chip_uid));
 
@@ -117,7 +117,7 @@ const BoxManagement = () => {
 
       const boxesWithAssignments = (boxesData || []).map((box) => {
         const assignment = assignmentsData?.find((a) => a.box_id === box.id);
-        const hasActivity = assignment ? customersWithActivity.has(assignment.customer_id) || activeBoxIds.has(box.box_id) : false;
+        const hasActivity = assignment ? customersWithActivity.has(assignment.customer_id) || activeBoxIds.has(box.stamp_id) : false;
         const lastActivity = assignment ? lastActivityMap[assignment.customer_id] : null;
         const lastActivityDays = lastActivity ? Math.floor((Date.now() - lastActivity.getTime()) / (1000 * 60 * 60 * 24)) : null;
 
@@ -146,7 +146,7 @@ const BoxManagement = () => {
     let filtered = [...boxes];
     if (searchTerm) {
       const term = searchTerm.toLowerCase();
-      filtered = filtered.filter((b) => b.box_id.toLowerCase().includes(term) || b.notes?.toLowerCase().includes(term) || b.assigned_customer?.customer_name.toLowerCase().includes(term));
+      filtered = filtered.filter((b) => b.stamp_id.toLowerCase().includes(term) || b.notes?.toLowerCase().includes(term) || b.assigned_customer?.customer_name.toLowerCase().includes(term));
     }
     if (filterAssigned === "assigned") filtered = filtered.filter((b) => b.assigned_customer);
     else if (filterAssigned === "available") filtered = filtered.filter((b) => !b.assigned_customer);
@@ -165,9 +165,9 @@ const BoxManagement = () => {
     if (cleanId.length !== 15) { toast.error("Stempel-ID muss genau 15 Zeichen haben"); return; }
     setAdding(true);
     try {
-      const { data: existing } = await supabase.from("boxes").select("id").eq("box_id", newBoxId).maybeSingle();
+      const { data: existing } = await supabase.from("boxes").select("id").eq("stamp_id", newBoxId).maybeSingle();
       if (existing) { toast.error("Diese Stempel-ID existiert bereits"); return; }
-      const { error } = await supabase.from("boxes").insert({ box_id: newBoxId, notes: newBoxNotes.trim() || null, stamp_preset: newBoxPreset });
+      const { error } = await supabase.from("boxes").insert({ stamp_id: newBoxId, notes: newBoxNotes.trim() || null, stamp_preset: newBoxPreset });
       if (error) throw error;
       toast.success("Stempel-ID erfolgreich hinzugefügt");
       setNewBoxId(""); setNewBoxNotes(""); setNewBoxPreset("standard_3");
@@ -190,7 +190,7 @@ const BoxManagement = () => {
   const openStampDialog = async (box: Box) => {
     setStampDialogBox(box); setStampDialogOpen(true); setLoadingStamps(true);
     try {
-      const { data } = await supabase.from("nfc_chips").select("id, stamp_color, hardware_uid, chip_uid, points_value").eq("chip_uid", box.box_id);
+      const { data } = await supabase.from("nfc_chips").select("id, stamp_color, hardware_uid, chip_uid, points_value").eq("chip_uid", box.stamp_id);
       setRegisteredStamps(data || []);
     } catch (e) { setRegisteredStamps([]); }
     finally { setLoadingStamps(false); }
@@ -199,7 +199,7 @@ const BoxManagement = () => {
   const openDetailDialog = async (box: Box) => {
     setDetailBox(box); setLoadingDetail(true);
     try {
-      const { data } = await supabase.from("nfc_chips").select("id, stamp_color, hardware_uid, chip_uid, points_value").eq("chip_uid", box.box_id);
+      const { data } = await supabase.from("nfc_chips").select("id, stamp_color, hardware_uid, chip_uid, points_value").eq("chip_uid", box.stamp_id);
       setDetailStamps(data || []);
     } catch (e) { setDetailStamps([]); }
     finally { setLoadingDetail(false); }
@@ -208,7 +208,7 @@ const BoxManagement = () => {
   const startStampRegistration = async (color: string) => {
     if (!stampDialogBox || !webNfcSupported) { toast.error("Web NFC nicht verfügbar"); return; }
     setScanningStampColor(color);
-    const boxId = stampDialogBox.box_id;
+    const boxId = stampDialogBox.stamp_id;
     const merchantCustomerId = stampDialogBox.assigned_customer?.customer_id || null;
     const ndefText = `${boxId}:${color}`;
     try {
@@ -388,7 +388,7 @@ const BoxManagement = () => {
                           </TooltipContent>
                         </Tooltip>
                       </TableCell>
-                      <TableCell className="py-2 font-mono text-sm">{box.box_id}</TableCell>
+                      <TableCell className="py-2 font-mono text-sm">{box.stamp_id}</TableCell>
                       <TableCell className="py-2 text-sm">
                         {box.assigned_customer ? <span className="font-medium">{box.assigned_customer.customer_name}</span> : <span className="text-muted-foreground">—</span>}
                       </TableCell>
@@ -415,7 +415,7 @@ const BoxManagement = () => {
         <Dialog open={!!detailBox} onOpenChange={(open) => !open && setDetailBox(null)}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle className="flex items-center gap-2"><Package className="w-5 h-5" /> Stempel-ID: {detailBox?.box_id}</DialogTitle>
+              <DialogTitle className="flex items-center gap-2"><Package className="w-5 h-5" /> Stempel-ID: {detailBox?.stamp_id}</DialogTitle>
               <DialogDescription>Details und registrierte Stempel</DialogDescription>
             </DialogHeader>
             {detailBox && (
@@ -460,7 +460,7 @@ const BoxManagement = () => {
         <Dialog open={stampDialogOpen} onOpenChange={setStampDialogOpen}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle className="flex items-center gap-2"><Shield className="w-5 h-5" /> NFC-Stempel: {stampDialogBox?.box_id}</DialogTitle>
+              <DialogTitle className="flex items-center gap-2"><Shield className="w-5 h-5" /> NFC-Stempel: {stampDialogBox?.stamp_id}</DialogTitle>
               <DialogDescription>Registriere die NFC-Stempel für diese Stempel-ID</DialogDescription>
             </DialogHeader>
             {loadingStamps ? (
@@ -493,7 +493,7 @@ const BoxManagement = () => {
           </DialogContent>
         </Dialog>
 
-        <ConfirmActionDialog open={!!deleteBox} onOpenChange={(open) => !open && setDeleteBox(null)} onConfirm={handleDelete} title="Stempel-ID löschen?" description={`Die Stempel-ID "${deleteBox?.box_id}" wird dauerhaft gelöscht.`} confirmText="Löschen" confirmPhrase="LÖSCHEN" destructive />
+        <ConfirmActionDialog open={!!deleteBox} onOpenChange={(open) => !open && setDeleteBox(null)} onConfirm={handleDelete} title="Stempel-ID löschen?" description={`Die Stempel-ID "${deleteBox?.stamp_id}" wird dauerhaft gelöscht.`} confirmText="Löschen" confirmPhrase="LÖSCHEN" destructive />
       </div>
     </TooltipProvider>
   );
