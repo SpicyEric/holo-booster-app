@@ -283,6 +283,10 @@ const BoxManagement = () => {
 
   const openDetailDialog = async (row: BoxRow) => {
     setDetailRow(row); setLoadingDetail(true);
+    setEditBoxId(row.box_id);
+    setEditStempelId(row.stempel_id || "");
+    setBoxIdError("");
+    setStempelIdError("");
     try {
       if (row.stempel_id) {
         const { data } = await supabase.from("nfc_chips").select("id, stamp_color, hardware_uid, chip_uid, points_value").eq("chip_uid", row.stempel_id);
@@ -292,6 +296,53 @@ const BoxManagement = () => {
       }
     } catch { setDetailStamps([]); }
     finally { setLoadingDetail(false); }
+  };
+
+  const validateBoxId = async (value: string) => {
+    if (!value.trim()) { setBoxIdError("Pflichtfeld"); return; }
+    if (value === detailRow?.box_id) { setBoxIdError(""); return; }
+    const { data } = await supabase.from("eloyo_boxes").select("id").eq("box_id", value).maybeSingle();
+    setBoxIdError(data ? "Box-ID existiert bereits" : "");
+  };
+
+  const validateStempelId = async (value: string) => {
+    if (!value.trim()) { setStempelIdError("Pflichtfeld"); return; }
+    if (value === detailRow?.stempel_id) { setStempelIdError(""); return; }
+    const { data } = await supabase.from("boxes").select("id").eq("stamp_id", value).maybeSingle();
+    const { data: eloyoData } = await supabase.from("eloyo_boxes").select("id").eq("stempel_id", value).maybeSingle();
+    setStempelIdError(data || eloyoData ? "Stempel-ID existiert bereits" : "");
+  };
+
+  const handleSaveEdit = async () => {
+    if (!detailRow || boxIdError || stempelIdError || !editBoxId.trim() || !editStempelId.trim()) return;
+    const boxIdChanged = editBoxId !== detailRow.box_id;
+    const stempelIdChanged = editStempelId !== detailRow.stempel_id;
+    if (!boxIdChanged && !stempelIdChanged) { toast.info("Keine Änderungen"); return; }
+    setSavingEdit(true);
+    try {
+      if (boxIdChanged) {
+        const { error } = await supabase.from("eloyo_boxes").update({ box_id: editBoxId }).eq("id", detailRow.id);
+        if (error) throw error;
+      }
+      if (stempelIdChanged && detailRow.stempel_id) {
+        // Update in boxes table
+        const { error: boxErr } = await supabase.from("boxes").update({ stamp_id: editStempelId }).eq("stamp_id", detailRow.stempel_id);
+        if (boxErr) throw boxErr;
+        // Update in eloyo_boxes
+        const { error: eloyoErr } = await supabase.from("eloyo_boxes").update({ stempel_id: editStempelId }).eq("id", detailRow.id);
+        if (eloyoErr) throw eloyoErr;
+        // Update nfc_chips references
+        await supabase.from("nfc_chips").update({ chip_uid: editStempelId }).eq("chip_uid", detailRow.stempel_id);
+      }
+      toast.success("Änderungen gespeichert");
+      setDetailRow(null);
+      loadRows();
+    } catch (e: any) {
+      console.error(e);
+      toast.error("Fehler beim Speichern");
+    } finally {
+      setSavingEdit(false);
+    }
   };
 
   const startStampRegistration = async (color: string) => {
