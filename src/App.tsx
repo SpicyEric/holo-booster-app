@@ -39,6 +39,7 @@ import SalesRepDashboard from "./pages/salesrep/SalesRepDashboard";
 import SalesRepSettings from "./pages/salesrep/SalesRepSettings";
 import SalesRepMessages from "./pages/salesrep/SalesRepMessages";
 import SalesRepProvisionen from "./pages/salesrep/SalesRepProvisionen";
+import SalesRepOrders from "./pages/salesrep/SalesRepOrders";
 import MerchantSetup from "./pages/merchant/MerchantSetup";
 import Scan from "./pages/Scan";
 import NotFound from "./pages/NotFound";
@@ -148,6 +149,7 @@ const App = () => {
                 <Route path="stats" element={<Stats />} />
                 <Route path="checkout" element={<Checkout />} />
                 <Route path="messages" element={<SalesRepMessages />} />
+                <Route path="orders" element={<SalesRepOrders />} />
                 <Route path="settings" element={<SalesRepSettings />} />
                 <Route path="map" element={<CustomerMap />} />
               </Route>
