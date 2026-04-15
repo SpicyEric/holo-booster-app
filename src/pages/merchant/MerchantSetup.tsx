@@ -112,7 +112,7 @@ export default function MerchantSetup() {
         .eq("box_id", state.boxId)
         .maybeSingle();
 
-      if (!boxData) { toast.error("Box-ID existiert nicht"); return; }
+      if (!boxData) { toast.error("Stempel-ID existiert nicht"); return; }
 
       const { count } = await supabase
         .from("customer_boxes")

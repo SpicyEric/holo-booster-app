@@ -727,7 +727,7 @@ const MeinGeschaeft = () => {
         .maybeSingle();
 
       if (!boxData) {
-        toast.error('Box-ID existiert nicht');
+        toast.error('Stempel-ID existiert nicht');
         return;
       }
 
@@ -739,7 +739,7 @@ const MeinGeschaeft = () => {
         .maybeSingle();
 
       if (ownAssignment) {
-        toast.error('Box bereits verknüpft');
+        toast.error('Stempel-ID bereits verknüpft');
         return;
       }
 
@@ -749,14 +749,14 @@ const MeinGeschaeft = () => {
         .eq('box_id', boxData.id);
 
       if (count && count > 0) {
-        toast.error('Box bereits vergeben');
+        toast.error('Stempel-ID bereits vergeben');
         return;
       }
 
       await supabase.from('customer_boxes').insert({ customer_id: customerId, box_id: boxData.id });
       await createDefaultStamps(boxData.stamp_preset || 'standard_3', customerId);
 
-      toast.success('Box hinzugefügt');
+      toast.success('Stempel-ID hinzugefügt');
       setNewBoxId('');
       loadData();
     } catch {
@@ -1351,7 +1351,7 @@ const MeinGeschaeft = () => {
                   )}
                 </Card>
 
-                {/* Box-IDs */}
+                {/* Stempel-IDs */}
                 <Card className="rounded-2xl shadow-sm border-0 bg-gray-50/80">
                   <CardHeader className="pb-4">
                     <div className="flex items-center gap-3">
@@ -1359,8 +1359,8 @@ const MeinGeschaeft = () => {
                         <Package className="h-5 w-5 text-primary" />
                       </div>
                       <div>
-                        <CardTitle className="text-lg font-semibold text-gray-900">Box-IDs</CardTitle>
-                        <CardDescription className="text-gray-500">Verknüpfen Sie Ihre Starterbox</CardDescription>
+                        <CardTitle className="text-lg font-semibold text-gray-900">Stempel-IDs</CardTitle>
+                        <CardDescription className="text-gray-500">Verknüpfen Sie Ihre Stempel-ID</CardDescription>
                       </div>
                     </div>
                   </CardHeader>
