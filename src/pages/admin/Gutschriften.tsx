@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { GlassCard } from "@/components/GlassCard";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,6 +11,7 @@ import { Euro, Download, Search, CheckCircle, FileText, Loader2, Play } from "lu
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { de } from "date-fns/locale";
+import { ConfirmActionDialog } from "@/components/ConfirmActionDialog";
 
 interface Gutschrift {
   id: string;
@@ -51,6 +52,7 @@ export default function AdminGutschriften() {
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [markingId, setMarkingId] = useState<string | null>(null);
   const [triggering, setTriggering] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   useEffect(() => {
     fetchGutschriften();
@@ -106,6 +108,23 @@ export default function AdminGutschriften() {
     }
   };
 
+  const downloadPdf = async (pdfPath: string, gutschriftNummer: string) => {
+    try {
+      const { data, error } = await supabase.storage
+        .from("gutschriften")
+        .createSignedUrl(pdfPath, 60, {
+          download: `Gutschrift-${gutschriftNummer}.pdf`,
+        });
+
+      if (error) throw error;
+      if (data?.signedUrl) {
+        window.open(data.signedUrl, "_blank");
+      }
+    } catch (err: any) {
+      toast.error("Download fehlgeschlagen: " + err.message);
+    }
+  };
+
   const monate = useMemo(() => {
     const set = new Set(gutschriften.map((g) => `${g.periode_jahr}-${g.periode_monat}`));
     return Array.from(set).sort().reverse().map((key) => {
@@ -148,11 +167,22 @@ export default function AdminGutschriften() {
           <h1 className="text-2xl font-bold font-headline">Gutschriften</h1>
           <p className="text-muted-foreground text-sm">Monatliche Abrechnungen der Vertriebler</p>
         </div>
-        <Button onClick={triggerGutschriften} disabled={triggering} variant="outline">
+        <Button onClick={() => setConfirmOpen(true)} disabled={triggering} variant="outline">
           {triggering ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Play className="h-4 w-4 mr-2" />}
           Gutschriften jetzt erstellen
         </Button>
       </div>
+
+      <ConfirmActionDialog
+        open={confirmOpen}
+        onOpenChange={setConfirmOpen}
+        onConfirm={triggerGutschriften}
+        title="Gutschriften erstellen"
+        description="Willst du wirklich Gutschriften für alle Vertriebler neu erstellen? Bereits existierende Gutschriften für diesen Monat werden übersprungen."
+        confirmText="Gutschriften erstellen"
+        confirmPhrase="ERSTELLEN"
+        destructive={false}
+      />
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <GlassCard className="p-4">
@@ -272,10 +302,12 @@ export default function AdminGutschriften() {
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-2">
                         {g.pdf_url && (
-                          <Button variant="ghost" size="icon" asChild>
-                            <a href={g.pdf_url} target="_blank" rel="noopener noreferrer">
-                              <Download className="h-4 w-4" />
-                            </a>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => downloadPdf(g.pdf_url!, g.gutschrift_nummer)}
+                          >
+                            <Download className="h-4 w-4" />
                           </Button>
                         )}
                         {g.status === "erstellt" && (
