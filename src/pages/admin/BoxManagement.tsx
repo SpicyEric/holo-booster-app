@@ -315,31 +315,78 @@ const BoxManagement = () => {
 
   const handleSaveEdit = async () => {
     if (!detailRow || boxIdError || stempelIdError || !editBoxId.trim() || !editStempelId.trim()) return;
-    const boxIdChanged = editBoxId !== detailRow.box_id;
-    const stempelIdChanged = editStempelId !== detailRow.stempel_id;
-    if (!boxIdChanged && !stempelIdChanged) { toast.info("Keine Änderungen"); return; }
+
+    const nextBoxId = editBoxId.trim().toUpperCase();
+    const nextStempelId = editStempelId.trim().toUpperCase();
+    const previousStempelId = detailRow.stempel_id;
+    const boxIdChanged = nextBoxId !== detailRow.box_id;
+    const stempelIdChanged = nextStempelId !== detailRow.stempel_id;
+
+    if (!boxIdChanged && !stempelIdChanged) {
+      toast.info("Keine Änderungen");
+      return;
+    }
+
     setSavingEdit(true);
+    let stempelTemporarilyDetached = false;
+
     try {
       if (boxIdChanged) {
-        const { error } = await supabase.from("eloyo_boxes").update({ box_id: editBoxId }).eq("id", detailRow.id);
+        const { error } = await supabase.from("eloyo_boxes").update({ box_id: nextBoxId }).eq("id", detailRow.id);
         if (error) throw error;
       }
-      if (stempelIdChanged && detailRow.stempel_id) {
-        // First update eloyo_boxes (has FK to boxes.stamp_id)
-        const { error: eloyoErr } = await supabase.from("eloyo_boxes").update({ stempel_id: editStempelId }).eq("id", detailRow.id);
-        if (eloyoErr) throw eloyoErr;
-        // Then update boxes table
-        const { error: boxErr } = await supabase.from("boxes").update({ stamp_id: editStempelId }).eq("stamp_id", detailRow.stempel_id);
-        if (boxErr) throw boxErr;
-        // Update nfc_chips references
-        await supabase.from("nfc_chips").update({ chip_uid: editStempelId }).eq("chip_uid", detailRow.stempel_id);
+
+      if (stempelIdChanged) {
+        if (previousStempelId) {
+          const { error: detachErr } = await supabase
+            .from("eloyo_boxes")
+            .update({ stempel_id: null })
+            .eq("id", detailRow.id);
+          if (detachErr) throw detachErr;
+          stempelTemporarilyDetached = true;
+
+          const { error: boxErr } = await supabase
+            .from("boxes")
+            .update({ stamp_id: nextStempelId })
+            .eq("stamp_id", previousStempelId);
+          if (boxErr) throw boxErr;
+
+          const { error: chipsErr } = await supabase
+            .from("nfc_chips")
+            .update({ chip_uid: nextStempelId })
+            .eq("chip_uid", previousStempelId);
+          if (chipsErr) throw chipsErr;
+
+          const { error: reattachErr } = await supabase
+            .from("eloyo_boxes")
+            .update({ stempel_id: nextStempelId })
+            .eq("id", detailRow.id);
+          if (reattachErr) throw reattachErr;
+
+          stempelTemporarilyDetached = false;
+        } else {
+          const { error: insertBoxErr } = await supabase
+            .from("boxes")
+            .insert({ stamp_id: nextStempelId, stamp_preset: "standard_3" });
+          if (insertBoxErr) throw insertBoxErr;
+
+          const { error: attachErr } = await supabase
+            .from("eloyo_boxes")
+            .update({ stempel_id: nextStempelId })
+            .eq("id", detailRow.id);
+          if (attachErr) throw attachErr;
+        }
       }
+
       toast.success("Änderungen gespeichert");
       setDetailRow(null);
       loadRows();
     } catch (e: any) {
+      if (stempelTemporarilyDetached && previousStempelId) {
+        await supabase.from("eloyo_boxes").update({ stempel_id: previousStempelId }).eq("id", detailRow.id);
+      }
       console.error(e);
-      toast.error("Fehler beim Speichern");
+      toast.error(e?.message ? `Fehler beim Speichern: ${e.message}` : "Fehler beim Speichern");
     } finally {
       setSavingEdit(false);
     }
