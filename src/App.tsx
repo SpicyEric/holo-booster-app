@@ -74,6 +74,7 @@ import AdminCalendar from "./pages/admin/Calendar";
 import SalesRepRegistration from "./pages/admin/SalesRepRegistration";
 import BoxOrders from "./pages/admin/BoxOrders";
 import BoxReturns from "./pages/admin/BoxReturns";
+import SalesReps from "./pages/admin/SalesReps";
 
 const queryClient = new QueryClient();
 
