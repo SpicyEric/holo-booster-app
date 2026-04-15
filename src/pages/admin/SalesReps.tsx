@@ -163,7 +163,21 @@ const SalesReps = () => {
     }
   };
 
-  const filtered = useMemo(() => {
+  const confirmDeleteRep = async () => {
+    if (!selected) return;
+    if (deleteConfirmText.toLowerCase() !== "löschen") { toast.error('Bitte "löschen" eingeben'); return; }
+    try {
+      await supabase.from("sales_rep_profiles").delete().eq("user_id", selected.user_id);
+      await supabase.from("user_roles").delete().eq("user_id", selected.user_id).eq("role", "partner");
+      await supabase.from("profiles").delete().eq("user_id", selected.user_id);
+      await supabase.functions.invoke("deleteUserAccount", { body: { userId: selected.user_id } });
+      toast.success("Vertriebler gelöscht");
+      setDeleteDialogOpen(false);
+      setSelected(null);
+      loadReps();
+    } catch (e: any) { toast.error("Fehler beim Löschen: " + e.message); }
+  };
+
     if (!searchTerm) return reps;
     const t = searchTerm.toLowerCase();
     return reps.filter(r =>
