@@ -103,6 +103,13 @@ const BoxManagement = () => {
   const [detailStamps, setDetailStamps] = useState<RegisteredStamp[]>([]);
   const [loadingDetail, setLoadingDetail] = useState(false);
 
+  // Editable fields in detail dialog
+  const [editBoxId, setEditBoxId] = useState("");
+  const [editStempelId, setEditStempelId] = useState("");
+  const [boxIdError, setBoxIdError] = useState("");
+  const [stempelIdError, setStempelIdError] = useState("");
+  const [savingEdit, setSavingEdit] = useState(false);
+
   useEffect(() => { setWebNfcSupported('NDEFReader' in window); }, []);
 
   const loadRows = async () => {
@@ -276,6 +283,10 @@ const BoxManagement = () => {
 
   const openDetailDialog = async (row: BoxRow) => {
     setDetailRow(row); setLoadingDetail(true);
+    setEditBoxId(row.box_id);
+    setEditStempelId(row.stempel_id || "");
+    setBoxIdError("");
+    setStempelIdError("");
     try {
       if (row.stempel_id) {
         const { data } = await supabase.from("nfc_chips").select("id, stamp_color, hardware_uid, chip_uid, points_value").eq("chip_uid", row.stempel_id);
@@ -285,6 +296,53 @@ const BoxManagement = () => {
       }
     } catch { setDetailStamps([]); }
     finally { setLoadingDetail(false); }
+  };
+
+  const validateBoxId = async (value: string) => {
+    if (!value.trim()) { setBoxIdError("Pflichtfeld"); return; }
+    if (value === detailRow?.box_id) { setBoxIdError(""); return; }
+    const { data } = await supabase.from("eloyo_boxes").select("id").eq("box_id", value).maybeSingle();
+    setBoxIdError(data ? "Box-ID existiert bereits" : "");
+  };
+
+  const validateStempelId = async (value: string) => {
+    if (!value.trim()) { setStempelIdError("Pflichtfeld"); return; }
+    if (value === detailRow?.stempel_id) { setStempelIdError(""); return; }
+    const { data } = await supabase.from("boxes").select("id").eq("stamp_id", value).maybeSingle();
+    const { data: eloyoData } = await supabase.from("eloyo_boxes").select("id").eq("stempel_id", value).maybeSingle();
+    setStempelIdError(data || eloyoData ? "Stempel-ID existiert bereits" : "");
+  };
+
+  const handleSaveEdit = async () => {
+    if (!detailRow || boxIdError || stempelIdError || !editBoxId.trim() || !editStempelId.trim()) return;
+    const boxIdChanged = editBoxId !== detailRow.box_id;
+    const stempelIdChanged = editStempelId !== detailRow.stempel_id;
+    if (!boxIdChanged && !stempelIdChanged) { toast.info("Keine Änderungen"); return; }
+    setSavingEdit(true);
+    try {
+      if (boxIdChanged) {
+        const { error } = await supabase.from("eloyo_boxes").update({ box_id: editBoxId }).eq("id", detailRow.id);
+        if (error) throw error;
+      }
+      if (stempelIdChanged && detailRow.stempel_id) {
+        // Update in boxes table
+        const { error: boxErr } = await supabase.from("boxes").update({ stamp_id: editStempelId }).eq("stamp_id", detailRow.stempel_id);
+        if (boxErr) throw boxErr;
+        // Update in eloyo_boxes
+        const { error: eloyoErr } = await supabase.from("eloyo_boxes").update({ stempel_id: editStempelId }).eq("id", detailRow.id);
+        if (eloyoErr) throw eloyoErr;
+        // Update nfc_chips references
+        await supabase.from("nfc_chips").update({ chip_uid: editStempelId }).eq("chip_uid", detailRow.stempel_id);
+      }
+      toast.success("Änderungen gespeichert");
+      setDetailRow(null);
+      loadRows();
+    } catch (e: any) {
+      console.error(e);
+      toast.error("Fehler beim Speichern");
+    } finally {
+      setSavingEdit(false);
+    }
   };
 
   const startStampRegistration = async (color: string) => {
@@ -442,11 +500,36 @@ const BoxManagement = () => {
         <Dialog open={!!detailRow} onOpenChange={(open) => !open && setDetailRow(null)}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle className="flex items-center gap-2"><Package className="w-5 h-5" /> Box: {detailRow?.box_id}</DialogTitle>
-              <DialogDescription>Stempel-ID: {detailRow?.stempel_id || '—'}</DialogDescription>
+              <DialogTitle className="flex items-center gap-2"><Package className="w-5 h-5" /> Box bearbeiten</DialogTitle>
+              <DialogDescription>Box-ID und Stempel-ID können manuell geändert werden.</DialogDescription>
             </DialogHeader>
             {detailRow && (
               <div className="space-y-4">
+                <div className="space-y-3">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="edit-box-id" className="text-xs font-medium">Box-ID</Label>
+                    <Input
+                      id="edit-box-id"
+                      value={editBoxId}
+                      onChange={(e) => { const v = e.target.value.toUpperCase(); setEditBoxId(v); }}
+                      onBlur={() => validateBoxId(editBoxId)}
+                      className={`font-mono ${boxIdError ? "border-destructive focus-visible:ring-destructive" : ""}`}
+                    />
+                    {boxIdError && <p className="text-xs text-destructive">{boxIdError}</p>}
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="edit-stempel-id" className="text-xs font-medium">Stempel-ID</Label>
+                    <Input
+                      id="edit-stempel-id"
+                      value={editStempelId}
+                      onChange={(e) => { const v = e.target.value.toUpperCase(); setEditStempelId(v); }}
+                      onBlur={() => validateStempelId(editStempelId)}
+                      className={`font-mono ${stempelIdError ? "border-destructive focus-visible:ring-destructive" : ""}`}
+                    />
+                    {stempelIdError && <p className="text-xs text-destructive">{stempelIdError}</p>}
+                  </div>
+                </div>
+
                 <div className="grid grid-cols-2 gap-3 text-sm">
                   <div>
                     <p className="text-xs text-muted-foreground">Box-Status</p>
@@ -485,6 +568,13 @@ const BoxManagement = () => {
                   ) : (
                     <p className="text-xs text-muted-foreground text-center py-3">Keine Stempel registriert</p>
                   )}
+                </div>
+                <div className="flex justify-end gap-2 pt-2">
+                  <Button variant="outline" size="sm" onClick={() => setDetailRow(null)}>Abbrechen</Button>
+                  <Button size="sm" onClick={handleSaveEdit} disabled={savingEdit || !!boxIdError || !!stempelIdError || !editBoxId.trim() || !editStempelId.trim()}>
+                    {savingEdit ? <Loader2 className="w-3 h-3 mr-1 animate-spin" /> : null}
+                    Speichern
+                  </Button>
                 </div>
               </div>
             )}
