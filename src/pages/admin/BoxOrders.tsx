@@ -229,7 +229,7 @@ export default function BoxOrders() {
                   <Input
                     value={val}
                     onChange={e => validateBoxId(i, e.target.value)}
-                    placeholder="z.B. BOX-2026-0001"
+                    placeholder="z.B. A3K7M"
                     className={`font-mono pr-8 ${validationResults[i] === true ? 'border-green-500' : validationResults[i] === false ? 'border-red-500' : ''}`}
                   />
                   {validationResults[i] === true && <CheckCircle2 className="w-4 h-4 text-green-500 absolute right-2.5 top-1/2 -translate-y-1/2" />}

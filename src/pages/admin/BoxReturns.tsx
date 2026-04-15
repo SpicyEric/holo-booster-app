@@ -134,7 +134,7 @@ export default function BoxReturns() {
             <Input
               value={searchId}
               onChange={e => setSearchId(e.target.value.toUpperCase())}
-              placeholder="Box-ID eingeben (z.B. BOX-2026-0001)"
+              placeholder="Box-ID eingeben (z.B. A3K7M)"
               className="font-mono"
               onKeyDown={e => e.key === 'Enter' && handleSearch()}
             />
