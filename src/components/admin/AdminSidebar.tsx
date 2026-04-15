@@ -38,7 +38,7 @@ const NAV_GROUPS: NavGroup[] = [
       { path: "/admin/leads", label: "Kontakte", icon: Users },
       { path: "/admin/lead-pipeline", label: "Pipeline", icon: GitBranch },
       { path: "/admin/calendar", label: "Kalender", icon: CalendarDays },
-      { path: "/admin/customers", label: "Meine Kunden", icon: Users },
+      { path: "/admin/customers", label: "Kunden", icon: Users },
       { path: "/admin/checkout", label: "Kunde abschließen", icon: ShoppingCart },
     ],
   },
@@ -61,7 +61,7 @@ const NAV_GROUPS: NavGroup[] = [
   {
     label: "SYSTEM",
     items: [
-      { path: "/admin/accounts", label: "Accounts", icon: UserCog },
+      { path: "/admin/accounts", label: "User-Accounts", icon: UserCog },
       { path: "/admin/settings", label: "Einstellungen", icon: Settings },
     ],
   },
