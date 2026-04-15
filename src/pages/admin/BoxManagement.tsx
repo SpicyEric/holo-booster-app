@@ -67,6 +67,7 @@ interface BoxRow {
   stempel_id: string | null;
   status: string;
   created_at: string;
+  haendler_id: string | null;
   // derived
   stempel_status: string;
   assigned_customer_name: string | null;
