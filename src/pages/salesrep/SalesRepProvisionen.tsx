@@ -58,8 +58,21 @@ export default function SalesRepProvisionen() {
         ]);
 
         if (commissionsRes.error) throw commissionsRes.error;
-        setCommissions((commissionsRes.data || []) as Commission[]);
+        const comms = (commissionsRes.data || []) as Commission[];
+        setCommissions(comms);
         if (profileRes.data) setProfile(profileRes.data as SalesRepProfile);
+
+        // Fetch active status for all customer_ids in commissions
+        const customerIds = [...new Set(comms.map(c => c.customer_id).filter(Boolean))] as string[];
+        if (customerIds.length > 0) {
+          const { data: customers } = await supabase
+            .from('customers')
+            .select('id, active')
+            .in('id', customerIds);
+          const map: Record<string, boolean> = {};
+          (customers || []).forEach((c: any) => { map[c.id] = c.active; });
+          setActiveCustomerMap(map);
+        }
       } catch (err) {
         console.error('Error fetching commissions:', err);
       } finally {
@@ -340,7 +353,7 @@ export default function SalesRepProvisionen() {
                             {(c.discount_cents || 0) > 0 ? `-${formatCents(c.discount_cents || 0)} €` : '—'}
                           </TableCell>
                         )}
-                        <TableCell>{getStatusBadge(c.effectiveStatus)}</TableCell>
+                        <TableCell>{getStatusBadge(c.effectiveStatus, c.commission_type, c.customer_id ? activeCustomerMap[c.customer_id] : undefined)}</TableCell>
                         <TableCell className="text-sm text-muted-foreground whitespace-nowrap">
                           {c.effectiveStatus === 'pending' && c.available_at
                             ? format(new Date(c.available_at), 'dd.MM.yyyy', { locale: de })
