@@ -392,7 +392,7 @@ const BoxManagement = () => {
                   const bs = BOX_STATUS_BADGES[row.status] || BOX_STATUS_BADGES.offen;
                   const ss = STEMPEL_STATUS_BADGES[row.stempel_status] || STEMPEL_STATUS_BADGES.offen;
                   const canChangeStatus = row.status === 'offen';
-                  const canDelete = row.status === 'offen';
+                  const canDelete = true;
 
                   return (
                     <TableRow key={row.id} className="hover:bg-[hsl(262,40%,97%)] cursor-pointer" onClick={() => openDetailDialog(row)}>
