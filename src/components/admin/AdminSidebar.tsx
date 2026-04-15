@@ -52,6 +52,7 @@ const NAV_GROUPS: NavGroup[] = [
   {
     label: "VERTRIEB",
     items: [
+      { path: "/admin/sales-reps", label: "Vertriebler", icon: Users },
       { path: "/admin/sales-rep-register", label: "Vertriebler registrieren", icon: UserPlus },
       { path: "/admin/box-orders", label: "Bestellungen", icon: Truck },
       { path: "/admin/box-returns", label: "Boxenrücknahme", icon: RotateCcw },
