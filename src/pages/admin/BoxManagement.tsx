@@ -136,7 +136,7 @@ const BoxManagement = () => {
       });
 
       setBoxes(boxesWithAssignments);
-    } catch (error: any) { toast.error("Fehler beim Laden der Boxen"); console.error(error); }
+    } catch (error: any) { toast.error("Fehler beim Laden der Stempel-IDs"); console.error(error); }
     finally { setLoading(false); }
   };
 
@@ -252,7 +252,7 @@ const BoxManagement = () => {
           dotColor: "bg-red-500",
           description: cs === "past_due"
             ? "Das Abo dieses Kunden ist überfällig. Die Zahlung konnte nicht eingezogen werden."
-            : "Dieser Kunde hat sein Abo gekündigt. Die Box bleibt 12 Monate zugewiesen.",
+            : "Dieser Kunde hat sein Abo gekündigt. Die Stempel-ID bleibt 12 Monate zugewiesen.",
         };
       }
       if (!box.assigned_customer.customer_active) {
@@ -260,7 +260,7 @@ const BoxManagement = () => {
           label: "Inaktiv",
           color: "bg-orange-50 text-orange-700 border-orange-200",
           dotColor: "bg-orange-500",
-          description: "Der Kunde ist nicht mehr aktiv. Die Box ist noch zugewiesen, wird aber nicht genutzt.",
+          description: "Der Kunde ist nicht mehr aktiv. Die Stempel-ID ist noch zugewiesen, wird aber nicht genutzt.",
         };
       }
       if (box.hasActivity) {
@@ -269,21 +269,21 @@ const BoxManagement = () => {
           label: "Aktiv genutzt",
           color: "bg-green-50 text-green-700 border-green-200",
           dotColor: "bg-green-500",
-          description: `Box ist zugewiesen und wird aktiv für Stempeltransaktionen genutzt.${daysInfo}`,
+          description: `Stempel-ID ist zugewiesen und wird aktiv für Stempeltransaktionen genutzt.${daysInfo}`,
         };
       }
       return {
         label: "Zugewiesen",
         color: "bg-yellow-50 text-yellow-700 border-yellow-200",
         dotColor: "bg-yellow-500",
-        description: `Box ist dem Kunden „${box.assigned_customer.customer_name}" zugewiesen, es gab aber bisher keine Stempeltransaktionen (NFC).`,
+        description: `Stempel-ID ist dem Kunden „${box.assigned_customer.customer_name}" zugewiesen, es gab aber bisher keine Stempeltransaktionen (NFC).`,
       };
     }
     return {
       label: "Verfügbar",
       color: "bg-blue-50 text-blue-700 border-blue-200",
       dotColor: "bg-blue-500",
-      description: "Diese Box ist noch keinem Kunden zugewiesen und kann vergeben werden.",
+      description: "Diese Stempel-ID ist noch keinem Kunden zugewiesen und kann vergeben werden.",
     };
   };
 
@@ -461,7 +461,7 @@ const BoxManagement = () => {
           <DialogContent>
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2"><Shield className="w-5 h-5" /> NFC-Stempel: {stampDialogBox?.box_id}</DialogTitle>
-              <DialogDescription>Registriere die NFC-Stempel für diese Box</DialogDescription>
+              <DialogDescription>Registriere die NFC-Stempel für diese Stempel-ID</DialogDescription>
             </DialogHeader>
             {loadingStamps ? (
               <div className="flex items-center justify-center py-8"><Loader2 className="h-6 w-6 animate-spin" /></div>
