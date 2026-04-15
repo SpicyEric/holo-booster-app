@@ -47,6 +47,9 @@ serve(async (req) => {
     // Create user with custom password or auto-generated password
     const password = customPassword || crypto.randomUUID();
     
+    let userId: string;
+    let isExistingUser = false;
+
     const { data: newUser, error: createError } = await supabase.auth.admin.createUser({
       email,
       password,
@@ -57,34 +60,49 @@ serve(async (req) => {
     });
 
     if (createError) {
-      console.error('Error creating user:', createError);
-      return new Response(JSON.stringify({ error: createError.message }), {
-        status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+      // If user already exists (e.g. as end_customer), reuse them
+      if (createError.message?.includes('already been registered') || (createError as any).code === 'email_exists') {
+        console.log('[createUserAccount] User already exists, reusing:', email);
+        const { data: usersData, error: listError } = await supabase.auth.admin.listUsers();
+        if (listError) throw listError;
+        const existing = usersData.users.find((u: any) => u.email === email);
+        if (!existing) throw new Error('User exists but could not be found');
+        userId = existing.id;
+        isExistingUser = true;
+      } else {
+        console.error('Error creating user:', createError);
+        return new Response(JSON.stringify({ error: createError.message }), {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+    } else {
+      userId = newUser.user.id;
     }
 
-    // Remove auto-assigned end_customer role (from trigger)
+    // Remove auto-assigned end_customer role (from trigger) if assigning a different role
     const assignedRole = role || 'merchant';
     if (assignedRole !== 'end_customer') {
       await supabase
         .from('user_roles')
         .delete()
-        .eq('user_id', newUser.user.id)
+        .eq('user_id', userId)
         .eq('role', 'end_customer');
     }
 
-    // Assign role
+    // Assign role (upsert to be idempotent)
     const { error: roleInsertError } = await supabase
       .from('user_roles')
       .upsert({
-        user_id: newUser.user.id,
+        user_id: userId,
         role: assignedRole,
       }, { onConflict: 'user_id,role' });
 
     if (roleInsertError) {
       console.error('Error assigning role:', roleInsertError);
-      await supabase.auth.admin.deleteUser(newUser.user.id);
+      if (!isExistingUser) {
+        await supabase.auth.admin.deleteUser(userId);
+      }
       return new Response(JSON.stringify({ error: 'Failed to assign role' }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
