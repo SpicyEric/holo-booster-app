@@ -1,16 +1,24 @@
 import { useEffect, useState } from "react";
-import { Outlet } from "react-router-dom";
+import { Outlet, useNavigate } from "react-router-dom";
 import { WebProtectedRoute } from "@/components/WebProtectedRoute";
 import SalesRepSidebar from "@/components/salesrep/SalesRepSidebar";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { AlertTriangle, Clock } from "lucide-react";
+import { AlertTriangle, Clock, Package } from "lucide-react";
+
+interface BoxWarning {
+  box_id: string;
+  days_remaining: number;
+  frist_ablauf: string;
+}
 
 const SalesRepDashboard = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [contractWarning, setContractWarning] = useState<{ show: boolean; daysLeft: number }>({ show: false, daysLeft: 0 });
   const [inactivityWarning, setInactivityWarning] = useState<{ show: boolean; daysSince: number }>({ show: false, daysSince: 0 });
   const [deletionWarning, setDeletionWarning] = useState<{ show: boolean; daysLeft: number }>({ show: false, daysLeft: 0 });
+  const [boxWarnings, setBoxWarnings] = useState<BoxWarning[]>([]);
 
   useEffect(() => {
     document.body.classList.add('ccm19-right');
@@ -38,7 +46,6 @@ const SalesRepDashboard = () => {
           setContractWarning({ show: true, daysLeft: -1 });
         }
 
-        // Inactivity check: only if they have at least one conversion
         const firstConv = (data as any).first_conversion_at;
         const lastConv = (data as any).last_conversion_at;
         if (firstConv && lastConv) {
@@ -46,7 +53,6 @@ const SalesRepDashboard = () => {
           if (daysSince >= 45) {
             setInactivityWarning({ show: true, daysSince });
           }
-          // 365-day deletion warning (show from day 300)
           if (daysSince >= 300) {
             const daysLeft = Math.max(0, 365 - daysSince);
             setDeletionWarning({ show: true, daysLeft });
@@ -54,7 +60,29 @@ const SalesRepDashboard = () => {
         }
       }
     };
+
+    const checkBoxWarnings = async () => {
+      const { data: boxes } = await supabase
+        .from('eloyo_boxes')
+        .select('box_id, frist_ablauf')
+        .eq('vertriebler_id', user.id)
+        .eq('status', 'versendet')
+        .not('frist_ablauf', 'is', null);
+
+      if (boxes) {
+        const warnings: BoxWarning[] = [];
+        for (const box of boxes) {
+          const days = Math.ceil((new Date(box.frist_ablauf!).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+          if (days <= 15) {
+            warnings.push({ box_id: box.box_id, days_remaining: days, frist_ablauf: box.frist_ablauf! });
+          }
+        }
+        setBoxWarnings(warnings);
+      }
+    };
+
     checkProfile();
+    checkBoxWarnings();
   }, [user]);
 
   return (
@@ -85,6 +113,25 @@ const SalesRepDashboard = () => {
                   </p>
                 </div>
               </div>
+            )}
+            {boxWarnings.length > 0 && (
+              <button
+                onClick={() => navigate('/vertriebler/nachrichten')}
+                className="mb-6 w-full flex items-start gap-3 p-4 rounded-lg bg-orange-50 border border-orange-200 hover:bg-orange-100 transition-colors text-left"
+              >
+                <Package className="h-5 w-5 text-orange-600 shrink-0 mt-0.5" />
+                <div>
+                  <p className="font-medium text-orange-700">
+                    ⚠️ {boxWarnings.length} Box{boxWarnings.length > 1 ? 'en' : ''} {boxWarnings.length > 1 ? 'laufen' : 'läuft'} bald ab
+                  </p>
+                  <p className="text-sm text-orange-600">
+                    {boxWarnings.map(w => `${w.box_id}: noch ${w.days_remaining} Tag${w.days_remaining !== 1 ? 'e' : ''}`).join(' · ')}
+                  </p>
+                  <p className="text-xs text-orange-500 mt-1">
+                    Klicke hier für Details →
+                  </p>
+                </div>
+              </button>
             )}
             {inactivityWarning.show && (
               <div className={`mb-6 flex items-start gap-3 p-4 rounded-lg ${
