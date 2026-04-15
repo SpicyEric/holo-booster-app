@@ -119,7 +119,7 @@ export default function MerchantSetup() {
         .select("id", { count: "exact", head: true })
         .eq("box_id", boxData.id);
 
-      if (count && count > 0) { toast.error("Diese Box ist bereits vergeben"); return; }
+      if (count && count > 0) { toast.error("Diese Stempel-ID ist bereits vergeben"); return; }
 
       await supabase.from("customer_boxes").insert({
         customer_id: customerId,
@@ -153,7 +153,7 @@ export default function MerchantSetup() {
         });
       }
 
-      toast.success("Box erfolgreich verknüpft! 🎉");
+      toast.success("Stempel-ID erfolgreich verknüpft! 🎉");
       goNext();
     } catch {
       toast.error("Fehler beim Verknüpfen");
