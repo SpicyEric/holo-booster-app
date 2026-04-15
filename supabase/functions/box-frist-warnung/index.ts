@@ -21,15 +21,15 @@ serve(async (req) => {
     const adminEmail = Deno.env.get("ADMIN_EMAIL");
 
     const now = new Date();
-    const sevenDaysLater = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+    const fifteenDaysLater = new Date(now.getTime() + 15 * 24 * 60 * 60 * 1000);
 
-    // Find boxes expiring within 7 days
+    // Find boxes expiring within 15 days
     const { data: warningBoxes, error } = await supabaseAdmin
       .from("eloyo_boxes")
       .select("id, box_id, vertriebler_id, frist_ablauf")
       .eq("status", "versendet")
       .gte("frist_ablauf", now.toISOString())
-      .lte("frist_ablauf", sevenDaysLater.toISOString());
+      .lte("frist_ablauf", fifteenDaysLater.toISOString());
 
     if (error) throw error;
 
@@ -83,7 +83,7 @@ serve(async (req) => {
 
       const emailBody = `Hallo ${data.name},
 
-die Frist für folgende eloyo Boxen läuft in weniger als 7 Tagen ab:
+die Frist für folgende eloyo Boxen läuft in weniger als 15 Tagen ab:
 
 ${boxList}
 
