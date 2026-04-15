@@ -18,7 +18,7 @@ import {
 import { Separator } from "@/components/ui/separator";
 import {
   UserPlus, Search, Shield, Users, Store, X, Trash2, RotateCcw, Mail,
-  Phone, MapPin, Calendar, Clock, CreditCard, ArrowUpDown, ChevronRight, Building2, Hash, Globe, Pencil, Save, XCircle,
+  Phone, MapPin, Calendar, Clock, CreditCard, ArrowUpDown, ChevronRight, Building2, Hash, Globe, Pencil, Save, XCircle, Star, Loader2,
 } from "lucide-react";
 import { toast } from "sonner";
 
