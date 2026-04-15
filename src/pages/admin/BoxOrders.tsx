@@ -65,7 +65,8 @@ export default function BoxOrders() {
           body: { userIds },
         });
 
-        const emailMap = new Map((emailData?.emails || []).map((e: any) => [e.id, e.email]));
+        const emailsObj = emailData?.emails || {};
+        const emailMap = new Map(Object.entries(emailsObj));
 
         const enriched: OrderWithProfile[] = pakete.map(p => ({
           ...p,
