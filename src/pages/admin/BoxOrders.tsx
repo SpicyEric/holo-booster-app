@@ -70,7 +70,7 @@ export default function BoxOrders() {
         const enriched: OrderWithProfile[] = pakete.map(p => ({
           ...p,
           vertriebler_name: profileMap.get(p.vertriebler_id) || 'Unbekannt',
-          vertriebler_email: emailMap.get(p.vertriebler_id) || '',
+          vertriebler_email: (emailMap.get(p.vertriebler_id) as string) || '',
         }));
         setOrders(enriched);
       } else {
