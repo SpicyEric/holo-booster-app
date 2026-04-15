@@ -115,6 +115,42 @@ export type Database = {
           },
         ]
       }
+      box_pakete: {
+        Row: {
+          anzahl_boxen: number
+          bestelldatum: string
+          created_at: string
+          id: string
+          notizen: string | null
+          paket_typ: string
+          status: string
+          updated_at: string
+          vertriebler_id: string
+        }
+        Insert: {
+          anzahl_boxen: number
+          bestelldatum?: string
+          created_at?: string
+          id?: string
+          notizen?: string | null
+          paket_typ: string
+          status?: string
+          updated_at?: string
+          vertriebler_id: string
+        }
+        Update: {
+          anzahl_boxen?: number
+          bestelldatum?: string
+          created_at?: string
+          id?: string
+          notizen?: string | null
+          paket_typ?: string
+          status?: string
+          updated_at?: string
+          vertriebler_id?: string
+        }
+        Relationships: []
+      }
       boxes: {
         Row: {
           created_at: string
@@ -1022,6 +1058,85 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "customers"
             referencedColumns: ["id"]
+          },
+        ]
+      }
+      eloyo_boxes: {
+        Row: {
+          abschlussdatum: string | null
+          bestelldatum: string | null
+          box_id: string
+          created_at: string
+          frist_ablauf: string | null
+          haendler_id: string | null
+          id: string
+          paket_id: string | null
+          preis_protokolliert: number
+          rechnung_stripe_id: string | null
+          retour_datum: string | null
+          status: string
+          stempel_id: string | null
+          updated_at: string
+          versanddatum: string | null
+          vertriebler_id: string | null
+        }
+        Insert: {
+          abschlussdatum?: string | null
+          bestelldatum?: string | null
+          box_id: string
+          created_at?: string
+          frist_ablauf?: string | null
+          haendler_id?: string | null
+          id?: string
+          paket_id?: string | null
+          preis_protokolliert?: number
+          rechnung_stripe_id?: string | null
+          retour_datum?: string | null
+          status?: string
+          stempel_id?: string | null
+          updated_at?: string
+          versanddatum?: string | null
+          vertriebler_id?: string | null
+        }
+        Update: {
+          abschlussdatum?: string | null
+          bestelldatum?: string | null
+          box_id?: string
+          created_at?: string
+          frist_ablauf?: string | null
+          haendler_id?: string | null
+          id?: string
+          paket_id?: string | null
+          preis_protokolliert?: number
+          rechnung_stripe_id?: string | null
+          retour_datum?: string | null
+          status?: string
+          stempel_id?: string | null
+          updated_at?: string
+          versanddatum?: string | null
+          vertriebler_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "eloyo_boxes_haendler_id_fkey"
+            columns: ["haendler_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "eloyo_boxes_paket_id_fkey"
+            columns: ["paket_id"]
+            isOneToOne: false
+            referencedRelation: "box_pakete"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "eloyo_boxes_stempel_id_fkey"
+            columns: ["stempel_id"]
+            isOneToOne: false
+            referencedRelation: "boxes"
+            referencedColumns: ["stamp_id"]
           },
         ]
       }
@@ -1970,6 +2085,7 @@ export type Database = {
           gender: string | null
           id: string
           last_name: string | null
+          stripe_customer_id: string | null
           updated_at: string
           user_id: string
         }
@@ -1984,6 +2100,7 @@ export type Database = {
           gender?: string | null
           id?: string
           last_name?: string | null
+          stripe_customer_id?: string | null
           updated_at?: string
           user_id: string
         }
@@ -1998,6 +2115,7 @@ export type Database = {
           gender?: string | null
           id?: string
           last_name?: string | null
+          stripe_customer_id?: string | null
           updated_at?: string
           user_id?: string
         }

@@ -1,232 +1,319 @@
-import { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useState, useEffect } from 'react';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Minus, Plus, ShoppingCart, Package, CreditCard, Trash2 } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { Package, AlertTriangle, Clock, CheckCircle2, RotateCcw, FileWarning, Loader2 } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 
-interface Product {
+interface BoxPaket {
   id: string;
-  name: string;
-  description: string;
-  price: number; // cents
-  image: string;
-  category: 'box' | 'print';
+  paket_typ: string;
+  anzahl_boxen: number;
+  bestelldatum: string;
+  status: string;
+  notizen: string | null;
 }
 
-interface CartItem {
-  product: Product;
-  quantity: number;
+interface EloyoBox {
+  id: string;
+  box_id: string;
+  status: string;
+  versanddatum: string | null;
+  frist_ablauf: string | null;
+  haendler_id: string | null;
+  abschlussdatum: string | null;
+  retour_datum: string | null;
 }
 
-const PRODUCTS: Product[] = [
-  {
-    id: 'starter-box',
-    name: 'Starterbox',
-    description: 'Komplettes Starterset mit NFC-Box, Aufstellern und Anleitungsmaterial für deinen nächsten Kundenabschluss.',
-    price: 0,
-    image: '📦',
-    category: 'box',
-  },
-  {
-    id: 'visitenkarten-100',
-    name: 'Visitenkarten (100 Stk.)',
-    description: '100 hochwertige Visitenkarten im Eloyo-Design mit deinem Namen und QR-Code.',
-    price: 2900,
-    image: '🪪',
-    category: 'print',
-  },
-  {
-    id: 'visitenkarten-250',
-    name: 'Visitenkarten (250 Stk.)',
-    description: '250 hochwertige Visitenkarten im Eloyo-Design mit deinem Namen und QR-Code.',
-    price: 4900,
-    image: '🪪',
-    category: 'print',
-  },
-  {
-    id: 'visitenkarten-500',
-    name: 'Visitenkarten (500 Stk.)',
-    description: '500 hochwertige Visitenkarten im Eloyo-Design mit deinem Namen und QR-Code.',
-    price: 7900,
-    image: '🪪',
-    category: 'print',
-  },
-];
+const STATUS_LABELS: Record<string, { label: string; color: string; icon: React.ElementType }> = {
+  offen: { label: 'Offen', color: 'bg-amber-100 text-amber-800 border-amber-200', icon: Clock },
+  versendet: { label: 'Versendet', color: 'bg-blue-100 text-blue-800 border-blue-200', icon: Package },
+  abgeschlossen: { label: 'Abgeschlossen', color: 'bg-green-100 text-green-800 border-green-200', icon: CheckCircle2 },
+  retourniert: { label: 'Retourniert', color: 'bg-gray-100 text-gray-700 border-gray-200', icon: RotateCcw },
+  in_rechnung_gestellt: { label: 'In Rechnung gestellt', color: 'bg-red-100 text-red-800 border-red-200', icon: FileWarning },
+};
 
-function formatPrice(cents: number) {
-  if (cents === 0) return 'Kostenlos';
-  return `${(cents / 100).toFixed(2).replace('.', ',')} €`;
+function getDaysRemaining(fristAblauf: string | null): number | null {
+  if (!fristAblauf) return null;
+  const diff = new Date(fristAblauf).getTime() - Date.now();
+  return Math.ceil(diff / (1000 * 60 * 60 * 24));
 }
 
 export default function SalesRepOrders() {
-  const [cart, setCart] = useState<CartItem[]>([]);
+  const { user } = useAuth();
+  const [loading, setLoading] = useState(true);
+  const [ordering, setOrdering] = useState(false);
+  const [activeCustomerCount, setActiveCustomerCount] = useState(0);
+  const [hasActiveOrder, setHasActiveOrder] = useState(false);
+  const [orders, setOrders] = useState<BoxPaket[]>([]);
+  const [orderBoxes, setOrderBoxes] = useState<Record<string, EloyoBox[]>>({});
+  const [confirmModal, setConfirmModal] = useState<'starter' | 'vertrieb' | null>(null);
 
-  const addToCart = (product: Product) => {
-    setCart(prev => {
-      const existing = prev.find(i => i.product.id === product.id);
-      if (existing) {
-        return prev.map(i => i.product.id === product.id ? { ...i, quantity: i.quantity + 1 } : i);
+  const loadData = async () => {
+    if (!user) return;
+    setLoading(true);
+    try {
+      // Active customer count
+      const { count: activeCount } = await supabase
+        .from('customers')
+        .select('id', { count: 'exact', head: true })
+        .eq('promoter_id', user.id)
+        .eq('active', true);
+      setActiveCustomerCount(activeCount || 0);
+
+      // Check for active orders
+      const { data: activePakete } = await supabase
+        .from('box_pakete')
+        .select('id')
+        .eq('vertriebler_id', user.id)
+        .in('status', ['offen', 'versendet']);
+
+      const { data: activeBoxes } = await supabase
+        .from('eloyo_boxes')
+        .select('id')
+        .eq('vertriebler_id', user.id)
+        .eq('status', 'versendet');
+
+      setHasActiveOrder((activePakete?.length || 0) > 0 || (activeBoxes?.length || 0) > 0);
+
+      // All orders
+      const { data: pakete } = await supabase
+        .from('box_pakete')
+        .select('*')
+        .eq('vertriebler_id', user.id)
+        .order('bestelldatum', { ascending: false });
+      setOrders(pakete || []);
+
+      // Boxes per order
+      if (pakete && pakete.length > 0) {
+        const paketIds = pakete.map(p => p.id);
+        const { data: boxes } = await supabase
+          .from('eloyo_boxes')
+          .select('id, box_id, status, versanddatum, frist_ablauf, haendler_id, abschlussdatum, retour_datum, paket_id')
+          .in('paket_id', paketIds);
+
+        const grouped: Record<string, EloyoBox[]> = {};
+        (boxes || []).forEach((b: any) => {
+          if (!grouped[b.paket_id]) grouped[b.paket_id] = [];
+          grouped[b.paket_id].push(b);
+        });
+        setOrderBoxes(grouped);
       }
-      return [...prev, { product, quantity: 1 }];
-    });
-    toast.success(`${product.name} hinzugefügt`);
-  };
-
-  const updateQuantity = (productId: string, delta: number) => {
-    setCart(prev => prev.map(i => {
-      if (i.product.id !== productId) return i;
-      const newQty = i.quantity + delta;
-      return newQty > 0 ? { ...i, quantity: newQty } : i;
-    }).filter(i => i.quantity > 0));
-  };
-
-  const removeFromCart = (productId: string) => {
-    setCart(prev => prev.filter(i => i.product.id !== productId));
-  };
-
-  const cartTotal = cart.reduce((sum, i) => sum + i.product.price * i.quantity, 0);
-  const cartCount = cart.reduce((sum, i) => sum + i.quantity, 0);
-
-  const handleCheckout = () => {
-    if (cart.length === 0) {
-      toast.error('Dein Warenkorb ist leer');
-      return;
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
     }
-    // TODO: Stripe checkout integration
-    toast.info('Checkout wird vorbereitet…');
   };
+
+  useEffect(() => { loadData(); }, [user]);
+
+  const handleOrder = async (typ: 'starter' | 'vertrieb') => {
+    if (!user) return;
+    setOrdering(true);
+    try {
+      const anzahl = typ === 'starter' ? 4 : 7;
+      const { error } = await supabase.from('box_pakete').insert({
+        vertriebler_id: user.id,
+        paket_typ: typ,
+        anzahl_boxen: anzahl,
+        status: 'offen',
+      });
+      if (error) throw error;
+      toast.success('Bestellung erfolgreich aufgegeben');
+      setConfirmModal(null);
+      loadData();
+    } catch (e: any) {
+      toast.error(e.message || 'Fehler bei der Bestellung');
+    } finally {
+      setOrdering(false);
+    }
+  };
+
+  const canOrderVertrieb = activeCustomerCount >= 4;
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <div>
         <h1 className="text-2xl font-bold text-foreground">Bestellung</h1>
-        <p className="text-sm text-muted-foreground">Bestelle Starterboxen, Visitenkarten und weiteres Vertriebsmaterial.</p>
+        <p className="text-sm text-muted-foreground">Bestelle eloyo Boxen für deinen Vertrieb.</p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Products */}
-        <div className="lg:col-span-2 space-y-4">
-          <h2 className="text-lg font-semibold flex items-center gap-2">
-            <Package className="w-5 h-5 text-primary" />
-            Produkte
-          </h2>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {PRODUCTS.map(product => {
-              const inCart = cart.find(i => i.product.id === product.id);
-              return (
-                <Card key={product.id} className={cn(
-                  "transition-all duration-200 hover:shadow-md",
-                  inCart && "ring-2 ring-primary/30"
-                )}>
-                  <CardContent className="pt-5">
-                    <div className="flex items-start gap-4">
-                      <div className="text-4xl shrink-0">{product.image}</div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-start justify-between gap-2">
-                          <h3 className="font-semibold text-sm">{product.name}</h3>
-                          <Badge variant={product.price === 0 ? 'secondary' : 'default'} className="shrink-0 text-xs">
-                            {formatPrice(product.price)}
-                          </Badge>
-                        </div>
-                        <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{product.description}</p>
-
-                        <div className="mt-3 flex items-center gap-2">
-                          {inCart ? (
-                            <div className="flex items-center gap-2">
-                              <Button
-                                variant="outline"
-                                size="icon"
-                                className="h-7 w-7"
-                                onClick={() => updateQuantity(product.id, -1)}
-                              >
-                                <Minus className="w-3 h-3" />
-                              </Button>
-                              <span className="text-sm font-bold w-6 text-center">{inCart.quantity}</span>
-                              <Button
-                                variant="outline"
-                                size="icon"
-                                className="h-7 w-7"
-                                onClick={() => updateQuantity(product.id, 1)}
-                              >
-                                <Plus className="w-3 h-3" />
-                              </Button>
-                            </div>
-                          ) : (
-                            <Button size="sm" className="h-7 text-xs gap-1" onClick={() => addToCart(product)}>
-                              <Plus className="w-3 h-3" />
-                              In den Warenkorb
-                            </Button>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Cart */}
-        <div className="space-y-4">
-          <h2 className="text-lg font-semibold flex items-center gap-2">
-            <ShoppingCart className="w-5 h-5 text-primary" />
-            Warenkorb
-            {cartCount > 0 && (
-              <Badge variant="secondary" className="text-xs">{cartCount}</Badge>
+      {/* Products */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Starterpaket */}
+        <Card className="relative overflow-hidden">
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-lg">Starterpaket</CardTitle>
+              <Badge variant="secondary">4 Boxen</Badge>
+            </div>
+            <CardDescription>4 eloyo Boxen für den Einstieg</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="text-3xl font-bold">120,00 €</div>
+            <p className="text-xs text-muted-foreground">Warenwert: 4 × 30,00 € inkl. MwSt.</p>
+            <div className="p-3 bg-amber-50 dark:bg-amber-950/30 rounded-lg border border-amber-200 dark:border-amber-800">
+              <p className="text-xs text-amber-800 dark:text-amber-200 flex items-start gap-2">
+                <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
+                Du zahlst nur für Boxen, die du innerhalb von 90 Tagen weder abgeschlossen noch zurückgesendet hast.
+              </p>
+            </div>
+            <Button
+              className="w-full"
+              disabled={hasActiveOrder}
+              onClick={() => setConfirmModal('starter')}
+            >
+              {hasActiveOrder ? 'Aktive Bestellung vorhanden' : 'Bestellen'}
+            </Button>
+            {hasActiveOrder && (
+              <p className="text-xs text-center text-muted-foreground">Du hast bereits eine aktive Bestellung</p>
             )}
-          </h2>
+          </CardContent>
+        </Card>
 
-          <Card>
-            <CardContent className="pt-5">
-              {cart.length === 0 ? (
-                <p className="text-sm text-muted-foreground text-center py-6">Dein Warenkorb ist leer.</p>
-              ) : (
-                <div className="space-y-3">
-                  {cart.map(item => (
-                    <div key={item.product.id} className="flex items-center gap-3 p-2 rounded-lg bg-muted/30">
-                      <span className="text-xl">{item.product.image}</span>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium truncate">{item.product.name}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {item.quantity}× {formatPrice(item.product.price)}
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <span className="text-sm font-semibold">
-                          {formatPrice(item.product.price * item.quantity)}
-                        </span>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-6 w-6 text-muted-foreground hover:text-destructive"
-                          onClick={() => removeFromCart(item.product.id)}
-                        >
-                          <Trash2 className="w-3 h-3" />
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-
-                  <div className="border-t pt-3 mt-3">
-                    <div className="flex justify-between items-center mb-4">
-                      <span className="font-semibold">Gesamt</span>
-                      <span className="text-lg font-bold">{formatPrice(cartTotal)}</span>
-                    </div>
-                    <Button className="w-full gap-2" onClick={handleCheckout}>
-                      <CreditCard className="w-4 h-4" />
-                      Zur Kasse
-                    </Button>
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
+        {/* Vertriebspaket */}
+        <Card className="relative overflow-hidden">
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-lg">Vertriebspaket</CardTitle>
+              <Badge variant="secondary">7 Boxen</Badge>
+            </div>
+            <CardDescription>7 eloyo Boxen für erfahrene Vertriebspartner</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="text-3xl font-bold">210,00 €</div>
+            <p className="text-xs text-muted-foreground">Warenwert: 7 × 30,00 € inkl. MwSt.</p>
+            <div className="p-3 bg-amber-50 dark:bg-amber-950/30 rounded-lg border border-amber-200 dark:border-amber-800">
+              <p className="text-xs text-amber-800 dark:text-amber-200 flex items-start gap-2">
+                <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
+                Du zahlst nur für Boxen, die du innerhalb von 90 Tagen weder abgeschlossen noch zurückgesendet hast.
+              </p>
+            </div>
+            {!canOrderVertrieb && !hasActiveOrder && (
+              <Badge variant="outline" className="w-full justify-center py-1.5 text-xs">
+                Verfügbar ab 4 aktiven Kunden ({activeCustomerCount}/4)
+              </Badge>
+            )}
+            <Button
+              className="w-full"
+              disabled={hasActiveOrder || !canOrderVertrieb}
+              onClick={() => setConfirmModal('vertrieb')}
+            >
+              {hasActiveOrder ? 'Aktive Bestellung vorhanden' : !canOrderVertrieb ? 'Noch nicht verfügbar' : 'Bestellen'}
+            </Button>
+            {hasActiveOrder && (
+              <p className="text-xs text-center text-muted-foreground">Du hast bereits eine aktive Bestellung</p>
+            )}
+          </CardContent>
+        </Card>
       </div>
+
+      {/* Orders */}
+      {orders.length > 0 && (
+        <div className="space-y-4">
+          <h2 className="text-lg font-semibold">Meine Bestellungen</h2>
+          {orders.map(order => {
+            const boxes = orderBoxes[order.id] || [];
+            const statusInfo = STATUS_LABELS[order.status] || STATUS_LABELS.offen;
+            const StatusIcon = statusInfo.icon;
+            return (
+              <Card key={order.id}>
+                <CardContent className="pt-5 space-y-4">
+                  <div className="flex items-center justify-between flex-wrap gap-2">
+                    <div>
+                      <p className="font-semibold">
+                        {order.paket_typ === 'starter' ? 'Starterpaket' : 'Vertriebspaket'}
+                        <span className="text-muted-foreground font-normal ml-2">({order.anzahl_boxen} Boxen)</span>
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        Bestellt am {new Date(order.bestelldatum).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                      </p>
+                    </div>
+                    <Badge className={`${statusInfo.color} border gap-1`}>
+                      <StatusIcon className="w-3 h-3" />
+                      {statusInfo.label}
+                    </Badge>
+                  </div>
+
+                  {boxes.length > 0 && (
+                    <div className="space-y-2">
+                      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Box-IDs</p>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        {boxes.map(box => {
+                          const days = getDaysRemaining(box.frist_ablauf);
+                          const boxStatus = STATUS_LABELS[box.status] || STATUS_LABELS.versendet;
+                          const BoxIcon = boxStatus.icon;
+                          const isUrgent = days !== null && days <= 14 && box.status === 'versendet';
+                          const isExpired = days !== null && days <= 0 && box.status === 'versendet';
+                          return (
+                            <div key={box.id} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg border">
+                              <div className="flex items-center gap-2">
+                                <code className="text-xs font-mono font-semibold">{box.box_id}</code>
+                                <Badge variant="outline" className={`text-[10px] ${boxStatus.color} border gap-0.5`}>
+                                  <BoxIcon className="w-2.5 h-2.5" />
+                                  {boxStatus.label}
+                                </Badge>
+                              </div>
+                              {days !== null && box.status === 'versendet' && (
+                                <span className={`text-xs font-medium ${isExpired ? 'text-red-600 line-through' : isUrgent ? 'text-red-600' : 'text-muted-foreground'}`}>
+                                  {isExpired ? 'Abgelaufen' : `Noch ${days} Tag${days !== 1 ? 'e' : ''}`}
+                                </span>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Confirmation Modal */}
+      <Dialog open={!!confirmModal} onOpenChange={() => setConfirmModal(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="w-5 h-5 text-amber-500" />
+              Verbindliche Bestellung
+            </DialogTitle>
+            <DialogDescription className="text-left pt-2 space-y-3">
+              <p>
+                Ab dem Versanddatum läuft ein <strong>90-Tage-Timer</strong> für jede eloyo Box.
+              </p>
+              <p>
+                Jede Box muss innerhalb dieser 90 Tage einem Kunden zugewiesen oder unversehrt zurückgesendet werden.
+              </p>
+              <p>
+                Nicht abgeschlossene und nicht retournierte Boxen werden mit je <strong>30,00 €</strong> in Rechnung gestellt.
+              </p>
+              <p className="font-semibold text-foreground">Diese Bestellung ist verbindlich.</p>
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setConfirmModal(null)}>Abbrechen</Button>
+            <Button onClick={() => confirmModal && handleOrder(confirmModal)} disabled={ordering}>
+              {ordering ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+              Jetzt verbindlich bestellen
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

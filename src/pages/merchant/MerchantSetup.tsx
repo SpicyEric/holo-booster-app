@@ -126,6 +126,34 @@ export default function MerchantSetup() {
         box_id: boxData.id,
       });
 
+      // Link eloyo_box if exists with this stamp_id
+      const { data: eloyoBox } = await supabase
+        .from("eloyo_boxes")
+        .select("id, paket_id, status")
+        .eq("stempel_id", state.boxId)
+        .eq("status", "versendet")
+        .maybeSingle();
+
+      if (eloyoBox) {
+        await supabase.from("eloyo_boxes").update({
+          haendler_id: customerId,
+          abschlussdatum: new Date().toISOString(),
+          status: "abgeschlossen",
+        }).eq("id", eloyoBox.id);
+
+        // Check if all boxes in paket are done
+        if (eloyoBox.paket_id) {
+          const { data: siblings } = await supabase
+            .from("eloyo_boxes")
+            .select("status")
+            .eq("paket_id", eloyoBox.paket_id);
+          const allDone = (siblings || []).every(s => s.status === "abgeschlossen" || s.status === "retourniert");
+          if (allDone) {
+            await supabase.from("box_pakete").update({ status: "abgeschlossen" }).eq("id", eloyoBox.paket_id);
+          }
+        }
+      }
+
       const preset = boxData.stamp_preset || "standard_3";
       const configs = preset === "standard_5"
         ? [

@@ -72,6 +72,8 @@ import Pipeline from "./pages/admin/Pipeline";
 import LeadsPipeline from "./pages/admin/LeadsPipeline";
 import AdminCalendar from "./pages/admin/Calendar";
 import SalesRepRegistration from "./pages/admin/SalesRepRegistration";
+import BoxOrders from "./pages/admin/BoxOrders";
+import BoxReturns from "./pages/admin/BoxReturns";
 
 const queryClient = new QueryClient();
 
@@ -117,6 +119,8 @@ const App = () => {
                 <Route path="checkout" element={<Checkout />} />
                 <Route path="boxes" element={<BoxManagement />} />
                 <Route path="sales-rep-register" element={<SalesRepRegistration />} />
+                <Route path="box-orders" element={<BoxOrders />} />
+                <Route path="box-returns" element={<BoxReturns />} />
                 <Route path="settings" element={<Settings />} />
                 <Route path="map" element={<CustomerMap />} />
               </Route>
