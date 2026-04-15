@@ -96,7 +96,9 @@ export default function AdminGutschriften() {
   const triggerGutschriften = async () => {
     setTriggering(true);
     try {
-      const { data, error } = await supabase.functions.invoke("monatliche-gutschrift");
+      const { data, error } = await supabase.functions.invoke("monatliche-gutschrift", {
+        body: { force: true },
+      });
       if (error) throw error;
       toast.success("Gutschriften erfolgreich erstellt!");
       console.log("Gutschrift results:", data);

@@ -16,6 +16,13 @@ serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
   try {
+    // Check if this is a manual trigger (from admin UI) vs cron
+    let forceRecreate = false;
+    try {
+      const body = await req.json();
+      if (body?.force) forceRecreate = true;
+    } catch { /* no body = cron trigger */ }
+
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, serviceKey);
@@ -37,20 +44,16 @@ serve(async (req: Request) => {
       });
     }
 
-    const { data: lastGs } = await supabase
-      .from("vertriebler_gutschriften")
-      .select("gutschrift_nummer")
-      .eq("periode_monat", monat)
-      .eq("periode_jahr", jahr)
-      .order("gutschrift_nummer", { ascending: false })
-      .limit(1)
-      .maybeSingle();
+    // If force recreate, delete all existing gutschriften for this month first
+    if (forceRecreate) {
+      await supabase
+        .from("vertriebler_gutschriften")
+        .delete()
+        .eq("periode_monat", monat)
+        .eq("periode_jahr", jahr);
+    }
 
     let counter = 1;
-    if (lastGs?.gutschrift_nummer) {
-      const parts = lastGs.gutschrift_nummer.split("-");
-      counter = parseInt(parts[parts.length - 1]) + 1;
-    }
 
     const results: string[] = [];
 
