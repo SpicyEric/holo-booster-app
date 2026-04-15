@@ -37,6 +37,7 @@ export default function SalesRepProvisionen() {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterType, setFilterType] = useState<string>('all');
   const [filterStatus, setFilterStatus] = useState<string>('all');
+  const [activeCustomerMap, setActiveCustomerMap] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     if (!user?.id) return;
@@ -134,10 +135,18 @@ export default function SalesRepProvisionen() {
   const formatCents = (cents: number) => (cents / 100).toFixed(2).replace('.', ',');
   const formatBrutto = (netCents: number) => formatCents(Math.round(netCents * 1.19));
 
-  const getStatusBadge = (status: string | null) => {
+  const getStatusBadge = (status: string | null, commissionType: string | null, customerActive?: boolean) => {
+    if (commissionType === 'recurring') {
+      // Folgeprovision: show aktiv/nicht aktiv based on customer status
+      if (customerActive) {
+        return <Badge className="bg-green-100 text-green-800 hover:bg-green-100">Aktiv</Badge>;
+      }
+      return <Badge className="bg-red-100 text-red-800 hover:bg-red-100">Nicht aktiv</Badge>;
+    }
+    // Einmalprovision
     switch (status) {
       case 'available': return <Badge className="bg-green-100 text-green-800 hover:bg-green-100">Verfügbar</Badge>;
-      case 'paid': return <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-100">Ausbezahlt</Badge>;
+      case 'paid': return <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-100">Ausgezahlt</Badge>;
       case 'pending': return <Badge className="bg-yellow-100 text-yellow-800 hover:bg-yellow-100">Vorgemerkt</Badge>;
       default: return <Badge variant="outline">{status || '—'}</Badge>;
     }
