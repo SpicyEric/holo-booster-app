@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
-import { Loader2, Upload, Download, FileText, AlertTriangle, Eye, EyeOff, Lock, User, Building, FileCheck } from "lucide-react";
+import { Loader2, Upload, Download, FileText, AlertTriangle, Eye, EyeOff, Lock, User, Building, FileCheck, CheckCircle2, XCircle } from "lucide-react";
 
 interface SalesRepProfile {
   id: string;
@@ -42,6 +42,8 @@ export default function SalesRepSettings() {
   const [saving, setSaving] = useState(false);
   const [profile, setProfile] = useState<SalesRepProfile | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [vatValidating, setVatValidating] = useState(false);
+  const [vatResult, setVatResult] = useState<{ valid: boolean; name?: string; message?: string } | null>(null);
 
   // Password
   const [newPassword, setNewPassword] = useState('');
@@ -460,17 +462,73 @@ export default function SalesRepSettings() {
                 </div>
 
                 <Button
-                  onClick={() => handleSave({
-                    tax_number: profile.tax_number,
-                    vat_id: profile.vat_id,
-                    is_small_business: profile.is_small_business,
-                  })}
-                  disabled={saving}
+                  onClick={async () => {
+                    await handleSave({
+                      tax_number: profile.tax_number,
+                      vat_id: profile.vat_id,
+                      is_small_business: profile.is_small_business,
+                    });
+
+                    // Validate VAT ID via VIES if provided
+                    if (profile.vat_id && profile.vat_id.trim().length > 0) {
+                      setVatValidating(true);
+                      setVatResult(null);
+                      try {
+                        const { data: sessionData } = await supabase.auth.getSession();
+                        const token = sessionData?.session?.access_token;
+                        const res = await supabase.functions.invoke('validate-ust-id', {
+                          body: { vat_id: profile.vat_id },
+                          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+                        });
+                        if (res.error) throw new Error(res.error.message || 'Validierungsfehler');
+                        const result = res.data;
+                        if (result.error) {
+                          setVatResult({ valid: false, message: result.error });
+                        } else {
+                          setVatResult(result);
+                          if (result.valid) {
+                            setProfile(prev => prev ? { ...prev, vat_id: profile.vat_id } : prev);
+                          }
+                        }
+                      } catch (err: any) {
+                        setVatResult({ valid: false, message: err.message || 'Validierung fehlgeschlagen' });
+                      } finally {
+                        setVatValidating(false);
+                      }
+                    } else {
+                      setVatResult(null);
+                    }
+                  }}
+                  disabled={saving || vatValidating}
                   className="w-full"
                 >
-                  {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  Steuerangaben speichern
+                  {(saving || vatValidating) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  {vatValidating ? 'USt-IdNr. wird geprüft…' : 'Steuerangaben speichern'}
                 </Button>
+
+                {vatResult && (
+                  <div className={`flex items-start gap-2 p-3 rounded-md text-sm ${
+                    vatResult.valid 
+                      ? 'bg-green-500/10 text-green-700 dark:text-green-400 border border-green-500/20' 
+                      : 'bg-destructive/10 text-destructive border border-destructive/20'
+                  }`}>
+                    {vatResult.valid ? (
+                      <CheckCircle2 className="h-5 w-5 shrink-0 mt-0.5" />
+                    ) : (
+                      <XCircle className="h-5 w-5 shrink-0 mt-0.5" />
+                    )}
+                    <div>
+                      {vatResult.valid ? (
+                        <>
+                          <p className="font-medium">USt-IdNr. bestätigt</p>
+                          {vatResult.name && <p>Gefunden: {vatResult.name}</p>}
+                        </>
+                      ) : (
+                        <p>{vatResult.message || 'Diese USt-IdNr. ist laut EU-Register ungültig. Bitte prüfe die Nummer.'}</p>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
             </GlassCard>
 

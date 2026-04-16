@@ -1,0 +1,1 @@
+ALTER TABLE public.sales_rep_profiles ADD COLUMN IF NOT EXISTS ust_id_verified BOOLEAN DEFAULT false;

@@ -2587,6 +2587,7 @@ export type Database = {
           tax_number: string | null
           updated_at: string
           user_id: string
+          ust_id_verified: boolean | null
           vat_id: string | null
           vertrag_angenommen_am: string | null
           vertrag_ip: string | null
@@ -2623,6 +2624,7 @@ export type Database = {
           tax_number?: string | null
           updated_at?: string
           user_id: string
+          ust_id_verified?: boolean | null
           vat_id?: string | null
           vertrag_angenommen_am?: string | null
           vertrag_ip?: string | null
@@ -2659,6 +2661,7 @@ export type Database = {
           tax_number?: string | null
           updated_at?: string
           user_id?: string
+          ust_id_verified?: boolean | null
           vat_id?: string | null
           vertrag_angenommen_am?: string | null
           vertrag_ip?: string | null
