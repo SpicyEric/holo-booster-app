@@ -91,7 +91,7 @@ const Customers = () => {
   const [sendingMessage, setSendingMessage] = useState(false);
 
   const { isLoaded } = useJsApiLoader({
-    googleMapsApiKey: apiKey || '',
+    googleMapsApiKey: apiKey || 'PLACEHOLDER',
     libraries: LIBRARIES,
   });
 
