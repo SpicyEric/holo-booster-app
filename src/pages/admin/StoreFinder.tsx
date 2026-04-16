@@ -415,7 +415,7 @@ function StoreFinderContent({ apiKey }: { apiKey: string }) {
         {/* Left side: Map */}
         <Card className="overflow-hidden">
           <CardContent className="p-0 relative h-full" style={{ minHeight: '600px' }}>
-            {keyLoading || !isLoaded ? (
+            {!isLoaded ? (
               <div className="flex items-center justify-center h-full">
                 <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
               </div>
@@ -663,4 +663,29 @@ function StoreFinderContent({ apiKey }: { apiKey: string }) {
       </div>
     </div>
   );
+}
+
+export default function StoreFinder() {
+  const { apiKey, loading } = useGoogleMapsApiKey();
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-96">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  if (!apiKey) {
+    return (
+      <div className="flex items-center justify-center h-96 text-muted-foreground">
+        <div className="text-center">
+          <MapPin className="h-12 w-12 mx-auto mb-2 text-muted-foreground/50" />
+          <p>Google Maps API-Key nicht konfiguriert</p>
+        </div>
+      </div>
+    );
+  }
+
+  return <StoreFinderContent apiKey={apiKey} />;
 }
