@@ -2479,6 +2479,50 @@ export type Database = {
           },
         ]
       }
+      sales_rep_contract_uploads: {
+        Row: {
+          confirmed_at: string | null
+          confirmed_by_user_id: string | null
+          file_name: string
+          file_path: string
+          file_size: number | null
+          id: string
+          mime_type: string | null
+          uploaded_at: string
+          vertriebler_id: string
+        }
+        Insert: {
+          confirmed_at?: string | null
+          confirmed_by_user_id?: string | null
+          file_name: string
+          file_path: string
+          file_size?: number | null
+          id?: string
+          mime_type?: string | null
+          uploaded_at?: string
+          vertriebler_id: string
+        }
+        Update: {
+          confirmed_at?: string | null
+          confirmed_by_user_id?: string | null
+          file_name?: string
+          file_path?: string
+          file_size?: number | null
+          id?: string
+          mime_type?: string | null
+          uploaded_at?: string
+          vertriebler_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sales_rep_contract_uploads_vertriebler_id_fkey"
+            columns: ["vertriebler_id"]
+            isOneToOne: false
+            referencedRelation: "sales_rep_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       sales_rep_notifications: {
         Row: {
           body: string
@@ -2515,6 +2559,7 @@ export type Database = {
       sales_rep_profiles: {
         Row: {
           account_holder: string | null
+          activated_at: string | null
           bank_name: string | null
           bic: string | null
           city: string | null
@@ -2546,6 +2591,7 @@ export type Database = {
         }
         Insert: {
           account_holder?: string | null
+          activated_at?: string | null
           bank_name?: string | null
           bic?: string | null
           city?: string | null
@@ -2577,6 +2623,7 @@ export type Database = {
         }
         Update: {
           account_holder?: string | null
+          activated_at?: string | null
           bank_name?: string | null
           bic?: string | null
           city?: string | null
