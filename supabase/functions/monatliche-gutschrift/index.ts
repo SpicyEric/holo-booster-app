@@ -34,7 +34,7 @@ serve(async (req: Request) => {
 
     const { data: reps, error: repsErr } = await supabase
       .from("sales_rep_profiles")
-      .select("id, user_id, first_name, last_name, email, street, house_number, postal_code, city, tax_number, vat_id, is_small_business")
+      .select("id, user_id, first_name, last_name, email, street, house_number, postal_code, city, tax_number, vat_id, is_small_business, iban, bic, vertrag_outdated")
       .eq("is_active", true);
 
     if (repsErr) throw repsErr;
@@ -58,6 +58,46 @@ serve(async (req: Request) => {
     const results: string[] = [];
 
     for (const rep of reps) {
+      // Check: Steuernummer required for payout
+      if (!rep.tax_number || rep.tax_number.trim() === "") {
+        // Send notification about missing tax number
+        await supabase.from("sales_rep_notifications").insert({
+          user_id: rep.user_id,
+          notification_type: "gutschrift_gesperrt",
+          title: `Auszahlung ${periodeLabel} gesperrt`,
+          body: `Deine Provision für ${periodeLabel} konnte nicht ausgezahlt werden, da keine Steuernummer hinterlegt ist. Bitte ergänze deine Steuerangaben unter Einstellungen.`,
+          metadata: { grund: "steuernummer_fehlt" },
+        });
+        results.push(`${rep.first_name} ${rep.last_name}: KEINE STEUERNUMMER — Provision verfällt`);
+        continue;
+      }
+
+      // Check: IBAN + BIC required for payout
+      if (!rep.iban || rep.iban.trim() === "" || !rep.bic || rep.bic.trim() === "") {
+        await supabase.from("sales_rep_notifications").insert({
+          user_id: rep.user_id,
+          notification_type: "gutschrift_gesperrt",
+          title: `Auszahlung ${periodeLabel} gesperrt`,
+          body: `Deine Provision für ${periodeLabel} konnte nicht ausgezahlt werden, da keine Bankverbindung (IBAN/BIC) hinterlegt ist. Bitte ergänze deine Bankdaten unter Einstellungen.`,
+          metadata: { grund: "bankdaten_fehlt" },
+        });
+        results.push(`${rep.first_name} ${rep.last_name}: KEINE BANKDATEN — Provision verfällt`);
+        continue;
+      }
+
+      // Check: Contract outdated = no payout
+      if (rep.vertrag_outdated) {
+        await supabase.from("sales_rep_notifications").insert({
+          user_id: rep.user_id,
+          notification_type: "gutschrift_gesperrt",
+          title: `Auszahlung ${periodeLabel} gesperrt`,
+          body: `Deine Provision für ${periodeLabel} konnte nicht ausgezahlt werden, da dein Vertrag aktualisiert werden muss. Bitte nimm den Vertrag unter "Mein Vertrag" erneut an.`,
+          metadata: { grund: "vertrag_outdated" },
+        });
+        results.push(`${rep.first_name} ${rep.last_name}: VERTRAG OUTDATED — Provision verfällt`);
+        continue;
+      }
+
       const { data: existing } = await supabase
         .from("vertriebler_gutschriften")
         .select("id")
