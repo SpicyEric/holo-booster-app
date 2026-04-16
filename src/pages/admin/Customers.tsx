@@ -90,8 +90,9 @@ const Customers = () => {
   const [messageBody, setMessageBody] = useState("");
   const [sendingMessage, setSendingMessage] = useState(false);
 
+  const effectiveApiKey = apiKey || '';
   const { isLoaded } = useJsApiLoader({
-    googleMapsApiKey: apiKey || 'PLACEHOLDER',
+    googleMapsApiKey: effectiveApiKey,
     libraries: LIBRARIES,
   });
 

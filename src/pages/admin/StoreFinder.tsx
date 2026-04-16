@@ -302,8 +302,9 @@ export default function StoreFinder() {
   const mapRef = useRef<google.maps.Map | null>(null);
 
   const { apiKey, loading: keyLoading } = useGoogleMapsApiKey();
+  const effectiveApiKey = apiKey || '';
   const { isLoaded } = useJsApiLoader({
-    googleMapsApiKey: apiKey || '',
+    googleMapsApiKey: effectiveApiKey,
     libraries: GMAP_LIBRARIES,
   });
 
