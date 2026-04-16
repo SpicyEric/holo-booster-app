@@ -308,7 +308,7 @@ function generateContractPdf(d: ContractData): Uint8Array {
     },
     {
       title: "C – Auftreten nach außen",
-      text: "Der Vertriebspartner ist nicht berechtigt, im Namen von ELOYO rechtsverbindliche Erklärungen abzugeben oder Verträge zu schließen. Gegenüber Kunden und Dritten hat er sich ausschließlich als „Vertriebspartner von ELOYO" vorzustellen.",
+      text: `Der Vertriebspartner ist nicht berechtigt, im Namen von ELOYO rechtsverbindliche Erklärungen abzugeben oder Verträge zu schließen. Gegenüber Kunden und Dritten hat er sich ausschließlich als \u201EVertriebspartner von ELOYO\u201C vorzustellen.`,
     },
     {
       title: "D – Registrierung & Account-Aktivierung",
