@@ -87,21 +87,22 @@ Deno.serve(async (req) => {
           if (commErr) console.error(`Error deleting commissions for ${rep.email}:`, commErr);
         }
 
-        // 3. Delete gutschriften (credit notes)
-        const { error: gsErr } = await supabase
-          .from("vertriebler_gutschriften")
-          .delete()
-          .eq("vertriebler_id", rep.id);
-        if (gsErr) console.error(`Error deleting gutschriften for ${rep.email}:`, gsErr);
+        // 3. Gutschriften + PDFs bleiben erhalten (Admin muss sie weiterhin sehen)
+        // Nur den vertriebler_id-Bezug in der Gutschriften-Tabelle belassen
 
-        // 4. Delete gutschriften PDFs from storage
+        // 4. Delete contract uploads from storage
         if (rep.user_id) {
-          const { data: files } = await supabase.storage
-            .from("gutschriften")
-            .list(rep.user_id);
-          if (files && files.length > 0) {
-            const paths = files.map((f) => `${rep.user_id}/${f.name}`);
-            await supabase.storage.from("gutschriften").remove(paths);
+          const { data: contracts } = await supabase
+            .from("sales_rep_contract_uploads")
+            .select("file_path")
+            .eq("vertriebler_id", rep.id);
+          if (contracts && contracts.length > 0) {
+            const paths = contracts.map((c: any) => c.file_path);
+            await supabase.storage.from("sales-rep-contracts").remove(paths);
+            await supabase
+              .from("sales_rep_contract_uploads")
+              .delete()
+              .eq("vertriebler_id", rep.id);
           }
         }
 
