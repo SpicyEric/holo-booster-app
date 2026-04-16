@@ -67,6 +67,47 @@ const CustomerMarker = ({ customer, isSelected, onClick }: { customer: Customer;
   );
 };
 
+// Inner map component — only mounted when apiKey is available
+function CustomersMapView({ apiKey, customers, selectedCustomerId, onSelectCustomer, onMapLoad }: {
+  apiKey: string;
+  customers: Customer[];
+  selectedCustomerId: string | null;
+  onSelectCustomer: (id: string) => void;
+  onMapLoad: (map: google.maps.Map) => void;
+}) {
+  const { isLoaded } = useJsApiLoader({
+    googleMapsApiKey: apiKey,
+    libraries: LIBRARIES,
+  });
+
+  const customersWithCoords = customers.filter(c => c.latitude && c.longitude);
+  const defaultCenter = { lat: 51.1657, lng: 10.4515 };
+
+  if (!isLoaded) {
+    return <div className="flex items-center justify-center h-full text-muted-foreground">Karte wird geladen…</div>;
+  }
+
+  return (
+    <GoogleMap
+      mapContainerStyle={{ width: '100%', height: '100%' }}
+      center={defaultCenter}
+      zoom={7}
+      onLoad={onMapLoad}
+      options={{ disableDefaultUI: false, zoomControl: true, mapTypeControl: false, streetViewControl: false, fullscreenControl: true }}
+    >
+      {customersWithCoords.map((customer) => (
+        <OverlayView key={customer.id} position={{ lat: customer.latitude!, lng: customer.longitude! }} mapPaneName={OverlayView.OVERLAY_MOUSE_TARGET}>
+          <CustomerMarker
+            customer={customer}
+            isSelected={selectedCustomerId === customer.id}
+            onClick={() => onSelectCustomer(customer.id)}
+          />
+        </OverlayView>
+      ))}
+    </GoogleMap>
+  );
+}
+
 const Customers = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -89,13 +130,6 @@ const Customers = () => {
   const [messageSubject, setMessageSubject] = useState("");
   const [messageBody, setMessageBody] = useState("");
   const [sendingMessage, setSendingMessage] = useState(false);
-
-  const mapApiKey = apiKey || 'NONE';
-  const { isLoaded } = useJsApiLoader({
-    googleMapsApiKey: mapApiKey,
-    libraries: LIBRARIES,
-  });
-  const mapReady = isLoaded && !!apiKey;
 
   const loadCustomers = useCallback(async () => {
     if (authLoading) return;
