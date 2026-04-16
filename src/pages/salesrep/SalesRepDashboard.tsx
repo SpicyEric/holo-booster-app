@@ -30,7 +30,7 @@ const SalesRepDashboard = () => {
     const checkProfile = async () => {
       const { data } = await supabase
         .from('sales_rep_profiles')
-        .select('contract_status, contract_deadline, first_conversion_at, last_conversion_at')
+        .select('contract_status, contract_deadline, activated_at, last_conversion_at')
         .eq('user_id', user.id)
         .maybeSingle();
 
@@ -46,10 +46,14 @@ const SalesRepDashboard = () => {
           setContractWarning({ show: true, daysLeft: -1 });
         }
 
-        const firstConv = (data as any).first_conversion_at;
+        // Inactivity timer: starts at activated_at, resets on last_conversion_at
+        const activatedAt = (data as any).activated_at;
         const lastConv = (data as any).last_conversion_at;
-        if (firstConv && lastConv) {
-          const daysSince = Math.floor((Date.now() - new Date(lastConv).getTime()) / (1000 * 60 * 60 * 24));
+        if (activatedAt) {
+          const referenceDate = lastConv
+            ? new Date(Math.max(new Date(activatedAt).getTime(), new Date(lastConv).getTime()))
+            : new Date(activatedAt);
+          const daysSince = Math.floor((Date.now() - referenceDate.getTime()) / (1000 * 60 * 60 * 24));
           if (daysSince >= 45) {
             setInactivityWarning({ show: true, daysSince });
           }

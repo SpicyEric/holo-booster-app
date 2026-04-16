@@ -30,13 +30,24 @@ Deno.serve(async (req) => {
       });
     }
 
-    // 2) Sales reps inactive for 365+ days (last_conversion_at older than 365 days)
+    // 2) Sales reps inactive for 365+ days
+    // Timer starts from activated_at (when admin approved contract)
+    // Resets on each new conversion (last_conversion_at)
     const cutoff365 = new Date(Date.now() - 365 * 24 * 60 * 60 * 1000).toISOString();
     const { data: inactiveReps, error: inactiveError } = await supabase
       .from("sales_rep_profiles")
-      .select("id, user_id, first_name, last_name, email, last_conversion_at")
-      .not("first_conversion_at", "is", null)
-      .lt("last_conversion_at", cutoff365);
+      .select("id, user_id, first_name, last_name, email, activated_at, last_conversion_at")
+      .eq("contract_status", "approved")
+      .not("activated_at", "is", null);
+
+    // Filter: delete if both activated_at and last_conversion_at are older than 365 days
+    // (last_conversion_at resets the timer, so we check whichever is more recent)
+    const filteredInactive = (inactiveReps || []).filter((rep: any) => {
+      const lastActivity = rep.last_conversion_at
+        ? new Date(Math.max(new Date(rep.activated_at).getTime(), new Date(rep.last_conversion_at).getTime()))
+        : new Date(rep.activated_at);
+      return lastActivity.toISOString() < cutoff365;
+    });
 
     if (inactiveError) {
       console.error("Error fetching inactive reps:", inactiveError);
@@ -44,8 +55,8 @@ Deno.serve(async (req) => {
 
     // Combine both lists, deduplicate by user_id
     const allRepsToDelete = [...(expiredReps || [])];
-    const seenUserIds = new Set((expiredReps || []).map((r) => r.user_id));
-    for (const rep of inactiveReps || []) {
+    const seenUserIds = new Set((expiredReps || []).map((r: any) => r.user_id));
+    for (const rep of filteredInactive) {
       if (!seenUserIds.has(rep.user_id)) {
         allRepsToDelete.push(rep);
         seenUserIds.add(rep.user_id);
@@ -87,21 +98,22 @@ Deno.serve(async (req) => {
           if (commErr) console.error(`Error deleting commissions for ${rep.email}:`, commErr);
         }
 
-        // 3. Delete gutschriften (credit notes)
-        const { error: gsErr } = await supabase
-          .from("vertriebler_gutschriften")
-          .delete()
-          .eq("vertriebler_id", rep.id);
-        if (gsErr) console.error(`Error deleting gutschriften for ${rep.email}:`, gsErr);
+        // 3. Gutschriften + PDFs bleiben erhalten (Admin muss sie weiterhin sehen)
+        // Nur den vertriebler_id-Bezug in der Gutschriften-Tabelle belassen
 
-        // 4. Delete gutschriften PDFs from storage
+        // 4. Delete contract uploads from storage
         if (rep.user_id) {
-          const { data: files } = await supabase.storage
-            .from("gutschriften")
-            .list(rep.user_id);
-          if (files && files.length > 0) {
-            const paths = files.map((f) => `${rep.user_id}/${f.name}`);
-            await supabase.storage.from("gutschriften").remove(paths);
+          const { data: contracts } = await supabase
+            .from("sales_rep_contract_uploads")
+            .select("file_path")
+            .eq("vertriebler_id", rep.id);
+          if (contracts && contracts.length > 0) {
+            const paths = contracts.map((c: any) => c.file_path);
+            await supabase.storage.from("sales-rep-contracts").remove(paths);
+            await supabase
+              .from("sales_rep_contract_uploads")
+              .delete()
+              .eq("vertriebler_id", rep.id);
           }
         }
 
