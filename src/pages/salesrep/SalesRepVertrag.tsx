@@ -80,7 +80,7 @@ export default function SalesRepVertrag() {
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
 
-      toast.success("Vertrag erfolgreich angenommen. Du kannst ihn jederzeit unter „Mein Vertrag" einsehen.");
+      toast.success('Vertrag erfolgreich angenommen. Du kannst ihn jederzeit unter "Mein Vertrag" einsehen.');
       navigate("/vertriebler");
     } catch (err: any) {
       toast.error(err.message || "Fehler bei der Vertragsannahme");
