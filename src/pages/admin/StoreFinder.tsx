@@ -302,12 +302,10 @@ export default function StoreFinder() {
   const mapRef = useRef<google.maps.Map | null>(null);
 
   const { apiKey, loading: keyLoading } = useGoogleMapsApiKey();
-  const mapApiKey = apiKey || 'NONE';
   const { isLoaded } = useJsApiLoader({
-    googleMapsApiKey: mapApiKey,
+    googleMapsApiKey: apiKey || '',
     libraries: GMAP_LIBRARIES,
   });
-  const mapReady = isLoaded && !!apiKey;
 
   const handleMapClick = useCallback((e: google.maps.MapMouseEvent) => {
     if (!manualAddMode || !e.latLng) return;
