@@ -117,7 +117,7 @@ function getStageColor(status: string): string {
 
 // ── Main Component ─────────────────────────────────────────────────────────────
 
-export default function StoreFinder() {
+function StoreFinderContent({ apiKey }: { apiKey: string }) {
   const [searchResults, setSearchResults] = useState<PlaceResult[]>([]);
   const [savedStores, setSavedStores] = useState<DiscoveredStore[]>([]);
   const [searching, setSearching] = useState(false);
