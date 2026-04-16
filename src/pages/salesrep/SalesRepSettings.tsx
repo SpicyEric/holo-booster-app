@@ -42,6 +42,8 @@ export default function SalesRepSettings() {
   const [saving, setSaving] = useState(false);
   const [profile, setProfile] = useState<SalesRepProfile | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [vatValidating, setVatValidating] = useState(false);
+  const [vatResult, setVatResult] = useState<{ valid: boolean; name?: string; message?: string } | null>(null);
 
   // Password
   const [newPassword, setNewPassword] = useState('');
