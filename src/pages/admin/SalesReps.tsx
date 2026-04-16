@@ -364,7 +364,7 @@ const SalesReps = () => {
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Name, E-Mail, MA-Nr., Ort…"
+              placeholder="Name, E-Mail, PID, Ort…"
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
               className="pl-9 h-9 text-sm"
@@ -390,7 +390,7 @@ const SalesReps = () => {
                       <div className="flex items-center gap-2">
                         <span className="font-medium text-sm truncate">{r.full_name}</span>
                         {r.employee_number && (
-                          <Badge variant="outline" className="text-[10px] shrink-0">MA-{r.employee_number}</Badge>
+                          <Badge variant="outline" className="text-[10px] shrink-0">PID-{r.employee_number}</Badge>
                         )}
                       </div>
                       <p className="text-xs text-muted-foreground truncate mt-0.5">{r.email}</p>
@@ -433,7 +433,7 @@ const SalesReps = () => {
                 <h2 className="text-xl font-bold font-headline">{selected.full_name}</h2>
                 <p className="text-sm text-muted-foreground">{selected.email}</p>
                 {selected.employee_number && (
-                  <Badge variant="outline" className="mt-1">MA-{selected.employee_number}</Badge>
+                  <Badge variant="outline" className="mt-1">PID-{selected.employee_number}</Badge>
                 )}
               </div>
               <div className="ml-auto flex items-center gap-2">

@@ -218,9 +218,9 @@ export default function SalesRepSettings() {
 
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
-                  <Label>Mitarbeiternummer</Label>
+                  <Label>Partner-ID</Label>
                   <div className="p-3 rounded-md bg-muted text-muted-foreground font-mono">
-                    #{profile.employee_number || '—'}
+                    PID-{profile.employee_number || '—'}
                   </div>
                 </div>
                 <div className="space-y-2">
