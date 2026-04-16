@@ -15,7 +15,7 @@ Deno.serve(async (req) => {
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, serviceRoleKey);
 
-    // Find sales rep profiles where contract is still pending and deadline has passed
+    // 1) Sales reps where contract is still pending and 30-day deadline has passed
     const { data: expiredReps, error: fetchError } = await supabase
       .from("sales_rep_profiles")
       .select("id, user_id, first_name, last_name, email, contract_deadline")
@@ -30,7 +30,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Also find sales reps inactive for 365+ days (based on last_conversion_at)
+    // 2) Sales reps inactive for 365+ days (last_conversion_at older than 365 days)
     const cutoff365 = new Date(Date.now() - 365 * 24 * 60 * 60 * 1000).toISOString();
     const { data: inactiveReps, error: inactiveError } = await supabase
       .from("sales_rep_profiles")
@@ -59,38 +59,110 @@ Deno.serve(async (req) => {
     }
 
     const deleted: string[] = [];
+    const errors: string[] = [];
 
     for (const rep of allRepsToDelete) {
       console.log(`Deleting sales rep: ${rep.first_name} ${rep.last_name} (${rep.email})`);
 
-      const { error: deleteProfileError } = await supabase
-        .from("sales_rep_profiles")
-        .delete()
-        .eq("id", rep.id);
+      try {
+        // --- Clean up all related data ---
 
-      if (deleteProfileError) {
-        console.error(`Error deleting profile for ${rep.email}:`, deleteProfileError);
-        continue;
-      }
-
-      if (rep.user_id) {
-        await supabase
-          .from("user_roles")
-          .delete()
-          .eq("user_id", rep.user_id)
-          .eq("role", "sales_partner");
-
-        const { error: deleteUserError } = await supabase.auth.admin.deleteUser(rep.user_id);
-        if (deleteUserError) {
-          console.error(`Error deleting auth user for ${rep.email}:`, deleteUserError);
+        // 1. Remove promoter_id from customers (keeps customers, removes binding)
+        if (rep.user_id) {
+          const { error: clearPromoterErr } = await supabase
+            .from("customers")
+            .update({ promoter_id: null })
+            .eq("promoter_id", rep.user_id);
+          if (clearPromoterErr) {
+            console.error(`Error clearing promoter_id for ${rep.email}:`, clearPromoterErr);
+          }
         }
-      }
 
-      deleted.push(rep.email);
+        // 2. Delete commissions
+        if (rep.user_id) {
+          const { error: commErr } = await supabase
+            .from("commissions")
+            .delete()
+            .eq("promoter_id", rep.user_id);
+          if (commErr) console.error(`Error deleting commissions for ${rep.email}:`, commErr);
+        }
+
+        // 3. Delete gutschriften (credit notes)
+        const { error: gsErr } = await supabase
+          .from("vertriebler_gutschriften")
+          .delete()
+          .eq("vertriebler_id", rep.id);
+        if (gsErr) console.error(`Error deleting gutschriften for ${rep.email}:`, gsErr);
+
+        // 4. Delete gutschriften PDFs from storage
+        if (rep.user_id) {
+          const { data: files } = await supabase.storage
+            .from("gutschriften")
+            .list(rep.user_id);
+          if (files && files.length > 0) {
+            const paths = files.map((f) => `${rep.user_id}/${f.name}`);
+            await supabase.storage.from("gutschriften").remove(paths);
+          }
+        }
+
+        // 5. Reset eloyo_boxes assigned to this sales rep (return to available)
+        if (rep.user_id) {
+          const { error: boxErr } = await supabase
+            .from("eloyo_boxes")
+            .update({ vertriebler_id: null, status: "verfuegbar" })
+            .eq("vertriebler_id", rep.user_id)
+            .in("status", ["zugewiesen", "versendet"]);
+          if (boxErr) console.error(`Error resetting boxes for ${rep.email}:`, boxErr);
+        }
+
+        // 6. Delete box_pakete
+        if (rep.user_id) {
+          const { error: paketErr } = await supabase
+            .from("box_pakete")
+            .delete()
+            .eq("vertriebler_id", rep.user_id);
+          if (paketErr) console.error(`Error deleting box_pakete for ${rep.email}:`, paketErr);
+        }
+
+        // 7. Delete the sales_rep_profile
+        const { error: deleteProfileError } = await supabase
+          .from("sales_rep_profiles")
+          .delete()
+          .eq("id", rep.id);
+
+        if (deleteProfileError) {
+          console.error(`Error deleting profile for ${rep.email}:`, deleteProfileError);
+          errors.push(rep.email);
+          continue;
+        }
+
+        // 8. Delete user_roles and auth user
+        if (rep.user_id) {
+          await supabase
+            .from("user_roles")
+            .delete()
+            .eq("user_id", rep.user_id)
+            .eq("role", "sales_partner");
+
+          const { error: deleteUserError } = await supabase.auth.admin.deleteUser(rep.user_id);
+          if (deleteUserError) {
+            console.error(`Error deleting auth user for ${rep.email}:`, deleteUserError);
+          }
+        }
+
+        deleted.push(rep.email);
+      } catch (repErr) {
+        console.error(`Unexpected error processing ${rep.email}:`, repErr);
+        errors.push(rep.email);
+      }
     }
 
     return new Response(
-      JSON.stringify({ message: `Deleted ${deleted.length} accounts`, deleted }),
+      JSON.stringify({
+        message: `Deleted ${deleted.length} accounts`,
+        deleted,
+        errors: errors.length > 0 ? errors : undefined,
+      }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (err) {
