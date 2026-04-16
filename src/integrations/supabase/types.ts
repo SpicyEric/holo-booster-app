@@ -2588,6 +2588,10 @@ export type Database = {
           updated_at: string
           user_id: string
           vat_id: string | null
+          vertrag_angenommen_am: string | null
+          vertrag_ip: string | null
+          vertrag_pdf_url: string | null
+          vertrag_user_agent: string | null
         }
         Insert: {
           account_holder?: string | null
@@ -2620,6 +2624,10 @@ export type Database = {
           updated_at?: string
           user_id: string
           vat_id?: string | null
+          vertrag_angenommen_am?: string | null
+          vertrag_ip?: string | null
+          vertrag_pdf_url?: string | null
+          vertrag_user_agent?: string | null
         }
         Update: {
           account_holder?: string | null
@@ -2652,6 +2660,10 @@ export type Database = {
           updated_at?: string
           user_id?: string
           vat_id?: string | null
+          vertrag_angenommen_am?: string | null
+          vertrag_ip?: string | null
+          vertrag_pdf_url?: string | null
+          vertrag_user_agent?: string | null
         }
         Relationships: []
       }
