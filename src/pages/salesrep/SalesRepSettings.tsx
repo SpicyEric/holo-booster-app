@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
-import { Loader2, Upload, Download, FileText, AlertTriangle, Eye, EyeOff, Lock, User, Building, FileCheck } from "lucide-react";
+import { Loader2, Upload, Download, FileText, AlertTriangle, Eye, EyeOff, Lock, User, Building, FileCheck, CheckCircle2, XCircle } from "lucide-react";
 
 interface SalesRepProfile {
   id: string;
