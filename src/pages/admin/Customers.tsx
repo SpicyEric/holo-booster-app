@@ -299,26 +299,14 @@ const Customers = () => {
               <p>Google Maps API-Key nicht konfiguriert</p>
             </div>
           </div>
-        ) : isLoaded ? (
-          <GoogleMap
-            mapContainerStyle={{ width: '100%', height: '100%' }}
-            center={defaultCenter}
-            zoom={7}
-            onLoad={onMapLoad}
-            options={{ disableDefaultUI: false, zoomControl: true, mapTypeControl: false, streetViewControl: false, fullscreenControl: true }}
-          >
-            {customersWithCoords.map((customer) => (
-              <OverlayView key={customer.id} position={{ lat: customer.latitude!, lng: customer.longitude! }} mapPaneName={OverlayView.OVERLAY_MOUSE_TARGET}>
-                <CustomerMarker
-                  customer={customer}
-                  isSelected={selectedCustomerId === customer.id}
-                  onClick={() => { setSelectedCustomerId(customer.id); }}
-                />
-              </OverlayView>
-            ))}
-          </GoogleMap>
         ) : (
-          <div className="flex items-center justify-center h-full text-muted-foreground">Karte wird geladen…</div>
+          <CustomersMapView
+            apiKey={apiKey}
+            customers={customers}
+            selectedCustomerId={selectedCustomerId}
+            onSelectCustomer={(id) => setSelectedCustomerId(id)}
+            onMapLoad={onMapLoad}
+          />
         )}
       </div>
 
