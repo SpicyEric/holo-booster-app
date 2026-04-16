@@ -2591,6 +2591,7 @@ export type Database = {
           vat_id: string | null
           vertrag_angenommen_am: string | null
           vertrag_ip: string | null
+          vertrag_outdated: boolean | null
           vertrag_pdf_url: string | null
           vertrag_user_agent: string | null
         }
@@ -2628,6 +2629,7 @@ export type Database = {
           vat_id?: string | null
           vertrag_angenommen_am?: string | null
           vertrag_ip?: string | null
+          vertrag_outdated?: boolean | null
           vertrag_pdf_url?: string | null
           vertrag_user_agent?: string | null
         }
@@ -2665,6 +2667,7 @@ export type Database = {
           vat_id?: string | null
           vertrag_angenommen_am?: string | null
           vertrag_ip?: string | null
+          vertrag_outdated?: boolean | null
           vertrag_pdf_url?: string | null
           vertrag_user_agent?: string | null
         }

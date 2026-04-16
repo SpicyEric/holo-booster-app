@@ -38,7 +38,8 @@ export default function SalesRepVertrag() {
     setProfile(data);
     setLoading(false);
 
-    if (data?.vertrag_angenommen_am) {
+    // If contract accepted and NOT outdated, redirect
+    if (data?.vertrag_angenommen_am && !data?.vertrag_outdated) {
       navigate("/vertriebler/mein-vertrag");
     }
   };

@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
-import { Loader2, Upload, Download, FileText, AlertTriangle, Eye, EyeOff, Lock, User, Building, FileCheck, CheckCircle2, XCircle } from "lucide-react";
+import { Loader2, Eye, EyeOff, Lock, User, Building, FileCheck, CheckCircle2, XCircle, Info } from "lucide-react";
 
 interface SalesRepProfile {
   id: string;
@@ -30,18 +30,19 @@ interface SalesRepProfile {
   bank_name: string;
   account_holder: string;
   is_small_business: boolean;
-  contract_file_path: string | null;
-  contract_uploaded_at: string | null;
-  contract_status: string;
-  contract_deadline: string | null;
+  vertrag_angenommen_am: string | null;
+  vertrag_outdated: boolean;
 }
+
+// Fields that trigger vertrag_outdated when changed
+const CONTRACT_SENSITIVE_FIELDS = ["first_name", "last_name", "street", "house_number", "postal_code", "city", "tax_number", "vat_id", "iban", "bic"] as const;
 
 export default function SalesRepSettings() {
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [profile, setProfile] = useState<SalesRepProfile | null>(null);
-  const [uploading, setUploading] = useState(false);
+  const [originalProfile, setOriginalProfile] = useState<SalesRepProfile | null>(null);
   const [vatValidating, setVatValidating] = useState(false);
   const [vatResult, setVatResult] = useState<{ valid: boolean; name?: string; message?: string } | null>(null);
 
@@ -64,7 +65,11 @@ export default function SalesRepSettings() {
         .maybeSingle();
 
       if (error) throw error;
-      if (data) setProfile(data as unknown as SalesRepProfile);
+      if (data) {
+        const p = data as unknown as SalesRepProfile;
+        setProfile(p);
+        setOriginalProfile(p);
+      }
     } catch (err: any) {
       console.error('Error loading profile:', err);
       toast.error('Fehler beim Laden des Profils');
@@ -74,17 +79,39 @@ export default function SalesRepSettings() {
   };
 
   const handleSave = async (fields: Partial<SalesRepProfile>) => {
-    if (!profile) return;
+    if (!profile || !originalProfile) return;
     setSaving(true);
     try {
+      // Check if any contract-sensitive field changed
+      let outdated = false;
+      if (profile.vertrag_angenommen_am) {
+        for (const key of CONTRACT_SENSITIVE_FIELDS) {
+          if (key in fields && (fields as any)[key] !== (originalProfile as any)[key]) {
+            outdated = true;
+            break;
+          }
+        }
+      }
+
+      const updateFields: any = { ...fields };
+      if (outdated) {
+        updateFields.vertrag_outdated = true;
+      }
+
       const { error } = await supabase
         .from('sales_rep_profiles')
-        .update(fields as any)
+        .update(updateFields)
         .eq('user_id', user!.id);
 
       if (error) throw error;
-      setProfile(prev => prev ? { ...prev, ...fields } : prev);
+      const updated = { ...profile, ...updateFields };
+      setProfile(updated);
+      setOriginalProfile(updated);
       toast.success('Änderungen gespeichert');
+
+      if (outdated) {
+        toast.warning('Deine Profildaten haben sich geändert. Bitte nimm den aktualisierten Vertrag erneut an.');
+      }
     } catch (err: any) {
       toast.error(err.message || 'Fehler beim Speichern');
     } finally {
@@ -115,59 +142,6 @@ export default function SalesRepSettings() {
     }
   };
 
-  const handleContractUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file || !user) return;
-
-    setUploading(true);
-    try {
-      const filePath = `${user.id}/vertrag_${Date.now()}_${file.name}`;
-      const { error: uploadError } = await supabase.storage
-        .from('sales-rep-contracts')
-        .upload(filePath, file);
-
-      if (uploadError) throw uploadError;
-
-      const { error: updateError } = await supabase
-        .from('sales_rep_profiles')
-        .update({
-          contract_file_path: filePath,
-          contract_uploaded_at: new Date().toISOString(),
-          contract_status: 'submitted',
-        } as any)
-        .eq('user_id', user.id);
-
-      if (updateError) throw updateError;
-
-      setProfile(prev => prev ? {
-        ...prev,
-        contract_file_path: filePath,
-        contract_uploaded_at: new Date().toISOString(),
-        contract_status: 'submitted',
-      } : prev);
-
-      toast.success('Vertrag erfolgreich hochgeladen');
-    } catch (err: any) {
-      toast.error(err.message || 'Fehler beim Hochladen');
-    } finally {
-      setUploading(false);
-    }
-  };
-
-  const handleContractDownload = async () => {
-    if (!profile?.contract_file_path) return;
-    try {
-      const { data, error } = await supabase.storage
-        .from('sales-rep-contracts')
-        .createSignedUrl(profile.contract_file_path, 60);
-
-      if (error) throw error;
-      window.open(data.signedUrl, '_blank');
-    } catch (err: any) {
-      toast.error('Fehler beim Download');
-    }
-  };
-
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -183,10 +157,6 @@ export default function SalesRepSettings() {
       </div>
     );
   }
-
-  const contractDaysLeft = profile.contract_deadline
-    ? Math.max(0, Math.ceil((new Date(profile.contract_deadline).getTime() - Date.now()) / (1000 * 60 * 60 * 24)))
-    : null;
 
   return (
     <div className="space-y-6">
@@ -208,7 +178,7 @@ export default function SalesRepSettings() {
           </TabsTrigger>
           <TabsTrigger value="tax" className="flex items-center gap-2">
             <FileCheck className="h-4 w-4" />
-            <span className="hidden sm:inline">Steuern & Vertrag</span>
+            <span className="hidden sm:inline">Steuern</span>
           </TabsTrigger>
         </TabsList>
 
@@ -371,7 +341,7 @@ export default function SalesRepSettings() {
             <div className="p-6 space-y-6">
               <h2 className="text-lg font-semibold">Bankverbindung</h2>
               <p className="text-sm text-muted-foreground">
-                Ohne hinterlegte Bankverbindung bist du nicht vergütungsberechtigt.
+                Ohne hinterlegte Bankverbindung ist keine Auszahlung möglich. Provisionen verfallen ersatzlos.
               </p>
 
               <div className="grid gap-4 sm:grid-cols-2">
@@ -425,183 +395,129 @@ export default function SalesRepSettings() {
           </GlassCard>
         </TabsContent>
 
-        {/* STEUERN & VERTRAG */}
+        {/* STEUERN */}
         <TabsContent value="tax">
-          <div className="space-y-6">
-            <GlassCard>
-              <div className="p-6 space-y-6">
-                <h2 className="text-lg font-semibold">Steuerangaben</h2>
-                <p className="text-sm text-muted-foreground">
-                  Ohne Steuernummer bist du nicht vergütungsberechtigt.
+          <GlassCard>
+            <div className="p-6 space-y-6">
+              <h2 className="text-lg font-semibold">Steuerangaben</h2>
+
+              {/* Info box */}
+              <div className="bg-muted/60 border border-border rounded-lg p-4 space-y-3 text-sm text-muted-foreground">
+                <div className="flex items-start gap-2">
+                  <Info className="h-4 w-4 shrink-0 mt-0.5 text-primary" />
+                  <p className="font-medium text-foreground">Hinweis: Dies ist keine Rechtsberatung. Bitte informiere dich selbst oder bei einem Steuerberater über deine steuerliche Situation.</p>
+                </div>
+                <p>
+                  <strong>Kleinunternehmerregelung (§ 19 UStG):</strong> Wenn dein Jahresumsatz unter 22.000 € liegt, kannst du die Kleinunternehmerregelung nutzen. In diesem Fall benötigst du nur eine Steuernummer, keine USt-IdNr. Deine Provisionen werden netto ausgezahlt — ohne MwSt.-Aufschlag.
                 </p>
+                <p>
+                  <strong>USt-pflichtig:</strong> Wenn du eine gültige USt-IdNr. hinterlegst und diese bestätigt wird, werden deine Provisionen brutto (zzgl. 19% MwSt.) ausgezahlt. Deine Gutschriften werden entsprechend ausgestellt.
+                </p>
+                <p className="font-medium text-destructive">
+                  Wichtig: Ohne hinterlegte Steuernummer ist keine Auszahlung möglich. Provisionen die in einem Monat anfallen, in dem keine Steuernummer vorliegt, verfallen ersatzlos.
+                </p>
+              </div>
 
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <div className="space-y-2">
-                    <Label>Steuernummer</Label>
-                    <Input
-                      value={profile.tax_number}
-                      onChange={(e) => setProfile(prev => prev ? { ...prev, tax_number: e.target.value } : prev)}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>USt-IdNr. (optional)</Label>
-                    <Input
-                      value={profile.vat_id}
-                      placeholder="DE..."
-                      onChange={(e) => setProfile(prev => prev ? { ...prev, vat_id: e.target.value } : prev)}
-                    />
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-3">
-                  <Switch
-                    checked={profile.is_small_business}
-                    onCheckedChange={(checked) => setProfile(prev => prev ? { ...prev, is_small_business: checked } : prev)}
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label>Steuernummer</Label>
+                  <Input
+                    value={profile.tax_number}
+                    onChange={(e) => setProfile(prev => prev ? { ...prev, tax_number: e.target.value } : prev)}
                   />
-                  <Label>Kleinunternehmerregelung (§19 UStG)</Label>
                 </div>
+                <div className="space-y-2">
+                  <Label>USt-IdNr. (optional)</Label>
+                  <Input
+                    value={profile.vat_id}
+                    placeholder="DE..."
+                    onChange={(e) => setProfile(prev => prev ? { ...prev, vat_id: e.target.value } : prev)}
+                  />
+                </div>
+              </div>
 
-                <Button
-                  onClick={async () => {
-                    await handleSave({
-                      tax_number: profile.tax_number,
-                      vat_id: profile.vat_id,
-                      is_small_business: profile.is_small_business,
-                    });
+              <div className="flex items-center gap-3">
+                <Switch
+                  checked={profile.is_small_business}
+                  onCheckedChange={(checked) => setProfile(prev => prev ? { ...prev, is_small_business: checked } : prev)}
+                />
+                <Label>Kleinunternehmerregelung (§19 UStG)</Label>
+              </div>
 
-                    // Validate VAT ID via VIES if provided
-                    if (profile.vat_id && profile.vat_id.trim().length > 0) {
-                      setVatValidating(true);
-                      setVatResult(null);
-                      try {
-                        const { data: sessionData } = await supabase.auth.getSession();
-                        const token = sessionData?.session?.access_token;
-                        const res = await supabase.functions.invoke('validate-ust-id', {
-                          body: { vat_id: profile.vat_id },
-                          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-                        });
-                        if (res.error) throw new Error(res.error.message || 'Validierungsfehler');
-                        const result = res.data;
-                        if (result.error) {
-                          setVatResult({ valid: false, message: result.error });
-                        } else {
-                          setVatResult(result);
-                          if (result.valid) {
-                            setProfile(prev => prev ? { ...prev, vat_id: profile.vat_id } : prev);
-                          }
-                        }
-                      } catch (err: any) {
-                        setVatResult({ valid: false, message: err.message || 'Validierung fehlgeschlagen' });
-                      } finally {
+              <Button
+                onClick={async () => {
+                  // Validate VAT ID via VIES if provided
+                  if (profile.vat_id && profile.vat_id.trim().length > 0) {
+                    setVatValidating(true);
+                    setVatResult(null);
+                    try {
+                      const { data: sessionData } = await supabase.auth.getSession();
+                      const token = sessionData?.session?.access_token;
+                      const res = await supabase.functions.invoke('validate-ust-id', {
+                        body: { vat_id: profile.vat_id },
+                        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+                      });
+                      if (res.error) throw new Error(res.error.message || 'Validierungsfehler');
+                      const result = res.data;
+                      if (result.error) {
+                        setVatResult({ valid: false, message: result.error });
                         setVatValidating(false);
+                        return; // Don't save if invalid
                       }
-                    } else {
-                      setVatResult(null);
+                      setVatResult(result);
+                      if (!result.valid) {
+                        setVatValidating(false);
+                        return; // Don't save if invalid
+                      }
+                    } catch (err: any) {
+                      setVatResult({ valid: false, message: err.message || 'Validierung fehlgeschlagen' });
+                      setVatValidating(false);
+                      return;
+                    } finally {
+                      setVatValidating(false);
                     }
-                  }}
-                  disabled={saving || vatValidating}
-                  className="w-full"
-                >
-                  {(saving || vatValidating) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  {vatValidating ? 'USt-IdNr. wird geprüft…' : 'Steuerangaben speichern'}
-                </Button>
+                  } else {
+                    setVatResult(null);
+                  }
 
-                {vatResult && (
-                  <div className={`flex items-start gap-2 p-3 rounded-md text-sm ${
-                    vatResult.valid 
-                      ? 'bg-green-500/10 text-green-700 dark:text-green-400 border border-green-500/20' 
-                      : 'bg-destructive/10 text-destructive border border-destructive/20'
-                  }`}>
+                  await handleSave({
+                    tax_number: profile.tax_number,
+                    vat_id: profile.vat_id,
+                    is_small_business: profile.is_small_business,
+                  });
+                }}
+                disabled={saving || vatValidating}
+                className="w-full"
+              >
+                {(saving || vatValidating) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                {vatValidating ? 'USt-IdNr. wird geprüft…' : 'Steuerangaben speichern'}
+              </Button>
+
+              {vatResult && (
+                <div className={`flex items-start gap-2 p-3 rounded-md text-sm ${
+                  vatResult.valid 
+                    ? 'bg-green-500/10 text-green-700 dark:text-green-400 border border-green-500/20' 
+                    : 'bg-destructive/10 text-destructive border border-destructive/20'
+                }`}>
+                  {vatResult.valid ? (
+                    <CheckCircle2 className="h-5 w-5 shrink-0 mt-0.5" />
+                  ) : (
+                    <XCircle className="h-5 w-5 shrink-0 mt-0.5" />
+                  )}
+                  <div>
                     {vatResult.valid ? (
-                      <CheckCircle2 className="h-5 w-5 shrink-0 mt-0.5" />
+                      <>
+                        <p className="font-medium">USt-IdNr. bestätigt</p>
+                        {vatResult.name && <p>Gefunden: {vatResult.name}</p>}
+                      </>
                     ) : (
-                      <XCircle className="h-5 w-5 shrink-0 mt-0.5" />
+                      <p>{vatResult.message || 'Diese USt-IdNr. ist laut EU-Register ungültig. Bitte prüfe die Nummer.'}</p>
                     )}
-                    <div>
-                      {vatResult.valid ? (
-                        <>
-                          <p className="font-medium">USt-IdNr. bestätigt</p>
-                          {vatResult.name && <p>Gefunden: {vatResult.name}</p>}
-                        </>
-                      ) : (
-                        <p>{vatResult.message || 'Diese USt-IdNr. ist laut EU-Register ungültig. Bitte prüfe die Nummer.'}</p>
-                      )}
-                    </div>
-                  </div>
-                )}
-              </div>
-            </GlassCard>
-
-            <GlassCard>
-              <div className="p-6 space-y-6">
-                <h2 className="text-lg font-semibold">Vertriebspartnervertrag</h2>
-
-                {profile.contract_status === 'pending' && contractDaysLeft !== null && (
-                  <div className="flex items-start gap-3 p-4 rounded-lg bg-destructive/10 border border-destructive/20">
-                    <AlertTriangle className="h-5 w-5 text-destructive shrink-0 mt-0.5" />
-                    <div>
-                      <p className="font-medium text-destructive">Vertrag nicht eingereicht</p>
-                      <p className="text-sm text-destructive/80">
-                        Bitte lade deinen unterschriebenen Vertrag innerhalb von {contractDaysLeft} Tagen hoch. 
-                        Andernfalls wird dein Account automatisch gelöscht.
-                      </p>
-                    </div>
-                  </div>
-                )}
-
-                {profile.contract_status === 'submitted' && (
-                  <div className="flex items-start gap-3 p-4 rounded-lg bg-primary/10 border border-primary/20">
-                    <FileCheck className="h-5 w-5 text-primary shrink-0 mt-0.5" />
-                    <div>
-                      <p className="font-medium text-primary">Vertrag eingereicht</p>
-                      <p className="text-sm text-muted-foreground">
-                        Dein Vertrag wurde am {profile.contract_uploaded_at ? new Date(profile.contract_uploaded_at).toLocaleDateString('de-DE') : '—'} hochgeladen und wird geprüft.
-                      </p>
-                    </div>
-                  </div>
-                )}
-
-                {profile.contract_status === 'approved' && (
-                  <div className="flex items-start gap-3 p-4 rounded-lg bg-green-500/10 border border-green-500/20">
-                    <FileCheck className="h-5 w-5 text-green-600 shrink-0 mt-0.5" />
-                    <div>
-                      <p className="font-medium text-green-600">Vertrag genehmigt</p>
-                      <p className="text-sm text-muted-foreground">Dein Vertrag wurde geprüft und genehmigt.</p>
-                    </div>
-                  </div>
-                )}
-
-                <div className="flex flex-col sm:flex-row gap-3">
-                  {/* TODO: Link to contract template PDF */}
-                  <Button variant="outline" className="flex items-center gap-2">
-                    <Download className="h-4 w-4" />
-                    Vertragsvorlage herunterladen
-                  </Button>
-
-                  <div className="relative">
-                    <input
-                      type="file"
-                      accept=".pdf,.jpg,.jpeg,.png"
-                      onChange={handleContractUpload}
-                      className="absolute inset-0 opacity-0 cursor-pointer"
-                      disabled={uploading}
-                    />
-                    <Button variant="default" className="flex items-center gap-2 pointer-events-none">
-                      {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
-                      Unterschriebenen Vertrag hochladen
-                    </Button>
                   </div>
                 </div>
-
-                {profile.contract_file_path && (
-                  <Button variant="ghost" size="sm" onClick={handleContractDownload} className="flex items-center gap-2">
-                    <FileText className="h-4 w-4" />
-                    Hochgeladenen Vertrag ansehen
-                  </Button>
-                )}
-              </div>
-            </GlassCard>
-          </div>
+              )}
+            </div>
+          </GlassCard>
         </TabsContent>
       </Tabs>
     </div>
