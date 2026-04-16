@@ -12,10 +12,22 @@ import {
 import {
   Search, Users, Phone, MapPin, Calendar, Hash, Shield, Building2,
   CreditCard, FileText, TrendingUp, Star, Loader2, ChevronRight, Trash2, Mail,
+  CheckCircle, Download, Eye, Clock,
 } from "lucide-react";
 import { toast } from "sonner";
 
+interface ContractUpload {
+  id: string;
+  file_name: string;
+  file_path: string;
+  file_size: number | null;
+  uploaded_at: string;
+  confirmed_at: string | null;
+  confirmed_by_user_id: string | null;
+}
+
 interface SalesRepAccount {
+  id: string; // sales_rep_profiles.id
   user_id: string;
   email: string;
   full_name: string;
@@ -39,14 +51,30 @@ interface SalesRepAccount {
   contract_deadline: string | null;
   contract_file_path: string | null;
   is_active: boolean;
+  activated_at: string | null;
   created_at: string;
   first_conversion_at: string | null;
   last_conversion_at: string | null;
-  // computed
   total_conversions: number;
   total_commission_cents: number;
   active_boxes: number;
 }
+
+const getStatusLabel = (rep: SalesRepAccount): { label: string; variant: "default" | "secondary" | "destructive" | "outline" } => {
+  if (rep.contract_status === "approved" && rep.is_active && rep.activated_at) {
+    return { label: "Aktiv", variant: "default" };
+  }
+  if (rep.contract_status === "submitted") {
+    return { label: "Zu bearbeiten", variant: "outline" };
+  }
+  if (rep.contract_status === "pending") {
+    return { label: "Neu", variant: "secondary" };
+  }
+  if (rep.contract_status === "rejected") {
+    return { label: "Abgelehnt", variant: "destructive" };
+  }
+  return { label: "Neu", variant: "secondary" };
+};
 
 const SalesReps = () => {
   const [reps, setReps] = useState<SalesRepAccount[]>([]);
@@ -55,13 +83,21 @@ const SalesReps = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deleteConfirmText, setDeleteConfirmText] = useState("");
+  const [activateDialogOpen, setActivateDialogOpen] = useState(false);
+  const [contractUploads, setContractUploads] = useState<ContractUpload[]>([]);
+  const [loadingContracts, setLoadingContracts] = useState(false);
+  const [confirmingContractId, setConfirmingContractId] = useState<string | null>(null);
 
   useEffect(() => { loadReps(); }, []);
+
+  useEffect(() => {
+    if (selected) loadContracts(selected.id);
+    else setContractUploads([]);
+  }, [selected?.id]);
 
   const loadReps = async () => {
     try {
       setLoading(true);
-
       const { data: srData, error: srErr } = await supabase
         .from("sales_rep_profiles")
         .select("*")
@@ -71,7 +107,6 @@ const SalesReps = () => {
 
       const userIds = srData.map(s => s.user_id);
 
-      // Fetch emails, subscriptions (conversions), commissions, boxes in parallel
       const [emailsRes, subsRes, commissionsRes, boxesRes] = await Promise.all([
         supabase.functions.invoke("getUserEmails", { body: { userIds } }),
         supabase.from("customer_subscriptions").select("created_by").in("created_by", userIds),
@@ -88,22 +123,16 @@ const SalesReps = () => {
           Object.entries(rawEmails).forEach(([uid, email]) => { emailMap[uid] = email as string; });
         }
       }
-      // Fallback: use email from sales_rep_profiles
       srData.forEach(sr => { if (sr.email && !emailMap[sr.user_id]) emailMap[sr.user_id] = sr.email; });
 
-      // Count conversions per user
       const convMap: Record<string, number> = {};
       (subsRes.data || []).forEach((s: any) => {
         if (s.created_by) convMap[s.created_by] = (convMap[s.created_by] || 0) + 1;
       });
-
-      // Sum commissions per user
       const commMap: Record<string, number> = {};
       (commissionsRes.data || []).forEach((c: any) => {
         if (c.promoter_id) commMap[c.promoter_id] = (commMap[c.promoter_id] || 0) + c.amount_cents;
       });
-
-      // Count active boxes per user
       const boxMap: Record<string, number> = {};
       (boxesRes.data || []).forEach((b: any) => {
         if (b.vertriebler_id && b.status === "versendet") {
@@ -111,7 +140,6 @@ const SalesReps = () => {
         }
       });
 
-      // Fetch profiles for full_name
       const { data: profiles } = await supabase
         .from("profiles")
         .select("user_id, full_name, first_name, last_name")
@@ -123,6 +151,7 @@ const SalesReps = () => {
         const profile = profileMap[sr.user_id];
         const fullName = profile?.full_name || [sr.first_name, sr.last_name].filter(Boolean).join(" ") || "—";
         return {
+          id: sr.id,
           user_id: sr.user_id,
           email: emailMap[sr.user_id] || "—",
           full_name: fullName,
@@ -146,6 +175,7 @@ const SalesReps = () => {
           contract_deadline: sr.contract_deadline,
           contract_file_path: sr.contract_file_path,
           is_active: sr.is_active,
+          activated_at: (sr as any).activated_at,
           created_at: sr.created_at,
           first_conversion_at: sr.first_conversion_at,
           last_conversion_at: sr.last_conversion_at,
@@ -163,6 +193,85 @@ const SalesReps = () => {
     }
   };
 
+  const loadContracts = async (profileId: string) => {
+    setLoadingContracts(true);
+    try {
+      const { data, error } = await supabase
+        .from("sales_rep_contract_uploads")
+        .select("*")
+        .eq("vertriebler_id", profileId)
+        .order("uploaded_at", { ascending: false });
+      if (error) throw error;
+      setContractUploads((data as any[]) || []);
+    } catch (e: any) {
+      console.error("Error loading contracts:", e);
+      setContractUploads([]);
+    } finally {
+      setLoadingContracts(false);
+    }
+  };
+
+  const downloadContract = async (filePath: string, fileName: string) => {
+    try {
+      const { data, error } = await supabase.storage
+        .from("sales-rep-contracts")
+        .createSignedUrl(filePath, 60, { download: fileName });
+      if (error) throw error;
+      if (data?.signedUrl) window.open(data.signedUrl, "_blank");
+    } catch (e: any) {
+      toast.error("Fehler beim Download: " + e.message);
+    }
+  };
+
+  const confirmContract = async (uploadId: string) => {
+    setConfirmingContractId(uploadId);
+    try {
+      const { error } = await supabase
+        .from("sales_rep_contract_uploads")
+        .update({ confirmed_at: new Date().toISOString(), confirmed_by_user_id: (await supabase.auth.getUser()).data.user?.id })
+        .eq("id", uploadId);
+      if (error) throw error;
+      toast.success("Vertrag bestätigt");
+      if (selected) {
+        await loadContracts(selected.id);
+        // Update contract_status to submitted if still pending
+        if (selected.contract_status === "pending" || selected.contract_status === "submitted") {
+          await supabase
+            .from("sales_rep_profiles")
+            .update({ contract_status: "submitted" })
+            .eq("id", selected.id);
+        }
+      }
+    } catch (e: any) {
+      toast.error("Fehler: " + e.message);
+    } finally {
+      setConfirmingContractId(null);
+    }
+  };
+
+  const activateAccount = async () => {
+    if (!selected) return;
+    try {
+      const now = new Date().toISOString();
+      const { error } = await supabase
+        .from("sales_rep_profiles")
+        .update({
+          contract_status: "approved",
+          is_active: true,
+          activated_at: now,
+        })
+        .eq("id", selected.id);
+      if (error) throw error;
+      toast.success("Account aktiviert! 90-Tage-Timer gestartet.");
+      setActivateDialogOpen(false);
+      await loadReps();
+      // Re-select updated rep
+      setSelected(prev => prev ? { ...prev, contract_status: "approved", is_active: true, activated_at: now } : null);
+    } catch (e: any) {
+      toast.error("Fehler: " + e.message);
+    }
+  };
+
   const confirmDeleteRep = async () => {
     if (!selected) return;
     if (deleteConfirmText.toLowerCase() !== "löschen") { toast.error('Bitte "löschen" eingeben'); return; }
@@ -177,6 +286,7 @@ const SalesReps = () => {
       loadReps();
     } catch (e: any) { toast.error("Fehler beim Löschen: " + e.message); }
   };
+
   const filtered = useMemo(() => {
     if (!searchTerm) return reps;
     const t = searchTerm.toLowerCase();
@@ -190,6 +300,20 @@ const SalesReps = () => {
 
   const fmt = (d: string | null) => d ? new Date(d).toLocaleDateString("de-DE") : "—";
   const fmtEur = (cents: number) => (cents / 100).toLocaleString("de-DE", { style: "currency", currency: "EUR" });
+  const fmtSize = (bytes: number | null) => {
+    if (!bytes) return "—";
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  };
+
+  // Check if activation is possible: all uploads confirmed, at least one upload exists
+  const canActivate = selected &&
+    selected.contract_status !== "approved" &&
+    contractUploads.length > 0 &&
+    contractUploads.every(u => u.confirmed_at !== null);
+
+  const hasUnconfirmedContracts = contractUploads.some(u => !u.confirmed_at);
 
   const InfoRow = ({ icon, label, value }: { icon: React.ReactNode; label: string; value: React.ReactNode }) => (
     <div className="flex items-start gap-2 py-1.5">
@@ -201,9 +325,12 @@ const SalesReps = () => {
     </div>
   );
 
-  const Section = ({ title, children }: { title: string; children: React.ReactNode }) => (
+  const Section = ({ title, children, action }: { title: string; children: React.ReactNode; action?: React.ReactNode }) => (
     <div className="space-y-1">
-      <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider font-headline">{title}</h4>
+      <div className="flex items-center justify-between">
+        <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider font-headline">{title}</h4>
+        {action}
+      </div>
       <div className="space-y-0.5">{children}</div>
     </div>
   );
@@ -248,37 +375,40 @@ const SalesReps = () => {
           {filtered.length === 0 ? (
             <p className="text-sm text-muted-foreground text-center py-8">Keine Vertriebler gefunden</p>
           ) : (
-            filtered.map(r => (
-              <button
-                key={r.user_id}
-                onClick={() => setSelected(r)}
-                className={`w-full text-left px-4 py-3 border-b transition-colors hover:bg-muted/50 ${
-                  selected?.user_id === r.user_id ? "bg-muted" : ""
-                }`}
-              >
-                <div className="flex items-center justify-between">
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2">
-                      <span className="font-medium text-sm truncate">{r.full_name}</span>
-                      {r.employee_number && (
-                        <Badge variant="outline" className="text-[10px] shrink-0">MA-{r.employee_number}</Badge>
-                      )}
+            filtered.map(r => {
+              const status = getStatusLabel(r);
+              return (
+                <button
+                  key={r.user_id}
+                  onClick={() => setSelected(r)}
+                  className={`w-full text-left px-4 py-3 border-b transition-colors hover:bg-muted/50 ${
+                    selected?.user_id === r.user_id ? "bg-muted" : ""
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium text-sm truncate">{r.full_name}</span>
+                        {r.employee_number && (
+                          <Badge variant="outline" className="text-[10px] shrink-0">MA-{r.employee_number}</Badge>
+                        )}
+                      </div>
+                      <p className="text-xs text-muted-foreground truncate mt-0.5">{r.email}</p>
+                      <div className="flex items-center gap-3 mt-1 text-[11px] text-muted-foreground">
+                        <span>{r.total_conversions} Abschlüsse</span>
+                        <span>{r.city || "—"}</span>
+                      </div>
                     </div>
-                    <p className="text-xs text-muted-foreground truncate mt-0.5">{r.email}</p>
-                    <div className="flex items-center gap-3 mt-1 text-[11px] text-muted-foreground">
-                      <span>{r.total_conversions} Abschlüsse</span>
-                      <span>{r.city || "—"}</span>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <Badge variant={status.variant} className="text-[10px]">
+                        {status.label}
+                      </Badge>
+                      <ChevronRight className="h-4 w-4 text-muted-foreground" />
                     </div>
                   </div>
-                  <div className="flex items-center gap-2 shrink-0">
-                    <Badge variant={r.is_active ? "default" : "secondary"} className="text-[10px]">
-                      {r.is_active ? "Aktiv" : "Inaktiv"}
-                    </Badge>
-                    <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                  </div>
-                </div>
-              </button>
-            ))
+                </button>
+              );
+            })
           )}
         </div>
       </div>
@@ -307,14 +437,50 @@ const SalesReps = () => {
                 )}
               </div>
               <div className="ml-auto flex items-center gap-2">
-                <Badge variant={selected.is_active ? "default" : "destructive"} className="text-sm">
-                  {selected.is_active ? "Aktiv" : "Inaktiv"}
+                <Badge variant={getStatusLabel(selected).variant} className="text-sm">
+                  {getStatusLabel(selected).label}
                 </Badge>
                 <Button size="sm" variant="destructive" className="h-8 text-xs" onClick={() => { setDeleteConfirmText(""); setDeleteDialogOpen(true); }}>
                   <Trash2 className="w-3 h-3 mr-1" /> Löschen
                 </Button>
               </div>
             </div>
+
+            {/* Activation Banner */}
+            {selected.contract_status !== "approved" && (
+              <div className={`flex items-start gap-3 p-4 rounded-lg ${
+                canActivate
+                  ? "bg-green-50 border border-green-200"
+                  : "bg-muted/50 border border-border"
+              }`}>
+                {canActivate ? (
+                  <>
+                    <CheckCircle className="h-5 w-5 text-green-600 shrink-0 mt-0.5" />
+                    <div className="flex-1">
+                      <p className="font-medium text-green-700">Alle Verträge bestätigt</p>
+                      <p className="text-sm text-green-600">Account kann jetzt aktiviert werden. Der 90-Tage-Timer startet mit der Aktivierung.</p>
+                    </div>
+                    <Button size="sm" onClick={() => setActivateDialogOpen(true)} className="shrink-0">
+                      <CheckCircle className="w-3.5 h-3.5 mr-1" /> Account aktivieren
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <Clock className="h-5 w-5 text-muted-foreground shrink-0 mt-0.5" />
+                    <div>
+                      <p className="font-medium text-foreground">Account noch nicht aktiviert</p>
+                      <p className="text-sm text-muted-foreground">
+                        {contractUploads.length === 0
+                          ? "Noch kein Vertrag hochgeladen."
+                          : hasUnconfirmedContracts
+                            ? "Es gibt noch unbestätigte Verträge. Bitte zuerst alle Verträge prüfen und bestätigen."
+                            : "Verträge bestätigt — Aktivierung möglich."}
+                      </p>
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
 
             <Separator />
 
@@ -324,6 +490,72 @@ const SalesReps = () => {
               <StatCard label="Provisionen gesamt" value={fmtEur(selected.total_commission_cents)} icon={<Star className="h-4 w-4" />} />
               <StatCard label="Aktive Boxen" value={selected.active_boxes} icon={<Building2 className="h-4 w-4" />} />
             </div>
+
+            <Separator />
+
+            {/* Contract Uploads */}
+            <Section title="Vertragsdokumente">
+              {loadingContracts ? (
+                <div className="flex items-center gap-2 py-4 text-muted-foreground">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <span className="text-sm">Lade Verträge…</span>
+                </div>
+              ) : contractUploads.length === 0 ? (
+                <p className="text-sm text-muted-foreground py-3">Noch keine Verträge hochgeladen.</p>
+              ) : (
+                <div className="space-y-2 mt-2">
+                  {contractUploads.map(upload => (
+                    <div key={upload.id} className={`flex items-center gap-3 p-3 rounded-lg border ${
+                      upload.confirmed_at ? "bg-green-50/50 border-green-200" : "bg-muted/30 border-border"
+                    }`}>
+                      <FileText className={`h-5 w-5 shrink-0 ${upload.confirmed_at ? "text-green-600" : "text-muted-foreground"}`} />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium truncate">{upload.file_name}</p>
+                        <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
+                          <span>{fmt(upload.uploaded_at)}</span>
+                          <span>·</span>
+                          <span>{fmtSize(upload.file_size)}</span>
+                          {upload.confirmed_at && (
+                            <>
+                              <span>·</span>
+                              <span className="text-green-600 font-medium">✓ Bestätigt am {fmt(upload.confirmed_at)}</span>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-7 w-7 p-0"
+                          onClick={() => downloadContract(upload.file_path, upload.file_name)}
+                          title="Herunterladen"
+                        >
+                          <Download className="h-3.5 w-3.5" />
+                        </Button>
+                        {!upload.confirmed_at && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-7 text-xs"
+                            disabled={confirmingContractId === upload.id}
+                            onClick={() => confirmContract(upload.id)}
+                          >
+                            {confirmingContractId === upload.id ? (
+                              <Loader2 className="h-3 w-3 animate-spin" />
+                            ) : (
+                              <>
+                                <CheckCircle className="h-3 w-3 mr-1" /> Bestätigen
+                              </>
+                            )}
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </Section>
 
             <Separator />
 
@@ -355,15 +587,18 @@ const SalesReps = () => {
 
             <Separator />
 
-            {/* Vertrag */}
-            <Section title="Vertrag">
-              <InfoRow icon={<Shield className="w-3.5 h-3.5" />} label="Vertragsstatus" value={
+            {/* Vertrag Status */}
+            <Section title="Vertragsstatus">
+              <InfoRow icon={<Shield className="w-3.5 h-3.5" />} label="Status" value={
                 selected.contract_status === "approved" ? "✅ Genehmigt" :
-                selected.contract_status === "pending" ? "⏳ Ausstehend" :
+                selected.contract_status === "submitted" ? "📋 Eingereicht — zu bearbeiten" :
+                selected.contract_status === "pending" ? "⏳ Ausstehend (Neu)" :
                 selected.contract_status === "rejected" ? "❌ Abgelehnt" : "—"
               } />
               <InfoRow icon={<Calendar className="w-3.5 h-3.5" />} label="Vertragsfrist" value={fmt(selected.contract_deadline)} />
-              <InfoRow icon={<FileText className="w-3.5 h-3.5" />} label="Vertragsdatei" value={selected.contract_file_path ? "Vorhanden" : "Nicht hochgeladen"} />
+              {selected.activated_at && (
+                <InfoRow icon={<CheckCircle className="w-3.5 h-3.5" />} label="Aktiviert am" value={fmt(selected.activated_at)} />
+              )}
             </Section>
 
             <Separator />
@@ -371,6 +606,9 @@ const SalesReps = () => {
             {/* Timeline */}
             <Section title="Zeitverlauf">
               <InfoRow icon={<Calendar className="w-3.5 h-3.5" />} label="Registriert am" value={fmt(selected.created_at)} />
+              {selected.activated_at && (
+                <InfoRow icon={<CheckCircle className="w-3.5 h-3.5" />} label="Aktiviert am" value={fmt(selected.activated_at)} />
+              )}
               <InfoRow icon={<Calendar className="w-3.5 h-3.5" />} label="Erster Abschluss" value={fmt(selected.first_conversion_at)} />
               <InfoRow icon={<Calendar className="w-3.5 h-3.5" />} label="Letzter Abschluss" value={fmt(selected.last_conversion_at)} />
             </Section>
@@ -386,6 +624,7 @@ const SalesReps = () => {
           <AlertDialogTitle>Vertriebler löschen?</AlertDialogTitle>
           <AlertDialogDescription>
             Account von <strong>{selected?.full_name}</strong> ({selected?.email}) wird unwiderruflich gelöscht.
+            Gutschriften bleiben zur Dokumentation erhalten.
             <div className="mt-3">
               <Label className="text-xs">Bitte "löschen" eingeben:</Label>
               <Input value={deleteConfirmText} onChange={e => setDeleteConfirmText(e.target.value)} className="mt-1" />
@@ -395,6 +634,24 @@ const SalesReps = () => {
         <AlertDialogFooter>
           <AlertDialogCancel>Abbrechen</AlertDialogCancel>
           <AlertDialogAction onClick={confirmDeleteRep} className="bg-destructive hover:bg-destructive/90">Löschen</AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+
+    {/* Activate Dialog */}
+    <AlertDialog open={activateDialogOpen} onOpenChange={setActivateDialogOpen}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Account aktivieren?</AlertDialogTitle>
+          <AlertDialogDescription>
+            Der Account von <strong>{selected?.full_name}</strong> wird aktiviert.
+            Der 90-Tage-Timer für den ersten Abschluss startet jetzt.
+            Nach 365 Tagen Inaktivität wird der Account automatisch gelöscht.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+          <AlertDialogAction onClick={activateAccount}>Aktivieren</AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
