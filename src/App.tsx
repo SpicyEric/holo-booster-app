@@ -78,6 +78,8 @@ import BoxReturns from "./pages/admin/BoxReturns";
 import SalesReps from "./pages/admin/SalesReps";
 import AdminGutschriften from "./pages/admin/Gutschriften";
 import SalesRepAbrechnungen from "./pages/salesrep/SalesRepAbrechnungen";
+import SalesRepVertrag from "./pages/salesrep/SalesRepVertrag";
+import SalesRepMeinVertrag from "./pages/salesrep/SalesRepMeinVertrag";
 
 const queryClient = new QueryClient();
 
@@ -162,6 +164,8 @@ const App = () => {
                 <Route path="orders" element={<SalesRepOrders />} />
                 <Route path="settings" element={<SalesRepSettings />} />
                 <Route path="abrechnungen" element={<SalesRepAbrechnungen />} />
+                <Route path="vertrag" element={<SalesRepVertrag />} />
+                <Route path="mein-vertrag" element={<SalesRepMeinVertrag />} />
                 <Route path="map" element={<CustomerMap />} />
               </Route>
 
