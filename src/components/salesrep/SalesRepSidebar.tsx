@@ -2,7 +2,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { signOut } from "@/lib/auth";
 import { toast } from "sonner";
 import {
-  LayoutDashboard, Users, Package, BarChart3, Euro, Mail, Receipt,
+  LayoutDashboard, Users, Package, BarChart3, Euro, Mail, Receipt, FileText,
   ShoppingCart, Settings, LogOut, ChevronLeft, Menu, X, Map, GitBranch, Search, CalendarDays,
 } from "lucide-react";
 import eloyoLogo from "@/assets/eloyo-logo.png";
@@ -48,6 +48,12 @@ const NAV_GROUPS: NavGroup[] = [
     items: [
       { path: "/vertriebler/messages", label: "Nachrichten", icon: Mail },
       { path: "/vertriebler/orders", label: "Bestellung", icon: Package },
+    ],
+  },
+  {
+    label: "VERTRAG",
+    items: [
+      { path: "/vertriebler/mein-vertrag", label: "Mein Vertrag", icon: FileText },
     ],
   },
   {
