@@ -30,13 +30,24 @@ Deno.serve(async (req) => {
       });
     }
 
-    // 2) Sales reps inactive for 365+ days (last_conversion_at older than 365 days)
+    // 2) Sales reps inactive for 365+ days
+    // Timer starts from activated_at (when admin approved contract)
+    // Resets on each new conversion (last_conversion_at)
     const cutoff365 = new Date(Date.now() - 365 * 24 * 60 * 60 * 1000).toISOString();
     const { data: inactiveReps, error: inactiveError } = await supabase
       .from("sales_rep_profiles")
-      .select("id, user_id, first_name, last_name, email, last_conversion_at")
-      .not("first_conversion_at", "is", null)
-      .lt("last_conversion_at", cutoff365);
+      .select("id, user_id, first_name, last_name, email, activated_at, last_conversion_at")
+      .eq("contract_status", "approved")
+      .not("activated_at", "is", null);
+
+    // Filter: delete if both activated_at and last_conversion_at are older than 365 days
+    // (last_conversion_at resets the timer, so we check whichever is more recent)
+    const filteredInactive = (inactiveReps || []).filter((rep: any) => {
+      const lastActivity = rep.last_conversion_at
+        ? new Date(Math.max(new Date(rep.activated_at).getTime(), new Date(rep.last_conversion_at).getTime()))
+        : new Date(rep.activated_at);
+      return lastActivity.toISOString() < cutoff365;
+    });
 
     if (inactiveError) {
       console.error("Error fetching inactive reps:", inactiveError);
@@ -44,8 +55,8 @@ Deno.serve(async (req) => {
 
     // Combine both lists, deduplicate by user_id
     const allRepsToDelete = [...(expiredReps || [])];
-    const seenUserIds = new Set((expiredReps || []).map((r) => r.user_id));
-    for (const rep of inactiveReps || []) {
+    const seenUserIds = new Set((expiredReps || []).map((r: any) => r.user_id));
+    for (const rep of filteredInactive) {
       if (!seenUserIds.has(rep.user_id)) {
         allRepsToDelete.push(rep);
         seenUserIds.add(rep.user_id);
