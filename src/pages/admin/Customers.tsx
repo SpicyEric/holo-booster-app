@@ -90,11 +90,12 @@ const Customers = () => {
   const [messageBody, setMessageBody] = useState("");
   const [sendingMessage, setSendingMessage] = useState(false);
 
-  const effectiveApiKey = apiKey || '';
+  const mapApiKey = apiKey || 'NONE';
   const { isLoaded } = useJsApiLoader({
-    googleMapsApiKey: effectiveApiKey,
+    googleMapsApiKey: mapApiKey,
     libraries: LIBRARIES,
   });
+  const mapReady = isLoaded && !!apiKey;
 
   const loadCustomers = useCallback(async () => {
     if (authLoading) return;
