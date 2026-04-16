@@ -19,8 +19,8 @@ export default function SalesRepMeinVertrag() {
   }, [user]);
 
   const loadProfile = async () => {
-    const { data } = await supabase
-      .from("sales_rep_profiles" as any)
+    const { data } = await (supabase
+      .from("sales_rep_profiles") as any)
       .select("*")
       .eq("user_id", user!.id)
       .single();

@@ -26,8 +26,8 @@ export default function SalesRepVertrag() {
   }, [user]);
 
   const loadProfile = async () => {
-    const { data, error } = await supabase
-      .from("sales_rep_profiles" as any)
+    const { data, error } = await (supabase
+      .from("sales_rep_profiles") as any)
       .select("*")
       .eq("user_id", user!.id)
       .single();
@@ -38,7 +38,6 @@ export default function SalesRepVertrag() {
     setProfile(data);
     setLoading(false);
 
-    // If contract is already signed, redirect
     if (data?.vertrag_angenommen_am) {
       navigate("/vertriebler/mein-vertrag");
     }
