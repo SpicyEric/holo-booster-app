@@ -1,0 +1,1 @@
+ALTER TABLE public.sales_rep_profiles ADD COLUMN IF NOT EXISTS vertrag_outdated BOOLEAN DEFAULT false;
