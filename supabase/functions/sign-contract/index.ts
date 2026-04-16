@@ -41,8 +41,8 @@ serve(async (req: Request) => {
       .single();
     if (profErr || !profile) throw new Error("Profil nicht gefunden");
 
-    // Check if already signed
-    if (profile.vertrag_angenommen_am) {
+    // Allow re-signing if contract is outdated
+    if (profile.vertrag_angenommen_am && !profile.vertrag_outdated) {
       throw new Error("Vertrag wurde bereits angenommen");
     }
 
@@ -95,7 +95,7 @@ serve(async (req: Request) => {
       });
     if (uploadErr) throw new Error(`Upload-Fehler: ${uploadErr.message}`);
 
-    // Update profile
+    // Update profile - reset outdated flag
     const { error: updateErr } = await supabase
       .from("sales_rep_profiles")
       .update({
@@ -104,6 +104,7 @@ serve(async (req: Request) => {
         vertrag_user_agent: userAgent,
         vertrag_pdf_url: storagePath,
         contract_status: "angenommen",
+        vertrag_outdated: false,
       })
       .eq("user_id", user.id);
     if (updateErr) throw new Error(`Update-Fehler: ${updateErr.message}`);
