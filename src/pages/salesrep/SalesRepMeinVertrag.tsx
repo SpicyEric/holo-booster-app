@@ -46,16 +46,18 @@ export default function SalesRepMeinVertrag() {
     try {
       const { data, error } = await supabase.storage
         .from("vertraege")
-        .createSignedUrl(profile.vertrag_pdf_url, 60);
+        .download(profile.vertrag_pdf_url);
       if (error) throw error;
 
+      const blob = data;
+      const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
-      link.href = data.signedUrl;
+      link.href = url;
       link.download = `Vertriebspartnervertrag_PID-${profile.employee_number || "VP"}.pdf`;
-      link.target = "_blank";
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
+      URL.revokeObjectURL(url);
     } catch (err: any) {
       toast.error("Download fehlgeschlagen: " + (err.message || "Unbekannter Fehler"));
     } finally {
