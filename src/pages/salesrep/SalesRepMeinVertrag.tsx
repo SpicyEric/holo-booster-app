@@ -171,7 +171,7 @@ export default function SalesRepMeinVertrag() {
               Dein Vertrag wurde aktualisiert. Bitte nimm die neue Version innerhalb von 30 Tagen an.
             </p>
             <p className="text-xs text-muted-foreground mt-1">
-              Bis zur Annahme sind Boxenbestellung und Auszahlung gesperrt.
+              Wird die neue Version nicht innerhalb der Frist angenommen, werden Boxenbestellung und Auszahlung gesperrt.
             </p>
             <Button
               variant="destructive"
