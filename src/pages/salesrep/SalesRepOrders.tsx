@@ -51,11 +51,20 @@ export default function SalesRepOrders() {
   const [orders, setOrders] = useState<BoxPaket[]>([]);
   const [orderBoxes, setOrderBoxes] = useState<Record<string, EloyoBox[]>>({});
   const [confirmModal, setConfirmModal] = useState<'starter' | 'vertrieb' | null>(null);
+  const [vertragOutdated, setVertragOutdated] = useState(false);
 
   const loadData = async () => {
     if (!user) return;
     setLoading(true);
     try {
+      // Vertrag-Outdated check
+      const { data: prof } = await (supabase
+        .from('sales_rep_profiles') as any)
+        .select('vertrag_outdated')
+        .eq('user_id', user.id)
+        .maybeSingle();
+      setVertragOutdated(!!prof?.vertrag_outdated);
+
       // Active customer count
       const { count: activeCount } = await supabase
         .from('customers')
@@ -113,6 +122,11 @@ export default function SalesRepOrders() {
 
   const handleOrder = async (typ: 'starter' | 'vertrieb') => {
     if (!user) return;
+    if (vertragOutdated) {
+      toast.error('Bitte nimm zuerst die neue Vertragsversion an, bevor du Boxen bestellst.');
+      setConfirmModal(null);
+      return;
+    }
     setOrdering(true);
     try {
       const anzahl = typ === 'starter' ? 4 : 7;
@@ -149,6 +163,20 @@ export default function SalesRepOrders() {
         <h1 className="text-2xl font-bold text-foreground">Bestellung</h1>
         <p className="text-sm text-muted-foreground">Bestelle eloyo Boxen für deinen Vertrieb.</p>
       </div>
+
+      {vertragOutdated && (
+        <div className="bg-destructive/10 border border-destructive/30 rounded-lg p-4 flex items-start gap-3">
+          <AlertTriangle className="w-5 h-5 text-destructive shrink-0 mt-0.5" />
+          <div className="flex-1">
+            <p className="text-sm font-medium text-destructive">
+              Bestellungen sind gesperrt — bitte nimm zuerst die neue Vertragsversion an.
+            </p>
+            <Button variant="destructive" size="sm" className="mt-3" onClick={() => window.location.assign('/vertriebler/mein-vertrag')}>
+              Zum Vertrag →
+            </Button>
+          </div>
+        </div>
+      )}
 
       {/* Products */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

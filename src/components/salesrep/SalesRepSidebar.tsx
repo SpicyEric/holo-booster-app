@@ -51,14 +51,9 @@ const NAV_GROUPS: NavGroup[] = [
     ],
   },
   {
-    label: "VERTRAG",
-    items: [
-      { path: "/vertriebler/mein-vertrag", label: "Mein Vertrag", icon: FileText },
-    ],
-  },
-  {
     label: "SYSTEM",
     items: [
+      { path: "/vertriebler/mein-vertrag", label: "Mein Vertrag", icon: FileText },
       { path: "/vertriebler/abrechnungen", label: "Meine Abrechnungen", icon: Receipt },
       { path: "/vertriebler/settings", label: "Einstellungen", icon: Settings },
     ],
