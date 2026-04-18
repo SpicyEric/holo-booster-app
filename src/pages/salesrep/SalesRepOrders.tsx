@@ -164,7 +164,31 @@ export default function SalesRepOrders() {
         <p className="text-sm text-muted-foreground">Bestelle eloyo Boxen für deinen Vertrieb.</p>
       </div>
 
+      {vertragOutdated && (
+        <div className="bg-destructive/10 border border-destructive/30 rounded-lg p-4 flex items-start gap-3">
+          <AlertTriangle className="w-5 h-5 text-destructive shrink-0 mt-0.5" />
+          <div className="flex-1">
+            <p className="text-sm font-medium text-destructive">
+              Bestellungen sind gesperrt — bitte nimm zuerst die neue Vertragsversion an.
+            </p>
+            <Button variant="destructive" size="sm" className="mt-3" onClick={() => window.location.assign('/vertriebler/mein-vertrag')}>
+              Zum Vertrag →
+            </Button>
+          </div>
+        </div>
+      )}
+
       {/* Products */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Starterpaket */}
+        <Card className="relative overflow-hidden">
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-lg">Starterpaket</CardTitle>
+              <Badge variant="secondary">4 Boxen</Badge>
+            </div>
+            <CardDescription>4 eloyo Boxen für den Einstieg</CardDescription>
+          </CardHeader>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Starterpaket */}
         <Card className="relative overflow-hidden">
