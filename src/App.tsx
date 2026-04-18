@@ -80,6 +80,7 @@ import AdminGutschriften from "./pages/admin/Gutschriften";
 import SalesRepAbrechnungen from "./pages/salesrep/SalesRepAbrechnungen";
 import SalesRepVertrag from "./pages/salesrep/SalesRepVertrag";
 import SalesRepMeinVertrag from "./pages/salesrep/SalesRepMeinVertrag";
+import SalesRepStats from "./pages/salesrep/SalesRepStats";
 import AdminVertragsversionen from "./pages/admin/Vertragsversionen";
 import AdminZusatzvereinbarungen from "./pages/admin/Zusatzvereinbarungen";
 
@@ -162,7 +163,7 @@ const App = () => {
                 <Route path="lead-pipeline" element={<LeadsPipeline />} />
                 <Route path="store-finder" element={<StoreFinder />} />
                 <Route path="calendar" element={<AdminCalendar />} />
-                <Route path="stats" element={<Stats />} />
+                <Route path="stats" element={<SalesRepStats />} />
                 <Route path="checkout" element={<SalesRepCheckout />} />
                 <Route path="messages" element={<SalesRepMessages />} />
                 <Route path="orders" element={<SalesRepOrders />} />

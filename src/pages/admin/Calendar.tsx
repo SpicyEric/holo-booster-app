@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useSearchParams, useNavigate, useLocation } from 'react-router-dom';
+import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isSameMonth, addMonths, subMonths, startOfWeek, endOfWeek, parseISO } from 'date-fns';
@@ -54,6 +55,9 @@ const DURATION_OPTIONS = [15, 30, 60];
 export default function AdminCalendar() {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
+  const location = useLocation();
+  const { user } = useAuth();
+  const isSalesRepCtx = location.pathname.startsWith('/vertriebler');
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(true);
@@ -234,18 +238,29 @@ export default function AdminCalendar() {
 
       const leadIds = [...new Set((data || []).map((a: any) => a.lead_id))];
       let leadsMap: Record<string, any> = {};
+      let allowedLeadIds: Set<string> | null = null;
+
       if (leadIds.length > 0) {
-        const { data: leads } = await supabase
+        let leadsQuery = supabase
           .from('discovered_stores')
-          .select('id, name, google_photo_url, status, note_title, notes, phone, email, address, contact_person, latitude, longitude')
+          .select('id, name, google_photo_url, status, note_title, notes, phone, email, address, contact_person, latitude, longitude, admin_user_id')
           .in('id', leadIds);
+        if (isSalesRepCtx && user?.id) {
+          leadsQuery = leadsQuery.eq('admin_user_id', user.id);
+        }
+        const { data: leads } = await leadsQuery;
         if (leads) {
           leadsMap = Object.fromEntries(leads.map((l: any) => [l.id, l]));
+          if (isSalesRepCtx) {
+            allowedLeadIds = new Set(leads.map((l: any) => l.id));
+          }
         }
       }
 
       setAppointments(
-        (data || []).map((a: any) => ({ ...a, lead: leadsMap[a.lead_id] || null }))
+        (data || [])
+          .filter((a: any) => !allowedLeadIds || allowedLeadIds.has(a.lead_id))
+          .map((a: any) => ({ ...a, lead: leadsMap[a.lead_id] || null }))
       );
     } catch (err) {
       console.error(err);
@@ -253,7 +268,7 @@ export default function AdminCalendar() {
     } finally {
       setLoading(false);
     }
-  }, [currentMonth]);
+  }, [currentMonth, isSalesRepCtx, user?.id]);
 
   useEffect(() => { fetchAppointments(); }, [fetchAppointments]);
 

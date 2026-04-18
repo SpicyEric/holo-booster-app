@@ -1,5 +1,8 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { useLocation } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
+import { useSalesRepActive } from '@/hooks/useSalesRepActive';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -9,7 +12,7 @@ import { Slider } from '@/components/ui/slider';
 import { toast } from 'sonner';
 import {
   Search, MapPin, Phone, Globe, Star, Plus,
-  Loader2, Sparkles, Building2, Mail, User, ExternalLink, Trash2,
+  Loader2, Sparkles, Building2, Mail, User, ExternalLink, Trash2, Lock,
 } from 'lucide-react';
 import { useGoogleMapsApiKey } from '@/hooks/useGoogleMapsApiKey';
 import { GoogleMap, useJsApiLoader, OverlayView } from '@react-google-maps/api';
@@ -118,6 +121,11 @@ function getStageColor(status: string): string {
 // ── Main Component ─────────────────────────────────────────────────────────────
 
 function StoreFinderContent({ apiKey }: { apiKey: string }) {
+  const location = useLocation();
+  const { user } = useAuth();
+  const isSalesRepCtx = location.pathname.startsWith('/vertriebler');
+  const { requireActive } = useSalesRepActive();
+
   const [searchResults, setSearchResults] = useState<PlaceResult[]>([]);
   const [savedStores, setSavedStores] = useState<DiscoveredStore[]>([]);
   const [searching, setSearching] = useState(false);
@@ -131,13 +139,18 @@ function StoreFinderContent({ apiKey }: { apiKey: string }) {
   // Load saved stores
   useEffect(() => {
     loadSavedStores();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id, isSalesRepCtx]);
 
   const loadSavedStores = async () => {
-    const { data, error } = await supabase
+    let query = supabase
       .from('discovered_stores')
       .select('*')
       .order('created_at', { ascending: false });
+    if (isSalesRepCtx && user?.id) {
+      query = query.eq('admin_user_id', user.id);
+    }
+    const { data, error } = await query;
 
     if (error) {
       console.error('Error loading stores:', error);
@@ -162,6 +175,7 @@ function StoreFinderContent({ apiKey }: { apiKey: string }) {
   };
 
   const searchPlaces = async () => {
+    if (!requireActive()) return;
     if (!postalCode && !searchCenter) {
       toast.error('Bitte PLZ eingeben');
       return;
@@ -208,6 +222,7 @@ function StoreFinderContent({ apiKey }: { apiKey: string }) {
   };
 
   const addStore = async (place: PlaceResult) => {
+    if (!requireActive()) return;
     try {
       // Get detailed info first
       const { data: detailData, error: detailError } = await supabase.functions.invoke('place-details', {
@@ -257,6 +272,7 @@ function StoreFinderContent({ apiKey }: { apiKey: string }) {
   };
 
   const enrichStore = async (storeId: string) => {
+    if (!requireActive()) return;
     const store = savedStores.find((s) => s.id === storeId);
     if (!store) return;
 
@@ -312,6 +328,7 @@ function StoreFinderContent({ apiKey }: { apiKey: string }) {
   }, [manualAddMode]);
 
   const addManualStore = async () => {
+    if (!requireActive()) return;
     if (!manualName.trim() || !manualLatLng) return;
     try {
       const { data: userData } = await supabase.auth.getUser();
