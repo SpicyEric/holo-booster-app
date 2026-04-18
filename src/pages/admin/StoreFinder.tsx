@@ -121,6 +121,11 @@ function getStageColor(status: string): string {
 // ── Main Component ─────────────────────────────────────────────────────────────
 
 function StoreFinderContent({ apiKey }: { apiKey: string }) {
+  const location = useLocation();
+  const { user } = useAuth();
+  const isSalesRepCtx = location.pathname.startsWith('/vertriebler');
+  const { requireActive } = useSalesRepActive();
+
   const [searchResults, setSearchResults] = useState<PlaceResult[]>([]);
   const [savedStores, setSavedStores] = useState<DiscoveredStore[]>([]);
   const [searching, setSearching] = useState(false);
@@ -134,13 +139,18 @@ function StoreFinderContent({ apiKey }: { apiKey: string }) {
   // Load saved stores
   useEffect(() => {
     loadSavedStores();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id, isSalesRepCtx]);
 
   const loadSavedStores = async () => {
-    const { data, error } = await supabase
+    let query = supabase
       .from('discovered_stores')
       .select('*')
       .order('created_at', { ascending: false });
+    if (isSalesRepCtx && user?.id) {
+      query = query.eq('admin_user_id', user.id);
+    }
+    const { data, error } = await query;
 
     if (error) {
       console.error('Error loading stores:', error);
