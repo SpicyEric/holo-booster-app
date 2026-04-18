@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
@@ -301,12 +302,20 @@ export default function LeadsPipeline() {
 
 
   /* ---- Fetch ---- */
+  const { user } = useAuth();
+  const location = useLocation();
+  const isSalesRepCtx = location.pathname.startsWith('/vertriebler');
+
   const fetchStores = useCallback(async () => {
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from('discovered_stores')
         .select('*')
         .order('created_at', { ascending: false });
+      if (isSalesRepCtx && user?.id) {
+        query = query.eq('admin_user_id', user.id);
+      }
+      const { data, error } = await query;
 
       if (error) throw error;
       setStores(data || []);
@@ -316,7 +325,7 @@ export default function LeadsPipeline() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [isSalesRepCtx, user?.id]);
 
   useEffect(() => { fetchStores(); }, [fetchStores]);
 
