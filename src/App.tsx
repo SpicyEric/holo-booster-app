@@ -80,6 +80,8 @@ import AdminGutschriften from "./pages/admin/Gutschriften";
 import SalesRepAbrechnungen from "./pages/salesrep/SalesRepAbrechnungen";
 import SalesRepVertrag from "./pages/salesrep/SalesRepVertrag";
 import SalesRepMeinVertrag from "./pages/salesrep/SalesRepMeinVertrag";
+import AdminVertragsversionen from "./pages/admin/Vertragsversionen";
+import AdminZusatzvereinbarungen from "./pages/admin/Zusatzvereinbarungen";
 
 const queryClient = new QueryClient();
 
@@ -129,6 +131,8 @@ const App = () => {
                 <Route path="box-orders" element={<BoxOrders />} />
                 <Route path="box-returns" element={<BoxReturns />} />
                 <Route path="gutschriften" element={<AdminGutschriften />} />
+                <Route path="vertragsversionen" element={<AdminVertragsversionen />} />
+                <Route path="zusatzvereinbarungen" element={<AdminZusatzvereinbarungen />} />
                 <Route path="settings" element={<Settings />} />
                 <Route path="map" element={<CustomerMap />} />
               </Route>
