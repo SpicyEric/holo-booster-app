@@ -546,6 +546,36 @@ function generateContractPdf(d: ContractData): Uint8Array {
   const bottomLine = y + 10;
   doc.line(margin, bottomLine, pw - margin, bottomLine);
 
+  // ===== VERSIONS-HINWEISSEITE (nur bei Replacement) =====
+  if (d.previousVersion) {
+    addPage();
+    doc.setFontSize(18);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(107, 33, 168);
+    doc.text("VERSIONSHINWEIS", pw / 2, y, { align: "center" });
+    doc.setTextColor(0);
+    y += 14;
+
+    doc.setFontSize(11);
+    doc.setFont("helvetica", "normal");
+    const note = `Diese Vertragsversion (${d.version}) ersetzt die zuvor angenommene Version (${d.previousVersion}). Die vorherige Fassung wurde im internen Archiv gesichert und bleibt für Nachweiszwecke verfügbar. Mit der digitalen Annahme dieser neuen Version erkennt der Vertriebspartner die aktualisierten Konditionen verbindlich an.`;
+    const noteLines = doc.splitTextToSize(note, pw - 2 * margin - 10);
+    for (const ln of noteLines) { doc.text(ln, margin + 5, y); y += 6; }
+    y += 6;
+    doc.setFontSize(9);
+    doc.setTextColor(100);
+    doc.text(`Aktuelle Version: ${d.version}`, margin + 5, y); y += 5;
+    doc.text(`Vorherige Version: ${d.previousVersion}`, margin + 5, y); y += 5;
+    doc.text(`Annahme der neuen Version: ${d.vertragsdatum}, ${d.uhrzeit} Uhr`, margin + 5, y);
+    doc.setTextColor(0);
+  } else {
+    // Versionsnummer als kleiner Hinweis am Ende
+    doc.setFontSize(8);
+    doc.setTextColor(120);
+    doc.text(`Vertragsversion: ${d.version}`, margin, bottomLine + 6);
+    doc.setTextColor(0);
+  }
+
   const arrayBuffer = doc.output("arraybuffer");
   return new Uint8Array(arrayBuffer);
 }
