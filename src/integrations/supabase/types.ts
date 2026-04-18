@@ -2590,10 +2590,13 @@ export type Database = {
           ust_id_verified: boolean | null
           vat_id: string | null
           vertrag_angenommen_am: string | null
+          vertrag_inaktiv: boolean | null
           vertrag_ip: string | null
           vertrag_outdated: boolean | null
+          vertrag_outdated_seit: string | null
           vertrag_pdf_url: string | null
           vertrag_user_agent: string | null
+          vertrag_version: string | null
         }
         Insert: {
           account_holder?: string | null
@@ -2628,10 +2631,13 @@ export type Database = {
           ust_id_verified?: boolean | null
           vat_id?: string | null
           vertrag_angenommen_am?: string | null
+          vertrag_inaktiv?: boolean | null
           vertrag_ip?: string | null
           vertrag_outdated?: boolean | null
+          vertrag_outdated_seit?: string | null
           vertrag_pdf_url?: string | null
           vertrag_user_agent?: string | null
+          vertrag_version?: string | null
         }
         Update: {
           account_holder?: string | null
@@ -2666,10 +2672,13 @@ export type Database = {
           ust_id_verified?: boolean | null
           vat_id?: string | null
           vertrag_angenommen_am?: string | null
+          vertrag_inaktiv?: boolean | null
           vertrag_ip?: string | null
           vertrag_outdated?: boolean | null
+          vertrag_outdated_seit?: string | null
           vertrag_pdf_url?: string | null
           vertrag_user_agent?: string | null
+          vertrag_version?: string | null
         }
         Relationships: []
       }
@@ -2979,6 +2988,39 @@ export type Database = {
           },
         ]
       }
+      vertrag_versionen: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          ist_aktiv: boolean
+          notizen: string | null
+          pdf_url: string
+          titel: string
+          version: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          ist_aktiv?: boolean
+          notizen?: string | null
+          pdf_url: string
+          titel: string
+          version: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          ist_aktiv?: boolean
+          notizen?: string | null
+          pdf_url?: string
+          titel?: string
+          version?: string
+        }
+        Relationships: []
+      }
       vertriebler_gutschriften: {
         Row: {
           aktive_kunden_snapshot: number
@@ -3064,6 +3106,83 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      vertriebler_zusatzvereinbarungen: {
+        Row: {
+          angenommen_am: string | null
+          created_at: string
+          id: string
+          ip: string | null
+          pdf_url: string | null
+          status: string
+          user_agent: string | null
+          user_id: string
+          vereinbarung_id: string
+        }
+        Insert: {
+          angenommen_am?: string | null
+          created_at?: string
+          id?: string
+          ip?: string | null
+          pdf_url?: string | null
+          status?: string
+          user_agent?: string | null
+          user_id: string
+          vereinbarung_id: string
+        }
+        Update: {
+          angenommen_am?: string | null
+          created_at?: string
+          id?: string
+          ip?: string | null
+          pdf_url?: string | null
+          status?: string
+          user_agent?: string | null
+          user_id?: string
+          vereinbarung_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vertriebler_zusatzvereinbarungen_vereinbarung_id_fkey"
+            columns: ["vereinbarung_id"]
+            isOneToOne: false
+            referencedRelation: "zusatzvereinbarungen"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      zusatzvereinbarungen: {
+        Row: {
+          beschreibung: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          ist_aktiv: boolean
+          pdf_url: string
+          pflicht: boolean
+          titel: string
+        }
+        Insert: {
+          beschreibung?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          ist_aktiv?: boolean
+          pdf_url: string
+          pflicht?: boolean
+          titel: string
+        }
+        Update: {
+          beschreibung?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          ist_aktiv?: boolean
+          pdf_url?: string
+          pflicht?: boolean
+          titel?: string
+        }
+        Relationships: []
       }
     }
     Views: {
