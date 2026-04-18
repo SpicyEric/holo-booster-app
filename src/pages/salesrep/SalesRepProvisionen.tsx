@@ -113,15 +113,16 @@ export default function SalesRepProvisionen() {
     if (!profile?.first_conversion_at) return null; // no sales yet, no timer
     if (!profile?.last_conversion_at) return null;
     const daysSince = Math.floor((Date.now() - new Date(profile.last_conversion_at).getTime()) / (1000 * 60 * 60 * 24));
-    return Math.max(0, 90 - daysSince);
+    return Math.max(0, 180 - daysSince);
   }, [profile]);
 
   const accountDeletionDaysLeft = useMemo(() => {
     if (!profile?.first_conversion_at) return null;
     if (!profile?.last_conversion_at) return null;
     const daysSince = Math.floor((Date.now() - new Date(profile.last_conversion_at).getTime()) / (1000 * 60 * 60 * 24));
-    if (daysSince < 90) return null;
-    return Math.max(0, 365 - daysSince);
+    if (daysSince < 180) return null;
+    // Nach 180 Tagen Inaktivität: weitere 180 Tage bis zur Löschung (insgesamt 360 Tage)
+    return Math.max(0, 360 - daysSince);
   }, [profile]);
 
   // Active customers (unique customer_ids with recurring commissions)

@@ -410,15 +410,15 @@ function generateContractPdf(d: ContractData): Uint8Array {
   // ===== G – Inaktivität & Konsequenzen =====
   heading("G – Inaktivität & Konsequenzen");
   paragraph("Aktivitätsdefinition: Als Aktivität gilt ausschließlich der bestätigte Zahlungseingang eines Neukunden. Kundenkontakte, Termine oder die Nutzung des Backoffice begründen keine Aktivität. Ab dem Tag des letzten Zahlungseingangs läuft ein Zähler in Kalendertagen. Bei jedem neuen bestätigten Zahlungseingang wird er automatisch auf 0 zurückgesetzt.");
-  bullet("Tag 1–90: AKTIV — Folgeprovision wird am Stichtag (1. des Monats) normal berechnet und ausgezahlt.");
-  bullet("Ab Tag 91: INAKTIV — Folgeprovision wird nicht ausgezahlt, nicht angestaut und nicht nachgeholt. Account bleibt 9 Monate eingefroren.");
-  bullet("Ab Monat 13: ACCOUNT GELÖSCHT — Vollständige Löschung, Kundenzuordnung aufgehoben.");
+  bullet("Tag 1–180: AKTIV — Folgeprovision wird am Stichtag (1. des Monats) normal berechnet und ausgezahlt.");
+  bullet("Ab Tag 181: INAKTIV — Folgeprovision wird nicht ausgezahlt, nicht angestaut und nicht nachgeholt. Account bleibt weitere 180 Tage (ca. 6 Monate) eingefroren. In dieser Zeit kann der Vertriebspartner durch einen neuen bestätigten Zahlungseingang reaktiviert werden — die bestehenden Kundenzuordnungen bleiben in dieser Zeit erhalten.");
+  bullet("Ab Tag 361: ACCOUNT GELÖSCHT — Vollständige Löschung des Accounts, Kundenzuordnung wird aufgehoben.");
   paragraph("Wird innerhalb der 9-monatigen Einfrierphase ein neuer Kunde abgeschlossen, wechselt der Status sofort wieder auf aktiv. Die Folgeprovision läuft ab dem nächsten Stichtag wieder normal. Das Backoffice zeigt den aktuellen Zählerstand jederzeit an. Bei Erreichen von Tag 75 wird der Vertriebspartner automatisch per E-Mail gewarnt.");
 
   // ===== H – Kündigung & Provisionen nach Vertragsende =====
   heading("H – Kündigung & Provisionen nach Vertragsende");
   paragraph("Dieser Vertrag kann von beiden Parteien mit einer Frist von einem Monat zum Monatsende ordentlich gekündigt werden. Das Recht zur außerordentlichen fristlosen Kündigung aus wichtigem Grund bleibt unberührt — insbesondere bei Verstoß gegen die Wettbewerbsregelung, Rufschädigung oder Verstößen gegen geltendes Recht.");
-  paragraph("Nach Kündigung gelten für Provisionen dieselben Regeln wie bei Inaktivität. Die Folgeprovision läuft weiter, solange der Zähler unter 90 Tagen liegt. Sobald der Zähler 90 Tage überschreitet oder die Kündigung wirksam wird — je nachdem was früher eintritt — wird kein Geldfluss mehr ausgelöst. Account bleibt 9 Monate eingefroren, nach 12 Monaten gelöscht.");
+  paragraph("Nach Kündigung gelten für Provisionen dieselben Regeln wie bei Inaktivität. Die Folgeprovision läuft weiter, solange der Zähler unter 180 Tagen liegt. Sobald der Zähler 180 Tage überschreitet oder die Kündigung wirksam wird — je nachdem was früher eintritt — wird kein Geldfluss mehr ausgelöst. Account bleibt anschließend 180 Tage eingefroren (Reaktivierung in dieser Zeit möglich, Kundenzuordnung bleibt erhalten); nach insgesamt 360 Tagen wird der Account gelöscht und die Kundenzuordnung aufgehoben.");
 
   // ===== I – eloyo Boxen & Bestellsystem =====
   heading("I – eloyo Boxen & Bestellsystem");

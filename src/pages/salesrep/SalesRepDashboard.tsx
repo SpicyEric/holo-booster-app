@@ -55,11 +55,13 @@ const SalesRepDashboard = () => {
             ? new Date(Math.max(new Date(activatedAt).getTime(), new Date(lastConv).getTime()))
             : new Date(activatedAt);
           const daysSince = Math.floor((Date.now() - referenceDate.getTime()) / (1000 * 60 * 60 * 24));
-          if (daysSince >= 75) {
+          // Vorwarnung ab Tag 150 (30 Tage vor Inaktivität)
+          if (daysSince >= 150) {
             setInactivityWarning({ show: true, daysSince });
           }
+          // Löschwarnung ab Tag 300 (60 Tage vor Löschung bei Tag 360)
           if (daysSince >= 300) {
-            const daysLeft = Math.max(0, 365 - daysSince);
+            const daysLeft = Math.max(0, 360 - daysSince);
             setDeletionWarning({ show: true, daysLeft });
           }
         }
@@ -141,27 +143,27 @@ const SalesRepDashboard = () => {
             )}
             {inactivityWarning.show && (
               <div className={`mb-6 flex items-start gap-3 p-4 rounded-lg ${
-                inactivityWarning.daysSince >= 90
+                inactivityWarning.daysSince >= 180
                   ? 'bg-destructive/10 border border-destructive/20'
                   : 'bg-orange-50 border border-orange-200'
               }`}>
                 <Clock className={`h-5 w-5 shrink-0 mt-0.5 ${
-                  inactivityWarning.daysSince >= 90 ? 'text-destructive' : 'text-orange-600'
+                  inactivityWarning.daysSince >= 180 ? 'text-destructive' : 'text-orange-600'
                 }`} />
                 <div>
                   <p className={`font-medium ${
-                    inactivityWarning.daysSince >= 90 ? 'text-destructive' : 'text-orange-700'
+                    inactivityWarning.daysSince >= 180 ? 'text-destructive' : 'text-orange-700'
                   }`}>
-                    {inactivityWarning.daysSince >= 90
+                    {inactivityWarning.daysSince >= 180
                       ? 'Provisionen pausiert – Inaktivität'
                       : 'Inaktivitäts-Warnung'}
                   </p>
                   <p className={`text-sm ${
-                    inactivityWarning.daysSince >= 90 ? 'text-destructive/80' : 'text-orange-600'
+                    inactivityWarning.daysSince >= 180 ? 'text-destructive/80' : 'text-orange-600'
                   }`}>
-                    {inactivityWarning.daysSince >= 90
-                      ? `Du hast seit ${inactivityWarning.daysSince} Tagen keinen neuen Abschluss. Deine Provisionen sind pausiert, bis ein neuer Abschluss erfolgt.`
-                      : `Du hast seit ${inactivityWarning.daysSince} Tagen keinen neuen Abschluss. Ab 90 Tagen werden deine Provisionen pausiert.`}
+                    {inactivityWarning.daysSince >= 180
+                      ? `Du hast seit ${inactivityWarning.daysSince} Tagen keinen neuen Abschluss. Deine Provisionen sind pausiert, bis ein neuer Abschluss erfolgt. Dein Account wird nach insgesamt 360 Tagen Inaktivität automatisch gelöscht.`
+                      : `Du hast seit ${inactivityWarning.daysSince} Tagen keinen neuen Abschluss. Ab 180 Tagen werden deine Provisionen pausiert.`}
                   </p>
                 </div>
               </div>
