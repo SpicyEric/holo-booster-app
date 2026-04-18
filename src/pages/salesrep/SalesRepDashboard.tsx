@@ -5,6 +5,7 @@ import SalesRepSidebar from "@/components/salesrep/SalesRepSidebar";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { AlertTriangle, Clock, Package } from "lucide-react";
+import { VertragOutdatedBanner } from "@/components/salesrep/VertragOutdatedBanner";
 
 interface BoxWarning {
   box_id: string;
@@ -95,6 +96,7 @@ const SalesRepDashboard = () => {
         <SalesRepSidebar />
         <main className="flex-1 min-w-0 overflow-x-hidden p-6">
           <div className="max-w-7xl mx-auto">
+            <VertragOutdatedBanner />
             {contractWarning.show && contractWarning.daysLeft === -1 && (
               <div className="mb-6 flex items-start gap-3 p-4 rounded-lg bg-blue-50 border border-blue-200">
                 <AlertTriangle className="h-5 w-5 text-blue-600 shrink-0 mt-0.5" />

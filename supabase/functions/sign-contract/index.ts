@@ -67,6 +67,27 @@ serve(async (req: Request) => {
     const adresse = `${profile.street} ${profile.house_number || ""}, ${profile.postal_code} ${profile.city}`.trim();
     const partnerId = profile.employee_number ? `PID-${profile.employee_number}` : profile.id.substring(0, 8);
 
+    // Aktive Vertragsversion ermitteln
+    const { data: activeVer } = await supabase
+      .from("vertrag_versionen")
+      .select("version, titel")
+      .eq("ist_aktiv", true)
+      .maybeSingle();
+    const newVersion: string = activeVer?.version || "v1";
+    const previousVersion: string | null = profile.vertrag_version || null;
+    const isReplacement = !!previousVersion && previousVersion !== newVersion;
+
+    // Bei Re-Sign: alte PDF archivieren
+    if (isReplacement && profile.vertrag_pdf_url) {
+      const archivePath = `${user.id}/archiv/${previousVersion}_${Date.now()}.pdf`;
+      const { data: oldBlob } = await supabase.storage.from("vertraege").download(profile.vertrag_pdf_url);
+      if (oldBlob) {
+        await supabase.storage.from("vertraege").upload(archivePath, oldBlob, {
+          contentType: "application/pdf", upsert: true,
+        });
+      }
+    }
+
     // Generate PDF
     const pdfBytes = generateContractPdf({
       fullName,
@@ -83,10 +104,12 @@ serve(async (req: Request) => {
       userAgent,
       userId: user.id,
       uhrzeit: uhrzeitFormatiert,
+      version: newVersion,
+      previousVersion: isReplacement ? previousVersion : null,
     });
 
     // Upload to storage
-    const storagePath = `${user.id}/Vertriebspartnervertrag_${partnerId}.pdf`;
+    const storagePath = `${user.id}/Vertriebspartnervertrag_${partnerId}_${newVersion}.pdf`;
     const { error: uploadErr } = await supabase.storage
       .from("vertraege")
       .upload(storagePath, pdfBytes, {
@@ -95,7 +118,7 @@ serve(async (req: Request) => {
       });
     if (uploadErr) throw new Error(`Upload-Fehler: ${uploadErr.message}`);
 
-    // Update profile - reset outdated flag
+    // Update profile - reset outdated flag, set version
     const { error: updateErr } = await supabase
       .from("sales_rep_profiles")
       .update({
@@ -105,6 +128,9 @@ serve(async (req: Request) => {
         vertrag_pdf_url: storagePath,
         contract_status: "angenommen",
         vertrag_outdated: false,
+        vertrag_outdated_seit: null,
+        vertrag_inaktiv: false,
+        vertrag_version: newVersion,
       })
       .eq("user_id", user.id);
     if (updateErr) throw new Error(`Update-Fehler: ${updateErr.message}`);
@@ -192,6 +218,8 @@ interface ContractData {
   userAgent: string;
   userId: string;
   uhrzeit: string;
+  version: string;
+  previousVersion: string | null;
 }
 
 function generateContractPdf(d: ContractData): Uint8Array {
@@ -517,6 +545,36 @@ function generateContractPdf(d: ContractData): Uint8Array {
   doc.setLineWidth(0.8);
   const bottomLine = y + 10;
   doc.line(margin, bottomLine, pw - margin, bottomLine);
+
+  // ===== VERSIONS-HINWEISSEITE (nur bei Replacement) =====
+  if (d.previousVersion) {
+    addPage();
+    doc.setFontSize(18);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(107, 33, 168);
+    doc.text("VERSIONSHINWEIS", pw / 2, y, { align: "center" });
+    doc.setTextColor(0);
+    y += 14;
+
+    doc.setFontSize(11);
+    doc.setFont("helvetica", "normal");
+    const note = `Diese Vertragsversion (${d.version}) ersetzt die zuvor angenommene Version (${d.previousVersion}). Die vorherige Fassung wurde im internen Archiv gesichert und bleibt für Nachweiszwecke verfügbar. Mit der digitalen Annahme dieser neuen Version erkennt der Vertriebspartner die aktualisierten Konditionen verbindlich an.`;
+    const noteLines = doc.splitTextToSize(note, pw - 2 * margin - 10);
+    for (const ln of noteLines) { doc.text(ln, margin + 5, y); y += 6; }
+    y += 6;
+    doc.setFontSize(9);
+    doc.setTextColor(100);
+    doc.text(`Aktuelle Version: ${d.version}`, margin + 5, y); y += 5;
+    doc.text(`Vorherige Version: ${d.previousVersion}`, margin + 5, y); y += 5;
+    doc.text(`Annahme der neuen Version: ${d.vertragsdatum}, ${d.uhrzeit} Uhr`, margin + 5, y);
+    doc.setTextColor(0);
+  } else {
+    // Versionsnummer als kleiner Hinweis am Ende
+    doc.setFontSize(8);
+    doc.setTextColor(120);
+    doc.text(`Vertragsversion: ${d.version}`, margin, bottomLine + 6);
+    doc.setTextColor(0);
+  }
 
   const arrayBuffer = doc.output("arraybuffer");
   return new Uint8Array(arrayBuffer);
