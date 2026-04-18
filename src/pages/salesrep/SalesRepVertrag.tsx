@@ -215,7 +215,7 @@ export default function SalesRepVertrag() {
             <p>Solange ein geworbener Kunde aktiv bleibt und seinen Vertrag bei ELOYO aufrechterhält, erhält der Vertriebspartner eine monatliche Folgeprovision in Höhe von 12,00 € netto pro aktivem Kunden.</p>
 
             <p className="font-semibold mt-3">3. Inaktivitätsregel</p>
-            <p>Ab dem 91. Tag ohne bestätigten Neukunden-Abschluss gilt der Vertriebspartner als inaktiv. Während der Inaktivität werden keine Folgeprovisionen ausgezahlt. Nicht ausgezahlte Folgeprovisionen verfallen ersatzlos.</p>
+            <p>Ab dem 181. Tag ohne bestätigten Neukunden-Abschluss gilt der Vertriebspartner als inaktiv. Während der Inaktivität werden keine Folgeprovisionen ausgezahlt. Nicht ausgezahlte Folgeprovisionen verfallen ersatzlos. Eine Reaktivierung durch einen neuen bestätigten Zahlungseingang ist innerhalb der nächsten 180 Tage möglich – Kundenzuordnungen bleiben in dieser Zeit erhalten.</p>
 
             <p className="font-semibold mt-3">4. Sponsor-Bonus</p>
             <p>Empfiehlt der Vertriebspartner eine Person als neuen Vertriebspartner, erhält er einen monatlichen Bonus von 5,00 € netto pro aktivem Kunden des gesponserten Partners. Dies gilt nur für eine Ebene.</p>
@@ -231,9 +231,9 @@ export default function SalesRepVertrag() {
           <ContractSection title="G – Inaktivität & Konsequenzen">
             <p>Als Aktivität gilt ausschließlich der bestätigte Zahlungseingang eines Neukunden. Ab dem Tag des letzten Zahlungseingangs läuft ein Zähler in Kalendertagen.</p>
             <div className="bg-muted/50 rounded p-3 mt-2 space-y-1 text-xs">
-              <p><strong>Tag 1–90:</strong> AKTIV – Folgeprovision wird normal berechnet und ausgezahlt.</p>
-              <p><strong>Ab Tag 91:</strong> INAKTIV – Keine Folgeprovisionen. Account eingefroren.</p>
-              <p><strong>Ab Monat 13:</strong> ACCOUNT GELÖSCHT – Vollständige Löschung, Kundenzuordnung aufgehoben.</p>
+              <p><strong>Tag 1–180:</strong> AKTIV – Folgeprovision wird normal berechnet und ausgezahlt.</p>
+              <p><strong>Ab Tag 181:</strong> INAKTIV – Keine Folgeprovisionen. Account eingefroren für weitere 180 Tage. Reaktivierung in dieser Zeit möglich, Kundenzuordnungen bleiben erhalten.</p>
+              <p><strong>Ab Tag 361:</strong> ACCOUNT GELÖSCHT – Vollständige Löschung, Kundenzuordnung aufgehoben.</p>
             </div>
           </ContractSection>
 
