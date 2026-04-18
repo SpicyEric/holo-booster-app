@@ -58,11 +58,18 @@ export default function SalesRepVertrag() {
 
   // Check if required fields are filled
   const missingFields = profile ? [
+    !profile.first_name && "Vorname",
+    !profile.last_name && "Nachname",
+    !profile.phone && "Telefon",
     !profile.street && "Straße",
+    !profile.house_number && "Hausnummer",
     !profile.postal_code && "PLZ",
     !profile.city && "Ort",
+    !profile.account_holder && "Kontoinhaber",
+    !profile.bank_name && "Bankname",
     !profile.iban && "IBAN",
     !profile.bic && "BIC",
+    !profile.tax_number && "Steuernummer",
   ].filter(Boolean) : [];
 
   const handleSign = async () => {
