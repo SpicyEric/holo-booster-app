@@ -4,7 +4,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Euro, TrendingUp, Clock, Users, Search, Filter, Timer } from 'lucide-react';
+import { Euro, TrendingUp, Clock, Users, Search, Filter, Timer, Lock } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { format } from 'date-fns';
@@ -27,6 +27,8 @@ interface SalesRepProfile {
   is_small_business: boolean;
   last_conversion_at: string | null;
   first_conversion_at: string | null;
+  vertrag_outdated?: boolean | null;
+  vertrag_inaktiv?: boolean | null;
 }
 
 export default function SalesRepProvisionen() {
@@ -52,7 +54,7 @@ export default function SalesRepProvisionen() {
             .order('created_at', { ascending: false }),
           supabase
             .from('sales_rep_profiles')
-            .select('is_small_business, last_conversion_at, first_conversion_at')
+            .select('is_small_business, last_conversion_at, first_conversion_at, vertrag_outdated, vertrag_inaktiv')
             .eq('user_id', user.id)
             .maybeSingle(),
         ]);
@@ -177,12 +179,30 @@ export default function SalesRepProvisionen() {
     return <div className="flex items-center justify-center py-12"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" /></div>;
   }
 
+  const payoutBlocked = !!(profile?.vertrag_outdated || profile?.vertrag_inaktiv);
+
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold">Provisionen</h1>
         <p className="text-muted-foreground">Übersicht deiner Provisionen und Auszahlungen</p>
       </div>
+
+      {payoutBlocked && (
+        <div className="bg-destructive/10 border border-destructive/30 rounded-lg p-4 flex items-start gap-3">
+          <Lock className="w-5 h-5 text-destructive shrink-0 mt-0.5" />
+          <div className="flex-1">
+            <p className="text-sm font-medium text-destructive">
+              Auszahlung gesperrt
+            </p>
+            <p className="text-xs text-muted-foreground mt-1">
+              {profile?.vertrag_inaktiv
+                ? "Dein Account ist gesperrt – du hast die neue Vertragsversion nicht innerhalb von 30 Tagen angenommen. Bitte kontaktiere den Support."
+                : "Bitte nimm zuerst die neue Vertragsversion an. Sobald die Annahme erfolgt ist, werden Auszahlungen wieder freigegeben."}
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
