@@ -175,6 +175,7 @@ function StoreFinderContent({ apiKey }: { apiKey: string }) {
   };
 
   const searchPlaces = async () => {
+    if (!requireActive()) return;
     if (!postalCode && !searchCenter) {
       toast.error('Bitte PLZ eingeben');
       return;
