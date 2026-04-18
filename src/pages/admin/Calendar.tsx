@@ -55,6 +55,9 @@ const DURATION_OPTIONS = [15, 30, 60];
 export default function AdminCalendar() {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
+  const location = useLocation();
+  const { user } = useAuth();
+  const isSalesRepCtx = location.pathname.startsWith('/vertriebler');
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(true);
