@@ -162,7 +162,7 @@ const App = () => {
                 <Route path="lead-pipeline" element={<LeadsPipeline />} />
                 <Route path="store-finder" element={<StoreFinder />} />
                 <Route path="calendar" element={<AdminCalendar />} />
-                <Route path="stats" element={<Stats />} />
+                <Route path="stats" element={<SalesRepStats />} />
                 <Route path="checkout" element={<SalesRepCheckout />} />
                 <Route path="messages" element={<SalesRepMessages />} />
                 <Route path="orders" element={<SalesRepOrders />} />
