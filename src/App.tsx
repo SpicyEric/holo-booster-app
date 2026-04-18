@@ -80,6 +80,7 @@ import AdminGutschriften from "./pages/admin/Gutschriften";
 import SalesRepAbrechnungen from "./pages/salesrep/SalesRepAbrechnungen";
 import SalesRepVertrag from "./pages/salesrep/SalesRepVertrag";
 import SalesRepMeinVertrag from "./pages/salesrep/SalesRepMeinVertrag";
+import SalesRepStats from "./pages/salesrep/SalesRepStats";
 import AdminVertragsversionen from "./pages/admin/Vertragsversionen";
 import AdminZusatzvereinbarungen from "./pages/admin/Zusatzvereinbarungen";
 
