@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -52,6 +53,9 @@ type SortField = 'shop_name' | 'postal_code' | 'phone' | 'status' | 'created_at'
 
 export default function Leads() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const { user } = useAuth();
+  const isSalesRepCtx = location.pathname.startsWith('/vertriebler');
   const [contacts, setContacts] = useState<UnifiedContact[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -61,13 +65,45 @@ export default function Leads() {
   const [sortField, setSortField] = useState<SortField>('shop_name');
   const [sortAsc, setSortAsc] = useState(true);
 
-  useEffect(() => { fetchContacts(); }, []);
+  useEffect(() => { fetchContacts(); }, [user?.id, isSalesRepCtx]);
 
   const fetchContacts = async () => {
     try {
+      // Pipeline contacts (discovered_stores) — scoped to current sales rep
+      let storesQuery = supabase
+        .from('discovered_stores')
+        .select('id, name, contact_person, phone, email, street, house_number, postal_code, city, industry, status, created_at, linked_customer_id');
+      if (isSalesRepCtx && user?.id) {
+        storesQuery = storesQuery.eq('admin_user_id', user.id);
+      }
+
+      // Customers — for sales rep, only those they closed (via subscriptions.created_by)
+      let ownClosedCustomerIds: string[] = [];
+      if (isSalesRepCtx && user?.id) {
+        const { data: subs } = await supabase
+          .from('customer_subscriptions')
+          .select('customer_id')
+          .eq('created_by', user.id);
+        ownClosedCustomerIds = (subs || [])
+          .map((s: any) => s.customer_id)
+          .filter(Boolean);
+      }
+
+      let customersQuery = supabase
+        .from('customers')
+        .select('id, name, contact_person, phone, email, street, house_number, postal_code, city, industry, status, created_at');
+      if (isSalesRepCtx) {
+        if (ownClosedCustomerIds.length === 0) {
+          // Skip customer fetch entirely
+          customersQuery = customersQuery.in('id', ['00000000-0000-0000-0000-000000000000']);
+        } else {
+          customersQuery = customersQuery.in('id', ownClosedCustomerIds);
+        }
+      }
+
       const [storesRes, customersRes] = await Promise.all([
-        supabase.from('discovered_stores').select('id, name, contact_person, phone, email, street, house_number, postal_code, city, industry, status, created_at, linked_customer_id'),
-        supabase.from('customers').select('id, name, contact_person, phone, email, street, house_number, postal_code, city, industry, status, created_at'),
+        storesQuery,
+        customersQuery,
       ]);
       if (storesRes.error) throw storesRes.error;
       if (customersRes.error) throw customersRes.error;
