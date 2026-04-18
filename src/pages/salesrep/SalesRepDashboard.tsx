@@ -5,6 +5,7 @@ import SalesRepSidebar from "@/components/salesrep/SalesRepSidebar";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { AlertTriangle, Clock, Package } from "lucide-react";
+import { VertragOutdatedBanner } from "@/components/salesrep/VertragOutdatedBanner";
 
 interface BoxWarning {
   box_id: string;
