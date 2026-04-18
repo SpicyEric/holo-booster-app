@@ -51,11 +51,20 @@ export default function SalesRepOrders() {
   const [orders, setOrders] = useState<BoxPaket[]>([]);
   const [orderBoxes, setOrderBoxes] = useState<Record<string, EloyoBox[]>>({});
   const [confirmModal, setConfirmModal] = useState<'starter' | 'vertrieb' | null>(null);
+  const [vertragOutdated, setVertragOutdated] = useState(false);
 
   const loadData = async () => {
     if (!user) return;
     setLoading(true);
     try {
+      // Vertrag-Outdated check
+      const { data: prof } = await (supabase
+        .from('sales_rep_profiles') as any)
+        .select('vertrag_outdated')
+        .eq('user_id', user.id)
+        .maybeSingle();
+      setVertragOutdated(!!prof?.vertrag_outdated);
+
       // Active customer count
       const { count: activeCount } = await supabase
         .from('customers')
@@ -113,6 +122,11 @@ export default function SalesRepOrders() {
 
   const handleOrder = async (typ: 'starter' | 'vertrieb') => {
     if (!user) return;
+    if (vertragOutdated) {
+      toast.error('Bitte nimm zuerst die neue Vertragsversion an, bevor du Boxen bestellst.');
+      setConfirmModal(null);
+      return;
+    }
     setOrdering(true);
     try {
       const anzahl = typ === 'starter' ? 4 : 7;
