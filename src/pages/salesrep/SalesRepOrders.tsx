@@ -189,16 +189,6 @@ export default function SalesRepOrders() {
             </div>
             <CardDescription>4 eloyo Boxen für den Einstieg</CardDescription>
           </CardHeader>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Starterpaket */}
-        <Card className="relative overflow-hidden">
-          <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-lg">Starterpaket</CardTitle>
-              <Badge variant="secondary">4 Boxen</Badge>
-            </div>
-            <CardDescription>4 eloyo Boxen für den Einstieg</CardDescription>
-          </CardHeader>
           <CardContent className="space-y-4">
             <div className="text-3xl font-bold">120,00 €</div>
             <p className="text-xs text-muted-foreground">Warenwert: 4 × 30,00 € inkl. MwSt.</p>
