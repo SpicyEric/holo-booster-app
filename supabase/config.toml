@@ -74,3 +74,9 @@ verify_jwt = false
 
 [functions.monatliche-gutschrift-reset]
 verify_jwt = false
+
+[functions.notify-vertrag-version]
+verify_jwt = false
+
+[functions.cleanup-vertrag-outdated]
+verify_jwt = false
