@@ -222,6 +222,7 @@ function StoreFinderContent({ apiKey }: { apiKey: string }) {
   };
 
   const addStore = async (place: PlaceResult) => {
+    if (!requireActive()) return;
     try {
       // Get detailed info first
       const { data: detailData, error: detailError } = await supabase.functions.invoke('place-details', {
@@ -271,6 +272,7 @@ function StoreFinderContent({ apiKey }: { apiKey: string }) {
   };
 
   const enrichStore = async (storeId: string) => {
+    if (!requireActive()) return;
     const store = savedStores.find((s) => s.id === storeId);
     if (!store) return;
 
@@ -326,6 +328,7 @@ function StoreFinderContent({ apiKey }: { apiKey: string }) {
   }, [manualAddMode]);
 
   const addManualStore = async () => {
+    if (!requireActive()) return;
     if (!manualName.trim() || !manualLatLng) return;
     try {
       const { data: userData } = await supabase.auth.getUser();
