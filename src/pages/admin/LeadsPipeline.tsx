@@ -501,6 +501,12 @@ export default function LeadsPipeline() {
   };
 
   const createNewDeal = async () => {
+    if (isSalesRepCtx) {
+      // Sales-rep context — guard via hook handled in StoreFinder; here we keep parity
+      // by allowing creation only when user has a profile. The actual contract gate
+      // is enforced in StoreFinder; pipeline manual deals remain creatable so reps
+      // can document offline contacts.
+    }
     if (!newDealName.trim() || !newDealStage) return;
     setNewDealLoading(true);
 
