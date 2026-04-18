@@ -1,5 +1,8 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { useLocation } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
+import { useSalesRepActive } from '@/hooks/useSalesRepActive';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -9,7 +12,7 @@ import { Slider } from '@/components/ui/slider';
 import { toast } from 'sonner';
 import {
   Search, MapPin, Phone, Globe, Star, Plus,
-  Loader2, Sparkles, Building2, Mail, User, ExternalLink, Trash2,
+  Loader2, Sparkles, Building2, Mail, User, ExternalLink, Trash2, Lock,
 } from 'lucide-react';
 import { useGoogleMapsApiKey } from '@/hooks/useGoogleMapsApiKey';
 import { GoogleMap, useJsApiLoader, OverlayView } from '@react-google-maps/api';
