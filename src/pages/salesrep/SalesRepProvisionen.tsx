@@ -111,14 +111,14 @@ export default function SalesRepProvisionen() {
     if (!profile?.first_conversion_at) return null; // no sales yet, no timer
     if (!profile?.last_conversion_at) return null;
     const daysSince = Math.floor((Date.now() - new Date(profile.last_conversion_at).getTime()) / (1000 * 60 * 60 * 24));
-    return Math.max(0, 60 - daysSince);
+    return Math.max(0, 90 - daysSince);
   }, [profile]);
 
   const accountDeletionDaysLeft = useMemo(() => {
     if (!profile?.first_conversion_at) return null;
     if (!profile?.last_conversion_at) return null;
     const daysSince = Math.floor((Date.now() - new Date(profile.last_conversion_at).getTime()) / (1000 * 60 * 60 * 24));
-    if (daysSince < 60) return null;
+    if (daysSince < 90) return null;
     return Math.max(0, 365 - daysSince);
   }, [profile]);
 
