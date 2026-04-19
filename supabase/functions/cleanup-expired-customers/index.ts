@@ -23,6 +23,7 @@ Deno.serve(async (req) => {
       .select("id, name, company_name, email, cancelled_at")
       .eq("status", "canceled")
       .eq("active", false)
+      .eq("is_demo", false)
       .not("cancelled_at", "is", null)
       .lt("cancelled_at", cutoff12Months);
 
