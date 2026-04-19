@@ -83,6 +83,7 @@ import SalesRepMeinVertrag from "./pages/salesrep/SalesRepMeinVertrag";
 import SalesRepStats from "./pages/salesrep/SalesRepStats";
 import AdminVertragsversionen from "./pages/admin/Vertragsversionen";
 import AdminZusatzvereinbarungen from "./pages/admin/Zusatzvereinbarungen";
+import AdminPushLogs from "./pages/admin/PushLogs";
 
 const queryClient = new QueryClient();
 
@@ -134,6 +135,7 @@ const App = () => {
                 <Route path="gutschriften" element={<AdminGutschriften />} />
                 <Route path="vertragsversionen" element={<AdminVertragsversionen />} />
                 <Route path="zusatzvereinbarungen" element={<AdminZusatzvereinbarungen />} />
+                <Route path="push" element={<AdminPushLogs />} />
                 <Route path="settings" element={<Settings />} />
                 <Route path="map" element={<CustomerMap />} />
               </Route>

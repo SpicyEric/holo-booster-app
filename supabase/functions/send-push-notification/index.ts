@@ -94,14 +94,44 @@ Deno.serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  const supabase = createClient(
+    Deno.env.get("SUPABASE_URL")!,
+    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+  );
+
+  let user_id: string | undefined;
+  let title = "";
+  let body = "";
+  let data: Record<string, unknown> | undefined;
+  let source: string | undefined;
+  let trigger_function: string | undefined;
+
   try {
-    const { user_id, title, body, data } = await req.json();
+    const payload = await req.json();
+    user_id = payload.user_id;
+    title = payload.title;
+    body = payload.body;
+    data = payload.data;
+    source = payload.source;
+    trigger_function = payload.trigger_function;
 
     if (!user_id || !title || !body) {
       return new Response(
         JSON.stringify({ error: "user_id, title, and body are required" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
+    }
+
+    // Lookup recipient info for richer logs
+    let recipient_email: string | null = null;
+    let recipient_name: string | null = null;
+    try {
+      const { data: userInfo } = await supabase.auth.admin.getUserById(user_id);
+      recipient_email = userInfo?.user?.email ?? null;
+      const meta = userInfo?.user?.user_metadata ?? {};
+      recipient_name = (meta as any).full_name || (meta as any).name || null;
+    } catch (_e) {
+      // ignore lookup failures
     }
 
     // Get service account
@@ -112,18 +142,30 @@ Deno.serve(async (req) => {
     const serviceAccount = JSON.parse(serviceAccountJson);
 
     // Get device tokens for user
-    const supabase = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
-    );
-
     const { data: tokens, error: tokensError } = await supabase
       .from("device_tokens")
-      .select("fcm_token")
+      .select("fcm_token, platform")
       .eq("user_id", user_id);
 
     if (tokensError) throw tokensError;
+
     if (!tokens || tokens.length === 0) {
+      await supabase.from("push_notification_logs").insert({
+        user_id,
+        recipient_email,
+        recipient_name,
+        title,
+        body,
+        data: data ?? null,
+        source: source ?? null,
+        trigger_function: trigger_function ?? null,
+        device_count: 0,
+        sent_count: 0,
+        failed_count: 0,
+        invalid_token_count: 0,
+        status: "no_devices",
+      });
+
       return new Response(
         JSON.stringify({ success: true, sent: 0, reason: "no_device_tokens" }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -137,8 +179,9 @@ Deno.serve(async (req) => {
     let sent = 0;
     let failed = 0;
     const invalidTokens: string[] = [];
+    const fcmResponses: Array<Record<string, unknown>> = [];
 
-    for (const { fcm_token } of tokens) {
+    for (const { fcm_token, platform } of tokens) {
       try {
         const fcmResponse = await fetch(
           `https://fcm.googleapis.com/v1/projects/${projectId}/messages:send`,
@@ -184,13 +227,19 @@ Deno.serve(async (req) => {
         );
 
         const result = await fcmResponse.json();
+        fcmResponses.push({
+          platform,
+          token_preview: `${fcm_token.slice(0, 12)}…${fcm_token.slice(-6)}`,
+          ok: fcmResponse.ok,
+          status: fcmResponse.status,
+          response: result,
+        });
 
         if (fcmResponse.ok) {
           sent++;
         } else {
           failed++;
           console.error("FCM error:", result);
-          // If token is invalid, mark for cleanup
           if (
             result?.error?.code === 404 ||
             result?.error?.details?.some(
@@ -203,6 +252,12 @@ Deno.serve(async (req) => {
       } catch (err) {
         failed++;
         console.error("Error sending to token:", err);
+        fcmResponses.push({
+          platform,
+          token_preview: `${fcm_token.slice(0, 12)}…${fcm_token.slice(-6)}`,
+          ok: false,
+          error: (err as Error).message,
+        });
       }
     }
 
@@ -215,14 +270,53 @@ Deno.serve(async (req) => {
       console.log(`Cleaned up ${invalidTokens.length} invalid tokens`);
     }
 
+    // Persist log
+    const status =
+      sent > 0 && failed === 0
+        ? "success"
+        : sent > 0 && failed > 0
+        ? "partial"
+        : "failed";
+
+    await supabase.from("push_notification_logs").insert({
+      user_id,
+      recipient_email,
+      recipient_name,
+      title,
+      body,
+      data: data ?? null,
+      source: source ?? null,
+      trigger_function: trigger_function ?? null,
+      device_count: tokens.length,
+      sent_count: sent,
+      failed_count: failed,
+      invalid_token_count: invalidTokens.length,
+      status,
+      fcm_responses: fcmResponses,
+    });
+
     return new Response(
       JSON.stringify({ success: true, sent, failed }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {
     console.error("Error:", error);
+    try {
+      await supabase.from("push_notification_logs").insert({
+        user_id: user_id ?? null,
+        title: title || "(unknown)",
+        body: body || "(unknown)",
+        data: data ?? null,
+        source: source ?? null,
+        trigger_function: trigger_function ?? null,
+        status: "error",
+        error_message: (error as Error).message,
+      });
+    } catch (_e) {
+      // ignore log failure
+    }
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: (error as Error).message }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }

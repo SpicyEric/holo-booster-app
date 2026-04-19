@@ -3,7 +3,7 @@ import { signOut } from "@/lib/auth";
 import { toast } from "sonner";
 import {
   LayoutDashboard, Users, Box, Package, UserCog, BarChart3,
-  ShoppingCart, Settings, LogOut, ChevronLeft, Menu, X, Map, GitBranch, Search, Lightbulb, CalendarDays, UserPlus, Truck, RotateCcw, Receipt, FileText, FileSignature,
+  ShoppingCart, Settings, LogOut, ChevronLeft, Menu, X, Map, GitBranch, Search, Lightbulb, CalendarDays, UserPlus, Truck, RotateCcw, Receipt, FileText, FileSignature, Bell,
 } from "lucide-react";
 import eloyoLogo from "@/assets/eloyo-logo.png";
 import { cn } from "@/lib/utils";
@@ -57,14 +57,15 @@ const NAV_GROUPS: NavGroup[] = [
       { path: "/admin/box-orders", label: "Bestellungen", icon: Truck },
       { path: "/admin/box-returns", label: "Boxenrücknahme", icon: RotateCcw },
       { path: "/admin/gutschriften", label: "Gutschriften", icon: Receipt },
+      { path: "/admin/vertragsversionen", label: "Vertragsversionen", icon: FileSignature },
+      { path: "/admin/zusatzvereinbarungen", label: "Zusatzvereinbarungen", icon: FileText },
     ],
   },
   {
     label: "SYSTEM",
     items: [
-      { path: "/admin/vertragsversionen", label: "Vertragsversionen", icon: FileSignature },
-      { path: "/admin/zusatzvereinbarungen", label: "Zusatzvereinbarungen", icon: FileText },
       { path: "/admin/accounts", label: "User-Accounts", icon: UserCog },
+      { path: "/admin/push", label: "Push", icon: Bell },
       { path: "/admin/settings", label: "Einstellungen", icon: Settings },
     ],
   },
