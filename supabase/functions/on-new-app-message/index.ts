@@ -27,12 +27,21 @@ Deno.serve(async (req) => {
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Get merchant name
+    // Get merchant name + active status
     const { data: merchant } = await supabase
       .from("customers")
-      .select("name, company_name")
+      .select("name, company_name, active")
       .eq("id", record.merchant_customer_id)
       .single();
+
+    // Block push for inactive (cancelled) merchants
+    if (!merchant || merchant.active !== true) {
+      console.log("[on-new-app-message] Skipping push — merchant inactive:", record.merchant_customer_id);
+      return new Response(
+        JSON.stringify({ success: true, skipped: "merchant_inactive" }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
 
     const merchantName = merchant?.company_name || merchant?.name || "Ein Geschäft";
 

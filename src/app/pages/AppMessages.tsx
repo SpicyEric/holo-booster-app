@@ -102,15 +102,21 @@ export const AppMessages = () => {
       const sevenDaysAgo = new Date();
       sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
-      const { data, error } = await supabase
+      const { data: rawData, error } = await supabase
         .from('app_messages')
         .select(`
           id, title, body, sent_at, read_at, offer_id, image_url, merchant_customer_id,
-          customers!merchant_customer_id (name, company_name, logo_url)
+          customers!merchant_customer_id (name, company_name, logo_url, active)
         `)
         .eq('user_id', user?.id)
         .gte('sent_at', sevenDaysAgo.toISOString())
         .order('sent_at', { ascending: false });
+
+      // Hide messages from inactive (cancelled) merchants — data stays in DB
+      const data = rawData?.filter((m: any) => {
+        const c = Array.isArray(m.customers) ? m.customers[0] : m.customers;
+        return c?.active === true;
+      });
 
       if (!error && data) {
         // Auto-mark messages WITHOUT offers as read
