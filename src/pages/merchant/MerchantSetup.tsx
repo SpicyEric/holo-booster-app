@@ -396,8 +396,17 @@ export default function MerchantSetup() {
         </nav>
 
         {/* Footer */}
-        <div className="px-6 py-4 border-t border-white/10">
+        <div className="px-6 py-4 border-t border-white/10 space-y-3">
           <p className="text-xs text-white/30">Schritt {step + 1} von {TOTAL}</p>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => navigate("/kunde/mein-geschaeft")}
+            className="w-full justify-start text-white/60 hover:text-white hover:bg-white/10 rounded-xl"
+          >
+            Wizard überspringen
+            <ChevronRight className="h-4 w-4 ml-auto" />
+          </Button>
         </div>
       </div>
 
