@@ -2124,6 +2124,69 @@ export type Database = {
         }
         Relationships: []
       }
+      push_notification_logs: {
+        Row: {
+          body: string
+          created_at: string
+          data: Json | null
+          device_count: number
+          error_message: string | null
+          failed_count: number
+          fcm_responses: Json | null
+          id: string
+          invalid_token_count: number
+          metadata: Json | null
+          recipient_email: string | null
+          recipient_name: string | null
+          sent_count: number
+          source: string | null
+          status: string
+          title: string
+          trigger_function: string | null
+          user_id: string | null
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          data?: Json | null
+          device_count?: number
+          error_message?: string | null
+          failed_count?: number
+          fcm_responses?: Json | null
+          id?: string
+          invalid_token_count?: number
+          metadata?: Json | null
+          recipient_email?: string | null
+          recipient_name?: string | null
+          sent_count?: number
+          source?: string | null
+          status?: string
+          title: string
+          trigger_function?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          data?: Json | null
+          device_count?: number
+          error_message?: string | null
+          failed_count?: number
+          fcm_responses?: Json | null
+          id?: string
+          invalid_token_count?: number
+          metadata?: Json | null
+          recipient_email?: string | null
+          recipient_name?: string | null
+          sent_count?: number
+          source?: string | null
+          status?: string
+          title?: string
+          trigger_function?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       qr_tokens: {
         Row: {
           code: string
