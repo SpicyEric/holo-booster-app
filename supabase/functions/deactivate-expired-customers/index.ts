@@ -31,11 +31,13 @@ serve(async (req) => {
     log("Function started");
 
     // Candidates: cancelled customers that are still active=true
+    // Demo merchants (is_demo=true) are excluded — they must always stay visible
     const { data: candidates, error: fetchError } = await supabase
       .from("customers")
       .select("id, name, company_name, email, stripe_subscription_id, cancelled_at, active, status")
       .eq("status", "canceled")
-      .eq("active", true);
+      .eq("active", true)
+      .eq("is_demo", false);
 
     if (fetchError) throw fetchError;
     log("Candidates fetched", { count: candidates?.length ?? 0 });

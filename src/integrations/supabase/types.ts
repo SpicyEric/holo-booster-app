@@ -743,6 +743,7 @@ export type Database = {
           id: string
           industry: string | null
           instagram: string | null
+          is_demo: boolean
           last_auto_reply_check: string | null
           last_contact_date: string | null
           latitude: number | null
@@ -817,6 +818,7 @@ export type Database = {
           id?: string
           industry?: string | null
           instagram?: string | null
+          is_demo?: boolean
           last_auto_reply_check?: string | null
           last_contact_date?: string | null
           latitude?: number | null
@@ -891,6 +893,7 @@ export type Database = {
           id?: string
           industry?: string | null
           instagram?: string | null
+          is_demo?: boolean
           last_auto_reply_check?: string | null
           last_contact_date?: string | null
           latitude?: number | null
