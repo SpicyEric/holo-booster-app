@@ -3,14 +3,46 @@ import { Capacitor } from '@capacitor/core';
 
 const THEME_KEY = 'eloyo-dark-mode';
 
+const getSystemPrefersDark = (): boolean => {
+  try {
+    return typeof window !== 'undefined'
+      && !!window.matchMedia
+      && window.matchMedia('(prefers-color-scheme: dark)').matches;
+  } catch {
+    return false;
+  }
+};
+
 export const useTheme = () => {
   const [isDark, setIsDark] = useState(() => {
     try {
-      return localStorage.getItem(THEME_KEY) === 'true';
+      const stored = localStorage.getItem(THEME_KEY);
+      if (stored === 'true') return true;
+      if (stored === 'false') return false;
+      // No stored preference → follow system theme
+      return getSystemPrefersDark();
     } catch {
-      return false;
+      return getSystemPrefersDark();
     }
   });
+
+  // Sync with system theme changes when user hasn't set a manual preference
+  useEffect(() => {
+    if (typeof window === 'undefined' || !window.matchMedia) return;
+    const mq = window.matchMedia('(prefers-color-scheme: dark)');
+    const handler = (e: MediaQueryListEvent) => {
+      try {
+        const stored = localStorage.getItem(THEME_KEY);
+        if (stored !== 'true' && stored !== 'false') {
+          setIsDark(e.matches);
+        }
+      } catch {
+        setIsDark(e.matches);
+      }
+    };
+    mq.addEventListener?.('change', handler);
+    return () => mq.removeEventListener?.('change', handler);
+  }, []);
 
   // Apply class to <html> on mount and change — only for /app routes
   useEffect(() => {
