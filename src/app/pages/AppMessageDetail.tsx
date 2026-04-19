@@ -72,13 +72,22 @@ const AppMessageDetail = () => {
         .from('app_messages')
         .select(`
           id, title, body, sent_at, read_at, offer_id, offer_redeemed_at, image_url, merchant_customer_id,
-          customers!merchant_customer_id (name, company_name, logo_url)
+          customers!merchant_customer_id (name, company_name, logo_url, active)
         `)
         .eq('id', id!)
         .eq('user_id', user!.id)
         .maybeSingle();
 
       if (msgError || !msgData) {
+        setLoading(false);
+        return;
+      }
+
+      // Block access to messages from inactive (cancelled) merchants
+      const merchantData = Array.isArray((msgData as any).customers)
+        ? (msgData as any).customers[0]
+        : (msgData as any).customers;
+      if (merchantData?.active !== true) {
         setLoading(false);
         return;
       }

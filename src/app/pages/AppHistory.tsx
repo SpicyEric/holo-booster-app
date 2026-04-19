@@ -49,14 +49,16 @@ export const AppHistory = () => {
           .from('point_transactions')
           .select(`
             id, points_change, description, transaction_type, created_at, merchant_customer_id,
-            customer:customers!merchant_customer_id (name, company_name, logo_url)
+            customer:customers!merchant_customer_id (name, company_name, logo_url, active)
           `)
           .in('loyalty_account_id', accountIds)
           .order('created_at', { ascending: false })
-          .limit(50);
+          .limit(100);
 
         if (!error && data) {
-          setTransactions(data as unknown as Transaction[]);
+          // Hide transactions of inactive (cancelled) merchants — data stays in DB
+          const visible = (data as any[]).filter((tx) => tx.customer?.active === true);
+          setTransactions(visible.slice(0, 50) as unknown as Transaction[]);
         }
       }
     } catch (err) {

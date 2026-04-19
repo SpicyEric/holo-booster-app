@@ -78,11 +78,19 @@ export const AppMessages = () => {
       const merchantIds = accounts.map(a => a.merchant_customer_id);
       const pointsMap = new Map(accounts.map(a => [a.merchant_customer_id, a.current_points_balance || 0]));
 
+      // Only count rewards from active merchants
+      const { data: activeMerchants } = await supabase
+        .from('customers')
+        .select('id')
+        .in('id', merchantIds)
+        .eq('active', true);
+      const activeIds = new Set((activeMerchants || []).map((m: any) => m.id));
+
       const { data: rewards } = await supabase
         .from('rewards')
         .select('id, points_required, merchant_customer_id')
         .eq('is_active', true)
-        .in('merchant_customer_id', merchantIds);
+        .in('merchant_customer_id', Array.from(activeIds));
 
       if (rewards) {
         const count = rewards.filter(r => (pointsMap.get(r.merchant_customer_id) || 0) >= r.points_required).length;
@@ -102,15 +110,21 @@ export const AppMessages = () => {
       const sevenDaysAgo = new Date();
       sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
-      const { data, error } = await supabase
+      const { data: rawData, error } = await supabase
         .from('app_messages')
         .select(`
           id, title, body, sent_at, read_at, offer_id, image_url, merchant_customer_id,
-          customers!merchant_customer_id (name, company_name, logo_url)
+          customers!merchant_customer_id (name, company_name, logo_url, active)
         `)
         .eq('user_id', user?.id)
         .gte('sent_at', sevenDaysAgo.toISOString())
         .order('sent_at', { ascending: false });
+
+      // Hide messages from inactive (cancelled) merchants — data stays in DB
+      const data = rawData?.filter((m: any) => {
+        const c = Array.isArray(m.customers) ? m.customers[0] : m.customers;
+        return c?.active === true;
+      });
 
       if (!error && data) {
         // Auto-mark messages WITHOUT offers as read
