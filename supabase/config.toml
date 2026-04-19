@@ -80,3 +80,6 @@ verify_jwt = false
 
 [functions.cleanup-vertrag-outdated]
 verify_jwt = false
+
+[functions.deactivate-expired-customers]
+verify_jwt = false
