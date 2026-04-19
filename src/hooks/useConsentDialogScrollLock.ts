@@ -17,6 +17,12 @@ export const useConsentDialogScrollLock = () => {
     if (typeof window === 'undefined') return;
 
     const preventBackgroundScroll = (event: WheelEvent | TouchEvent) => {
+      // Only block scrolling when the body explicitly has the modal-open class.
+      // This prevents the listener from accidentally blocking page scroll on
+      // routes where CCM19 only renders its small consent icon (which can still
+      // match `dialog.ccm-dialog-open` in the DOM but is not a true modal).
+      if (!document.body.classList.contains(CONSENT_SCROLL_LOCK_CLASS)) return;
+
       const dialog = document.querySelector(CONSENT_DIALOG_SELECTOR);
       if (!dialog) return;
 
