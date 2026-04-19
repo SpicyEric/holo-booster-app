@@ -182,39 +182,15 @@ export const useNewCustomerOfferRedemption = ({
     });
 
     const nfcSupported = await nfcService.isSupported();
-    
+
     if (!nfcSupported) {
-      // For web preview/testing, simulate successful scan
-      if (!nfcService.isNativeApp()) {
-        toast.info('NFC nicht verfügbar - Simuliere Scan für Test...');
-        setTimeout(async () => {
-          const result = await processNewCustomerOffer();
-          if (result.success) {
-            setState({
-              isRedeeming: true,
-              isScanning: false,
-              redemptionSuccess: true,
-              error: null,
-              showPermissionDialog: false,
-              permissionDialogType: 'disabled',
-            });
-            onSuccess();
-          } else {
-            setState(prev => ({
-              ...prev,
-              isScanning: false,
-              error: prev.error || 'Einlösung fehlgeschlagen',
-            }));
-          }
-        }, 2000);
-        return;
-      }
-      
       setState({
         isRedeeming: false,
         isScanning: false,
         redemptionSuccess: false,
-        error: 'NFC wird auf diesem Gerät nicht unterstützt',
+        error: nfcService.isNativeApp()
+          ? 'NFC wird auf diesem Gerät nicht unterstützt'
+          : 'NFC ist nur in der mobilen App verfügbar. Bitte nutze die Eloyo-App auf deinem Smartphone.',
         showPermissionDialog: false,
         permissionDialogType: 'disabled',
       });
