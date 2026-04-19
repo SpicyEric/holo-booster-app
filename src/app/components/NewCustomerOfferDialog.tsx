@@ -99,7 +99,7 @@ export const NewCustomerOfferDialog = ({
   if (redemptionSuccess) {
     return (
       <Dialog open={open} onOpenChange={handleClose}>
-        <DialogContent className="max-w-sm mx-auto">
+        <DialogContent className="max-w-[320px] mx-auto rounded-2xl bg-background/95 backdrop-blur-sm [&>button]:hidden">
           <div className="text-center py-6">
             <div className="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-4">
               <Check className="h-10 w-10 text-green-600" />
@@ -129,7 +129,7 @@ export const NewCustomerOfferDialog = ({
   if (error && !isScanning) {
     return (
       <Dialog open={open} onOpenChange={handleClose}>
-        <DialogContent className="max-w-sm mx-auto">
+        <DialogContent className="max-w-[320px] mx-auto rounded-2xl bg-background/95 backdrop-blur-sm [&>button]:hidden">
           <div className="text-center py-6">
             <div className="w-20 h-20 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-4">
               <AlertCircle className="h-10 w-10 text-red-600" />
@@ -158,10 +158,18 @@ export const NewCustomerOfferDialog = ({
   if (isScanning) {
     return (
       <Dialog open={open} onOpenChange={() => {}}>
-        <DialogContent className="max-w-sm mx-auto" onPointerDownOutside={(e) => e.preventDefault()}>
+        <DialogContent
+          className="max-w-[320px] mx-auto rounded-2xl bg-background/95 backdrop-blur-sm [&>button]:hidden"
+          onPointerDownOutside={(e) => e.preventDefault()}
+          onEscapeKeyDown={(e) => e.preventDefault()}
+        >
           <div className="text-center py-6">
-            <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4 animate-pulse">
-              <Smartphone className="h-10 w-10 text-primary" />
+            <div className="relative w-24 h-24 mx-auto mb-4">
+              <span className="absolute inset-0 rounded-full bg-primary/20 animate-ping" />
+              <span className="absolute inset-2 rounded-full bg-primary/30 animate-pulse" />
+              <div className="relative w-24 h-24 rounded-full bg-primary/10 flex items-center justify-center">
+                <Smartphone className="h-10 w-10 text-primary animate-pulse" />
+              </div>
             </div>
             <h2 className="text-xl font-bold text-foreground mb-2">
               Stempel scannen
@@ -176,7 +184,6 @@ export const NewCustomerOfferDialog = ({
               <p className="font-semibold text-foreground">{offer.title}</p>
             </div>
             <Button variant="outline" onClick={cancelRedemption} className="w-full">
-              <X className="h-4 w-4 mr-2" />
               Abbrechen
             </Button>
           </div>
@@ -188,7 +195,7 @@ export const NewCustomerOfferDialog = ({
   // Initial state - show offer details
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-sm mx-auto">
+      <DialogContent className="max-w-[320px] mx-auto rounded-2xl bg-background/95 backdrop-blur-sm">
         <DialogHeader>
           <DialogTitle className="text-center">Neukundenprämie</DialogTitle>
         </DialogHeader>
