@@ -78,11 +78,19 @@ export const AppMessages = () => {
       const merchantIds = accounts.map(a => a.merchant_customer_id);
       const pointsMap = new Map(accounts.map(a => [a.merchant_customer_id, a.current_points_balance || 0]));
 
+      // Only count rewards from active merchants
+      const { data: activeMerchants } = await supabase
+        .from('customers')
+        .select('id')
+        .in('id', merchantIds)
+        .eq('active', true);
+      const activeIds = new Set((activeMerchants || []).map((m: any) => m.id));
+
       const { data: rewards } = await supabase
         .from('rewards')
         .select('id, points_required, merchant_customer_id')
         .eq('is_active', true)
-        .in('merchant_customer_id', merchantIds);
+        .in('merchant_customer_id', Array.from(activeIds));
 
       if (rewards) {
         const count = rewards.filter(r => (pointsMap.get(r.merchant_customer_id) || 0) >= r.points_required).length;
