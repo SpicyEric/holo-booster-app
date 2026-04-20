@@ -11,6 +11,7 @@ import eloyoLogo from "@/assets/eloyo-logo.png";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
+import { linkOrphanNfcChipsToMerchant } from "@/lib/nfcChipLinking";
 
 import { initialWizardState, STEP_META, calculateSuggestion, suggestedRewardPoints } from "../wizard/wizardLogic";
 import type { WizardState } from "../wizard/wizardLogic";
