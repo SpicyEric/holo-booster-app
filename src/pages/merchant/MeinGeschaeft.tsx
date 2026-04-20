@@ -768,6 +768,8 @@ const MeinGeschaeft = () => {
         await supabase.from('eloyo_boxes').update({
           haendler_id: customerId,
         }).eq('id', eloyoBox.id);
+        // Verknüpfe ggf. bereits registrierte Hardware-Chips mit dem Händler
+        await linkOrphanNfcChipsToMerchant(stampIdValue, customerId);
       }
 
       await createDefaultStamps(boxData.stamp_preset || 'standard_3', customerId);
