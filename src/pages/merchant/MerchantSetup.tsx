@@ -11,6 +11,7 @@ import eloyoLogo from "@/assets/eloyo-logo.png";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
+import { linkOrphanNfcChipsToMerchant } from "@/lib/nfcChipLinking";
 
 import { initialWizardState, STEP_META, calculateSuggestion, suggestedRewardPoints } from "../wizard/wizardLogic";
 import type { WizardState } from "../wizard/wizardLogic";
@@ -138,6 +139,8 @@ export default function MerchantSetup() {
         await supabase.from("eloyo_boxes").update({
           haendler_id: customerId,
         }).eq("id", eloyoBox.id);
+        // Verknüpfe ggf. bereits registrierte Hardware-Chips mit dem Händler
+        await linkOrphanNfcChipsToMerchant(state.boxId, customerId);
       }
 
       const preset = boxData.stamp_preset || "standard_3";

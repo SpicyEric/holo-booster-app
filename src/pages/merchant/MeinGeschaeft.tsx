@@ -35,6 +35,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { calculateSuggestion, SPEND_PRESETS } from "../wizard/wizardLogic";
 import { cn } from "@/lib/utils";
+import { linkOrphanNfcChipsToMerchant } from "@/lib/nfcChipLinking";
 
 const INDUSTRIES = [
   { value: "cafe", label: "Café" },
@@ -768,6 +769,8 @@ const MeinGeschaeft = () => {
         await supabase.from('eloyo_boxes').update({
           haendler_id: customerId,
         }).eq('id', eloyoBox.id);
+        // Verknüpfe ggf. bereits registrierte Hardware-Chips mit dem Händler
+        await linkOrphanNfcChipsToMerchant(stampIdValue, customerId);
       }
 
       await createDefaultStamps(boxData.stamp_preset || 'standard_3', customerId);
