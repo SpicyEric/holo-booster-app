@@ -756,8 +756,15 @@ const MeinGeschaeft = () => {
 
       await supabase.from('customer_boxes').insert({ customer_id: customerId, box_id: boxData.id });
 
-      // Link eloyo_box if exists with this stamp_id — trigger handles status automatically
       const stampIdValue = newBoxId.trim().toUpperCase();
+
+      // Persistiere die Stempel-ID auch direkt am Händler-Datensatz
+      await supabase
+        .from('customers')
+        .update({ stamp_id: stampIdValue })
+        .eq('id', customerId);
+
+      // Link eloyo_box if exists with this stamp_id — trigger handles status automatically
       const { data: eloyoBox } = await supabase
         .from('eloyo_boxes')
         .select('id')
@@ -769,9 +776,11 @@ const MeinGeschaeft = () => {
         await supabase.from('eloyo_boxes').update({
           haendler_id: customerId,
         }).eq('id', eloyoBox.id);
-        // Verknüpfe ggf. bereits registrierte Hardware-Chips mit dem Händler
-        await linkOrphanNfcChipsToMerchant(stampIdValue, customerId);
       }
+
+      // Immer: bereits registrierte Hardware-Chips mit diesem Händler verknüpfen,
+      // unabhängig davon, ob ein eloyo_boxes-Eintrag existiert.
+      await linkOrphanNfcChipsToMerchant(stampIdValue, customerId);
 
       await createDefaultStamps(boxData.stamp_preset || 'standard_3', customerId);
 
