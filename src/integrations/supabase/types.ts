@@ -3265,6 +3265,10 @@ export type Database = {
             Returns: Json
           }
         | { Args: { p_hardware_uid: string; p_user_id: string }; Returns: Json }
+      claim_orphan_nfc_chips: {
+        Args: { p_merchant_customer_id: string; p_stempel_id: string }
+        Returns: number
+      }
       generate_customer_number: { Args: never; Returns: string }
       has_role: {
         Args: {

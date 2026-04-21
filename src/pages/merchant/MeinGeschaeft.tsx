@@ -1195,7 +1195,7 @@ const MeinGeschaeft = () => {
                           </div>
                           <Slider
                             min={3}
-                            max={50}
+                            max={200}
                             step={1}
                             value={[avgRevenue]}
                             onValueChange={(val) => {
@@ -1206,7 +1206,7 @@ const MeinGeschaeft = () => {
                           />
                           <div className="flex justify-between text-xs text-muted-foreground">
                             <span>3 €</span>
-                            <span>50 €</span>
+                            <span>200 €</span>
                           </div>
 
                           {stampSettingsDirty && (

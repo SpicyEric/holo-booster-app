@@ -142,7 +142,7 @@ export const GOAL_OPTIONS = [
   },
 ];
 
-export const SPEND_PRESETS = [5, 8, 12, 20, 35];
+export const SPEND_PRESETS = [5, 8, 12, 20, 35, 50, 75, 100, 150];
 
 export const TOTAL_STEPS = 8;
 
