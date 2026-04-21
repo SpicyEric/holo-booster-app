@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { Search, RefreshCw, Plus, Phone, MapPin, Send, Navigation } from "lucide-react";
+import { Search, RefreshCw, Plus, Phone, MapPin, Send, Navigation, MapPinned, X } from "lucide-react";
 import { toast } from "sonner";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
@@ -68,12 +68,14 @@ const CustomerMarker = ({ customer, isSelected, onClick }: { customer: Customer;
 };
 
 // Inner map component — only mounted when apiKey is available
-function CustomersMapView({ apiKey, customers, selectedCustomerId, onSelectCustomer, onMapLoad }: {
+function CustomersMapView({ apiKey, customers, selectedCustomerId, onSelectCustomer, onMapLoad, placementMode, onMapClick }: {
   apiKey: string;
   customers: Customer[];
   selectedCustomerId: string | null;
   onSelectCustomer: (id: string) => void;
   onMapLoad: (map: google.maps.Map) => void;
+  placementMode: boolean;
+  onMapClick: (lat: number, lng: number) => void;
 }) {
   const { isLoaded } = useJsApiLoader({
     googleMapsApiKey: apiKey,
@@ -93,14 +95,21 @@ function CustomersMapView({ apiKey, customers, selectedCustomerId, onSelectCusto
       center={defaultCenter}
       zoom={7}
       onLoad={onMapLoad}
-      options={{ disableDefaultUI: false, zoomControl: true, mapTypeControl: false, streetViewControl: false, fullscreenControl: true }}
+      onClick={(e) => {
+        if (!placementMode || !e.latLng) return;
+        onMapClick(e.latLng.lat(), e.latLng.lng());
+      }}
+      options={{
+        disableDefaultUI: false, zoomControl: true, mapTypeControl: false, streetViewControl: false, fullscreenControl: true,
+        draggableCursor: placementMode ? 'crosshair' : undefined,
+      }}
     >
       {customersWithCoords.map((customer) => (
         <OverlayView key={customer.id} position={{ lat: customer.latitude!, lng: customer.longitude! }} mapPaneName={OverlayView.OVERLAY_MOUSE_TARGET}>
           <CustomerMarker
             customer={customer}
             isSelected={selectedCustomerId === customer.id}
-            onClick={() => onSelectCustomer(customer.id)}
+            onClick={() => !placementMode && onSelectCustomer(customer.id)}
           />
         </OverlayView>
       ))}
@@ -124,6 +133,10 @@ const Customers = () => {
   const [sortBy, setSortBy] = useState<string>("created_desc");
   const [activeTab, setActiveTab] = useState("alle");
   const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null);
+
+  // Placement mode: customer being repositioned on the map
+  const [placementCustomer, setPlacementCustomer] = useState<Customer | null>(null);
+  const [savingPlacement, setSavingPlacement] = useState(false);
 
   // Message dialog
   const [messageCustomer, setMessageCustomer] = useState<Customer | null>(null);
