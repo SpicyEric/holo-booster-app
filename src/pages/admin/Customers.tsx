@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { Search, RefreshCw, Plus, Phone, MapPin, Send, Navigation } from "lucide-react";
+import { Search, RefreshCw, Plus, Phone, MapPin, Send, Navigation, MapPinned, X } from "lucide-react";
 import { toast } from "sonner";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
@@ -68,12 +68,14 @@ const CustomerMarker = ({ customer, isSelected, onClick }: { customer: Customer;
 };
 
 // Inner map component — only mounted when apiKey is available
-function CustomersMapView({ apiKey, customers, selectedCustomerId, onSelectCustomer, onMapLoad }: {
+function CustomersMapView({ apiKey, customers, selectedCustomerId, onSelectCustomer, onMapLoad, placementMode, onMapClick }: {
   apiKey: string;
   customers: Customer[];
   selectedCustomerId: string | null;
   onSelectCustomer: (id: string) => void;
   onMapLoad: (map: google.maps.Map) => void;
+  placementMode: boolean;
+  onMapClick: (lat: number, lng: number) => void;
 }) {
   const { isLoaded } = useJsApiLoader({
     googleMapsApiKey: apiKey,
@@ -93,14 +95,21 @@ function CustomersMapView({ apiKey, customers, selectedCustomerId, onSelectCusto
       center={defaultCenter}
       zoom={7}
       onLoad={onMapLoad}
-      options={{ disableDefaultUI: false, zoomControl: true, mapTypeControl: false, streetViewControl: false, fullscreenControl: true }}
+      onClick={(e) => {
+        if (!placementMode || !e.latLng) return;
+        onMapClick(e.latLng.lat(), e.latLng.lng());
+      }}
+      options={{
+        disableDefaultUI: false, zoomControl: true, mapTypeControl: false, streetViewControl: false, fullscreenControl: true,
+        draggableCursor: placementMode ? 'crosshair' : undefined,
+      }}
     >
       {customersWithCoords.map((customer) => (
         <OverlayView key={customer.id} position={{ lat: customer.latitude!, lng: customer.longitude! }} mapPaneName={OverlayView.OVERLAY_MOUSE_TARGET}>
           <CustomerMarker
             customer={customer}
             isSelected={selectedCustomerId === customer.id}
-            onClick={() => onSelectCustomer(customer.id)}
+            onClick={() => !placementMode && onSelectCustomer(customer.id)}
           />
         </OverlayView>
       ))}
@@ -124,6 +133,10 @@ const Customers = () => {
   const [sortBy, setSortBy] = useState<string>("created_desc");
   const [activeTab, setActiveTab] = useState("alle");
   const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null);
+
+  // Placement mode: customer being repositioned on the map
+  const [placementCustomer, setPlacementCustomer] = useState<Customer | null>(null);
+  const [savingPlacement, setSavingPlacement] = useState(false);
 
   // Message dialog
   const [messageCustomer, setMessageCustomer] = useState<Customer | null>(null);
@@ -277,6 +290,39 @@ const Customers = () => {
     }
   };
 
+  const handleStartPlacement = (customer: Customer) => {
+    setPlacementCustomer(customer);
+    setSelectedCustomerId(customer.id);
+    if (map && customer.latitude && customer.longitude) {
+      map.panTo({ lat: customer.latitude, lng: customer.longitude });
+      map.setZoom(16);
+    }
+    toast.info(`Klicke auf der Karte, um "${customer.name}" neu zu platzieren.`);
+  };
+
+  const handleMapPlacementClick = async (lat: number, lng: number) => {
+    if (!placementCustomer || savingPlacement) return;
+    setSavingPlacement(true);
+    try {
+      const { error } = await supabase
+        .from("customers")
+        .update({ latitude: lat, longitude: lng })
+        .eq("id", placementCustomer.id);
+      if (error) throw error;
+      // Lokal updaten, damit Marker direkt springt
+      setCustomers((prev) => prev.map((c) =>
+        c.id === placementCustomer.id ? { ...c, latitude: lat, longitude: lng } : c
+      ));
+      toast.success(`"${placementCustomer.name}" wurde neu platziert`);
+      setPlacementCustomer(null);
+    } catch (e: any) {
+      console.error(e);
+      toast.error("Fehler beim Speichern der Position");
+    } finally {
+      setSavingPlacement(false);
+    }
+  };
+
   const onMapLoad = useCallback((mapInstance: google.maps.Map) => { setMap(mapInstance); }, []);
 
   const activeCount = customers.filter((c) => c.active).length;
@@ -306,7 +352,23 @@ const Customers = () => {
             selectedCustomerId={selectedCustomerId}
             onSelectCustomer={(id) => setSelectedCustomerId(id)}
             onMapLoad={onMapLoad}
+            placementMode={!!placementCustomer}
+            onMapClick={handleMapPlacementClick}
           />
+        )}
+
+        {placementCustomer && (
+          <div className="absolute top-4 left-1/2 -translate-x-1/2 z-10 bg-background border shadow-lg rounded-full pl-4 pr-1.5 py-1.5 flex items-center gap-3 max-w-[90%]">
+            <MapPinned className="w-4 h-4 text-primary shrink-0" />
+            <div className="text-sm">
+              <span className="font-medium">{placementCustomer.name}</span>{" "}
+              <span className="text-muted-foreground">– klicke auf die Karte zum Platzieren</span>
+            </div>
+            <Button size="sm" variant="ghost" className="h-7 rounded-full"
+              onClick={() => setPlacementCustomer(null)} disabled={savingPlacement}>
+              <X className="w-3.5 h-3.5 mr-1" /> Abbrechen
+            </Button>
+          </div>
         )}
       </div>
 
@@ -392,6 +454,15 @@ const Customers = () => {
                         <Navigation className="h-3 w-3" />
                       </Button>
                     )}
+                    <Button
+                      variant={placementCustomer?.id === customer.id ? "default" : "ghost"}
+                      size="icon"
+                      className="h-7 w-7"
+                      title="Auf Karte platzieren"
+                      onClick={(e) => { e.stopPropagation(); handleStartPlacement(customer); }}
+                    >
+                      <MapPinned className="h-3 w-3" />
+                    </Button>
                     <Button variant="ghost" size="icon" className="h-7 w-7" title="Nachricht senden"
                       onClick={(e) => { e.stopPropagation(); setMessageCustomer(customer); }}>
                       <Send className="h-3 w-3" />
