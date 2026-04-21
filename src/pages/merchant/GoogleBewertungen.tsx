@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Slider } from "@/components/ui/slider";
 import { toast } from "sonner";
-import { Star, ExternalLink, Copy, CheckCircle2, Bot, Loader2, Gift } from "lucide-react";
+import { Star, ExternalLink, Copy, CheckCircle2, Bot, Loader2, Gift, Monitor, Search, MousePointer, Link2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 
