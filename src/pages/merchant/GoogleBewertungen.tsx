@@ -350,24 +350,121 @@ const GoogleBewertungen = () => {
           </Card>
 
           {/* How to get Google Review Link */}
-          <Card className="p-6 rounded-2xl shadow-sm border-0 bg-gray-50/80">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">So findest du deinen Google-Bewertungslink</h3>
-            <ol className="list-decimal list-inside space-y-3 text-gray-600">
-              <li>
-                Öffne <a 
-                  href="https://business.google.com" 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="text-primary hover:underline font-medium"
-                >
-                  Google Business Profile
-                </a>
-              </li>
-              <li>Wähle dein Geschäft aus</li>
-              <li>Klicke auf "Kunden" → "Bewertungen"</li>
-              <li>Klicke auf "Teilen" oder "Weitere Bewertungen erhalten"</li>
-              <li>Kopiere den Link und füge ihn hier ein</li>
-            </ol>
+          <Card className="p-6 rounded-2xl shadow-sm border-0 bg-white">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center">
+                <Link2 className="w-5 h-5 text-blue-600" />
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900">
+                So findest du deinen Google-Bewertungslink
+              </h3>
+            </div>
+
+            <div className="space-y-4">
+              {/* Step 1 */}
+              <div className="flex gap-4 p-4 rounded-xl bg-gray-50 hover:bg-blue-50/50 transition-colors">
+                <div className="flex-shrink-0 w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-sm">
+                  1
+                </div>
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Monitor className="w-4 h-4 text-gray-500" />
+                    <span className="font-medium text-gray-900">Webportal öffnen</span>
+                  </div>
+                  <p className="text-sm text-gray-600 mb-3">
+                    Gehe auf <strong>business.google.com</strong> und melde dich mit deinem Google-Konto an.
+                    Stelle sicher, dass du Zugriff auf dein Google Business Profile hast.
+                  </p>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="rounded-lg text-sm"
+                    onClick={() => window.open('https://business.google.com', '_blank')}
+                  >
+                    <ExternalLink className="w-3 h-3 mr-2" />
+                    Zu Google Business Profile
+                  </Button>
+                </div>
+              </div>
+
+              {/* Step 2 */}
+              <div className="flex gap-4 p-4 rounded-xl bg-gray-50 hover:bg-blue-50/50 transition-colors">
+                <div className="flex-shrink-0 w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-sm">
+                  2
+                </div>
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Search className="w-4 h-4 text-gray-500" />
+                    <span className="font-medium text-gray-900">Standort auswählen</span>
+                  </div>
+                  <p className="text-sm text-gray-600">
+                    Falls du mehrere Standorte hast, wähle in der linken Sidebar den richtigen Standort aus.
+                    Klicke auf den Namen deines Geschäfts, um den Standort zu öffnen.
+                  </p>
+                </div>
+              </div>
+
+              {/* Step 3 */}
+              <div className="flex gap-4 p-4 rounded-xl bg-gray-50 hover:bg-blue-50/50 transition-colors">
+                <div className="flex-shrink-0 w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-sm">
+                  3
+                </div>
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-2">
+                    <MousePointer className="w-4 h-4 text-gray-500" />
+                    <span className="font-medium text-gray-900">Zu "Bewertungen" navigieren</span>
+                  </div>
+                  <p className="text-sm text-gray-600">
+                    Klicke im linken Menü auf <span className="inline-flex items-center px-2 py-0.5 bg-white rounded text-xs font-medium text-gray-700 border">Kunden</span> und wähle dann <span className="inline-flex items-center px-2 py-0.5 bg-white rounded text-xs font-medium text-gray-700 border">Bewertungen</span> aus.
+                  </p>
+                </div>
+              </div>
+
+              {/* Step 4 */}
+              <div className="flex gap-4 p-4 rounded-xl bg-gray-50 hover:bg-blue-50/50 transition-colors">
+                <div className="flex-shrink-0 w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-sm">
+                  4
+                </div>
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Gift className="w-4 h-4 text-gray-500" />
+                    <span className="font-medium text-gray-900">Den Link generieren</span>
+                  </div>
+                  <p className="text-sm text-gray-600">
+                    Oben in der Bewertungs-Übersicht findest du einen Button mit der Aufschrift <strong className="text-gray-800">"Weitere Bewertungen erhalten"</strong> oder <strong className="text-gray-800">"Teilen"</strong>. Klicke darauf, um die verknüpfbare URL zu erstellen.
+                  </p>
+                </div>
+              </div>
+
+              {/* Step 5 */}
+              <div className="flex gap-4 p-4 rounded-xl bg-green-50 border border-green-200">
+                <div className="flex-shrink-0 w-8 h-8 rounded-full bg-green-600 text-white flex items-center justify-center font-bold text-sm">
+                  5
+                </div>
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Copy className="w-4 h-4 text-green-600" />
+                    <span className="font-medium text-green-800">Link kopieren & hier einfügen</span>
+                  </div>
+                  <p className="text-sm text-green-700">
+                    Der Link beginnt mit <code className="bg-white px-1.5 py-0.5 rounded text-xs">https://g.page/r/...</code> oder <code className="bg-white px-1.5 py-0.5 rounded text-xs">https://search.google.com/local/reviews?...</code>. Kopiere ihn und füge ihn oben in das Feld „Google Bewertungslink“ ein.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Pro Tip */}
+            <div className="mt-6 p-4 rounded-xl bg-amber-50 border border-amber-200">
+              <div className="flex items-start gap-3">
+                <Star className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5 fill-amber-500" />
+                <div>
+                  <p className="font-medium text-amber-800 mb-1">Tipp: Direktlink testen</p>
+                  <p className="text-sm text-amber-700">
+                    Nachdem du den Link gespeichert hast, teste ihn in einem Inkognito-Fenster, um sicherzustellen, dass er direkt zur Bewertungsmaske führt.
+                  </p>
+                </div>
+              </div>
+            </div>
           </Card>
 
         </div>
