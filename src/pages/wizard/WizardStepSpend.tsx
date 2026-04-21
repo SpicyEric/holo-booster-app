@@ -9,9 +9,7 @@ interface Props {
   onChange: (updates: Partial<WizardState>) => void;
 }
 
-  // SPEND_PRESETS already covers the relevant quick-select range up to 150 €.
-  // The slider supports values up to 200 €.
-
+export default function WizardStepSpend({ state, onChange }: Props) {
   return (
     <div className="space-y-6">
       <p className="text-base text-muted-foreground">
@@ -37,15 +35,15 @@ interface Props {
         ))}
         <button
           type="button"
-          onClick={() => onChange({ avgSpend: 50 })}
+          onClick={() => onChange({ avgSpend: 200 })}
           className={cn(
             "px-5 py-2.5 rounded-full border-2 text-base font-medium transition-all",
-            state.avgSpend === 50
+            state.avgSpend === 200
               ? "border-primary bg-primary/10 text-primary"
               : "border-border bg-card text-foreground hover:border-primary/40"
           )}
         >
-          &gt; 35 €
+          &gt; 150 €
         </button>
       </div>
 
@@ -66,13 +64,13 @@ interface Props {
           value={[state.avgSpend]}
           onValueChange={([val]) => onChange({ avgSpend: val })}
           min={3}
-          max={50}
+          max={200}
           step={1}
           className="w-full"
         />
         <div className="flex justify-between text-xs text-muted-foreground px-1">
           <span>3 €</span>
-          <span>50 €</span>
+          <span>200 €</span>
         </div>
       </div>
 
