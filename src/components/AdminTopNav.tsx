@@ -29,13 +29,15 @@ export function AdminTopNav() {
   const location = useLocation();
 
   const handleLogout = async () => {
-    const { error } = await signOut();
-    if (error) {
-      toast.error("Logout fehlgeschlagen");
-    } else {
-      toast.success("Erfolgreich abgemeldet");
-      navigate("/auth");
+    try {
+      await signOut();
+    } catch (e) {
+      console.error("[AdminTopNav] signOut error", e);
     }
+    // Hartes Reload erzwingen, damit Auth-State sicher zurückgesetzt wird
+    // und kein Redirect-Loop zurück ins Admin-Panel passiert.
+    toast.success("Erfolgreich abgemeldet");
+    window.location.href = "/auth";
   };
 
   const currentPage = menuItems.find(item => 
