@@ -9,8 +9,8 @@ interface Props {
   onChange: (updates: Partial<WizardState>) => void;
 }
 
-export default function WizardStepSpend({ state, onChange }: Props) {
-  const allValues = [...SPEND_PRESETS, 50];
+  // SPEND_PRESETS already covers the relevant quick-select range up to 150 €.
+  // The slider supports values up to 200 €.
 
   return (
     <div className="space-y-6">
