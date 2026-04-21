@@ -75,9 +75,10 @@ const Auth = () => {
     };
   }, []);
 
-  const redirectByRole = (userRole: UserRole, isPasswordSetup = false) => {
+  const redirectByRole = (userRole: UserRole, _isPasswordSetup = false) => {
+    // Wizard ist global deaktiviert – Händler landen immer direkt im Dashboard.
     if (userRole === 'admin') navigate('/admin');
-    else if (userRole === 'merchant') navigate(isPasswordSetup ? '/kunde/setup' : '/kunde');
+    else if (userRole === 'merchant') navigate('/kunde');
     else if (userRole === 'partner') navigate('/partner/dashboard');
   };
 

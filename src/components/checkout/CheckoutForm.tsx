@@ -191,6 +191,17 @@ export default function CheckoutForm({ backPath, backLabel, partnerUserId }: Che
 
       if (error) throw error;
       if (data?.url) {
+        // Save email so we can auto-login as the new customer
+        // after Stripe redirects back to /checkout/success.
+        try {
+          localStorage.setItem(
+            "pendingImpersonateEmail",
+            contactEmail.toLowerCase().trim()
+          );
+          localStorage.setItem("pendingImpersonateAt", Date.now().toString());
+        } catch {
+          /* ignore */
+        }
         window.open(data.url, '_blank');
         toast.success("Checkout-Session erstellt!");
       }

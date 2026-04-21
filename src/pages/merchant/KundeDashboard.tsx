@@ -110,8 +110,9 @@ export default function KundeDashboard() {
       if (user?.id) {
         customerData = await getUserCustomer(user.id);
         if (customerData) {
-          const { count: boxCount } = await supabase.from("customer_boxes").select("id", { count: "exact", head: true }).eq("customer_id", customerData.id);
-          if (!boxCount || boxCount === 0) { navigate("/kunde/setup"); return; }
+          // Wizard deaktiviert: Händler werden direkt ins Dashboard gelassen,
+          // Box-ID und Stempelsystem werden vom Vertriebler/Admin oder
+          // im Bereich "Mein Geschäft" gepflegt.
           setCustomer({ id: customerData.id, name: customerData.name, email: customerData.email || user.email || "", company_name: customerData.company_name, status: customerData.status || "active", customer_number: customerData.customer_number, created_at: customerData.created_at, postal_code: customerData.postal_code, birthday_enabled: customerData.birthday_enabled });
         }
       }
