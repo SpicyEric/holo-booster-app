@@ -371,7 +371,6 @@ function StoreFinderContent({ apiKey }: { apiKey: string }) {
   const [manualAddMode, setManualAddMode] = useState(false);
   const [manualName, setManualName] = useState('');
   const [manualLatLng, setManualLatLng] = useState<{ lat: number; lng: number } | null>(null);
-  const mapRef = useRef<google.maps.Map | null>(null);
 
   const { isLoaded } = useJsApiLoader({
     googleMapsApiKey: apiKey,
