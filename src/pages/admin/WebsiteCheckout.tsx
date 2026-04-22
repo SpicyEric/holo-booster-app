@@ -7,9 +7,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { Check, Globe, CreditCard, Loader2, Wrench } from "lucide-react";
+import { Check, Globe, Loader2, Wrench, X } from "lucide-react";
 import { INDUSTRIES } from "@/pages/wizard/wizardLogic";
 
 const PRICING = {
@@ -17,9 +18,17 @@ const PRICING = {
   monthly: 39,
 };
 
+interface ValidatedDiscount {
+  code: string;
+  discountType: 'percentage' | 'fixed';
+  discountValue: number;
+  appliesTo: 'one_time' | 'recurring' | 'both';
+}
+
 export default function WebsiteCheckout() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+  const [validatingPromo, setValidatingPromo] = useState(false);
 
   // Company profile
   const [companyName, setCompanyName] = useState("");
@@ -49,6 +58,69 @@ export default function WebsiteCheckout() {
 
   // Additional contacts
   const [additionalContacts, setAdditionalContacts] = useState("");
+
+  // Promo
+  const [promoCodeInput, setPromoCodeInput] = useState("");
+  const [validatedDiscounts, setValidatedDiscounts] = useState<ValidatedDiscount[]>([]);
+
+  const calculateTotal = () => {
+    const baseSetup = PRICING.setup;
+    const baseMonthly = PRICING.monthly;
+    let setupDiscount = 0, monthlyDiscount = 0;
+    for (const d of validatedDiscounts) {
+      if (d.appliesTo === 'one_time' || d.appliesTo === 'both') {
+        setupDiscount += d.discountType === 'percentage' ? baseSetup * (d.discountValue / 100) : d.discountValue;
+      }
+      if (d.appliesTo === 'recurring' || d.appliesTo === 'both') {
+        monthlyDiscount += d.discountType === 'percentage' ? baseMonthly * (d.discountValue / 100) : d.discountValue;
+      }
+    }
+    const finalSetup = Math.max(0, baseSetup - setupDiscount);
+    const finalMonthly = Math.max(0, baseMonthly - monthlyDiscount);
+    return {
+      setup: baseSetup, setupDiscounted: finalSetup, setupDiscount,
+      monthly: baseMonthly, monthlyDiscounted: finalMonthly, monthlyDiscount,
+      firstPayment: finalSetup + finalMonthly,
+      totalDiscount: setupDiscount + monthlyDiscount,
+    };
+  };
+
+  const totals = calculateTotal();
+
+  const validatePromoCode = async () => {
+    const codes = promoCodeInput.split(",").map(c => c.trim()).filter(Boolean);
+    if (codes.length === 0) { toast.error("Bitte gib einen Rabattcode ein"); return; }
+    if (codes.length > 2) { toast.error("Max. 2 Rabattcodes"); return; }
+    const newCodes = codes.filter(c => !validatedDiscounts.some(d => d.code.toUpperCase() === c.toUpperCase()));
+    if (newCodes.length === 0) { toast.info("Codes bereits hinzugefügt"); return; }
+
+    setValidatingPromo(true);
+    try {
+      const results: ValidatedDiscount[] = [];
+      for (const code of newCodes) {
+        const { data, error } = await supabase.functions.invoke("validate-promo-code", { body: { code } });
+        if (error) throw error;
+        if (data.valid) {
+          results.push({ code: code.toUpperCase(), discountType: data.discountType, discountValue: data.discountValue, appliesTo: data.appliesTo });
+        } else {
+          toast.error(`Code "${code}": ${data.error || "Ungültig"}`);
+        }
+      }
+      if (results.length > 0) {
+        setValidatedDiscounts(prev => [...prev, ...results].slice(0, 2));
+        setPromoCodeInput("");
+        toast.success(`${results.length} Rabattcode(s) angewendet!`);
+      }
+    } catch {
+      toast.error("Fehler bei der Validierung");
+    } finally {
+      setValidatingPromo(false);
+    }
+  };
+
+  const removeDiscount = (code: string) => {
+    setValidatedDiscounts(prev => prev.filter(d => d.code !== code));
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -81,6 +153,7 @@ export default function WebsiteCheckout() {
           vatId,
           contactPhone,
           additionalContacts,
+          promoCodes: validatedDiscounts.map(d => d.code),
         },
       });
 
@@ -95,8 +168,6 @@ export default function WebsiteCheckout() {
       setLoading(false);
     }
   };
-
-  const total = PRICING.setup + PRICING.monthly;
 
   return (
     <div className="min-h-screen p-4 md:p-8 font-body">
@@ -321,6 +392,29 @@ export default function WebsiteCheckout() {
             </CardContent>
           </Card>
 
+          {/* Promo codes - subtle single line */}
+          <div className="flex gap-2 items-center flex-wrap">
+            <Input
+              value={promoCodeInput}
+              onChange={e => setPromoCodeInput(e.target.value)}
+              placeholder="Rabattcode eingeben..."
+              className="max-w-xs"
+              disabled={validatedDiscounts.length >= 2 || validatingPromo}
+              onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); validatePromoCode(); } }}
+            />
+            <Button type="button" variant="ghost" size="sm" onClick={validatePromoCode}
+              disabled={validatedDiscounts.length >= 2 || validatingPromo || !promoCodeInput.trim()}>
+              {validatingPromo ? <Loader2 className="w-4 h-4 animate-spin" /> : "Anwenden"}
+            </Button>
+            {validatedDiscounts.map(d => (
+              <Badge key={d.code} className="flex items-center gap-1 bg-green-100 text-green-800 text-xs">
+                <Check className="w-3 h-3" />{d.code}
+                <span className="opacity-75">({d.discountType === 'percentage' ? `${d.discountValue}%` : `${d.discountValue}€`})</span>
+                <button type="button" onClick={() => removeDiscount(d.code)}><X className="w-3 h-3" /></button>
+              </Badge>
+            ))}
+          </div>
+
           {/* Summary */}
           <Card className="border-2 border-primary">
             <CardHeader className="pb-3">
@@ -329,17 +423,31 @@ export default function WebsiteCheckout() {
             <CardContent className="space-y-2">
               <div className="flex justify-between py-1.5 border-b text-sm">
                 <span>Erstellung & Einrichtung (einmalig)</span>
-                <span className="font-medium">{PRICING.setup.toFixed(2)}€</span>
+                <span className="font-medium">
+                  {totals.setupDiscount > 0 ? (
+                    <><span className="line-through text-muted-foreground mr-2">{totals.setup.toFixed(2)}€</span><span className="text-green-600">{totals.setupDiscounted.toFixed(2)}€</span></>
+                  ) : `${totals.setup.toFixed(2)}€`}
+                </span>
               </div>
               <div className="flex justify-between py-1.5 border-b text-sm">
                 <span>Monatlicher Service</span>
-                <span className="font-medium">{PRICING.monthly.toFixed(2)}€/Monat</span>
+                <span className="font-medium">
+                  {totals.monthlyDiscount > 0 ? (
+                    <><span className="line-through text-muted-foreground mr-2">{totals.monthly.toFixed(2)}€</span><span className="text-green-600">{totals.monthlyDiscounted.toFixed(2)}€</span></>
+                  ) : `${totals.monthly.toFixed(2)}€`}/Monat
+                </span>
               </div>
+              {totals.totalDiscount > 0 && (
+                <div className="flex justify-between py-1.5 text-green-600 bg-green-50 px-3 rounded text-sm">
+                  <span>Rabatt</span>
+                  <span className="font-medium">-{totals.totalDiscount.toFixed(2)}€</span>
+                </div>
+              )}
               <div className="flex justify-between py-2 border-t-2 font-bold">
                 <span>Erste Zahlung</span>
-                <span>{total.toFixed(2)}€</span>
+                <span className={totals.totalDiscount > 0 ? "text-green-600" : ""}>{totals.firstPayment.toFixed(2)}€</span>
               </div>
-              <p className="text-xs text-muted-foreground">Danach {PRICING.monthly.toFixed(2)}€/Monat. Alle Preise brutto inkl. 19 % MwSt.</p>
+              <p className="text-xs text-muted-foreground">Danach {totals.monthlyDiscounted.toFixed(2)}€/Monat. Alle Preise brutto inkl. 19 % MwSt.</p>
             </CardContent>
           </Card>
 
