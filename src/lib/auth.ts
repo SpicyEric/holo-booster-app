@@ -111,7 +111,14 @@ export const deriveUserRole = async (userId: string, userEmail?: string): Promis
       const roles = rolesData.map((r) => r.role as string);
       console.log('[deriveUserRole] Found roles in Lovable Cloud:', roles);
       
-      // Priorisiere Rollen: admin > merchant > partner > end_customer
+      // Context-aware: in der App (/app/*) bevorzuge end_customer,
+      // sonst Web-Priorisierung admin > merchant > partner > end_customer
+      const isAppContext = typeof window !== 'undefined' && window.location.pathname.startsWith('/app');
+      
+      if (isAppContext && (roles.includes('end_customer') || roles.includes('customer'))) {
+        return 'end_customer';
+      }
+      
       if (roles.includes('admin')) {
         return 'admin';
       }
