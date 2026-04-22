@@ -126,6 +126,7 @@ function StoreFinderContent({ apiKey }: { apiKey: string }) {
   const isSalesRepCtx = location.pathname.startsWith('/vertriebler');
   const { requireActive } = useSalesRepActive();
 
+  const mapRef = useRef<google.maps.Map | null>(null);
   const [searchResults, setSearchResults] = useState<PlaceResult[]>([]);
   const [savedStores, setSavedStores] = useState<DiscoveredStore[]>([]);
   const [searching, setSearching] = useState(false);
