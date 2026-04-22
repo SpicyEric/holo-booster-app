@@ -80,21 +80,26 @@ export const AppAuth = () => {
       });
       if (error) throw error;
 
-      const { data: roleData } = await supabase
+      // Fetch ALL roles - a user can have multiple (e.g. partner + end_customer)
+      const { data: rolesData } = await supabase
         .from('user_roles')
         .select('role')
-        .eq('user_id', data.user.id)
-        .maybeSingle();
+        .eq('user_id', data.user.id);
 
-      const role = roleData?.role;
-      if (!role) {
+      const roles = (rolesData || []).map(r => r.role as string);
+      const hasAppRole = roles.includes('end_customer') || roles.includes('customer');
+
+      if (roles.length === 0) {
+        // No roles at all - assign end_customer
         await supabase.from('user_roles').insert({ user_id: data.user.id, role: 'end_customer' });
-      } else if (role !== 'end_customer' && role !== 'customer') {
+      } else if (!hasAppRole) {
+        // Only business roles, no app access
         await supabase.auth.signOut();
         toast.error('Dieses Konto ist für das Business-Dashboard.');
         setLoading(false);
         return;
       }
+      // If user has end_customer role (possibly alongside other roles), allow app access
 
       toast.success('Willkommen zurück!');
       navigate(getPostAuthRoute());
