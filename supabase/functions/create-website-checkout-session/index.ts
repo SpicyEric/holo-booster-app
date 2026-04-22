@@ -25,6 +25,7 @@ interface CheckoutRequest {
   vatId?: string;
   contactPhone?: string;
   additionalContacts?: string;
+  promoCodes?: string[];
 }
 
 const corsHeaders = {
@@ -37,6 +38,9 @@ const PRICE_IDS = {
   WEBSITE_SETUP: "price_1TOz4OBhiBjCX9PmTUX9G9Le",      // 559€ einmalig (brutto)
   WEBSITE_MONTHLY: "price_1TOz4QBhiBjCX9PmE6O33eDc",    // 39€/Monat (brutto)
 };
+
+// Brutto-Preise in Cent (für price_data Fallback bei Rabatten)
+const SETUP_PRICE_CENTS = 55900;   // 559€
 
 // Tax Rate ID für 19% MwSt. (inclusive)
 const TAX_RATE_ID = "txr_1TJYQcBhiBjCX9Pm1iPiJe16";
@@ -53,6 +57,7 @@ serve(async (req) => {
     const {
       customerName, customerEmail, companyName, address,
       billingAddress, industry, vatId, contactPhone, additionalContacts,
+      promoCodes,
     } = body;
 
     if (!customerEmail || !companyName) {
@@ -113,11 +118,61 @@ serve(async (req) => {
       customerId = customer.id;
     }
 
-    // Line items: Einmalige Erstellung + monatliches Abo
-    const lineItems = [
-      { price: PRICE_IDS.WEBSITE_SETUP, quantity: 1, tax_rates: [TAX_RATE_ID] },
-      { price: PRICE_IDS.WEBSITE_MONTHLY, quantity: 1, tax_rates: [TAX_RATE_ID] },
-    ];
+    // Process promo codes (same pattern as create-checkout-session)
+    let setupPercentOff = 0;
+    let monthlyCouponId: string | null = null;
+    const appliedCodes: string[] = [];
+
+    if (promoCodes && promoCodes.length > 0) {
+      for (const code of promoCodes.slice(0, 2)) {
+        const trimmedCode = code.trim();
+        if (!trimmedCode) continue;
+        try {
+          const promoCodesList = await stripe.promotionCodes.list({ code: trimmedCode, active: true, limit: 1 });
+          if (promoCodesList.data.length > 0) {
+            const promoCode = promoCodesList.data[0];
+            const coupon = await stripe.coupons.retrieve(promoCode.coupon.id);
+            if (coupon.percent_off && coupon.duration === 'once') {
+              setupPercentOff = coupon.percent_off;
+              appliedCodes.push(trimmedCode);
+            } else if (coupon.duration === 'repeating' || coupon.duration === 'forever') {
+              monthlyCouponId = coupon.id;
+              appliedCodes.push(trimmedCode);
+            } else if (!monthlyCouponId) {
+              monthlyCouponId = coupon.id;
+              appliedCodes.push(trimmedCode);
+            }
+          }
+        } catch (error) {
+          console.log("[CREATE-WEBSITE-CHECKOUT] Promo error:", trimmedCode, error);
+        }
+      }
+    }
+
+    // Build line items
+    const lineItems: any[] = [];
+
+    // 1. Setup fee – discount via price_data fallback if percent off applied
+    if (setupPercentOff > 0) {
+      const discountedPrice = Math.round(SETUP_PRICE_CENTS * (1 - setupPercentOff / 100));
+      lineItems.push({
+        price_data: {
+          currency: 'eur',
+          unit_amount: Math.max(0, discountedPrice),
+          product_data: {
+            name: 'Eloyo Website – Erstellung & Einrichtung',
+            description: `${setupPercentOff}% Rabatt (Original: €559,00)`,
+          },
+        },
+        quantity: 1,
+        tax_rates: [TAX_RATE_ID],
+      });
+    } else {
+      lineItems.push({ price: PRICE_IDS.WEBSITE_SETUP, quantity: 1, tax_rates: [TAX_RATE_ID] });
+    }
+
+    // 2. Monthly subscription
+    lineItems.push({ price: PRICE_IDS.WEBSITE_MONTHLY, quantity: 1, tax_rates: [TAX_RATE_ID] });
 
     const metadata: Record<string, string> = {
       serviceType: 'website',
@@ -128,9 +183,10 @@ serve(async (req) => {
       vatId: vatId || '',
       contactPhone: contactPhone || '',
       additionalContacts: additionalContacts || '',
+      appliedPromoCodes: appliedCodes.join(', '),
     };
 
-    const session = await stripe.checkout.sessions.create({
+    const sessionParams: any = {
       customer: customerId,
       mode: "subscription",
       line_items: lineItems,
@@ -140,11 +196,19 @@ serve(async (req) => {
       cancel_url: `${req.headers.get("origin")}/checkout/cancel`,
       metadata,
       subscription_data: {
-        metadata: { serviceType: 'website' },
+        metadata: { serviceType: 'website', appliedPromoCodes: appliedCodes.join(', ') },
       },
-    });
+    };
 
-    console.log("[CREATE-WEBSITE-CHECKOUT] Session created:", session.id);
+    if (monthlyCouponId) {
+      sessionParams.discounts = [{ coupon: monthlyCouponId }];
+    } else {
+      sessionParams.allow_promotion_codes = true;
+    }
+
+    const session = await stripe.checkout.sessions.create(sessionParams);
+
+    console.log("[CREATE-WEBSITE-CHECKOUT] Session created:", session.id, "applied codes:", appliedCodes);
 
     return new Response(JSON.stringify({ url: session.url }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
