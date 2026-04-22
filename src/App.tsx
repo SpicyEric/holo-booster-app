@@ -25,6 +25,7 @@ import Accounts from "./pages/admin/Accounts";
 import Orders from "./pages/admin/Orders";
 import Stats from "./pages/admin/Stats";
 import Checkout from "./pages/admin/Checkout";
+import WebsiteCheckout from "./pages/admin/WebsiteCheckout";
 import BoxManagement from "./pages/admin/BoxManagement";
 import Settings from "./pages/admin/Settings";
 import MerchantLayout from "./components/MerchantLayout";
@@ -127,6 +128,7 @@ const App = () => {
                 <Route path="calendar" element={<AdminCalendar />} />
                 <Route path="stats" element={<Stats />} />
                 <Route path="checkout" element={<Checkout />} />
+                <Route path="website-checkout" element={<WebsiteCheckout />} />
                 <Route path="boxes" element={<BoxManagement />} />
                 <Route path="sales-rep-register" element={<SalesRepRegistration />} />
                 <Route path="sales-reps" element={<SalesReps />} />
