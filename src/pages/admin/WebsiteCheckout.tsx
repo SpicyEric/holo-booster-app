@@ -131,6 +131,7 @@ export default function WebsiteCheckout() {
                 </div>
                 <ul className="space-y-1">
                   {[
+                    "In 48 Stunden live",
                     "Komplette Website-Erstellung",
                     "Individuelles Design",
                     "Einrichtung & Konfiguration",
