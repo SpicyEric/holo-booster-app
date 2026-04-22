@@ -136,6 +136,62 @@ function StoreFinderContent({ apiKey }: { apiKey: string }) {
   const [keyword, setKeyword] = useState('');
   const [searchCenter, setSearchCenter] = useState<{ lat: number; lng: number } | null>(null);
 
+  // Name-based search (Google Places Text Search)
+  const [nameQuery, setNameQuery] = useState('');
+  const [nameResults, setNameResults] = useState<PlaceResult[]>([]);
+  const [nameSearching, setNameSearching] = useState(false);
+  const [nameDropdownOpen, setNameDropdownOpen] = useState(false);
+  const [highlightedPlace, setHighlightedPlace] = useState<PlaceResult | null>(null);
+  const nameDebounceRef = useRef<number | null>(null);
+
+  const runNameSearch = useCallback(async (q: string) => {
+    if (!q || q.trim().length < 2) {
+      setNameResults([]);
+      return;
+    }
+    setNameSearching(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('text-search-places', {
+        body: { query: q.trim() },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      const savedPlaceIds = new Set(savedStores.map((s) => s.place_id));
+      const filtered = (data.places || []).filter((p: PlaceResult) => !savedPlaceIds.has(p.place_id));
+      setNameResults(filtered);
+      setNameDropdownOpen(true);
+    } catch (e: any) {
+      console.error('Name search error:', e);
+      toast.error(e.message || 'Suche fehlgeschlagen');
+    } finally {
+      setNameSearching(false);
+    }
+  }, [savedStores]);
+
+  useEffect(() => {
+    if (nameDebounceRef.current) window.clearTimeout(nameDebounceRef.current);
+    if (!nameQuery.trim()) {
+      setNameResults([]);
+      setNameDropdownOpen(false);
+      return;
+    }
+    nameDebounceRef.current = window.setTimeout(() => {
+      runNameSearch(nameQuery);
+    }, 400);
+    return () => {
+      if (nameDebounceRef.current) window.clearTimeout(nameDebounceRef.current);
+    };
+  }, [nameQuery, runNameSearch]);
+
+  const selectNameResult = (place: PlaceResult) => {
+    setHighlightedPlace(place);
+    setNameDropdownOpen(false);
+    if (mapRef.current && place.latitude && place.longitude) {
+      mapRef.current.panTo({ lat: place.latitude, lng: place.longitude });
+      mapRef.current.setZoom(16);
+    }
+  };
+
   // Load saved stores
   useEffect(() => {
     loadSavedStores();
