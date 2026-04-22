@@ -126,6 +126,7 @@ function StoreFinderContent({ apiKey }: { apiKey: string }) {
   const isSalesRepCtx = location.pathname.startsWith('/vertriebler');
   const { requireActive } = useSalesRepActive();
 
+  const mapRef = useRef<google.maps.Map | null>(null);
   const [searchResults, setSearchResults] = useState<PlaceResult[]>([]);
   const [savedStores, setSavedStores] = useState<DiscoveredStore[]>([]);
   const [searching, setSearching] = useState(false);
@@ -135,6 +136,62 @@ function StoreFinderContent({ apiKey }: { apiKey: string }) {
   const [category, setCategory] = useState('');
   const [keyword, setKeyword] = useState('');
   const [searchCenter, setSearchCenter] = useState<{ lat: number; lng: number } | null>(null);
+
+  // Name-based search (Google Places Text Search)
+  const [nameQuery, setNameQuery] = useState('');
+  const [nameResults, setNameResults] = useState<PlaceResult[]>([]);
+  const [nameSearching, setNameSearching] = useState(false);
+  const [nameDropdownOpen, setNameDropdownOpen] = useState(false);
+  const [highlightedPlace, setHighlightedPlace] = useState<PlaceResult | null>(null);
+  const nameDebounceRef = useRef<number | null>(null);
+
+  const runNameSearch = useCallback(async (q: string) => {
+    if (!q || q.trim().length < 2) {
+      setNameResults([]);
+      return;
+    }
+    setNameSearching(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('text-search-places', {
+        body: { query: q.trim() },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      const savedPlaceIds = new Set(savedStores.map((s) => s.place_id));
+      const filtered = (data.places || []).filter((p: PlaceResult) => !savedPlaceIds.has(p.place_id));
+      setNameResults(filtered);
+      setNameDropdownOpen(true);
+    } catch (e: any) {
+      console.error('Name search error:', e);
+      toast.error(e.message || 'Suche fehlgeschlagen');
+    } finally {
+      setNameSearching(false);
+    }
+  }, [savedStores]);
+
+  useEffect(() => {
+    if (nameDebounceRef.current) window.clearTimeout(nameDebounceRef.current);
+    if (!nameQuery.trim()) {
+      setNameResults([]);
+      setNameDropdownOpen(false);
+      return;
+    }
+    nameDebounceRef.current = window.setTimeout(() => {
+      runNameSearch(nameQuery);
+    }, 400);
+    return () => {
+      if (nameDebounceRef.current) window.clearTimeout(nameDebounceRef.current);
+    };
+  }, [nameQuery, runNameSearch]);
+
+  const selectNameResult = (place: PlaceResult) => {
+    setHighlightedPlace(place);
+    setNameDropdownOpen(false);
+    if (mapRef.current && place.latitude && place.longitude) {
+      mapRef.current.panTo({ lat: place.latitude, lng: place.longitude });
+      mapRef.current.setZoom(16);
+    }
+  };
 
   // Load saved stores
   useEffect(() => {
@@ -315,7 +372,6 @@ function StoreFinderContent({ apiKey }: { apiKey: string }) {
   const [manualAddMode, setManualAddMode] = useState(false);
   const [manualName, setManualName] = useState('');
   const [manualLatLng, setManualLatLng] = useState<{ lat: number; lng: number } | null>(null);
-  const mapRef = useRef<google.maps.Map | null>(null);
 
   const { isLoaded } = useJsApiLoader({
     googleMapsApiKey: apiKey,
@@ -363,7 +419,105 @@ function StoreFinderContent({ apiKey }: { apiKey: string }) {
         <p className="text-muted-foreground text-sm">Finde und recherchiere potenzielle Kunden in deiner Umgebung</p>
       </div>
 
-      {/* Search Controls */}
+      {/* Name Search Bar */}
+      <Card>
+        <CardContent className="p-4">
+          <label className="text-xs font-medium mb-1.5 block">
+            Geschäft nach Name suchen
+          </label>
+          <div className="relative">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+              <Input
+                placeholder="z.B. Bäckerei Müller München"
+                value={nameQuery}
+                onChange={(e) => setNameQuery(e.target.value)}
+                onFocus={() => nameResults.length > 0 && setNameDropdownOpen(true)}
+                onBlur={() => setTimeout(() => setNameDropdownOpen(false), 200)}
+                className="pl-9 pr-9"
+              />
+              {nameSearching && (
+                <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground animate-spin" />
+              )}
+            </div>
+
+            {nameDropdownOpen && nameResults.length > 0 && (
+              <div className="absolute z-30 mt-1 w-full bg-popover border rounded-md shadow-lg max-h-80 overflow-y-auto">
+                {nameResults.map((p) => (
+                  <button
+                    type="button"
+                    key={p.place_id}
+                    onMouseDown={(e) => e.preventDefault()}
+                    onClick={() => selectNameResult(p)}
+                    className="w-full text-left px-3 py-2 hover:bg-accent transition-colors border-b last:border-b-0 flex items-center gap-3"
+                  >
+                    <div className="h-9 w-9 rounded-md bg-primary/10 flex items-center justify-center shrink-0 overflow-hidden">
+                      {p.photo_reference ? (
+                        <img
+                          src={`https://maps.googleapis.com/maps/api/place/photo?maxwidth=60&photo_reference=${p.photo_reference}&key=${apiKey}`}
+                          alt=""
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <Building2 className="h-4 w-4 text-primary" />
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium truncate">{p.name}</p>
+                      <p className="text-xs text-muted-foreground truncate flex items-center gap-1">
+                        <MapPin className="h-3 w-3 shrink-0" /> {p.address}
+                      </p>
+                    </div>
+                    {p.rating && (
+                      <div className="flex items-center gap-1 text-xs text-muted-foreground shrink-0">
+                        <Star className="h-3 w-3 text-yellow-400 fill-yellow-400" />
+                        {p.rating.toFixed(1)}
+                      </div>
+                    )}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {nameDropdownOpen && !nameSearching && nameQuery.trim().length >= 2 && nameResults.length === 0 && (
+              <div className="absolute z-30 mt-1 w-full bg-popover border rounded-md shadow-lg p-4 text-center text-sm text-muted-foreground">
+                Keine Geschäfte gefunden
+              </div>
+            )}
+          </div>
+
+          {highlightedPlace && (
+            <div className="mt-3 flex items-center gap-3 p-3 rounded-md bg-accent/50 border">
+              <MapPin className="h-4 w-4 text-primary shrink-0" />
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium truncate">{highlightedPlace.name}</p>
+                <p className="text-xs text-muted-foreground truncate">{highlightedPlace.address}</p>
+              </div>
+              <Button
+                size="sm"
+                className="shrink-0"
+                onClick={async () => {
+                  await addStore(highlightedPlace);
+                  setHighlightedPlace(null);
+                  setNameQuery('');
+                }}
+              >
+                <Plus className="h-3.5 w-3.5 mr-1" /> Hinzufügen
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                className="shrink-0"
+                onClick={() => setHighlightedPlace(null)}
+              >
+                ✕
+              </Button>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+
       <Card>
         <CardContent className="p-4">
           <div className="flex flex-wrap items-end gap-4">
@@ -538,6 +692,21 @@ function StoreFinderContent({ apiKey }: { apiKey: string }) {
                           <MapPin className="h-4 w-4" />
                         </div>
                         <div className="w-0 h-0 border-l-[6px] border-r-[6px] border-t-[8px] border-l-transparent border-r-transparent border-t-emerald-500 mx-auto -mt-0.5" />
+                      </div>
+                    </OverlayView>
+                  )}
+
+                  {/* Highlighted place from name search */}
+                  {highlightedPlace && highlightedPlace.latitude && highlightedPlace.longitude && (
+                    <OverlayView
+                      position={{ lat: highlightedPlace.latitude, lng: highlightedPlace.longitude }}
+                      mapPaneName={OverlayView.OVERLAY_MOUSE_TARGET}
+                    >
+                      <div className="transform -translate-x-1/2 -translate-y-full">
+                        <div className="bg-primary text-primary-foreground rounded-full h-10 w-10 flex items-center justify-center shadow-xl border-2 border-background animate-bounce ring-4 ring-primary/30">
+                          <Sparkles className="h-5 w-5" />
+                        </div>
+                        <div className="w-0 h-0 border-l-[8px] border-r-[8px] border-t-[10px] border-l-transparent border-r-transparent border-t-primary mx-auto -mt-0.5" />
                       </div>
                     </OverlayView>
                   )}
