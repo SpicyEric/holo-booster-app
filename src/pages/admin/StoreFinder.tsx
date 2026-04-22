@@ -695,6 +695,21 @@ function StoreFinderContent({ apiKey }: { apiKey: string }) {
                       </div>
                     </OverlayView>
                   )}
+
+                  {/* Highlighted place from name search */}
+                  {highlightedPlace && highlightedPlace.latitude && highlightedPlace.longitude && (
+                    <OverlayView
+                      position={{ lat: highlightedPlace.latitude, lng: highlightedPlace.longitude }}
+                      mapPaneName={OverlayView.OVERLAY_MOUSE_TARGET}
+                    >
+                      <div className="transform -translate-x-1/2 -translate-y-full">
+                        <div className="bg-primary text-primary-foreground rounded-full h-10 w-10 flex items-center justify-center shadow-xl border-2 border-background animate-bounce ring-4 ring-primary/30">
+                          <Sparkles className="h-5 w-5" />
+                        </div>
+                        <div className="w-0 h-0 border-l-[8px] border-r-[8px] border-t-[10px] border-l-transparent border-r-transparent border-t-primary mx-auto -mt-0.5" />
+                      </div>
+                    </OverlayView>
+                  )}
                 </GoogleMap>
 
                 {/* Manual add bar */}
