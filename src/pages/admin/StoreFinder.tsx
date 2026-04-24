@@ -15,7 +15,7 @@ import {
   Loader2, Sparkles, Building2, Mail, User, ExternalLink, Trash2, Lock,
 } from 'lucide-react';
 import { useGoogleMapsApiKey } from '@/hooks/useGoogleMapsApiKey';
-import { GoogleMap, useJsApiLoader, OverlayView } from '@react-google-maps/api';
+import { GoogleMap, useJsApiLoader, OverlayView, Circle } from '@react-google-maps/api';
 
 const GMAP_LIBRARIES: ('places')[] = ['places'];
 
@@ -373,15 +373,28 @@ function StoreFinderContent({ apiKey }: { apiKey: string }) {
   const [manualName, setManualName] = useState('');
   const [manualLatLng, setManualLatLng] = useState<{ lat: number; lng: number } | null>(null);
 
+  // Pin-on-map search mode
+  const [pinSearchMode, setPinSearchMode] = useState(false);
+  const [searchPin, setSearchPin] = useState<{ lat: number; lng: number } | null>(null);
+
   const { isLoaded } = useJsApiLoader({
     googleMapsApiKey: apiKey,
     libraries: GMAP_LIBRARIES,
   });
 
   const handleMapClick = useCallback((e: google.maps.MapMouseEvent) => {
-    if (!manualAddMode || !e.latLng) return;
-    setManualLatLng({ lat: e.latLng.lat(), lng: e.latLng.lng() });
-  }, [manualAddMode]);
+    if (!e.latLng) return;
+    if (pinSearchMode) {
+      const next = { lat: e.latLng.lat(), lng: e.latLng.lng() };
+      setSearchPin(next);
+      setSearchCenter(next);
+      setPostalCode('');
+      return;
+    }
+    if (manualAddMode) {
+      setManualLatLng({ lat: e.latLng.lat(), lng: e.latLng.lng() });
+    }
+  }, [manualAddMode, pinSearchMode]);
 
   const addManualStore = async () => {
     if (!requireActive()) return;
@@ -526,10 +539,32 @@ function StoreFinderContent({ apiKey }: { apiKey: string }) {
               <Input
                 placeholder="z.B. 80331"
                 value={postalCode}
-                onChange={(e) => setPostalCode(e.target.value)}
+                onChange={(e) => {
+                  setPostalCode(e.target.value);
+                  if (e.target.value) {
+                    setSearchPin(null);
+                  }
+                }}
                 className="w-32"
                 onKeyDown={(e) => e.key === 'Enter' && searchPlaces()}
               />
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium">oder Pin auf Karte</label>
+              <Button
+                type="button"
+                variant={pinSearchMode ? 'default' : 'outline'}
+                size="sm"
+                className="h-9"
+                onClick={() => {
+                  setPinSearchMode((v) => !v);
+                  if (manualAddMode) setManualAddMode(false);
+                }}
+              >
+                <MapPin className="h-3.5 w-3.5 mr-1" />
+                {pinSearchMode ? 'Pin-Modus aktiv' : 'Pin setzen'}
+              </Button>
             </div>
 
             <div className="space-y-1.5">
@@ -606,9 +641,40 @@ function StoreFinderContent({ apiKey }: { apiKey: string }) {
                       { featureType: 'poi', stylers: [{ visibility: 'off' }] },
                       { featureType: 'transit', stylers: [{ visibility: 'off' }] },
                     ],
-                    ...(manualAddMode ? { cursor: 'crosshair' } : {}),
+                    ...((manualAddMode || pinSearchMode) ? { cursor: 'crosshair' } : {}),
                   }}
                 >
+                  {/* Search radius circle around the pin */}
+                  {searchPin && (
+                    <Circle
+                      center={searchPin}
+                      radius={radius}
+                      options={{
+                        strokeColor: 'hsl(262, 55%, 45%)',
+                        strokeOpacity: 0.8,
+                        strokeWeight: 2,
+                        fillColor: 'hsl(262, 55%, 45%)',
+                        fillOpacity: 0.12,
+                        clickable: false,
+                      }}
+                    />
+                  )}
+
+                  {/* Search pin marker */}
+                  {searchPin && (
+                    <OverlayView
+                      position={searchPin}
+                      mapPaneName={OverlayView.OVERLAY_MOUSE_TARGET}
+                    >
+                      <div className="transform -translate-x-1/2 -translate-y-full">
+                        <div className="bg-primary text-primary-foreground rounded-full h-9 w-9 flex items-center justify-center shadow-lg border-2 border-background">
+                          <MapPin className="h-4 w-4" />
+                        </div>
+                        <div className="w-0 h-0 border-l-[7px] border-r-[7px] border-t-[9px] border-l-transparent border-r-transparent border-t-primary mx-auto -mt-0.5" />
+                      </div>
+                    </OverlayView>
+                  )}
+
                   {/* Saved stores */}
                   {savedStores.filter(s => s.latitude && s.longitude).map((store) => {
                     const stageColor = getStageColor(store.status);
@@ -740,6 +806,46 @@ function StoreFinderContent({ apiKey }: { apiKey: string }) {
                   >
                     <MapPin className="h-3.5 w-3.5 mr-1" /> Manuell hinzufügen
                   </Button>
+                )}
+
+                {/* Pin search mode bar */}
+                {pinSearchMode && (
+                  <div className="absolute top-3 left-3 right-3 bg-card/95 backdrop-blur rounded-xl shadow-lg border p-3 space-y-2">
+                    <p className="text-xs font-medium">
+                      📍 {searchPin
+                        ? `Pin gesetzt – Umkreis ${(radius / 1000).toFixed(1)} km. Du kannst den Pin verschieben oder direkt suchen.`
+                        : 'Klicke auf die Karte, um den Suchmittelpunkt zu setzen.'}
+                    </p>
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        className="h-7 text-xs"
+                        onClick={searchPlaces}
+                        disabled={!searchPin || searching}
+                      >
+                        {searching ? <Loader2 className="h-3 w-3 mr-1 animate-spin" /> : <Search className="h-3 w-3 mr-1" />}
+                        In Umkreis suchen
+                      </Button>
+                      {searchPin && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-7 text-xs"
+                          onClick={() => { setSearchPin(null); setSearchCenter(null); }}
+                        >
+                          Pin entfernen
+                        </Button>
+                      )}
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="h-7 text-xs"
+                        onClick={() => setPinSearchMode(false)}
+                      >
+                        Schließen
+                      </Button>
+                    </div>
+                  </div>
                 )}
 
                 {/* Legend */}
