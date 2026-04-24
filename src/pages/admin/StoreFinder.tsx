@@ -557,6 +557,20 @@ function StoreFinderContent({ apiKey }: { apiKey: string }) {
     ? { lat: Number(savedStores[0].latitude), lng: Number(savedStores[0].longitude) }
     : { lat: 48.137154, lng: 11.576124 });
 
+  // Initial-Center nur beim ersten Map-Load setzen, danach NICHT mehr controlled
+  // verwalten (sonst springt die Karte bei jedem State-Update zurück).
+  const initialCenterRef = useRef(mapCenter);
+  const didCenterOnSearchRef = useRef(false);
+
+  // Wenn der Nutzer aktiv eine Suche/Pin setzt → einmalig dorthin schwenken.
+  useEffect(() => {
+    if (!searchCenter || !mapRef.current) return;
+    if (didCenterOnSearchRef.current) return;
+    didCenterOnSearchRef.current = true;
+    mapRef.current.panTo(searchCenter);
+    mapRef.current.setZoom(13);
+  }, [searchCenter]);
+
   return (
     <div className="space-y-4">
       {/* Header */}
