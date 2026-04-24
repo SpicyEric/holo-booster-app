@@ -879,17 +879,10 @@ function StoreFinderContent({ apiKey }: { apiKey: string }) {
                     );
                   })}
 
-                  {/* Search results - native Google Marker (performant, kein Lag) */}
-                  {searchResults
-                    .filter((p) => p.latitude && p.longitude)
-                    .map((place) => (
-                      <Marker
-                        key={place.place_id}
-                        position={{ lat: place.latitude, lng: place.longitude }}
-                        title={place.name}
-                        onClick={() => openPlaceDetails(place.place_id)}
-                      />
-                    ))}
+                  {/* Suchergebnisse werden NICHT mehr als Marker gerendert –
+                      die Google-eigenen POI-Icons auf der Karte sind klickbar
+                      und genügen, um Geschäfte zu erkennen und zu öffnen. */}
+
 
 
                   {/* Manual pin */}
