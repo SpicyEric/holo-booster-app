@@ -557,18 +557,33 @@ function StoreFinderContent({ apiKey }: { apiKey: string }) {
     ? { lat: Number(savedStores[0].latitude), lng: Number(savedStores[0].longitude) }
     : { lat: 48.137154, lng: 11.576124 });
 
-  // Initial-Center nur beim ersten Map-Load setzen, danach NICHT mehr controlled
-  // verwalten (sonst springt die Karte bei jedem State-Update zurück).
+  // Initial-Center nur einmal beim ersten Map-Load setzen, danach NICHT mehr
+  // controlled verwalten (sonst springt die Karte bei jedem State-Update zurück).
   const initialCenterRef = useRef(mapCenter);
+  const didApplyInitialCenterRef = useRef(false);
   const lastCenteredSearchRef = useRef<string | null>(null);
 
+  // Beim ersten Laden gespeicherter Stores einmalig auf den ersten Store zentrieren.
+  useEffect(() => {
+    if (didApplyInitialCenterRef.current) return;
+    if (!mapRef.current) return;
+    if (searchCenter) return; // Suche hat Vorrang (separater Effekt)
+    if (savedStores.length === 0) return;
+    const first = savedStores[0];
+    if (!first.latitude || !first.longitude) return;
+    didApplyInitialCenterRef.current = true;
+    mapRef.current.panTo({ lat: Number(first.latitude), lng: Number(first.longitude) });
+  }, [savedStores, searchCenter]);
+
   // Wenn der Nutzer aktiv eine NEUE Suche/Pin setzt → einmalig dorthin schwenken.
-  // Re-Renders durch andere State-Updates lösen KEIN Re-Centering aus.
+  // Re-Renders durch andere State-Updates (z.B. neuer Store hinzugefügt) lösen
+  // KEIN Re-Centering aus.
   useEffect(() => {
     if (!searchCenter || !mapRef.current) return;
     const key = `${searchCenter.lat.toFixed(5)},${searchCenter.lng.toFixed(5)}`;
     if (lastCenteredSearchRef.current === key) return;
     lastCenteredSearchRef.current = key;
+    didApplyInitialCenterRef.current = true;
     mapRef.current.panTo(searchCenter);
     mapRef.current.setZoom(13);
   }, [searchCenter]);
