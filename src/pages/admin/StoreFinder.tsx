@@ -373,15 +373,28 @@ function StoreFinderContent({ apiKey }: { apiKey: string }) {
   const [manualName, setManualName] = useState('');
   const [manualLatLng, setManualLatLng] = useState<{ lat: number; lng: number } | null>(null);
 
+  // Pin-on-map search mode
+  const [pinSearchMode, setPinSearchMode] = useState(false);
+  const [searchPin, setSearchPin] = useState<{ lat: number; lng: number } | null>(null);
+
   const { isLoaded } = useJsApiLoader({
     googleMapsApiKey: apiKey,
     libraries: GMAP_LIBRARIES,
   });
 
   const handleMapClick = useCallback((e: google.maps.MapMouseEvent) => {
-    if (!manualAddMode || !e.latLng) return;
-    setManualLatLng({ lat: e.latLng.lat(), lng: e.latLng.lng() });
-  }, [manualAddMode]);
+    if (!e.latLng) return;
+    if (pinSearchMode) {
+      const next = { lat: e.latLng.lat(), lng: e.latLng.lng() };
+      setSearchPin(next);
+      setSearchCenter(next);
+      setPostalCode('');
+      return;
+    }
+    if (manualAddMode) {
+      setManualLatLng({ lat: e.latLng.lat(), lng: e.latLng.lng() });
+    }
+  }, [manualAddMode, pinSearchMode]);
 
   const addManualStore = async () => {
     if (!requireActive()) return;
