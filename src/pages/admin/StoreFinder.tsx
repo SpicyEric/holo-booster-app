@@ -560,13 +560,15 @@ function StoreFinderContent({ apiKey }: { apiKey: string }) {
   // Initial-Center nur beim ersten Map-Load setzen, danach NICHT mehr controlled
   // verwalten (sonst springt die Karte bei jedem State-Update zurück).
   const initialCenterRef = useRef(mapCenter);
-  const didCenterOnSearchRef = useRef(false);
+  const lastCenteredSearchRef = useRef<string | null>(null);
 
-  // Wenn der Nutzer aktiv eine Suche/Pin setzt → einmalig dorthin schwenken.
+  // Wenn der Nutzer aktiv eine NEUE Suche/Pin setzt → einmalig dorthin schwenken.
+  // Re-Renders durch andere State-Updates lösen KEIN Re-Centering aus.
   useEffect(() => {
     if (!searchCenter || !mapRef.current) return;
-    if (didCenterOnSearchRef.current) return;
-    didCenterOnSearchRef.current = true;
+    const key = `${searchCenter.lat.toFixed(5)},${searchCenter.lng.toFixed(5)}`;
+    if (lastCenteredSearchRef.current === key) return;
+    lastCenteredSearchRef.current = key;
     mapRef.current.panTo(searchCenter);
     mapRef.current.setZoom(13);
   }, [searchCenter]);
