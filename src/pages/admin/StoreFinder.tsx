@@ -489,6 +489,16 @@ function StoreFinderContent({ apiKey }: { apiKey: string }) {
 
   // Detail eines Place-IDs laden (für Klick auf Google-eigene POIs oder eigene Marker)
   const openPlaceDetails = useCallback(async (placeId: string) => {
+    // Falls die Karte im Fullscreen ist, verlassen – sonst wird der Dialog
+    // (am <body> gemountet) vom Fullscreen-Element verdeckt.
+    try {
+      const fsEl = document.fullscreenElement;
+      if (fsEl && document.exitFullscreen) {
+        await document.exitFullscreen();
+      }
+    } catch {
+      // ignore – Dialog öffnet trotzdem
+    }
     setDetailOpen(true);
     setDetailLoading(true);
     setDetailPlace(null);
