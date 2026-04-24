@@ -489,6 +489,15 @@ function StoreFinderContent({ apiKey }: { apiKey: string }) {
 
   // Detail eines Place-IDs laden (für Klick auf Google-eigene POIs oder eigene Marker)
   const openPlaceDetails = useCallback(async (placeId: string) => {
+    // Vollbildmodus verlassen, damit das Dialog-Fenster (am body) sichtbar ist.
+    // Die Map-Position bleibt erhalten, da kein neuer searchCenter gesetzt wird.
+    try {
+      if (typeof document !== 'undefined' && document.fullscreenElement && document.exitFullscreen) {
+        await document.exitFullscreen();
+      }
+    } catch {
+      /* ignore */
+    }
     setDetailOpen(true);
     setDetailLoading(true);
     setDetailPlace(null);
