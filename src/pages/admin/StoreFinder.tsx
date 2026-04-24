@@ -330,6 +330,51 @@ function StoreFinderContent({ apiKey }: { apiKey: string }) {
     }
   };
 
+  // Hinzufügen direkt aus dem Detail-Dialog (Details schon geladen)
+  const addStoreFromDetails = async (d: any, types: string[] = []) => {
+    if (!requireActive()) return;
+    if (!d?.place_id) return;
+    // Doppelte verhindern
+    if (savedStores.some((s) => s.place_id === d.place_id)) {
+      toast.info('Dieser Store ist bereits gespeichert');
+      return;
+    }
+    try {
+      const categoryLabel = CATEGORIES.find((c) => types?.includes(c.value))?.label || null;
+      const { data: userData } = await supabase.auth.getUser();
+      const { error: insertError } = await supabase.from('discovered_stores').insert({
+        admin_user_id: userData.user!.id,
+        place_id: d.place_id,
+        name: d.name,
+        address: d.address,
+        street: d.street,
+        house_number: d.house_number,
+        postal_code: d.postal_code,
+        city: d.city,
+        latitude: d.latitude,
+        longitude: d.longitude,
+        phone: d.phone,
+        website: d.website,
+        google_rating: d.google_rating,
+        google_reviews_count: d.google_reviews_count,
+        google_photo_url: d.google_photo_url,
+        industry: categoryLabel,
+        opening_hours: d.opening_hours,
+        enrichment_status: 'pending',
+        status: 'new',
+      } as any);
+      if (insertError) throw insertError;
+      setSearchResults((prev) => prev.filter((p) => p.place_id !== d.place_id));
+      toast.success(`${d.name} hinzugefügt`);
+      setDetailOpen(false);
+      setDetailPlace(null);
+      loadSavedStores();
+    } catch (e: any) {
+      console.error('Add from details error:', e);
+      toast.error(e.message || 'Fehler beim Hinzufügen');
+    }
+  };
+
   const enrichStore = async (storeId: string) => {
     if (!requireActive()) return;
     const store = savedStores.find((s) => s.id === storeId);
