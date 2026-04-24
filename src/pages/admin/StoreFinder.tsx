@@ -798,8 +798,8 @@ function StoreFinderContent({ apiKey }: { apiKey: string }) {
               <>
                 <GoogleMap
                   mapContainerStyle={{ width: '100%', height: '100%' }}
-                  center={mapCenter}
-                  zoom={searchCenter ? 13 : 10}
+                  center={initialCenterRef.current}
+                  zoom={10}
                   onLoad={(map) => { mapRef.current = map; }}
                   onClick={handleMapClick}
                   onIdle={handleMapIdle}
