@@ -489,16 +489,6 @@ function StoreFinderContent({ apiKey }: { apiKey: string }) {
 
   // Detail eines Place-IDs laden (für Klick auf Google-eigene POIs oder eigene Marker)
   const openPlaceDetails = useCallback(async (placeId: string) => {
-    // Falls die Karte im Fullscreen ist, verlassen – sonst wird der Dialog
-    // (am <body> gemountet) vom Fullscreen-Element verdeckt.
-    try {
-      const fsEl = document.fullscreenElement;
-      if (fsEl && document.exitFullscreen) {
-        await document.exitFullscreen();
-      }
-    } catch {
-      // ignore – Dialog öffnet trotzdem
-    }
     setDetailOpen(true);
     setDetailLoading(true);
     setDetailPlace(null);
@@ -566,6 +556,37 @@ function StoreFinderContent({ apiKey }: { apiKey: string }) {
   const mapCenter = searchCenter || (savedStores.length > 0 && savedStores[0].latitude && savedStores[0].longitude
     ? { lat: Number(savedStores[0].latitude), lng: Number(savedStores[0].longitude) }
     : { lat: 48.137154, lng: 11.576124 });
+
+  // Initial-Center nur einmal beim ersten Map-Load setzen, danach NICHT mehr
+  // controlled verwalten (sonst springt die Karte bei jedem State-Update zurück).
+  const initialCenterRef = useRef(mapCenter);
+  const didApplyInitialCenterRef = useRef(false);
+  const lastCenteredSearchRef = useRef<string | null>(null);
+
+  // Beim ersten Laden gespeicherter Stores einmalig auf den ersten Store zentrieren.
+  useEffect(() => {
+    if (didApplyInitialCenterRef.current) return;
+    if (!mapRef.current) return;
+    if (searchCenter) return; // Suche hat Vorrang (separater Effekt)
+    if (savedStores.length === 0) return;
+    const first = savedStores[0];
+    if (!first.latitude || !first.longitude) return;
+    didApplyInitialCenterRef.current = true;
+    mapRef.current.panTo({ lat: Number(first.latitude), lng: Number(first.longitude) });
+  }, [savedStores, searchCenter]);
+
+  // Wenn der Nutzer aktiv eine NEUE Suche/Pin setzt → einmalig dorthin schwenken.
+  // Re-Renders durch andere State-Updates (z.B. neuer Store hinzugefügt) lösen
+  // KEIN Re-Centering aus.
+  useEffect(() => {
+    if (!searchCenter || !mapRef.current) return;
+    const key = `${searchCenter.lat.toFixed(5)},${searchCenter.lng.toFixed(5)}`;
+    if (lastCenteredSearchRef.current === key) return;
+    lastCenteredSearchRef.current = key;
+    didApplyInitialCenterRef.current = true;
+    mapRef.current.panTo(searchCenter);
+    mapRef.current.setZoom(13);
+  }, [searchCenter]);
 
   return (
     <div className="space-y-4">
@@ -792,8 +813,8 @@ function StoreFinderContent({ apiKey }: { apiKey: string }) {
               <>
                 <GoogleMap
                   mapContainerStyle={{ width: '100%', height: '100%' }}
-                  center={mapCenter}
-                  zoom={searchCenter ? 13 : 10}
+                  center={initialCenterRef.current}
+                  zoom={10}
                   onLoad={(map) => { mapRef.current = map; }}
                   onClick={handleMapClick}
                   onIdle={handleMapIdle}
