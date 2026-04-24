@@ -463,7 +463,14 @@ function StoreFinderContent({ apiKey }: { apiKey: string }) {
     }
   }, []);
 
-  const handleMapClick = useCallback((e: google.maps.MapMouseEvent) => {
+  const handleMapClick = useCallback((e: google.maps.MapMouseEvent & { placeId?: string }) => {
+    // Klick auf eingebauten Google-POI (z. B. kleines Geschäft) → Details öffnen
+    const placeId = (e as any).placeId as string | undefined;
+    if (placeId && !pinSearchMode && !manualAddMode) {
+      e.stop?.();
+      openPlaceDetails(placeId);
+      return;
+    }
     if (!e.latLng) return;
     if (pinSearchMode) {
       const next = { lat: e.latLng.lat(), lng: e.latLng.lng() };
@@ -475,7 +482,7 @@ function StoreFinderContent({ apiKey }: { apiKey: string }) {
     if (manualAddMode) {
       setManualLatLng({ lat: e.latLng.lat(), lng: e.latLng.lng() });
     }
-  }, [manualAddMode, pinSearchMode]);
+  }, [manualAddMode, pinSearchMode, openPlaceDetails]);
 
   const addManualStore = async () => {
     if (!requireActive()) return;
