@@ -808,6 +808,46 @@ function StoreFinderContent({ apiKey }: { apiKey: string }) {
                   </Button>
                 )}
 
+                {/* Pin search mode bar */}
+                {pinSearchMode && (
+                  <div className="absolute top-3 left-3 right-3 bg-card/95 backdrop-blur rounded-xl shadow-lg border p-3 space-y-2">
+                    <p className="text-xs font-medium">
+                      📍 {searchPin
+                        ? `Pin gesetzt – Umkreis ${(radius / 1000).toFixed(1)} km. Du kannst den Pin verschieben oder direkt suchen.`
+                        : 'Klicke auf die Karte, um den Suchmittelpunkt zu setzen.'}
+                    </p>
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        className="h-7 text-xs"
+                        onClick={searchPlaces}
+                        disabled={!searchPin || searching}
+                      >
+                        {searching ? <Loader2 className="h-3 w-3 mr-1 animate-spin" /> : <Search className="h-3 w-3 mr-1" />}
+                        In Umkreis suchen
+                      </Button>
+                      {searchPin && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-7 text-xs"
+                          onClick={() => { setSearchPin(null); setSearchCenter(null); }}
+                        >
+                          Pin entfernen
+                        </Button>
+                      )}
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="h-7 text-xs"
+                        onClick={() => setPinSearchMode(false)}
+                      >
+                        Schließen
+                      </Button>
+                    </div>
+                  </div>
+                )}
+
                 {/* Legend */}
                 <div className="absolute bottom-4 left-4 bg-card/90 backdrop-blur rounded-lg shadow-md border p-2 flex items-center gap-4 text-xs">
                   <div className="flex items-center gap-1.5">
