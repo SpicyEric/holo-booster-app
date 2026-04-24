@@ -1115,6 +1115,124 @@ function StoreFinderContent({ apiKey }: { apiKey: string }) {
           </div>
         </div>
       </div>
+
+      {/* Detail-Dialog für angeklickte Geschäfte (Google-POIs oder Suchergebnis-Marker) */}
+      <Dialog open={detailOpen} onOpenChange={(o) => { setDetailOpen(o); if (!o) setDetailPlace(null); }}>
+        <DialogContent className="max-w-lg p-0 overflow-hidden">
+          {detailLoading || !detailPlace ? (
+            <div className="flex items-center justify-center h-72">
+              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            </div>
+          ) : (
+            <>
+              {/* Großes Bild */}
+              <div className="relative h-56 bg-muted">
+                {detailPlace.google_photo_url ? (
+                  <img
+                    src={detailPlace.google_photo_url}
+                    alt={detailPlace.name}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center bg-primary/10">
+                    <Building2 className="h-16 w-16 text-primary/40" />
+                  </div>
+                )}
+                {savedStores.some((s) => s.place_id === detailPlace.place_id) && (
+                  <div className="absolute top-3 right-3 bg-emerald-500 text-white text-xs font-medium px-2.5 py-1 rounded-full flex items-center gap-1 shadow-md">
+                    <Check className="h-3 w-3" /> Gespeichert
+                  </div>
+                )}
+              </div>
+
+              <div className="p-5 space-y-3">
+                <DialogHeader className="space-y-1.5 text-left">
+                  <DialogTitle className="text-xl">{detailPlace.name}</DialogTitle>
+                  {detailPlace.address && (
+                    <DialogDescription className="flex items-start gap-1.5 text-sm">
+                      <MapPin className="h-3.5 w-3.5 mt-0.5 shrink-0" />
+                      <span>{detailPlace.address}</span>
+                    </DialogDescription>
+                  )}
+                </DialogHeader>
+
+                {(detailPlace.google_rating || detailPlace.google_reviews_count) && (
+                  <div className="flex items-center gap-3 text-sm">
+                    <RatingStars rating={detailPlace.google_rating} />
+                    {detailPlace.google_reviews_count > 0 && (
+                      <span className="text-xs text-muted-foreground">
+                        ({detailPlace.google_reviews_count} Bewertungen)
+                      </span>
+                    )}
+                  </div>
+                )}
+
+                <div className="space-y-1.5 text-sm">
+                  {detailPlace.phone && (
+                    <p className="flex items-center gap-2">
+                      <Phone className="h-3.5 w-3.5 text-muted-foreground" />
+                      <a href={`tel:${detailPlace.phone}`} className="text-primary hover:underline">
+                        {detailPlace.phone}
+                      </a>
+                    </p>
+                  )}
+                  {detailPlace.website && (
+                    <p className="flex items-center gap-2">
+                      <Globe className="h-3.5 w-3.5 text-muted-foreground" />
+                      <a
+                        href={detailPlace.website}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-primary hover:underline truncate max-w-[300px]"
+                      >
+                        {detailPlace.website.replace(/^https?:\/\//, '')}
+                      </a>
+                    </p>
+                  )}
+                  {detailPlace.opening_hours && Array.isArray(detailPlace.opening_hours) && (
+                    <details className="text-xs text-muted-foreground">
+                      <summary className="cursor-pointer flex items-center gap-2 hover:text-foreground">
+                        <Clock className="h-3.5 w-3.5" />
+                        Öffnungszeiten anzeigen
+                      </summary>
+                      <ul className="mt-2 ml-5 space-y-0.5">
+                        {detailPlace.opening_hours.map((line: string, i: number) => (
+                          <li key={i}>{line}</li>
+                        ))}
+                      </ul>
+                    </details>
+                  )}
+                </div>
+
+                <div className="flex items-center gap-2 pt-2">
+                  {savedStores.some((s) => s.place_id === detailPlace.place_id) ? (
+                    <Button disabled className="flex-1" variant="secondary">
+                      <Check className="h-4 w-4 mr-2" /> Bereits gespeichert
+                    </Button>
+                  ) : (
+                    <Button
+                      className="flex-1"
+                      onClick={() => addStoreFromDetails(detailPlace, detailPlace.types)}
+                    >
+                      <Plus className="h-4 w-4 mr-2" /> Hinzufügen
+                    </Button>
+                  )}
+                  {detailPlace.google_maps_url && (
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={() => window.open(detailPlace.google_maps_url, '_blank')}
+                      title="In Google Maps öffnen"
+                    >
+                      <ExternalLink className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
