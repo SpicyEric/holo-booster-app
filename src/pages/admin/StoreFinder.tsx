@@ -539,10 +539,32 @@ function StoreFinderContent({ apiKey }: { apiKey: string }) {
               <Input
                 placeholder="z.B. 80331"
                 value={postalCode}
-                onChange={(e) => setPostalCode(e.target.value)}
+                onChange={(e) => {
+                  setPostalCode(e.target.value);
+                  if (e.target.value) {
+                    setSearchPin(null);
+                  }
+                }}
                 className="w-32"
                 onKeyDown={(e) => e.key === 'Enter' && searchPlaces()}
               />
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium">oder Pin auf Karte</label>
+              <Button
+                type="button"
+                variant={pinSearchMode ? 'default' : 'outline'}
+                size="sm"
+                className="h-9"
+                onClick={() => {
+                  setPinSearchMode((v) => !v);
+                  if (manualAddMode) setManualAddMode(false);
+                }}
+              >
+                <MapPin className="h-3.5 w-3.5 mr-1" />
+                {pinSearchMode ? 'Pin-Modus aktiv' : 'Pin setzen'}
+              </Button>
             </div>
 
             <div className="space-y-1.5">
