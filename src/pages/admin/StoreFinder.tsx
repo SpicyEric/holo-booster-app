@@ -641,9 +641,40 @@ function StoreFinderContent({ apiKey }: { apiKey: string }) {
                       { featureType: 'poi', stylers: [{ visibility: 'off' }] },
                       { featureType: 'transit', stylers: [{ visibility: 'off' }] },
                     ],
-                    ...(manualAddMode ? { cursor: 'crosshair' } : {}),
+                    ...((manualAddMode || pinSearchMode) ? { cursor: 'crosshair' } : {}),
                   }}
                 >
+                  {/* Search radius circle around the pin */}
+                  {searchPin && (
+                    <Circle
+                      center={searchPin}
+                      radius={radius}
+                      options={{
+                        strokeColor: 'hsl(262, 55%, 45%)',
+                        strokeOpacity: 0.8,
+                        strokeWeight: 2,
+                        fillColor: 'hsl(262, 55%, 45%)',
+                        fillOpacity: 0.12,
+                        clickable: false,
+                      }}
+                    />
+                  )}
+
+                  {/* Search pin marker */}
+                  {searchPin && (
+                    <OverlayView
+                      position={searchPin}
+                      mapPaneName={OverlayView.OVERLAY_MOUSE_TARGET}
+                    >
+                      <div className="transform -translate-x-1/2 -translate-y-full">
+                        <div className="bg-primary text-primary-foreground rounded-full h-9 w-9 flex items-center justify-center shadow-lg border-2 border-background">
+                          <MapPin className="h-4 w-4" />
+                        </div>
+                        <div className="w-0 h-0 border-l-[7px] border-r-[7px] border-t-[9px] border-l-transparent border-r-transparent border-t-primary mx-auto -mt-0.5" />
+                      </div>
+                    </OverlayView>
+                  )}
+
                   {/* Saved stores */}
                   {savedStores.filter(s => s.latitude && s.longitude).map((store) => {
                     const stageColor = getStageColor(store.status);
