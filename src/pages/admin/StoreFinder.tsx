@@ -861,8 +861,8 @@ function StoreFinderContent({ apiKey }: { apiKey: string }) {
                         <div
                           className="cursor-pointer"
                           style={{ width: size, height: size, marginLeft: -size/2, marginTop: -size/2 }}
-                          onClick={() => addStore(place)}
-                          title={`${place.name} – Klicken zum Hinzufügen`}
+                          onClick={() => openPlaceDetails(place.place_id)}
+                          title={`${place.name} – Details ansehen`}
                         >
                           <div className="rounded-full overflow-hidden flex items-center justify-center"
                             style={{
