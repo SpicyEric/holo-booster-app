@@ -701,6 +701,26 @@ function StoreFinderContent({ apiKey }: { apiKey: string }) {
             </div>
 
             <div className="space-y-1.5">
+              <label className="text-xs font-medium flex items-center gap-1.5">
+                <Sparkles className="h-3 w-3 text-primary" />
+                Live-Suche
+              </label>
+              <div className="flex items-center gap-2 h-9 px-3 rounded-md border bg-background">
+                <Switch
+                  id="live-mode"
+                  checked={liveMode}
+                  onCheckedChange={(v) => {
+                    setLiveMode(v);
+                    if (v) setTimeout(() => runLiveSearch(), 100);
+                  }}
+                />
+                <label htmlFor="live-mode" className="text-xs cursor-pointer select-none">
+                  {liveMode ? 'An – beim Bewegen' : 'Aus'}
+                </label>
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
               <label className="text-xs font-medium">Kategorie</label>
               <Select value={category} onValueChange={setCategory}>
                 <SelectTrigger className="w-44">
