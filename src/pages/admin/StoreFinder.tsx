@@ -379,10 +379,89 @@ function StoreFinderContent({ apiKey }: { apiKey: string }) {
   const [pinSearchMode, setPinSearchMode] = useState(false);
   const [searchPin, setSearchPin] = useState<{ lat: number; lng: number } | null>(null);
 
+  // Live-Modus: automatische Suche im sichtbaren Kartenausschnitt
+  const [liveMode, setLiveMode] = useState(true);
+  const [mapType, setMapType] = useState<'roadmap' | 'satellite' | 'hybrid'>('roadmap');
+  const liveDebounceRef = useRef<number | null>(null);
+
+  // Detail-Dialog für angeklickte Geschäfte
+  const [detailLoading, setDetailLoading] = useState(false);
+  const [detailPlace, setDetailPlace] = useState<any | null>(null);
+  const [detailOpen, setDetailOpen] = useState(false);
+
   const { isLoaded } = useJsApiLoader({
     googleMapsApiKey: apiKey,
     libraries: GMAP_LIBRARIES,
   });
+
+  // Live-Suche: ruft beim Idle der Karte alle Geschäfte im sichtbaren Bereich ab
+  const runLiveSearch = useCallback(async () => {
+    const map = mapRef.current;
+    if (!map || !liveMode) return;
+    const bounds = map.getBounds();
+    const center = map.getCenter();
+    if (!bounds || !center) return;
+
+    // Radius aus Bounds berechnen (max. 25 km, Google-API-Limit)
+    const ne = bounds.getNorthEast();
+    const sw = bounds.getSouthWest();
+    const dynRadius = Math.min(
+      25000,
+      Math.round(
+        google.maps.geometry?.spherical?.computeDistanceBetween
+          ? google.maps.geometry.spherical.computeDistanceBetween(ne, sw) / 2
+          : 5000
+      ) || 5000
+    );
+
+    try {
+      const { data, error } = await supabase.functions.invoke('search-places', {
+        body: {
+          latitude: center.lat(),
+          longitude: center.lng(),
+          radius: dynRadius,
+          type: category && category !== 'all' ? category : undefined,
+          keyword: keyword || undefined,
+        },
+      });
+      if (error || data?.error) return;
+      const savedPlaceIds = new Set(savedStores.map((s) => s.place_id));
+      const filtered = (data.places || []).filter((p: PlaceResult) => !savedPlaceIds.has(p.place_id));
+      setSearchResults(filtered);
+    } catch (e) {
+      // Silent in live mode
+      console.warn('Live search error:', e);
+    }
+  }, [liveMode, category, keyword, savedStores]);
+
+  const handleMapIdle = useCallback(() => {
+    if (!liveMode) return;
+    if (liveDebounceRef.current) window.clearTimeout(liveDebounceRef.current);
+    liveDebounceRef.current = window.setTimeout(() => {
+      runLiveSearch();
+    }, 600);
+  }, [liveMode, runLiveSearch]);
+
+  // Detail eines Place-IDs laden (für Klick auf Google-eigene POIs oder eigene Marker)
+  const openPlaceDetails = useCallback(async (placeId: string) => {
+    setDetailOpen(true);
+    setDetailLoading(true);
+    setDetailPlace(null);
+    try {
+      const { data, error } = await supabase.functions.invoke('place-details', {
+        body: { place_id: placeId },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      setDetailPlace({ ...data.details, place_id: placeId });
+    } catch (e: any) {
+      console.error('Detail load error:', e);
+      toast.error(e.message || 'Details konnten nicht geladen werden');
+      setDetailOpen(false);
+    } finally {
+      setDetailLoading(false);
+    }
+  }, []);
 
   const handleMapClick = useCallback((e: google.maps.MapMouseEvent) => {
     if (!e.latLng) return;
