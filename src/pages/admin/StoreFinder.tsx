@@ -766,12 +766,21 @@ function StoreFinderContent({ apiKey }: { apiKey: string }) {
                   zoom={searchCenter ? 13 : 10}
                   onLoad={(map) => { mapRef.current = map; }}
                   onClick={handleMapClick}
+                  onIdle={handleMapIdle}
+                  mapTypeId={mapType}
                   options={{
                     streetViewControl: false,
-                    mapTypeControl: false,
+                    mapTypeControl: true,
+                    mapTypeControlOptions: {
+                      style: google.maps.MapTypeControlStyle.HORIZONTAL_BAR,
+                      position: google.maps.ControlPosition.TOP_RIGHT,
+                      mapTypeIds: ['roadmap', 'satellite', 'hybrid'],
+                    },
                     fullscreenControl: true,
+                    // POIs sichtbar lassen, damit auch kleine Geschäfte erscheinen.
+                    // Klicks auf POIs werden in handleMapClick als placeId-Click verarbeitet.
+                    clickableIcons: true,
                     styles: [
-                      { featureType: 'poi', stylers: [{ visibility: 'off' }] },
                       { featureType: 'transit', stylers: [{ visibility: 'off' }] },
                     ],
                     ...((manualAddMode || pinSearchMode) ? { cursor: 'crosshair' } : {}),
