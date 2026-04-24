@@ -425,7 +425,7 @@ function StoreFinderContent({ apiKey }: { apiKey: string }) {
   const [searchPin, setSearchPin] = useState<{ lat: number; lng: number } | null>(null);
 
   // Live-Modus: automatische Suche im sichtbaren Kartenausschnitt
-  const [liveMode, setLiveMode] = useState(true);
+  const [liveMode, setLiveMode] = useState(false);
   const [mapType, setMapType] = useState<'roadmap' | 'satellite' | 'hybrid'>('roadmap');
   const liveDebounceRef = useRef<number | null>(null);
 
