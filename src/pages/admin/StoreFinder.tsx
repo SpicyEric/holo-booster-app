@@ -17,7 +17,7 @@ import {
   Loader2, Sparkles, Building2, Mail, User, ExternalLink, Trash2, Lock, Clock, Check,
 } from 'lucide-react';
 import { useGoogleMapsApiKey } from '@/hooks/useGoogleMapsApiKey';
-import { GoogleMap, useJsApiLoader, OverlayView, Circle } from '@react-google-maps/api';
+import { GoogleMap, useJsApiLoader, OverlayView, Circle, Marker } from '@react-google-maps/api';
 
 const GMAP_LIBRARIES: ('places')[] = ['places'];
 
@@ -489,6 +489,16 @@ function StoreFinderContent({ apiKey }: { apiKey: string }) {
 
   // Detail eines Place-IDs laden (für Klick auf Google-eigene POIs oder eigene Marker)
   const openPlaceDetails = useCallback(async (placeId: string) => {
+    // Falls die Karte im Fullscreen ist, verlassen – sonst wird der Dialog
+    // (am <body> gemountet) vom Fullscreen-Element verdeckt.
+    try {
+      const fsEl = document.fullscreenElement;
+      if (fsEl && document.exitFullscreen) {
+        await document.exitFullscreen();
+      }
+    } catch {
+      // ignore – Dialog öffnet trotzdem
+    }
     setDetailOpen(true);
     setDetailLoading(true);
     setDetailPlace(null);
@@ -869,45 +879,18 @@ function StoreFinderContent({ apiKey }: { apiKey: string }) {
                     );
                   })}
 
-                  {/* Search results - circular photo markers with blue border */}
-                  {searchResults.filter(p => p.latitude && p.longitude).map((place) => {
-                    const size = 40;
-                    return (
-                      <OverlayView
+                  {/* Search results - native Google Marker (performant, kein Lag) */}
+                  {searchResults
+                    .filter((p) => p.latitude && p.longitude)
+                    .map((place) => (
+                      <Marker
                         key={place.place_id}
                         position={{ lat: place.latitude, lng: place.longitude }}
-                        mapPaneName={OverlayView.OVERLAY_MOUSE_TARGET}
-                      >
-                        <div
-                          className="cursor-pointer"
-                          style={{ width: size, height: size, marginLeft: -size/2, marginTop: -size/2 }}
-                          onClick={() => openPlaceDetails(place.place_id)}
-                          title={`${place.name} – Details ansehen`}
-                        >
-                          <div className="rounded-full overflow-hidden flex items-center justify-center"
-                            style={{
-                              width: size, height: size,
-                              border: '3px solid hsl(220, 90%, 50%)',
-                              backgroundColor: 'rgba(255,255,255,0.9)',
-                              boxShadow: '0 2px 8px rgba(0,0,0,0.25)',
-                            }}>
-                            {place.photo_reference ? (
-                              <img
-                                src={`https://maps.googleapis.com/maps/api/place/photo?maxwidth=80&photo_reference=${place.photo_reference}&key=${apiKey}`}
-                                alt=""
-                                className="w-full h-full object-cover"
-                              />
-                            ) : (
-                              <div className="w-full h-full flex items-center justify-center font-bold text-sm"
-                                style={{ backgroundColor: 'hsl(220, 90%, 50%)', color: 'white' }}>
-                                {place.name.charAt(0)}
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      </OverlayView>
-                    );
-                  })}
+                        title={place.name}
+                        onClick={() => openPlaceDetails(place.place_id)}
+                      />
+                    ))}
+
 
                   {/* Manual pin */}
                   {manualLatLng && (
