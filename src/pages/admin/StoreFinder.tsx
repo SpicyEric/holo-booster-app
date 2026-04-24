@@ -9,10 +9,12 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Slider } from '@/components/ui/slider';
+import { Switch } from '@/components/ui/switch';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { toast } from 'sonner';
 import {
   Search, MapPin, Phone, Globe, Star, Plus,
-  Loader2, Sparkles, Building2, Mail, User, ExternalLink, Trash2, Lock,
+  Loader2, Sparkles, Building2, Mail, User, ExternalLink, Trash2, Lock, Clock, Check,
 } from 'lucide-react';
 import { useGoogleMapsApiKey } from '@/hooks/useGoogleMapsApiKey';
 import { GoogleMap, useJsApiLoader, OverlayView, Circle } from '@react-google-maps/api';
@@ -328,6 +330,51 @@ function StoreFinderContent({ apiKey }: { apiKey: string }) {
     }
   };
 
+  // Hinzufügen direkt aus dem Detail-Dialog (Details schon geladen)
+  const addStoreFromDetails = async (d: any, types: string[] = []) => {
+    if (!requireActive()) return;
+    if (!d?.place_id) return;
+    // Doppelte verhindern
+    if (savedStores.some((s) => s.place_id === d.place_id)) {
+      toast.info('Dieser Store ist bereits gespeichert');
+      return;
+    }
+    try {
+      const categoryLabel = CATEGORIES.find((c) => types?.includes(c.value))?.label || null;
+      const { data: userData } = await supabase.auth.getUser();
+      const { error: insertError } = await supabase.from('discovered_stores').insert({
+        admin_user_id: userData.user!.id,
+        place_id: d.place_id,
+        name: d.name,
+        address: d.address,
+        street: d.street,
+        house_number: d.house_number,
+        postal_code: d.postal_code,
+        city: d.city,
+        latitude: d.latitude,
+        longitude: d.longitude,
+        phone: d.phone,
+        website: d.website,
+        google_rating: d.google_rating,
+        google_reviews_count: d.google_reviews_count,
+        google_photo_url: d.google_photo_url,
+        industry: categoryLabel,
+        opening_hours: d.opening_hours,
+        enrichment_status: 'pending',
+        status: 'new',
+      } as any);
+      if (insertError) throw insertError;
+      setSearchResults((prev) => prev.filter((p) => p.place_id !== d.place_id));
+      toast.success(`${d.name} hinzugefügt`);
+      setDetailOpen(false);
+      setDetailPlace(null);
+      loadSavedStores();
+    } catch (e: any) {
+      console.error('Add from details error:', e);
+      toast.error(e.message || 'Fehler beim Hinzufügen');
+    }
+  };
+
   const enrichStore = async (storeId: string) => {
     if (!requireActive()) return;
     const store = savedStores.find((s) => s.id === storeId);
@@ -377,12 +424,98 @@ function StoreFinderContent({ apiKey }: { apiKey: string }) {
   const [pinSearchMode, setPinSearchMode] = useState(false);
   const [searchPin, setSearchPin] = useState<{ lat: number; lng: number } | null>(null);
 
+  // Live-Modus: automatische Suche im sichtbaren Kartenausschnitt
+  const [liveMode, setLiveMode] = useState(true);
+  const [mapType, setMapType] = useState<'roadmap' | 'satellite' | 'hybrid'>('roadmap');
+  const liveDebounceRef = useRef<number | null>(null);
+
+  // Detail-Dialog für angeklickte Geschäfte
+  const [detailLoading, setDetailLoading] = useState(false);
+  const [detailPlace, setDetailPlace] = useState<any | null>(null);
+  const [detailOpen, setDetailOpen] = useState(false);
+
   const { isLoaded } = useJsApiLoader({
     googleMapsApiKey: apiKey,
     libraries: GMAP_LIBRARIES,
   });
 
-  const handleMapClick = useCallback((e: google.maps.MapMouseEvent) => {
+  // Live-Suche: ruft beim Idle der Karte alle Geschäfte im sichtbaren Bereich ab
+  const runLiveSearch = useCallback(async () => {
+    const map = mapRef.current;
+    if (!map || !liveMode) return;
+    const bounds = map.getBounds();
+    const center = map.getCenter();
+    if (!bounds || !center) return;
+
+    // Radius aus Bounds berechnen (max. 25 km, Google-API-Limit)
+    const ne = bounds.getNorthEast();
+    const sw = bounds.getSouthWest();
+    const dynRadius = Math.min(
+      25000,
+      Math.round(
+        google.maps.geometry?.spherical?.computeDistanceBetween
+          ? google.maps.geometry.spherical.computeDistanceBetween(ne, sw) / 2
+          : 5000
+      ) || 5000
+    );
+
+    try {
+      const { data, error } = await supabase.functions.invoke('search-places', {
+        body: {
+          latitude: center.lat(),
+          longitude: center.lng(),
+          radius: dynRadius,
+          type: category && category !== 'all' ? category : undefined,
+          keyword: keyword || undefined,
+        },
+      });
+      if (error || data?.error) return;
+      const savedPlaceIds = new Set(savedStores.map((s) => s.place_id));
+      const filtered = (data.places || []).filter((p: PlaceResult) => !savedPlaceIds.has(p.place_id));
+      setSearchResults(filtered);
+    } catch (e) {
+      // Silent in live mode
+      console.warn('Live search error:', e);
+    }
+  }, [liveMode, category, keyword, savedStores]);
+
+  const handleMapIdle = useCallback(() => {
+    if (!liveMode) return;
+    if (liveDebounceRef.current) window.clearTimeout(liveDebounceRef.current);
+    liveDebounceRef.current = window.setTimeout(() => {
+      runLiveSearch();
+    }, 600);
+  }, [liveMode, runLiveSearch]);
+
+  // Detail eines Place-IDs laden (für Klick auf Google-eigene POIs oder eigene Marker)
+  const openPlaceDetails = useCallback(async (placeId: string) => {
+    setDetailOpen(true);
+    setDetailLoading(true);
+    setDetailPlace(null);
+    try {
+      const { data, error } = await supabase.functions.invoke('place-details', {
+        body: { place_id: placeId },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      setDetailPlace({ ...data.details, place_id: placeId });
+    } catch (e: any) {
+      console.error('Detail load error:', e);
+      toast.error(e.message || 'Details konnten nicht geladen werden');
+      setDetailOpen(false);
+    } finally {
+      setDetailLoading(false);
+    }
+  }, []);
+
+  const handleMapClick = useCallback((e: google.maps.MapMouseEvent & { placeId?: string }) => {
+    // Klick auf eingebauten Google-POI (z. B. kleines Geschäft) → Details öffnen
+    const placeId = (e as any).placeId as string | undefined;
+    if (placeId && !pinSearchMode && !manualAddMode) {
+      e.stop?.();
+      openPlaceDetails(placeId);
+      return;
+    }
     if (!e.latLng) return;
     if (pinSearchMode) {
       const next = { lat: e.latLng.lat(), lng: e.latLng.lng() };
@@ -394,7 +527,7 @@ function StoreFinderContent({ apiKey }: { apiKey: string }) {
     if (manualAddMode) {
       setManualLatLng({ lat: e.latLng.lat(), lng: e.latLng.lng() });
     }
-  }, [manualAddMode, pinSearchMode]);
+  }, [manualAddMode, pinSearchMode, openPlaceDetails]);
 
   const addManualStore = async () => {
     if (!requireActive()) return;
@@ -568,6 +701,26 @@ function StoreFinderContent({ apiKey }: { apiKey: string }) {
             </div>
 
             <div className="space-y-1.5">
+              <label className="text-xs font-medium flex items-center gap-1.5">
+                <Sparkles className="h-3 w-3 text-primary" />
+                Live-Suche
+              </label>
+              <div className="flex items-center gap-2 h-9 px-3 rounded-md border bg-background">
+                <Switch
+                  id="live-mode"
+                  checked={liveMode}
+                  onCheckedChange={(v) => {
+                    setLiveMode(v);
+                    if (v) setTimeout(() => runLiveSearch(), 100);
+                  }}
+                />
+                <label htmlFor="live-mode" className="text-xs cursor-pointer select-none">
+                  {liveMode ? 'An – beim Bewegen' : 'Aus'}
+                </label>
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
               <label className="text-xs font-medium">Kategorie</label>
               <Select value={category} onValueChange={setCategory}>
                 <SelectTrigger className="w-44">
@@ -633,12 +786,21 @@ function StoreFinderContent({ apiKey }: { apiKey: string }) {
                   zoom={searchCenter ? 13 : 10}
                   onLoad={(map) => { mapRef.current = map; }}
                   onClick={handleMapClick}
+                  onIdle={handleMapIdle}
+                  mapTypeId={mapType}
                   options={{
                     streetViewControl: false,
-                    mapTypeControl: false,
+                    mapTypeControl: true,
+                    mapTypeControlOptions: {
+                      style: google.maps.MapTypeControlStyle.HORIZONTAL_BAR,
+                      position: google.maps.ControlPosition.TOP_RIGHT,
+                      mapTypeIds: ['roadmap', 'satellite', 'hybrid'],
+                    },
                     fullscreenControl: true,
+                    // POIs sichtbar lassen, damit auch kleine Geschäfte erscheinen.
+                    // Klicks auf POIs werden in handleMapClick als placeId-Click verarbeitet.
+                    clickableIcons: true,
                     styles: [
-                      { featureType: 'poi', stylers: [{ visibility: 'off' }] },
                       { featureType: 'transit', stylers: [{ visibility: 'off' }] },
                     ],
                     ...((manualAddMode || pinSearchMode) ? { cursor: 'crosshair' } : {}),
@@ -719,8 +881,8 @@ function StoreFinderContent({ apiKey }: { apiKey: string }) {
                         <div
                           className="cursor-pointer"
                           style={{ width: size, height: size, marginLeft: -size/2, marginTop: -size/2 }}
-                          onClick={() => addStore(place)}
-                          title={`${place.name} – Klicken zum Hinzufügen`}
+                          onClick={() => openPlaceDetails(place.place_id)}
+                          title={`${place.name} – Details ansehen`}
                         >
                           <div className="rounded-full overflow-hidden flex items-center justify-center"
                             style={{
@@ -953,6 +1115,124 @@ function StoreFinderContent({ apiKey }: { apiKey: string }) {
           </div>
         </div>
       </div>
+
+      {/* Detail-Dialog für angeklickte Geschäfte (Google-POIs oder Suchergebnis-Marker) */}
+      <Dialog open={detailOpen} onOpenChange={(o) => { setDetailOpen(o); if (!o) setDetailPlace(null); }}>
+        <DialogContent className="max-w-lg p-0 overflow-hidden">
+          {detailLoading || !detailPlace ? (
+            <div className="flex items-center justify-center h-72">
+              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            </div>
+          ) : (
+            <>
+              {/* Großes Bild */}
+              <div className="relative h-56 bg-muted">
+                {detailPlace.google_photo_url ? (
+                  <img
+                    src={detailPlace.google_photo_url}
+                    alt={detailPlace.name}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center bg-primary/10">
+                    <Building2 className="h-16 w-16 text-primary/40" />
+                  </div>
+                )}
+                {savedStores.some((s) => s.place_id === detailPlace.place_id) && (
+                  <div className="absolute top-3 right-3 bg-emerald-500 text-white text-xs font-medium px-2.5 py-1 rounded-full flex items-center gap-1 shadow-md">
+                    <Check className="h-3 w-3" /> Gespeichert
+                  </div>
+                )}
+              </div>
+
+              <div className="p-5 space-y-3">
+                <DialogHeader className="space-y-1.5 text-left">
+                  <DialogTitle className="text-xl">{detailPlace.name}</DialogTitle>
+                  {detailPlace.address && (
+                    <DialogDescription className="flex items-start gap-1.5 text-sm">
+                      <MapPin className="h-3.5 w-3.5 mt-0.5 shrink-0" />
+                      <span>{detailPlace.address}</span>
+                    </DialogDescription>
+                  )}
+                </DialogHeader>
+
+                {(detailPlace.google_rating || detailPlace.google_reviews_count) && (
+                  <div className="flex items-center gap-3 text-sm">
+                    <RatingStars rating={detailPlace.google_rating} />
+                    {detailPlace.google_reviews_count > 0 && (
+                      <span className="text-xs text-muted-foreground">
+                        ({detailPlace.google_reviews_count} Bewertungen)
+                      </span>
+                    )}
+                  </div>
+                )}
+
+                <div className="space-y-1.5 text-sm">
+                  {detailPlace.phone && (
+                    <p className="flex items-center gap-2">
+                      <Phone className="h-3.5 w-3.5 text-muted-foreground" />
+                      <a href={`tel:${detailPlace.phone}`} className="text-primary hover:underline">
+                        {detailPlace.phone}
+                      </a>
+                    </p>
+                  )}
+                  {detailPlace.website && (
+                    <p className="flex items-center gap-2">
+                      <Globe className="h-3.5 w-3.5 text-muted-foreground" />
+                      <a
+                        href={detailPlace.website}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-primary hover:underline truncate max-w-[300px]"
+                      >
+                        {detailPlace.website.replace(/^https?:\/\//, '')}
+                      </a>
+                    </p>
+                  )}
+                  {detailPlace.opening_hours && Array.isArray(detailPlace.opening_hours) && (
+                    <details className="text-xs text-muted-foreground">
+                      <summary className="cursor-pointer flex items-center gap-2 hover:text-foreground">
+                        <Clock className="h-3.5 w-3.5" />
+                        Öffnungszeiten anzeigen
+                      </summary>
+                      <ul className="mt-2 ml-5 space-y-0.5">
+                        {detailPlace.opening_hours.map((line: string, i: number) => (
+                          <li key={i}>{line}</li>
+                        ))}
+                      </ul>
+                    </details>
+                  )}
+                </div>
+
+                <div className="flex items-center gap-2 pt-2">
+                  {savedStores.some((s) => s.place_id === detailPlace.place_id) ? (
+                    <Button disabled className="flex-1" variant="secondary">
+                      <Check className="h-4 w-4 mr-2" /> Bereits gespeichert
+                    </Button>
+                  ) : (
+                    <Button
+                      className="flex-1"
+                      onClick={() => addStoreFromDetails(detailPlace, detailPlace.types)}
+                    >
+                      <Plus className="h-4 w-4 mr-2" /> Hinzufügen
+                    </Button>
+                  )}
+                  {detailPlace.google_maps_url && (
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={() => window.open(detailPlace.google_maps_url, '_blank')}
+                      title="In Google Maps öffnen"
+                    >
+                      <ExternalLink className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
