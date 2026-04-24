@@ -17,7 +17,7 @@ import {
   Loader2, Sparkles, Building2, Mail, User, ExternalLink, Trash2, Lock, Clock, Check,
 } from 'lucide-react';
 import { useGoogleMapsApiKey } from '@/hooks/useGoogleMapsApiKey';
-import { GoogleMap, useJsApiLoader, OverlayView, Circle } from '@react-google-maps/api';
+import { GoogleMap, useJsApiLoader, OverlayView, Circle, Marker } from '@react-google-maps/api';
 
 const GMAP_LIBRARIES: ('places')[] = ['places'];
 
