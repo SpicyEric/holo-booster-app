@@ -91,7 +91,7 @@ export const InviteFriendDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[340px] rounded-3xl p-6 gap-4 [&>button]:h-8 [&>button]:w-8 [&>button>svg]:h-5 [&>button>svg]:w-5">
+      <DialogContent className="max-w-[340px] rounded-3xl p-6 gap-4 [&>button]:rounded-none [&>button]:ring-0 [&>button]:ring-offset-0 [&>button]:focus:ring-0 [&>button]:focus:ring-offset-0 [&>button]:hover:bg-transparent [&>button]:data-[state=open]:bg-transparent [&>button>svg]:h-6 [&>button>svg]:w-6 [&>button>svg]:stroke-[2.5]">
         <DialogHeader className="space-y-3 text-center sm:text-center">
           <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/15">
             <Gift className="h-7 w-7 text-primary" />
