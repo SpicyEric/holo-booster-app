@@ -2,7 +2,6 @@ import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { Home, Gift, User, Scan, Store } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useOfflineSync } from '@/app/hooks/useOfflineSync';
-import { PendingInviteDialog } from '@/app/components/PendingInviteDialog';
 
 /**
  * Mobile-optimized layout for end customer app
@@ -79,9 +78,6 @@ export const AppLayout = () => {
           })}
         </div>
       </nav>
-
-      {/* Globaler Pending-Invite Dialog (zeigt sich nach Login wenn Invite-Code wartet) */}
-      <PendingInviteDialog />
     </div>
   );
 };
