@@ -134,7 +134,7 @@ function StoresGoogleMapContent({
       if (!logoUrl) return;
 
       const canvas = document.createElement('canvas');
-      const size = 44;
+      const size = 88;
       canvas.width = size;
       canvas.height = size;
       const ctx = canvas.getContext('2d');
@@ -156,8 +156,8 @@ function StoresGoogleMapContent({
 
           const icon: google.maps.Icon = {
             url: canvas.toDataURL(),
-            scaledSize: new google.maps.Size(44, 44),
-            anchor: new google.maps.Point(22, 22),
+            scaledSize: new google.maps.Size(56, 56),
+            anchor: new google.maps.Point(28, 28),
           };
 
           setMarkerIcons((prev) => {
