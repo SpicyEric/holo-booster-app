@@ -50,6 +50,7 @@ import CheckoutCancel from "./pages/CheckoutCancel";
 import DesignVariants from "./pages/DesignVariants";
 import Download from "./pages/Download";
 import TestWizard from "./pages/TestWizard";
+import InviteRedirect from "./pages/InviteRedirect";
 
 // App (End Customer) imports
 import { AppProtectedRoute } from "./components/AppProtectedRoute";
@@ -205,6 +206,9 @@ const App = () => {
 
               {/* Scan Route */}
               <Route path="/s/:cid" element={<Scan />} />
+
+              {/* Invite Redirect (Deep Link Landing) */}
+              <Route path="/i/:code" element={<InviteRedirect />} />
 
               {/* Checkout Routes */}
               <Route path="/checkout/success" element={<CheckoutSuccess />} />
