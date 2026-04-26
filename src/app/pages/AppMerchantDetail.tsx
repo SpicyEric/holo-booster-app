@@ -32,6 +32,9 @@ interface Merchant {
   google_review_url: string | null;
   latitude: number | null;
   longitude: number | null;
+  referral_enabled?: boolean | null;
+  referral_inviter_points?: number | null;
+  referral_invitee_points?: number | null;
 }
 
 interface Reward {
