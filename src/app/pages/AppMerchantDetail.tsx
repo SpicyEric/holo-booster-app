@@ -818,10 +818,24 @@ export const AppMerchantDetail = () => {
                 initial={shouldAnimateFromScan ? { opacity: 0, y: 5 } : false}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.4, delay: shouldAnimateFromScan ? 0.25 : 0 }}
-                className="absolute bottom-3 left-4 right-4"
+                className="absolute bottom-3 left-4 right-16"
               >
-                <h1 className="text-lg font-bold text-white drop-shadow-md">{merchantName}</h1>
+                <h1 className="text-lg font-bold text-white drop-shadow-md truncate">{merchantName}</h1>
               </motion.div>
+
+              {merchant.referral_enabled !== false && (
+                <motion.button
+                  initial={shouldAnimateFromScan ? { opacity: 0, scale: 0.6 } : false}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ duration: 0.4, delay: shouldAnimateFromScan ? 0.45 : 0, type: 'spring', stiffness: 300, damping: 20 }}
+                  whileTap={{ scale: 0.92 }}
+                  onClick={() => setInviteOpen(true)}
+                  aria-label="Freund einladen"
+                  className="absolute bottom-3 right-3 z-10 pointer-events-auto h-11 w-11 rounded-full bg-primary text-primary-foreground shadow-lg shadow-primary/40 flex items-center justify-center ring-2 ring-white/40 hover:bg-primary/90 transition-colors"
+                >
+                  <UserPlus className="h-5 w-5" />
+                </motion.button>
+              )}
             </div>
           </div>
 
@@ -1058,7 +1072,7 @@ export const AppMerchantDetail = () => {
 
       {/* Pop-up: Aktive Einladung — Erklärung + Countdown */}
       <Dialog open={invitationDialogOpen} onOpenChange={setInvitationDialogOpen}>
-        <DialogContent className="max-w-[340px] rounded-3xl p-0 gap-0 overflow-hidden border-0">
+        <DialogContent className="max-w-[340px] rounded-3xl p-0 gap-0 overflow-hidden border-0 [&>button]:hidden">
           <div
             className="h-32 bg-gradient-to-br from-primary to-primary/60"
             style={
@@ -1097,14 +1111,12 @@ export const AppMerchantDetail = () => {
                       {daysLeft} {daysLeft === 1 ? 'Tag' : 'Tage'}
                     </span>{' '}
                     deinen <span className="font-semibold text-foreground">ersten Stempel</span> und du bekommst{' '}
-                    <span className="font-semibold text-foreground">doppelte Punkte</span> auf deinen ersten Einkauf.
+                    <span className="font-semibold text-foreground">automatisch doppelte Punkte</span> auf deinen ersten Einkauf.
                     Auch die Person, die dich eingeladen hat, erhält dafür einen kleinen Bonus 💜
                   </p>
-                  <div className="rounded-xl bg-primary/10 px-3 py-2.5 mb-4">
-                    <div className="text-xs text-muted-foreground">Dein Willkommensbonus</div>
-                    <div className="text-lg font-bold text-primary">
-                      +{activeInvitation.invitee_points} Bonuspunkte
-                    </div>
+                  <div className="rounded-xl bg-primary/10 px-3 py-2.5 mb-4 flex items-center justify-center gap-2">
+                    <Sparkles className="h-4 w-4 text-primary" />
+                    <span className="text-base font-bold text-primary">Punkte ×2 auf deinen ersten Stempel</span>
                   </div>
                   <div className="flex items-center justify-center gap-1.5 text-xs text-muted-foreground mb-5">
                     <Timer className="h-3.5 w-3.5" />
