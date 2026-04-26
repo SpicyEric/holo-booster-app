@@ -497,6 +497,7 @@ const Marketing = () => {
             {[
               { value: "praemien", label: "Prämien", icon: Gift },
               { value: "boost", label: "Neukunden", icon: Rocket },
+              { value: "referral", label: "Empfehlungen", icon: UserPlus },
               { value: "reviews", label: "Bewertungen", icon: Star },
               { value: "messages", label: "Nachrichten", icon: MessageSquare },
               { value: "automations", label: "Automationen", icon: Zap },
