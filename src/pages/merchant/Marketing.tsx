@@ -496,19 +496,6 @@ const Marketing = () => {
   return (
     <div className="min-h-screen">
       <div className="max-w-5xl mx-auto px-6 lg:px-8 py-8 space-y-8">
-        {/* Header */}
-        <div>
-          <div className="flex items-center gap-3 mb-1">
-            <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-              <Megaphone className="h-5 w-5 text-primary" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold text-foreground">Marketing</h1>
-              <p className="text-muted-foreground text-sm">Gewinne neue Kunden, steigere deine Sichtbarkeit und aktiviere Stammkunden</p>
-            </div>
-          </div>
-        </div>
-
         <Tabs value={activeTab} onValueChange={setActiveTab}>
 
           {/* ========== PRÄMIEN TAB ========== */}
