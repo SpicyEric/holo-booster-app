@@ -760,7 +760,7 @@ const Marketing = () => {
                       <Label className="font-medium">Bonus für den Einlader</Label>
                       <p className="text-xs text-muted-foreground">Punkte, die der Kunde bekommt, der einen Freund erfolgreich eingeladen hat.</p>
                       <div className="flex items-center gap-4">
-                        <Slider value={[referralInviterPoints]} onValueChange={v => setReferralInviterPoints(v[0])} min={1} max={20} step={1} className="flex-1" />
+                        <Slider value={[referralInviterPoints]} onValueChange={v => setReferralInviterPoints(v[0])} min={1} max={50} step={1} className="flex-1" />
                         <span className="text-lg font-bold text-primary min-w-[3rem] text-center">{referralInviterPoints}</span>
                       </div>
                     </div>
