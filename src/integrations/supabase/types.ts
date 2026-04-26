@@ -3076,6 +3076,30 @@ export type Database = {
         }
         Relationships: []
       }
+      user_device_fingerprints: {
+        Row: {
+          created_at: string
+          fingerprint: string
+          id: string
+          last_seen_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          fingerprint: string
+          id?: string
+          last_seen_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          fingerprint?: string
+          id?: string
+          last_seen_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -3357,11 +3381,17 @@ export type Database = {
         Args: { p_merchant_customer_id: string; p_stempel_id: string }
         Returns: number
       }
-      consume_invitation: { Args: { p_share_code: string }; Returns: Json }
+      consume_invitation:
+        | { Args: { p_share_code: string }; Returns: Json }
+        | {
+            Args: { p_device_fingerprint?: string; p_share_code: string }
+            Returns: Json
+          }
       create_invitation: {
         Args: { p_merchant_customer_id: string }
         Returns: Json
       }
+      expire_old_invitations: { Args: never; Returns: number }
       generate_customer_number: { Args: never; Returns: string }
       get_pending_invitation: { Args: never; Returns: Json }
       has_role: {
@@ -3370,6 +3400,18 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      list_merchant_referrals: {
+        Args: { p_merchant_customer_id: string }
+        Returns: {
+          bonus_awarded_at: string
+          created_at: string
+          invitation_id: string
+          invitee_points: number
+          inviter_points: number
+          share_code: string
+          status: string
+        }[]
       }
       lookup_invitation: { Args: { p_share_code: string }; Returns: Json }
       process_referral_bonus: {
