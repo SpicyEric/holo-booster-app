@@ -638,7 +638,7 @@ export const AppMerchantDetail = () => {
       key: 'active-invitation',
       element: (
         <Card
-          className="reward-glow border-0 bg-gradient-to-br from-primary/15 via-primary/5 to-transparent cursor-pointer hover:shadow-lg transition-shadow relative overflow-hidden rounded-xl"
+          className="reward-glow border-0 bg-gradient-to-br from-primary/15 via-primary/5 to-transparent cursor-pointer relative rounded-xl"
           onClick={() => setInvitationDialogOpen(true)}
         >
           <CardContent className="p-4 flex items-center gap-4">
@@ -667,7 +667,7 @@ export const AppMerchantDetail = () => {
       key: 'new-customer-offer',
       element: (
         <Card 
-          className="reward-glow border-0 bg-primary/5 cursor-pointer hover:shadow-lg transition-shadow rounded-xl"
+          className="reward-glow border-0 bg-primary/5 cursor-pointer rounded-xl"
           onClick={handleNewCustomerOfferClick}
         >
           <CardContent className="p-4 flex items-center gap-4">
@@ -695,7 +695,7 @@ export const AppMerchantDetail = () => {
       key: 'google-review',
       element: (
         <Card 
-          className="border-2 border-amber-400 bg-amber-50 dark:bg-amber-950/30 cursor-pointer hover:shadow-lg transition-shadow"
+          className="border-2 border-amber-400 bg-amber-50 dark:bg-amber-950/30 cursor-pointer"
           onClick={handleClaimGoogleReviewBonus}
         >
           <CardContent className="p-4 flex items-center gap-4">
@@ -735,7 +735,7 @@ export const AppMerchantDetail = () => {
         key: reward.id,
         element: (
           <Card 
-            className={`cursor-pointer hover:shadow-lg transition-shadow ${canRedeem ? 'reward-glow border-0' : 'border-0 bg-black/[0.06] dark:bg-white/[0.04]'}`}
+            className={`cursor-pointer ${canRedeem ? 'reward-glow border-0' : 'border-0 bg-black/[0.06] dark:bg-white/[0.04]'}`}
             onClick={() => handleRewardClick(reward)}
           >
             <CardContent className="p-4 flex items-center gap-4">

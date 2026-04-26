@@ -121,7 +121,7 @@ export const AppRewards = () => {
           rewards.map((reward) => (
             <Card
               key={reward.id}
-              className="cursor-pointer hover:shadow-md transition-shadow active:scale-[0.98] border-primary/30"
+              className="cursor-pointer active:scale-[0.98] border-primary/30"
               onClick={() => handleRewardClick(reward)}
             >
               <CardContent className="p-4 flex items-center gap-3">
