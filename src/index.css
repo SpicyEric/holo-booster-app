@@ -245,6 +245,67 @@ body.ccm19-modal-open dialog.ccm-dialog-open .ccm-dialog-content-inner {
   view-transition-name: app-bottom-nav;
 }
 
+/* Animated glow effect for redeemable rewards */
+@property --reward-glow-angle {
+  syntax: '<angle>';
+  initial-value: 0deg;
+  inherits: false;
+}
+
+@keyframes reward-glow-spin {
+  to {
+    --reward-glow-angle: 360deg;
+  }
+}
+
+.reward-glow {
+  position: relative;
+  border-radius: 0.75rem;
+  background: hsl(var(--card));
+  isolation: isolate;
+}
+
+.reward-glow::before,
+.reward-glow::after {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: inherit;
+  padding: 2px;
+  background: conic-gradient(
+    from var(--reward-glow-angle),
+    hsl(var(--primary)),
+    hsl(var(--accent)),
+    hsl(var(--secondary)),
+    hsl(var(--primary) / 0.6),
+    hsl(var(--accent)),
+    hsl(var(--primary))
+  );
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+          mask-composite: exclude;
+  animation: reward-glow-spin 4s linear infinite;
+  pointer-events: none;
+  z-index: -1;
+}
+
+.reward-glow::after {
+  inset: -6px;
+  padding: 6px;
+  filter: blur(10px);
+  opacity: 0.55;
+  animation-duration: 4s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reward-glow::before,
+  .reward-glow::after {
+    animation: none;
+  }
+}
+
 ::view-transition-old(root),
 ::view-transition-new(root) {
   animation: none;
