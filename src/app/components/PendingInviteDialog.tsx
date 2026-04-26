@@ -147,6 +147,16 @@ export function PendingInviteDialog() {
         cover_image_url: preview.cover_image_url,
         invitee_points: preview.invitee_points,
       });
+
+      // Push an den Einladenden – fire-and-forget, blockiert UI nicht
+      void supabase.functions
+        .invoke('notify-invitation-accepted', {
+          body: {
+            invitation_id: result.invitation_id,
+            merchant_customer_id: result.merchant_customer_id,
+          },
+        })
+        .catch((err) => console.warn('[notify-invitation-accepted] failed:', err));
     } catch (err) {
       console.error('consume_invitation Fehler:', err);
       clearPendingInvite();
