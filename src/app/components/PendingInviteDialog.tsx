@@ -6,7 +6,7 @@ import { Gift, Sparkles } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { getDeviceFingerprint } from '@/lib/deviceFingerprint';
-import { clearPendingInvite, getPendingInviteCode, storePendingInvite } from '@/app/lib/pendingInvite';
+import { clearPendingInvite, getPendingInviteCode, isInviteConsumed, markInviteConsumed, storePendingInvite } from '@/app/lib/pendingInvite';
 
 interface InviteData {
   invitation_id: string;
