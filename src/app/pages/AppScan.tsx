@@ -13,6 +13,7 @@ import { offlineQueueService } from '@/app/services/offlineQueueService';
 import { NfcPermissionDialog } from '@/app/components/NfcPermissionDialog';
 import { OfflineBanner } from '@/app/components/OfflineBanner';
 import Particles from '@/components/Particles';
+import { maybeAwardReferralBonus } from '@/app/lib/referralBonus';
 
 type ScanResult = {
   success: boolean;
