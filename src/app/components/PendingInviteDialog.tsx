@@ -43,8 +43,17 @@ export function PendingInviteDialog() {
   useEffect(() => {
     if (!user) return;
     const code = localStorage.getItem(PENDING_INVITE_KEY);
-    if (!code) return;
-    void loadPreview(code);
+    if (code) {
+      void loadPreview(code);
+    }
+    // Reagiere zusätzlich auf neue Deep-Link-Events (App war bereits offen)
+    const onNewInvite = (e: Event) => {
+      const detail = (e as CustomEvent).detail as string | undefined;
+      const c = detail || localStorage.getItem(PENDING_INVITE_KEY);
+      if (c) void loadPreview(c);
+    };
+    window.addEventListener('eloyo:pending-invite', onNewInvite);
+    return () => window.removeEventListener('eloyo:pending-invite', onNewInvite);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
