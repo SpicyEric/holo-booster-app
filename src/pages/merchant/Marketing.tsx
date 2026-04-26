@@ -111,6 +111,17 @@ const Marketing = () => {
   const [stampPoints, setStampPoints] = useState<{ green: number | null; blue: number | null; red: number | null }>({ green: null, blue: null, red: null });
   const [showBonusHint, setShowBonusHint] = useState(false);
 
+  // --- Referral / Empfehlungen state ---
+  const [referralEnabled, setReferralEnabled] = useState(true);
+  const [referralInviterPoints, setReferralInviterPoints] = useState(3);
+  const [referralInviteePoints, setReferralInviteePoints] = useState(1);
+  const [savingReferral, setSavingReferral] = useState(false);
+  const [referralStats, setReferralStats] = useState<{
+    total_invites: number;
+    accepted: number;
+    converted: number;
+  }>({ total_invites: 0, accepted: 0, converted: 0 });
+
   // Track automation changes
   useEffect(() => {
     if (automationsLoadedRef.current) setAutomationsChanged(true);
@@ -159,7 +170,7 @@ const Marketing = () => {
       const midPoints = chipMap.blue;
       setMiddleStampPoints(midPoints);
 
-      const { data: cd } = await supabase.from('customers').select('google_review_url, google_review_points_enabled, google_review_points_value, birthday_enabled, birthday_message, birthday_bonus_points, birthday_gift_type, birthday_offer_title, birthday_offer_description, industry, avg_revenue, company_name, name').eq('id', assignment.customer_id).maybeSingle();
+      const { data: cd } = await supabase.from('customers').select('google_review_url, google_review_points_enabled, google_review_points_value, birthday_enabled, birthday_message, birthday_bonus_points, birthday_gift_type, birthday_offer_title, birthday_offer_description, industry, avg_revenue, company_name, name, referral_enabled, referral_inviter_points, referral_invitee_points').eq('id', assignment.customer_id).maybeSingle();
       if (cd) {
         setGoogleReviewUrl(cd.google_review_url || "");
         setReviewPointsEnabled(cd.google_review_points_enabled || false);
@@ -175,7 +186,33 @@ const Marketing = () => {
         setBirthdayOfferDescription((cd as any).birthday_offer_description || '');
         if (cd.industry) setMerchantIndustry(cd.industry);
         if (cd.avg_revenue) setAvgOrderValue(cd.avg_revenue);
+        // Referral settings
+        setReferralEnabled((cd as any).referral_enabled ?? true);
+        setReferralInviterPoints((cd as any).referral_inviter_points ?? 3);
+        setReferralInviteePoints((cd as any).referral_invitee_points ?? 1);
       }
+
+      // Referral statistics
+      const { data: invites } = await supabase
+        .from('invitations')
+        .select('id')
+        .eq('merchant_customer_id', assignment.customer_id);
+      const inviteIds = (invites || []).map((i) => i.id);
+      let acceptedCount = 0;
+      let convertedCount = 0;
+      if (inviteIds.length > 0) {
+        const { data: redemptions } = await supabase
+          .from('invitation_redemptions')
+          .select('id, bonus_awarded_at')
+          .in('invitation_id', inviteIds);
+        acceptedCount = redemptions?.length || 0;
+        convertedCount = redemptions?.filter((r) => r.bonus_awarded_at !== null).length || 0;
+      }
+      setReferralStats({
+        total_invites: invites?.length || 0,
+        accepted: acceptedCount,
+        converted: convertedCount,
+      });
       // Mark automations as loaded (so changes after this trigger automationsChanged)
       setTimeout(() => { automationsLoadedRef.current = true; }, 100);
 
@@ -220,6 +257,25 @@ const Marketing = () => {
       const { error } = await supabase.from("customers").update({ google_review_points_enabled: reviewPointsEnabled, google_review_points_value: reviewPointsValue, google_review_url: googleReviewUrl, updated_at: new Date().toISOString() }).eq("id", customerId);
       if (error) throw error; toast.success("Gespeichert!");
     } catch { toast.error("Fehler"); } finally { setSavingReviewPoints(false); }
+  };
+
+  const handleSaveReferral = async () => {
+    if (!customerId) return;
+    setSavingReferral(true);
+    try {
+      const { error } = await supabase.from("customers").update({
+        referral_enabled: referralEnabled,
+        referral_inviter_points: referralInviterPoints,
+        referral_invitee_points: referralInviteePoints,
+        updated_at: new Date().toISOString(),
+      }).eq("id", customerId);
+      if (error) throw error;
+      toast.success("Empfehlungs-Einstellungen gespeichert!");
+    } catch {
+      toast.error("Fehler beim Speichern");
+    } finally {
+      setSavingReferral(false);
+    }
   };
 
   const copyToClipboard = () => { if (googleReviewUrl) { navigator.clipboard.writeText(googleReviewUrl); setCopied(true); toast.success("Link kopiert!"); setTimeout(() => setCopied(false), 2000); } };
@@ -441,6 +497,7 @@ const Marketing = () => {
             {[
               { value: "praemien", label: "Prämien", icon: Gift },
               { value: "boost", label: "Neukunden", icon: Rocket },
+              { value: "referral", label: "Empfehlungen", icon: UserPlus },
               { value: "reviews", label: "Bewertungen", icon: Star },
               { value: "messages", label: "Nachrichten", icon: MessageSquare },
               { value: "automations", label: "Automationen", icon: Zap },
@@ -653,6 +710,97 @@ const Marketing = () => {
                     </div>
                   </>
                 )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* ========== BEWERTUNGEN TAB ========== */}
+          {/* ========== EMPFEHLUNGEN TAB ========== */}
+          <TabsContent value="referral" className="space-y-6 mt-6">
+            <Card className="rounded-2xl shadow-sm border border-primary/10 bg-primary/[0.03]">
+              <CardHeader className="pb-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center"><UserPlus className="h-5 w-5 text-primary" /></div>
+                  <div>
+                    <CardTitle className="text-lg font-semibold">Freunde-Empfehlungen</CardTitle>
+                    <CardDescription>Lass deine Kunden Freunde einladen – ihr profitiert alle</CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="p-4 bg-primary/5 rounded-xl border border-primary/10 text-sm text-muted-foreground space-y-2">
+                  <p className="font-medium text-foreground">💡 So funktioniert's</p>
+                  <p>Kunden können in deiner Geschäfts-Detailansicht Freunde via WhatsApp oder Link einladen. Wenn beide innerhalb von <strong>24 Stunden</strong> bei dir Punkte sammeln, bekommen <strong>beide</strong> einen Bonus von dir.</p>
+                  <p>Das bringt dir <strong>echten Footfall</strong> – zwei Kunden gleichzeitig pro erfolgreicher Empfehlung.</p>
+                </div>
+
+                <div className="flex items-center justify-between p-4 bg-card rounded-xl border border-border/30">
+                  <div>
+                    <p className="font-medium text-foreground">Empfehlungen aktivieren</p>
+                    <p className="text-sm text-muted-foreground">Zeigt den „Freund einladen"-Button in deiner App-Detailseite</p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className={`text-xs font-medium ${referralEnabled ? 'text-primary' : 'text-muted-foreground'}`}>
+                      {referralEnabled ? 'Aktiv' : 'Inaktiv'}
+                    </span>
+                    <Switch checked={referralEnabled} onCheckedChange={setReferralEnabled} />
+                  </div>
+                </div>
+
+                {referralEnabled && (
+                  <>
+                    <div className="p-4 bg-card rounded-xl border border-border/30 space-y-3">
+                      <Label className="font-medium">Bonus für den Einlader</Label>
+                      <p className="text-xs text-muted-foreground">Punkte, die der Kunde bekommt, der einen Freund erfolgreich eingeladen hat.</p>
+                      <div className="flex items-center gap-4">
+                        <Slider value={[referralInviterPoints]} onValueChange={v => setReferralInviterPoints(v[0])} min={1} max={20} step={1} className="flex-1" />
+                        <span className="text-lg font-bold text-primary min-w-[3rem] text-center">{referralInviterPoints}</span>
+                      </div>
+                    </div>
+
+                    <div className="p-4 bg-card rounded-xl border border-border/30 space-y-3">
+                      <Label className="font-medium">Bonus für den eingeladenen Freund</Label>
+                      <p className="text-xs text-muted-foreground">Willkommens-Punkte für die neu geworbene Person.</p>
+                      <div className="flex items-center gap-4">
+                        <Slider value={[referralInviteePoints]} onValueChange={v => setReferralInviteePoints(v[0])} min={1} max={20} step={1} className="flex-1" />
+                        <span className="text-lg font-bold text-primary min-w-[3rem] text-center">{referralInviteePoints}</span>
+                      </div>
+                    </div>
+                  </>
+                )}
+
+                <Button onClick={handleSaveReferral} disabled={savingReferral} className="rounded-xl">
+                  {savingReferral ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Speichern...</> : "Einstellungen speichern"}
+                </Button>
+              </CardContent>
+            </Card>
+
+            {/* Statistik */}
+            <Card className="rounded-2xl shadow-sm border border-primary/10 bg-primary/[0.03]">
+              <CardHeader className="pb-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center"><Sparkles className="h-5 w-5 text-primary" /></div>
+                  <div>
+                    <CardTitle className="text-lg font-semibold">Empfehlungs-Statistik</CardTitle>
+                    <CardDescription>Wie deine Kunden für dich werben</CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div className="p-4 bg-card rounded-xl border border-border/30 text-center">
+                    <p className="text-3xl font-bold text-foreground">{referralStats.total_invites}</p>
+                    <p className="text-xs text-muted-foreground mt-1">Einladungen verschickt</p>
+                  </div>
+                  <div className="p-4 bg-card rounded-xl border border-border/30 text-center">
+                    <p className="text-3xl font-bold text-foreground">{referralStats.accepted}</p>
+                    <p className="text-xs text-muted-foreground mt-1">Angenommen</p>
+                  </div>
+                  <div className="p-4 bg-card rounded-xl border border-border/30 text-center">
+                    <p className="text-3xl font-bold text-primary">{referralStats.converted}</p>
+                    <p className="text-xs text-muted-foreground mt-1">Erfolgreich (Bonus vergeben)</p>
+                  </div>
+                </div>
               </CardContent>
             </Card>
           </TabsContent>

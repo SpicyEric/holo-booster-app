@@ -14,7 +14,10 @@ interface InviteFriendDialogProps {
   inviteePoints: number;
 }
 
-const INVITE_BASE_URL = 'https://eloyo.de/i';
+// Direkter Edge-Function Link – funktioniert ohne externen Dienst.
+// Die Edge Function erkennt iOS/Android und leitet entweder in die App,
+// in den App Store oder zeigt eine Landingpage.
+const INVITE_BASE_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/invite-redirect`;
 
 export const InviteFriendDialog = ({
   open,
