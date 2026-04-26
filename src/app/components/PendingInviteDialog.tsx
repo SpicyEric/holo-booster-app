@@ -159,22 +159,49 @@ export function PendingInviteDialog() {
     setAccepting(true);
     try {
       const fp = getDeviceFingerprint();
+
+      // 🔍 DEBUG: Aktiver User vor RPC-Call
+      const { data: userData, error: userErr } = await supabase.auth.getUser();
+      console.log('[consume_invitation] PRE-CALL', {
+        share_code: preview.share_code,
+        device_fingerprint: fp,
+        client_user_id: userData?.user?.id ?? null,
+        client_user_email: userData?.user?.email ?? null,
+        getUser_error: userErr,
+        useAuth_user_id: user?.id ?? null,
+      });
+
       const { data, error } = await supabase.rpc('consume_invitation', {
         p_share_code: preview.share_code,
         p_device_fingerprint: fp,
       });
+
+      // 🔍 DEBUG: Vollständige Response
+      console.log('[consume_invitation] RESPONSE', {
+        data,
+        error,
+        error_message: error?.message,
+        error_code: (error as { code?: string } | null)?.code,
+        error_details: (error as { details?: string } | null)?.details,
+        error_hint: (error as { hint?: string } | null)?.hint,
+      });
+
       if (error) throw error;
       const result = data as {
         success: boolean;
         error?: string;
+        error_code?: string;
         invitation_id?: string;
         merchant_customer_id?: string;
       };
+
+      console.log('[consume_invitation] PARSED RESULT', result);
+
       // Egal ob neu angenommen oder bereits angenommen: nicht nochmal zeigen
       markInviteConsumed(preview.share_code);
       clearPendingInvite();
       if (!result.success) {
-        // Stille Behandlung
+        console.warn('[consume_invitation] FAILED:', result.error, '(code:', result.error_code, ')');
         setOpen(false);
         return;
       }
