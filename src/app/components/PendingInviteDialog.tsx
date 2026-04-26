@@ -130,6 +130,8 @@ export function PendingInviteDialog() {
         invitation_id?: string;
         merchant_customer_id?: string;
       };
+      // Egal ob neu angenommen oder bereits angenommen: nicht nochmal zeigen
+      markInviteConsumed(preview.share_code);
       clearPendingInvite();
       if (!result.success) {
         // Stille Behandlung
