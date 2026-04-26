@@ -751,7 +751,7 @@ const AppMessagesContent = () => {
           {messages.map((msg) => (
             <Card 
               key={msg.id} 
-              className={`p-4 cursor-pointer hover:shadow-md transition-shadow active:scale-[0.98] ${!msg.read_at ? 'border-l-4 border-l-primary' : ''}`}
+              className={`p-4 cursor-pointer hover:shadow-md transition-shadow active:scale-[0.98] border-0 ${!msg.read_at ? 'bg-primary/10' : 'bg-muted/70 dark:bg-muted/50'}`}
               onClick={() => navigate(`/app/messages/${msg.id}`)}
             >
               <div className="flex items-center gap-3">
