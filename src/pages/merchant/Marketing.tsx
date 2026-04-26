@@ -469,7 +469,7 @@ const Marketing = () => {
       if (error) throw error;
       toast.success("Neukundenprämie gelöscht");
       setNewCustomerOffer(null);
-      setNcoForm({ title: '', description: '', bonus_stamps: 0, is_active: true, image_url: '' });
+      setNcoForm({ title: '', description: '', is_active: true, image_url: '' });
       setShowDeleteNcoConfirm(false);
     } catch { toast.error("Fehler beim Löschen"); }
   };
@@ -631,7 +631,7 @@ const Marketing = () => {
                     <CardDescription>Gewinne neue Kunden mit einem attraktiven Willkommensangebot</CardDescription>
                   </div>
                 </div>
-                <Button variant={newCustomerOffer ? "outline" : "default"} onClick={() => { if (newCustomerOffer) { setNcoForm({ title: newCustomerOffer.title, description: newCustomerOffer.description || '', bonus_stamps: newCustomerOffer.bonus_stamps || 0, is_active: newCustomerOffer.is_active ?? true, image_url: newCustomerOffer.image_url || '' }); setNcoGiftType(newCustomerOffer.bonus_stamps && newCustomerOffer.bonus_stamps > 0 ? 'points' : 'offer'); } else { setNcoForm({ title: '', description: '', bonus_stamps: 0, is_active: true, image_url: '' }); setNcoGiftType('offer'); } setShowNcoDialog(true); }} className="rounded-xl">
+                <Button variant={newCustomerOffer ? "outline" : "default"} onClick={() => { if (newCustomerOffer) { setNcoForm({ title: newCustomerOffer.title, description: newCustomerOffer.description || '', is_active: newCustomerOffer.is_active ?? true, image_url: newCustomerOffer.image_url || '' }); } else { setNcoForm({ title: '', description: '', is_active: true, image_url: '' }); } setShowNcoDialog(true); }} className="rounded-xl">
                   {newCustomerOffer ? <><Edit2 className="h-4 w-4 mr-2" />Bearbeiten</> : <><Plus className="h-4 w-4 mr-2" />Erstellen</>}
                 </Button>
               </CardHeader>
