@@ -818,9 +818,9 @@ export const AppMerchantDetail = () => {
                 initial={shouldAnimateFromScan ? { opacity: 0, y: 5 } : false}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.4, delay: shouldAnimateFromScan ? 0.25 : 0 }}
-                className="absolute bottom-3 left-4 right-4"
+                className="absolute bottom-3 left-4 right-16"
               >
-                <h1 className="text-lg font-bold text-white drop-shadow-md">{merchantName}</h1>
+                <h1 className="text-lg font-bold text-white drop-shadow-md truncate">{merchantName}</h1>
               </motion.div>
 
               {merchant.referral_enabled !== false && (
