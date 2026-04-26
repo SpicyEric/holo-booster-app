@@ -764,6 +764,9 @@ export type Database = {
           priority: string | null
           promoter_id: string | null
           qr_code_url: string | null
+          referral_enabled: boolean
+          referral_invitee_points: number
+          referral_inviter_points: number
           sales_notes: string | null
           stamp_id: string | null
           stamp_mode: string | null
@@ -839,6 +842,9 @@ export type Database = {
           priority?: string | null
           promoter_id?: string | null
           qr_code_url?: string | null
+          referral_enabled?: boolean
+          referral_invitee_points?: number
+          referral_inviter_points?: number
           sales_notes?: string | null
           stamp_id?: string | null
           stamp_mode?: string | null
@@ -914,6 +920,9 @@ export type Database = {
           priority?: string | null
           promoter_id?: string | null
           qr_code_url?: string | null
+          referral_enabled?: boolean
+          referral_invitee_points?: number
+          referral_inviter_points?: number
           sales_notes?: string | null
           stamp_id?: string | null
           stamp_mode?: string | null
@@ -1280,6 +1289,85 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "google_review_claims_merchant_customer_id_fkey"
+            columns: ["merchant_customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      invitation_redemptions: {
+        Row: {
+          accepted_at: string
+          bonus_awarded_at: string | null
+          bonus_window_starts_at: string | null
+          id: string
+          invitation_id: string
+          invitee_stamped_at: string | null
+          invitee_user_id: string
+          inviter_stamped_at: string | null
+        }
+        Insert: {
+          accepted_at?: string
+          bonus_awarded_at?: string | null
+          bonus_window_starts_at?: string | null
+          id?: string
+          invitation_id: string
+          invitee_stamped_at?: string | null
+          invitee_user_id: string
+          inviter_stamped_at?: string | null
+        }
+        Update: {
+          accepted_at?: string
+          bonus_awarded_at?: string | null
+          bonus_window_starts_at?: string | null
+          id?: string
+          invitation_id?: string
+          invitee_stamped_at?: string | null
+          invitee_user_id?: string
+          inviter_stamped_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invitation_redemptions_invitation_id_fkey"
+            columns: ["invitation_id"]
+            isOneToOne: false
+            referencedRelation: "invitations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      invitations: {
+        Row: {
+          created_at: string
+          expires_at: string
+          id: string
+          inviter_user_id: string
+          merchant_customer_id: string
+          share_code: string
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at?: string
+          id?: string
+          inviter_user_id: string
+          merchant_customer_id: string
+          share_code: string
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string
+          id?: string
+          inviter_user_id?: string
+          merchant_customer_id?: string
+          share_code?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invitations_merchant_customer_id_fkey"
             columns: ["merchant_customer_id"]
             isOneToOne: false
             referencedRelation: "customers"
@@ -3269,13 +3357,24 @@ export type Database = {
         Args: { p_merchant_customer_id: string; p_stempel_id: string }
         Returns: number
       }
+      consume_invitation: { Args: { p_share_code: string }; Returns: Json }
+      create_invitation: {
+        Args: { p_merchant_customer_id: string }
+        Returns: Json
+      }
       generate_customer_number: { Args: never; Returns: string }
+      get_pending_invitation: { Args: never; Returns: Json }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
         }
         Returns: boolean
+      }
+      lookup_invitation: { Args: { p_share_code: string }; Returns: Json }
+      process_referral_bonus: {
+        Args: { p_merchant_customer_id: string; p_user_id: string }
+        Returns: Json
       }
       redeem_message_offer_via_nfc: {
         Args: {
