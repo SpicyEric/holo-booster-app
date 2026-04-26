@@ -292,11 +292,7 @@ body.ccm19-modal-open dialog.ccm-dialog-open .ccm-dialog-content-inner {
 }
 
 .reward-glow::after {
-  inset: -6px;
-  padding: 6px;
-  filter: blur(10px);
-  opacity: 0.55;
-  animation-duration: 4s;
+  display: none;
 }
 
 @media (prefers-reduced-motion: reduce) {
