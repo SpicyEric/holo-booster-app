@@ -34,6 +34,7 @@ export function OpenInvitationsBanner() {
 
   useEffect(() => {
     if (!user) return;
+    console.log('[OpenInvitationsBanner] mounted for user', user.id);
     void load();
 
     // Realtime: bei Änderungen an invitations / redemptions neu laden
@@ -42,17 +43,42 @@ export function OpenInvitationsBanner() {
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'invitations', filter: `inviter_user_id=eq.${user.id}` },
-        () => void load(),
+        (payload) => {
+          console.log('[OpenInvitationsBanner] realtime invitation change', payload);
+          void load();
+        },
       )
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'invitation_redemptions', filter: `invitee_user_id=eq.${user.id}` },
-        () => void load(),
+        (payload) => {
+          console.log('[OpenInvitationsBanner] realtime redemption change', payload);
+          void load();
+        },
       )
       .subscribe();
 
+    // Bug 3 Fix: explizite Refreshes wenn der Tab wieder aktiv wird oder
+    // ein anderer Teil der App eine Einladung verarbeitet hat.
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        console.log('[OpenInvitationsBanner] visibility -> reload');
+        void load();
+      }
+    };
+    const handleCustomEvent = () => {
+      console.log('[OpenInvitationsBanner] custom invitation event -> reload');
+      void load();
+    };
+    document.addEventListener('visibilitychange', handleVisibility);
+    window.addEventListener('focus', handleVisibility);
+    window.addEventListener('eloyo:invitation-changed', handleCustomEvent);
+
     return () => {
       supabase.removeChannel(channel);
+      document.removeEventListener('visibilitychange', handleVisibility);
+      window.removeEventListener('focus', handleVisibility);
+      window.removeEventListener('eloyo:invitation-changed', handleCustomEvent);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id]);
