@@ -4,6 +4,7 @@ import { Gift, MapPin, Heart, Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { MainLayout } from '@/app/components/layout/MainLayout';
+import { OpenInvitationsBanner } from '@/app/components/OpenInvitationsBanner';
 import { offlineCacheService } from '@/app/services/offlineQueueService';
 
 interface FeedItem {
@@ -334,6 +335,7 @@ export const AppHome = () => {
 
   return (
     <MainLayout title="Feed">
+      <OpenInvitationsBanner />
       {loading ? (
         <div className="flex items-center justify-center py-20">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
