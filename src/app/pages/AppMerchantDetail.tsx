@@ -738,7 +738,7 @@ export const AppMerchantDetail = () => {
 
         <div 
           className="pointer-events-none absolute inset-x-0 z-30"
-          style={{ top: headerHeight ? `${headerHeight}px` : '0px', height: '48px' }}
+          style={{ top: headerHeight ? `${headerHeight}px` : '0px', height: '20px' }}
         >
           <div className="h-full bg-gradient-to-b from-background to-transparent" />
         </div>
