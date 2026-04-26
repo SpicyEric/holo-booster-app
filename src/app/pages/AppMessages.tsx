@@ -182,20 +182,20 @@ export const AppMessages = () => {
       <div className="space-y-4">
         {/* Pinned verification banner */}
         {!emailVerified && (
-          <Card className="p-4 border-2 border-amber-400 bg-amber-50 dark:bg-amber-950/30">
+          <Card className="p-4 border-0 bg-black/[0.06] dark:bg-white/[0.04]">
             <div className="flex items-start gap-3">
-              <div className="w-10 h-10 rounded-full bg-amber-100 dark:bg-amber-900 flex items-center justify-center flex-shrink-0">
-                <ShieldAlert className="h-5 w-5 text-amber-600" />
+              <div className="w-10 h-10 rounded-full bg-amber-500/15 flex items-center justify-center flex-shrink-0">
+                <ShieldAlert className="h-5 w-5 text-amber-600 dark:text-amber-400" />
               </div>
               <div className="flex-1">
-                <h3 className="font-semibold text-amber-800 dark:text-amber-200">E-Mail bestätigen</h3>
-                <p className="text-sm text-amber-700 dark:text-amber-300 mt-1">
+                <h3 className="font-semibold text-foreground">E-Mail bestätigen</h3>
+                <p className="text-sm text-muted-foreground mt-1">
                   Bitte bestätige deine E-Mail-Adresse, um Prämien einlösen zu können. Prüfe deinen Posteingang.
                 </p>
                 <Button
                   variant="outline"
                   size="sm"
-                  className="mt-3 border-amber-400 text-amber-700 hover:bg-amber-100"
+                  className="mt-3"
                   onClick={handleResendVerification}
                   disabled={resending || resendCooldown > 0}
                 >
@@ -216,22 +216,22 @@ export const AppMessages = () => {
         {/* Pinned redeemable rewards card */}
         {redeemableCount > 0 && (
           <Card
-            className="p-4 cursor-pointer hover:shadow-lg transition-shadow border-2 border-green-200 bg-green-50/50 dark:bg-green-950/20"
+            className="p-4 cursor-pointer hover:shadow-md transition-shadow border-0 bg-black/[0.06] dark:bg-white/[0.04]"
             onClick={() => navigate('/app/rewards')}
           >
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-full bg-green-100 dark:bg-green-900 flex items-center justify-center">
-                <Trophy className="h-6 w-6 text-green-600" />
+              <div className="w-12 h-12 rounded-full bg-emerald-500/15 flex items-center justify-center">
+                <Trophy className="h-6 w-6 text-emerald-600 dark:text-emerald-400" />
               </div>
               <div className="flex-1">
-                <div className="text-xl font-bold text-green-700 dark:text-green-400">
+                <div className="text-xl font-bold text-foreground">
                   {redeemableCount}
                 </div>
-                <div className="text-sm text-green-600 dark:text-green-500">
+                <div className="text-sm text-muted-foreground">
                   {redeemableCount === 1 ? 'Einlösbare Prämie' : 'Einlösbare Prämien'}
                 </div>
               </div>
-              <ChevronRight className="h-5 w-5 text-green-400" />
+              <ChevronRight className="h-5 w-5 text-muted-foreground" />
             </div>
           </Card>
         )}
