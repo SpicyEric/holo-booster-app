@@ -20,6 +20,7 @@ import { useMessageNotifications } from '@/app/hooks/useMessageNotifications';
 import { useBackButton } from '@/app/hooks/useBackButton';
 import { ExitAppDialog } from '@/app/components/ExitAppDialog';
 import { useStatusBar } from '@/app/hooks/useStatusBar';
+import { OpenInvitationsBanner } from '@/app/components/OpenInvitationsBanner';
 
 // Map route paths to carousel indices
 const ROUTE_TO_INDEX: Record<string, number> = {
@@ -430,6 +431,7 @@ const AppHomeContent = () => {
   if (loading) {
     return (
       <PullToRefresh onRefresh={handleRefresh}>
+        <OpenInvitationsBanner />
         <div className="flex items-center justify-center py-20">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>
@@ -440,6 +442,7 @@ const AppHomeContent = () => {
   if (feedItems.length === 0) {
     return (
       <PullToRefresh onRefresh={handleRefresh}>
+        <OpenInvitationsBanner />
         <div className="text-center py-16 px-4">
           <div className="mx-auto w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
             <Gift className="h-8 w-8 text-primary" />
@@ -455,6 +458,7 @@ const AppHomeContent = () => {
 
   return (
     <PullToRefresh onRefresh={handleRefresh}>
+    <OpenInvitationsBanner />
     <div className="-mx-4 space-y-6">
       {feedItems.map((item: any) => {
         const isBoostedInRange = item.is_boosted && (item.distance === undefined || item.distance <= (item.boost_radius ?? 10));
