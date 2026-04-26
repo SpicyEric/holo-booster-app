@@ -276,9 +276,9 @@ export const RewardRedemptionDialog = ({
               </Button>
             </div>
           ) : (
-            <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 text-center">
-              <p className="text-orange-700 font-medium">Dir fehlen noch {pointsNeeded} Punkte</p>
-              <p className="text-sm text-orange-600 mt-1">Du hast {userPoints} von {reward.points_required} Punkten</p>
+            <div className="bg-muted/50 rounded-xl p-4 text-center">
+              <p className="text-foreground font-medium">Dir fehlen noch {pointsNeeded} Punkte</p>
+              <p className="text-sm text-muted-foreground mt-1">Du hast {userPoints} von {reward.points_required} Punkten</p>
             </div>
           )}
         </div>
