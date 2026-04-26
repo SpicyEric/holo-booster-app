@@ -1,103 +1,128 @@
-import { useState } from "react";
+import { useRef } from "react";
 import { ChevronLeft, ChevronRight, CheckCircle2 } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
-import { Button } from "@/components/ui/button";
+import {
+  motion,
+  AnimatePresence,
+  useMotionValue,
+  useAnimationFrame,
+  useTransform,
+} from "framer-motion";
+import { useState } from "react";
 import { cn } from "@/lib/utils";
 
 type Slide = {
   emoji: string;
   title: string;
-  body: React.ReactNode;
+  text: string;
 };
 
 const slides: Slide[] = [
   {
     emoji: "🔥",
     title: "Was wäre, wenn...",
-    body: (
-      <>
-        <p>
-          „Was wäre, wenn deine zufriedenen Kunden für dich neue Kunden ins Geschäft holen — ohne dass du einen Euro für Werbung ausgibst?"
-        </p>
-        <p>Das ist kein Traum. Das ist Eloyo Empfehlungsmarketing.</p>
-      </>
-    ),
+    text: "Was wäre, wenn deine zufriedenen Kunden für dich neue Kunden ins Geschäft holen — ohne dass du einen Euro für Werbung ausgibst? Das ist kein Traum. Das ist Eloyo Empfehlungsmarketing.",
   },
   {
     emoji: "💡",
     title: "Der wahre Wert eines Neukunden",
-    body: (
-      <>
-        <p>
-          „Ein neuer Kunde ist nicht nur ein Einkauf. Er ist ein potenzieller Stammkunde, der über Monate oder Jahre bei dir kauft."
-        </p>
-        <p>Jede erfolgreiche Empfehlung kann langfristig Hunderte Euro wert sein.</p>
-      </>
-    ),
+    text: "Ein neuer Kunde ist nicht nur ein Einkauf. Er ist ein potenzieller Stammkunde, der über Monate oder Jahre bei dir kauft. Jede erfolgreiche Empfehlung kann langfristig Hunderte Euro wert sein.",
   },
   {
     emoji: "⚙️",
     title: "So funktioniert's",
-    body: (
-      <>
-        <p>
-          „Deine Kunden laden Freunde per WhatsApp ein. Der Freund hat <strong>7 Tage</strong> Zeit, bei dir vorbeizukommen und seinen ersten Stempel zu sammeln."
-        </p>
-        <p>Erst wenn er wirklich einkauft und Punkte bekommt, zählt die Einladung.</p>
-      </>
-    ),
+    text: "Deine Kunden laden Freunde per WhatsApp ein. Der Freund hat 7 Tage Zeit, bei dir vorbeizukommen und seinen ersten Stempel zu sammeln. Erst wenn er wirklich einkauft und Punkte bekommt, zählt die Einladung.",
   },
   {
     emoji: "🎁",
     title: "Was bekommt wer?",
-    body: (
-      <>
-        <p>
-          „Der Eingeladene bekommt <strong>doppelte Punkte</strong> beim ersten Stempel — als Willkommensbonus."
-        </p>
-        <p>Der Einladende bekommt Bonuspunkte von dir — die du selbst festlegst.</p>
-      </>
-    ),
+    text: "Der Eingeladene bekommt doppelte Punkte beim ersten Stempel — als Willkommensbonus. Der Einladende bekommt Bonuspunkte von dir — die du selbst festlegst.",
   },
   {
     emoji: "🧮",
     title: "Die magische Formel",
-    body: (
-      <>
-        <p>
-          „Empfehle ca. <strong>50 %</strong> der Punkte für eine Standardleistung als Einlader-Bonus."
-        </p>
-        <p>
-          <strong>Beispiel Barbershop:</strong> Haarschnitt = 160 Punkte → Einlader-Bonus = 80 Punkte → 2 Empfehlungen = Gratis-Haarschnitt.
-        </p>
-      </>
-    ),
+    text: "Empfehle ca. 50% der Punkte einer Standardleistung als Einlader-Bonus. Beispiel Barbershop: Haarschnitt = 160 Punkte → Einlader-Bonus = 80 Punkte → 2 Empfehlungen = Gratis-Haarschnitt.",
   },
   {
     emoji: "🛡️",
     title: "Du bist geschützt",
-    body: (
-      <>
-        <p>
-          „Nur echte Neukunden können eingeladen werden — wer bei dir schon Punkte hat, kann nicht nochmal eingeladen werden."
-        </p>
-        <p>Jede Person kann auch nur von einem Freund gleichzeitig eingeladen werden. Kein Missbrauch möglich.</p>
-      </>
-    ),
+    text: "Nur echte Neukunden können eingeladen werden — wer bei dir schon Punkte hat, kann nicht nochmal eingeladen werden. Jede Person kann auch nur von einem Freund gleichzeitig eingeladen werden. Kein Missbrauch möglich.",
   },
   {
     emoji: "🌨️",
     title: "Der Schneeball-Effekt",
-    body: (
-      <>
-        <p>
-          „Jeder neue Kunde, der durch eine Empfehlung kommt, empfiehlt selbst weiter — weil er Bock hat, sich etwas Gratis abzuholen."
-        </p>
-        <p>Mit der Zeit wächst dein Stammkundenkreis organisch — ganz ohne Werbekosten.</p>
-      </>
-    ),
+    text: "Jeder neue Kunde, der durch eine Empfehlung kommt, empfiehlt selbst weiter — weil er Bock hat, sich etwas Gratis abzuholen. Mit der Zeit wächst dein Stammkundenkreis organisch — ganz ohne Werbekosten.",
   },
 ];
+
+const GRADIENT_COLORS = ["#5227FF", "#FF9FFC", "#B497CF"];
+const ANIMATION_SPEED_S = 8;
+
+const GradientText = ({ children }: { children: React.ReactNode }) => {
+  const progress = useMotionValue(0);
+  const elapsedRef = useRef(0);
+  const lastTimeRef = useRef<number | null>(null);
+  const animationDuration = ANIMATION_SPEED_S * 1000;
+
+  useAnimationFrame((time) => {
+    if (lastTimeRef.current === null) {
+      lastTimeRef.current = time;
+      return;
+    }
+    const deltaTime = time - lastTimeRef.current;
+    lastTimeRef.current = time;
+    elapsedRef.current += deltaTime;
+    const fullCycle = animationDuration * 2;
+    const cycleTime = elapsedRef.current % fullCycle;
+    if (cycleTime < animationDuration) {
+      progress.set((cycleTime / animationDuration) * 100);
+    } else {
+      progress.set(100 - ((cycleTime - animationDuration) / animationDuration) * 100);
+    }
+  });
+
+  const gradientColors = [...GRADIENT_COLORS, GRADIENT_COLORS[0]].join(", ");
+  const backgroundPosition = useTransform(progress, (p) => `${p}% 50%`);
+
+  return (
+    <motion.span
+      style={{
+        backgroundImage: `linear-gradient(to right, ${gradientColors})`,
+        backgroundSize: "300% 100%",
+        backgroundPosition,
+        backgroundClip: "text",
+        WebkitBackgroundClip: "text",
+        color: "transparent",
+        display: "inline-block",
+      }}
+      className="font-bold text-2xl md:text-[26px] leading-tight"
+    >
+      {children}
+    </motion.span>
+  );
+};
+
+const AnimatedWords = ({ text }: { text: string }) => {
+  const words = text.split(" ");
+  return (
+    <p className="text-foreground/90 leading-relaxed text-base md:text-[17px] font-semibold text-center">
+      {words.map((word, i) => (
+        <motion.span
+          key={i}
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{
+            duration: 0.5,
+            ease: [0.22, 1, 0.36, 1],
+            delay: 0.1 + i * 0.025,
+          }}
+          style={{ display: "inline-block", marginRight: "0.28em" }}
+        >
+          {word}
+        </motion.span>
+      ))}
+    </p>
+  );
+};
 
 export const ReferralExplainerCarousel = () => {
   const [index, setIndex] = useState(0);
@@ -106,11 +131,14 @@ export const ReferralExplainerCarousel = () => {
   const isLast = index === total - 1;
 
   const go = (dir: number) => {
+    const next = Math.min(Math.max(index + dir, 0), total - 1);
+    if (next === index) return;
     setDirection(dir);
-    setIndex((i) => Math.min(Math.max(i + dir, 0), total - 1));
+    setIndex(next);
   };
 
   const goTo = (i: number) => {
+    if (i === index) return;
     setDirection(i > index ? 1 : -1);
     setIndex(i);
   };
@@ -119,14 +147,22 @@ export const ReferralExplainerCarousel = () => {
 
   return (
     <div className="relative">
-      <div className="relative bg-card rounded-2xl border border-primary/15 shadow-sm overflow-hidden">
+      <div
+        className="relative overflow-hidden"
+        style={{
+          background: "linear-gradient(135deg, #f5f0ff 0%, #ede8ff 100%)",
+          border: "1px solid rgba(82, 39, 255, 0.15)",
+          borderRadius: "20px",
+          boxShadow: "0 8px 32px rgba(82, 39, 255, 0.12)",
+        }}
+      >
         {/* Navigation arrows */}
         <button
           type="button"
           onClick={() => go(-1)}
           disabled={index === 0}
           aria-label="Vorherige Karte"
-          className="absolute left-2 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-primary/10 hover:bg-primary/20 disabled:opacity-30 disabled:hover:bg-primary/10 flex items-center justify-center text-primary transition-colors"
+          className="absolute left-3 top-1/2 -translate-y-1/2 z-10 w-11 h-11 rounded-full bg-white/80 hover:bg-white shadow-md disabled:opacity-30 disabled:hover:bg-white/80 flex items-center justify-center text-primary transition-all backdrop-blur-sm"
         >
           <ChevronLeft className="h-5 w-5" />
         </button>
@@ -135,38 +171,43 @@ export const ReferralExplainerCarousel = () => {
           onClick={() => go(1)}
           disabled={isLast}
           aria-label="Nächste Karte"
-          className="absolute right-2 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-primary/10 hover:bg-primary/20 disabled:opacity-30 disabled:hover:bg-primary/10 flex items-center justify-center text-primary transition-colors"
+          className="absolute right-3 top-1/2 -translate-y-1/2 z-10 w-11 h-11 rounded-full bg-white/80 hover:bg-white shadow-md disabled:opacity-30 disabled:hover:bg-white/80 flex items-center justify-center text-primary transition-all backdrop-blur-sm"
         >
           <ChevronRight className="h-5 w-5" />
         </button>
 
         {/* Slide content */}
-        <div className="relative min-h-[260px] px-14 py-8 overflow-hidden">
+        <div
+          className="relative px-12 md:px-16 py-10 md:py-12 overflow-hidden"
+          style={{ minHeight: "280px" }}
+        >
           <AnimatePresence mode="wait" custom={direction}>
             <motion.div
               key={index}
               custom={direction}
-              initial={{ x: direction * 60, opacity: 0 }}
+              initial={{ x: direction * 80, opacity: 0 }}
               animate={{ x: 0, opacity: 1 }}
-              exit={{ x: direction * -60, opacity: 0 }}
-              transition={{ duration: 0.3, ease: "easeOut" }}
+              exit={{ x: direction * -80, opacity: 0 }}
+              transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
               className="flex flex-col items-center text-center max-w-2xl mx-auto"
             >
-              <div className="text-5xl mb-3 select-none" aria-hidden>
+              <div
+                className="mb-4 select-none leading-none"
+                style={{ fontSize: "64px" }}
+                aria-hidden
+              >
                 {slide.emoji}
               </div>
-              <h3 className="text-xl font-bold text-foreground mb-3">
-                {slide.title}
-              </h3>
-              <div className="text-sm text-muted-foreground space-y-2 leading-relaxed">
-                {slide.body}
+              <div className="mb-4">
+                <GradientText>{slide.title}</GradientText>
               </div>
+              <AnimatedWords text={slide.text} />
             </motion.div>
           </AnimatePresence>
         </div>
 
         {/* Progress dots */}
-        <div className="flex items-center justify-center gap-2 pb-5">
+        <div className="flex items-center justify-center gap-2 pb-6">
           {slides.map((_, i) => (
             <button
               key={i}
@@ -176,7 +217,7 @@ export const ReferralExplainerCarousel = () => {
               className={cn(
                 "rounded-full transition-all",
                 i === index
-                  ? "w-6 h-2 bg-primary"
+                  ? "w-7 h-2 bg-primary"
                   : "w-2 h-2 bg-primary/25 hover:bg-primary/50"
               )}
             />
@@ -198,7 +239,7 @@ export const ReferralExplainerCarousel = () => {
               <CheckCircle2 className="h-5 w-5 text-emerald-600" />
             </div>
             <p className="text-sm text-emerald-900 font-medium">
-              Du weißt jetzt alles über Empfehlungsmarketing. Stell deinen Bonus ein und leg los! 🚀
+              Du weißt jetzt alles. Stell deinen Bonus ein und leg los! 🚀
             </p>
           </motion.div>
         )}
