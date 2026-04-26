@@ -215,9 +215,9 @@ export const AppMessages = () => {
 
         {/* Pinned redeemable rewards card */}
         {redeemableCount > 0 && (
-          <Card
-            className="p-4 cursor-pointer hover:shadow-md transition-shadow border-0 bg-black/[0.06] dark:bg-white/[0.04]"
+          <button
             onClick={() => navigate('/app/rewards')}
+            className="w-full text-left rounded-lg p-4 cursor-pointer hover:shadow-md transition-shadow bg-black/[0.06] dark:bg-white/[0.04]"
           >
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 rounded-full bg-emerald-500/15 flex items-center justify-center">
@@ -233,7 +233,7 @@ export const AppMessages = () => {
               </div>
               <ChevronRight className="h-5 w-5 text-muted-foreground" />
             </div>
-          </Card>
+          </button>
         )}
 
         {loading ? (
