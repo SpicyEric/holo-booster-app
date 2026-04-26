@@ -496,19 +496,6 @@ const Marketing = () => {
   return (
     <div className="min-h-screen">
       <div className="max-w-5xl mx-auto px-6 lg:px-8 py-8 space-y-8">
-        {/* Header */}
-        <div>
-          <div className="flex items-center gap-3 mb-1">
-            <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-              <Megaphone className="h-5 w-5 text-primary" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold text-foreground">Marketing</h1>
-              <p className="text-muted-foreground text-sm">Gewinne neue Kunden, steigere deine Sichtbarkeit und aktiviere Stammkunden</p>
-            </div>
-          </div>
-        </div>
-
         <Tabs value={activeTab} onValueChange={setActiveTab}>
 
           {/* ========== PRÄMIEN TAB ========== */}
@@ -735,7 +722,7 @@ const Marketing = () => {
                   <p className="text-xs text-muted-foreground">
                     Punkte, die der Kunde bekommt, der einen Freund erfolgreich eingeladen hat.
                   </p>
-                  <div className="flex items-center gap-3 pt-1">
+                  <div className="flex items-center gap-4 pt-1">
                     <Input
                       type="number"
                       min={1}
@@ -745,9 +732,10 @@ const Marketing = () => {
                         const n = parseInt(e.target.value, 10);
                         setReferralInviterPoints(Number.isFinite(n) && n > 0 ? n : 1);
                       }}
-                      className="h-16 w-32 text-center text-4xl font-bold text-primary border-2 border-primary/30 focus-visible:border-primary rounded-xl"
+                      className="text-center font-bold text-primary border-2 border-primary/30 focus-visible:border-primary rounded-xl"
+                      style={{ height: "64px", width: "120px", fontSize: "28px", fontWeight: 700 }}
                     />
-                    <span className="text-sm text-muted-foreground">Punkte</span>
+                    <span className="text-muted-foreground font-medium" style={{ fontSize: "18px" }}>Punkte</span>
                   </div>
                 </div>
 
