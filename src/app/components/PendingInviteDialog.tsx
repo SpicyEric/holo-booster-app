@@ -72,11 +72,53 @@ export function PendingInviteDialog() {
   }, [preview?.share_code, accepted?.share_code]);
 
   const loadPreview = async (code: string) => {
-    // Bereits angenommene Einladungen niemals erneut als Preview anzeigen
+    // Bereits angenommene/abgelehnte Einladungen niemals erneut als Preview anzeigen
     if (isInviteConsumed(code)) {
       clearPendingInvite();
       return;
     }
+    // Wenn der User bereits eingeloggt ist, prüfen ob er die Einladung überhaupt
+    // noch annehmen kann (sonst bleibt der Code ewig im localStorage und der
+    // Dialog erscheint nach jeder Navigation erneut).
+    if (user) {
+      try {
+        const fp = getDeviceFingerprint();
+        const { data: consumeData } = await supabase.rpc('consume_invitation', {
+          p_share_code: code,
+          p_device_fingerprint: fp,
+        });
+        const consumeResult = consumeData as {
+          success: boolean;
+          error_code?: string;
+          error?: string;
+        } | null;
+        if (consumeResult && !consumeResult.success) {
+          // Bekannte Endzustände: nicht erneut anzeigen
+          const terminalCodes = new Set([
+            'already_customer',
+            'already_pending',
+            'already_redeemed',
+            'expired',
+            'not_found',
+          ]);
+          const code2 = consumeResult.error_code;
+          const isTerminal =
+            (code2 && terminalCodes.has(code2)) ||
+            /abgelaufen|nicht gefunden|sammelst bereits|bereits angenommen|offene Einladung/i.test(
+              consumeResult.error ?? ''
+            );
+          if (isTerminal) {
+            console.info('[PendingInviteDialog] Skipping invite (terminal):', code2 ?? consumeResult.error);
+            markInviteConsumed(code);
+            clearPendingInvite();
+            return;
+          }
+        }
+      } catch (err) {
+        console.warn('[PendingInviteDialog] precheck consume failed:', err);
+      }
+    }
+
     try {
       const { data, error } = await supabase.rpc('lookup_invitation', { p_share_code: code });
       if (error) throw error;
@@ -90,6 +132,7 @@ export function PendingInviteDialog() {
         invitee_points?: number;
       };
       if (!result.success) {
+        markInviteConsumed(code);
         clearPendingInvite();
         return;
       }
@@ -104,6 +147,7 @@ export function PendingInviteDialog() {
       setOpen(true);
     } catch (err) {
       console.error('lookup_invitation Fehler:', err);
+      markInviteConsumed(code);
       clearPendingInvite();
     }
   };
