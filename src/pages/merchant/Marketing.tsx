@@ -170,7 +170,7 @@ const Marketing = () => {
       const midPoints = chipMap.blue;
       setMiddleStampPoints(midPoints);
 
-      const { data: cd } = await supabase.from('customers').select('google_review_url, google_review_points_enabled, google_review_points_value, birthday_enabled, birthday_message, birthday_bonus_points, birthday_gift_type, birthday_offer_title, birthday_offer_description, industry, avg_revenue, company_name, name').eq('id', assignment.customer_id).maybeSingle();
+      const { data: cd } = await supabase.from('customers').select('google_review_url, google_review_points_enabled, google_review_points_value, birthday_enabled, birthday_message, birthday_bonus_points, birthday_gift_type, birthday_offer_title, birthday_offer_description, industry, avg_revenue, company_name, name, referral_enabled, referral_inviter_points, referral_invitee_points').eq('id', assignment.customer_id).maybeSingle();
       if (cd) {
         setGoogleReviewUrl(cd.google_review_url || "");
         setReviewPointsEnabled(cd.google_review_points_enabled || false);
@@ -186,7 +186,33 @@ const Marketing = () => {
         setBirthdayOfferDescription((cd as any).birthday_offer_description || '');
         if (cd.industry) setMerchantIndustry(cd.industry);
         if (cd.avg_revenue) setAvgOrderValue(cd.avg_revenue);
+        // Referral settings
+        setReferralEnabled((cd as any).referral_enabled ?? true);
+        setReferralInviterPoints((cd as any).referral_inviter_points ?? 3);
+        setReferralInviteePoints((cd as any).referral_invitee_points ?? 1);
       }
+
+      // Referral statistics
+      const { data: invites } = await supabase
+        .from('invitations')
+        .select('id')
+        .eq('merchant_customer_id', assignment.customer_id);
+      const inviteIds = (invites || []).map((i) => i.id);
+      let acceptedCount = 0;
+      let convertedCount = 0;
+      if (inviteIds.length > 0) {
+        const { data: redemptions } = await supabase
+          .from('invitation_redemptions')
+          .select('id, bonus_awarded_at')
+          .in('invitation_id', inviteIds);
+        acceptedCount = redemptions?.length || 0;
+        convertedCount = redemptions?.filter((r) => r.bonus_awarded_at !== null).length || 0;
+      }
+      setReferralStats({
+        total_invites: invites?.length || 0,
+        accepted: acceptedCount,
+        converted: convertedCount,
+      });
       // Mark automations as loaded (so changes after this trigger automationsChanged)
       setTimeout(() => { automationsLoadedRef.current = true; }, 100);
 
