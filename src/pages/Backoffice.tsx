@@ -4,6 +4,7 @@ import { BarChart3, Users, TrendingUp, Gift, Activity, PieChart, Zap } from 'luc
 import dashboardImg from '@/assets/backoffice-dashboard.png';
 import transactionsImg from '@/assets/backoffice-transactions.png';
 import MarketingCarousel from '@/components/MarketingCarousel';
+import { MacbookScroll } from '@/components/ui/macbook-scroll';
 
 const appleEase = [0.16, 1, 0.3, 1] as const;
 
