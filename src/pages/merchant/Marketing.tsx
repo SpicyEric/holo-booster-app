@@ -722,7 +722,7 @@ const Marketing = () => {
                   <p className="text-xs text-muted-foreground">
                     Punkte, die der Kunde bekommt, der einen Freund erfolgreich eingeladen hat.
                   </p>
-                  <div className="flex items-center gap-3 pt-1">
+                  <div className="flex items-center gap-4 pt-1">
                     <Input
                       type="number"
                       min={1}
@@ -732,9 +732,10 @@ const Marketing = () => {
                         const n = parseInt(e.target.value, 10);
                         setReferralInviterPoints(Number.isFinite(n) && n > 0 ? n : 1);
                       }}
-                      className="h-16 w-32 text-center text-4xl font-bold text-primary border-2 border-primary/30 focus-visible:border-primary rounded-xl"
+                      className="text-center font-bold text-primary border-2 border-primary/30 focus-visible:border-primary rounded-xl"
+                      style={{ height: "64px", width: "120px", fontSize: "28px", fontWeight: 700 }}
                     />
-                    <span className="text-sm text-muted-foreground">Punkte</span>
+                    <span className="text-muted-foreground font-medium" style={{ fontSize: "18px" }}>Punkte</span>
                   </div>
                 </div>
 
