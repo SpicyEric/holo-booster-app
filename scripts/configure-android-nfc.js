@@ -566,6 +566,31 @@ function configureAndroidManifest() {
     console.log('   ✅ No NFC intent filters in manifest (correct - prevents auto-launch)');
   }
 
+  const deepLinkFilters = `
+            <!-- Eloyo Invite Deep Links -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="eloyo" android:host="invite" />
+            </intent-filter>
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="https" android:host="eloyo.de" android:pathPrefix="/i" />
+                <data android:scheme="https" android:host="www.eloyo.de" android:pathPrefix="/i" />
+            </intent-filter>`;
+
+  if (!content.includes('android:scheme="eloyo" android:host="invite"')) {
+    content = content.replace(
+      /(<activity[\s\S]*?android:name="[^\"]*MainActivity"[\s\S]*?>)/,
+      `$1${deepLinkFilters}`
+    );
+    console.log('   ✅ Added Eloyo invite deep link filters');
+    modified = true;
+  }
+
   // Enforce portrait-only orientation on MainActivity
   if (!content.includes('android:screenOrientation')) {
     content = content.replace(
