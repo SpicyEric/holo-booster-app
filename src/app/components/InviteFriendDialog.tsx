@@ -67,7 +67,7 @@ export const InviteFriendDialog = ({
 
   const inviteUrl = shareCode ? `${INVITE_BASE_URL}/${shareCode}` : '';
   const shareText = shareCode
-    ? `🎉 Ich lade dich zu ${merchantName} ein! Wenn wir beide innerhalb 24h dort vorbeischauen, bekommen wir beide Bonuspunkte. ${inviteUrl}`
+    ? `Hey! 😊 Ich lad dich zu ${merchantName} ein — wenn du dort innerhalb der nächsten 7 Tage vorbeischaust und deinen ersten Stempel sammelst, bekommst du direkt doppelte Punkte. Und ich krieg dafür auch einen kleinen Bonus 😄 Hier der Link: ${inviteUrl}`
     : '';
 
   const openWhatsApp = () => {
