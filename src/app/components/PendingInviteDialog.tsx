@@ -155,6 +155,10 @@ export function PendingInviteDialog() {
     setPreview(null);
   };
 
+  const closeDialog = () => {
+    setOpen(false);
+  };
+
   const goToMerchant = () => {
     const target = accepted ?? preview;
     if (!target) return;
@@ -168,7 +172,7 @@ export function PendingInviteDialog() {
   const isAccepted = !!accepted;
 
   return (
-    <Dialog open={open} onOpenChange={(o) => { if (!o) declineInvite(); }}>
+    <Dialog open={open} onOpenChange={(o) => { if (!o) closeDialog(); }}>
       <DialogContent className="max-w-[340px] rounded-3xl p-0 gap-0 overflow-hidden border-0">
         <div
           className="h-32 bg-gradient-to-br from-primary to-primary/60"
