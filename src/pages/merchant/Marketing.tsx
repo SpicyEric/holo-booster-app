@@ -195,7 +195,7 @@ const Marketing = () => {
         if (cd.avg_revenue) setAvgOrderValue(cd.avg_revenue);
         // Referral settings
         setReferralEnabled((cd as any).referral_enabled ?? true);
-        setReferralInviterPoints((cd as any).referral_inviter_points ?? 3);
+        setReferralInviterPoints((cd as any).referral_inviter_points ?? 20);
         setReferralInviteePoints((cd as any).referral_invitee_points ?? 1);
       }
 
