@@ -667,7 +667,7 @@ export const AppMerchantDetail = () => {
       key: 'new-customer-offer',
       element: (
         <Card 
-          className="reward-glow border-0 bg-primary/5 cursor-pointer hover:shadow-lg transition-shadow rounded-xl"
+          className="reward-glow border-0 bg-primary/5 cursor-pointer rounded-xl"
           onClick={handleNewCustomerOfferClick}
         >
           <CardContent className="p-4 flex items-center gap-4">
