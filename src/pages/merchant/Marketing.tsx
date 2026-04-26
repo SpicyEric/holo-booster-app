@@ -121,6 +121,14 @@ const Marketing = () => {
     accepted: number;
     converted: number;
   }>({ total_invites: 0, accepted: 0, converted: 0 });
+  const [referralList, setReferralList] = useState<Array<{
+    invitation_id: string;
+    share_code: string;
+    created_at: string;
+    bonus_awarded_at: string | null;
+    inviter_points: number | null;
+    invitee_points: number | null;
+  }>>([]);
 
   // Track automation changes
   useEffect(() => {
