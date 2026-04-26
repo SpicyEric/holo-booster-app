@@ -207,6 +207,9 @@ const App = () => {
               {/* Scan Route */}
               <Route path="/s/:cid" element={<Scan />} />
 
+              {/* Invite Redirect (Deep Link Landing) */}
+              <Route path="/i/:code" element={<InviteRedirect />} />
+
               {/* Checkout Routes */}
               <Route path="/checkout/success" element={<CheckoutSuccess />} />
               <Route path="/checkout/cancel" element={<CheckoutCancel />} />
