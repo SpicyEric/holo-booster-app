@@ -708,14 +708,14 @@ const AppMessagesContent = () => {
     <div className="space-y-4">
       {/* Email verification banner */}
       {!emailVerified && (
-        <Card className="p-4 border-2 border-amber-400 bg-amber-50 dark:bg-amber-950/30">
+        <Card className="p-4 border-0 bg-muted/70 dark:bg-muted/50">
           <div className="flex items-start gap-3">
-            <div className="w-10 h-10 rounded-full bg-amber-100 dark:bg-amber-900 flex items-center justify-center flex-shrink-0">
-              <AlertCircle className="h-5 w-5 text-amber-600" />
+            <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
+              <AlertCircle className="h-5 w-5 text-muted-foreground" />
             </div>
             <div className="flex-1">
-              <h3 className="font-semibold text-amber-800 dark:text-amber-200">E-Mail bestätigen</h3>
-              <p className="text-sm text-amber-700 dark:text-amber-300 mt-1">
+              <h3 className="font-semibold text-foreground">E-Mail bestätigen</h3>
+              <p className="text-sm text-muted-foreground mt-1">
                 Bitte bestätige deine E-Mail-Adresse, um Prämien einlösen zu können.
               </p>
             </div>
@@ -726,20 +726,20 @@ const AppMessagesContent = () => {
       {/* Redeemable rewards card */}
       {redeemableCount > 0 && (
         <Card
-          className="p-4 cursor-pointer hover:shadow-lg transition-shadow border-2 border-green-200 bg-green-50/50 dark:bg-green-950/20"
+          className="p-4 cursor-pointer hover:shadow-md transition-shadow border-0 bg-muted/70 dark:bg-muted/50"
           onClick={() => navigate('/app/rewards')}
         >
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-full bg-green-100 dark:bg-green-900 flex items-center justify-center">
-              <Trophy className="h-6 w-6 text-green-600" />
+            <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
+              <Trophy className="h-6 w-6 text-primary" />
             </div>
             <div className="flex-1">
-              <div className="text-xl font-bold text-green-700 dark:text-green-400">{redeemableCount}</div>
-              <div className="text-sm text-green-600 dark:text-green-500">
+              <div className="text-xl font-bold text-foreground">{redeemableCount}</div>
+              <div className="text-sm text-muted-foreground">
                 {redeemableCount === 1 ? 'Einlösbare Prämie' : 'Einlösbare Prämien'}
               </div>
             </div>
-            <ChevronRight className="h-5 w-5 text-green-400" />
+            <ChevronRight className="h-5 w-5 text-muted-foreground" />
           </div>
         </Card>
       )}
@@ -751,7 +751,7 @@ const AppMessagesContent = () => {
           {messages.map((msg) => (
             <Card 
               key={msg.id} 
-              className={`p-4 cursor-pointer hover:shadow-md transition-shadow active:scale-[0.98] ${!msg.read_at ? 'border-l-4 border-l-primary' : ''}`}
+              className={`p-4 cursor-pointer hover:shadow-md transition-shadow active:scale-[0.98] border-0 ${!msg.read_at ? 'bg-primary/10' : 'bg-muted/70 dark:bg-muted/50'}`}
               onClick={() => navigate(`/app/messages/${msg.id}`)}
             >
               <div className="flex items-center gap-3">
