@@ -56,6 +56,10 @@ export function DeepLinkProvider({ children }: DeepLinkProviderProps) {
         return;
       }
 
+      if (url.includes('/i/') || url.includes('invite')) {
+        console.warn('⚠️ Invite Deep Link ohne erkannten Code:', url);
+      }
+
       // === Custom Scheme: eloyo://invite/CODE ===
       // Capacitor liefert diese als ungültige URL — manuell parsen
       const inviteSchemeMatch = url.match(/^eloyo:\/\/invite\/([A-Za-z0-9]{4,})/i);
@@ -137,10 +141,7 @@ export function DeepLinkProvider({ children }: DeepLinkProviderProps) {
         const initialLaunchUrl = await App.getLaunchUrl();
         if (initialLaunchUrl?.url) {
           console.log('📱 App mit Deep Link gestartet:', initialLaunchUrl.url);
-          const initialInviteCode = storePendingInvite(initialLaunchUrl.url);
-          if (initialInviteCode) {
-            notifyPendingInvite(initialInviteCode);
-          }
+          handleDeepLink(initialLaunchUrl.url);
         }
 
         // Listener für eingehende URLs (App im Hintergrund)
