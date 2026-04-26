@@ -1,9 +1,10 @@
-import { useLocation, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { signOut } from "@/lib/auth";
 import { toast } from "sonner";
 import {
   LayoutDashboard, Store, Users, Megaphone, Settings,
-  LogOut, ChevronLeft, Menu, X, Building2,
+  LogOut, ChevronLeft, ChevronDown, Menu, X, Building2,
+  Gift, Rocket, UserPlus, Star, MessageSquare, Zap,
 } from "lucide-react";
 import eloyoLogo from "@/assets/eloyo-logo.png";
 import { cn } from "@/lib/utils";
@@ -19,6 +20,8 @@ interface NavItem {
   path: string;
   label: string;
   icon: React.ElementType;
+  /** Optional sub-items shown when parent is active/expanded. Each maps to `?tab=` on the parent path. */
+  subItems?: { tab: string; label: string; icon: React.ElementType }[];
 }
 
 interface NavGroup {
@@ -43,7 +46,19 @@ const NAV_GROUPS: NavGroup[] = [
   {
     label: "WACHSTUM",
     items: [
-      { path: "/kunde/marketing", label: "Marketing", icon: Megaphone },
+      {
+        path: "/kunde/marketing",
+        label: "Marketing",
+        icon: Megaphone,
+        subItems: [
+          { tab: "praemien", label: "Prämien", icon: Gift },
+          { tab: "boost", label: "Neukunden", icon: Rocket },
+          { tab: "referral", label: "Empfehlungen", icon: UserPlus },
+          { tab: "reviews", label: "Bewertungen", icon: Star },
+          { tab: "messages", label: "Nachrichten", icon: MessageSquare },
+          { tab: "automations", label: "Automationen", icon: Zap },
+        ],
+      },
     ],
   },
   {
