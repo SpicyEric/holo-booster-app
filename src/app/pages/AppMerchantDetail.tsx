@@ -638,7 +638,7 @@ export const AppMerchantDetail = () => {
       key: 'active-invitation',
       element: (
         <Card
-          className="reward-glow border-0 bg-gradient-to-br from-primary/15 via-primary/5 to-transparent cursor-pointer hover:shadow-lg transition-shadow relative overflow-hidden rounded-xl"
+          className="reward-glow border-0 bg-gradient-to-br from-primary/15 via-primary/5 to-transparent cursor-pointer relative rounded-xl"
           onClick={() => setInvitationDialogOpen(true)}
         >
           <CardContent className="p-4 flex items-center gap-4">
