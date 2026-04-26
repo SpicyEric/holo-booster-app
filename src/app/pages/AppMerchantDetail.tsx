@@ -695,7 +695,7 @@ export const AppMerchantDetail = () => {
       key: 'google-review',
       element: (
         <Card 
-          className="border-2 border-amber-400 bg-amber-50 dark:bg-amber-950/30 cursor-pointer hover:shadow-lg transition-shadow"
+          className="border-2 border-amber-400 bg-amber-50 dark:bg-amber-950/30 cursor-pointer"
           onClick={handleClaimGoogleReviewBonus}
         >
           <CardContent className="p-4 flex items-center gap-4">
