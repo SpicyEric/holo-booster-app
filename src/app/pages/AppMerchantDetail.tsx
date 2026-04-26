@@ -748,7 +748,9 @@ export const AppMerchantDetail = () => {
             ref={contentScrollRef}
             className="h-full overflow-y-auto px-4 overflow-x-hidden scrollbar-hide"
             style={{
-              paddingTop: headerHeight ? `${headerHeight + 15}px` : '15px',
+              // Sensible fallback so content never slides under the header
+              // while the header is being (re-)measured.
+              paddingTop: `${(headerHeight || 320) + 15}px`,
               paddingBottom: 'calc(8rem + env(safe-area-inset-bottom, 0px))',
               overscrollBehavior: 'none',
               WebkitOverflowScrolling: 'touch',
