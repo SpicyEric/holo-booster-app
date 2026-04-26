@@ -114,25 +114,47 @@ export function PendingInviteDialog() {
           .maybeSingle();
 
         if (existingAccount && existingAccount.current_points_balance > 0) {
-          console.info('[PendingInviteDialog] user is already customer of merchant — skipping');
+          console.info('[PendingInviteDialog] user is already customer of merchant — showing info');
           markInviteConsumed(code);
           clearPendingInvite();
+          setIneligible({
+            kind: 'already_customer',
+            merchant_customer_id: result.merchant_customer_id,
+            merchant_name: result.merchant_name || 'diesem Geschäft',
+            logo_url: result.logo_url ?? null,
+            cover_image_url: result.cover_image_url ?? null,
+          });
+          setOpen(true);
           return;
         }
 
         // 2) User hat bereits eine offene Redemption für DIESEN Merchant
         const { data: existingRedemption } = await supabase
           .from('invitation_redemptions')
-          .select('id, bonus_window_starts_at, bonus_awarded_at, invitation_id, invitations!inner(merchant_customer_id)')
+          .select('id, bonus_window_starts_at, bonus_awarded_at, invitation_id, invitations!inner(merchant_customer_id, expires_at)')
           .eq('invitee_user_id', user.id)
           .eq('invitations.merchant_customer_id', result.merchant_customer_id)
           .is('bonus_awarded_at', null)
           .maybeSingle();
 
         if (existingRedemption) {
-          console.info('[PendingInviteDialog] user already has open redemption — skipping');
+          console.info('[PendingInviteDialog] user already has open redemption — showing info');
           markInviteConsumed(code);
           clearPendingInvite();
+          // 7-Tage-Fenster ab bonus_window_starts_at
+          const startsAt = (existingRedemption as { bonus_window_starts_at?: string | null }).bonus_window_starts_at;
+          const expiresAt = startsAt
+            ? new Date(new Date(startsAt).getTime() + 7 * 24 * 60 * 60 * 1000).toISOString()
+            : null;
+          setIneligible({
+            kind: 'already_invited',
+            merchant_customer_id: result.merchant_customer_id,
+            merchant_name: result.merchant_name || 'diesem Geschäft',
+            logo_url: result.logo_url ?? null,
+            cover_image_url: result.cover_image_url ?? null,
+            expires_at: expiresAt,
+          });
+          setOpen(true);
           return;
         }
       }
