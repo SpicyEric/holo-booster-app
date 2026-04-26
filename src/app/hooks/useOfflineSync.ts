@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { offlineQueueService, PendingStamp } from '@/app/services/offlineQueueService';
 import { useNetworkStatus } from './useNetworkStatus';
 import { toast } from 'sonner';
+import { maybeAwardReferralBonus } from '@/app/lib/referralBonus';
 
 /**
  * Hook that automatically syncs pending offline stamps when internet is restored.
