@@ -816,6 +816,37 @@ const Marketing = () => {
                     <p className="text-xs text-muted-foreground mt-1">Erfolgreich (Bonus vergeben)</p>
                   </div>
                 </div>
+
+                {referralList.length > 0 && (
+                  <div className="mt-6">
+                    <h4 className="text-sm font-semibold text-foreground mb-3">Erfolgreiche Empfehlungen</h4>
+                    <div className="space-y-2 max-h-80 overflow-y-auto">
+                      {referralList.filter(r => r.bonus_awarded_at).map((r) => (
+                        <div
+                          key={r.invitation_id}
+                          className="flex items-center justify-between p-3 rounded-lg bg-muted/40 border border-border/30"
+                        >
+                          <div className="text-sm">
+                            <p className="font-medium text-foreground">Code {r.share_code}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {r.bonus_awarded_at
+                                ? new Date(r.bonus_awarded_at).toLocaleDateString('de-DE', {
+                                    day: '2-digit', month: '2-digit', year: 'numeric',
+                                  })
+                                : '—'}
+                            </p>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-xs text-muted-foreground">Vergebene Punkte</p>
+                            <p className="text-sm font-semibold text-primary">
+                              +{(r.inviter_points ?? 0) + (r.invitee_points ?? 0)}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
