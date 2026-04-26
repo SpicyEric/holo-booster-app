@@ -236,8 +236,7 @@ const Marketing = () => {
       const { data: ncoData } = await supabase.from('new_customer_offers').select('*').eq('merchant_customer_id', assignment.customer_id).maybeSingle();
       setNewCustomerOffer(ncoData);
       if (ncoData) {
-        setNcoForm({ title: ncoData.title, description: ncoData.description || '', bonus_stamps: ncoData.bonus_stamps || 0, is_active: ncoData.is_active ?? true, image_url: ncoData.image_url || '' });
-        setNcoGiftType(ncoData.bonus_stamps && ncoData.bonus_stamps > 0 ? 'points' : 'offer');
+        setNcoForm({ title: ncoData.title, description: ncoData.description || '', is_active: ncoData.is_active ?? true, image_url: ncoData.image_url || '' });
       }
 
       const { data: msgData } = await supabase.from('app_messages').select('id, title, body, show_in_storefront, sent_at, offer_id').eq('merchant_customer_id', assignment.customer_id).order('sent_at', { ascending: false });
