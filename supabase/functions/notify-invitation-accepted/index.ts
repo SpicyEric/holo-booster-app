@@ -10,10 +10,11 @@ const corsHeaders = {
  * Sendet eine Push-Benachrichtigung an den EINLADENDEN, sobald
  * der Eingeladene die Einladung angenommen hat.
  *
- * Body:
- *  - invitation_id (uuid)  – pflicht
- *  - merchant_customer_id (uuid) – optional, wird sonst aus invitation gelesen
+ * Bug-Fix Bug 1: Retry-Mechanismus mit exponential backoff,
+ * damit die Push-Notification zuverlässig ankommt.
  */
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -65,31 +66,59 @@ Deno.serve(async (req) => {
       `Jemand hat deine Einladung zu ${merchantName} angenommen. ` +
       `Sobald der erste Stempel gesammelt wird, erhältst du deinen Bonus.`;
 
-    const pushRes = await fetch(
-      `${supabaseUrl}/functions/v1/send-push-notification`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${serviceKey}`,
-        },
-        body: JSON.stringify({
-          user_id: invitation.inviter_user_id,
-          title,
-          body: bodyText,
-          data: {
-            type: "invitation_accepted",
-            invitation_id: invitation.id,
-            merchant_customer_id: merchantCustomerId,
-          },
-        }),
-      },
-    );
+    // Bug 1 Fix: Retry mit exponential backoff (3 Versuche: 0ms, 1s, 3s)
+    const sendWithRetry = async (): Promise<{ ok: boolean; result: unknown; attempts: number }> => {
+      const delays = [0, 1000, 3000];
+      let lastResult: unknown = null;
+      for (let attempt = 0; attempt < delays.length; attempt++) {
+        if (delays[attempt] > 0) await sleep(delays[attempt]);
+        try {
+          const pushRes = await fetch(
+            `${supabaseUrl}/functions/v1/send-push-notification`,
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${serviceKey}`,
+              },
+              body: JSON.stringify({
+                user_id: invitation.inviter_user_id,
+                title,
+                body: bodyText,
+                data: {
+                  type: "invitation_accepted",
+                  invitation_id: invitation.id,
+                  merchant_customer_id: merchantCustomerId,
+                },
+              }),
+            },
+          );
+          const pushJson = await pushRes.json().catch(() => ({}));
+          lastResult = pushJson;
 
-    const pushJson = await pushRes.json().catch(() => ({}));
+          // Erfolg: send-push-notification gibt success:true ODER mindestens 1 erfolgreichen Token zurück
+          const successCount = (pushJson as { success_count?: number; success?: boolean })?.success_count;
+          const success = (pushJson as { success?: boolean })?.success;
+          if (pushRes.ok && (success === true || (typeof successCount === "number" && successCount > 0))) {
+            return { ok: true, result: pushJson, attempts: attempt + 1 };
+          }
+          console.warn(
+            `[notify-invitation-accepted] attempt ${attempt + 1} not yet successful:`,
+            pushJson,
+          );
+        } catch (err) {
+          console.error(`[notify-invitation-accepted] attempt ${attempt + 1} error`, err);
+          lastResult = { error: String(err) };
+        }
+      }
+      return { ok: false, result: lastResult, attempts: delays.length };
+    };
+
+    const result = await sendWithRetry();
+    console.log("[notify-invitation-accepted] result", result);
 
     return new Response(
-      JSON.stringify({ success: true, push: pushJson }),
+      JSON.stringify({ success: result.ok, push: result.result, attempts: result.attempts }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   } catch (error) {
