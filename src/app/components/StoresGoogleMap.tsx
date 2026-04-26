@@ -134,7 +134,7 @@ function StoresGoogleMapContent({
       if (!logoUrl) return;
 
       const canvas = document.createElement('canvas');
-      const size = 44;
+      const size = 88;
       canvas.width = size;
       canvas.height = size;
       const ctx = canvas.getContext('2d');
@@ -156,8 +156,8 @@ function StoresGoogleMapContent({
 
           const icon: google.maps.Icon = {
             url: canvas.toDataURL(),
-            scaledSize: new google.maps.Size(44, 44),
-            anchor: new google.maps.Point(22, 22),
+            scaledSize: new google.maps.Size(56, 56),
+            anchor: new google.maps.Point(28, 28),
           };
 
           setMarkerIcons((prev) => {
@@ -254,7 +254,7 @@ function StoresGoogleMapContent({
                 fillOpacity: 1,
                 strokeColor: '#ffffff',
                 strokeWeight: 3,
-                scale: 12,
+                scale: 18,
               }
             }
           />
@@ -264,15 +264,39 @@ function StoresGoogleMapContent({
           <InfoWindow
             position={{ lat: selectedStore.lat, lng: selectedStore.lng }}
             onCloseClick={() => setSelectedStore(null)}
+            options={{ pixelOffset: new google.maps.Size(0, -28) }}
           >
-            <div className="p-3 min-w-[200px]">
-              <h3 className="font-semibold mb-1 text-foreground">{selectedStore.name}</h3>
-              {selectedStore.category && (
-                <p className="text-sm text-muted-foreground mb-2">{selectedStore.category}</p>
-              )}
-              {selectedStore.distance && (
-                <p className="text-sm text-muted-foreground mb-3">{selectedStore.distance} km entfernt</p>
-              )}
+            <div className="min-w-[220px] -m-1">
+              <div className="flex items-center gap-3 mb-3">
+                {selectedStore.logo_url ? (
+                  <img
+                    src={selectedStore.logo_url}
+                    alt={selectedStore.name}
+                    className="h-12 w-12 rounded-full object-cover flex-shrink-0"
+                  />
+                ) : (
+                  <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                    <span className="text-primary font-semibold text-lg">
+                      {selectedStore.name.charAt(0)}
+                    </span>
+                  </div>
+                )}
+                <div className="min-w-0 flex-1">
+                  <h3 className="font-semibold text-foreground text-base leading-tight truncate">
+                    {selectedStore.name}
+                  </h3>
+                  {selectedStore.category && (
+                    <p className="text-xs text-muted-foreground truncate mt-0.5">
+                      {selectedStore.category}
+                    </p>
+                  )}
+                  {typeof selectedStore.distance === 'number' && (
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      {selectedStore.distance.toFixed(1).replace('.', ',')} km entfernt
+                    </p>
+                  )}
+                </div>
+              </div>
               <button
                 onClick={() => navigate(`/app/merchant/${selectedStore.id}`)}
                 className="w-full px-3 py-2 bg-primary text-primary-foreground rounded-md text-sm font-medium hover:bg-primary/90 transition-colors"
