@@ -136,6 +136,13 @@ const Marketing = () => {
 
   useEffect(() => { loadData(); }, []);
 
+  // Sync activeTab from ?tab= URL parameter (Sidebar Sub-Items)
+  useEffect(() => {
+    const tabParam = searchParams.get('tab');
+    const valid = ['praemien', 'boost', 'referral', 'reviews', 'messages', 'automations'];
+    if (tabParam && valid.includes(tabParam)) setActiveTab(tabParam);
+  }, [searchParams]);
+
   useEffect(() => {
     const boostStatus = searchParams.get('boost');
     const boostId = searchParams.get('boost_id');
@@ -277,9 +284,8 @@ const Marketing = () => {
     setSavingReferral(true);
     try {
       const { error } = await supabase.from("customers").update({
-        referral_enabled: referralEnabled,
+        referral_enabled: true,
         referral_inviter_points: referralInviterPoints,
-        referral_invitee_points: referralInviteePoints,
         updated_at: new Date().toISOString(),
       }).eq("id", customerId);
       if (error) throw error;
@@ -741,40 +747,42 @@ const Marketing = () => {
                   <p>Das bringt dir <strong>echten Footfall</strong> – zwei Kunden gleichzeitig pro erfolgreicher Empfehlung.</p>
                 </div>
 
-                <div className="flex items-center justify-between p-4 bg-card rounded-xl border border-border/30">
-                  <div>
-                    <p className="font-medium text-foreground">Empfehlungen aktivieren</p>
-                    <p className="text-sm text-muted-foreground">Zeigt den „Freund einladen"-Button in deiner App-Detailseite</p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className={`text-xs font-medium ${referralEnabled ? 'text-primary' : 'text-muted-foreground'}`}>
-                      {referralEnabled ? 'Aktiv' : 'Inaktiv'}
-                    </span>
-                    <Switch checked={referralEnabled} onCheckedChange={setReferralEnabled} />
+                <div className="p-5 bg-card rounded-xl border border-border/30 space-y-3">
+                  <Label className="font-medium text-base">Bonus für den Einlader</Label>
+                  <p className="text-xs text-muted-foreground">
+                    Punkte, die der Kunde bekommt, der einen Freund erfolgreich eingeladen hat.
+                  </p>
+                  <div className="flex items-center gap-3 pt-1">
+                    <Input
+                      type="number"
+                      min={1}
+                      max={500}
+                      value={referralInviterPoints}
+                      onChange={(e) => {
+                        const n = parseInt(e.target.value, 10);
+                        setReferralInviterPoints(Number.isFinite(n) && n > 0 ? n : 1);
+                      }}
+                      className="h-16 w-32 text-center text-4xl font-bold text-primary border-2 border-primary/30 focus-visible:border-primary rounded-xl"
+                    />
+                    <span className="text-sm text-muted-foreground">Punkte</span>
                   </div>
                 </div>
 
-                {referralEnabled && (
-                  <>
-                    <div className="p-4 bg-card rounded-xl border border-border/30 space-y-3">
-                      <Label className="font-medium">Bonus für den Einlader</Label>
-                      <p className="text-xs text-muted-foreground">Punkte, die der Kunde bekommt, der einen Freund erfolgreich eingeladen hat.</p>
-                      <div className="flex items-center gap-4">
-                        <Slider value={[referralInviterPoints]} onValueChange={v => setReferralInviterPoints(v[0])} min={1} max={50} step={1} className="flex-1" />
-                        <span className="text-lg font-bold text-primary min-w-[3rem] text-center">{referralInviterPoints}</span>
-                      </div>
+                <div className="p-4 bg-primary/5 rounded-xl border border-primary/10">
+                  <div className="flex items-start gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-primary/15 flex items-center justify-center shrink-0">
+                      <Sparkles className="h-4 w-4 text-primary" />
                     </div>
-
-                    <div className="p-4 bg-card rounded-xl border border-border/30 space-y-3">
-                      <Label className="font-medium">Bonus für den eingeladenen Freund</Label>
-                      <p className="text-xs text-muted-foreground">Willkommens-Punkte für die neu geworbene Person.</p>
-                      <div className="flex items-center gap-4">
-                        <Slider value={[referralInviteePoints]} onValueChange={v => setReferralInviteePoints(v[0])} min={1} max={20} step={1} className="flex-1" />
-                        <span className="text-lg font-bold text-primary min-w-[3rem] text-center">{referralInviteePoints}</span>
-                      </div>
+                    <div className="space-y-1">
+                      <p className="text-sm font-semibold text-foreground">
+                        Bonus für den eingeladenen Freund
+                      </p>
+                      <p className="text-xs text-muted-foreground leading-relaxed">
+                        Der eingeladene Freund bekommt automatisch <strong>doppelte Punkte</strong> auf seinen ersten Stempel bei dir. Das ist fest eingestellt und kann nicht geändert werden – so profitiert wirklich jeder Neukunde spürbar.
+                      </p>
                     </div>
-                  </>
-                )}
+                  </div>
+                </div>
 
                 <Button onClick={handleSaveReferral} disabled={savingReferral} className="rounded-xl">
                   {savingReferral ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Speichern...</> : "Einstellungen speichern"}

@@ -1,9 +1,10 @@
-import { useLocation, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { signOut } from "@/lib/auth";
 import { toast } from "sonner";
 import {
   LayoutDashboard, Store, Users, Megaphone, Settings,
-  LogOut, ChevronLeft, Menu, X, Building2,
+  LogOut, ChevronLeft, ChevronDown, Menu, X, Building2,
+  Gift, Rocket, UserPlus, Star, MessageSquare, Zap,
 } from "lucide-react";
 import eloyoLogo from "@/assets/eloyo-logo.png";
 import { cn } from "@/lib/utils";
@@ -19,6 +20,8 @@ interface NavItem {
   path: string;
   label: string;
   icon: React.ElementType;
+  /** Optional sub-items shown when parent is active/expanded. Each maps to `?tab=` on the parent path. */
+  subItems?: { tab: string; label: string; icon: React.ElementType }[];
 }
 
 interface NavGroup {
@@ -43,7 +46,19 @@ const NAV_GROUPS: NavGroup[] = [
   {
     label: "WACHSTUM",
     items: [
-      { path: "/kunde/marketing", label: "Marketing", icon: Megaphone },
+      {
+        path: "/kunde/marketing",
+        label: "Marketing",
+        icon: Megaphone,
+        subItems: [
+          { tab: "praemien", label: "Prämien", icon: Gift },
+          { tab: "boost", label: "Neukunden", icon: Rocket },
+          { tab: "referral", label: "Empfehlungen", icon: UserPlus },
+          { tab: "reviews", label: "Bewertungen", icon: Star },
+          { tab: "messages", label: "Nachrichten", icon: MessageSquare },
+          { tab: "automations", label: "Automationen", icon: Zap },
+        ],
+      },
     ],
   },
   {
@@ -57,6 +72,8 @@ const NAV_GROUPS: NavGroup[] = [
 function SidebarNav({ collapsed, onNavigate, companyName, subStatus }: { collapsed: boolean; onNavigate?: () => void; companyName?: string; subStatus?: string }) {
   const navigate = useNavigate();
   const location = useLocation();
+  const [searchParams] = useSearchParams();
+  const currentTab = searchParams.get('tab');
 
   const isActive = (path: string) => {
     if (path === "/kunde") return location.pathname === "/kunde" || location.pathname === "/kunde/";
@@ -78,6 +95,11 @@ function SidebarNav({ collapsed, onNavigate, companyName, subStatus }: { collaps
     onNavigate?.();
   };
 
+  const handleSubNav = (path: string, tab: string) => {
+    navigate(`${path}?tab=${tab}`);
+    onNavigate?.();
+  };
+
   return (
     <>
       <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-6">
@@ -91,27 +113,54 @@ function SidebarNav({ collapsed, onNavigate, companyName, subStatus }: { collaps
             <div className="space-y-1">
               {group.items.map((item) => {
                 const active = isActive(item.path);
+                const showSubItems = active && !collapsed && item.subItems && item.subItems.length > 0;
                 return (
-                  <button
-                    key={item.path}
-                    onClick={() => handleNav(item.path)}
-                    className={cn(
-                      "w-full flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200 relative",
-                      "hover:bg-white/10 active:scale-[0.97]",
-                      active
-                        ? "bg-white/15 text-white shadow-sm"
-                        : "text-white/60 hover:text-white",
-                      collapsed && "justify-center px-0"
+                  <div key={item.path}>
+                    <button
+                      onClick={() => handleNav(item.path)}
+                      className={cn(
+                        "w-full flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200 relative",
+                        "hover:bg-white/10 active:scale-[0.97]",
+                        active
+                          ? "bg-white/15 text-white shadow-sm"
+                          : "text-white/60 hover:text-white",
+                        collapsed && "justify-center px-0"
+                      )}
+                      title={collapsed ? item.label : undefined}
+                    >
+                      {active && (
+                        <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 bg-white rounded-r-full" />
+                      )}
+                      <item.icon className={cn("h-[18px] w-[18px] shrink-0 transition-colors", active ? "text-white" : "text-white/50")} />
+                      {!collapsed && <span className="flex-1 text-left">{item.label}</span>}
+                      {!collapsed && item.subItems && (
+                        <ChevronDown className={cn("h-3.5 w-3.5 text-white/40 transition-transform", showSubItems && "rotate-180")} />
+                      )}
+                    </button>
+
+                    {showSubItems && (
+                      <div className="mt-1 ml-3 pl-3 border-l border-white/10 space-y-0.5 animate-accordion-down">
+                        {item.subItems!.map((sub) => {
+                          const subActive = currentTab === sub.tab || (!currentTab && sub.tab === item.subItems![0].tab);
+                          return (
+                            <button
+                              key={sub.tab}
+                              onClick={() => handleSubNav(item.path, sub.tab)}
+                              className={cn(
+                                "w-full flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-[13px] font-medium transition-all duration-150 active:scale-[0.97]",
+                                subActive
+                                  ? "bg-white/10 text-white"
+                                  : "text-white/50 hover:text-white hover:bg-white/5"
+                              )}
+                            >
+                              <sub.icon className={cn("h-3.5 w-3.5 shrink-0", subActive ? "text-white" : "text-white/40")} />
+                              <span>{sub.label}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
                     )}
-                    title={collapsed ? item.label : undefined}
-                  >
-                    {/* Active accent bar */}
-                    {active && (
-                      <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 bg-white rounded-r-full" />
-                    )}
-                    <item.icon className={cn("h-[18px] w-[18px] shrink-0 transition-colors", active ? "text-white" : "text-white/50")} />
-                    {!collapsed && <span>{item.label}</span>}
-                  </button>
+                  </div>
                 );
               })}
             </div>
