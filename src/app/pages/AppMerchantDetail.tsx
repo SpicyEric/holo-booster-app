@@ -613,7 +613,7 @@ export const AppMerchantDetail = () => {
                 )}
               </div>
               <Badge variant={canRedeem ? 'default' : 'secondary'}>
-                {reward.points_required} Punkte
+                {reward.points_required}
               </Badge>
             </CardContent>
           </Card>
