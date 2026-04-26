@@ -2,6 +2,9 @@ import { createRoot } from "react-dom/client";
 import { HelmetProvider } from "react-helmet-async";
 import App from "./App.tsx";
 import "./index.css";
+import { registerNativeDeepLinkBootstrap } from "./app/lib/nativeDeepLinkBootstrap";
+
+registerNativeDeepLinkBootstrap();
 
 // Apply saved dark mode preference ONLY for app routes to avoid flash
 // Website (non-app) routes must always stay in light mode
