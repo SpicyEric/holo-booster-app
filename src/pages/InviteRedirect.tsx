@@ -1,15 +1,16 @@
 import { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { Gift, Sparkles } from 'lucide-react';
+import { Capacitor } from '@capacitor/core';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
+import { notifyPendingInvite, storePendingInvite } from '@/app/lib/pendingInvite';
 
 const APP_SCHEME = 'eloyo://invite/';
 const ANDROID_PACKAGE = 'com.eloyo.app';
 const IOS_STORE_URL = 'https://apps.apple.com/app/eloyo/id0000000000';
 const ANDROID_STORE_URL = 'https://play.google.com/store/apps/details?id=com.eloyo.app';
 const FALLBACK_URL = 'https://eloyo.de/download';
-const PENDING_INVITE_KEY = 'eloyo_pending_invite';
 
 type Platform = 'ios' | 'android' | 'web';
 
@@ -29,21 +30,29 @@ interface InviteData {
 
 export default function InviteRedirect() {
   const { code } = useParams<{ code: string }>();
+  const navigate = useNavigate();
   const platform = detectPlatform();
+  const isNativeApp = Capacitor.isNativePlatform();
   const [data, setData] = useState<InviteData | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(platform === 'web');
-  const isMobilePlatform = platform !== 'web';
+  const [loading, setLoading] = useState(platform === 'web' && !isNativeApp);
+  const isMobilePlatform = !isNativeApp && platform !== 'web';
 
   useEffect(() => {
     if (!code) return;
 
     // Code für Deferred Deep Link nach Installation persistieren
+    const storedCode = storePendingInvite(code);
     try {
-      localStorage.setItem(PENDING_INVITE_KEY, code);
       document.cookie = `eloyo_pending_invite=${code}; path=/; max-age=604800; SameSite=Lax`;
     } catch {
       // ignore
+    }
+
+    if (isNativeApp) {
+      if (storedCode) notifyPendingInvite(storedCode);
+      navigate('/app', { replace: true });
+      return;
     }
 
     if (platform === 'web') {
@@ -51,12 +60,12 @@ export default function InviteRedirect() {
     } else {
       setLoading(false);
     }
-  }, [code]);
+  }, [code, isNativeApp, navigate, platform]);
 
   // Mobile: sofort native App öffnen; wenn nicht installiert, Store-Fallback.
   // Wichtig: Nicht auf RPC/UI warten, sonst bleibt Samsung Internet sichtbar.
   useEffect(() => {
-    if (!code || platform === 'web') return;
+    if (!code || platform === 'web' || isNativeApp) return;
     const openedAt = Date.now();
     const storeLink = platform === 'ios' ? IOS_STORE_URL : ANDROID_STORE_URL;
     const appOpenLink = platform === 'android'
@@ -82,7 +91,7 @@ export default function InviteRedirect() {
       window.clearTimeout(fallbackTimer);
       document.removeEventListener('visibilitychange', onVis);
     };
-  }, [platform, code]);
+  }, [platform, code, isNativeApp]);
 
   const loadInvite = async (shareCode: string) => {
     try {

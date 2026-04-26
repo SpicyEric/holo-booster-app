@@ -3,7 +3,13 @@ const INVITE_CODE_PATTERN = /^[A-Za-z0-9]{4,}$/;
 
 const normalizeInviteCode = (value: string | null | undefined) => {
   if (!value) return null;
-  const decoded = decodeURIComponent(value).trim().replace(/^\/+|\/+$/g, '');
+  let decoded = value;
+  try {
+    decoded = decodeURIComponent(value);
+  } catch {
+    // keep raw value if Android/WhatsApp handed over a partially encoded intent URL
+  }
+  decoded = decoded.trim().replace(/^\/+|\/+$/g, '');
   const code = decoded.split(/[?#/&]/)[0];
   return INVITE_CODE_PATTERN.test(code) ? code.toUpperCase() : null;
 };
@@ -20,9 +26,22 @@ export function extractInviteCodeFromUrl(rawUrl: string | null | undefined) {
 
   const directMatch = rawUrl.match(/(?:^|[/?#&])(code|invite|share_code)=([A-Za-z0-9]{4,})/i)
     || rawUrl.match(/(?:eloyo|intent):\/\/(?:invite|i)\/([A-Za-z0-9]{4,})/i)
+    || rawUrl.match(/(?:eloyo|intent):\/\/(?:invite|i)\?[^#]*(?:code|invite|share_code)=([A-Za-z0-9]{4,})/i)
     || rawUrl.match(/https?:\/\/(?:www\.)?eloyo\.de\/i\/([A-Za-z0-9]{4,})/i);
   const directCode = normalizeInviteCode(directMatch?.[2] ?? directMatch?.[1]);
   if (directCode) return directCode;
+
+  const decodedRaw = (() => {
+    try {
+      return decodeURIComponent(rawUrl);
+    } catch {
+      return rawUrl;
+    }
+  })();
+  const looseMatch = decodedRaw.match(/(?:^|[/:?#&])(invite|i)[/:?=&]+([A-Za-z0-9]{4,})/i)
+    || decodedRaw.match(/(?:browser_fallback_url|url)=https?:\/\/(?:www\.)?eloyo\.de\/i\/([A-Za-z0-9]{4,})/i);
+  const looseCode = normalizeInviteCode(looseMatch?.[2] ?? looseMatch?.[1]);
+  if (looseCode) return looseCode;
 
   try {
     const parsedUrl = new URL(rawUrl);
