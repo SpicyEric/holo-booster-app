@@ -4,6 +4,7 @@ import { BarChart3, Users, TrendingUp, Gift, Activity, PieChart, Zap } from 'luc
 import dashboardImg from '@/assets/backoffice-dashboard.png';
 import transactionsImg from '@/assets/backoffice-transactions.png';
 import MarketingCarousel from '@/components/MarketingCarousel';
+import { MacbookScroll } from '@/components/ui/macbook-scroll';
 
 const appleEase = [0.16, 1, 0.3, 1] as const;
 
@@ -57,45 +58,48 @@ const Backoffice = () => {
         </div>
       </section>
 
-      {/* Dashboard Section */}
+      {/* MacBook Scroll Showcase */}
+      <section className="overflow-hidden">
+        <MacbookScroll
+          title={
+            <span>
+              Dein persönliches <br /> Händler-Dashboard
+            </span>
+          }
+          src={dashboardImg}
+          showGradient={false}
+        />
+      </section>
+
+      {/* Dashboard description */}
       <section className="py-16 px-6">
-        <div className="max-w-7xl mx-auto">
+        <div className="max-w-3xl mx-auto">
           <motion.div
             initial="hidden"
             whileInView="visible"
             viewport={viewportConfig}
             variants={staggerContainer}
-            className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center"
+            className="space-y-6 text-center"
           >
-            <motion.div variants={glassReveal} className="space-y-6">
-              <div className="inline-flex items-center gap-2 bg-primary/10 text-primary rounded-full px-4 py-1.5 text-sm font-medium">
-                <BarChart3 className="h-4 w-4" />
-                Dashboard
-              </div>
-              <h2 className="text-3xl md:text-4xl font-bold leading-tight">
-                Dein persönliches Händler-Dashboard
-              </h2>
-              <p className="text-muted-foreground text-lg leading-relaxed">
-                Als Eloyo-Partner hast du Zugriff auf dein eigenes Dashboard mit allen wichtigen Kennzahlen. 
-                Sieh auf einen Blick, wie viele Kunden du hast, wie viele Stempel gesammelt wurden und welche 
-                Prämien eingelöst werden. Alles übersichtlich, alles in Echtzeit.
-              </p>
-              <ul className="space-y-3">
-                {['Kundenanzahl & Wachstum', 'Stempel & Prämien im Überblick', 'Benachrichtigungen & Empfehlungen'].map((item) => (
-                  <li key={item} className="flex items-center gap-3 text-foreground">
-                    <div className="h-6 w-6 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                      <div className="h-2 w-2 rounded-full bg-primary" />
-                    </div>
-                    {item}
-                  </li>
-                ))}
-              </ul>
+            <motion.div variants={glassReveal} className="inline-flex items-center gap-2 bg-primary/10 text-primary rounded-full px-4 py-1.5 text-sm font-medium">
+              <BarChart3 className="h-4 w-4" />
+              Dashboard
             </motion.div>
-            <motion.div variants={glassReveal}>
-              <div className="rounded-2xl overflow-hidden shadow-2xl border border-border/30 bg-background">
-                <img src={dashboardImg} alt="Eloyo Händler-Dashboard mit KPIs und Benachrichtigungen" className="w-full h-auto" loading="lazy" />
-              </div>
-            </motion.div>
+            <motion.p variants={glassReveal} className="text-muted-foreground text-lg leading-relaxed">
+              Als Eloyo-Partner hast du Zugriff auf dein eigenes Dashboard mit allen wichtigen Kennzahlen.
+              Sieh auf einen Blick, wie viele Kunden du hast, wie viele Stempel gesammelt wurden und welche
+              Prämien eingelöst werden. Alles übersichtlich, alles in Echtzeit.
+            </motion.p>
+            <motion.ul variants={glassReveal} className="space-y-3 inline-block text-left">
+              {['Kundenanzahl & Wachstum', 'Stempel & Prämien im Überblick', 'Benachrichtigungen & Empfehlungen'].map((item) => (
+                <li key={item} className="flex items-center gap-3 text-foreground">
+                  <div className="h-6 w-6 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                    <div className="h-2 w-2 rounded-full bg-primary" />
+                  </div>
+                  {item}
+                </li>
+              ))}
+            </motion.ul>
           </motion.div>
         </div>
       </section>
