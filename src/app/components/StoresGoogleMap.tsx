@@ -135,7 +135,6 @@ function StoresGoogleMapContent({
 
       const canvas = document.createElement('canvas');
       const size = 44;
-      const borderWidth = 3;
       canvas.width = size;
       canvas.height = size;
       const ctx = canvas.getContext('2d');
@@ -150,16 +149,10 @@ function StoresGoogleMapContent({
         try {
           ctx.save();
           ctx.beginPath();
-          ctx.arc(size / 2, size / 2, size / 2 - borderWidth, 0, Math.PI * 2);
+          ctx.arc(size / 2, size / 2, size / 2, 0, Math.PI * 2);
           ctx.clip();
-          ctx.drawImage(img, borderWidth, borderWidth, size - borderWidth * 2, size - borderWidth * 2);
+          ctx.drawImage(img, 0, 0, size, size);
           ctx.restore();
-
-          ctx.beginPath();
-          ctx.arc(size / 2, size / 2, size / 2 - borderWidth / 2, 0, Math.PI * 2);
-          ctx.strokeStyle = '#9333EA';
-          ctx.lineWidth = borderWidth;
-          ctx.stroke();
 
           const icon: google.maps.Icon = {
             url: canvas.toDataURL(),
