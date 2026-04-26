@@ -1067,7 +1067,7 @@ export const AppMerchantDetail = () => {
           merchant={merchant}
           open={newCustomerOfferDialogOpen}
           onOpenChange={setNewCustomerOfferDialogOpen}
-          onRedemptionComplete={handleNewCustomerOfferRedeemed}
+          mode="preview"
         />
       )}
 
