@@ -419,7 +419,7 @@ export function PendingInviteDialog() {
           </p>
           <div className="rounded-xl bg-primary/10 px-3 py-2.5 mb-5">
             <div className="text-xs text-muted-foreground">Dein Willkommensbonus</div>
-            <div className="text-lg font-bold text-primary">+{display.invitee_points} Bonuspunkte</div>
+            <div className="text-base font-bold text-primary">Doppelte Punkte für deinen ersten Stempel</div>
           </div>
 
           {isAccepted ? (
