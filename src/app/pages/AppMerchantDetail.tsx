@@ -806,6 +806,17 @@ export const AppMerchantDetail = () => {
                   )}
                 </CardContent>
               </Card>
+
+              {merchant.referral_enabled !== false && (
+                <Button
+                  onClick={() => setInviteOpen(true)}
+                  className="w-full h-12 rounded-xl gap-2"
+                  variant="outline"
+                >
+                  <UserPlus className="h-4 w-4" />
+                  Freund einladen
+                </Button>
+              )}
             </TabsContent>
 
             <TabsContent value="transactions" className="mt-0 space-y-3">
