@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { DeepLinkProvider } from "@/app/components/DeepLinkProvider";
+import { PendingInviteDialog } from "@/app/components/PendingInviteDialog";
 import { useConsentDialogScrollLock } from "@/hooks/useConsentDialogScrollLock";
 import Landing from "./pages/Landing";
 import Backoffice from "./pages/Backoffice";
@@ -99,6 +100,7 @@ const App = () => {
         <Sonner />
         <BrowserRouter>
           <DeepLinkProvider>
+            <PendingInviteDialog />
             <Routes>
               {/* ===== ROOT ROUTE - handles native vs web ===== */}
               <Route path="/" element={<Index />} />
