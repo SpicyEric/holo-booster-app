@@ -1,5 +1,6 @@
 import { useEffect, useCallback, createContext, useContext, ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { storePendingInvite } from './PendingInviteDialog';
 
 // Check if Capacitor App plugin is available
 const getCapacitorApp = async () => {
