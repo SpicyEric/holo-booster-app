@@ -1120,5 +1120,9 @@ export const AppMerchantDetail = () => {
         </DialogContent>
       </Dialog>
 
+      <BottomNav />
+    </div>
+  );
+};
 
 export default AppMerchantDetail;
