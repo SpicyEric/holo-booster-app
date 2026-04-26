@@ -227,6 +227,13 @@ function configureEntitlements() {
     NFC_CONFIG.readerSessionFormats
   );
 
+  // Universal Links for invite links
+  entitlements = addPlistEntry(
+    entitlements,
+    'com.apple.developer.associated-domains',
+    DEEP_LINK_CONFIG.associatedDomains
+  );
+
   writePlist(ENTITLEMENTS_PATH, entitlements);
   console.log('✅ App.entitlements updated');
   return true;
