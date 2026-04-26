@@ -259,7 +259,24 @@ const Marketing = () => {
     } catch { toast.error("Fehler"); } finally { setSavingReviewPoints(false); }
   };
 
-  const copyToClipboard = () => { if (googleReviewUrl) { navigator.clipboard.writeText(googleReviewUrl); setCopied(true); toast.success("Link kopiert!"); setTimeout(() => setCopied(false), 2000); } };
+  const handleSaveReferral = async () => {
+    if (!customerId) return;
+    setSavingReferral(true);
+    try {
+      const { error } = await supabase.from("customers").update({
+        referral_enabled: referralEnabled,
+        referral_inviter_points: referralInviterPoints,
+        referral_invitee_points: referralInviteePoints,
+        updated_at: new Date().toISOString(),
+      }).eq("id", customerId);
+      if (error) throw error;
+      toast.success("Empfehlungs-Einstellungen gespeichert!");
+    } catch {
+      toast.error("Fehler beim Speichern");
+    } finally {
+      setSavingReferral(false);
+    }
+  };
 
   const estimateRecipients = async () => {
     if (!customerId) return;
