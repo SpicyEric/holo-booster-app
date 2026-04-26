@@ -1234,72 +1234,45 @@ const Marketing = () => {
               <DialogDescription>Ein Willkommensbonus für neue Kunden</DialogDescription>
             </DialogHeader>
             <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2">
-              {/* Gift Type Toggle */}
-              <div className="space-y-2">
-                <Label className="font-semibold">Art der Neukundenprämie</Label>
-                <div className="grid grid-cols-2 gap-2">
-                  <button type="button" onClick={() => setNcoGiftType('offer')} className={`p-3 rounded-xl border-2 text-left transition-all ${ncoGiftType === 'offer' ? 'border-primary bg-primary/5 ring-1 ring-primary/20' : 'border-border bg-card hover:border-muted-foreground/30'}`}>
-                    <div className="font-semibold text-sm">🎁 Angebot</div>
-                    <p className="text-xs text-muted-foreground mt-1">Titel, Beschreibung & Bild</p>
-                  </button>
-                  <button type="button" onClick={() => setNcoGiftType('points')} className={`p-3 rounded-xl border-2 text-left transition-all ${ncoGiftType === 'points' ? 'border-primary bg-primary/5 ring-1 ring-primary/20' : 'border-border bg-card hover:border-muted-foreground/30'}`}>
-                    <div className="font-semibold text-sm">⭐ Bonuspunkte</div>
-                    <p className="text-xs text-muted-foreground mt-1">Sofort Punkte schenken</p>
-                  </button>
-                </div>
+              <div className="p-4 bg-primary/5 rounded-xl border border-primary/10 text-sm text-muted-foreground space-y-2">
+                <p className="font-medium text-foreground">💡 So funktioniert die Neukundenprämie</p>
+                <p>Die Neukundenprämie ist ein <strong>persönliches Sachangebot</strong> deines Geschäfts – z.&nbsp;B. eine Shampooprobe im Friseursalon, eine kleine Portion Pommes oder ein gratis Ayran beim Döner.</p>
+                <p>Sobald ein Kunde zum ersten Mal bei dir Punkte sammelt, wird die Prämie automatisch freigeschaltet. Der Kunde zeigt dir den Bestätigungs-Bildschirm an der Kasse.</p>
               </div>
 
-              {ncoGiftType === 'offer' ? (
-                <>
-                  <div><Label>Titel *</Label><Input value={ncoForm.title} onChange={e => setNcoForm({ ...ncoForm, title: e.target.value })} placeholder="z.B. Gratis Kaffee für Neukunden" className="rounded-xl mt-1" /></div>
-                  <div>
-                    <Label>Beschreibung</Label>
-                    <div className="mt-1">
-                      <RichTextEditor value={ncoForm.description} onChange={v => setNcoForm({...ncoForm, description: v})} placeholder="Details zum Angebot..." rows={2} />
+              <div>
+                <Label>Titel *</Label>
+                <Input value={ncoForm.title} onChange={e => setNcoForm({ ...ncoForm, title: e.target.value })} placeholder="z.B. Gratis Shampooprobe / Kleine Pommes / Ayran gratis" className="rounded-xl mt-1" />
+              </div>
+              <div>
+                <Label>Beschreibung</Label>
+                <div className="mt-1">
+                  <RichTextEditor value={ncoForm.description} onChange={v => setNcoForm({...ncoForm, description: v})} placeholder="Details zum Angebot..." rows={2} />
+                </div>
+              </div>
+              <div>
+                <Label>Bild (optional)</Label>
+                <label className="cursor-pointer block mt-1 border-2 border-dashed border-border rounded-xl p-4 text-center hover:border-primary/50 transition-colors">
+                  <input type="file" accept="image/*" className="hidden" onChange={e => { const f = e.target.files?.[0]; if (f) handleNcoImageUpload(f); }} />
+                  {ncoForm.image_url ? (
+                    <div className="relative inline-block">
+                      <img src={ncoForm.image_url} alt="Preview" className="w-20 h-20 object-cover mx-auto rounded-lg" />
+                      <Button type="button" variant="destructive" size="sm" className="absolute -top-2 -right-2 h-6 w-6 p-0 rounded-full" onClick={(e) => { e.preventDefault(); setNcoForm(prev => ({...prev, image_url: ''})); }}>
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
                     </div>
-                  </div>
-                  <div>
-                    <Label>Bild (optional)</Label>
-                    <label className="cursor-pointer block mt-1 border-2 border-dashed border-border rounded-xl p-4 text-center hover:border-primary/50 transition-colors">
-                      <input type="file" accept="image/*" className="hidden" onChange={e => { const f = e.target.files?.[0]; if (f) handleNcoImageUpload(f); }} />
-                      {ncoForm.image_url ? (
-                        <div className="relative inline-block">
-                          <img src={ncoForm.image_url} alt="Preview" className="w-20 h-20 object-cover mx-auto rounded-lg" />
-                          <Button type="button" variant="destructive" size="sm" className="absolute -top-2 -right-2 h-6 w-6 p-0 rounded-full" onClick={(e) => { e.preventDefault(); setNcoForm(prev => ({...prev, image_url: ''})); }}>
-                            <Trash2 className="h-3 w-3" />
-                          </Button>
-                        </div>
-                      ) : (
-                        <span className="text-sm text-muted-foreground flex items-center justify-center gap-2">
-                          {uploadingNcoImage ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
-                          {uploadingNcoImage ? 'Hochladen...' : 'Bild hochladen'}
-                        </span>
-                      )}
-                    </label>
-                  </div>
-                </>
-              ) : (
-                <>
-                  <div className="p-4 bg-primary/5 rounded-xl border border-primary/10 text-sm text-muted-foreground">
-                    <p className="font-medium text-foreground mb-1">💡 Willkommens-Bonuspunkte</p>
-                    <p>Diese Funktion versorgt Kunden, die das erste Mal bei dir Punkte sammeln, direkt mit einer großen Anzahl an Punkten – damit sie schneller Prämien bei dir einlösen können und von Anfang an motiviert sind.</p>
-                  </div>
-                  <div>
-                    <Label>Anzahl Bonuspunkte</Label>
-                    <Input type="number" min={1} value={ncoForm.bonus_stamps || ''} onChange={e => setNcoForm({ ...ncoForm, bonus_stamps: parseInt(e.target.value) || 0 })} placeholder="z.B. 10" className="rounded-xl mt-1 w-32" />
-                  </div>
-                  <div>
-                    <Label>Beschreibung (optional)</Label>
-                    <div className="mt-1">
-                      <RichTextEditor value={ncoForm.description} onChange={v => setNcoForm({...ncoForm, description: v})} placeholder="z.B. Willkommen! Hier sind deine Startpunkte 🎉" rows={2} />
-                    </div>
-                  </div>
-                </>
-              )}
+                  ) : (
+                    <span className="text-sm text-muted-foreground flex items-center justify-center gap-2">
+                      {uploadingNcoImage ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+                      {uploadingNcoImage ? 'Hochladen...' : 'Bild hochladen'}
+                    </span>
+                  )}
+                </label>
+              </div>
             </div>
             <DialogFooter>
               <Button variant="outline" onClick={() => setShowNcoDialog(false)} className="rounded-xl">Abbrechen</Button>
-              <Button onClick={handleSaveNco} disabled={saving || (ncoGiftType === 'offer' && !ncoForm.title) || (ncoGiftType === 'points' && !ncoForm.bonus_stamps)} className="rounded-xl">
+              <Button onClick={handleSaveNco} disabled={saving || !ncoForm.title} className="rounded-xl">
                 {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
                 {newCustomerOffer ? 'Aktualisieren' : 'Erstellen'}
               </Button>
