@@ -96,6 +96,18 @@ export function DeepLinkProvider({ children }: DeepLinkProviderProps) {
     }
   }, [navigate]);
 
+  // Web-Pfad: Wenn die App im Browser geöffnet wird via /i/CODE,
+  // den Code speichern und zur Auth umleiten
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const path = window.location.pathname;
+    const m = path.match(/^\/i\/([A-Za-z0-9]{4,})/);
+    if (m) {
+      storePendingInvite(m[1]);
+      navigate('/app/auth', { replace: true });
+    }
+  }, [navigate]);
+
   useEffect(() => {
     let cleanup: (() => void) | undefined;
 
