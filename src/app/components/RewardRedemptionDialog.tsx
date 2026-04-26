@@ -130,7 +130,7 @@ export const RewardRedemptionDialog = ({
   if (redemptionSuccess) {
     return (
       <Dialog open={open} onOpenChange={handleClose}>
-        <DialogContent className="max-w-[320px] mx-auto rounded-2xl bg-background/95 backdrop-blur-sm [&>button]:rounded-lg [&>button]:p-1 [&>button]:opacity-100 [&>button>svg]:h-5 [&>button>svg]:w-5 [&>button>svg]:stroke-[2.5]">
+        <DialogContent className="max-w-[320px] mx-auto rounded-2xl border-0 bg-background/95 backdrop-blur-sm [&>button]:rounded-lg [&>button]:p-1 [&>button]:opacity-100 [&>button>svg]:h-5 [&>button>svg]:w-5 [&>button>svg]:stroke-[2.5]">
           <div className="text-center py-6">
             <div className="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-4">
               <Check className="h-10 w-10 text-green-600" />
@@ -153,7 +153,7 @@ export const RewardRedemptionDialog = ({
   if (error && !isScanning) {
     return (
       <Dialog open={open} onOpenChange={handleClose}>
-        <DialogContent className="max-w-[320px] mx-auto rounded-2xl bg-background/95 backdrop-blur-sm [&>button]:rounded-lg [&>button]:p-1 [&>button]:opacity-100 [&>button>svg]:h-5 [&>button>svg]:w-5 [&>button>svg]:stroke-[2.5]">
+        <DialogContent className="max-w-[320px] mx-auto rounded-2xl border-0 bg-background/95 backdrop-blur-sm [&>button]:rounded-lg [&>button]:p-1 [&>button]:opacity-100 [&>button>svg]:h-5 [&>button>svg]:w-5 [&>button>svg]:stroke-[2.5]">
           <div className="text-center py-6">
             <div className="w-20 h-20 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-4">
               <AlertCircle className="h-10 w-10 text-red-600" />
@@ -174,7 +174,7 @@ export const RewardRedemptionDialog = ({
   if (isScanning) {
     return (
       <Dialog open={open} onOpenChange={() => {}}>
-        <DialogContent className="max-w-[320px] mx-auto rounded-2xl bg-background/95 backdrop-blur-sm [&>button]:rounded-lg [&>button]:p-1 [&>button]:opacity-100 [&>button>svg]:h-5 [&>button>svg]:w-5 [&>button>svg]:stroke-[2.5]" onPointerDownOutside={(e) => e.preventDefault()}>
+        <DialogContent className="max-w-[320px] mx-auto rounded-2xl border-0 bg-background/95 backdrop-blur-sm [&>button]:rounded-lg [&>button]:p-1 [&>button]:opacity-100 [&>button>svg]:h-5 [&>button>svg]:w-5 [&>button>svg]:stroke-[2.5]" onPointerDownOutside={(e) => e.preventDefault()}>
           <div className="text-center py-6">
             <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4 animate-pulse">
               <Smartphone className="h-10 w-10 text-primary" />
@@ -198,7 +198,7 @@ export const RewardRedemptionDialog = ({
   // Initial state
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[320px] mx-auto rounded-2xl bg-background/95 backdrop-blur-sm [&>button]:rounded-lg [&>button]:p-1 [&>button]:opacity-100 [&>button>svg]:h-5 [&>button>svg]:w-5 [&>button>svg]:stroke-[2.5]">
+      <DialogContent className="max-w-[320px] mx-auto rounded-2xl border-0 bg-background/95 backdrop-blur-sm [&>button]:rounded-lg [&>button]:p-1 [&>button]:opacity-100 [&>button>svg]:h-5 [&>button>svg]:w-5 [&>button>svg]:stroke-[2.5]">
         <DialogHeader>
           <DialogTitle className="text-center">Prämie</DialogTitle>
         </DialogHeader>
