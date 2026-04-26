@@ -277,9 +277,8 @@ const Marketing = () => {
     setSavingReferral(true);
     try {
       const { error } = await supabase.from("customers").update({
-        referral_enabled: referralEnabled,
+        referral_enabled: true,
         referral_inviter_points: referralInviterPoints,
-        referral_invitee_points: referralInviteePoints,
         updated_at: new Date().toISOString(),
       }).eq("id", customerId);
       if (error) throw error;
