@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { nfcService, NfcReadResult } from '@/app/services/nfcService';
 import { pushNotificationService } from '@/app/services/pushNotificationService';
 import { toast } from 'sonner';
+import { maybeAwardReferralBonus } from '@/app/lib/referralBonus';
 
 interface UseNewCustomerOfferRedemptionProps {
   userId: string | undefined;
@@ -162,6 +163,12 @@ export const useNewCustomerOfferRedemption = ({
 
       const totalPoints = nfcPointsAwarded + bonusStamps;
       pushNotificationService.notifyNewCustomerOfferRedeemed(totalPoints, merchantName);
+
+      // Referral-Bonus prüfen — typischer Pfad für Eingeladene mit Welcome-Bonus
+      await maybeAwardReferralBonus({
+        userId,
+        merchantCustomerId: merchantId,
+      });
 
       return { success: true, totalPoints };
     } catch (error) {

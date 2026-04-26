@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { offlineQueueService, PendingStamp } from '@/app/services/offlineQueueService';
 import { useNetworkStatus } from './useNetworkStatus';
 import { toast } from 'sonner';
+import { maybeAwardReferralBonus } from '@/app/lib/referralBonus';
 
 /**
  * Hook that automatically syncs pending offline stamps when internet is restored.
@@ -31,11 +32,19 @@ export const useOfflineSync = () => {
 
         if (error) throw error;
 
-        const response = data as { success: boolean; points_awarded?: number; merchant_name?: string; error?: string };
+        const response = data as { success: boolean; points_awarded?: number; merchant_name?: string; merchant_customer_id?: string; error?: string };
 
         if (response.success) {
           offlineQueueService.markSynced(stamp.id);
           toast.success(`Offline-Stempel synchronisiert: +${response.points_awarded} Punkte`);
+
+          // Referral-Bonus prüfen (auch nach Offline-Sync)
+          if (response.merchant_customer_id) {
+            await maybeAwardReferralBonus({
+              userId: stamp.userId,
+              merchantCustomerId: response.merchant_customer_id,
+            });
+          }
         } else {
           offlineQueueService.markError(stamp.id, response.error || 'Unbekannter Fehler');
           toast.error(`Offline-Stempel abgelehnt: ${response.error}`);
