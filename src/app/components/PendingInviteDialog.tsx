@@ -10,6 +10,7 @@ import { clearPendingInvite, getPendingInviteCode, storePendingInvite } from '@/
 
 interface InviteData {
   invitation_id: string;
+  share_code: string;
   merchant_customer_id: string;
   merchant_name: string;
   logo_url: string | null;
@@ -132,6 +133,7 @@ export function PendingInviteDialog() {
       }
       setAccepted({
         invitation_id: result.invitation_id!,
+        share_code: preview.share_code,
         merchant_customer_id: result.merchant_customer_id!,
         merchant_name: preview.merchant_name,
         logo_url: preview.logo_url,
