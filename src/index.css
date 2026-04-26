@@ -25,10 +25,10 @@ All colors MUST be HSL.
 @layer base {
   :root {
     /* Light professional theme */
-    --background: 0 0% 100%;         /* #FFFFFF - white background */
+    --background: 270 30% 96%;       /* soft lavender background for contrast against cards */
     --foreground: 0 0% 10%;          /* #1a1a1a - dark text */
 
-    --card: 0 0% 98%;                /* #fafafa light cards */
+    --card: 0 0% 100%;               /* pure white cards stand out clearly */
     --card-foreground: 0 0% 10%;
 
     --popover: 0 0% 100%;
