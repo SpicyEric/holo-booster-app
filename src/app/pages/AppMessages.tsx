@@ -244,8 +244,8 @@ export const AppMessages = () => {
           messages.map((message) => (
             <Card
               key={message.id}
-              className={`p-4 cursor-pointer hover:shadow-md transition-shadow active:scale-[0.98] ${
-                !message.read_at ? 'border-l-4 border-l-primary' : ''
+              className={`p-4 cursor-pointer hover:shadow-md transition-shadow active:scale-[0.98] border-0 ${
+                !message.read_at ? 'bg-primary/[0.08] dark:bg-primary/[0.12]' : 'bg-black/[0.06] dark:bg-white/[0.04]'
               }`}
               onClick={() => navigate(`/app/messages/${message.id}`)}
             >
