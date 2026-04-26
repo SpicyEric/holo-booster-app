@@ -43,6 +43,7 @@ export function PendingInviteDialog() {
   const [accepting, setAccepting] = useState(false);
   const [preview, setPreview] = useState<PreviewData | null>(null);
   const [accepted, setAccepted] = useState<InviteData | null>(null);
+  const [ineligible, setIneligible] = useState<IneligibleReason | null>(null);
 
   useEffect(() => {
     const code = getPendingInviteCode();
