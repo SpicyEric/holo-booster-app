@@ -48,8 +48,14 @@ export function DeepLinkProvider({ children }: DeepLinkProviderProps) {
         const code = inviteSchemeMatch[1];
         console.log('🎁 Invite Code aus eloyo:// erkannt:', code);
         storePendingInvite(code);
-        // Kein navigate hier – PendingInviteDialog reagiert auf den gespeicherten Code,
-        // sobald der User authentifiziert ist
+        // In den App-Bereich wechseln, damit der PendingInviteDialog rendert
+        // (oder zur Auth, falls noch nicht eingeloggt — Dialog erscheint nach Login)
+        try {
+          window.dispatchEvent(new CustomEvent('eloyo:pending-invite', { detail: code }));
+        } catch {
+          // ignore
+        }
+        navigate('/app', { replace: true });
         return;
       }
 
@@ -64,6 +70,12 @@ export function DeepLinkProvider({ children }: DeepLinkProviderProps) {
           const code = inviteWebMatch[1];
           console.log('🎁 Invite Code aus Web-Link erkannt:', code);
           storePendingInvite(code);
+          try {
+            window.dispatchEvent(new CustomEvent('eloyo:pending-invite', { detail: code }));
+          } catch {
+            // ignore
+          }
+          navigate('/app', { replace: true });
           return;
         }
 
