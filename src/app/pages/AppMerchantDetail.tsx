@@ -129,6 +129,7 @@ export const AppMerchantDetail = () => {
   const [selectedReward, setSelectedReward] = useState<Reward | null>(null);
   const [rewardDialogOpen, setRewardDialogOpen] = useState(false);
   const [newCustomerOfferDialogOpen, setNewCustomerOfferDialogOpen] = useState(false);
+  const [newCustomerOfferDialogMode, setNewCustomerOfferDialogMode] = useState<'preview' | 'unlocked'>('preview');
   const [activeInvitation, setActiveInvitation] = useState<{
     redemption_id: string;
     invitation_id: string;
