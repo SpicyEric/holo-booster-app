@@ -72,11 +72,12 @@ export function PendingInviteDialog() {
   }, [preview?.share_code, accepted?.share_code]);
 
   const loadPreview = async (code: string) => {
-    // Bereits angenommene Einladungen niemals erneut als Preview anzeigen
+    // Bereits angenommene/abgelehnte Einladungen niemals erneut als Preview anzeigen
     if (isInviteConsumed(code)) {
       clearPendingInvite();
       return;
     }
+
     try {
       const { data, error } = await supabase.rpc('lookup_invitation', { p_share_code: code });
       if (error) throw error;
@@ -90,9 +91,47 @@ export function PendingInviteDialog() {
         invitee_points?: number;
       };
       if (!result.success) {
+        console.info('[PendingInviteDialog] lookup_invitation not successful:', result.error);
+        markInviteConsumed(code);
         clearPendingInvite();
         return;
       }
+
+      // Wenn User eingeloggt ist: read-only Eligibility-Check, BEVOR der Dialog erscheint.
+      // (Wir wollen NICHT consume_invitation aufrufen — das würde das 7-Tage-Fenster sofort starten.)
+      if (user && result.merchant_customer_id) {
+        // 1) User darf sich nicht selbst einladen / hat schon Punkte beim Merchant
+        const { data: existingAccount } = await supabase
+          .from('loyalty_accounts')
+          .select('id, current_points_balance')
+          .eq('user_id', user.id)
+          .eq('merchant_customer_id', result.merchant_customer_id)
+          .maybeSingle();
+
+        if (existingAccount && existingAccount.current_points_balance > 0) {
+          console.info('[PendingInviteDialog] user is already customer of merchant — skipping');
+          markInviteConsumed(code);
+          clearPendingInvite();
+          return;
+        }
+
+        // 2) User hat bereits eine offene Redemption für DIESEN Merchant
+        const { data: existingRedemption } = await supabase
+          .from('invitation_redemptions')
+          .select('id, bonus_window_starts_at, bonus_awarded_at, invitation_id, invitations!inner(merchant_customer_id)')
+          .eq('invitee_user_id', user.id)
+          .eq('invitations.merchant_customer_id', result.merchant_customer_id)
+          .is('bonus_awarded_at', null)
+          .maybeSingle();
+
+        if (existingRedemption) {
+          console.info('[PendingInviteDialog] user already has open redemption — skipping');
+          markInviteConsumed(code);
+          clearPendingInvite();
+          return;
+        }
+      }
+
       setPreview({
         share_code: code,
         merchant_customer_id: result.merchant_customer_id!,
@@ -104,6 +143,7 @@ export function PendingInviteDialog() {
       setOpen(true);
     } catch (err) {
       console.error('lookup_invitation Fehler:', err);
+      markInviteConsumed(code);
       clearPendingInvite();
     }
   };

@@ -54,7 +54,7 @@ Deno.serve(async (req) => {
     }
 
     // Combine both lists, deduplicate by user_id
-    const allRepsToDelete = [...(expiredReps || [])];
+    const allRepsToDelete: any[] = [...(expiredReps || [])];
     const seenUserIds = new Set((expiredReps || []).map((r: any) => r.user_id));
     for (const rep of filteredInactive) {
       if (!seenUserIds.has(rep.user_id)) {

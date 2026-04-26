@@ -44,12 +44,14 @@ export function OpenInvitationsBanner() {
       const collected: OpenInvitation[] = [];
 
       // 1) Als EINGELADENER: invitation_redemptions wo invitee_user_id = ich, noch nicht gestempelt
-      const { data: redemptions } = await supabase
+      const { data: redemptions, error: redErr } = await supabase
         .from('invitation_redemptions')
         .select('id, invitation_id, accepted_at, bonus_window_starts_at, invitee_stamped_at, bonus_awarded_at')
         .eq('invitee_user_id', user.id)
         .is('invitee_stamped_at', null)
         .is('bonus_awarded_at', null);
+
+      console.log('[OpenInvitationsBanner] redemptions for', user.id, ':', redemptions, 'err:', redErr);
 
       if (redemptions && redemptions.length > 0) {
         const invIds = redemptions.map(r => r.invitation_id);
@@ -73,7 +75,6 @@ export function OpenInvitationsBanner() {
           // Bonus-Fenster: 7 Tage ab bonus_window_starts_at (fallback accepted_at)
           const start = r.bonus_window_starts_at ?? r.accepted_at;
           const windowEnd = new Date(new Date(start).getTime() + 7 * 24 * 60 * 60 * 1000).toISOString();
-          // Nur anzeigen wenn weder Bonus-Fenster noch Einladung abgelaufen
           if (new Date(windowEnd).getTime() < Date.now()) continue;
 
           collected.push({
@@ -89,17 +90,18 @@ export function OpenInvitationsBanner() {
         }
       }
 
-      // 2) Als EINLADENDER: invitations status pending, noch nicht abgelaufen
-      const { data: myInvitations } = await supabase
+      // 2) Als EINLADENDER: invitations status pending oder accepted, noch nicht abgelaufen
+      const { data: myInvitations, error: invErr } = await supabase
         .from('invitations')
         .select('id, merchant_customer_id, expires_at, status, created_at')
         .eq('inviter_user_id', user.id)
-        .eq('status', 'pending')
+        .in('status', ['pending', 'accepted'])
         .gt('expires_at', new Date().toISOString())
         .order('created_at', { ascending: false });
 
+      console.log('[OpenInvitationsBanner] my invitations:', myInvitations, 'err:', invErr);
+
       if (myInvitations && myInvitations.length > 0) {
-        // Schon angenommen? Dann separat als "wartet auf Stempel" zeigen.
         const ids = myInvitations.map(i => i.id);
         const { data: redForMine } = await supabase
           .from('invitation_redemptions')
@@ -138,6 +140,7 @@ export function OpenInvitationsBanner() {
         seen.add(key);
         deduped.push(it);
       }
+      console.log('[OpenInvitationsBanner] final items:', deduped);
       setItems(deduped);
     } catch (err) {
       console.warn('[OpenInvitationsBanner] load error:', err);
