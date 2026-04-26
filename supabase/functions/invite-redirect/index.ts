@@ -31,6 +31,7 @@ function buildLandingHtml(opts: {
 }): string {
   const { code, merchantName, logoUrl, coverUrl, inviteePoints, platform } = opts;
   const appLink = `${APP_SCHEME}${code}`;
+  const androidIntentLink = `intent://invite/${code}#Intent;scheme=eloyo;package=com.eloyo.app;S.browser_fallback_url=${encodeURIComponent(ANDROID_STORE_URL)};end`;
   const storeLink = platform === 'ios' ? IOS_STORE_URL : platform === 'android' ? ANDROID_STORE_URL : FALLBACK_URL;
   const safeName = merchantName.replace(/</g, '&lt;');
   const safeCover = (coverUrl || logoUrl || '').replace(/"/g, '');
@@ -92,7 +93,7 @@ ${safeCover ? `<meta property="og:image" content="${safeCover}" />` : ''}
       }
     }, 1500);
     // Versuche App zu öffnen
-    window.location.href = '${appLink}';
+      window.location.href = platform === 'android' ? '${androidIntentLink}' : '${appLink}';
     // Wenn Tab inaktiv wird → App ist geöffnet → Timer canceln
     document.addEventListener('visibilitychange', function(){
       if (document.hidden) clearTimeout(fallbackTimer);
