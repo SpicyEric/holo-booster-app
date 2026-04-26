@@ -409,6 +409,24 @@ export const AppScan = () => {
         setResult({ success: true, points: response.points_awarded, totalPoints: response.total_points, merchantName, merchantCustomerId: response.merchant_customer_id });
         toast.success(`+${response.points_awarded} Punkte gesammelt!`);
         console.log('[AppScan] setResult called with merchantCustomerId:', response.merchant_customer_id);
+
+        // Referral-Bonus prüfen (Phase 1: Freund einladen)
+        if (response.merchant_customer_id) {
+          try {
+            const { data: refData } = await supabase.rpc('process_referral_bonus', {
+              p_user_id: currentUserId,
+              p_merchant_customer_id: response.merchant_customer_id,
+            });
+            const ref = refData as { processed?: boolean; bonus_awarded?: boolean; inviter_points?: number; invitee_points?: number; inviter_user_id?: string; invitee_user_id?: string } | null;
+            if (ref?.bonus_awarded) {
+              const isInviter = ref.inviter_user_id === currentUserId;
+              const bonus = isInviter ? ref.inviter_points : ref.invitee_points;
+              toast.success(`🎉 Empfehlungs-Bonus: +${bonus} Punkte!`, { duration: 5000 });
+            }
+          } catch (refErr) {
+            console.warn('[AppScan] Referral bonus check failed:', refErr);
+          }
+        }
       } else {
         setResult({ success: false, error: response.error || 'Stempel konnte nicht verarbeitet werden.' });
         toast.error(response.error || 'Stempel fehlgeschlagen');

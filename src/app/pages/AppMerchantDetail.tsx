@@ -13,6 +13,8 @@ import { toast } from 'sonner';
 import { BottomNav } from '@/app/components/layout/BottomNav';
 import { RewardRedemptionDialog } from '@/app/components/RewardRedemptionDialog';
 import { NewCustomerOfferDialog } from '@/app/components/NewCustomerOfferDialog';
+import { InviteFriendDialog } from '@/app/components/InviteFriendDialog';
+import { UserPlus } from 'lucide-react';
 
 interface Merchant {
   id: string;
@@ -32,6 +34,9 @@ interface Merchant {
   google_review_url: string | null;
   latitude: number | null;
   longitude: number | null;
+  referral_enabled?: boolean | null;
+  referral_inviter_points?: number | null;
+  referral_invitee_points?: number | null;
 }
 
 interface Reward {
@@ -117,6 +122,7 @@ export const AppMerchantDetail = () => {
     alreadyClaimed: false,
   });
   const [claimingReviewBonus, setClaimingReviewBonus] = useState(false);
+  const [inviteOpen, setInviteOpen] = useState(false);
   
   // Dialog states
   const [selectedReward, setSelectedReward] = useState<Reward | null>(null);
@@ -800,6 +806,17 @@ export const AppMerchantDetail = () => {
                   )}
                 </CardContent>
               </Card>
+
+              {merchant.referral_enabled !== false && (
+                <Button
+                  onClick={() => setInviteOpen(true)}
+                  className="w-full h-12 rounded-xl gap-2"
+                  variant="outline"
+                >
+                  <UserPlus className="h-4 w-4" />
+                  Freund einladen
+                </Button>
+              )}
             </TabsContent>
 
             <TabsContent value="transactions" className="mt-0 space-y-3">
@@ -867,6 +884,17 @@ export const AppMerchantDetail = () => {
           open={newCustomerOfferDialogOpen}
           onOpenChange={setNewCustomerOfferDialogOpen}
           onRedemptionComplete={handleNewCustomerOfferRedeemed}
+        />
+      )}
+
+      {merchant && (
+        <InviteFriendDialog
+          open={inviteOpen}
+          onOpenChange={setInviteOpen}
+          merchantId={merchant.id}
+          merchantName={merchantName}
+          inviterPoints={merchant.referral_inviter_points ?? 3}
+          inviteePoints={merchant.referral_invitee_points ?? 1}
         />
       )}
 

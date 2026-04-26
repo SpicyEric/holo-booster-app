@@ -83,3 +83,6 @@ verify_jwt = false
 
 [functions.deactivate-expired-customers]
 verify_jwt = false
+
+[functions.invite-redirect]
+verify_jwt = false
