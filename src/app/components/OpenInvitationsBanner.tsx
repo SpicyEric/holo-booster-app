@@ -35,6 +35,25 @@ export function OpenInvitationsBanner() {
   useEffect(() => {
     if (!user) return;
     void load();
+
+    // Realtime: bei Änderungen an invitations / redemptions neu laden
+    const channel = supabase
+      .channel(`open-invitations-${user.id}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'invitations', filter: `inviter_user_id=eq.${user.id}` },
+        () => void load(),
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'invitation_redemptions', filter: `invitee_user_id=eq.${user.id}` },
+        () => void load(),
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id]);
 

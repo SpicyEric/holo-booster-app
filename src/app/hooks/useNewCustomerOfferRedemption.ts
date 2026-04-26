@@ -162,13 +162,18 @@ export const useNewCustomerOfferRedemption = ({
       }
 
       const totalPoints = nfcPointsAwarded + bonusStamps;
-      pushNotificationService.notifyNewCustomerOfferRedeemed(totalPoints, merchantName);
 
-      // Referral-Bonus prüfen — typischer Pfad für Eingeladene mit Welcome-Bonus
-      await maybeAwardReferralBonus({
+      // Referral-Bonus zuerst prüfen — wenn ausgezahlt, übernimmt notify-referral-bonus
+      // die Push-Benachrichtigung. Sonst lokale Welcome-Push.
+      const referralResult = await maybeAwardReferralBonus({
         userId,
         merchantCustomerId: merchantId,
+        showToast: false, // Toast wird vom Caller (Welcome-Flow) bereits gezeigt
       });
+
+      if (!referralResult?.bonus_awarded) {
+        pushNotificationService.notifyNewCustomerOfferRedeemed(totalPoints, merchantName);
+      }
 
       return { success: true, totalPoints };
     } catch (error) {

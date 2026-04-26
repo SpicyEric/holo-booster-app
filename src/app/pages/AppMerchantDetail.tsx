@@ -145,6 +145,54 @@ export const AppMerchantDetail = () => {
     }
   }, [id, initialMerchant, user]);
 
+  // Auto-Refresh: Punkte neu laden wenn der Tab wieder sichtbar/fokussiert wird
+  // ODER wenn ein point_transaction für diesen User+Merchant via Realtime eintrifft
+  // (z.B. nach NFC-Scan, Welcome-Bonus oder Referral-Bonus auf einem anderen Device).
+  useEffect(() => {
+    if (!id || !user) return;
+
+    const refresh = () => {
+      void loadMerchant(true);
+    };
+
+    const onVisibility = () => {
+      if (document.visibilityState === 'visible') refresh();
+    };
+    document.addEventListener('visibilitychange', onVisibility);
+    window.addEventListener('focus', refresh);
+
+    // Realtime: punkt_transactions für diesen Merchant
+    const channel = supabase
+      .channel(`merchant-detail-${id}-${user.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'point_transactions',
+          filter: `merchant_customer_id=eq.${id}`,
+        },
+        () => refresh(),
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'loyalty_accounts',
+          filter: `merchant_customer_id=eq.${id}`,
+        },
+        () => refresh(),
+      )
+      .subscribe();
+
+    return () => {
+      document.removeEventListener('visibilitychange', onVisibility);
+      window.removeEventListener('focus', refresh);
+      supabase.removeChannel(channel);
+    };
+  }, [id, user]);
+
   useEffect(() => {
     if (scanAnimationPlayedRef.current || !shouldAnimateFromScan || scanAwardedPoints <= 0) {
       setDisplayPoints(userPoints);
