@@ -40,6 +40,13 @@ export function PendingInviteDialog() {
   const [accepted, setAccepted] = useState<InviteData | null>(null);
 
   useEffect(() => {
+    if (!user) return;
+    const code = getPendingInviteCode();
+    if (code) void loadPreview(code);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
+
+  useEffect(() => {
     const code = getPendingInviteCode();
     if (code) {
       void loadPreview(code);
