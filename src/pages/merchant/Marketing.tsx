@@ -112,7 +112,7 @@ const Marketing = () => {
 
   // --- Referral / Empfehlungen state ---
   const [referralEnabled, setReferralEnabled] = useState(true);
-  const [referralInviterPoints, setReferralInviterPoints] = useState(3);
+  const [referralInviterPoints, setReferralInviterPoints] = useState(20);
   const [referralInviteePoints, setReferralInviteePoints] = useState(1);
   const [savingReferral, setSavingReferral] = useState(false);
   const [referralStats, setReferralStats] = useState<{
@@ -195,7 +195,7 @@ const Marketing = () => {
         if (cd.avg_revenue) setAvgOrderValue(cd.avg_revenue);
         // Referral settings
         setReferralEnabled((cd as any).referral_enabled ?? true);
-        setReferralInviterPoints((cd as any).referral_inviter_points ?? 3);
+        setReferralInviterPoints((cd as any).referral_inviter_points ?? 20);
         setReferralInviteePoints((cd as any).referral_invitee_points ?? 1);
       }
 
@@ -760,7 +760,7 @@ const Marketing = () => {
                       <Label className="font-medium">Bonus für den Einlader</Label>
                       <p className="text-xs text-muted-foreground">Punkte, die der Kunde bekommt, der einen Freund erfolgreich eingeladen hat.</p>
                       <div className="flex items-center gap-4">
-                        <Slider value={[referralInviterPoints]} onValueChange={v => setReferralInviterPoints(v[0])} min={1} max={20} step={1} className="flex-1" />
+                        <Slider value={[referralInviterPoints]} onValueChange={v => setReferralInviterPoints(v[0])} min={1} max={50} step={1} className="flex-1" />
                         <span className="text-lg font-bold text-primary min-w-[3rem] text-center">{referralInviterPoints}</span>
                       </div>
                     </div>
