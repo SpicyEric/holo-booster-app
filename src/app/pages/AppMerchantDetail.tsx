@@ -735,7 +735,7 @@ export const AppMerchantDetail = () => {
         key: reward.id,
         element: (
           <Card 
-            className={`cursor-pointer hover:shadow-lg transition-shadow ${canRedeem ? 'reward-glow border-0' : 'border-0 bg-black/[0.06] dark:bg-white/[0.04]'}`}
+            className={`cursor-pointer ${canRedeem ? 'reward-glow border-0' : 'border-0 bg-black/[0.06] dark:bg-white/[0.04]'}`}
             onClick={() => handleRewardClick(reward)}
           >
             <CardContent className="p-4 flex items-center gap-4">
