@@ -1094,7 +1094,7 @@ export const AppMerchantDetail = () => {
           onOpenChange={setInviteOpen}
           merchantId={merchant.id}
           merchantName={merchantName}
-          inviterPoints={merchant.referral_inviter_points ?? 3}
+          inviterPoints={merchant.referral_inviter_points ?? 20}
           inviteePoints={merchant.referral_invitee_points ?? 1}
         />
       )}
