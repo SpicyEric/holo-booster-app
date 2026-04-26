@@ -215,6 +215,9 @@ export function PendingInviteDialog() {
         invitee_points: preview.invitee_points,
       });
 
+      // Bug 3 Fix: Banner im Feed sofort aktualisieren (Realtime ist nicht garantiert sofort da)
+      window.dispatchEvent(new CustomEvent('eloyo:invitation-changed'));
+
       // Push an den Einladenden – mit Retry, falls erster Versuch scheitert.
       // Wir blockieren das UI nicht, aber wir versuchen es bis zu 2x mit Backoff.
       void (async () => {
