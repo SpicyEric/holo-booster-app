@@ -208,6 +208,9 @@ const Landing = () => {
         </motion.div>
       </section>
 
+      {/* ═══════ HERO PARALLAX (Demo) ═══════ */}
+      <HeroParallax products={heroParallaxProducts} />
+
       {/* ═══════ FLAGSHIP FEATURE: Push ═══════ */}
       <section className="relative z-10 bg-[#f4f3fb] py-24 px-6">
         <div className="max-w-7xl mx-auto">
