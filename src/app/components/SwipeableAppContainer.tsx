@@ -466,7 +466,7 @@ const AppHomeContent = () => {
         return (
           <div
             key={`${item.type}-${item.id}`}
-            className={`bg-card relative ${isBoostedInRange ? 'ring-2 ring-amber-400/60 shadow-[0_0_15px_-3px_rgba(245,158,11,0.3)]' : ''}`}
+            className={`bg-card border border-border shadow-card relative ${isBoostedInRange ? 'ring-2 ring-amber-400/60 shadow-[0_0_15px_-3px_rgba(245,158,11,0.3)]' : ''}`}
             style={isBoostedInRange ? { animation: 'boost-glow 3s ease-in-out infinite' } : undefined}
           >
 
