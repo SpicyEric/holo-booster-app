@@ -50,7 +50,7 @@ export const NewCustomerOfferDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[340px] rounded-3xl p-0 gap-0 overflow-hidden border-0">
+      <DialogContent className="max-w-[340px] rounded-3xl p-0 gap-0 overflow-hidden border-0 [&>button]:hidden">
         {/* Header-Bild (Cover oder Logo als Fallback) */}
         <div
           className="h-32 bg-gradient-to-br from-primary to-primary/60"
