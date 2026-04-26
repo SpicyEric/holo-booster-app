@@ -129,6 +129,7 @@ export const AppMerchantDetail = () => {
   const [selectedReward, setSelectedReward] = useState<Reward | null>(null);
   const [rewardDialogOpen, setRewardDialogOpen] = useState(false);
   const [newCustomerOfferDialogOpen, setNewCustomerOfferDialogOpen] = useState(false);
+  const [newCustomerOfferDialogMode, setNewCustomerOfferDialogMode] = useState<'preview' | 'unlocked'>('preview');
   const [activeInvitation, setActiveInvitation] = useState<{
     redemption_id: string;
     invitation_id: string;
@@ -402,6 +403,21 @@ export const AppMerchantDetail = () => {
         setTransactions(transactionsResponse?.data ?? []);
         setNewCustomerOffer(offerResponse?.data ?? null);
 
+        // Auto-Trigger: Wenn eine Neukundenprämie freigeschaltet wurde (Transaktion existiert)
+        // und das Willkommens-Pop-up für diesen User+Merchant noch nicht angezeigt wurde,
+        // dann jetzt einmalig öffnen.
+        const unlockedTx = (transactionsResponse?.data ?? []).find(
+          (t: Transaction) => t.transaction_type === 'new_customer_offer_unlocked',
+        );
+        if (unlockedTx && offerResponse?.data && id) {
+          const seenKey = `eloyo:nco-welcome-shown:${user.id}:${id}`;
+          if (!localStorage.getItem(seenKey)) {
+            setNewCustomerOfferDialogMode('unlocked');
+            setNewCustomerOfferDialogOpen(true);
+            localStorage.setItem(seenKey, '1');
+          }
+        }
+
         // Einladung verarbeiten — nur anzeigen, wenn 7-Tage-Fenster noch aktiv ist
         const inviteRow = invitationResponse?.data as
           | { id: string; invitation_id: string; accepted_at: string; bonus_window_starts_at: string | null }
@@ -545,6 +561,7 @@ export const AppMerchantDetail = () => {
   };
 
   const handleNewCustomerOfferClick = () => {
+    setNewCustomerOfferDialogMode('preview');
     setNewCustomerOfferDialogOpen(true);
   };
 
@@ -1067,7 +1084,7 @@ export const AppMerchantDetail = () => {
           merchant={merchant}
           open={newCustomerOfferDialogOpen}
           onOpenChange={setNewCustomerOfferDialogOpen}
-          mode="preview"
+          mode={newCustomerOfferDialogMode}
         />
       )}
 
