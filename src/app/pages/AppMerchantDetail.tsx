@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowLeft, MapPin, Phone, Globe, Instagram, Clock, Gift, Sparkles, History, Star } from 'lucide-react';
+import { ArrowLeft, MapPin, Phone, Globe, Instagram, Clock, Gift, Sparkles, History, Star, PartyPopper, Timer } from 'lucide-react';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
@@ -128,6 +129,14 @@ export const AppMerchantDetail = () => {
   const [selectedReward, setSelectedReward] = useState<Reward | null>(null);
   const [rewardDialogOpen, setRewardDialogOpen] = useState(false);
   const [newCustomerOfferDialogOpen, setNewCustomerOfferDialogOpen] = useState(false);
+  const [activeInvitation, setActiveInvitation] = useState<{
+    redemption_id: string;
+    invitation_id: string;
+    expires_at: string;
+    inviter_points: number;
+    invitee_points: number;
+  } | null>(null);
+  const [invitationDialogOpen, setInvitationDialogOpen] = useState(false);
   const headerRef = useRef<HTMLDivElement | null>(null);
   const cardRef = useRef<HTMLDivElement | null>(null);
   const pointsBadgeRef = useRef<HTMLDivElement | null>(null);
@@ -353,7 +362,7 @@ export const AppMerchantDetail = () => {
         setUserPoints(points);
         setHasEverStamped(points > 0);
 
-        const [transactionsResponse, offerResponse, claimResponse] = await Promise.all([
+        const [transactionsResponse, offerResponse, claimResponse, invitationResponse] = await Promise.all([
           loyaltyAccount
             ? supabase
                 .from('point_transactions')
@@ -377,10 +386,43 @@ export const AppMerchantDetail = () => {
                 .eq('merchant_customer_id', id)
                 .maybeSingle()
             : Promise.resolve(null),
+          // Aktive Einladung als Eingeladener für DIESEN Merchant
+          supabase
+            .from('invitation_redemptions')
+            .select('id, invitation_id, accepted_at, bonus_window_starts_at, invitee_stamped_at, bonus_awarded_at, invitations!inner(id, merchant_customer_id)')
+            .eq('invitee_user_id', user.id)
+            .eq('invitations.merchant_customer_id', id)
+            .is('invitee_stamped_at', null)
+            .is('bonus_awarded_at', null)
+            .order('accepted_at', { ascending: false })
+            .limit(1)
+            .maybeSingle(),
         ]);
 
         setTransactions(transactionsResponse?.data ?? []);
         setNewCustomerOffer(offerResponse?.data ?? null);
+
+        // Einladung verarbeiten — nur anzeigen, wenn 7-Tage-Fenster noch aktiv ist
+        const inviteRow = invitationResponse?.data as
+          | { id: string; invitation_id: string; accepted_at: string; bonus_window_starts_at: string | null }
+          | null;
+        if (inviteRow) {
+          const start = inviteRow.bonus_window_starts_at ?? inviteRow.accepted_at;
+          const expiresAt = new Date(new Date(start).getTime() + 7 * 24 * 60 * 60 * 1000).toISOString();
+          if (new Date(expiresAt).getTime() > Date.now()) {
+            setActiveInvitation({
+              redemption_id: inviteRow.id,
+              invitation_id: inviteRow.invitation_id,
+              expires_at: expiresAt,
+              inviter_points: merchantData.referral_inviter_points ?? 3,
+              invitee_points: merchantData.referral_invitee_points ?? 1,
+            });
+          } else {
+            setActiveInvitation(null);
+          }
+        } else {
+          setActiveInvitation(null);
+        }
 
         if (reviewEnabled && reviewUrl) {
           setGoogleReviewBonus({
@@ -395,6 +437,7 @@ export const AppMerchantDetail = () => {
       } else {
         setTransactions([]);
         setNewCustomerOffer(null);
+        setActiveInvitation(null);
 
         if (reviewEnabled && reviewUrl) {
           setGoogleReviewBonus({ enabled: true, pointsValue: reviewPointsVal, reviewUrl, alreadyClaimed: false });
@@ -570,6 +613,38 @@ export const AppMerchantDetail = () => {
   // Build an array of all reward items for stagger animation
   const rewardItems: { key: string; element: React.ReactNode }[] = [];
   
+  // 🎁 Aktive Einladung — IMMER ganz oben, vor allen anderen Prämien
+  if (activeInvitation) {
+    const msLeft = new Date(activeInvitation.expires_at).getTime() - Date.now();
+    const daysLeft = Math.max(1, Math.ceil(msLeft / (24 * 60 * 60 * 1000)));
+    rewardItems.push({
+      key: 'active-invitation',
+      element: (
+        <Card
+          className="border-2 border-primary bg-gradient-to-br from-primary/15 via-primary/5 to-transparent cursor-pointer hover:shadow-lg transition-shadow relative overflow-hidden"
+          onClick={() => setInvitationDialogOpen(true)}
+        >
+          <CardContent className="p-4 flex items-center gap-4">
+            <div className="w-12 h-12 rounded-lg bg-primary flex items-center justify-center shrink-0">
+              <PartyPopper className="h-6 w-6 text-primary-foreground" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <Badge variant="default" className="mb-1 text-xs">Du wurdest eingeladen 🎉</Badge>
+              <h3 className="font-medium leading-tight">Sammle deinen ersten Stempel & erhalte doppelte Punkte</h3>
+              <p className="text-xs text-muted-foreground mt-0.5 flex items-center gap-1">
+                <Timer className="h-3 w-3" />
+                Noch {daysLeft} {daysLeft === 1 ? 'Tag' : 'Tage'} Zeit
+              </p>
+            </div>
+            <Badge variant="secondary" className="shrink-0">
+              <Sparkles className="h-3 w-3 mr-1" />2×
+            </Badge>
+          </CardContent>
+        </Card>
+      ),
+    });
+  }
+
   if (newCustomerOffer && !hasEverStamped) {
     rewardItems.push({
       key: 'new-customer-offer',
@@ -980,6 +1055,70 @@ export const AppMerchantDetail = () => {
           inviteePoints={merchant.referral_invitee_points ?? 1}
         />
       )}
+
+      {/* Pop-up: Aktive Einladung — Erklärung + Countdown */}
+      <Dialog open={invitationDialogOpen} onOpenChange={setInvitationDialogOpen}>
+        <DialogContent className="max-w-[340px] rounded-3xl p-0 gap-0 overflow-hidden border-0">
+          <div
+            className="h-32 bg-gradient-to-br from-primary to-primary/60"
+            style={
+              merchant?.cover_image_url || merchant?.logo_url
+                ? {
+                    backgroundImage: `url(${merchant.cover_image_url || merchant.logo_url})`,
+                    backgroundSize: 'cover',
+                    backgroundPosition: 'center',
+                  }
+                : undefined
+            }
+          />
+          <div className="px-6 pb-6 -mt-10 text-center">
+            <div className="mx-auto h-16 w-16 rounded-2xl bg-card border-4 border-card shadow-lg overflow-hidden flex items-center justify-center mb-3">
+              {merchant?.logo_url ? (
+                <img src={merchant.logo_url} alt={merchantName} className="h-full w-full object-cover" />
+              ) : (
+                <PartyPopper className="h-8 w-8 text-primary" />
+              )}
+            </div>
+            <div className="inline-flex items-center gap-1.5 rounded-full bg-primary/15 px-3 py-1 text-xs font-semibold text-primary mb-2">
+              <Sparkles className="h-3.5 w-3.5" />
+              Du wurdest eingeladen
+            </div>
+            <h2 className="text-xl font-bold leading-tight mb-2">
+              Willkommen bei <span className="text-primary">{merchantName}</span> 🎉
+            </h2>
+            {activeInvitation && (() => {
+              const ms = new Date(activeInvitation.expires_at).getTime() - Date.now();
+              const daysLeft = Math.max(1, Math.ceil(ms / (24 * 60 * 60 * 1000)));
+              return (
+                <>
+                  <p className="text-sm text-muted-foreground leading-relaxed mb-4">
+                    Sammle innerhalb der nächsten{' '}
+                    <span className="font-semibold text-foreground">
+                      {daysLeft} {daysLeft === 1 ? 'Tag' : 'Tage'}
+                    </span>{' '}
+                    deinen <span className="font-semibold text-foreground">ersten Stempel</span> und du bekommst{' '}
+                    <span className="font-semibold text-foreground">doppelte Punkte</span> auf deinen ersten Einkauf.
+                    Auch die Person, die dich eingeladen hat, erhält dafür einen kleinen Bonus 💜
+                  </p>
+                  <div className="rounded-xl bg-primary/10 px-3 py-2.5 mb-4">
+                    <div className="text-xs text-muted-foreground">Dein Willkommensbonus</div>
+                    <div className="text-lg font-bold text-primary">
+                      +{activeInvitation.invitee_points} Bonuspunkte
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-center gap-1.5 text-xs text-muted-foreground mb-5">
+                    <Timer className="h-3.5 w-3.5" />
+                    Verlier keine Zeit — sicher dir deine doppelten Punkte, bevor die Einladung abläuft!
+                  </div>
+                </>
+              );
+            })()}
+            <Button onClick={() => setInvitationDialogOpen(false)} className="w-full h-11 rounded-xl">
+              Alles klar
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <BottomNav />
     </div>
