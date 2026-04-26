@@ -266,40 +266,18 @@ function StoresGoogleMapContent({
             onCloseClick={() => setSelectedStore(null)}
             options={{ pixelOffset: new google.maps.Size(0, -28) }}
           >
-            <div className="min-w-[220px] -m-1">
-              <div className="flex items-center gap-3 mb-3">
-                {selectedStore.logo_url ? (
-                  <img
-                    src={selectedStore.logo_url}
-                    alt={selectedStore.name}
-                    className="h-12 w-12 rounded-full object-cover flex-shrink-0"
-                  />
-                ) : (
-                  <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                    <span className="text-primary font-semibold text-lg">
-                      {selectedStore.name.charAt(0)}
-                    </span>
-                  </div>
-                )}
-                <div className="min-w-0 flex-1">
-                  <h3 className="font-semibold text-foreground text-base leading-tight truncate">
-                    {selectedStore.name}
-                  </h3>
-                  {selectedStore.category && (
-                    <p className="text-xs text-muted-foreground truncate mt-0.5">
-                      {selectedStore.category}
-                    </p>
-                  )}
-                  {typeof selectedStore.distance === 'number' && (
-                    <p className="text-xs text-muted-foreground mt-0.5">
-                      {selectedStore.distance.toFixed(1).replace('.', ',')} km entfernt
-                    </p>
-                  )}
-                </div>
-              </div>
+            <div className="min-w-[200px] px-1 py-1">
+              <h3 className="font-semibold text-foreground text-base leading-tight">
+                {selectedStore.name}
+              </h3>
+              {typeof selectedStore.distance === 'number' && (
+                <p className="text-xs text-muted-foreground mt-1">
+                  {selectedStore.distance.toFixed(1).replace('.', ',')} km entfernt
+                </p>
+              )}
               <button
                 onClick={() => navigate(`/app/merchant/${selectedStore.id}`)}
-                className="w-full px-3 py-2 bg-primary text-primary-foreground rounded-md text-sm font-medium hover:bg-primary/90 transition-colors"
+                className="w-full mt-3 px-3 py-2 bg-primary text-primary-foreground rounded-md text-sm font-medium hover:bg-primary/90 transition-colors"
               >
                 Details anzeigen
               </button>
