@@ -1056,9 +1056,69 @@ export const AppMerchantDetail = () => {
         />
       )}
 
-      <BottomNav />
-    </div>
-  );
-};
+      {/* Pop-up: Aktive Einladung — Erklärung + Countdown */}
+      <Dialog open={invitationDialogOpen} onOpenChange={setInvitationDialogOpen}>
+        <DialogContent className="max-w-[340px] rounded-3xl p-0 gap-0 overflow-hidden border-0">
+          <div
+            className="h-32 bg-gradient-to-br from-primary to-primary/60"
+            style={
+              merchant?.cover_image_url || merchant?.logo_url
+                ? {
+                    backgroundImage: `url(${merchant.cover_image_url || merchant.logo_url})`,
+                    backgroundSize: 'cover',
+                    backgroundPosition: 'center',
+                  }
+                : undefined
+            }
+          />
+          <div className="px-6 pb-6 -mt-10 text-center">
+            <div className="mx-auto h-16 w-16 rounded-2xl bg-card border-4 border-card shadow-lg overflow-hidden flex items-center justify-center mb-3">
+              {merchant?.logo_url ? (
+                <img src={merchant.logo_url} alt={merchantName} className="h-full w-full object-cover" />
+              ) : (
+                <PartyPopper className="h-8 w-8 text-primary" />
+              )}
+            </div>
+            <div className="inline-flex items-center gap-1.5 rounded-full bg-primary/15 px-3 py-1 text-xs font-semibold text-primary mb-2">
+              <Sparkles className="h-3.5 w-3.5" />
+              Du wurdest eingeladen
+            </div>
+            <h2 className="text-xl font-bold leading-tight mb-2">
+              Willkommen bei <span className="text-primary">{merchantName}</span> 🎉
+            </h2>
+            {activeInvitation && (() => {
+              const ms = new Date(activeInvitation.expires_at).getTime() - Date.now();
+              const daysLeft = Math.max(1, Math.ceil(ms / (24 * 60 * 60 * 1000)));
+              return (
+                <>
+                  <p className="text-sm text-muted-foreground leading-relaxed mb-4">
+                    Sammle innerhalb der nächsten{' '}
+                    <span className="font-semibold text-foreground">
+                      {daysLeft} {daysLeft === 1 ? 'Tag' : 'Tage'}
+                    </span>{' '}
+                    deinen <span className="font-semibold text-foreground">ersten Stempel</span> und du bekommst{' '}
+                    <span className="font-semibold text-foreground">doppelte Punkte</span> auf deinen ersten Einkauf.
+                    Auch die Person, die dich eingeladen hat, erhält dafür einen kleinen Bonus 💜
+                  </p>
+                  <div className="rounded-xl bg-primary/10 px-3 py-2.5 mb-4">
+                    <div className="text-xs text-muted-foreground">Dein Willkommensbonus</div>
+                    <div className="text-lg font-bold text-primary">
+                      +{activeInvitation.invitee_points} Bonuspunkte
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-center gap-1.5 text-xs text-muted-foreground mb-5">
+                    <Timer className="h-3.5 w-3.5" />
+                    Verlier keine Zeit — sicher dir deine doppelten Punkte, bevor die Einladung abläuft!
+                  </div>
+                </>
+              );
+            })()}
+            <Button onClick={() => setInvitationDialogOpen(false)} className="w-full h-11 rounded-xl">
+              Alles klar
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
 
 export default AppMerchantDetail;
