@@ -88,22 +88,6 @@ export const InviteFriendDialog = ({
     }
   };
 
-  const nativeShare = async () => {
-    if (!shareText) return;
-    if (typeof navigator !== 'undefined' && (navigator as any).share) {
-      try {
-        await (navigator as any).share({
-          title: `Einladung zu ${merchantName}`,
-          text: shareText,
-          url: inviteUrl,
-        });
-      } catch {
-        // user cancelled
-      }
-    } else {
-      void copyLink();
-    }
-  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
