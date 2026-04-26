@@ -215,15 +215,30 @@ export function PendingInviteDialog() {
         invitee_points: preview.invitee_points,
       });
 
-      // Push an den Einladenden – fire-and-forget, blockiert UI nicht
-      void supabase.functions
-        .invoke('notify-invitation-accepted', {
-          body: {
-            invitation_id: result.invitation_id,
-            merchant_customer_id: result.merchant_customer_id,
-          },
-        })
-        .catch((err) => console.warn('[notify-invitation-accepted] failed:', err));
+      // Push an den Einladenden – mit Retry, falls erster Versuch scheitert.
+      // Wir blockieren das UI nicht, aber wir versuchen es bis zu 2x mit Backoff.
+      void (async () => {
+        for (let attempt = 1; attempt <= 2; attempt++) {
+          try {
+            const { data: notifyData, error: notifyErr } = await supabase.functions.invoke(
+              'notify-invitation-accepted',
+              {
+                body: {
+                  invitation_id: result.invitation_id,
+                  merchant_customer_id: result.merchant_customer_id,
+                },
+              },
+            );
+            console.log(`[notify-invitation-accepted] attempt ${attempt}:`, { notifyData, notifyErr });
+            const notifyResult = notifyData as { success?: boolean } | null;
+            if (notifyResult?.success) return;
+            if (attempt < 2) await new Promise((r) => setTimeout(r, 2000));
+          } catch (err) {
+            console.warn(`[notify-invitation-accepted] attempt ${attempt} failed:`, err);
+            if (attempt < 2) await new Promise((r) => setTimeout(r, 2000));
+          }
+        }
+      })();
     } catch (err) {
       console.error('consume_invitation Fehler:', err);
       clearPendingInvite();
