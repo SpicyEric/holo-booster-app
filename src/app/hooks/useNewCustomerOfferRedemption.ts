@@ -164,6 +164,12 @@ export const useNewCustomerOfferRedemption = ({
       const totalPoints = nfcPointsAwarded + bonusStamps;
       pushNotificationService.notifyNewCustomerOfferRedeemed(totalPoints, merchantName);
 
+      // Referral-Bonus prüfen — typischer Pfad für Eingeladene mit Welcome-Bonus
+      await maybeAwardReferralBonus({
+        userId,
+        merchantCustomerId: merchantId,
+      });
+
       return { success: true, totalPoints };
     } catch (error) {
       console.error('Error processing new customer offer:', error);
