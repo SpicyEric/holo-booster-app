@@ -6,8 +6,7 @@ import { Gift, Sparkles } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { getDeviceFingerprint } from '@/lib/deviceFingerprint';
-
-const PENDING_INVITE_KEY = 'eloyo_pending_invite';
+import { clearPendingInvite, getPendingInviteCode, storePendingInvite } from '@/app/lib/pendingInvite';
 
 interface InviteData {
   invitation_id: string;
@@ -42,14 +41,14 @@ export function PendingInviteDialog() {
 
   useEffect(() => {
     if (!user) return;
-    const code = localStorage.getItem(PENDING_INVITE_KEY);
+    const code = getPendingInviteCode();
     if (code) {
       void loadPreview(code);
     }
     // Reagiere zusätzlich auf neue Deep-Link-Events (App war bereits offen)
     const onNewInvite = (e: Event) => {
       const detail = (e as CustomEvent).detail as string | undefined;
-      const c = detail || localStorage.getItem(PENDING_INVITE_KEY);
+      const c = detail ? storePendingInvite(detail) : getPendingInviteCode();
       if (c) void loadPreview(c);
     };
     window.addEventListener('eloyo:pending-invite', onNewInvite);
@@ -71,7 +70,7 @@ export function PendingInviteDialog() {
         invitee_points?: number;
       };
       if (!result.success) {
-        localStorage.removeItem(PENDING_INVITE_KEY);
+        clearPendingInvite();
         return;
       }
       setPreview({
@@ -85,7 +84,7 @@ export function PendingInviteDialog() {
       setOpen(true);
     } catch (err) {
       console.error('lookup_invitation Fehler:', err);
-      localStorage.removeItem(PENDING_INVITE_KEY);
+      clearPendingInvite();
     }
   };
 
@@ -105,7 +104,7 @@ export function PendingInviteDialog() {
         invitation_id?: string;
         merchant_customer_id?: string;
       };
-      localStorage.removeItem(PENDING_INVITE_KEY);
+      clearPendingInvite();
       if (!result.success) {
         // Stille Behandlung
         setOpen(false);
@@ -121,7 +120,7 @@ export function PendingInviteDialog() {
       });
     } catch (err) {
       console.error('consume_invitation Fehler:', err);
-      localStorage.removeItem(PENDING_INVITE_KEY);
+      clearPendingInvite();
       setOpen(false);
     } finally {
       setAccepting(false);
@@ -129,7 +128,7 @@ export function PendingInviteDialog() {
   };
 
   const declineInvite = () => {
-    localStorage.removeItem(PENDING_INVITE_KEY);
+    clearPendingInvite();
     setOpen(false);
     setPreview(null);
   };
@@ -213,13 +212,4 @@ export function PendingInviteDialog() {
   );
 }
 
-/**
- * Hilfsfunktion zum Speichern eines pending Invite Codes.
- */
-export function storePendingInvite(code: string) {
-  try {
-    localStorage.setItem(PENDING_INVITE_KEY, code);
-  } catch {
-    // ignore
-  }
-}
+export { storePendingInvite } from '@/app/lib/pendingInvite';
