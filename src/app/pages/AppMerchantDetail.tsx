@@ -129,6 +129,14 @@ export const AppMerchantDetail = () => {
   const [selectedReward, setSelectedReward] = useState<Reward | null>(null);
   const [rewardDialogOpen, setRewardDialogOpen] = useState(false);
   const [newCustomerOfferDialogOpen, setNewCustomerOfferDialogOpen] = useState(false);
+  const [activeInvitation, setActiveInvitation] = useState<{
+    redemption_id: string;
+    invitation_id: string;
+    expires_at: string;
+    inviter_points: number;
+    invitee_points: number;
+  } | null>(null);
+  const [invitationDialogOpen, setInvitationDialogOpen] = useState(false);
   const headerRef = useRef<HTMLDivElement | null>(null);
   const cardRef = useRef<HTMLDivElement | null>(null);
   const pointsBadgeRef = useRef<HTMLDivElement | null>(null);
