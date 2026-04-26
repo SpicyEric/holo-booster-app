@@ -2,10 +2,10 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Gift, Sparkles, Loader2 } from 'lucide-react';
+import { Gift, Sparkles } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
-import { toast } from 'sonner';
+import { getDeviceFingerprint } from '@/lib/deviceFingerprint';
 
 const PENDING_INVITE_KEY = 'eloyo_pending_invite';
 
@@ -18,60 +18,55 @@ interface InviteData {
   invitee_points: number;
 }
 
+interface PreviewData {
+  share_code: string;
+  merchant_customer_id: string;
+  merchant_name: string;
+  logo_url: string | null;
+  cover_image_url: string | null;
+  invitee_points: number;
+}
+
 /**
  * Verarbeitet einen pending Invite-Code aus localStorage.
- * Erscheint automatisch nach Login wenn ein Code da ist.
- * Ruft consume_invitation auf, zeigt Popup und navigiert zum Händler.
+ * Zeigt zuerst Preview (annehmen / ablehnen). Erst auf "Annehmen"
+ * wird die Einladung verbraucht (consume_invitation) und das 7-Tage-Fenster startet.
  */
 export function PendingInviteDialog() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [invite, setInvite] = useState<InviteData | null>(null);
+  const [accepting, setAccepting] = useState(false);
+  const [preview, setPreview] = useState<PreviewData | null>(null);
+  const [accepted, setAccepted] = useState<InviteData | null>(null);
 
   useEffect(() => {
     if (!user) return;
-
     const code = localStorage.getItem(PENDING_INVITE_KEY);
     if (!code) return;
-
-    void processCode(code);
+    void loadPreview(code);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
-  const processCode = async (code: string) => {
-    setLoading(true);
+  const loadPreview = async (code: string) => {
     try {
-      const { data, error } = await supabase.rpc('consume_invitation', {
-        p_share_code: code,
-      });
+      const { data, error } = await supabase.rpc('lookup_invitation', { p_share_code: code });
       if (error) throw error;
       const result = data as {
         success: boolean;
         error?: string;
-        error_code?: string;
-        invitation_id?: string;
         merchant_customer_id?: string;
         merchant_name?: string;
         logo_url?: string | null;
         cover_image_url?: string | null;
         invitee_points?: number;
       };
-
-      // Code in jedem Fall entfernen, damit das Popup nicht erneut auftaucht
-      localStorage.removeItem(PENDING_INVITE_KEY);
-
       if (!result.success) {
-        // Stille Fehler bei "schon eingelöst" oder "abgelaufen"
-        if (result.error_code === 'already_redeemed') return;
-        if (result.error?.toLowerCase().includes('abgelaufen')) return;
-        if (result.error?.toLowerCase().includes('selbst')) return;
+        localStorage.removeItem(PENDING_INVITE_KEY);
         return;
       }
-
-      setInvite({
-        invitation_id: result.invitation_id!,
+      setPreview({
+        share_code: code,
         merchant_customer_id: result.merchant_customer_id!,
         merchant_name: result.merchant_name || 'einem Geschäft',
         logo_url: result.logo_url ?? null,
@@ -80,32 +75,77 @@ export function PendingInviteDialog() {
       });
       setOpen(true);
     } catch (err) {
-      // Fehler nicht stören; Code wurde entfernt
-      console.error('consume_invitation Fehler:', err);
+      console.error('lookup_invitation Fehler:', err);
       localStorage.removeItem(PENDING_INVITE_KEY);
-    } finally {
-      setLoading(false);
     }
   };
 
-  const goToMerchant = () => {
-    if (!invite) return;
-    setOpen(false);
-    navigate(`/app/merchant/${invite.merchant_customer_id}`);
+  const acceptInvite = async () => {
+    if (!preview) return;
+    setAccepting(true);
+    try {
+      const fp = getDeviceFingerprint();
+      const { data, error } = await supabase.rpc('consume_invitation', {
+        p_share_code: preview.share_code,
+        p_device_fingerprint: fp,
+      });
+      if (error) throw error;
+      const result = data as {
+        success: boolean;
+        error?: string;
+        invitation_id?: string;
+        merchant_customer_id?: string;
+      };
+      localStorage.removeItem(PENDING_INVITE_KEY);
+      if (!result.success) {
+        // Stille Behandlung
+        setOpen(false);
+        return;
+      }
+      setAccepted({
+        invitation_id: result.invitation_id!,
+        merchant_customer_id: result.merchant_customer_id!,
+        merchant_name: preview.merchant_name,
+        logo_url: preview.logo_url,
+        cover_image_url: preview.cover_image_url,
+        invitee_points: preview.invitee_points,
+      });
+    } catch (err) {
+      console.error('consume_invitation Fehler:', err);
+      localStorage.removeItem(PENDING_INVITE_KEY);
+      setOpen(false);
+    } finally {
+      setAccepting(false);
+    }
   };
 
-  if (!invite) return null;
+  const declineInvite = () => {
+    localStorage.removeItem(PENDING_INVITE_KEY);
+    setOpen(false);
+    setPreview(null);
+  };
+
+  const goToMerchant = () => {
+    const target = accepted ?? preview;
+    if (!target) return;
+    setOpen(false);
+    navigate(`/app/merchant/${target.merchant_customer_id}`);
+  };
+
+  if (!preview && !accepted) return null;
+
+  const display = accepted ?? preview!;
+  const isAccepted = !!accepted;
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={(o) => { if (!o) declineInvite(); }}>
       <DialogContent className="max-w-[340px] rounded-3xl p-0 gap-0 overflow-hidden border-0">
-        {/* Cover */}
         <div
           className="h-32 bg-gradient-to-br from-primary to-primary/60"
           style={
-            invite.cover_image_url || invite.logo_url
+            display.cover_image_url || display.logo_url
               ? {
-                  backgroundImage: `url(${invite.cover_image_url || invite.logo_url})`,
+                  backgroundImage: `url(${display.cover_image_url || display.logo_url})`,
                   backgroundSize: 'cover',
                   backgroundPosition: 'center',
                 }
@@ -114,8 +154,8 @@ export function PendingInviteDialog() {
         />
         <div className="px-6 pb-6 -mt-10 text-center">
           <div className="mx-auto h-16 w-16 rounded-2xl bg-card border-4 border-card shadow-lg overflow-hidden flex items-center justify-center mb-3">
-            {invite.logo_url ? (
-              <img src={invite.logo_url} alt={invite.merchant_name} className="h-full w-full object-cover" />
+            {display.logo_url ? (
+              <img src={display.logo_url} alt={display.merchant_name} className="h-full w-full object-cover" />
             ) : (
               <Gift className="h-8 w-8 text-primary" />
             )}
@@ -125,25 +165,39 @@ export function PendingInviteDialog() {
             Du wurdest eingeladen
           </div>
           <h2 className="text-xl font-bold leading-tight mb-2">
-            Willkommen bei <span className="text-primary">{invite.merchant_name}</span> 🎉
+            Willkommen bei <span className="text-primary">{display.merchant_name}</span> 🎉
           </h2>
           <p className="text-sm text-muted-foreground leading-relaxed mb-4">
-            Sammle innerhalb der nächsten <span className="font-semibold text-foreground">24 Stunden</span> hier deinen
-            ersten Stempel – ihr bekommt dann <span className="font-semibold text-foreground">beide</span> Bonuspunkte!
+            Sammle innerhalb der nächsten <span className="font-semibold text-foreground">7 Tage</span> dort
+            deinen ersten Stempel – ihr bekommt dann <span className="font-semibold text-foreground">beide</span>{' '}
+            Bonuspunkte!
           </p>
           <div className="rounded-xl bg-primary/10 px-3 py-2.5 mb-5">
             <div className="text-xs text-muted-foreground">Dein Willkommensbonus</div>
-            <div className="text-lg font-bold text-primary">+{invite.invitee_points} Bonuspunkte</div>
+            <div className="text-lg font-bold text-primary">+{display.invitee_points} Bonuspunkte</div>
           </div>
-          <Button onClick={goToMerchant} className="w-full h-11 rounded-xl">
-            Zum Geschäft
-          </Button>
-          <button
-            onClick={() => setOpen(false)}
-            className="text-xs text-muted-foreground mt-3 hover:text-foreground"
-          >
-            Später
-          </button>
+
+          {isAccepted ? (
+            <Button onClick={goToMerchant} className="w-full h-11 rounded-xl">
+              Zum Geschäft
+            </Button>
+          ) : (
+            <div className="space-y-2">
+              <Button
+                onClick={acceptInvite}
+                disabled={accepting}
+                className="w-full h-11 rounded-xl"
+              >
+                {accepting ? 'Wird angenommen…' : 'Einladung annehmen'}
+              </Button>
+              <button
+                onClick={declineInvite}
+                className="w-full text-xs text-muted-foreground hover:text-foreground py-2"
+              >
+                Ablehnen
+              </button>
+            </div>
+          )}
         </div>
       </DialogContent>
     </Dialog>
@@ -151,8 +205,7 @@ export function PendingInviteDialog() {
 }
 
 /**
- * Hilfsfunktion zum Speichern eines pending Invite Codes
- * (wird vom DeepLinkProvider aufgerufen wenn ein eloyo://invite/CODE Link kommt)
+ * Hilfsfunktion zum Speichern eines pending Invite Codes.
  */
 export function storePendingInvite(code: string) {
   try {

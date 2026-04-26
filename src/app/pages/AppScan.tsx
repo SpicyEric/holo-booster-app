@@ -410,18 +410,41 @@ export const AppScan = () => {
         toast.success(`+${response.points_awarded} Punkte gesammelt!`);
         console.log('[AppScan] setResult called with merchantCustomerId:', response.merchant_customer_id);
 
-        // Referral-Bonus prüfen (Phase 1: Freund einladen)
+        // Referral-Bonus prüfen (Phase 2: Joint Visit, 7 Tage)
         if (response.merchant_customer_id) {
           try {
             const { data: refData } = await supabase.rpc('process_referral_bonus', {
               p_user_id: currentUserId,
               p_merchant_customer_id: response.merchant_customer_id,
             });
-            const ref = refData as { processed?: boolean; bonus_awarded?: boolean; inviter_points?: number; invitee_points?: number; inviter_user_id?: string; invitee_user_id?: string } | null;
+            const ref = refData as {
+              processed?: boolean;
+              bonus_awarded?: boolean;
+              inviter_points?: number;
+              invitee_points?: number;
+              inviter_user_id?: string;
+              invitee_user_id?: string;
+              merchant_customer_id?: string;
+            } | null;
             if (ref?.bonus_awarded) {
               const isInviter = ref.inviter_user_id === currentUserId;
               const bonus = isInviter ? ref.inviter_points : ref.invitee_points;
               toast.success(`🎉 Empfehlungs-Bonus: +${bonus} Punkte!`, { duration: 5000 });
+
+              // Push-Notifications an beide Beteiligte
+              try {
+                await supabase.functions.invoke('notify-referral-bonus', {
+                  body: {
+                    inviter_user_id: ref.inviter_user_id,
+                    invitee_user_id: ref.invitee_user_id,
+                    inviter_points: ref.inviter_points,
+                    invitee_points: ref.invitee_points,
+                    merchant_customer_id: ref.merchant_customer_id ?? response.merchant_customer_id,
+                  },
+                });
+              } catch (pushErr) {
+                console.warn('[AppScan] notify-referral-bonus failed:', pushErr);
+              }
             }
           } catch (refErr) {
             console.warn('[AppScan] Referral bonus check failed:', refErr);
