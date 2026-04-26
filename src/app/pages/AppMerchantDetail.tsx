@@ -362,7 +362,7 @@ export const AppMerchantDetail = () => {
         setUserPoints(points);
         setHasEverStamped(points > 0);
 
-        const [transactionsResponse, offerResponse, claimResponse] = await Promise.all([
+        const [transactionsResponse, offerResponse, claimResponse, invitationResponse] = await Promise.all([
           loyaltyAccount
             ? supabase
                 .from('point_transactions')
@@ -386,10 +386,43 @@ export const AppMerchantDetail = () => {
                 .eq('merchant_customer_id', id)
                 .maybeSingle()
             : Promise.resolve(null),
+          // Aktive Einladung als Eingeladener für DIESEN Merchant
+          supabase
+            .from('invitation_redemptions')
+            .select('id, invitation_id, accepted_at, bonus_window_starts_at, invitee_stamped_at, bonus_awarded_at, invitations!inner(id, merchant_customer_id)')
+            .eq('invitee_user_id', user.id)
+            .eq('invitations.merchant_customer_id', id)
+            .is('invitee_stamped_at', null)
+            .is('bonus_awarded_at', null)
+            .order('accepted_at', { ascending: false })
+            .limit(1)
+            .maybeSingle(),
         ]);
 
         setTransactions(transactionsResponse?.data ?? []);
         setNewCustomerOffer(offerResponse?.data ?? null);
+
+        // Einladung verarbeiten — nur anzeigen, wenn 7-Tage-Fenster noch aktiv ist
+        const inviteRow = invitationResponse?.data as
+          | { id: string; invitation_id: string; accepted_at: string; bonus_window_starts_at: string | null }
+          | null;
+        if (inviteRow) {
+          const start = inviteRow.bonus_window_starts_at ?? inviteRow.accepted_at;
+          const expiresAt = new Date(new Date(start).getTime() + 7 * 24 * 60 * 60 * 1000).toISOString();
+          if (new Date(expiresAt).getTime() > Date.now()) {
+            setActiveInvitation({
+              redemption_id: inviteRow.id,
+              invitation_id: inviteRow.invitation_id,
+              expires_at: expiresAt,
+              inviter_points: merchantData.referral_inviter_points ?? 3,
+              invitee_points: merchantData.referral_invitee_points ?? 1,
+            });
+          } else {
+            setActiveInvitation(null);
+          }
+        } else {
+          setActiveInvitation(null);
+        }
 
         if (reviewEnabled && reviewUrl) {
           setGoogleReviewBonus({
@@ -404,6 +437,7 @@ export const AppMerchantDetail = () => {
       } else {
         setTransactions([]);
         setNewCustomerOffer(null);
+        setActiveInvitation(null);
 
         if (reviewEnabled && reviewUrl) {
           setGoogleReviewBonus({ enabled: true, pointsValue: reviewPointsVal, reviewUrl, alreadyClaimed: false });
