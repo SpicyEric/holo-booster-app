@@ -278,6 +278,8 @@ const Marketing = () => {
     }
   };
 
+  const copyToClipboard = () => { if (googleReviewUrl) { navigator.clipboard.writeText(googleReviewUrl); setCopied(true); toast.success("Link kopiert!"); setTimeout(() => setCopied(false), 2000); } };
+
   const estimateRecipients = async () => {
     if (!customerId) return;
     setEstimatingRecipients(true);
