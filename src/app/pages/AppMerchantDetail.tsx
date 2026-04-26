@@ -772,7 +772,7 @@ export const AppMerchantDetail = () => {
 
             <TabsContent value="info" className="mt-0 space-y-4">
               {merchant.description && (
-                <Card>
+                <Card className="border-0 bg-black/[0.06] dark:bg-white/[0.04]">
                   <CardContent className="p-4">
                     <p className="text-sm whitespace-pre-wrap">{merchant.description}</p>
                   </CardContent>
@@ -780,7 +780,7 @@ export const AppMerchantDetail = () => {
               )}
 
               {openingHours && (
-                <Card>
+                <Card className="border-0 bg-black/[0.06] dark:bg-white/[0.04]">
                   <CardContent className="p-4">
                     <h3 className="font-medium mb-3 flex items-center gap-2">
                       <Clock className="h-4 w-4" />
@@ -798,7 +798,7 @@ export const AppMerchantDetail = () => {
                 </Card>
               )}
 
-              <Card>
+              <Card className="border-0 bg-black/[0.06] dark:bg-white/[0.04]">
                 <CardContent className="p-4 space-y-3">
                   {address && (
                     <a
