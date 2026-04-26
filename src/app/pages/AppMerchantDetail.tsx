@@ -122,6 +122,7 @@ export const AppMerchantDetail = () => {
     alreadyClaimed: false,
   });
   const [claimingReviewBonus, setClaimingReviewBonus] = useState(false);
+  const [inviteOpen, setInviteOpen] = useState(false);
   
   // Dialog states
   const [selectedReward, setSelectedReward] = useState<Reward | null>(null);
