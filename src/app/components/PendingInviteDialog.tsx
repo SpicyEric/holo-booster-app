@@ -286,14 +286,96 @@ export function PendingInviteDialog() {
 
   const closeDialog = () => {
     setOpen(false);
+    // Ineligible-Dialoge sind reine Info — beim Schließen komplett zurücksetzen
+    if (ineligible) setIneligible(null);
   };
 
   const goToMerchant = () => {
-    const target = accepted ?? preview;
+    const target = accepted ?? preview ?? ineligible;
     if (!target) return;
     setOpen(false);
+    if (ineligible) setIneligible(null);
     navigate(`/app/merchant/${target.merchant_customer_id}`);
   };
+
+  // ─── Render: Ineligible-Hinweis ────────────────────────────────
+  if (ineligible) {
+    const daysLeft = ineligible.kind === 'already_invited' && ineligible.expires_at
+      ? Math.max(0, Math.ceil((new Date(ineligible.expires_at).getTime() - Date.now()) / (24 * 60 * 60 * 1000)))
+      : 0;
+
+    return (
+      <Dialog open={open} onOpenChange={(o) => { if (!o) closeDialog(); }}>
+        <DialogContent className="max-w-[340px] rounded-3xl p-0 gap-0 overflow-hidden border-0">
+          <div
+            className="h-32 bg-gradient-to-br from-muted to-muted/60"
+            style={
+              ineligible.cover_image_url || ineligible.logo_url
+                ? {
+                    backgroundImage: `url(${ineligible.cover_image_url || ineligible.logo_url})`,
+                    backgroundSize: 'cover',
+                    backgroundPosition: 'center',
+                  }
+                : undefined
+            }
+          />
+          <div className="px-6 pb-6 -mt-10 text-center">
+            <div className="mx-auto h-16 w-16 rounded-2xl bg-card border-4 border-card shadow-lg overflow-hidden flex items-center justify-center mb-3">
+              {ineligible.logo_url ? (
+                <img src={ineligible.logo_url} alt={ineligible.merchant_name} className="h-full w-full object-cover" />
+              ) : (
+                <Info className="h-8 w-8 text-muted-foreground" />
+              )}
+            </div>
+
+            {ineligible.kind === 'already_customer' ? (
+              <>
+                <div className="inline-flex items-center gap-1.5 rounded-full bg-muted px-3 py-1 text-xs font-semibold text-muted-foreground mb-2">
+                  <Info className="h-3.5 w-3.5" />
+                  Einladung nicht möglich
+                </div>
+                <h2 className="text-xl font-bold leading-tight mb-2">
+                  Du sammelst schon bei <span className="text-primary">{ineligible.merchant_name}</span>
+                </h2>
+                <p className="text-sm text-muted-foreground leading-relaxed mb-5">
+                  Da du dort bereits Punkte gesammelt hast, kannst du nicht als Neukunde
+                  eingeladen werden. Der Willkommensbonus gilt nur für die erste Einladung.
+                </p>
+              </>
+            ) : (
+              <>
+                <div className="inline-flex items-center gap-1.5 rounded-full bg-muted px-3 py-1 text-xs font-semibold text-muted-foreground mb-2">
+                  <Clock className="h-3.5 w-3.5" />
+                  Bereits eingeladen
+                </div>
+                <h2 className="text-xl font-bold leading-tight mb-2">
+                  Du bist schon zu <span className="text-primary">{ineligible.merchant_name}</span> eingeladen
+                </h2>
+                <p className="text-sm text-muted-foreground leading-relaxed mb-5">
+                  Eine andere Person hat dich bereits eingeladen. Sammle innerhalb der nächsten{' '}
+                  <span className="font-semibold text-foreground">{daysLeft} {daysLeft === 1 ? 'Tag' : 'Tage'}</span>{' '}
+                  deinen ersten Stempel, um den Bonus zu erhalten.
+                  Eine neue Einladung ist erst möglich, wenn diese abgelaufen ist.
+                </p>
+              </>
+            )}
+
+            <div className="space-y-2">
+              <Button onClick={goToMerchant} className="w-full h-11 rounded-xl">
+                Zum Geschäft
+              </Button>
+              <button
+                onClick={closeDialog}
+                className="w-full text-xs text-muted-foreground hover:text-foreground py-2"
+              >
+                Schließen
+              </button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  }
 
   if (!preview && !accepted) return null;
 
@@ -332,8 +414,8 @@ export function PendingInviteDialog() {
           </h2>
           <p className="text-sm text-muted-foreground leading-relaxed mb-4">
             Sammle innerhalb der nächsten <span className="font-semibold text-foreground">7 Tage</span> dort
-            deinen ersten Stempel – ihr bekommt dann <span className="font-semibold text-foreground">beide</span>{' '}
-            Bonuspunkte!
+            deinen ersten Stempel und bekomme <span className="font-semibold text-foreground">doppelte Punkte</span>{' '}
+            auf deinen ersten Einkauf!
           </p>
           <div className="rounded-xl bg-primary/10 px-3 py-2.5 mb-5">
             <div className="text-xs text-muted-foreground">Dein Willkommensbonus</div>
