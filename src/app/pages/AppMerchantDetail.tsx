@@ -887,6 +887,17 @@ export const AppMerchantDetail = () => {
         />
       )}
 
+      {merchant && (
+        <InviteFriendDialog
+          open={inviteOpen}
+          onOpenChange={setInviteOpen}
+          merchantId={merchant.id}
+          merchantName={merchantName}
+          inviterPoints={merchant.referral_inviter_points ?? 3}
+          inviteePoints={merchant.referral_invitee_points ?? 1}
+        />
+      )}
+
       <BottomNav />
     </div>
   );
