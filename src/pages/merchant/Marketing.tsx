@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Slider } from '@/components/ui/slider';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { 
   Loader2, Plus, MessageSquare, Gift, Send, Users, Clock, UserPlus, Zap, Cake, Save, 
   ChevronDown, Rocket, CheckCircle2, Timer, Star, ExternalLink, Copy, Bot, Megaphone,
