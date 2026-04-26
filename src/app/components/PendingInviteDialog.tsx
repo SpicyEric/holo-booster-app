@@ -6,7 +6,7 @@ import { Gift, Sparkles } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { getDeviceFingerprint } from '@/lib/deviceFingerprint';
-import { clearPendingInvite, getPendingInviteCode, storePendingInvite } from '@/app/lib/pendingInvite';
+import { clearPendingInvite, getPendingInviteCode, isInviteConsumed, markInviteConsumed, storePendingInvite } from '@/app/lib/pendingInvite';
 
 interface InviteData {
   invitation_id: string;
@@ -72,6 +72,11 @@ export function PendingInviteDialog() {
   }, [preview?.share_code, accepted?.share_code]);
 
   const loadPreview = async (code: string) => {
+    // Bereits angenommene Einladungen niemals erneut als Preview anzeigen
+    if (isInviteConsumed(code)) {
+      clearPendingInvite();
+      return;
+    }
     try {
       const { data, error } = await supabase.rpc('lookup_invitation', { p_share_code: code });
       if (error) throw error;
@@ -125,6 +130,8 @@ export function PendingInviteDialog() {
         invitation_id?: string;
         merchant_customer_id?: string;
       };
+      // Egal ob neu angenommen oder bereits angenommen: nicht nochmal zeigen
+      markInviteConsumed(preview.share_code);
       clearPendingInvite();
       if (!result.success) {
         // Stille Behandlung

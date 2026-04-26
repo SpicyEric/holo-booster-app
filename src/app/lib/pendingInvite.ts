@@ -75,6 +75,9 @@ export function storePendingInvite(codeOrUrl: string) {
   const code = extractInviteCodeFromUrl(codeOrUrl) || normalizeInviteCode(codeOrUrl);
   if (!code) return null;
 
+  // Bereits eingelöste Einladungen niemals erneut als pending speichern
+  if (isInviteConsumed(code)) return null;
+
   try {
     localStorage.setItem(PENDING_INVITE_KEY, code);
     sessionStorage.setItem(PENDING_INVITE_KEY, code);
@@ -89,6 +92,39 @@ export function clearPendingInvite() {
   try {
     localStorage.removeItem(PENDING_INVITE_KEY);
     sessionStorage.removeItem(PENDING_INVITE_KEY);
+  } catch {
+    // ignore
+  }
+}
+
+const CONSUMED_INVITES_KEY = 'eloyo_consumed_invites';
+const CONSUMED_MAX = 50;
+
+function readConsumedList(): string[] {
+  try {
+    const raw = localStorage.getItem(CONSUMED_INVITES_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed.filter((c) => typeof c === 'string') : [];
+  } catch {
+    return [];
+  }
+}
+
+export function isInviteConsumed(code: string): boolean {
+  const normalized = normalizeInviteCode(code);
+  if (!normalized) return false;
+  return readConsumedList().includes(normalized);
+}
+
+export function markInviteConsumed(code: string) {
+  const normalized = normalizeInviteCode(code);
+  if (!normalized) return;
+  try {
+    const list = readConsumedList().filter((c) => c !== normalized);
+    list.push(normalized);
+    while (list.length > CONSUMED_MAX) list.shift();
+    localStorage.setItem(CONSUMED_INVITES_KEY, JSON.stringify(list));
   } catch {
     // ignore
   }
