@@ -29,10 +29,10 @@ interface InviteData {
 
 export default function InviteRedirect() {
   const { code } = useParams<{ code: string }>();
+  const platform = detectPlatform();
   const [data, setData] = useState<InviteData | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(platform === 'web');
-  const platform = detectPlatform();
 
   useEffect(() => {
     if (!code) return;
