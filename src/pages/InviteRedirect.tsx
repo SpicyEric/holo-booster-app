@@ -5,6 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 
 const APP_SCHEME = 'eloyo://invite/';
+const ANDROID_PACKAGE = 'com.eloyo.app';
 const IOS_STORE_URL = 'https://apps.apple.com/app/eloyo/id0000000000';
 const ANDROID_STORE_URL = 'https://play.google.com/store/apps/details?id=com.eloyo.app';
 const FALLBACK_URL = 'https://eloyo.de/download';
@@ -52,6 +53,9 @@ export default function InviteRedirect() {
     if (!data || platform === 'web') return;
     const openedAt = Date.now();
     const storeLink = platform === 'ios' ? IOS_STORE_URL : ANDROID_STORE_URL;
+    const appOpenLink = platform === 'android'
+      ? `intent://invite/${code}#Intent;scheme=eloyo;package=${ANDROID_PACKAGE};S.browser_fallback_url=${encodeURIComponent(storeLink)};end`
+      : `${APP_SCHEME}${code}`;
 
     const fallbackTimer = window.setTimeout(() => {
       // Wenn Tab noch sichtbar (App nicht geöffnet) → Store
@@ -66,7 +70,7 @@ export default function InviteRedirect() {
     document.addEventListener('visibilitychange', onVis);
 
     // App-Scheme triggern
-    window.location.href = `${APP_SCHEME}${code}`;
+    window.location.href = appOpenLink;
 
     return () => {
       window.clearTimeout(fallbackTimer);
@@ -107,7 +111,9 @@ export default function InviteRedirect() {
   };
 
   const storeLink = platform === 'ios' ? IOS_STORE_URL : platform === 'android' ? ANDROID_STORE_URL : FALLBACK_URL;
-  const appLink = `${APP_SCHEME}${code}`;
+  const appLink = platform === 'android'
+    ? `intent://invite/${code}#Intent;scheme=eloyo;package=${ANDROID_PACKAGE};S.browser_fallback_url=${encodeURIComponent(storeLink)};end`
+    : `${APP_SCHEME}${code}`;
 
   if (loading) {
     return (
