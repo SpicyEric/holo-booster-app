@@ -31,7 +31,7 @@ export default function InviteRedirect() {
   const { code } = useParams<{ code: string }>();
   const [data, setData] = useState<InviteData | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(platform === 'web');
   const platform = detectPlatform();
 
   useEffect(() => {
@@ -45,12 +45,17 @@ export default function InviteRedirect() {
       // ignore
     }
 
-    void loadInvite(code);
+    if (platform === 'web') {
+      void loadInvite(code);
+    } else {
+      setLoading(false);
+    }
   }, [code]);
 
-  // Auto-Versuch die App zu öffnen (nur Mobile)
+  // Mobile: sofort native App öffnen; wenn nicht installiert, Store-Fallback.
+  // Wichtig: Nicht auf RPC/UI warten, sonst bleibt Samsung Internet sichtbar.
   useEffect(() => {
-    if (!data || platform === 'web') return;
+    if (!code || platform === 'web') return;
     const openedAt = Date.now();
     const storeLink = platform === 'ios' ? IOS_STORE_URL : ANDROID_STORE_URL;
     const appOpenLink = platform === 'android'
@@ -76,7 +81,7 @@ export default function InviteRedirect() {
       window.clearTimeout(fallbackTimer);
       document.removeEventListener('visibilitychange', onVis);
     };
-  }, [data, platform, code]);
+  }, [platform, code]);
 
   const loadInvite = async (shareCode: string) => {
     try {
