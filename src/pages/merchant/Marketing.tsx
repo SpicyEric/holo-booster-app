@@ -61,9 +61,8 @@ const Marketing = () => {
   const [uploadingRewardImage, setUploadingRewardImage] = useState(false);
   const [newCustomerOffer, setNewCustomerOffer] = useState<NewCustomerOffer | null>(null);
   const [showNcoDialog, setShowNcoDialog] = useState(false);
-  const [ncoForm, setNcoForm] = useState({ title: '', description: '', bonus_stamps: 0, is_active: true, image_url: '' });
+  const [ncoForm, setNcoForm] = useState({ title: '', description: '', is_active: true, image_url: '' });
   const [uploadingNcoImage, setUploadingNcoImage] = useState(false);
-  const [ncoGiftType, setNcoGiftType] = useState<'offer' | 'points'>('offer');
   const [showDeleteNcoConfirm, setShowDeleteNcoConfirm] = useState(false);
   
   const [merchantIndustry, setMerchantIndustry] = useState<string | null>(null);
