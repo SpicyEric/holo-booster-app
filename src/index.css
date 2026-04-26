@@ -65,6 +65,17 @@ All colors MUST be HSL.
     --shadow-card: 0 2px 8px hsl(0 0% 0% / 0.1);
   }
 
+  /* App im Light Mode: Hintergrund leicht abgedunkelt, Karten bleiben weiß
+     → klarer Kontrast zwischen Feed-Hintergrund und Karten/Bannern */
+  html[data-app-route='true']:not(.dark) {
+    --background: 270 25% 94%;       /* soft lavender feed background */
+    --card: 0 0% 100%;               /* crisp white cards */
+    --muted: 270 20% 90%;            /* slightly deeper muted surface */
+    --border: 270 15% 85%;           /* visible borders */
+    --input: 0 0% 100%;
+    --shadow-card: 0 4px 14px hsl(262 30% 20% / 0.08);
+  }
+
   /* Dark mode nur für echte App-Routes */
   html.dark[data-app-route='true'] {
     --background: 0 0% 13%;           /* #212121 - dark gray, not pure black */
