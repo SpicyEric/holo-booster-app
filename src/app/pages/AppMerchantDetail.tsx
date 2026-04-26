@@ -561,6 +561,7 @@ export const AppMerchantDetail = () => {
   };
 
   const handleNewCustomerOfferClick = () => {
+    setNewCustomerOfferDialogMode('preview');
     setNewCustomerOfferDialogOpen(true);
   };
 
@@ -1083,7 +1084,7 @@ export const AppMerchantDetail = () => {
           merchant={merchant}
           open={newCustomerOfferDialogOpen}
           onOpenChange={setNewCustomerOfferDialogOpen}
-          mode="preview"
+          mode={newCustomerOfferDialogMode}
         />
       )}
 
