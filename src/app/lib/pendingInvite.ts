@@ -75,6 +75,9 @@ export function storePendingInvite(codeOrUrl: string) {
   const code = extractInviteCodeFromUrl(codeOrUrl) || normalizeInviteCode(codeOrUrl);
   if (!code) return null;
 
+  // Bereits eingelöste Einladungen niemals erneut als pending speichern
+  if (isInviteConsumed(code)) return null;
+
   try {
     localStorage.setItem(PENDING_INVITE_KEY, code);
     sessionStorage.setItem(PENDING_INVITE_KEY, code);
