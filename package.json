@@ -53,7 +53,6 @@
     "@radix-ui/react-tooltip": "^1.2.7",
     "@react-google-maps/api": "^2.20.7",
     "@supabase/supabase-js": "^2.79.0",
-    "@tabler/icons-react": "^3.41.1",
     "@tanstack/react-query": "^5.83.0",
     "canvas-confetti": "^1.9.4",
     "capacitor-native-settings": "^7.0.1",
