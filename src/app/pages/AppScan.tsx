@@ -14,6 +14,7 @@ import { NfcPermissionDialog } from '@/app/components/NfcPermissionDialog';
 import { OfflineBanner } from '@/app/components/OfflineBanner';
 import Particles from '@/components/Particles';
 import { maybeAwardReferralBonus } from '@/app/lib/referralBonus';
+import { maybeUnlockNewCustomerOffer } from '@/app/lib/newCustomerOffer';
 
 type ScanResult = {
   success: boolean;
@@ -414,6 +415,11 @@ export const AppScan = () => {
         // Referral-Bonus prüfen (Phase 2: Joint Visit, 7 Tage)
         if (response.merchant_customer_id) {
           await maybeAwardReferralBonus({
+            userId: currentUserId,
+            merchantCustomerId: response.merchant_customer_id,
+          });
+          // Neukundenprämie freischalten (idempotent)
+          await maybeUnlockNewCustomerOffer({
             userId: currentUserId,
             merchantCustomerId: response.merchant_customer_id,
           });
