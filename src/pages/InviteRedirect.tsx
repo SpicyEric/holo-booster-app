@@ -33,6 +33,7 @@ export default function InviteRedirect() {
   const [data, setData] = useState<InviteData | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(platform === 'web');
+  const isMobilePlatform = platform !== 'web';
 
   useEffect(() => {
     if (!code) return;
@@ -123,7 +124,32 @@ export default function InviteRedirect() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="text-muted-foreground">Lädt …</div>
+        <div className="text-muted-foreground">Öffne Eloyo …</div>
+      </div>
+    );
+  }
+
+  if (isMobilePlatform) {
+    const storeLink = platform === 'ios' ? IOS_STORE_URL : ANDROID_STORE_URL;
+    const appLink = platform === 'android'
+      ? `intent://invite/${code}#Intent;scheme=eloyo;package=${ANDROID_PACKAGE};S.browser_fallback_url=${encodeURIComponent(storeLink)};end`
+      : `${APP_SCHEME}${code}`;
+
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center p-6">
+        <div className="w-full max-w-sm text-center space-y-4">
+          <div className="mx-auto h-12 w-12 rounded-2xl bg-primary/15 flex items-center justify-center">
+            <Gift className="h-6 w-6 text-primary" />
+          </div>
+          <h1 className="text-xl font-bold">Eloyo wird geöffnet …</h1>
+          <p className="text-sm text-muted-foreground">Falls nichts passiert, öffne die App direkt.</p>
+          <Button asChild className="w-full h-11 rounded-xl">
+            <a href={appLink}>In Eloyo öffnen</a>
+          </Button>
+          <Button asChild variant="outline" className="w-full h-11 rounded-xl">
+            <a href={storeLink}>App herunterladen</a>
+          </Button>
+        </div>
       </div>
     );
   }
