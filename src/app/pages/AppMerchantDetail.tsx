@@ -613,6 +613,38 @@ export const AppMerchantDetail = () => {
   // Build an array of all reward items for stagger animation
   const rewardItems: { key: string; element: React.ReactNode }[] = [];
   
+  // 🎁 Aktive Einladung — IMMER ganz oben, vor allen anderen Prämien
+  if (activeInvitation) {
+    const msLeft = new Date(activeInvitation.expires_at).getTime() - Date.now();
+    const daysLeft = Math.max(1, Math.ceil(msLeft / (24 * 60 * 60 * 1000)));
+    rewardItems.push({
+      key: 'active-invitation',
+      element: (
+        <Card
+          className="border-2 border-primary bg-gradient-to-br from-primary/15 via-primary/5 to-transparent cursor-pointer hover:shadow-lg transition-shadow relative overflow-hidden"
+          onClick={() => setInvitationDialogOpen(true)}
+        >
+          <CardContent className="p-4 flex items-center gap-4">
+            <div className="w-12 h-12 rounded-lg bg-primary flex items-center justify-center shrink-0">
+              <PartyPopper className="h-6 w-6 text-primary-foreground" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <Badge variant="default" className="mb-1 text-xs">Du wurdest eingeladen 🎉</Badge>
+              <h3 className="font-medium leading-tight">Sammle deinen ersten Stempel & erhalte doppelte Punkte</h3>
+              <p className="text-xs text-muted-foreground mt-0.5 flex items-center gap-1">
+                <Timer className="h-3 w-3" />
+                Noch {daysLeft} {daysLeft === 1 ? 'Tag' : 'Tage'} Zeit
+              </p>
+            </div>
+            <Badge variant="secondary" className="shrink-0">
+              <Sparkles className="h-3 w-3 mr-1" />2×
+            </Badge>
+          </CardContent>
+        </Card>
+      ),
+    });
+  }
+
   if (newCustomerOffer && !hasEverStamped) {
     rewardItems.push({
       key: 'new-customer-offer',
