@@ -876,7 +876,7 @@ export const AppMerchantDetail = () => {
                     : '';
 
                   return (
-                    <Card key={tx.id}>
+                    <Card key={tx.id} className="border-0 bg-black/[0.06] dark:bg-white/[0.04]">
                       <CardContent className="p-4 flex items-center gap-3">
                         <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
                           isPositive ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
