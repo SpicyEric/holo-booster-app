@@ -10,6 +10,7 @@ import { clearPendingInvite, getPendingInviteCode, storePendingInvite } from '@/
 
 interface InviteData {
   invitation_id: string;
+  share_code: string;
   merchant_customer_id: string;
   merchant_name: string;
   logo_url: string | null;
@@ -40,7 +41,6 @@ export function PendingInviteDialog() {
   const [accepted, setAccepted] = useState<InviteData | null>(null);
 
   useEffect(() => {
-    if (!user) return;
     const code = getPendingInviteCode();
     if (code) void loadPreview(code);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -51,6 +51,12 @@ export function PendingInviteDialog() {
     if (code) {
       void loadPreview(code);
     }
+    const pollForInvite = window.setInterval(() => {
+      const pendingCode = getPendingInviteCode();
+      if (pendingCode && pendingCode !== preview?.share_code && pendingCode !== accepted?.share_code) {
+        void loadPreview(pendingCode);
+      }
+    }, 750);
     // Reagiere zusätzlich auf neue Deep-Link-Events (App war bereits offen)
     const onNewInvite = (e: Event) => {
       const detail = (e as CustomEvent).detail as string | undefined;
@@ -58,9 +64,12 @@ export function PendingInviteDialog() {
       if (c) void loadPreview(c);
     };
     window.addEventListener('eloyo:pending-invite', onNewInvite);
-    return () => window.removeEventListener('eloyo:pending-invite', onNewInvite);
+    return () => {
+      window.clearInterval(pollForInvite);
+      window.removeEventListener('eloyo:pending-invite', onNewInvite);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [preview?.share_code, accepted?.share_code]);
 
   const loadPreview = async (code: string) => {
     try {
@@ -124,6 +133,7 @@ export function PendingInviteDialog() {
       }
       setAccepted({
         invitation_id: result.invitation_id!,
+        share_code: preview.share_code,
         merchant_customer_id: result.merchant_customer_id!,
         merchant_name: preview.merchant_name,
         logo_url: preview.logo_url,

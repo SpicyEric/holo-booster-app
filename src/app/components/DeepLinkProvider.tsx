@@ -1,6 +1,7 @@
 import { useEffect, useCallback, createContext, useContext, ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { extractInviteCodeFromUrl, notifyPendingInvite, storePendingInvite } from '@/app/lib/pendingInvite';
+import { consumeQueuedNativeDeepLinks, DEEP_LINK_EVENT } from '@/app/lib/nativeDeepLinkBootstrap';
 
 // Check if Capacitor App plugin is available
 const getCapacitorApp = async () => {
@@ -129,6 +130,13 @@ export function DeepLinkProvider({ children }: DeepLinkProviderProps) {
 
   useEffect(() => {
     let cleanup: (() => void) | undefined;
+    const handleQueuedUrl = (event: Event) => {
+      const url = (event as CustomEvent).detail as string | undefined;
+      if (url) handleDeepLink(url);
+    };
+
+    window.addEventListener(DEEP_LINK_EVENT, handleQueuedUrl);
+    consumeQueuedNativeDeepLinks().forEach(handleDeepLink);
 
     const setupDeepLinkListeners = async () => {
       const App = await getCapacitorApp();
@@ -175,6 +183,7 @@ export function DeepLinkProvider({ children }: DeepLinkProviderProps) {
     setupDeepLinkListeners();
 
     return () => {
+      window.removeEventListener(DEEP_LINK_EVENT, handleQueuedUrl);
       cleanup?.();
     };
   }, [handleDeepLink]);
