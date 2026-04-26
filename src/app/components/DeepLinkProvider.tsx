@@ -41,17 +41,38 @@ export function DeepLinkProvider({ children }: DeepLinkProviderProps) {
     try {
       let targetPath: string | null = null;
 
+      // === Custom Scheme: eloyo://invite/CODE ===
+      // Capacitor liefert diese als ungültige URL — manuell parsen
+      const inviteSchemeMatch = url.match(/^eloyo:\/\/invite\/([A-Za-z0-9]{4,})/i);
+      if (inviteSchemeMatch) {
+        const code = inviteSchemeMatch[1];
+        console.log('🎁 Invite Code aus eloyo:// erkannt:', code);
+        storePendingInvite(code);
+        // Kein navigate hier – PendingInviteDialog reagiert auf den gespeicherten Code,
+        // sobald der User authentifiziert ist
+        return;
+      }
+
       // Versuche URL zu parsen
       try {
         const parsedUrl = new URL(url);
         const pathname = parsedUrl.pathname;
-        
+
+        // === Web-Link: https://eloyo.de/i/CODE ===
+        const inviteWebMatch = pathname.match(/^\/i\/([A-Za-z0-9]{4,})/);
+        if (inviteWebMatch) {
+          const code = inviteWebMatch[1];
+          console.log('🎁 Invite Code aus Web-Link erkannt:', code);
+          storePendingInvite(code);
+          return;
+        }
+
         // NFC/Chip deep links komplett ignorieren - Punkte werden NUR
         // über den aktiven Scan-Bildschirm vergeben
-        const hasChipParam = parsedUrl.searchParams.has('chip') || 
+        const hasChipParam = parsedUrl.searchParams.has('chip') ||
                              parsedUrl.searchParams.has('nfc') ||
                              parsedUrl.searchParams.has('tag');
-        
+
         if (hasChipParam) {
           console.log('📱 NFC Deep Link ignoriert - Punkte nur über aktiven Scan');
           return;
