@@ -79,6 +79,9 @@ export const AppLayout = () => {
           })}
         </div>
       </nav>
+
+      {/* Globaler Pending-Invite Dialog (zeigt sich nach Login wenn Invite-Code wartet) */}
+      <PendingInviteDialog />
     </div>
   );
 };
