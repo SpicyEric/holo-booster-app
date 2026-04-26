@@ -77,47 +77,6 @@ export function PendingInviteDialog() {
       clearPendingInvite();
       return;
     }
-    // Wenn der User bereits eingeloggt ist, prüfen ob er die Einladung überhaupt
-    // noch annehmen kann (sonst bleibt der Code ewig im localStorage und der
-    // Dialog erscheint nach jeder Navigation erneut).
-    if (user) {
-      try {
-        const fp = getDeviceFingerprint();
-        const { data: consumeData } = await supabase.rpc('consume_invitation', {
-          p_share_code: code,
-          p_device_fingerprint: fp,
-        });
-        const consumeResult = consumeData as {
-          success: boolean;
-          error_code?: string;
-          error?: string;
-        } | null;
-        if (consumeResult && !consumeResult.success) {
-          // Bekannte Endzustände: nicht erneut anzeigen
-          const terminalCodes = new Set([
-            'already_customer',
-            'already_pending',
-            'already_redeemed',
-            'expired',
-            'not_found',
-          ]);
-          const code2 = consumeResult.error_code;
-          const isTerminal =
-            (code2 && terminalCodes.has(code2)) ||
-            /abgelaufen|nicht gefunden|sammelst bereits|bereits angenommen|offene Einladung/i.test(
-              consumeResult.error ?? ''
-            );
-          if (isTerminal) {
-            console.info('[PendingInviteDialog] Skipping invite (terminal):', code2 ?? consumeResult.error);
-            markInviteConsumed(code);
-            clearPendingInvite();
-            return;
-          }
-        }
-      } catch (err) {
-        console.warn('[PendingInviteDialog] precheck consume failed:', err);
-      }
-    }
 
     try {
       const { data, error } = await supabase.rpc('lookup_invitation', { p_share_code: code });
@@ -132,10 +91,47 @@ export function PendingInviteDialog() {
         invitee_points?: number;
       };
       if (!result.success) {
+        console.info('[PendingInviteDialog] lookup_invitation not successful:', result.error);
         markInviteConsumed(code);
         clearPendingInvite();
         return;
       }
+
+      // Wenn User eingeloggt ist: read-only Eligibility-Check, BEVOR der Dialog erscheint.
+      // (Wir wollen NICHT consume_invitation aufrufen — das würde das 7-Tage-Fenster sofort starten.)
+      if (user && result.merchant_customer_id) {
+        // 1) User darf sich nicht selbst einladen / hat schon Punkte beim Merchant
+        const { data: existingAccount } = await supabase
+          .from('loyalty_accounts')
+          .select('id, current_points_balance')
+          .eq('user_id', user.id)
+          .eq('merchant_customer_id', result.merchant_customer_id)
+          .maybeSingle();
+
+        if (existingAccount && existingAccount.current_points_balance > 0) {
+          console.info('[PendingInviteDialog] user is already customer of merchant — skipping');
+          markInviteConsumed(code);
+          clearPendingInvite();
+          return;
+        }
+
+        // 2) User hat bereits eine offene Redemption für DIESEN Merchant
+        const { data: existingRedemption } = await supabase
+          .from('invitation_redemptions')
+          .select('id, bonus_window_starts_at, bonus_awarded_at, invitation_id, invitations!inner(merchant_customer_id)')
+          .eq('invitee_user_id', user.id)
+          .eq('invitations.merchant_customer_id', result.merchant_customer_id)
+          .is('bonus_awarded_at', null)
+          .maybeSingle();
+
+        if (existingRedemption) {
+          console.info('[PendingInviteDialog] user already has open redemption — skipping');
+          markInviteConsumed(code);
+          clearPendingInvite();
+          return;
+        }
+      }
+
       setPreview({
         share_code: code,
         merchant_customer_id: result.merchant_customer_id!,
