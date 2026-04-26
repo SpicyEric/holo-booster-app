@@ -730,8 +730,8 @@ const Marketing = () => {
                 <div className="p-4 bg-primary/5 rounded-xl border border-primary/10 text-sm text-muted-foreground space-y-2">
                   <p className="font-medium text-foreground">💡 So funktioniert's</p>
                   <p>Kunden können in deiner Geschäfts-Detailansicht Freunde via WhatsApp oder Link einladen. Der eingeladene Freund hat <strong>7 Tage</strong> Zeit, bei dir vorbeizukommen und seinen ersten Stempel zu sammeln.</p>
-                  <p>Für eine erfolgreiche Einladung bekommt der Einlader ca. <strong>50 % der Punkte</strong>, die für eine Standarddienstleistung oder ein Standardprodukt nötig sind. <em>Beispiel: 2 Freunde einladen = 2 × 80 Punkte = 160 Punkte – damit lässt sich z. B. ein gratis Haarschnitt einlösen.</em></p>
-                  <p>Der eingeladene Freund bekommt automatisch <strong>doppelte Punkte</strong> auf seinen ersten Stempel. So profitiert wirklich jeder – und du gewinnst echten Footfall mit zwei Kunden gleichzeitig pro erfolgreicher Empfehlung.</p>
+                  <p>Der eingeladene Freund bekommt automatisch <strong>doppelte Punkte</strong> auf seinen ersten Stempel.</p>
+                  <p>Für eine erfolgreiche Einladung bekommt der Einlader ca. <strong>50 % der Punkte</strong>, die für eine Standarddienstleistung oder ein Standardprodukt nötig sind. <strong>Beispiel Barbershop:</strong> Ein gratis Haarschnitt kostet 160 Punkte. Dementsprechend bringt das erfolgreiche Einladen von einem Neukunden 80 Punkte. Somit kann man durch zwei erfolgreiche Einladungen sich die Prämie „gratis Haarschnitt“ abholen.</p>
                 </div>
 
                 <div className="p-5 bg-card rounded-xl border border-border/30 space-y-3">
@@ -752,22 +752,6 @@ const Marketing = () => {
                       className="h-16 w-32 text-center text-4xl font-bold text-primary border-2 border-primary/30 focus-visible:border-primary rounded-xl"
                     />
                     <span className="text-sm text-muted-foreground">Punkte</span>
-                  </div>
-                </div>
-
-                <div className="p-4 bg-primary/5 rounded-xl border border-primary/10">
-                  <div className="flex items-start gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-primary/15 flex items-center justify-center shrink-0">
-                      <Sparkles className="h-4 w-4 text-primary" />
-                    </div>
-                    <div className="space-y-1">
-                      <p className="text-sm font-semibold text-foreground">
-                        Bonus für den eingeladenen Freund
-                      </p>
-                      <p className="text-xs text-muted-foreground leading-relaxed">
-                        Der eingeladene Freund bekommt automatisch <strong>doppelte Punkte</strong> auf seinen ersten Stempel bei dir. Das ist fest eingestellt und kann nicht geändert werden – so profitiert wirklich jeder Neukunde spürbar.
-                      </p>
-                    </div>
                   </div>
                 </div>
 
