@@ -727,12 +727,7 @@ const Marketing = () => {
                 </div>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="p-4 bg-primary/5 rounded-xl border border-primary/10 text-sm text-muted-foreground space-y-2">
-                  <p className="font-medium text-foreground">💡 So funktioniert's</p>
-                  <p>Kunden können in deiner Geschäfts-Detailansicht Freunde via WhatsApp oder Link einladen. Der eingeladene Freund hat <strong>7 Tage</strong> Zeit, bei dir vorbeizukommen und seinen ersten Stempel zu sammeln.</p>
-                  <p>Der eingeladene Freund bekommt automatisch <strong>doppelte Punkte</strong> auf seinen ersten Stempel.</p>
-                  <p>Für eine erfolgreiche Einladung bekommt der Einlader ca. <strong>50 % der Punkte</strong>, die für eine Standarddienstleistung oder ein Standardprodukt nötig sind. <strong>Beispiel Barbershop:</strong> Ein gratis Haarschnitt kostet 160 Punkte. Dementsprechend bringt das erfolgreiche Einladen von einem Neukunden 80 Punkte. Somit kann man durch zwei erfolgreiche Einladungen sich die Prämie „gratis Haarschnitt“ abholen.</p>
-                </div>
+                <ReferralExplainerCarousel />
 
                 <div className="p-5 bg-card rounded-xl border border-border/30 space-y-3">
                   <Label className="font-medium text-base">Bonus für den Einlader</Label>
