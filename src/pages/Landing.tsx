@@ -15,6 +15,26 @@ import businessNetwork from '@/assets/business-network-v2.png';
 import contactPerson from '@/assets/contact-person.png';
 import contactCtaButton from '@/assets/contact-cta-button.png';
 import { useEffect, useState } from 'react';
+import { HeroParallax } from '@/components/ui/hero-parallax';
+
+/* ─── Hero Parallax demo products (placeholder images) ─── */
+const heroParallaxProducts = [
+  { title: 'Moonbeam', link: '#', thumbnail: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&q=80' },
+  { title: 'Cursor', link: '#', thumbnail: 'https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?w=800&q=80' },
+  { title: 'Rogue', link: '#', thumbnail: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800&q=80' },
+  { title: 'Editorially', link: '#', thumbnail: 'https://images.unsplash.com/photo-1556761175-5973dc0f32e7?w=800&q=80' },
+  { title: 'Editrix AI', link: '#', thumbnail: 'https://images.unsplash.com/photo-1559136555-9303baea8ebd?w=800&q=80' },
+  { title: 'Pixel Perfect', link: '#', thumbnail: 'https://images.unsplash.com/photo-1542744173-8e7e53415bb0?w=800&q=80' },
+  { title: 'Algochurn', link: '#', thumbnail: 'https://images.unsplash.com/photo-1551434678-e076c223a692?w=800&q=80' },
+  { title: 'Aceternity UI', link: '#', thumbnail: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800&q=80' },
+  { title: 'Tailwind Master Kit', link: '#', thumbnail: 'https://images.unsplash.com/photo-1581291518857-4e27b48ff24e?w=800&q=80' },
+  { title: 'SmartBridge', link: '#', thumbnail: 'https://images.unsplash.com/photo-1556761175-b413da4baf72?w=800&q=80' },
+  { title: 'Renderwork Studio', link: '#', thumbnail: 'https://images.unsplash.com/photo-1497366216548-37526070297c?w=800&q=80' },
+  { title: 'Creme Digital', link: '#', thumbnail: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800&q=80' },
+  { title: 'Golden Bells', link: '#', thumbnail: 'https://images.unsplash.com/photo-1497366754035-f200968a6e72?w=800&q=80' },
+  { title: 'Invoker Labs', link: '#', thumbnail: 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=800&q=80' },
+  { title: 'E Free Invoice', link: '#', thumbnail: 'https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=800&q=80' },
+];
 
 /* ─── Apple-style cubic-bezier ─── */
 const appleEase = [0.16, 1, 0.3, 1] as const;
