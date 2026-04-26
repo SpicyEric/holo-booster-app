@@ -221,6 +221,13 @@ const Marketing = () => {
         accepted: acceptedCount,
         converted: convertedCount,
       });
+
+      // Liste der erfolgreichen Empfehlungen
+      const { data: refList } = await supabase.rpc('list_merchant_referrals', {
+        p_merchant_customer_id: assignment.customer_id,
+      });
+      setReferralList((refList as any[] | null) ?? []);
+
       // Mark automations as loaded (so changes after this trigger automationsChanged)
       setTimeout(() => { automationsLoadedRef.current = true; }, 100);
 
