@@ -822,6 +822,20 @@ export const AppMerchantDetail = () => {
               >
                 <h1 className="text-lg font-bold text-white drop-shadow-md">{merchantName}</h1>
               </motion.div>
+
+              {merchant.referral_enabled !== false && (
+                <motion.button
+                  initial={shouldAnimateFromScan ? { opacity: 0, scale: 0.6 } : false}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ duration: 0.4, delay: shouldAnimateFromScan ? 0.45 : 0, type: 'spring', stiffness: 300, damping: 20 }}
+                  whileTap={{ scale: 0.92 }}
+                  onClick={() => setInviteOpen(true)}
+                  aria-label="Freund einladen"
+                  className="absolute bottom-3 right-3 z-10 pointer-events-auto h-11 w-11 rounded-full bg-primary text-primary-foreground shadow-lg shadow-primary/40 flex items-center justify-center ring-2 ring-white/40 hover:bg-primary/90 transition-colors"
+                >
+                  <UserPlus className="h-5 w-5" />
+                </motion.button>
+              )}
             </div>
           </div>
 
