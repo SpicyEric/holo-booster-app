@@ -88,48 +88,40 @@ export const InviteFriendDialog = ({
     }
   };
 
-  const nativeShare = async () => {
-    if (!shareText) return;
-    if (typeof navigator !== 'undefined' && (navigator as any).share) {
-      try {
-        await (navigator as any).share({
-          title: `Einladung zu ${merchantName}`,
-          text: shareText,
-          url: inviteUrl,
-        });
-      } catch {
-        // user cancelled
-      }
-    } else {
-      void copyLink();
-    }
-  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[340px] rounded-3xl p-6 gap-4">
+      <DialogContent className="max-w-[340px] rounded-3xl p-6 gap-4 [&>button]:h-8 [&>button]:w-8 [&>button>svg]:h-5 [&>button>svg]:w-5">
         <DialogHeader className="space-y-3 text-center sm:text-center">
           <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/15">
             <Gift className="h-7 w-7 text-primary" />
           </div>
           <DialogTitle className="text-xl">Freund einladen</DialogTitle>
           <DialogDescription className="text-sm leading-relaxed">
-            Lade einen Freund zu <span className="font-semibold text-foreground">{merchantName}</span> ein.
-            Wenn ihr beide innerhalb von <span className="font-semibold text-foreground">24 Stunden</span> dort
-            Punkte sammelt, bekommt ihr <span className="font-semibold text-foreground">beide</span> einen Bonus:
+            Lade eine Person zu <span className="font-semibold text-foreground">{merchantName}</span> ein,
+            indem du ihr deinen persönlichen Link schickst. Sammelt sie innerhalb von{' '}
+            <span className="font-semibold text-foreground">7 Tagen</span> dort ihren ersten Stempel,
+            bekommt ihr <span className="font-semibold text-foreground">beide</span> einen Bonus:
           </DialogDescription>
         </DialogHeader>
 
         <div className="grid grid-cols-2 gap-2">
           <div className="rounded-xl bg-muted/50 px-3 py-3 text-center">
             <div className="text-xs text-muted-foreground">Du bekommst</div>
-            <div className="text-lg font-bold text-primary">+{inviterPoints} Punkte</div>
+            <div className="text-lg font-bold text-primary leading-tight">+{inviterPoints} Punkte</div>
+            <div className="text-[10px] text-muted-foreground mt-0.5 leading-tight">als Empfehlungs-Bonus</div>
           </div>
           <div className="rounded-xl bg-muted/50 px-3 py-3 text-center">
             <div className="text-xs text-muted-foreground">Dein Freund</div>
-            <div className="text-lg font-bold text-primary">+{inviteePoints} Punkte</div>
+            <div className="text-lg font-bold text-primary leading-tight">Punkte ×2</div>
+            <div className="text-[10px] text-muted-foreground mt-0.5 leading-tight">auf den ersten Stempel</div>
           </div>
         </div>
+
+        <p className="text-[11px] text-muted-foreground leading-relaxed text-center px-1">
+          Du kannst nur Personen einladen, die bei <span className="font-medium text-foreground">{merchantName}</span> noch
+          keine Punkte gesammelt haben und aktuell keine offene Einladung von jemand anderem für diesen Laden besitzen.
+        </p>
 
         {loading ? (
           <div className="flex items-center justify-center py-6">
@@ -143,23 +135,14 @@ export const InviteFriendDialog = ({
               </svg>
               Über WhatsApp einladen
             </Button>
-            <div className="flex gap-2">
-              <Button
-                onClick={copyLink}
-                variant="outline"
-                className="flex-1 h-10 rounded-xl"
-              >
-                {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-                {copied ? 'Kopiert' : 'Link kopieren'}
-              </Button>
-              <Button
-                onClick={nativeShare}
-                variant="outline"
-                className="flex-1 h-10 rounded-xl"
-              >
-                Teilen
-              </Button>
-            </div>
+            <Button
+              onClick={copyLink}
+              variant="outline"
+              className="w-full h-10 rounded-xl"
+            >
+              {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+              {copied ? 'Kopiert' : 'Link kopieren'}
+            </Button>
             <p className="text-center text-[11px] text-muted-foreground pt-1">
               Link gültig 7 Tage · Code: <span className="font-mono">{shareCode}</span>
             </p>
