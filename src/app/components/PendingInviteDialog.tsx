@@ -72,6 +72,11 @@ export function PendingInviteDialog() {
   }, [preview?.share_code, accepted?.share_code]);
 
   const loadPreview = async (code: string) => {
+    // Bereits angenommene Einladungen niemals erneut als Preview anzeigen
+    if (isInviteConsumed(code)) {
+      clearPendingInvite();
+      return;
+    }
     try {
       const { data, error } = await supabase.rpc('lookup_invitation', { p_share_code: code });
       if (error) throw error;
