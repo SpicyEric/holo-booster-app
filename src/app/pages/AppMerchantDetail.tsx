@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowLeft, MapPin, Phone, Globe, Instagram, Clock, Gift, Sparkles, History, Star } from 'lucide-react';
+import { ArrowLeft, MapPin, Phone, Globe, Instagram, Clock, Gift, Sparkles, History, Star, PartyPopper, Timer } from 'lucide-react';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
