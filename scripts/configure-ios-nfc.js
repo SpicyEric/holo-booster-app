@@ -38,6 +38,12 @@ const LOCATION_CONFIG = {
   NSLocationAlwaysAndWhenInUseUsageDescription: 'Eloyo benötigt deinen Standort um Stores in deiner Nähe zu finden und dich über Angebote in der Nähe zu informieren.',
 };
 
+const DEEP_LINK_CONFIG = {
+  urlScheme: 'eloyo',
+  urlName: 'com.eloyo.app',
+  associatedDomains: ['applinks:eloyo.de', 'applinks:www.eloyo.de'],
+};
+
 /**
  * Check if iOS platform exists
  */
@@ -107,6 +113,18 @@ function addPlistEntry(plistContent, key, value) {
   return newContent;
 }
 
+function addUrlScheme(plistContent) {
+  if (plistContent.includes('<string>eloyo</string>')) {
+    console.log('   ⏭️  eloyo URL scheme already present');
+    return plistContent;
+  }
+
+  const insertPosition = plistContent.lastIndexOf('</dict>');
+  const entry = `\t<key>CFBundleURLTypes</key>\n\t<array>\n\t\t<dict>\n\t\t\t<key>CFBundleURLName</key>\n\t\t\t<string>${DEEP_LINK_CONFIG.urlName}</string>\n\t\t\t<key>CFBundleURLSchemes</key>\n\t\t\t<array>\n\t\t\t\t<string>${DEEP_LINK_CONFIG.urlScheme}</string>\n\t\t\t</array>\n\t\t</dict>\n\t</array>\n`;
+  console.log('   ✅ eloyo URL scheme added');
+  return plistContent.slice(0, insertPosition) + entry + plistContent.slice(insertPosition);
+}
+
 /**
  * Configure Info.plist - NFC
  */
@@ -173,6 +191,9 @@ function configureInfoPlist() {
   
   // Geolocation Configuration
   plist = configureGeolocationInPlist(plist);
+
+  // Deep Link URL Scheme
+  plist = addUrlScheme(plist);
 
   writePlist(INFO_PLIST_PATH, plist);
   console.log('✅ Info.plist updated');
