@@ -140,7 +140,7 @@ export function OpenInvitationsBanner() {
           <button
             key={item.invitation_id}
             onClick={() => navigate(`/app/merchant/${item.merchant_customer_id}`)}
-            className="w-full text-left px-4 py-3 bg-card rounded-xl flex items-center gap-3 active:opacity-70 transition-opacity"
+            className="w-full text-left px-4 py-3 bg-card border border-border rounded-xl flex items-center gap-3 shadow-card active:opacity-70 transition-opacity"
           >
             {item.merchant_logo ? (
               <img src={item.merchant_logo} alt="" className="w-10 h-10 rounded-full object-cover flex-shrink-0" />
