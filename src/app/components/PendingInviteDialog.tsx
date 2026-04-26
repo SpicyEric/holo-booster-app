@@ -2,11 +2,15 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Gift, Sparkles } from 'lucide-react';
+import { Gift, Sparkles, Info, Clock } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { getDeviceFingerprint } from '@/lib/deviceFingerprint';
 import { clearPendingInvite, getPendingInviteCode, isInviteConsumed, markInviteConsumed, storePendingInvite } from '@/app/lib/pendingInvite';
+
+type IneligibleReason =
+  | { kind: 'already_customer'; merchant_customer_id: string; merchant_name: string; logo_url: string | null; cover_image_url: string | null }
+  | { kind: 'already_invited'; merchant_customer_id: string; merchant_name: string; logo_url: string | null; cover_image_url: string | null; expires_at: string | null };
 
 interface InviteData {
   invitation_id: string;
