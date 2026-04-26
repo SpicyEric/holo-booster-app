@@ -108,7 +108,6 @@ const Nachrichten = () => {
   const [newCustomerOfferForm, setNewCustomerOfferForm] = useState({
     title: '',
     description: '',
-    bonus_stamps: 0,
     is_active: true
   });
 
@@ -208,7 +207,6 @@ const Nachrichten = () => {
         setNewCustomerOfferForm({
           title: ncoData.title,
           description: ncoData.description || '',
-          bonus_stamps: ncoData.bonus_stamps || 0,
           is_active: ncoData.is_active ?? true
         });
       }
@@ -452,7 +450,7 @@ const Nachrichten = () => {
           .update({
             title: newCustomerOfferForm.title,
             description: newCustomerOfferForm.description || null,
-            bonus_stamps: newCustomerOfferForm.bonus_stamps,
+            bonus_stamps: 0,
             is_active: newCustomerOfferForm.is_active
           })
           .eq('id', newCustomerOffer.id);
@@ -465,7 +463,7 @@ const Nachrichten = () => {
             merchant_customer_id: customerId,
             title: newCustomerOfferForm.title,
             description: newCustomerOfferForm.description || null,
-            bonus_stamps: newCustomerOfferForm.bonus_stamps,
+            bonus_stamps: 0,
             is_active: newCustomerOfferForm.is_active
           });
         if (error) throw error;
@@ -489,7 +487,7 @@ const Nachrichten = () => {
       if (error) throw error;
       toast.success('Neukundenangebot gelöscht');
       setNewCustomerOffer(null);
-      setNewCustomerOfferForm({ title: '', description: '', bonus_stamps: 0, is_active: true });
+      setNewCustomerOfferForm({ title: '', description: '', is_active: true });
     } catch (error) {
       toast.error('Fehler beim Löschen');
     }
