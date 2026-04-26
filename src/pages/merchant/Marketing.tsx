@@ -136,6 +136,13 @@ const Marketing = () => {
 
   useEffect(() => { loadData(); }, []);
 
+  // Sync activeTab from ?tab= URL parameter (Sidebar Sub-Items)
+  useEffect(() => {
+    const tabParam = searchParams.get('tab');
+    const valid = ['praemien', 'boost', 'referral', 'reviews', 'messages', 'automations'];
+    if (tabParam && valid.includes(tabParam)) setActiveTab(tabParam);
+  }, [searchParams]);
+
   useEffect(() => {
     const boostStatus = searchParams.get('boost');
     const boostId = searchParams.get('boost_id');
