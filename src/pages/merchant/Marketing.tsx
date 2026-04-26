@@ -111,6 +111,17 @@ const Marketing = () => {
   const [stampPoints, setStampPoints] = useState<{ green: number | null; blue: number | null; red: number | null }>({ green: null, blue: null, red: null });
   const [showBonusHint, setShowBonusHint] = useState(false);
 
+  // --- Referral / Empfehlungen state ---
+  const [referralEnabled, setReferralEnabled] = useState(true);
+  const [referralInviterPoints, setReferralInviterPoints] = useState(3);
+  const [referralInviteePoints, setReferralInviteePoints] = useState(1);
+  const [savingReferral, setSavingReferral] = useState(false);
+  const [referralStats, setReferralStats] = useState<{
+    total_invites: number;
+    accepted: number;
+    converted: number;
+  }>({ total_invites: 0, accepted: 0, converted: 0 });
+
   // Track automation changes
   useEffect(() => {
     if (automationsLoadedRef.current) setAutomationsChanged(true);
