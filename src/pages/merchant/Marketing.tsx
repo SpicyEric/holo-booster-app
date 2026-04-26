@@ -112,7 +112,7 @@ const Marketing = () => {
 
   // --- Referral / Empfehlungen state ---
   const [referralEnabled, setReferralEnabled] = useState(true);
-  const [referralInviterPoints, setReferralInviterPoints] = useState(3);
+  const [referralInviterPoints, setReferralInviterPoints] = useState(20);
   const [referralInviteePoints, setReferralInviteePoints] = useState(1);
   const [savingReferral, setSavingReferral] = useState(false);
   const [referralStats, setReferralStats] = useState<{
