@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { nfcService, NfcReadResult } from '@/app/services/nfcService';
 import { pushNotificationService } from '@/app/services/pushNotificationService';
 import { toast } from 'sonner';
+import { maybeAwardReferralBonus } from '@/app/lib/referralBonus';
 
 interface UseNewCustomerOfferRedemptionProps {
   userId: string | undefined;
