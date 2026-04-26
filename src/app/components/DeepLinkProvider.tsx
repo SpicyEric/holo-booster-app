@@ -1,6 +1,6 @@
 import { useEffect, useCallback, createContext, useContext, ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { storePendingInvite } from './PendingInviteDialog';
+import { extractInviteCodeFromUrl, notifyPendingInvite, storePendingInvite } from '@/app/lib/pendingInvite';
 
 // Check if Capacitor App plugin is available
 const getCapacitorApp = async () => {
@@ -40,6 +40,21 @@ export function DeepLinkProvider({ children }: DeepLinkProviderProps) {
 
     try {
       let targetPath: string | null = null;
+
+      const inviteCode = extractInviteCodeFromUrl(url);
+      if (inviteCode) {
+        console.log('🎁 Invite Code erkannt:', inviteCode);
+        const storedCode = storePendingInvite(inviteCode);
+        if (storedCode) {
+          try {
+            notifyPendingInvite(storedCode);
+          } catch {
+            // ignore
+          }
+        }
+        navigate('/app', { replace: true });
+        return;
+      }
 
       // === Custom Scheme: eloyo://invite/CODE ===
       // Capacitor liefert diese als ungültige URL — manuell parsen
@@ -119,6 +134,15 @@ export function DeepLinkProvider({ children }: DeepLinkProviderProps) {
       }
 
       try {
+        const initialLaunchUrl = await App.getLaunchUrl();
+        if (initialLaunchUrl?.url) {
+          console.log('📱 App mit Deep Link gestartet:', initialLaunchUrl.url);
+          const initialInviteCode = storePendingInvite(initialLaunchUrl.url);
+          if (initialInviteCode) {
+            notifyPendingInvite(initialInviteCode);
+          }
+        }
+
         // Listener für eingehende URLs (App im Hintergrund)
         const urlListener = await App.addListener('appUrlOpen', (event) => {
           console.log('📱 App URL Open:', event.url);
@@ -135,16 +159,6 @@ export function DeepLinkProvider({ children }: DeepLinkProviderProps) {
             }
           }
         });
-
-        // Prüfe ob App mit Deep Link gestartet wurde
-        const launchUrl = await App.getLaunchUrl();
-        if (launchUrl?.url) {
-          console.log('📱 App mit Deep Link gestartet:', launchUrl.url);
-          // Kleine Verzögerung um sicherzustellen dass Router bereit ist
-          setTimeout(() => {
-            handleDeepLink(launchUrl.url);
-          }, 100);
-        }
 
         cleanup = () => {
           urlListener.remove();
