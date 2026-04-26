@@ -430,7 +430,7 @@ export const AppMerchantDetail = () => {
               redemption_id: inviteRow.id,
               invitation_id: inviteRow.invitation_id,
               expires_at: expiresAt,
-              inviter_points: merchantData.referral_inviter_points ?? 3,
+              inviter_points: merchantData.referral_inviter_points ?? 20,
               invitee_points: merchantData.referral_invitee_points ?? 1,
             });
           } else {
