@@ -42,6 +42,12 @@ export function PendingInviteDialog() {
   useEffect(() => {
     if (!user) return;
     const code = getPendingInviteCode();
+    if (code) void loadPreview(code);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
+
+  useEffect(() => {
+    const code = getPendingInviteCode();
     if (code) {
       void loadPreview(code);
     }
@@ -54,7 +60,7 @@ export function PendingInviteDialog() {
     window.addEventListener('eloyo:pending-invite', onNewInvite);
     return () => window.removeEventListener('eloyo:pending-invite', onNewInvite);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user]);
+  }, []);
 
   const loadPreview = async (code: string) => {
     try {
@@ -90,6 +96,12 @@ export function PendingInviteDialog() {
 
   const acceptInvite = async () => {
     if (!preview) return;
+    if (!user) {
+      storePendingInvite(preview.share_code);
+      setOpen(false);
+      navigate('/app/auth');
+      return;
+    }
     setAccepting(true);
     try {
       const fp = getDeviceFingerprint();
@@ -196,7 +208,7 @@ export function PendingInviteDialog() {
                 disabled={accepting}
                 className="w-full h-11 rounded-xl"
               >
-                {accepting ? 'Wird angenommen…' : 'Einladung annehmen'}
+                {accepting ? 'Wird angenommen…' : user ? 'Einladung annehmen' : 'Einloggen oder registrieren'}
               </Button>
               <button
                 onClick={declineInvite}
