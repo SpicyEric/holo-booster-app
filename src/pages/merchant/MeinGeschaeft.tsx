@@ -973,6 +973,50 @@ const MeinGeschaeft = () => {
                         placeholder="Erzähle etwas über dein Geschäft..."
                         rows={4}
                       />
+                      <div className="mt-2">
+                        <p className="text-xs text-muted-foreground mb-1.5">
+                          💡 Vorlagen einfügen (kannst du anschließend frei anpassen):
+                        </p>
+                        <div className="flex flex-wrap gap-1.5">
+                          {[
+                            {
+                              label: "👋 Willkommen",
+                              text: `Herzlich willkommen bei ${formData.name || "uns"}! Wir freuen uns auf deinen Besuch und darauf, dich mit unseren Lieblingsprodukten zu verwöhnen. ✨`,
+                            },
+                            {
+                              label: "🎁 Treue belohnt",
+                              text: "Bei uns lohnt sich jeder Besuch: Sammle Punkte, sichere dir tolle Prämien und genieße exklusive Vorteile als Stammgast. 💜",
+                            },
+                            {
+                              label: "🤝 Freunde einladen",
+                              text: `Lade 2 Freunde ein, die noch nie bei uns waren — und du hast direkt genug Punkte für eine tolle Prämie! 🎁 Deine Freunde bekommen beim ersten Besuch doppelte Punkte, du bekommst deinen Bonus.`,
+                            },
+                            {
+                              label: "⭐ Qualität & Leidenschaft",
+                              text: "Mit Liebe zum Detail und höchsten Qualitätsansprüchen sorgen wir dafür, dass jeder Besuch bei uns zu einem kleinen Highlight wird.",
+                            },
+                            {
+                              label: "📍 Mitten in der Stadt",
+                              text: `Du findest uns zentral gelegen${formData.city ? ` in ${formData.city}` : ""} — perfekt für einen kurzen Stopp oder einen entspannten Aufenthalt. Wir freuen uns auf dich!`,
+                            },
+                          ].map((tpl) => (
+                            <Button
+                              key={tpl.label}
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                const current = formData.description?.trim() || "";
+                                const next = current ? `${current}\n\n${tpl.text}` : tpl.text;
+                                handleInputChange("description", next);
+                              }}
+                              className="h-7 px-2.5 text-xs rounded-lg bg-white hover:bg-primary/5 hover:border-primary/40 hover:text-primary transition-colors"
+                            >
+                              {tpl.label}
+                            </Button>
+                          ))}
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </Card>
