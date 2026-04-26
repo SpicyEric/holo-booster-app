@@ -153,22 +153,55 @@ export const AppMerchantDetail = () => {
 
   useEffect(() => {
     const updateHeaderHeight = () => {
-      setHeaderHeight(headerRef.current?.offsetHeight ?? 0);
+      const next = headerRef.current?.offsetHeight ?? 0;
+      // Ignore transient 0/very-small measurements (e.g. when tab/app
+      // is briefly hidden) — keep the last valid height instead.
+      if (next < 50) return;
+      setHeaderHeight((prev) => (prev === next ? prev : next));
     };
 
     updateHeaderHeight();
 
-    if (!headerRef.current || typeof ResizeObserver === 'undefined') {
-      return;
+    // Re-measure once images inside the header have loaded — image
+    // load events after a tab/app resume can change the cover height.
+    const headerEl = headerRef.current;
+    const imgs = headerEl ? Array.from(headerEl.querySelectorAll('img')) : [];
+    imgs.forEach((img) => {
+      if (!img.complete) {
+        img.addEventListener('load', updateHeaderHeight, { once: true });
+      }
+    });
+
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        // Defer to next frames so layout has settled.
+        requestAnimationFrame(() => requestAnimationFrame(updateHeaderHeight));
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibility);
+    window.addEventListener('pageshow', updateHeaderHeight);
+    window.addEventListener('focus', updateHeaderHeight);
+
+    if (!headerEl || typeof ResizeObserver === 'undefined') {
+      return () => {
+        document.removeEventListener('visibilitychange', handleVisibility);
+        window.removeEventListener('pageshow', updateHeaderHeight);
+        window.removeEventListener('focus', updateHeaderHeight);
+        imgs.forEach((img) => img.removeEventListener('load', updateHeaderHeight));
+      };
     }
 
     const observer = new ResizeObserver(() => updateHeaderHeight());
-    observer.observe(headerRef.current);
+    observer.observe(headerEl);
     window.addEventListener('resize', updateHeaderHeight);
 
     return () => {
       observer.disconnect();
       window.removeEventListener('resize', updateHeaderHeight);
+      document.removeEventListener('visibilitychange', handleVisibility);
+      window.removeEventListener('pageshow', updateHeaderHeight);
+      window.removeEventListener('focus', updateHeaderHeight);
+      imgs.forEach((img) => img.removeEventListener('load', updateHeaderHeight));
     };
   }, [merchant]);
 
