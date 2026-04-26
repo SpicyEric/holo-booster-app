@@ -446,13 +446,10 @@ const Marketing = () => {
 
   const handleSaveNco = async () => {
     if (!customerId) return;
-    if (ncoGiftType === 'offer' && !ncoForm.title) { toast.error("Bitte Titel eingeben"); return; }
-    if (ncoGiftType === 'points' && (!ncoForm.bonus_stamps || ncoForm.bonus_stamps <= 0)) { toast.error("Bitte Bonuspunkte eingeben"); return; }
+    if (!ncoForm.title) { toast.error("Bitte Titel eingeben"); return; }
     setSaving(true);
     try {
-      const dataToSave = ncoGiftType === 'points'
-        ? { title: `${ncoForm.bonus_stamps} Willkommens-Punkte`, description: ncoForm.description || null, bonus_stamps: ncoForm.bonus_stamps, image_url: null }
-        : { title: ncoForm.title, description: ncoForm.description || null, bonus_stamps: 0, image_url: ncoForm.image_url || null };
+      const dataToSave = { title: ncoForm.title, description: ncoForm.description || null, bonus_stamps: 0, image_url: ncoForm.image_url || null };
 
       if (newCustomerOffer) {
         const { error } = await supabase.from("new_customer_offers").update(dataToSave).eq("id", newCustomerOffer.id);
