@@ -15,6 +15,7 @@ import {
   Store, UserPlus, MessageSquare, Cake, Rocket, Bell, X
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import CountUp from "@/components/CountUp";
 import {
   Tooltip, TooltipContent, TooltipProvider, TooltipTrigger
 } from "@/components/ui/tooltip";
@@ -26,7 +27,7 @@ interface DashboardStats { totalContacts: number; totalStamps: number; totalRede
 const DEMO_MERCHANT_ID = "e828d21a-f7c5-4c8e-bc8d-6301e3e3ab45";
 const DEMO_STATS: DashboardStats = { totalContacts: 832, totalStamps: 6102, totalRedemptions: 312, networkEffect: 387, newContactsThisWeek: 117 };
 
-const KpiCard = ({ icon: Icon, label, value, sub, trend, iconBg, iconColor, bigNumber }: { icon: React.ElementType; label: string; value: string; sub?: string; trend?: string; iconBg: string; iconColor: string; bigNumber?: boolean }) => (
+const KpiCard = ({ icon: Icon, label, value, countTo, sub, trend, iconBg, iconColor, bigNumber }: { icon: React.ElementType; label: string; value?: string; countTo?: number | null; sub?: string; trend?: string; iconBg: string; iconColor: string; bigNumber?: boolean }) => (
   <div className="bg-white rounded-2xl p-5 border border-border/30 shadow-[0_1px_3px_hsl(262,30%,80%/0.3)] hover:shadow-[0_4px_12px_hsl(262,30%,80%/0.4)] transition-all duration-300 group">
     <div className="flex items-center justify-between mb-3">
       <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center transition-transform duration-300 group-hover:scale-105", iconBg)}>
@@ -36,7 +37,13 @@ const KpiCard = ({ icon: Icon, label, value, sub, trend, iconBg, iconColor, bigN
         <span className="text-xs font-medium text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">{trend}</span>
       )}
     </div>
-    <p className={cn("font-bold text-foreground tracking-tight", bigNumber ? "text-5xl" : "text-3xl")}>{value}</p>
+    <p className={cn("font-bold text-foreground tracking-tight", bigNumber ? "text-5xl" : "text-3xl")}>
+      {typeof countTo === 'number' ? (
+        <CountUp to={countTo} separator="." duration={2.2} />
+      ) : (
+        value ?? '–'
+      )}
+    </p>
     <p className="text-sm text-muted-foreground mt-1">{label}</p>
     {sub && <p className="text-xs text-muted-foreground/70 mt-0.5">{sub}</p>}
   </div>
@@ -379,13 +386,14 @@ export default function KundeDashboard() {
 
           {/* ====== KPI Cards ====== */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            <KpiCard icon={Users} label="Kunden gesamt" value={stats?.totalContacts?.toLocaleString('de-DE') || '0'} trend={stats && stats.newContactsThisWeek > 0 ? `+${stats.newContactsThisWeek} diese Woche` : undefined} iconBg="bg-primary/10" iconColor="text-primary" bigNumber />
-            <KpiCard icon={Trophy} label="Stempel gesamt" value={stats?.totalStamps?.toLocaleString('de-DE') || '0'} sub="Gesamt seit Start" iconBg="bg-emerald-50" iconColor="text-emerald-600" bigNumber />
-            <KpiCard icon={Gift} label="Prämien eingelöst" value={stats?.totalRedemptions?.toLocaleString('de-DE') || '0'} iconBg="bg-amber-50" iconColor="text-amber-600" />
+            <KpiCard icon={Users} label="Kunden gesamt" countTo={stats?.totalContacts ?? 0} trend={stats && stats.newContactsThisWeek > 0 ? `+${stats.newContactsThisWeek} diese Woche` : undefined} iconBg="bg-primary/10" iconColor="text-primary" bigNumber />
+            <KpiCard icon={Trophy} label="Stempel gesamt" countTo={stats?.totalStamps ?? 0} sub="Gesamt seit Start" iconBg="bg-emerald-50" iconColor="text-emerald-600" bigNumber />
+            <KpiCard icon={Gift} label="Prämien eingelöst" countTo={stats?.totalRedemptions ?? 0} iconBg="bg-amber-50" iconColor="text-amber-600" />
             <KpiCard
               icon={Zap}
               label="Netzwerkeffekt"
-              value={stats && stats.networkEffect > 0 ? stats.networkEffect.toLocaleString('de-DE') : '–'}
+              countTo={stats && stats.networkEffect > 0 ? stats.networkEffect : null}
+              value={stats && stats.networkEffect > 0 ? undefined : '–'}
               sub={stats && stats.networkEffect > 0 ? "Neukundenprämien eingelöst" : "Noch keine Neukundenprämien"}
               iconBg="bg-purple-50"
               iconColor="text-purple-600"
