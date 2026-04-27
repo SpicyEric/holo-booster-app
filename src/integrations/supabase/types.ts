@@ -732,6 +732,7 @@ export type Database = {
           design_urls: string[] | null
           email: string | null
           facebook: string | null
+          gallery_images: string[]
           google_access_token: string | null
           google_business_name: string | null
           google_refresh_token: string | null
@@ -817,6 +818,7 @@ export type Database = {
           design_urls?: string[] | null
           email?: string | null
           facebook?: string | null
+          gallery_images?: string[]
           google_access_token?: string | null
           google_business_name?: string | null
           google_refresh_token?: string | null
@@ -902,6 +904,7 @@ export type Database = {
           design_urls?: string[] | null
           email?: string | null
           facebook?: string | null
+          gallery_images?: string[]
           google_access_token?: string | null
           google_business_name?: string | null
           google_refresh_token?: string | null

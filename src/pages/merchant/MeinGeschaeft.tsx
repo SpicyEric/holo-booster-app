@@ -16,7 +16,7 @@ import {
 import { toast } from "sonner";
 import {
   Upload, Save, MapPin, Phone, Globe, Instagram, Facebook, Twitter,
-  Clock, Store, Gift, Info, UserPlus, Plus, Trash2, Edit2, Loader2, Package, ImageIcon, BarChart3, Stamp, ArrowRight
+  Clock, Store, Gift, Info, UserPlus, Plus, Trash2, Edit2, Loader2, Package, ImageIcon, BarChart3, Stamp, ArrowRight, X, Image as ImageLucide, Sparkles
 } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Switch } from "@/components/ui/switch";
@@ -164,7 +164,9 @@ const MeinGeschaeft = () => {
     facebook: "",
     twitter: "",
     opening_hours: defaultOpeningHours,
+    gallery_images: [] as string[],
   });
+  const [uploadingGallery, setUploadingGallery] = useState(false);
 
   // Rewards
   const [rewards, setRewards] = useState<Reward[]>([]);
@@ -266,6 +268,7 @@ const MeinGeschaeft = () => {
           facebook: customer.facebook || "",
           twitter: customer.twitter || "",
           opening_hours: (customer.opening_hours as OpeningHours) || defaultOpeningHours,
+          gallery_images: ((customer as any).gallery_images as string[]) || [],
         });
         // Store initial form data for dirty tracking
         const loadedFormData = {
@@ -284,6 +287,7 @@ const MeinGeschaeft = () => {
           facebook: customer.facebook || "",
           twitter: customer.twitter || "",
           opening_hours: (customer.opening_hours as OpeningHours) || defaultOpeningHours,
+          gallery_images: ((customer as any).gallery_images as string[]) || [],
         };
         initialFormDataRef.current = loadedFormData;
         // Restore stamp settings
@@ -408,6 +412,39 @@ const MeinGeschaeft = () => {
     }
   };
 
+  const handleGalleryUpload = async (file: File) => {
+    if (!customerId) return;
+    if (formData.gallery_images.length >= 5) {
+      toast.error("Maximal 5 Galerie-Bilder erlaubt");
+      return;
+    }
+    setUploadingGallery(true);
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${customerId}/gallery_${Date.now()}.${fileExt}`;
+      const { error: uploadError } = await supabase.storage
+        .from("customer-assets")
+        .upload(fileName, file, { upsert: true });
+      if (uploadError) throw uploadError;
+      const { data: { publicUrl } } = supabase.storage
+        .from("customer-assets")
+        .getPublicUrl(fileName);
+      setFormData(prev => ({ ...prev, gallery_images: [...prev.gallery_images, publicUrl] }));
+      toast.success("Bild hinzugefügt");
+    } catch {
+      toast.error("Fehler beim Hochladen");
+    } finally {
+      setUploadingGallery(false);
+    }
+  };
+
+  const handleRemoveGalleryImage = (index: number) => {
+    setFormData(prev => ({
+      ...prev,
+      gallery_images: prev.gallery_images.filter((_, i) => i !== index),
+    }));
+  };
+
   const geocodeAddress = async (street: string, houseNumber: string, postalCode: string, city: string) => {
     try {
       const { data } = await supabase.functions.invoke('geocode-address', {
@@ -445,6 +482,7 @@ const MeinGeschaeft = () => {
         facebook: formData.facebook,
         twitter: formData.twitter,
         opening_hours: formData.opening_hours,
+        gallery_images: formData.gallery_images,
         updated_at: new Date().toISOString(),
       };
 
@@ -844,10 +882,13 @@ const MeinGeschaeft = () => {
   return (
     <div className="min-h-screen">
       <div className="max-w-7xl mx-auto p-6 sm:p-8">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Phone Preview */}
-          <div className="lg:col-span-1 order-2 lg:order-1">
-            <div className="sticky top-24">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+          {/* Phone Preview - sticky left column (35%) */}
+          <div className="lg:col-span-4 order-2 lg:order-1">
+            <div className="sticky top-6">
+              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3 px-1">
+                Live-Vorschau
+              </p>
               <PhoneFrame title="Live-Vorschau">
                 <MerchantPreviewLive 
                   data={{
@@ -874,18 +915,26 @@ const MeinGeschaeft = () => {
                 />
               </PhoneFrame>
               
-              {/* Global Save Button below phone */}
-              {activeTab === 'info' && profileDirty && (
-                <Button onClick={handleSaveInfo} disabled={saving} className="w-full rounded-xl mt-4 animate-pulse" size="lg">
+              {/* Always-visible Save Button */}
+              {activeTab === 'info' && (
+                <Button
+                  onClick={handleSaveInfo}
+                  disabled={saving || !profileDirty}
+                  className={cn(
+                    "w-full rounded-xl mt-4 transition-all",
+                    profileDirty && "animate-pulse shadow-lg shadow-primary/30"
+                  )}
+                  size="lg"
+                >
                   {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
-                  Änderungen speichern
+                  {profileDirty ? "Änderungen speichern" : "Gespeichert"}
                 </Button>
               )}
             </div>
           </div>
 
-          {/* Content */}
-          <div className="lg:col-span-2 order-1 lg:order-2">
+          {/* Content - right column (65%) */}
+          <div className="lg:col-span-8 order-1 lg:order-2">
             <Tabs value={activeTab} onValueChange={handleTabChange}>
               <TabsList className="hidden">
                 <TabsTrigger value="info" />
@@ -894,109 +943,143 @@ const MeinGeschaeft = () => {
 
 
               {/* Info Tab */}
-              <TabsContent value="info" className="space-y-6">
-                {/* Images */}
-                <Card className="rounded-2xl shadow-sm border-0 bg-gray-50/80 p-6">
-                  <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                    <Upload className="w-5 h-5" />
-                    Bilder
-                  </h3>
-                  <div className="grid grid-cols-2 gap-6">
+              <TabsContent value="info" className="space-y-5">
+                {/* Section 1: Bilder */}
+                <Card className="rounded-xl border border-border/60 bg-white p-6 shadow-sm">
+                  <div className="flex items-center gap-2 mb-5">
+                    <ImageLucide className="w-4 h-4 text-primary" />
+                    <h3 className="text-base font-semibold text-foreground">Bilder</h3>
+                  </div>
+
+                  <div className="grid grid-cols-[auto_1fr] gap-5 items-start">
+                    {/* Logo */}
                     <div>
-                      <Label className="mb-2 block">Logo</Label>
-                      <div className="border-2 border-dashed border-gray-200 rounded-xl p-4 text-center hover:border-primary/50 transition-colors">
+                      <Label className="text-xs font-medium text-muted-foreground mb-2 block">Logo</Label>
+                      <label className="group relative w-20 h-20 rounded-xl bg-muted/40 border border-border overflow-hidden flex items-center justify-center cursor-pointer hover:border-primary/50 transition-colors block">
+                        <input type="file" accept="image/*" className="hidden" onChange={(e) => { const file = e.target.files?.[0]; if (file) handleImageUpload(file, "logo"); }} />
                         {formData.logo_url ? (
-                          <div className="space-y-3">
-                            <img src={formData.logo_url} alt="Logo" className="w-20 h-20 object-contain mx-auto rounded-lg bg-white" />
-                            <label className="cursor-pointer text-sm text-primary hover:underline block">
-                              <input type="file" accept="image/*" className="hidden" onChange={(e) => { const file = e.target.files?.[0]; if (file) handleImageUpload(file, "logo"); }} />
-                              {uploadingLogo ? "Hochladen..." : "Ändern"}
-                            </label>
-                          </div>
+                          <img src={formData.logo_url} alt="Logo" className="w-full h-full object-cover" />
                         ) : (
-                          <label className="cursor-pointer block py-4">
-                            <input type="file" accept="image/*" className="hidden" onChange={(e) => { const file = e.target.files?.[0]; if (file) handleImageUpload(file, "logo"); }} />
-                            <ImageIcon className="w-8 h-8 mx-auto mb-2 text-gray-300" />
-                            <span className="text-sm text-gray-500">{uploadingLogo ? "Hochladen..." : "Logo hochladen"}</span>
-                          </label>
+                          <ImageIcon className="w-6 h-6 text-muted-foreground/50" />
                         )}
-                      </div>
+                        {uploadingLogo && (
+                          <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                            <Loader2 className="w-5 h-5 text-white animate-spin" />
+                          </div>
+                        )}
+                      </label>
+                      <label className="cursor-pointer block mt-2">
+                        <input type="file" accept="image/*" className="hidden" onChange={(e) => { const file = e.target.files?.[0]; if (file) handleImageUpload(file, "logo"); }} />
+                        <span className="text-xs font-medium text-primary hover:underline">Ändern</span>
+                      </label>
                     </div>
+
+                    {/* Cover */}
                     <div>
-                      <Label className="mb-2 block">Titelbild</Label>
-                      <div className="border-2 border-dashed border-gray-200 rounded-xl p-4 text-center hover:border-primary/50 transition-colors">
+                      <Label className="text-xs font-medium text-muted-foreground mb-2 block">Titelbild</Label>
+                      <label className="group relative w-full aspect-[16/9] rounded-xl bg-muted/40 border border-border overflow-hidden flex items-center justify-center cursor-pointer hover:border-primary/50 transition-colors block">
+                        <input type="file" accept="image/*" className="hidden" onChange={(e) => { const file = e.target.files?.[0]; if (file) handleImageUpload(file, "cover"); }} />
                         {formData.cover_image_url ? (
-                          <div className="space-y-3">
-                            <img src={formData.cover_image_url} alt="Titelbild" className="w-full h-24 object-cover mx-auto rounded-lg" />
-                            <label className="cursor-pointer text-sm text-primary hover:underline block">
-                              <input type="file" accept="image/*" className="hidden" onChange={(e) => { const file = e.target.files?.[0]; if (file) handleImageUpload(file, "cover"); }} />
-                              {uploadingCover ? "Hochladen..." : "Ändern"}
-                            </label>
-                          </div>
+                          <img src={formData.cover_image_url} alt="Titelbild" className="w-full h-full object-cover" />
                         ) : (
-                          <label className="cursor-pointer block py-4">
-                            <input type="file" accept="image/*" className="hidden" onChange={(e) => { const file = e.target.files?.[0]; if (file) handleImageUpload(file, "cover"); }} />
-                            <ImageIcon className="w-8 h-8 mx-auto mb-2 text-gray-300" />
-                            <span className="text-sm text-gray-500">{uploadingCover ? "Hochladen..." : "Titelbild hochladen"}</span>
-                          </label>
+                          <div className="flex flex-col items-center gap-1 text-muted-foreground/60">
+                            <ImageIcon className="w-6 h-6" />
+                            <span className="text-xs">Titelbild hochladen</span>
+                          </div>
                         )}
-                      </div>
+                        {uploadingCover && (
+                          <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                            <Loader2 className="w-5 h-5 text-white animate-spin" />
+                          </div>
+                        )}
+                      </label>
+                      <label className="cursor-pointer block mt-2">
+                        <input type="file" accept="image/*" className="hidden" onChange={(e) => { const file = e.target.files?.[0]; if (file) handleImageUpload(file, "cover"); }} />
+                        <span className="text-xs font-medium text-primary hover:underline">Ändern</span>
+                      </label>
                     </div>
+                  </div>
+
+                  {/* Galerie */}
+                  <div className="mt-6 pt-6 border-t border-border/60">
+                    <div className="mb-3">
+                      <h4 className="text-sm font-semibold text-foreground">Weitere Bilder (Slideshow)</h4>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        Kunden können durch diese Bilder in deinem Store-Profil swipen.
+                      </p>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {formData.gallery_images.map((url, i) => (
+                        <div key={i} className="relative group w-[100px] h-[70px] rounded-lg overflow-hidden border border-border bg-muted/40">
+                          <img src={url} alt={`Galerie ${i + 1}`} className="w-full h-full object-cover" />
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveGalleryImage(i)}
+                            className="absolute top-1 right-1 w-5 h-5 rounded-full bg-black/60 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black/80"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        </div>
+                      ))}
+                      {formData.gallery_images.length < 5 && (
+                        <label className="w-[100px] h-[70px] rounded-lg border-2 border-dashed border-border bg-muted/30 hover:border-primary/50 hover:bg-primary/5 flex items-center justify-center cursor-pointer transition-colors">
+                          <input type="file" accept="image/*" className="hidden" onChange={(e) => { const file = e.target.files?.[0]; if (file) handleGalleryUpload(file); }} />
+                          {uploadingGallery ? (
+                            <Loader2 className="w-4 h-4 text-muted-foreground animate-spin" />
+                          ) : (
+                            <Plus className="w-5 h-5 text-muted-foreground/60" />
+                          )}
+                        </label>
+                      )}
+                    </div>
+                    <p className="text-[11px] text-muted-foreground mt-2">
+                      {formData.gallery_images.length}/5 Bilder
+                    </p>
                   </div>
                 </Card>
 
-                {/* Business Info */}
-                <Card className="rounded-2xl shadow-sm border-0 bg-gray-50/80 p-6">
-                  <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                    <Store className="w-5 h-5" />
-                    Geschäftsinformationen
-                  </h3>
+                {/* Section 2: Geschäftsinformationen */}
+                <Card className="rounded-xl border border-border/60 bg-white p-6 shadow-sm">
+                  <div className="flex items-center gap-2 mb-5">
+                    <Store className="w-4 h-4 text-primary" />
+                    <h3 className="text-base font-semibold text-foreground">Geschäftsinformationen</h3>
+                  </div>
                   <div className="space-y-4">
                     <div>
-                      <Label>Geschäftsname *</Label>
-                      <Input value={formData.name} onChange={(e) => handleInputChange("name", e.target.value)} placeholder="z.B. Café Sonnenschein" className="rounded-xl" />
+                      <Label className="text-xs font-medium text-muted-foreground mb-1.5 block">Geschäftsname *</Label>
+                      <Input value={formData.name} onChange={(e) => handleInputChange("name", e.target.value)} placeholder="z.B. Café Sonnenschein" className="rounded-lg" />
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <Label className="text-xs font-medium text-muted-foreground mb-1.5 block">Branche</Label>
+                        <Select value={formData.industry} onValueChange={(value) => handleInputChange("industry", value)}>
+                          <SelectTrigger className="rounded-lg"><SelectValue placeholder="Branche auswählen" /></SelectTrigger>
+                          <SelectContent>{INDUSTRIES.map((ind) => (<SelectItem key={ind.value} value={ind.value}>{ind.label}</SelectItem>))}</SelectContent>
+                        </Select>
+                      </div>
+                      <div />
                     </div>
                     <div>
-                      <Label>Branche</Label>
-                      <Select value={formData.industry} onValueChange={(value) => handleInputChange("industry", value)}>
-                        <SelectTrigger className="rounded-xl"><SelectValue placeholder="Branche auswählen" /></SelectTrigger>
-                        <SelectContent>{INDUSTRIES.map((ind) => (<SelectItem key={ind.value} value={ind.value}>{ind.label}</SelectItem>))}</SelectContent>
-                      </Select>
-                    </div>
-                    <div>
-                      <Label>Beschreibung</Label>
-                      <RichTextEditor
-                        value={formData.description}
-                        onChange={(value) => handleInputChange("description", value)}
-                        placeholder="Erzähle etwas über dein Geschäft..."
-                        rows={4}
-                      />
-                      <div className="mt-2">
-                        <p className="text-xs text-muted-foreground mb-1.5">
-                          💡 Vorlagen einfügen (kannst du anschließend frei anpassen):
+                      <Label className="text-xs font-medium text-muted-foreground mb-1.5 block">Beschreibung</Label>
+                      <div style={{ resize: 'vertical', overflow: 'auto', minHeight: 120 }} className="rounded-lg">
+                        <RichTextEditor
+                          value={formData.description}
+                          onChange={(value) => handleInputChange("description", value)}
+                          placeholder="Erzähle etwas über dein Geschäft..."
+                          rows={5}
+                        />
+                      </div>
+                      <div className="mt-3">
+                        <p className="text-[11px] text-muted-foreground mb-1.5 flex items-center gap-1">
+                          <Sparkles className="w-3 h-3" /> Vorlagen einfügen (kannst du anschließend frei anpassen):
                         </p>
                         <div className="flex flex-wrap gap-1.5">
                           {[
-                            {
-                              label: "👋 Willkommen",
-                              text: `Herzlich willkommen bei ${formData.name || "uns"}! Wir freuen uns auf deinen Besuch und darauf, dich mit unseren Lieblingsprodukten zu verwöhnen. ✨`,
-                            },
-                            {
-                              label: "🎁 Treue belohnt",
-                              text: "Bei uns lohnt sich jeder Besuch: Sammle Punkte, sichere dir tolle Prämien und genieße exklusive Vorteile als Stammgast. 💜",
-                            },
-                            {
-                              label: "🤝 Freunde einladen",
-                              text: `Lade 2 Freunde ein, die noch nie bei uns waren — und du hast direkt genug Punkte für eine tolle Prämie! 🎁 Deine Freunde bekommen beim ersten Besuch doppelte Punkte, du bekommst deinen Bonus.`,
-                            },
-                            {
-                              label: "⭐ Qualität & Leidenschaft",
-                              text: "Mit Liebe zum Detail und höchsten Qualitätsansprüchen sorgen wir dafür, dass jeder Besuch bei uns zu einem kleinen Highlight wird.",
-                            },
-                            {
-                              label: "📍 Mitten in der Stadt",
-                              text: `Du findest uns zentral gelegen${formData.city ? ` in ${formData.city}` : ""} — perfekt für einen kurzen Stopp oder einen entspannten Aufenthalt. Wir freuen uns auf dich!`,
-                            },
+                            { label: "👋 Willkommen", text: `Herzlich willkommen bei ${formData.name || "uns"}! Wir freuen uns auf deinen Besuch und darauf, dich mit unseren Lieblingsprodukten zu verwöhnen. ✨` },
+                            { label: "🎁 Treue belohnt", text: "Bei uns lohnt sich jeder Besuch: Sammle Punkte, sichere dir tolle Prämien und genieße exklusive Vorteile als Stammgast. 💜" },
+                            { label: "🤝 Freunde einladen", text: `Lade 2 Freunde ein, die noch nie bei uns waren — und du hast direkt genug Punkte für eine tolle Prämie! 🎁 Deine Freunde bekommen beim ersten Besuch doppelte Punkte, du bekommst deinen Bonus.` },
+                            { label: "⭐ Qualität & Leidenschaft", text: "Mit Liebe zum Detail und höchsten Qualitätsansprüchen sorgen wir dafür, dass jeder Besuch bei uns zu einem kleinen Highlight wird." },
+                            { label: "📍 Mitten in der Stadt", text: `Du findest uns zentral gelegen${formData.city ? ` in ${formData.city}` : ""} — perfekt für einen kurzen Stopp oder einen entspannten Aufenthalt. Wir freuen uns auf dich!` },
                           ].map((tpl) => (
                             <Button
                               key={tpl.label}
@@ -1019,57 +1102,55 @@ const MeinGeschaeft = () => {
                   </div>
                 </Card>
 
-                {/* Address */}
-                <Card className="rounded-2xl shadow-sm border-0 bg-gray-50/80 p-6">
-                  <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                    <MapPin className="w-5 h-5" />
-                    Adresse
-                  </h3>
+                {/* Section 3: Adresse */}
+                <Card className="rounded-xl border border-border/60 bg-white p-6 shadow-sm">
+                  <div className="flex items-center gap-2 mb-5">
+                    <MapPin className="w-4 h-4 text-primary" />
+                    <h3 className="text-base font-semibold text-foreground">Adresse</h3>
+                  </div>
                   <div className="space-y-4">
-                    <div className="grid grid-cols-3 gap-4">
-                      <div className="col-span-2">
-                        <Label>Straße</Label>
-                        <Input value={formData.street} onChange={(e) => handleInputChange("street", e.target.value)} placeholder="Hauptstraße" className="rounded-xl" />
+                    <div className="grid grid-cols-4 gap-3">
+                      <div className="col-span-3">
+                        <Label className="text-xs font-medium text-muted-foreground mb-1.5 block">Straße</Label>
+                        <Input value={formData.street} onChange={(e) => handleInputChange("street", e.target.value)} placeholder="Hauptstraße" className="rounded-lg" />
                       </div>
                       <div>
-                        <Label>Nr.</Label>
-                        <Input value={formData.house_number} onChange={(e) => handleInputChange("house_number", e.target.value)} placeholder="123" className="rounded-xl" />
+                        <Label className="text-xs font-medium text-muted-foreground mb-1.5 block">Nr.</Label>
+                        <Input value={formData.house_number} onChange={(e) => handleInputChange("house_number", e.target.value)} placeholder="123" className="rounded-lg" />
                       </div>
                     </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <Label>PLZ</Label>
-                        <Input value={formData.postal_code} onChange={(e) => handleInputChange("postal_code", e.target.value)} placeholder="12345" className="rounded-xl" />
+                    <div className="grid grid-cols-10 gap-3">
+                      <div className="col-span-3">
+                        <Label className="text-xs font-medium text-muted-foreground mb-1.5 block">PLZ</Label>
+                        <Input value={formData.postal_code} onChange={(e) => handleInputChange("postal_code", e.target.value)} placeholder="12345" className="rounded-lg" />
                       </div>
-                      <div>
-                        <Label>Ort</Label>
-                        <Input value={formData.city} onChange={(e) => handleInputChange("city", e.target.value)} placeholder="Berlin" className="rounded-xl" />
+                      <div className="col-span-7">
+                        <Label className="text-xs font-medium text-muted-foreground mb-1.5 block">Ort</Label>
+                        <Input value={formData.city} onChange={(e) => handleInputChange("city", e.target.value)} placeholder="Berlin" className="rounded-lg" />
                       </div>
                     </div>
                   </div>
                 </Card>
 
-                {/* Opening Hours */}
-                <Card className="rounded-2xl shadow-sm border-0 bg-gray-50/80 p-6">
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-semibold flex items-center gap-2">
-                      <Clock className="w-5 h-5" />
-                      Öffnungszeiten
-                    </h3>
+                {/* Section 4: Öffnungszeiten */}
+                <Card className="rounded-xl border border-border/60 bg-white p-6 shadow-sm">
+                  <div className="flex items-center justify-between mb-5">
                     <div className="flex items-center gap-2">
-                      <span className="text-sm text-muted-foreground">{Object.keys(formData.opening_hours).length > 0 ? 'An' : 'Aus'}</span>
+                      <Clock className="w-4 h-4 text-primary" />
+                      <h3 className="text-base font-semibold text-foreground">Öffnungszeiten</h3>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-muted-foreground">Anzeigen</span>
                       <Switch
                         checked={Object.keys(formData.opening_hours).length > 0}
                         onCheckedChange={(checked) => {
                           if (checked) {
-                            // Initialize all days with default hours
                             const defaultHours: OpeningHours = {};
                             DAYS.forEach(day => {
                               defaultHours[day.key] = { open: "09:00", close: "18:00", closed: false };
                             });
                             setFormData(prev => ({ ...prev, opening_hours: defaultHours }));
                           } else {
-                            // Clear all opening hours
                             setFormData(prev => ({ ...prev, opening_hours: {} }));
                           }
                         }}
@@ -1077,102 +1158,87 @@ const MeinGeschaeft = () => {
                     </div>
                   </div>
                   {Object.keys(formData.opening_hours).length > 0 ? (
-                    <div className="space-y-3">
-                      {DAYS.map((day) => (
-                        <div key={day.key} className="flex items-center gap-4">
-                          <div className="w-24 text-sm font-medium">{day.label}</div>
-                          <label className="flex items-center gap-2 cursor-pointer">
-                            <input type="checkbox" checked={formData.opening_hours[day.key]?.closed || false} onChange={(e) => handleOpeningHoursChange(day.key, "closed", e.target.checked)} className="rounded" />
-                            <span className="text-sm text-gray-500">Geschlossen</span>
-                          </label>
-                          {!formData.opening_hours[day.key]?.closed && (
-                            <div className="flex items-center gap-2 flex-1">
-                              <Input type="time" value={formData.opening_hours[day.key]?.open || "09:00"} onChange={(e) => handleOpeningHoursChange(day.key, "open", e.target.value)} className="w-28 rounded-xl" />
-                              <span className="text-gray-400">-</span>
-                              <Input type="time" value={formData.opening_hours[day.key]?.close || "18:00"} onChange={(e) => handleOpeningHoursChange(day.key, "close", e.target.value)} className="w-28 rounded-xl" />
-                            </div>
-                          )}
-                        </div>
-                      ))}
+                    <div className="space-y-2">
+                      {DAYS.map((day) => {
+                        const closed = formData.opening_hours[day.key]?.closed || false;
+                        return (
+                          <div key={day.key} className="flex items-center gap-3 py-1.5">
+                            <div className="w-20 text-sm font-medium text-foreground">{day.label}</div>
+                            <label className="flex items-center gap-1.5 cursor-pointer text-xs text-muted-foreground w-28">
+                              <input
+                                type="checkbox"
+                                checked={closed}
+                                onChange={(e) => handleOpeningHoursChange(day.key, "closed", e.target.checked)}
+                                className="rounded border-border"
+                              />
+                              <span>Geschlossen</span>
+                            </label>
+                            {!closed ? (
+                              <div className="flex items-center gap-2 flex-1">
+                                <Input type="time" value={formData.opening_hours[day.key]?.open || "09:00"} onChange={(e) => handleOpeningHoursChange(day.key, "open", e.target.value)} className="w-28 h-9 rounded-lg text-sm" />
+                                <span className="text-muted-foreground text-xs">bis</span>
+                                <Input type="time" value={formData.opening_hours[day.key]?.close || "18:00"} onChange={(e) => handleOpeningHoursChange(day.key, "close", e.target.value)} className="w-28 h-9 rounded-lg text-sm" />
+                              </div>
+                            ) : (
+                              <div className="flex-1 text-xs text-muted-foreground italic">Geschlossen</div>
+                            )}
+                          </div>
+                        );
+                      })}
                     </div>
                   ) : (
-                    <p className="text-sm text-muted-foreground text-center py-4">
-                      Öffnungszeiten sind deaktiviert. Schalten Sie den Regler ein, um Öffnungszeiten anzuzeigen.
+                    <p className="text-sm text-muted-foreground text-center py-6">
+                      Öffnungszeiten sind deaktiviert. Schalte den Regler oben ein, um sie anzuzeigen.
                     </p>
                   )}
                 </Card>
 
-                {/* Contact & Links */}
-                <Card className="rounded-2xl shadow-sm border-0 bg-gray-50/80 p-6">
-                  <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                    <Globe className="w-5 h-5" />
-                    Kontakt & Links
-                  </h3>
-                  <div className="space-y-4">
-                    <div>
-                      <Label>Telefon</Label>
-                      <div className="relative">
-                        <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                        <Input 
-                          value={formData.phone} 
-                          onChange={(e) => handleInputChange("phone", e.target.value)} 
-                          onFocus={() => setScrollTarget('contact')}
-                          placeholder="+49 123 456789" 
-                          className="pl-10 rounded-xl" 
-                        />
-                      </div>
+                {/* Section 5: Kontakt & Links */}
+                <Card className="rounded-xl border border-border/60 bg-white p-6 shadow-sm">
+                  <div className="flex items-center gap-2 mb-5">
+                    <Globe className="w-4 h-4 text-primary" />
+                    <h3 className="text-base font-semibold text-foreground">Kontakt & Links</h3>
+                  </div>
+                  <div className="space-y-3">
+                    <div className="relative">
+                      <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                      <Input
+                        value={formData.phone}
+                        onChange={(e) => handleInputChange("phone", e.target.value)}
+                        onFocus={() => setScrollTarget('contact')}
+                        placeholder="Telefon — z.B. +49 123 456789"
+                        className="pl-10 rounded-lg"
+                      />
                     </div>
-                    <div>
-                      <Label>Website</Label>
-                      <div className="relative">
-                        <Globe className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                        <Input 
-                          value={formData.website} 
-                          onChange={(e) => handleInputChange("website", e.target.value)} 
-                          onFocus={() => setScrollTarget('contact')}
-                          placeholder="https://..." 
-                          className="pl-10 rounded-xl" 
-                        />
-                      </div>
+                    <div className="relative">
+                      <Globe className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                      <Input
+                        value={formData.website}
+                        onChange={(e) => handleInputChange("website", e.target.value)}
+                        onFocus={() => setScrollTarget('contact')}
+                        placeholder="Website — https://..."
+                        className="pl-10 rounded-lg"
+                      />
                     </div>
-                    <div>
-                      <Label>Instagram</Label>
-                      <div className="relative">
-                        <Instagram className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                        <Input 
-                          value={formData.instagram} 
-                          onChange={(e) => handleInputChange("instagram", e.target.value)} 
-                          onFocus={() => setScrollTarget('contact')}
-                          placeholder="https://instagram.com/..." 
-                          className="pl-10 rounded-xl" 
-                        />
-                      </div>
+                    <div className="relative">
+                      <Instagram className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                      <Input
+                        value={formData.instagram}
+                        onChange={(e) => handleInputChange("instagram", e.target.value)}
+                        onFocus={() => setScrollTarget('contact')}
+                        placeholder="Instagram — https://instagram.com/..."
+                        className="pl-10 rounded-lg"
+                      />
                     </div>
-                    <div>
-                      <Label>Facebook</Label>
-                      <div className="relative">
-                        <Facebook className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                        <Input 
-                          value={formData.facebook} 
-                          onChange={(e) => handleInputChange("facebook", e.target.value)} 
-                          onFocus={() => setScrollTarget('contact')}
-                          placeholder="https://facebook.com/..." 
-                          className="pl-10 rounded-xl" 
-                        />
-                      </div>
-                    </div>
-                    <div>
-                      <Label>X (Twitter)</Label>
-                      <div className="relative">
-                        <Twitter className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                        <Input 
-                          value={formData.twitter} 
-                          onChange={(e) => handleInputChange("twitter", e.target.value)} 
-                          onFocus={() => setScrollTarget('contact')}
-                          placeholder="https://x.com/..." 
-                          className="pl-10 rounded-xl" 
-                        />
-                      </div>
+                    <div className="relative">
+                      <Facebook className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                      <Input
+                        value={formData.facebook}
+                        onChange={(e) => handleInputChange("facebook", e.target.value)}
+                        onFocus={() => setScrollTarget('contact')}
+                        placeholder="Facebook — https://facebook.com/..."
+                        className="pl-10 rounded-lg"
+                      />
                     </div>
                   </div>
                 </Card>
