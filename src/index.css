@@ -169,6 +169,17 @@ All colors MUST be HSL.
   .safe-area-pb {
     padding-bottom: env(safe-area-inset-bottom, 0px);
   }
+
+  /* Merchant Backoffice nutzt dieselbe Schrift-Hierarchie wie die Website:
+     Body = Manrope, Überschriften = Plus Jakarta Sans */
+  .font-body h1,
+  .font-body h2,
+  .font-body h3,
+  .font-body h4,
+  .font-body h5,
+  .font-body h6 {
+    font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+  }
 }
 
 /* Samsung Internet "Force Dark Mode" override */
