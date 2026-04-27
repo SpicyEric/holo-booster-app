@@ -18,7 +18,7 @@ import howItWorksStamp from '@/assets/howitworks/stamp.png';
 import howItWorksPresent from '@/assets/howitworks/present.png';
 import howItWorksReferal from '@/assets/howitworks/referal.png';
 import { useEffect, useState } from 'react';
-import FeatureExplorer from '@/components/landing/FeatureExplorer';
+
 import RewardWheel from '@/components/landing/RewardWheel';
 import ReferralSection from '@/components/landing/ReferralSection';
 import GoogleReviewsCard from '@/components/landing/GoogleReviewsCard';
