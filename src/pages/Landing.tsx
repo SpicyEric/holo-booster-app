@@ -333,7 +333,7 @@ const Landing = () => {
                 className="relative cursor-default"
               >
                 <div
-                  className={`relative overflow-hidden bg-[#e8e7ef] rounded-[2.5rem] p-8 h-full transition-shadow duration-500 ${
+                  className={`group relative overflow-hidden bg-[#e8e7ef] rounded-[2.5rem] p-8 h-64 transition-shadow duration-500 ${
                     isActive ? 'shadow-[0_20px_60px_rgba(124,58,237,0.18)]' : ''
                   }`}
                 >
@@ -350,9 +350,13 @@ const Landing = () => {
                         'brightness(0) saturate(100%) invert(11%) sepia(78%) saturate(5736%) hue-rotate(269deg) brightness(82%) contrast(105%)',
                     }}
                   />
-                  <div className="relative z-10">
-                    <h3 className="font-headline text-2xl font-bold mb-4">{item.step}. {item.title}</h3>
-                    <p className="text-[#4a4455]">{item.desc}</p>
+                  <div className="relative z-10 h-full flex flex-col justify-center">
+                    <h3 className="font-headline text-2xl font-bold transition-transform duration-500 ease-out group-hover:-translate-y-4">
+                      {item.step}. {item.title}
+                    </h3>
+                    <p className="text-[#4a4455] mt-3 max-h-0 opacity-0 overflow-hidden transition-all duration-500 ease-out group-hover:max-h-40 group-hover:opacity-100 group-hover:-translate-y-2">
+                      {item.desc}
+                    </p>
                   </div>
                 </div>
                 {i < 2 && (
