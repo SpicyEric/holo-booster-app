@@ -844,18 +844,6 @@ const MeinGeschaeft = () => {
   return (
     <div className="min-h-screen">
       <div className="max-w-7xl mx-auto p-6 sm:p-8">
-        <div className="mb-6">
-          <div className="flex items-center gap-3 mb-1">
-            <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-              <Store className="h-5 w-5 text-primary" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold text-foreground">Mein Geschäft</h1>
-              <p className="text-muted-foreground text-sm">Verwalte dein Angebot, System und Geschäftsprofil</p>
-            </div>
-          </div>
-        </div>
-
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Phone Preview */}
           <div className="lg:col-span-1 order-2 lg:order-1">
