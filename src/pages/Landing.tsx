@@ -17,6 +17,7 @@ import contactCtaButton from '@/assets/contact-cta-button.png';
 import { useEffect, useState } from 'react';
 import FeatureExplorer from '@/components/landing/FeatureExplorer';
 import SplitText from '@/components/ui/split-text';
+import { Timeline } from '@/components/ui/timeline';
 
 /* ─── Rotating animated headline ─── */
 const ROTATING_HEADLINES = [
