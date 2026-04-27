@@ -28,6 +28,14 @@ import {
 import RichTextEditor from '@/components/merchant/RichTextEditor';
 import RewardSuggestionsPanel from '@/components/merchant/RewardSuggestionsPanel';
 import ReferralExplainerCarousel from '@/components/merchant/ReferralExplainerCarousel';
+import { ExplainerCarousel } from '@/components/merchant/ExplainerCarousel';
+import {
+  praemienCards,
+  neukundenCards,
+  bewertungenCards,
+  nachrichtenCards,
+  automationenCards,
+} from '@/components/merchant/explainerCarouselsData';
 import EmojiPicker from '@/components/EmojiPicker';
 import { cn } from '@/lib/utils';
 import { usePushLimit } from '@/hooks/usePushLimit';
