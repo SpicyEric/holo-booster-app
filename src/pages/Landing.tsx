@@ -174,15 +174,6 @@ const HeroMockupWithNotifications = () => {
 
 const Landing = () => {
   const navigate = useNavigate();
-  const [contactImageOffsetY, setContactImageOffsetY] = useState(20);
-  const [contactImageCopied, setContactImageCopied] = useState(false);
-
-  const copyContactImageValues = async () => {
-    const values = `CTA Foto Werte:\noffsetY: ${contactImageOffsetY}px\nposition: absolute; bottom: 0; left: 0;\nwidth: mobile 160px / desktop 192px`;
-    await navigator.clipboard.writeText(values);
-    setContactImageCopied(true);
-    window.setTimeout(() => setContactImageCopied(false), 1600);
-  };
 
   // Auto-cycling "hover" highlight for the 3 step cards (1 → 2 → 3 → off → repeat)
   const [activeStep, setActiveStep] = useState<number>(0);
@@ -518,7 +509,7 @@ const Landing = () => {
                 src={contactPerson}
                 alt="Eloyo Geschäftsinhaber"
                 className="absolute left-0 bottom-0 w-40 sm:w-48 h-auto object-contain pointer-events-none select-none"
-                style={{ transform: `translateY(${contactImageOffsetY}px)`, maxHeight: 'none' }}
+                style={{ transform: 'translateY(32px)', maxHeight: 'none' }}
               />
             </div>
 
@@ -542,27 +533,6 @@ const Landing = () => {
               </motion.button>
             </div>
 
-            <div className="absolute right-6 -bottom-24 z-20 w-[min(320px,calc(100vw-48px))] rounded-xl border border-white/25 bg-white/95 p-4 text-[#1a1b21] shadow-xl backdrop-blur">
-              <div className="mb-3 flex items-center justify-between gap-3">
-                <span className="text-sm font-bold">Foto nach unten</span>
-                <span className="rounded-full bg-primary/10 px-2.5 py-1 text-xs font-bold text-primary">{contactImageOffsetY}px</span>
-              </div>
-              <input
-                type="range"
-                min="0"
-                max="90"
-                value={contactImageOffsetY}
-                onChange={(event) => setContactImageOffsetY(Number(event.target.value))}
-                className="w-full accent-primary"
-              />
-              <button
-                type="button"
-                onClick={copyContactImageValues}
-                className="mt-3 w-full rounded-lg bg-primary px-4 py-2 text-sm font-bold text-primary-foreground"
-              >
-                {contactImageCopied ? 'Kopiert' : 'Speichern & kopieren'}
-              </button>
-            </div>
           </motion.div>
         </div>
       </section>
