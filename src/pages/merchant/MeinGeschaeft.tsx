@@ -1037,7 +1037,9 @@ const MeinGeschaeft = () => {
                   </div>
                 </Card>
 
-                {/* Section 3: Beschreibung — eigene große Karte */}
+                {/* Spalte links: Beschreibung + Kontakt */}
+                <div className="space-y-4">
+                {/* Section 3: Beschreibung */}
                 <Card className="rounded-xl border border-border/60 bg-white p-5 shadow-sm">
                   <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-2">
