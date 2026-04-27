@@ -397,7 +397,7 @@ const Landing = () => {
         <FeatureExplorer />
       </section>
 
-      {/* ═══════ FLAGSHIP FEATURE: Push ═══════ */}
+      {/* ═══════ PUSH-NACHRICHTEN ═══════ */}
       <section className="relative z-10 bg-[#f4f3fb] py-24 px-6">
         <div className="max-w-7xl mx-auto">
           <motion.div
@@ -407,20 +407,8 @@ const Landing = () => {
             viewport={viewportConfig}
             className="bg-white rounded-[3rem] overflow-hidden shadow-sm flex flex-col md:flex-row items-center"
           >
-            <div className="p-6 sm:p-10 lg:p-20 md:w-1/2">
-              <span className="text-primary font-bold tracking-widest uppercase text-xs font-headline">Flagship Feature</span>
-              <h2 className="font-headline text-2xl sm:text-4xl md:text-5xl font-extrabold mt-4 mb-6 leading-tight tracking-[-0.02em]">
-                Push-Benachrichtigungen, die gelesen werden
-              </h2>
-              <p className="text-lg text-[#4a4455] leading-relaxed mb-8">
-                Vergiss E-Mails, die im Spam landen. Schicke Angebote, Neuigkeiten oder Belohnungen direkt auf den Sperrbildschirm deiner Kunden. Warm, freundlich und effektiv.
-              </p>
-              <div className="flex items-center gap-3 text-primary font-bold">
-                <CheckCircle className="h-5 w-5" />
-                <span>98% Öffnungsrate</span>
-              </div>
-            </div>
-            <div className="md:w-1/2 bg-[#eeedf5] min-h-[400px] relative flex items-center justify-center p-12">
+            {/* Phone links */}
+            <div className="md:w-1/2 bg-[#eeedf5] min-h-[400px] relative flex items-center justify-center p-12 order-1">
               <div className="w-[260px] sm:w-[280px] h-[540px] sm:h-[580px] bg-slate-900 rounded-[3rem] p-1.5 shadow-2xl border-[3px] border-slate-700">
                 <div className="w-full h-full bg-slate-100 rounded-[2.6rem] overflow-hidden relative">
                   <img src={pushBg} alt="Eloyo App Push-Benachrichtigung" className="w-full h-full object-cover" />
@@ -438,6 +426,17 @@ const Landing = () => {
                   </div>
                 </div>
               </div>
+            </div>
+
+            {/* Text rechts */}
+            <div className="p-6 sm:p-10 lg:p-20 md:w-1/2 order-2">
+              <span className="text-primary font-bold tracking-widest uppercase text-xs font-headline">Push-Nachrichten</span>
+              <h2 className="font-headline text-2xl sm:text-4xl md:text-5xl font-extrabold mt-4 mb-6 leading-tight tracking-[-0.02em]">
+                Der direkteste Kanal zu deinen Kunden
+              </h2>
+              <p className="text-lg text-[#4a4455] leading-relaxed">
+                E-Mails werden ignoriert, SMS kosten Geld. Push-Nachrichten erscheinen direkt auf dem Sperrbildschirm – selbst wenn niemand die App öffnet. Der Kanal, den bisher nur große Konzerne hatten. Ab jetzt auch du.
+              </p>
             </div>
           </motion.div>
         </div>
