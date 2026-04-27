@@ -996,12 +996,12 @@ const MeinGeschaeft = () => {
                 </Card>
 
                 {/* Section 2: Geschäftsinfos + Adresse kombiniert */}
-                <Card className="rounded-xl border border-border/60 bg-white p-5 shadow-sm">
+                <Card className="rounded-xl border border-border/60 bg-white p-5 shadow-sm h-full flex flex-col">
                   <div className="flex items-center gap-2 mb-4">
                     <Store className="w-4 h-4 text-primary" />
                     <h3 className="text-sm font-semibold text-foreground">Geschäftsinformationen</h3>
                   </div>
-                  <div className="space-y-3">
+                  <div className="space-y-3 flex-1">
                     <div className="grid grid-cols-2 gap-3">
                       <div>
                         <Label className="text-[11px] font-medium text-muted-foreground mb-1 block">Geschäftsname *</Label>
@@ -1015,21 +1015,24 @@ const MeinGeschaeft = () => {
                         </Select>
                       </div>
                     </div>
-                    {/* Adresse — eine Zeile */}
+                    {/* Adresse — Zeile 1: Straße + Nr. */}
                     <div className="grid grid-cols-12 gap-2">
-                      <div className="col-span-6">
+                      <div className="col-span-9">
                         <Label className="text-[11px] font-medium text-muted-foreground mb-1 block">Straße</Label>
                         <Input value={formData.street} onChange={(e) => handleInputChange("street", e.target.value)} placeholder="Hauptstraße" className="h-9 rounded-lg bg-slate-50 border-slate-300 focus-visible:border-primary focus-visible:ring-primary/30 text-foreground placeholder:text-slate-400" />
                       </div>
-                      <div className="col-span-2">
+                      <div className="col-span-3">
                         <Label className="text-[11px] font-medium text-muted-foreground mb-1 block">Nr.</Label>
                         <Input value={formData.house_number} onChange={(e) => handleInputChange("house_number", e.target.value)} placeholder="12" className="h-9 rounded-lg bg-slate-50 border-slate-300 focus-visible:border-primary focus-visible:ring-primary/30 text-foreground placeholder:text-slate-400" />
                       </div>
-                      <div className="col-span-2">
+                    </div>
+                    {/* Adresse — Zeile 2: PLZ + Ort */}
+                    <div className="grid grid-cols-12 gap-2">
+                      <div className="col-span-4">
                         <Label className="text-[11px] font-medium text-muted-foreground mb-1 block">PLZ</Label>
                         <Input value={formData.postal_code} onChange={(e) => handleInputChange("postal_code", e.target.value)} placeholder="12345" className="h-9 rounded-lg bg-slate-50 border-slate-300 focus-visible:border-primary focus-visible:ring-primary/30 text-foreground placeholder:text-slate-400" />
                       </div>
-                      <div className="col-span-2">
+                      <div className="col-span-8">
                         <Label className="text-[11px] font-medium text-muted-foreground mb-1 block">Ort</Label>
                         <Input value={formData.city} onChange={(e) => handleInputChange("city", e.target.value)} placeholder="Berlin" className="h-9 rounded-lg bg-slate-50 border-slate-300 focus-visible:border-primary focus-visible:ring-primary/30 text-foreground placeholder:text-slate-400" />
                       </div>
