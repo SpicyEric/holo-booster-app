@@ -17,6 +17,7 @@ import contactCtaButton from '@/assets/contact-cta-button.png';
 import { useEffect, useState } from 'react';
 import FeatureExplorer from '@/components/landing/FeatureExplorer';
 import SplitText from '@/components/ui/split-text';
+import { Timeline } from '@/components/ui/timeline';
 
 /* ─── Rotating animated headline ─── */
 const ROTATING_HEADLINES = [
@@ -276,37 +277,34 @@ const Landing = () => {
             Drei Schritte zu mehr Umsatz und glücklicheren Kunden.
           </motion.p>
         </div>
-        <motion.div
-          variants={staggerContainer}
-          initial="hidden"
-          whileInView="visible"
-          viewport={viewportConfig}
-          className="max-w-7xl mx-auto grid md:grid-cols-3 gap-8 lg:gap-12"
-        >
-          {[
-            { step: '1', title: 'Kunde scannt den Stempel', desc: 'Dein Mitarbeiter hält den Eloyo-Stempel ans Handy des Kunden — ein kurzer Tap und die Punkte sind sofort gutgeschrieben.', icon: '📱' },
-            { step: '2', title: 'Sammelt Punkte, löst Prämien ein', desc: 'Jeder Besuch wird belohnt. Der Kunde wählt selbst was er will — das schafft echte Motivation und er kommt wieder.', icon: '⭐' },
-            { step: '3', title: 'Bringt neue Kunden rein', desc: 'Der Kunde teilt seinen persönlichen Einladungslink. Du bekommst Neukunden — ohne einen Euro Werbekosten.', icon: '🚀' },
-          ].map((item, i) => (
-            <motion.div
-              key={i}
-              variants={glassReveal}
-              {...cardHover}
-              className="relative group cursor-default"
-            >
-              <div className="bg-[#e8e7ef] rounded-[2.5rem] p-10 h-full transition-shadow hover:shadow-[0_20px_60px_rgba(124,58,237,0.15)]">
-                <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center shadow-lg mb-8 text-2xl group-hover:bg-gradient-to-br group-hover:from-primary group-hover:to-blue-500 transition-colors">
-                  <span className="group-hover:brightness-200">{item.icon}</span>
-                </div>
-                <h3 className="font-headline text-2xl font-bold mb-4">{item.step}. {item.title}</h3>
-                <p className="text-[#4a4455]">{item.desc}</p>
-              </div>
-              {i < 2 && (
-                <div className="hidden md:block absolute top-1/2 -right-6 -translate-y-1/2 text-[#ccc3d8] text-3xl">→</div>
-              )}
-            </motion.div>
-          ))}
-        </motion.div>
+        <Timeline
+          data={[
+            {
+              title: '1. Kunde scannt den Stempel',
+              content: (
+                <p className="text-[#4a4455] text-base md:text-lg leading-relaxed max-w-2xl">
+                  Dein Mitarbeiter hält den Eloyo-Stempel ans Handy des Kunden — ein kurzer Tap und die Punkte sind sofort gutgeschrieben.
+                </p>
+              ),
+            },
+            {
+              title: '2. Sammelt Punkte, löst Prämien ein',
+              content: (
+                <p className="text-[#4a4455] text-base md:text-lg leading-relaxed max-w-2xl">
+                  Jeder Besuch wird belohnt. Der Kunde wählt selbst was er will — das schafft echte Motivation und er kommt wieder.
+                </p>
+              ),
+            },
+            {
+              title: '3. Bringt neue Kunden rein',
+              content: (
+                <p className="text-[#4a4455] text-base md:text-lg leading-relaxed max-w-2xl">
+                  Der Kunde teilt seinen persönlichen Einladungslink. Du bekommst Neukunden — ohne einen Euro Werbekosten.
+                </p>
+              ),
+            },
+          ]}
+        />
       </section>
 
       {/* ═══════ FEATURES SECTION HEADER ═══════ */}
