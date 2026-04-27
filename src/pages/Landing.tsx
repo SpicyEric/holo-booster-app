@@ -260,7 +260,7 @@ const Landing = () => {
           <motion.div variants={glassReveal} className="text-left">
             <div className="inline-flex items-center gap-2 bg-primary/10 text-primary px-4 py-1.5 rounded-full text-sm font-bold mb-6">
               <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-              Digitales Stempelsystem 2.0
+              Stempelkarte 2.0
             </div>
             <RotatingHeadline />
             <p className="text-xl text-[#4a4455] leading-relaxed mb-10 max-w-xl">
