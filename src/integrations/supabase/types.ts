@@ -783,6 +783,13 @@ export type Database = {
           website: string | null
           welcome_enabled: boolean
           welcome_message: string | null
+          winback_bonus_points: number | null
+          winback_enabled: boolean
+          winback_gift_type: string
+          winback_inactivity_days: number
+          winback_message: string | null
+          winback_offer_description: string | null
+          winback_offer_title: string | null
         }
         Insert: {
           active?: boolean
@@ -861,6 +868,13 @@ export type Database = {
           website?: string | null
           welcome_enabled?: boolean
           welcome_message?: string | null
+          winback_bonus_points?: number | null
+          winback_enabled?: boolean
+          winback_gift_type?: string
+          winback_inactivity_days?: number
+          winback_message?: string | null
+          winback_offer_description?: string | null
+          winback_offer_title?: string | null
         }
         Update: {
           active?: boolean
@@ -939,6 +953,13 @@ export type Database = {
           website?: string | null
           welcome_enabled?: boolean
           welcome_message?: string | null
+          winback_bonus_points?: number | null
+          winback_enabled?: boolean
+          winback_gift_type?: string
+          winback_inactivity_days?: number
+          winback_message?: string | null
+          winback_offer_description?: string | null
+          winback_offer_title?: string | null
         }
         Relationships: []
       }
@@ -3325,6 +3346,41 @@ export type Database = {
             columns: ["vereinbarung_id"]
             isOneToOne: false
             referencedRelation: "zusatzvereinbarungen"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      winback_message_log: {
+        Row: {
+          app_message_id: string | null
+          id: string
+          last_stamp_at: string | null
+          merchant_customer_id: string
+          sent_at: string
+          user_id: string
+        }
+        Insert: {
+          app_message_id?: string | null
+          id?: string
+          last_stamp_at?: string | null
+          merchant_customer_id: string
+          sent_at?: string
+          user_id: string
+        }
+        Update: {
+          app_message_id?: string | null
+          id?: string
+          last_stamp_at?: string | null
+          merchant_customer_id?: string
+          sent_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "winback_message_log_merchant_customer_id_fkey"
+            columns: ["merchant_customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
             referencedColumns: ["id"]
           },
         ]

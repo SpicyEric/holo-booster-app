@@ -92,3 +92,6 @@ verify_jwt = false
 
 [functions.notify-referral-bonus]
 verify_jwt = false
+
+[functions.winback-cron]
+verify_jwt = false

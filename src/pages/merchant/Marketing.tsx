@@ -113,6 +113,14 @@ const Marketing = () => {
   const [birthdayGiftType, setBirthdayGiftType] = useState<'points' | 'offer'>('points');
   const [birthdayOfferTitle, setBirthdayOfferTitle] = useState('');
   const [birthdayOfferDescription, setBirthdayOfferDescription] = useState('');
+  // --- Winback (Rückholnachrichten) state ---
+  const [winbackEnabled, setWinbackEnabled] = useState(false);
+  const [winbackMessage, setWinbackMessage] = useState('Wir vermissen dich! Schau doch bald wieder bei uns vorbei – wir freuen uns auf dich.');
+  const [winbackInactivityDays, setWinbackInactivityDays] = useState(90);
+  const [winbackGiftType, setWinbackGiftType] = useState<'none' | 'points' | 'offer'>('none');
+  const [winbackBonusPoints, setWinbackBonusPoints] = useState(5);
+  const [winbackOfferTitle, setWinbackOfferTitle] = useState('');
+  const [winbackOfferDescription, setWinbackOfferDescription] = useState('');
   const [savingAutomations, setSavingAutomations] = useState(false);
   const [automationsChanged, setAutomationsChanged] = useState(false);
   const automationsLoadedRef = useRef(false);
@@ -142,7 +150,7 @@ const Marketing = () => {
   // Track automation changes
   useEffect(() => {
     if (automationsLoadedRef.current) setAutomationsChanged(true);
-  }, [birthdayEnabled, birthdayMessage, birthdayBonusPoints, birthdayGiftType, birthdayOfferTitle, birthdayOfferDescription]);
+  }, [birthdayEnabled, birthdayMessage, birthdayBonusPoints, birthdayGiftType, birthdayOfferTitle, birthdayOfferDescription, winbackEnabled, winbackMessage, winbackInactivityDays, winbackGiftType, winbackBonusPoints, winbackOfferTitle, winbackOfferDescription]);
 
   useEffect(() => { loadData(); }, []);
 
@@ -194,7 +202,7 @@ const Marketing = () => {
       const midPoints = chipMap.blue;
       setMiddleStampPoints(midPoints);
 
-      const { data: cd } = await supabase.from('customers').select('google_review_url, google_review_points_enabled, google_review_points_value, birthday_enabled, birthday_message, birthday_bonus_points, birthday_gift_type, birthday_offer_title, birthday_offer_description, industry, avg_revenue, company_name, name, referral_enabled, referral_inviter_points, referral_invitee_points').eq('id', assignment.customer_id).maybeSingle();
+      const { data: cd } = await supabase.from('customers').select('google_review_url, google_review_points_enabled, google_review_points_value, birthday_enabled, birthday_message, birthday_bonus_points, birthday_gift_type, birthday_offer_title, birthday_offer_description, industry, avg_revenue, company_name, name, referral_enabled, referral_inviter_points, referral_invitee_points, winback_enabled, winback_message, winback_inactivity_days, winback_gift_type, winback_bonus_points, winback_offer_title, winback_offer_description').eq('id', assignment.customer_id).maybeSingle();
       if (cd) {
         setGoogleReviewUrl(cd.google_review_url || "");
         setReviewPointsEnabled(cd.google_review_points_enabled || false);
@@ -214,6 +222,14 @@ const Marketing = () => {
         setReferralEnabled((cd as any).referral_enabled ?? true);
         setReferralInviterPoints((cd as any).referral_inviter_points ?? 20);
         setReferralInviteePoints((cd as any).referral_invitee_points ?? 1);
+        // Winback settings
+        setWinbackEnabled((cd as any).winback_enabled ?? false);
+        if ((cd as any).winback_message) setWinbackMessage((cd as any).winback_message);
+        setWinbackInactivityDays((cd as any).winback_inactivity_days ?? 90);
+        setWinbackGiftType(((cd as any).winback_gift_type as 'none' | 'points' | 'offer') || 'none');
+        setWinbackBonusPoints((cd as any).winback_bonus_points ?? (midPoints ?? 5));
+        setWinbackOfferTitle((cd as any).winback_offer_title || '');
+        setWinbackOfferDescription((cd as any).winback_offer_description || '');
       }
 
       // Referral statistics — nur tatsächlich verschickte Einladungen zählen
@@ -395,7 +411,21 @@ const Marketing = () => {
     if (!customerId) return;
     setSavingAutomations(true);
     try {
-      const { error } = await supabase.from('customers').update({ birthday_enabled: birthdayEnabled, birthday_message: birthdayMessage, birthday_bonus_points: birthdayBonusPoints, birthday_gift_type: birthdayGiftType, birthday_offer_title: birthdayOfferTitle || null, birthday_offer_description: birthdayOfferDescription || null } as any).eq('id', customerId);
+      const { error } = await supabase.from('customers').update({
+        birthday_enabled: birthdayEnabled,
+        birthday_message: birthdayMessage,
+        birthday_bonus_points: birthdayBonusPoints,
+        birthday_gift_type: birthdayGiftType,
+        birthday_offer_title: birthdayOfferTitle || null,
+        birthday_offer_description: birthdayOfferDescription || null,
+        winback_enabled: winbackEnabled,
+        winback_message: winbackMessage,
+        winback_inactivity_days: Math.max(7, Math.min(365, winbackInactivityDays || 90)),
+        winback_gift_type: winbackGiftType,
+        winback_bonus_points: winbackGiftType === 'points' ? (winbackBonusPoints || 0) : null,
+        winback_offer_title: winbackGiftType === 'offer' ? (winbackOfferTitle || null) : null,
+        winback_offer_description: winbackGiftType === 'offer' ? (winbackOfferDescription || null) : null,
+      } as any).eq('id', customerId);
       if (error) throw error; toast.success('Gespeichert'); setAutomationsChanged(false);
     } catch { toast.error('Fehler'); } finally { setSavingAutomations(false); }
   };
@@ -991,6 +1021,100 @@ const Marketing = () => {
                     </div>
                   )}
                 </div>
+
+                {/* Rückholnachrichten */}
+                <div className={`p-4 rounded-xl border-2 transition-colors ${winbackEnabled ? 'bg-purple-50/60 border-purple-200' : 'bg-muted/20 border-border/50'}`}>
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-3">
+                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${winbackEnabled ? 'bg-purple-500' : 'bg-muted'}`}>
+                        <Clock className={`h-4 w-4 ${winbackEnabled ? 'text-white' : 'text-muted-foreground'}`} />
+                      </div>
+                      <div>
+                        <h4 className="font-semibold text-foreground">Rückholnachrichten</h4>
+                        <p className="text-xs text-muted-foreground">Automatische Nachricht an Kunden, die länger nicht mehr gestempelt haben</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className={`text-xs font-medium ${winbackEnabled ? 'text-purple-600' : 'text-muted-foreground'}`}>{winbackEnabled ? 'Aktiv' : 'Inaktiv'}</span>
+                      <Switch checked={winbackEnabled} onCheckedChange={setWinbackEnabled} />
+                    </div>
+                  </div>
+                  {winbackEnabled && (
+                    <div className="mt-3 space-y-4">
+                      <div>
+                        <Label className="text-xs text-muted-foreground">Nachricht an inaktive Kunden</Label>
+                        <div className="mt-1">
+                          <RichTextEditor value={winbackMessage} onChange={setWinbackMessage} placeholder="Wir vermissen dich! Schau doch bald wieder vorbei..." rows={2} />
+                        </div>
+                      </div>
+
+                      <div>
+                        <Label className="text-xs text-muted-foreground">Nach wie vielen Tagen ohne Stempel senden?</Label>
+                        <div className="flex items-center gap-3 mt-1">
+                          <Input
+                            type="number"
+                            min={7}
+                            max={365}
+                            value={winbackInactivityDays}
+                            onChange={(e) => setWinbackInactivityDays(parseInt(e.target.value) || 90)}
+                            className="rounded-xl w-32"
+                          />
+                          <span className="text-sm text-muted-foreground">Tage (Standard: 90)</span>
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Sobald ein Kunde {winbackInactivityDays} Tage lang keinen Stempel gesammelt hat, bekommt er automatisch deine Nachricht – auch als Push.
+                        </p>
+                      </div>
+
+                      <div className="space-y-3">
+                        <Label className="text-xs text-muted-foreground font-semibold">Geschenk anhängen?</Label>
+                        <div className="grid grid-cols-3 gap-2">
+                          <button type="button" onClick={() => setWinbackGiftType('none')} className={`p-3 rounded-xl border-2 text-left transition-all ${winbackGiftType === 'none' ? 'border-purple-400 bg-purple-50 ring-1 ring-purple-200' : 'border-border bg-card hover:border-muted-foreground/30'}`}>
+                            <div className="font-semibold text-sm">✉️ Nur Nachricht</div>
+                            <p className="text-xs text-muted-foreground mt-1">Ohne Geschenk</p>
+                          </button>
+                          <button type="button" onClick={() => setWinbackGiftType('points')} className={`p-3 rounded-xl border-2 text-left transition-all ${winbackGiftType === 'points' ? 'border-purple-400 bg-purple-50 ring-1 ring-purple-200' : 'border-border bg-card hover:border-muted-foreground/30'}`}>
+                            <div className="font-semibold text-sm">🎁 Bonuspunkte</div>
+                            <p className="text-xs text-muted-foreground mt-1">Punkte schenken</p>
+                          </button>
+                          <button type="button" onClick={() => setWinbackGiftType('offer')} className={`p-3 rounded-xl border-2 text-left transition-all ${winbackGiftType === 'offer' ? 'border-purple-400 bg-purple-50 ring-1 ring-purple-200' : 'border-border bg-card hover:border-muted-foreground/30'}`}>
+                            <div className="font-semibold text-sm">🎉 Angebot</div>
+                            <p className="text-xs text-muted-foreground mt-1">Angebot schenken</p>
+                          </button>
+                        </div>
+                      </div>
+
+                      {winbackGiftType === 'points' && (
+                        <div>
+                          <Label className="text-xs text-muted-foreground">Bonuspunkte</Label>
+                          <Input
+                            type="number"
+                            min={1}
+                            value={winbackBonusPoints}
+                            onChange={(e) => setWinbackBonusPoints(parseInt(e.target.value) || 5)}
+                            className="rounded-xl w-32 mt-1"
+                          />
+                        </div>
+                      )}
+
+                      {winbackGiftType === 'offer' && (
+                        <div className="space-y-3 p-3 bg-purple-50/50 rounded-xl border border-purple-100">
+                          <div>
+                            <Label className="text-xs">Angebotstitel</Label>
+                            <Input value={winbackOfferTitle} onChange={(e) => setWinbackOfferTitle(e.target.value)} placeholder="z.B. Kaffee aufs Haus" className="mt-1 rounded-xl text-sm" />
+                          </div>
+                          <div>
+                            <Label className="text-xs">Beschreibung</Label>
+                            <div className="mt-1">
+                              <RichTextEditor value={winbackOfferDescription} onChange={setWinbackOfferDescription} placeholder="Details..." rows={2} />
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+
                 <Button
                   onClick={handleSaveAutomations}
                   disabled={savingAutomations || !customerId}
