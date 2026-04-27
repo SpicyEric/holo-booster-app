@@ -900,7 +900,7 @@ const MeinGeschaeft = () => {
 
   return (
     <div className="min-h-screen pb-24">
-      <div className="max-w-[1400px] mx-auto p-6 sm:p-8">
+      <div className="w-full mx-auto px-6 sm:px-10 py-6 sm:py-8">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           {/* Content - LEFT column (fields) */}
           <div className="lg:col-span-7 order-2 lg:order-1">
