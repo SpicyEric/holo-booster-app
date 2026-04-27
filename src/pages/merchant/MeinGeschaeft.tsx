@@ -1234,27 +1234,7 @@ const MeinGeschaeft = () => {
                           Wie viel gibt ein Kunde bei dir im Durchschnitt pro Besuch aus?
                         </p>
 
-                        {/* Quick select buttons */}
-                        <div className="flex flex-wrap gap-2 mb-4">
-                          {SPEND_PRESETS.map((val) => (
-                            <button
-                              key={val}
-                              type="button"
-                              onClick={() => {
-                                setAvgRevenue(val);
-                                setStampMode('revenue');
-                              }}
-                              className={cn(
-                                "px-4 py-2 rounded-full border-2 text-sm font-medium transition-all",
-                                avgRevenue === val && stampMode === 'revenue'
-                                  ? 'border-primary bg-primary/10 text-primary'
-                                  : 'border-border bg-card text-muted-foreground hover:border-primary/40'
-                              )}
-                            >
-                              ca. {val} €
-                            </button>
-                          ))}
-                        </div>
+
 
                         {/* Slider */}
                         <div className="space-y-3">
