@@ -164,7 +164,9 @@ const MeinGeschaeft = () => {
     facebook: "",
     twitter: "",
     opening_hours: defaultOpeningHours,
+    gallery_images: [] as string[],
   });
+  const [uploadingGallery, setUploadingGallery] = useState(false);
 
   // Rewards
   const [rewards, setRewards] = useState<Reward[]>([]);
