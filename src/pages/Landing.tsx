@@ -437,10 +437,10 @@ const Landing = () => {
               Google-Bewertungen
             </span>
             <h3 className="font-headline text-3xl md:text-4xl font-extrabold mt-3 mb-5 leading-tight tracking-[-0.02em] text-[#1a1b21]">
-              Mehr 5-Sterne Google Reviews
+              Mehr Google-Bewertungen, ohne ein Wort zu sagen
             </h3>
             <p className="text-[#4a4455] text-lg leading-relaxed">
-              Zufriedene Stammkunden sind deine besten Botschafter. Eloyo motiviert deine treuesten Fans, eine positive Bewertung bei Google zu hinterlassen und so dein Neukundengeschäft anzukurbeln.
+              Du musst keinen Kunden mehr bitten, dir eine Bewertung zu hinterlassen. Eloyo macht das automatisch für dich.
             </p>
           </div>
 
