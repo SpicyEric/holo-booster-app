@@ -169,6 +169,38 @@ const HeroMockupWithNotifications = () => {
 const Landing = () => {
   const navigate = useNavigate();
 
+  // Auto-cycling "hover" highlight for the 3 step cards (1 → 2 → 3 → off → repeat)
+  const [activeStep, setActiveStep] = useState<number>(0);
+  useEffect(() => {
+    // Sequence: card 0 on (1.6s) → off (0.4s) → card 1 on → off → card 2 on → off → loop
+    const sequence = [0, -1, 1, -1, 2, -1];
+    const onDuration = 1600;
+    const offDuration = 400;
+    let i = 0;
+    setActiveStep(sequence[0]);
+    const tick = () => {
+      i = (i + 1) % sequence.length;
+      setActiveStep(sequence[i]);
+    };
+    const interval = setInterval(() => {
+      tick();
+    }, 0);
+    clearInterval(interval);
+    // Use a recursive timeout to alternate durations
+    let timeoutId: ReturnType<typeof setTimeout>;
+    const schedule = () => {
+      const current = sequence[i];
+      const delay = current === -1 ? offDuration : onDuration;
+      timeoutId = setTimeout(() => {
+        i = (i + 1) % sequence.length;
+        setActiveStep(sequence[i]);
+        schedule();
+      }, delay);
+    };
+    schedule();
+    return () => clearTimeout(timeoutId);
+  }, []);
+
   useEffect(() => {
     const hash = window.location.hash || "";
     if (hash && (hash.includes('type=recovery') || hash.includes('type=signup'))) {
