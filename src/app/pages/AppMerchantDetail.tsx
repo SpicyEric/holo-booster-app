@@ -695,15 +695,15 @@ export const AppMerchantDetail = () => {
       key: 'google-review',
       element: (
         <Card 
-          className="border-2 border-amber-400 bg-amber-50 dark:bg-amber-950/30 cursor-pointer"
+          className="review-glow border-0 cursor-pointer rounded-xl"
           onClick={handleClaimGoogleReviewBonus}
         >
           <CardContent className="p-4 flex items-center gap-4">
-            <div className="w-12 h-12 rounded-lg bg-amber-100 dark:bg-amber-900/50 flex items-center justify-center">
-              <Star className="h-6 w-6 text-amber-600 fill-amber-500" />
+            <div className="w-12 h-12 rounded-lg bg-yellow-500/10 flex items-center justify-center">
+              <Star className="h-6 w-6 text-yellow-500" />
             </div>
             <div className="flex-1">
-              <Badge className="mb-1 text-xs bg-amber-500 hover:bg-amber-600">Google-Bewertung</Badge>
+              <Badge variant="outline" className="mb-1 text-xs border-yellow-500/20 text-yellow-600 dark:text-yellow-400">Google-Bewertung</Badge>
               <h3 className="font-medium">Bewerte uns & erhalte Bonuspunkte!</h3>
               <p className="text-sm text-muted-foreground line-clamp-1">
                 Hinterlasse eine Google-Bewertung und erhalte {googleReviewBonus.pointsValue} Bonuspunkte

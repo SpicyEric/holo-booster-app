@@ -284,6 +284,62 @@ All colors MUST be HSL.
   }
 }
 
+@property --review-glow-angle {
+  syntax: '<angle>';
+  initial-value: 0deg;
+  inherits: false;
+}
+
+@keyframes review-glow-spin {
+  to {
+    --review-glow-angle: 360deg;
+  }
+}
+
+.review-glow {
+  position: relative;
+  border-radius: 0.75rem;
+  background: hsl(var(--card));
+  isolation: isolate;
+}
+
+.review-glow::before,
+.review-glow::after {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: inherit;
+  padding: 2px;
+  background: conic-gradient(
+    from var(--review-glow-angle),
+    hsl(43 90% 55%),
+    hsl(45 85% 60%),
+    hsl(50 80% 52%),
+    hsl(43 90% 55% / 0.6),
+    hsl(45 85% 60%),
+    hsl(43 90% 55%)
+  );
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+          mask-composite: exclude;
+  animation: review-glow-spin 4s linear infinite;
+  pointer-events: none;
+  z-index: -1;
+}
+
+.review-glow::after {
+  display: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .review-glow::before,
+  .review-glow::after {
+    animation: none;
+  }
+}
+
 ::view-transition-old(root),
 ::view-transition-new(root) {
   animation: none;
