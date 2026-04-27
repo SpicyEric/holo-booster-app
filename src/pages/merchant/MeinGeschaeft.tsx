@@ -18,7 +18,7 @@ import {
   Upload, Save, MapPin, Phone, Globe, Instagram, Facebook, Twitter,
   Clock, Store, Gift, Info, UserPlus, Plus, Trash2, Edit2, Loader2, Package, ImageIcon, BarChart3, Stamp, ArrowRight
 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Switch } from "@/components/ui/switch";
 import { Slider } from "@/components/ui/slider";
 import {
@@ -131,7 +131,21 @@ const MeinGeschaeft = () => {
   const [customerId, setCustomerId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState("info");
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [scrollTarget, setScrollTarget] = useState<'description' | 'hours' | 'contact' | 'bottom' | null>(null);
+
+  // Sync activeTab with ?tab= URL parameter (Sidebar Sub-Items)
+  useEffect(() => {
+    const tabParam = searchParams.get('tab');
+    if (tabParam === 'info' || tabParam === 'stempel') {
+      setActiveTab(tabParam);
+    }
+  }, [searchParams]);
+
+  const handleTabChange = (tab: string) => {
+    setActiveTab(tab);
+    setSearchParams({ tab }, { replace: true });
+  };
   
   // Business Info
   const [formData, setFormData] = useState({
