@@ -1141,7 +1141,7 @@ const MeinGeschaeft = () => {
                 {/* Ende linke Spalte (Beschreibung + Kontakt) */}
 
                 {/* Section 4: Öffnungszeiten — kompakt 2-spaltig (rechte Spalte) */}
-                <Card className="rounded-xl border border-border/60 bg-white p-5 shadow-sm">
+                <Card className="rounded-xl border border-border/60 bg-white p-5 shadow-sm h-full flex flex-col">
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-2">
                       <Clock className="w-4 h-4 text-primary" />
