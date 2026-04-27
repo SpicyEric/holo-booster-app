@@ -18,7 +18,7 @@ import {
   Upload, Save, MapPin, Phone, Globe, Instagram, Facebook, Twitter,
   Clock, Store, Gift, Info, UserPlus, Plus, Trash2, Edit2, Loader2, Package, ImageIcon, BarChart3, Stamp, ArrowRight
 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Switch } from "@/components/ui/switch";
 import { Slider } from "@/components/ui/slider";
 import {
@@ -131,7 +131,21 @@ const MeinGeschaeft = () => {
   const [customerId, setCustomerId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState("info");
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [scrollTarget, setScrollTarget] = useState<'description' | 'hours' | 'contact' | 'bottom' | null>(null);
+
+  // Sync activeTab with ?tab= URL parameter (Sidebar Sub-Items)
+  useEffect(() => {
+    const tabParam = searchParams.get('tab');
+    if (tabParam === 'info' || tabParam === 'stempel') {
+      setActiveTab(tabParam);
+    }
+  }, [searchParams]);
+
+  const handleTabChange = (tab: string) => {
+    setActiveTab(tab);
+    setSearchParams({ tab }, { replace: true });
+  };
   
   // Business Info
   const [formData, setFormData] = useState({
@@ -884,7 +898,7 @@ const MeinGeschaeft = () => {
 
           {/* Content */}
           <div className="lg:col-span-2 order-1 lg:order-2">
-            <Tabs value={activeTab} onValueChange={setActiveTab}>
+            <Tabs value={activeTab} onValueChange={handleTabChange}>
               <TabsList className="inline-flex gap-2 bg-transparent p-0 mb-6">
                 <TabsTrigger value="info" className="rounded-full px-5 py-2 text-sm font-medium border border-border/50 data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:border-primary data-[state=active]:shadow-sm data-[state=inactive]:bg-white data-[state=inactive]:text-muted-foreground hover:bg-primary/5 transition-all duration-200">
                   <Info className="w-4 h-4 mr-2" />
