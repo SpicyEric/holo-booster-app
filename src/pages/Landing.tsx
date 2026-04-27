@@ -309,6 +309,71 @@ const Landing = () => {
         </motion.div>
       </section>
 
+      {/* ═══════ FEATURES SECTION HEADER ═══════ */}
+      <section className="relative z-10 pt-24 pb-4 px-6 bg-[#faf8ff] text-center">
+        <motion.div
+          variants={glassReveal}
+          initial="hidden"
+          whileInView="visible"
+          viewport={viewportConfig}
+          className="max-w-4xl mx-auto"
+        >
+          <span className="text-primary font-bold tracking-widest uppercase text-xs font-headline">Features</span>
+          <h2 className="font-headline text-4xl md:text-5xl font-extrabold mt-3 tracking-[-0.02em]">
+            Alles was du brauchst — in einem System
+          </h2>
+        </motion.div>
+      </section>
+
+      {/* ═══════ FEATURE EXPLORER (Tabs + Cards) ═══════ */}
+      <FeatureExplorer />
+
+      {/* ═══════ FLAGSHIP FEATURE: Push ═══════ */}
+      <section className="relative z-10 bg-[#f4f3fb] py-24 px-6">
+        <div className="max-w-7xl mx-auto">
+          <motion.div
+            variants={glassReveal}
+            initial="hidden"
+            whileInView="visible"
+            viewport={viewportConfig}
+            className="bg-white rounded-[3rem] overflow-hidden shadow-sm flex flex-col md:flex-row items-center"
+          >
+            <div className="p-6 sm:p-10 lg:p-20 md:w-1/2">
+              <span className="text-primary font-bold tracking-widest uppercase text-xs font-headline">Flagship Feature</span>
+              <h2 className="font-headline text-2xl sm:text-4xl md:text-5xl font-extrabold mt-4 mb-6 leading-tight tracking-[-0.02em]">
+                Push-Benachrichtigungen, die gelesen werden
+              </h2>
+              <p className="text-lg text-[#4a4455] leading-relaxed mb-8">
+                Vergiss E-Mails, die im Spam landen. Schicke Angebote, Neuigkeiten oder Belohnungen direkt auf den Sperrbildschirm deiner Kunden. Warm, freundlich und effektiv.
+              </p>
+              <div className="flex items-center gap-3 text-primary font-bold">
+                <CheckCircle className="h-5 w-5" />
+                <span>98% Öffnungsrate</span>
+              </div>
+            </div>
+            <div className="md:w-1/2 bg-[#eeedf5] min-h-[400px] relative flex items-center justify-center p-12">
+              <div className="w-[260px] sm:w-[280px] h-[540px] sm:h-[580px] bg-slate-900 rounded-[3rem] p-1.5 shadow-2xl border-[3px] border-slate-700">
+                <div className="w-full h-full bg-slate-100 rounded-[2.6rem] overflow-hidden relative">
+                  <img src={pushBg} alt="Eloyo App Push-Benachrichtigung" className="w-full h-full object-cover" />
+                  <div className="absolute top-1/2 -translate-y-1/2 left-3 right-3 space-y-3">
+                    <div className="bg-white/80 backdrop-blur-md p-4 rounded-2xl shadow-lg animate-bounce">
+                      <div className="flex items-center gap-2 mb-1">
+                        <div className="w-5 h-5 rounded-md overflow-hidden flex-shrink-0">
+                          <img src={eloyoLogo} alt="Eloyo" className="w-full h-full object-contain" />
+                        </div>
+                        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Eloyo · Jetzt</span>
+                      </div>
+                      <p className="text-sm font-bold text-slate-900">Backstube König:</p>
+                      <p className="text-xs text-slate-600">Morgen Frühstück für 1 Person – nur 10 €. Komm vorbei! 🥐</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      </section>
+
       {/* ═══════ NETZWERK ═══════ */}
       <section className="relative z-10 py-24 px-6 bg-[#f4f3fb]">
         <motion.div
