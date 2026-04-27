@@ -1431,6 +1431,8 @@ const MeinGeschaeft = () => {
                   )}
                 </Card>
 
+                {/* RECHTE SPALTE: Stempel-IDs + Prämien */}
+                <div className="flex flex-col gap-4">
                 {/* Stempel-IDs */}
                 <Card className="rounded-2xl shadow-sm border-0 bg-gray-50/80">
                   <CardHeader className="pb-4">
@@ -1469,6 +1471,32 @@ const MeinGeschaeft = () => {
                     </div>
                   </CardContent>
                 </Card>
+
+                {/* Prämien-Schnellzugriff */}
+                <Card className="rounded-2xl shadow-sm border-0 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent">
+                  <CardContent className="p-6 flex flex-col items-center text-center gap-3">
+                    <div className="w-12 h-12 rounded-2xl bg-primary/15 flex items-center justify-center">
+                      <Gift className="h-6 w-6 text-primary" />
+                    </div>
+                    <div>
+                      <p className="font-semibold text-foreground">Verwalte deine Prämien</p>
+                      <p className="text-sm text-muted-foreground">Lege fest, wofür Kunden ihre Punkte einlösen können</p>
+                    </div>
+                    <Button
+                      onClick={() => navigate('/kunde/marketing?tab=praemien')}
+                      className="rounded-xl gap-2"
+                      size="lg"
+                    >
+                      <Gift className="h-4 w-4" />
+                      Zu deinen Prämien
+                      <ArrowRight className="h-4 w-4" />
+                    </Button>
+                  </CardContent>
+                </Card>
+                </div>
+                {/* Ende rechte Spalte */}
+                </div>
+                {/* Ende 2-spaltiges Stempel-Grid */}
               </TabsContent>
             </Tabs>
           </div>
