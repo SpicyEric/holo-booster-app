@@ -29,7 +29,6 @@ import {
   XAxis,
   YAxis,
   ResponsiveContainer,
-  Clock,
 } from 'recharts';
 import { Clock as ClockIcon } from 'lucide-react';
 
