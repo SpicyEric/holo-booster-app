@@ -457,17 +457,128 @@ const Backoffice = () => {
             initial="hidden"
             whileInView="visible"
             viewport={viewportConfig}
-            className="order-2 lg:order-1 flex justify-center"
+            className="order-2 lg:order-1"
           >
-            <div className="relative w-full max-w-xl">
+            <div className="relative w-full">
               <div className="absolute -inset-8 bg-gradient-to-br from-blue-400/20 to-primary/10 blur-3xl rounded-full pointer-events-none" />
-              <div className="relative rounded-2xl overflow-hidden border border-[#e8e7ef]">
-                <img
-                  src={transactionsImg}
-                  alt="Eloyo erkennt inaktive Kunden automatisch"
-                  className="w-full h-auto block"
-                  loading="lazy"
-                />
+              <div className="relative grid grid-cols-2 gap-4">
+
+                {/* Stempelzeiten */}
+                <div className="bg-white rounded-2xl p-4 border border-[#e8e7ef] shadow-[0_1px_3px_hsl(262,30%,80%/0.3)]">
+                  <div className="flex items-center gap-2 mb-1">
+                    <ClockIcon className="w-3.5 h-3.5 text-primary" />
+                    <h4 className="text-[13px] font-semibold text-[#1a1b21]">Stempelzeiten</h4>
+                  </div>
+                  <p className="text-[10px] text-[#7b7487] mb-2">Verteilung nach Uhrzeit</p>
+                  <div className="h-[110px] w-full">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <AreaChart data={[
+                        { hour: '6', count: 4 }, { hour: '8', count: 18 }, { hour: '10', count: 32 },
+                        { hour: '12', count: 48 }, { hour: '14', count: 36 }, { hour: '16', count: 42 },
+                        { hour: '18', count: 28 }, { hour: '20', count: 12 }, { hour: '22', count: 5 },
+                      ]}>
+                        <defs>
+                          <linearGradient id="bo-hour" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor="hsl(262,83%,58%)" stopOpacity={0.4} />
+                            <stop offset="95%" stopColor="hsl(262,83%,58%)" stopOpacity={0} />
+                          </linearGradient>
+                        </defs>
+                        <XAxis dataKey="hour" tick={{ fontSize: 9, fill: 'hsl(0,0%,45%)' }} tickLine={false} axisLine={false} />
+                        <YAxis hide />
+                        <Area type="monotone" dataKey="count" stroke="hsl(262,83%,58%)" strokeWidth={2} fill="url(#bo-hour)" />
+                      </AreaChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+
+                {/* Kundenzuwachs */}
+                <div className="bg-white rounded-2xl p-4 border border-[#e8e7ef] shadow-[0_1px_3px_hsl(262,30%,80%/0.3)]">
+                  <div className="flex items-center gap-2 mb-1">
+                    <TrendingUp className="w-3.5 h-3.5 text-emerald-600" />
+                    <h4 className="text-[13px] font-semibold text-[#1a1b21]">Kundenzuwachs</h4>
+                  </div>
+                  <p className="text-[10px] text-[#7b7487] mb-2">Letzte 30 Tage</p>
+                  <div className="h-[110px] w-full">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <AreaChart data={[
+                        { d: '01.', total: 612 }, { d: '05.', total: 648 }, { d: '10.', total: 689 },
+                        { d: '15.', total: 724 }, { d: '20.', total: 762 }, { d: '25.', total: 798 },
+                        { d: '30.', total: 832 },
+                      ]}>
+                        <defs>
+                          <linearGradient id="bo-growth" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor="hsl(142,76%,36%)" stopOpacity={0.4} />
+                            <stop offset="95%" stopColor="hsl(142,76%,36%)" stopOpacity={0} />
+                          </linearGradient>
+                        </defs>
+                        <XAxis dataKey="d" tick={{ fontSize: 9, fill: 'hsl(0,0%,45%)' }} tickLine={false} axisLine={false} />
+                        <YAxis hide />
+                        <Area type="monotone" dataKey="total" stroke="hsl(142,76%,36%)" strokeWidth={2} fill="url(#bo-growth)" />
+                      </AreaChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+
+                {/* Kundengruppen */}
+                <div className="bg-white rounded-2xl p-4 border border-[#e8e7ef] shadow-[0_1px_3px_hsl(262,30%,80%/0.3)]">
+                  <h4 className="text-[13px] font-semibold text-[#1a1b21] mb-3">Kundengruppen</h4>
+                  <div className="space-y-2">
+                    {[
+                      { name: 'Neu', count: 184, pct: 22, color: 'hsl(142,71%,45%)' },
+                      { name: 'Kunden', count: 312, pct: 38, color: 'hsl(217,91%,60%)' },
+                      { name: 'Stammkunden', count: 226, pct: 27, color: 'hsl(262,83%,58%)' },
+                      { name: 'VIP', count: 110, pct: 13, color: 'hsl(38,92%,50%)' },
+                    ].map((seg) => (
+                      <div key={seg.name} className="flex items-center gap-2">
+                        <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: seg.color }} />
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between">
+                            <span className="text-[11px] font-medium text-[#1a1b21]">{seg.name}</span>
+                            <span className="text-[10px] text-[#7b7487]">{seg.pct}%</span>
+                          </div>
+                          <div className="h-1 bg-muted/40 rounded-full mt-0.5 overflow-hidden">
+                            <div className="h-full rounded-full" style={{ width: `${seg.pct}%`, backgroundColor: seg.color }} />
+                          </div>
+                        </div>
+                        <span className="text-[10px] text-[#7b7487] tabular-nums w-7 text-right">{seg.count}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Demografie */}
+                <div className="bg-white rounded-2xl p-4 border border-[#e8e7ef] shadow-[0_1px_3px_hsl(262,30%,80%/0.3)]">
+                  <h4 className="text-[13px] font-semibold text-[#1a1b21] mb-3">Demografie</h4>
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className="flex items-center gap-1.5">
+                      <div className="w-2 h-2 rounded-full bg-primary" />
+                      <span className="text-[10px] text-[#1a1b21] font-medium">Männlich</span>
+                      <span className="text-[10px] text-[#7b7487]">46%</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <div className="w-2 h-2 rounded-full bg-orange-500" />
+                      <span className="text-[10px] text-[#1a1b21] font-medium">Weiblich</span>
+                      <span className="text-[10px] text-[#7b7487]">54%</span>
+                    </div>
+                  </div>
+                  <div className="h-[78px] w-full">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={[
+                        { age: '18-24', male: 18, female: 22 },
+                        { age: '25-34', male: 42, female: 48 },
+                        { age: '35-44', male: 38, female: 44 },
+                        { age: '45-54', male: 28, female: 32 },
+                        { age: '55+', male: 16, female: 20 },
+                      ]} barGap={1} barCategoryGap="20%">
+                        <XAxis dataKey="age" tick={{ fontSize: 8, fill: 'hsl(0,0%,45%)' }} tickLine={false} axisLine={false} />
+                        <YAxis hide />
+                        <Bar dataKey="male" fill="hsl(262,83%,58%)" radius={[2, 2, 0, 0]} />
+                        <Bar dataKey="female" fill="#F97316" radius={[2, 2, 0, 0]} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+
               </div>
             </div>
           </motion.div>
