@@ -493,30 +493,36 @@ const Landing = () => {
         </motion.div>
       </section>
       {/* ═══════ FINAL CTA ═══════ */}
-      <section className="relative z-10 py-10 px-6">
+      <section className="relative z-10 py-10 px-6 pt-24">
         <div className="max-w-5xl mx-auto">
           <motion.div
             variants={glassReveal}
             initial="hidden"
             whileInView="visible"
             viewport={viewportConfig}
-            className="bg-gradient-to-r from-primary to-blue-500 rounded-2xl px-8 py-8 relative overflow-hidden text-white flex flex-col sm:flex-row items-center gap-6"
+            className="bg-gradient-to-r from-primary to-blue-500 rounded-2xl px-8 py-8 relative text-white flex flex-col sm:flex-row items-center gap-6 min-h-[140px]"
+            style={{ overflow: 'visible' }}
           >
-            <div className="flex items-center gap-5 shrink-0">
+            {/* Foto links – ragt oben aus dem Banner heraus, unten bündig */}
+            <div className="relative shrink-0 w-32 sm:w-36 self-stretch">
               <img
                 src={contactPerson}
                 alt="Eloyo Geschäftsinhaber"
-                className="rounded-full w-20 h-20 object-cover object-top border-2 border-white/20 shadow-lg"
+                className="absolute bottom-0 left-0 w-32 sm:w-36 h-auto object-contain object-bottom pointer-events-none select-none"
+                style={{ maxHeight: 'none' }}
               />
-              <div>
-                <p className="font-headline text-lg font-bold leading-snug">
-                  Wir kommen persönlich vorbei & richten alles ein.
-                </p>
-                <p className="text-sm text-white/80">
-                  Kostenlose Demo – in 10 Min. live erleben.
-                </p>
-              </div>
             </div>
+
+            {/* Text – vertikal zentriert, mit Abstand zum Foto */}
+            <div className="flex-1 sm:pl-4">
+              <p className="font-headline text-lg font-bold leading-snug">
+                Wir kommen persönlich vorbei & richten alles ein.
+              </p>
+              <p className="text-sm text-white/80">
+                Kostenlose Demo – in 10 Min. live erleben.
+              </p>
+            </div>
+
             <div className="sm:ml-auto shrink-0">
               <motion.button
                 {...buttonMotion}
