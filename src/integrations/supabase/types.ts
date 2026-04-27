@@ -3414,6 +3414,7 @@ export type Database = {
         }[]
       }
       lookup_invitation: { Args: { p_share_code: string }; Returns: Json }
+      mark_invitation_shared: { Args: { p_share_code: string }; Returns: Json }
       process_referral_bonus: {
         Args: { p_merchant_customer_id: string; p_user_id: string }
         Returns: Json
