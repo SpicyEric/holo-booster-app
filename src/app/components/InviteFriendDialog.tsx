@@ -71,7 +71,9 @@ export const InviteFriendDialog = ({
     : '';
 
   const openWhatsApp = () => {
-    if (!shareText) return;
+    if (!shareText || !shareCode) return;
+    // Erst beim tatsächlichen Versand zählt es als verschickte Einladung
+    void supabase.rpc('mark_invitation_shared', { p_share_code: shareCode });
     const url = `https://wa.me/?text=${encodeURIComponent(shareText)}`;
     window.open(url, '_blank', 'noopener,noreferrer');
   };
