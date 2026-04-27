@@ -128,21 +128,160 @@ const Backoffice = () => {
           </motion.p>
         </motion.div>
 
-        {/* Großes Dashboard-Bild */}
+        {/* Statisches Dashboard-Mockup (1:1 Replikation des echten Backoffice) */}
         <motion.div
           variants={glassReveal}
           initial="hidden"
           whileInView="visible"
           viewport={viewportConfig}
-          className="max-w-[1400px] mx-auto mt-16 relative z-10"
+          className="max-w-[1200px] mx-auto mt-16 relative z-10"
         >
-          <div className="rounded-2xl overflow-hidden border border-[#e8e7ef]">
-            <img
-              src={dashboardImg}
-              alt="Eloyo Backoffice Dashboard mit allen Kennzahlen auf einen Blick"
-              className="w-full h-auto block"
-              loading="lazy"
-            />
+          <div className="rounded-3xl overflow-hidden border border-[#e8e7ef] bg-[hsl(262,40%,93%)] shadow-2xl shadow-primary/10">
+            <div className="p-6 lg:p-8 space-y-6">
+
+              {/* Hero-Header */}
+              <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[hsl(262,60%,45%)] via-[hsl(262,70%,50%)] to-[hsl(230,70%,55%)] p-8 text-white shadow-[0_8px_30px_hsl(262,50%,40%/0.35)]">
+                <div className="absolute -top-24 -right-24 w-72 h-72 bg-white/[0.06] rounded-full blur-3xl" />
+                <div className="absolute -bottom-16 -left-16 w-48 h-48 bg-white/[0.04] rounded-full blur-3xl" />
+                <div className="relative z-10 flex items-end justify-between gap-6">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Sparkles className="h-5 w-5 opacity-70" />
+                      <span className="text-sm font-medium opacity-70">Dein Eloyo-Dashboard</span>
+                    </div>
+                    <h3 className="font-headline text-3xl lg:text-4xl font-bold tracking-tight leading-[1.1]">
+                      Willkommen zurück, Backstube König!
+                    </h3>
+                    <p className="mt-2 text-base opacity-75 max-w-xl">
+                      Hier siehst du, wie dein Kundenbindungssystem läuft und wo du als Nächstes optimieren kannst.
+                    </p>
+                    <div className="flex items-center gap-3 mt-5">
+                      <span className="inline-flex items-center bg-white/20 text-white text-xs font-medium rounded-full px-3 py-1 backdrop-blur-sm">
+                        <TrendingUp className="w-3 h-3 mr-1" />
+                        +117 neue Kunden diese Woche
+                      </span>
+                    </div>
+                  </div>
+                  <div className="hidden lg:flex flex-col items-end gap-3">
+                    <span className="text-[10px] font-semibold tracking-[0.2em] uppercase opacity-60">
+                      Deine bisherigen Erfolge
+                    </span>
+                    <div className="flex items-center gap-2">
+                      {[Star, Gift, Sparkles, Trophy].map((Icon, i) => (
+                        <div key={i} className="w-10 h-10 rounded-full bg-white/15 backdrop-blur-sm flex items-center justify-center">
+                          <Icon className="w-4 h-4 text-white/90" />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* KPI-Kacheln */}
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                {[
+                  { icon: Users, value: '832', label: 'Kunden gesamt', trend: '+117 diese Woche', iconBg: 'bg-primary/10', iconColor: 'text-primary' },
+                  { icon: Trophy, value: '6.102', label: 'Stempel gesamt', sub: 'Gesamt seit Start', iconBg: 'bg-emerald-50', iconColor: 'text-emerald-600' },
+                  { icon: Gift, value: '312', label: 'Prämien eingelöst', iconBg: 'bg-amber-50', iconColor: 'text-amber-600' },
+                  { icon: Zap, value: '387', label: 'Netzwerkeffekt', sub: 'Neukundenprämien eingelöst', iconBg: 'bg-primary/10', iconColor: 'text-primary' },
+                ].map((k) => (
+                  <div key={k.label} className="bg-white rounded-2xl p-5 border border-border/30 shadow-[0_1px_3px_hsl(262,30%,80%/0.3)]">
+                    <div className="flex items-center justify-between mb-3">
+                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${k.iconBg}`}>
+                        <k.icon className={`w-5 h-5 ${k.iconColor}`} />
+                      </div>
+                      {k.trend && (
+                        <span className="text-xs font-medium text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">
+                          {k.trend}
+                        </span>
+                      )}
+                    </div>
+                    <p className="font-bold text-foreground tracking-tight text-3xl lg:text-4xl">{k.value}</p>
+                    <p className="text-sm text-muted-foreground mt-1">{k.label}</p>
+                    {k.sub && <p className="text-xs text-muted-foreground/70 mt-0.5">{k.sub}</p>}
+                  </div>
+                ))}
+              </div>
+
+              {/* Fortschritt + Empfohlene Schritte */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Dein Fortschritt */}
+                <div className="bg-white rounded-2xl p-6 border border-border/30 shadow-[0_1px_3px_hsl(262,30%,80%/0.3)]">
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                        <Target className="w-5 h-5 text-primary" />
+                      </div>
+                      <div>
+                        <p className="font-bold text-foreground">Dein Fortschritt</p>
+                        <p className="text-xs text-muted-foreground">4/5 erledigt</p>
+                      </div>
+                    </div>
+                    <span className="text-xs font-medium text-primary bg-primary/10 px-3 py-1 rounded-full border border-primary/20">
+                      Aktiv wachsend
+                    </span>
+                  </div>
+                  <div className="h-1.5 w-full bg-primary/10 rounded-full overflow-hidden mb-4">
+                    <div className="h-full bg-gradient-to-r from-primary to-blue-500 rounded-full" style={{ width: '80%' }} />
+                  </div>
+                  <ul className="space-y-2">
+                    {[
+                      { label: 'Geschäftsprofil vervollständigen', done: true },
+                      { label: 'Deine fünfte Prämie erstellen', done: true },
+                      { label: 'Google-Bewertungen aktivieren', done: true },
+                      { label: 'Öffnungszeiten eintragen', done: true },
+                      { label: 'Neukundenprämie hinzufügen', done: false },
+                    ].map((m) => (
+                      <li
+                        key={m.label}
+                        className={`flex items-center justify-between rounded-xl px-3 py-2.5 ${
+                          m.done ? 'bg-emerald-50/50' : 'bg-muted/30'
+                        }`}
+                      >
+                        <div className="flex items-center gap-3 min-w-0">
+                          {m.done ? (
+                            <CheckCircle2 className="w-5 h-5 text-emerald-500 flex-shrink-0" />
+                          ) : (
+                            <Circle className="w-5 h-5 text-muted-foreground/40 flex-shrink-0" />
+                          )}
+                          <span
+                            className={`text-sm truncate ${
+                              m.done ? 'text-emerald-700 line-through' : 'text-foreground'
+                            }`}
+                          >
+                            {m.label}
+                          </span>
+                        </div>
+                        <ChevronRight className="w-4 h-4 text-muted-foreground/40 flex-shrink-0" />
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                {/* Empfohlene nächste Schritte */}
+                <div>
+                  <div className="mb-4">
+                    <p className="font-bold text-foreground">Empfohlene nächste Schritte</p>
+                    <p className="text-sm text-muted-foreground">Optimiere dein System für bessere Ergebnisse</p>
+                  </div>
+                  <div className="bg-white rounded-2xl p-5 border border-border/30 shadow-[0_1px_3px_hsl(262,30%,80%/0.3)]">
+                    <div className="flex items-start gap-4">
+                      <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
+                        <UserPlus className="w-5 h-5 text-primary" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-semibold text-foreground mb-1">Neukundenprämie hinzufügen</p>
+                        <p className="text-sm text-muted-foreground leading-relaxed">
+                          Erstelle eine Neukundenprämie, die nur Nutzern angezeigt wird, die noch keine Punkte bei dir gesammelt haben — perfekt, um neue Kunden ins Geschäft zu holen.
+                        </p>
+                      </div>
+                      <ChevronRight className="w-4 h-4 text-muted-foreground/40 flex-shrink-0 mt-1" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+            </div>
           </div>
         </motion.div>
       </section>
