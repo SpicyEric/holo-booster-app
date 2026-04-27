@@ -224,9 +224,7 @@ const Landing = () => {
               <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
               Digitales Stempelsystem 2.0
             </div>
-            <h1 className="font-headline text-5xl md:text-7xl font-extrabold text-[#1a1b21] leading-[1.1] mb-6 tracking-[-0.02em]">
-              Schreib deinen Stammkunden direkt aufs Handy
-            </h1>
+            <RotatingHeadline />
             <p className="text-xl text-[#4a4455] leading-relaxed mb-10 max-w-xl">
               Verwandle anonyme Laufkundschaft in loyale Fans. Mit unserem NFC-Stempelsystem kommunizierst du so einfach wie noch nie – direkt per Push-Nachricht.
             </p>
