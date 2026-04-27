@@ -169,6 +169,38 @@ const HeroMockupWithNotifications = () => {
 const Landing = () => {
   const navigate = useNavigate();
 
+  // Auto-cycling "hover" highlight for the 3 step cards (1 → 2 → 3 → off → repeat)
+  const [activeStep, setActiveStep] = useState<number>(0);
+  useEffect(() => {
+    // Sequence: card 0 on (1.6s) → off (0.4s) → card 1 on → off → card 2 on → off → loop
+    const sequence = [0, -1, 1, -1, 2, -1];
+    const onDuration = 1600;
+    const offDuration = 400;
+    let i = 0;
+    setActiveStep(sequence[0]);
+    const tick = () => {
+      i = (i + 1) % sequence.length;
+      setActiveStep(sequence[i]);
+    };
+    const interval = setInterval(() => {
+      tick();
+    }, 0);
+    clearInterval(interval);
+    // Use a recursive timeout to alternate durations
+    let timeoutId: ReturnType<typeof setTimeout>;
+    const schedule = () => {
+      const current = sequence[i];
+      const delay = current === -1 ? offDuration : onDuration;
+      timeoutId = setTimeout(() => {
+        i = (i + 1) % sequence.length;
+        setActiveStep(sequence[i]);
+        schedule();
+      }, delay);
+    };
+    schedule();
+    return () => clearTimeout(timeoutId);
+  }, []);
+
   useEffect(() => {
     const hash = window.location.hash || "";
     if (hash && (hash.includes('type=recovery') || hash.includes('type=signup'))) {
@@ -287,25 +319,45 @@ const Landing = () => {
             { step: '1', title: 'Kunde scannt den Stempel', desc: 'Dein Mitarbeiter hält den Eloyo-Stempel ans Handy des Kunden — ein kurzer Tap und die Punkte sind sofort gutgeschrieben.', icon: '📱' },
             { step: '2', title: 'Sammelt Punkte, löst Prämien ein', desc: 'Jeder Besuch wird belohnt. Der Kunde wählt selbst was er will — das schafft echte Motivation und er kommt wieder.', icon: '⭐' },
             { step: '3', title: 'Bringt neue Kunden rein', desc: 'Der Kunde teilt seinen persönlichen Einladungslink. Du bekommst Neukunden — ohne einen Euro Werbekosten.', icon: '🚀' },
-          ].map((item, i) => (
-            <motion.div
-              key={i}
-              variants={glassReveal}
-              {...cardHover}
-              className="relative group cursor-default"
-            >
-              <div className="bg-[#e8e7ef] rounded-[2.5rem] p-10 h-full transition-shadow hover:shadow-[0_20px_60px_rgba(124,58,237,0.15)]">
-                <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center shadow-lg mb-8 text-2xl group-hover:bg-gradient-to-br group-hover:from-primary group-hover:to-blue-500 transition-colors">
-                  <span className="group-hover:brightness-200">{item.icon}</span>
+          ].map((item, i) => {
+            const isActive = activeStep === i;
+            return (
+              <motion.div
+                key={i}
+                variants={glassReveal}
+                animate={{ y: isActive ? -6 : 0, scale: isActive ? 1.02 : 1 }}
+                transition={{ type: 'spring', stiffness: 280, damping: 20 }}
+                className="relative cursor-default"
+              >
+                <div
+                  className={`bg-[#e8e7ef] rounded-[2.5rem] p-10 h-full transition-shadow duration-500 ${
+                    isActive ? 'shadow-[0_20px_60px_rgba(124,58,237,0.18)]' : ''
+                  }`}
+                >
+                  <div
+                    className={`w-16 h-16 rounded-2xl flex items-center justify-center shadow-lg mb-8 text-2xl transition-colors duration-500 ${
+                      isActive
+                        ? 'bg-gradient-to-br from-primary to-blue-500'
+                        : 'bg-white'
+                    }`}
+                  >
+                    <span
+                      className={`transition-[filter] duration-500 ${
+                        isActive ? 'brightness-200' : ''
+                      }`}
+                    >
+                      {item.icon}
+                    </span>
+                  </div>
+                  <h3 className="font-headline text-2xl font-bold mb-4">{item.step}. {item.title}</h3>
+                  <p className="text-[#4a4455]">{item.desc}</p>
                 </div>
-                <h3 className="font-headline text-2xl font-bold mb-4">{item.step}. {item.title}</h3>
-                <p className="text-[#4a4455]">{item.desc}</p>
-              </div>
-              {i < 2 && (
-                <div className="hidden md:block absolute top-1/2 -right-6 -translate-y-1/2 text-[#ccc3d8] text-3xl">→</div>
-              )}
-            </motion.div>
-          ))}
+                {i < 2 && (
+                  <div className="hidden md:block absolute top-1/2 -right-6 -translate-y-1/2 text-[#ccc3d8] text-3xl">→</div>
+                )}
+              </motion.div>
+            );
+          })}
         </motion.div>
       </section>
 
