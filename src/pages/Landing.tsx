@@ -20,7 +20,7 @@ import SplitText from '@/components/ui/split-text';
 
 /* ─── Rotating animated headline ─── */
 const ROTATING_HEADLINES = [
-  'Stammkunden werben Neukunden. Automatisch.',
+  'Kunden werben Neukunden. Automatisch.',
   'Schreib deinen Kunden direkt aufs Handy.',
   'Verwandle jeden Besuch in echte Treue.',
 ];
