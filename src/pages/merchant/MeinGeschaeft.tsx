@@ -899,15 +899,9 @@ const MeinGeschaeft = () => {
           {/* Content */}
           <div className="lg:col-span-2 order-1 lg:order-2">
             <Tabs value={activeTab} onValueChange={handleTabChange}>
-              <TabsList className="inline-flex gap-2 bg-transparent p-0 mb-6">
-                <TabsTrigger value="info" className="rounded-full px-5 py-2 text-sm font-medium border border-border/50 data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:border-primary data-[state=active]:shadow-sm data-[state=inactive]:bg-white data-[state=inactive]:text-muted-foreground hover:bg-primary/5 transition-all duration-200">
-                  <Info className="w-4 h-4 mr-2" />
-                  Profil
-                </TabsTrigger>
-                <TabsTrigger value="stempel" className="rounded-full px-5 py-2 text-sm font-medium border border-border/50 data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:border-primary data-[state=active]:shadow-sm data-[state=inactive]:bg-white data-[state=inactive]:text-muted-foreground hover:bg-primary/5 transition-all duration-200">
-                  <Package className="w-4 h-4 mr-2" />
-                  System
-                </TabsTrigger>
+              <TabsList className="hidden">
+                <TabsTrigger value="info" />
+                <TabsTrigger value="stempel" />
               </TabsList>
 
 
