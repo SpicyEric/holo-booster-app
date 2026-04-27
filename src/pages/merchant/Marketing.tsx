@@ -717,12 +717,11 @@ const Marketing = () => {
               <CardContent className="space-y-4">
                 <ReferralExplainerCarousel />
 
-                <div className="p-5 bg-card rounded-xl border border-border/30 space-y-3">
-                  <Label className="font-medium text-base">Bonus für den Einlader</Label>
-                  <p className="text-xs text-muted-foreground">
-                    Punkte, die der Kunde bekommt, der einen Freund erfolgreich eingeladen hat.
-                  </p>
-                  <div className="flex items-center gap-4 pt-1">
+                <div className="p-5 bg-card rounded-xl border border-border/30 space-y-4">
+                  <h3 className="font-semibold text-foreground text-base">
+                    Punkte, die der Kunde bekommt, der einen Freund erfolgreich eingeladen hat
+                  </h3>
+                  <div className="flex items-center gap-4">
                     <Input
                       type="number"
                       min={1}
@@ -735,7 +734,7 @@ const Marketing = () => {
                       className="text-center font-bold text-primary border-2 border-primary/30 focus-visible:border-primary rounded-xl"
                       style={{ height: "64px", width: "120px", fontSize: "28px", fontWeight: 700 }}
                     />
-                    <span className="text-muted-foreground font-medium" style={{ fontSize: "18px" }}>Punkte</span>
+                    <span className="text-foreground font-medium" style={{ fontSize: "18px" }}>Punkte</span>
                   </div>
                 </div>
 
