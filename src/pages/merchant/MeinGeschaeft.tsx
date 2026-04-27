@@ -1047,13 +1047,13 @@ const MeinGeschaeft = () => {
                   <div className="space-y-4">
                     <div>
                       <Label className="text-xs font-medium text-muted-foreground mb-1.5 block">Geschäftsname *</Label>
-                      <Input value={formData.name} onChange={(e) => handleInputChange("name", e.target.value)} placeholder="z.B. Café Sonnenschein" className="rounded-lg" />
+                      <Input value={formData.name} onChange={(e) => handleInputChange("name", e.target.value)} placeholder="z.B. Café Sonnenschein" className="rounded-lg bg-slate-50 border-slate-300 focus-visible:border-primary focus-visible:ring-primary/30 text-foreground placeholder:text-slate-400" />
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       <div>
                         <Label className="text-xs font-medium text-muted-foreground mb-1.5 block">Branche</Label>
                         <Select value={formData.industry} onValueChange={(value) => handleInputChange("industry", value)}>
-                          <SelectTrigger className="rounded-lg"><SelectValue placeholder="Branche auswählen" /></SelectTrigger>
+                          <SelectTrigger className="rounded-lg bg-slate-50 border-slate-300 focus-visible:border-primary focus-visible:ring-primary/30 text-foreground placeholder:text-slate-400"><SelectValue placeholder="Branche auswählen" /></SelectTrigger>
                           <SelectContent>{INDUSTRIES.map((ind) => (<SelectItem key={ind.value} value={ind.value}>{ind.label}</SelectItem>))}</SelectContent>
                         </Select>
                       </div>
@@ -1061,7 +1061,7 @@ const MeinGeschaeft = () => {
                     </div>
                     <div>
                       <Label className="text-xs font-medium text-muted-foreground mb-1.5 block">Beschreibung</Label>
-                      <div style={{ resize: 'vertical', overflow: 'auto', minHeight: 120 }} className="rounded-lg">
+                      <div style={{ resize: 'vertical', overflow: 'auto', minHeight: 120 }} className="rounded-lg bg-slate-50 border-slate-300 focus-visible:border-primary focus-visible:ring-primary/30 text-foreground placeholder:text-slate-400">
                         <RichTextEditor
                           value={formData.description}
                           onChange={(value) => handleInputChange("description", value)}
@@ -1091,7 +1091,7 @@ const MeinGeschaeft = () => {
                                 const next = current ? `${current}\n\n${tpl.text}` : tpl.text;
                                 handleInputChange("description", next);
                               }}
-                              className="h-7 px-2.5 text-xs rounded-lg bg-white hover:bg-primary/5 hover:border-primary/40 hover:text-primary transition-colors"
+                              className="h-7 px-2.5 text-xs rounded-lg bg-slate-100 border-slate-300 hover:bg-primary/10 hover:border-primary/50 hover:text-primary transition-colors"
                             >
                               {tpl.label}
                             </Button>
@@ -1112,21 +1112,21 @@ const MeinGeschaeft = () => {
                     <div className="grid grid-cols-4 gap-3">
                       <div className="col-span-3">
                         <Label className="text-xs font-medium text-muted-foreground mb-1.5 block">Straße</Label>
-                        <Input value={formData.street} onChange={(e) => handleInputChange("street", e.target.value)} placeholder="Hauptstraße" className="rounded-lg" />
+                        <Input value={formData.street} onChange={(e) => handleInputChange("street", e.target.value)} placeholder="Hauptstraße" className="rounded-lg bg-slate-50 border-slate-300 focus-visible:border-primary focus-visible:ring-primary/30 text-foreground placeholder:text-slate-400" />
                       </div>
                       <div>
                         <Label className="text-xs font-medium text-muted-foreground mb-1.5 block">Nr.</Label>
-                        <Input value={formData.house_number} onChange={(e) => handleInputChange("house_number", e.target.value)} placeholder="123" className="rounded-lg" />
+                        <Input value={formData.house_number} onChange={(e) => handleInputChange("house_number", e.target.value)} placeholder="123" className="rounded-lg bg-slate-50 border-slate-300 focus-visible:border-primary focus-visible:ring-primary/30 text-foreground placeholder:text-slate-400" />
                       </div>
                     </div>
                     <div className="grid grid-cols-10 gap-3">
                       <div className="col-span-3">
                         <Label className="text-xs font-medium text-muted-foreground mb-1.5 block">PLZ</Label>
-                        <Input value={formData.postal_code} onChange={(e) => handleInputChange("postal_code", e.target.value)} placeholder="12345" className="rounded-lg" />
+                        <Input value={formData.postal_code} onChange={(e) => handleInputChange("postal_code", e.target.value)} placeholder="12345" className="rounded-lg bg-slate-50 border-slate-300 focus-visible:border-primary focus-visible:ring-primary/30 text-foreground placeholder:text-slate-400" />
                       </div>
                       <div className="col-span-7">
                         <Label className="text-xs font-medium text-muted-foreground mb-1.5 block">Ort</Label>
-                        <Input value={formData.city} onChange={(e) => handleInputChange("city", e.target.value)} placeholder="Berlin" className="rounded-lg" />
+                        <Input value={formData.city} onChange={(e) => handleInputChange("city", e.target.value)} placeholder="Berlin" className="rounded-lg bg-slate-50 border-slate-300 focus-visible:border-primary focus-visible:ring-primary/30 text-foreground placeholder:text-slate-400" />
                       </div>
                     </div>
                   </div>
@@ -1175,9 +1175,9 @@ const MeinGeschaeft = () => {
                             </label>
                             {!closed ? (
                               <div className="flex items-center gap-2 flex-1">
-                                <Input type="time" value={formData.opening_hours[day.key]?.open || "09:00"} onChange={(e) => handleOpeningHoursChange(day.key, "open", e.target.value)} className="w-28 h-9 rounded-lg text-sm" />
+                                <Input type="time" value={formData.opening_hours[day.key]?.open || "09:00"} onChange={(e) => handleOpeningHoursChange(day.key, "open", e.target.value)} className="w-28 h-9 rounded-lg text-sm bg-slate-50 border-slate-300 focus-visible:border-primary focus-visible:ring-primary/30 text-foreground placeholder:text-slate-400" />
                                 <span className="text-muted-foreground text-xs">bis</span>
-                                <Input type="time" value={formData.opening_hours[day.key]?.close || "18:00"} onChange={(e) => handleOpeningHoursChange(day.key, "close", e.target.value)} className="w-28 h-9 rounded-lg text-sm" />
+                                <Input type="time" value={formData.opening_hours[day.key]?.close || "18:00"} onChange={(e) => handleOpeningHoursChange(day.key, "close", e.target.value)} className="w-28 h-9 rounded-lg text-sm bg-slate-50 border-slate-300 focus-visible:border-primary focus-visible:ring-primary/30 text-foreground placeholder:text-slate-400" />
                               </div>
                             ) : (
                               <div className="flex-1 text-xs text-muted-foreground italic">Geschlossen</div>
@@ -1207,7 +1207,7 @@ const MeinGeschaeft = () => {
                         onChange={(e) => handleInputChange("phone", e.target.value)}
                         onFocus={() => setScrollTarget('contact')}
                         placeholder="Telefon — z.B. +49 123 456789"
-                        className="pl-10 rounded-lg"
+                        className="pl-10 rounded-lg bg-slate-50 border-slate-300 focus-visible:border-primary focus-visible:ring-primary/30 text-foreground placeholder:text-slate-400"
                       />
                     </div>
                     <div className="relative">
@@ -1217,7 +1217,7 @@ const MeinGeschaeft = () => {
                         onChange={(e) => handleInputChange("website", e.target.value)}
                         onFocus={() => setScrollTarget('contact')}
                         placeholder="Website — https://..."
-                        className="pl-10 rounded-lg"
+                        className="pl-10 rounded-lg bg-slate-50 border-slate-300 focus-visible:border-primary focus-visible:ring-primary/30 text-foreground placeholder:text-slate-400"
                       />
                     </div>
                     <div className="relative">
@@ -1227,7 +1227,7 @@ const MeinGeschaeft = () => {
                         onChange={(e) => handleInputChange("instagram", e.target.value)}
                         onFocus={() => setScrollTarget('contact')}
                         placeholder="Instagram — https://instagram.com/..."
-                        className="pl-10 rounded-lg"
+                        className="pl-10 rounded-lg bg-slate-50 border-slate-300 focus-visible:border-primary focus-visible:ring-primary/30 text-foreground placeholder:text-slate-400"
                       />
                     </div>
                     <div className="relative">
@@ -1237,7 +1237,7 @@ const MeinGeschaeft = () => {
                         onChange={(e) => handleInputChange("facebook", e.target.value)}
                         onFocus={() => setScrollTarget('contact')}
                         placeholder="Facebook — https://facebook.com/..."
-                        className="pl-10 rounded-lg"
+                        className="pl-10 rounded-lg bg-slate-50 border-slate-300 focus-visible:border-primary focus-visible:ring-primary/30 text-foreground placeholder:text-slate-400"
                       />
                     </div>
                   </div>
