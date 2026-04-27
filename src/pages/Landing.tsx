@@ -496,48 +496,6 @@ const Landing = () => {
           </div>
         </motion.div>
       </section>
-      {/* ═══════ GAMIFICATION ═══════ */}
-      <section className="relative z-10 py-24 px-6 bg-[#f4f3fb]">
-        <motion.div
-          variants={staggerContainer}
-          initial="hidden"
-          whileInView="visible"
-          viewport={viewportConfig}
-          className="max-w-7xl mx-auto"
-        >
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
-            <motion.div variants={glassReveal} className="order-2 lg:order-1">
-              <img src={eloyoAppMockup} alt="Eloyo App mit Gamification" className="w-full max-w-md mx-auto h-auto rounded-2xl shadow-2xl" />
-            </motion.div>
-            <motion.div variants={glassReveal} className="space-y-6 order-1 lg:order-2">
-              <h2 className="font-headline text-4xl md:text-5xl font-extrabold leading-tight tracking-[-0.02em]">
-                Deine Kunden kommen <span className="text-primary">von selbst wieder</span>
-              </h2>
-              <p className="text-lg text-[#4a4455]">
-                Vergiss langweilige Stempelkarten, die niemand einlöst. Bei Eloyo entscheiden deine Kunden selbst, wie sie ihre Punkte ausgeben – das schafft echte Motivation und emotionale Bindung.
-              </p>
-              <ul className="space-y-3">
-                {[
-                  'Mehrere Prämien zur Auswahl – der Kunde entscheidet',
-                  'Sichtbarer Fortschritt motiviert zum Wiederkommen',
-                  'Persönliche Belohnungen schaffen emotionale Bindung',
-                  'Punkte können nicht verfallen – maximale Fairness'
-                ].map((point, i) => (
-                  <motion.li
-                    key={i}
-                    variants={glassReveal}
-                    className="flex items-center gap-3"
-                  >
-                    <CheckCircle className="h-5 w-5 text-primary flex-shrink-0" />
-                    <span className="text-[#1a1b21]">{point}</span>
-                  </motion.li>
-                ))}
-              </ul>
-            </motion.div>
-          </div>
-        </motion.div>
-      </section>
-
       {/* ═══════ FINAL CTA ═══════ */}
       <section className="relative z-10 py-10 px-6">
         <div className="max-w-5xl mx-auto">
