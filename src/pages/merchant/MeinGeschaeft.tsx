@@ -1503,7 +1503,78 @@ const MeinGeschaeft = () => {
               </TabsContent>
             </Tabs>
           </div>
+
+          {/* Phone Preview - RIGHT column, sticky, größer */}
+          <div className="lg:col-span-5 order-1 lg:order-2">
+            <div className="sticky top-6">
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-3 px-1">
+                Live-Vorschau
+              </p>
+              <div className="flex justify-center">
+                <div className="scale-110 origin-top">
+                  <PhoneFrame>
+                    <MerchantPreviewLive 
+                      data={{
+                        name: formData.name || "Geschäftsname",
+                        description: formData.description,
+                        logo_url: formData.logo_url,
+                        cover_image_url: formData.cover_image_url,
+                        street: formData.street,
+                        house_number: formData.house_number,
+                        postal_code: formData.postal_code,
+                        city: formData.city,
+                        phone: formData.phone,
+                        website: formData.website,
+                        instagram: formData.instagram,
+                        facebook: formData.facebook,
+                        twitter: formData.twitter,
+                        opening_hours: formData.opening_hours,
+                      }}
+                      rewards={rewards}
+                      activeTab={activeTab === 'info' ? 'info' : 'rewards'}
+                      onTabChange={(tab) => setActiveTab(tab === 'info' ? 'info' : 'stempel')}
+                      userPoints={25}
+                      scrollTarget={scrollTarget}
+                    />
+                  </PhoneFrame>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
+
+        {/* Sticky Save Bar — taucht nur auf bei Änderungen */}
+        {showSaveBar && (
+          <div className="fixed bottom-0 left-0 right-0 z-50 animate-in slide-in-from-bottom-4 duration-200">
+            <div className="bg-white/95 backdrop-blur-md border-t border-border shadow-[0_-4px_20px_rgba(0,0,0,0.08)]">
+              <div className="max-w-[1400px] mx-auto px-6 sm:px-8 py-3 flex items-center justify-between gap-4">
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+                  <span className="text-sm font-medium text-foreground">Du hast ungespeicherte Änderungen</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="ghost"
+                    onClick={activeTab === 'info' ? handleDiscardChanges : handleDiscardStampChanges}
+                    disabled={saving || savingChips}
+                    className="rounded-lg"
+                  >
+                    Verwerfen
+                  </Button>
+                  <Button
+                    onClick={activeTab === 'info' ? handleSaveInfo : handleSaveChips}
+                    disabled={saving || savingChips}
+                    className="rounded-lg bg-primary hover:bg-primary/90"
+                  >
+                    {(saving || savingChips) ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
+                    Änderungen speichern
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
 
         {/* Reward Dialog */}
         <Dialog open={showRewardDialog} onOpenChange={setShowRewardDialog}>
