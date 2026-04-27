@@ -16,6 +16,9 @@ const ReferralSection = () => {
             Ohne dass du einen Euro für Werbung ausgibst. Das ist kein Traum –
             das ist Eloyo Empfehlungsmarketing.
           </p>
+          <p className="text-[#4a4455] text-lg leading-relaxed mt-4">
+            Dadurch werden deine Kunden animiert, für Prämien Freunde mit in dein Geschäft zu bringen. Dadurch steigt effektiv dein Umsatz und du gewinnst langfristig neue Stammkunden dazu.
+          </p>
         </div>
 
         {/* Video rechts — Kanten weich in den weißen Hintergrund verblendet */}
