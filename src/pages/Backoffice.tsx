@@ -501,8 +501,11 @@ const Backoffice = () => {
                   <div className="h-[110px] w-full">
                     <ResponsiveContainer width="100%" height="100%">
                       <AreaChart data={[
-                        { d: '01.', total: 612 }, { d: '05.', total: 648 }, { d: '10.', total: 689 },
-                        { d: '15.', total: 724 }, { d: '20.', total: 762 }, { d: '25.', total: 798 },
+                        { d: '01.', total: 612 }, { d: '03.', total: 615 }, { d: '05.', total: 624 },
+                        { d: '07.', total: 626 }, { d: '09.', total: 658 }, { d: '11.', total: 663 },
+                        { d: '13.', total: 668 }, { d: '15.', total: 705 }, { d: '17.', total: 712 },
+                        { d: '19.', total: 714 }, { d: '21.', total: 738 }, { d: '23.', total: 742 },
+                        { d: '25.', total: 776 }, { d: '27.', total: 782 }, { d: '29.', total: 815 },
                         { d: '30.', total: 832 },
                       ]}>
                         <defs>
