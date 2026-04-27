@@ -1518,7 +1518,7 @@ const MeinGeschaeft = () => {
                 Live-Vorschau
               </p>
               <div className="flex justify-center">
-                <div className="scale-110 origin-top">
+                <div className="scale-[1.3] origin-top">
                   <PhoneFrame>
                     <MerchantPreviewLive 
                       data={{
