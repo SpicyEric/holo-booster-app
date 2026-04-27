@@ -8,6 +8,7 @@ import {
   useTransform,
 } from "framer-motion";
 import { cn } from "@/lib/utils";
+import referralAnimation from "@/assets/referral-animation.mp4";
 
 type Slide = { emoji: string; title: string; text: string };
 type Tab = { id: string; label: string; emoji: string; slides: Slide[] };
