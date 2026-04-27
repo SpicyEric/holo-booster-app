@@ -1207,31 +1207,10 @@ const MeinGeschaeft = () => {
                 {/* Ende 2-spaltiges Profil-Grid */}
               </TabsContent>
 
-                {/* Stempel Tab */}
-              <TabsContent value="stempel" className="space-y-6">
-                {/* Schnellzugriff: Zu deinen Prämien */}
-                <Card className="rounded-2xl shadow-sm border-0 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent">
-                  <CardContent className="p-6 flex flex-col items-center text-center gap-3">
-                    <div className="w-12 h-12 rounded-2xl bg-primary/15 flex items-center justify-center">
-                      <Gift className="h-6 w-6 text-primary" />
-                    </div>
-                    <div>
-                      <p className="font-semibold text-foreground">Verwalte deine Prämien</p>
-                      <p className="text-sm text-muted-foreground">Lege fest, wofür Kunden ihre Punkte einlösen können</p>
-                    </div>
-                    <Button
-                      onClick={() => navigate('/kunde/marketing?tab=praemien')}
-                      className="rounded-xl gap-2"
-                      size="lg"
-                    >
-                      <Gift className="h-4 w-4" />
-                      Zu deinen Prämien
-                      <ArrowRight className="h-4 w-4" />
-                    </Button>
-                  </CardContent>
-                </Card>
-
-                {/* Automatisches Stempelsystem */}
+                {/* Stempel Tab - 2-spaltiges Layout wie Profil */}
+              <TabsContent value="stempel" className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
+                {/* LINKS: Automatisches Stempelsystem */}
                 <Card className="rounded-2xl shadow-sm border-0 bg-muted/40">
                   <CardHeader className="pb-4">
                     <div className="flex items-center justify-between">
@@ -1255,27 +1234,7 @@ const MeinGeschaeft = () => {
                           Wie viel gibt ein Kunde bei dir im Durchschnitt pro Besuch aus?
                         </p>
 
-                        {/* Quick select buttons */}
-                        <div className="flex flex-wrap gap-2 mb-4">
-                          {SPEND_PRESETS.map((val) => (
-                            <button
-                              key={val}
-                              type="button"
-                              onClick={() => {
-                                setAvgRevenue(val);
-                                setStampMode('revenue');
-                              }}
-                              className={cn(
-                                "px-4 py-2 rounded-full border-2 text-sm font-medium transition-all",
-                                avgRevenue === val && stampMode === 'revenue'
-                                  ? 'border-primary bg-primary/10 text-primary'
-                                  : 'border-border bg-card text-muted-foreground hover:border-primary/40'
-                              )}
-                            >
-                              ca. {val} €
-                            </button>
-                          ))}
-                        </div>
+
 
                         {/* Slider */}
                         <div className="space-y-3">
@@ -1472,6 +1431,8 @@ const MeinGeschaeft = () => {
                   )}
                 </Card>
 
+                {/* RECHTE SPALTE: Stempel-IDs + Prämien */}
+                <div className="flex flex-col gap-4">
                 {/* Stempel-IDs */}
                 <Card className="rounded-2xl shadow-sm border-0 bg-gray-50/80">
                   <CardHeader className="pb-4">
@@ -1510,6 +1471,32 @@ const MeinGeschaeft = () => {
                     </div>
                   </CardContent>
                 </Card>
+
+                {/* Prämien-Schnellzugriff */}
+                <Card className="rounded-2xl shadow-sm border-0 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent">
+                  <CardContent className="p-6 flex flex-col items-center text-center gap-3">
+                    <div className="w-12 h-12 rounded-2xl bg-primary/15 flex items-center justify-center">
+                      <Gift className="h-6 w-6 text-primary" />
+                    </div>
+                    <div>
+                      <p className="font-semibold text-foreground">Verwalte deine Prämien</p>
+                      <p className="text-sm text-muted-foreground">Lege fest, wofür Kunden ihre Punkte einlösen können</p>
+                    </div>
+                    <Button
+                      onClick={() => navigate('/kunde/marketing?tab=praemien')}
+                      className="rounded-xl gap-2"
+                      size="lg"
+                    >
+                      <Gift className="h-4 w-4" />
+                      Zu deinen Prämien
+                      <ArrowRight className="h-4 w-4" />
+                    </Button>
+                  </CardContent>
+                </Card>
+                </div>
+                {/* Ende rechte Spalte */}
+                </div>
+                {/* Ende 2-spaltiges Stempel-Grid */}
               </TabsContent>
             </Tabs>
           </div>
