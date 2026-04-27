@@ -503,13 +503,13 @@ const Landing = () => {
             className="bg-gradient-to-r from-primary to-blue-500 rounded-2xl px-8 py-8 relative text-white flex flex-col sm:flex-row items-center gap-6 min-h-[140px]"
             style={{ overflow: 'visible' }}
           >
-            {/* Foto links – ragt oben aus dem Banner heraus, unten bündig */}
-            <div className="relative shrink-0 w-32 sm:w-36 self-stretch">
+            {/* Foto links – unten bündig mit Banner-Kante, ragt oben heraus */}
+            <div className="relative shrink-0 w-36 sm:w-44 self-stretch">
               <img
                 src={contactPerson}
                 alt="Eloyo Geschäftsinhaber"
-                className="absolute bottom-0 left-0 w-32 sm:w-36 h-auto object-contain object-bottom pointer-events-none select-none"
-                style={{ maxHeight: 'none' }}
+                className="absolute left-0 w-36 sm:w-44 h-auto object-contain pointer-events-none select-none"
+                style={{ bottom: 0, maxHeight: 'none' }}
               />
             </div>
 
