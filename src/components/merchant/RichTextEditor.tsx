@@ -54,7 +54,7 @@ const RichTextEditor = ({ value, onChange, placeholder, rows = 3 }: RichTextEdit
 
   return (
     <div className="space-y-0">
-      <div className="flex items-center gap-1 p-1.5 bg-gray-100 rounded-t-xl border border-b-0 border-gray-200">
+      <div className="flex items-center gap-1 p-1.5 bg-slate-100 rounded-t-xl border border-b-0 border-slate-300">
         <Popover open={showEmoji} onOpenChange={setShowEmoji}>
           <PopoverTrigger asChild>
             <Button
@@ -104,7 +104,7 @@ const RichTextEditor = ({ value, onChange, placeholder, rows = 3 }: RichTextEdit
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         rows={rows}
-        className="rounded-t-none rounded-b-xl border-t-0 resize-none"
+        className="rounded-t-none rounded-b-xl border-t-0 resize-none bg-slate-50 border-slate-300 focus-visible:border-primary focus-visible:ring-primary/30 placeholder:text-slate-400"
       />
     </div>
   );
