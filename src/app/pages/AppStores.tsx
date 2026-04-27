@@ -292,9 +292,9 @@ export default function AppStores() {
                           <div className="w-full h-full bg-gradient-to-br from-purple-500 to-blue-500" />
                         )}
                       </div>
-                      <div className="absolute top-3 left-3 z-20 w-12 h-12 overflow-hidden border-0 ring-0 outline-none" style={{ clipPath: 'circle(50%)' }}>
+                      <div className="absolute top-3 left-3 z-20 w-12 h-12 overflow-hidden border-0 ring-0 outline-none" style={{ clipPath: 'circle(48%)' }}>
                         {store.logo_url ? (
-                          <img src={store.logo_url} alt={`${store.name} Logo`} className="w-full h-full object-cover scale-125" />
+                          <img src={store.logo_url} alt={`${store.name} Logo`} className="w-full h-full object-cover scale-150" />
                         ) : (
                           <div className="w-full h-full bg-primary flex items-center justify-center">
                             <span className="text-lg font-bold text-white">{store.name?.charAt(0)?.toUpperCase() || '?'}</span>
