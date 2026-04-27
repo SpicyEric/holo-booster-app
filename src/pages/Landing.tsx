@@ -15,6 +15,7 @@ import businessNetwork from '@/assets/business-network-v2.png';
 import contactPerson from '@/assets/contact-person.png';
 import contactCtaButton from '@/assets/contact-cta-button.png';
 import { useEffect, useState } from 'react';
+import FeatureExplorer from '@/components/landing/FeatureExplorer';
 
 /* ─── Apple-style cubic-bezier ─── */
 const appleEase = [0.16, 1, 0.3, 1] as const;
@@ -207,6 +208,9 @@ const Landing = () => {
           </motion.div>
         </motion.div>
       </section>
+
+      {/* ═══════ FEATURE EXPLORER (Tabs + Cards) ═══════ */}
+      <FeatureExplorer />
 
       {/* ═══════ FLAGSHIP FEATURE: Push ═══════ */}
       <section className="relative z-10 bg-[#f4f3fb] py-24 px-6">
