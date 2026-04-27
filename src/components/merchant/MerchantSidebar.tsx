@@ -114,7 +114,7 @@ function SidebarNav({ collapsed, onNavigate, companyName, subStatus }: { collaps
         {NAV_GROUPS.map((group) => (
           <div key={group.label}>
             {!collapsed && (
-              <p className="text-[10px] font-bold tracking-[0.12em] text-white/40 uppercase mb-2 px-3">
+              <p className="text-[10px] font-bold tracking-[0.12em] text-slate-400 uppercase mb-2 px-3">
                 {group.label}
               </p>
             )}
@@ -128,26 +128,26 @@ function SidebarNav({ collapsed, onNavigate, companyName, subStatus }: { collaps
                       onClick={() => handleNav(item.path)}
                       className={cn(
                         "w-full flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200 relative",
-                        "hover:bg-white/10 active:scale-[0.97]",
+                        "hover:bg-primary/5 active:scale-[0.97]",
                         active
-                          ? "bg-white/15 text-white shadow-sm"
-                          : "text-white/60 hover:text-white",
+                          ? "bg-gradient-to-r from-primary/10 to-secondary/5 text-primary shadow-sm"
+                          : "text-slate-600 hover:text-slate-900",
                         collapsed && "justify-center px-0"
                       )}
                       title={collapsed ? item.label : undefined}
                     >
                       {active && (
-                        <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 bg-white rounded-r-full" />
+                        <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 bg-primary rounded-r-full" />
                       )}
-                      <item.icon className={cn("h-[18px] w-[18px] shrink-0 transition-colors", active ? "text-white" : "text-white/50")} />
+                      <item.icon className={cn("h-[18px] w-[18px] shrink-0 transition-colors", active ? "text-primary" : "text-slate-400")} />
                       {!collapsed && <span className="flex-1 text-left">{item.label}</span>}
                       {!collapsed && item.subItems && (
-                        <ChevronDown className={cn("h-3.5 w-3.5 text-white/40 transition-transform", showSubItems && "rotate-180")} />
+                        <ChevronDown className={cn("h-3.5 w-3.5 text-slate-400 transition-transform", showSubItems && "rotate-180")} />
                       )}
                     </button>
 
                     {showSubItems && (
-                      <div className="mt-1 ml-3 pl-3 border-l border-white/10 space-y-0.5 animate-accordion-down">
+                      <div className="mt-1 ml-3 pl-3 border-l border-primary/15 space-y-0.5 animate-accordion-down">
                         {item.subItems!.map((sub) => {
                           const subActive = currentTab === sub.tab || (!currentTab && sub.tab === item.subItems![0].tab);
                           return (
@@ -157,11 +157,11 @@ function SidebarNav({ collapsed, onNavigate, companyName, subStatus }: { collaps
                               className={cn(
                                 "w-full flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-[13px] font-medium transition-all duration-150 active:scale-[0.97]",
                                 subActive
-                                  ? "bg-white/10 text-white"
-                                  : "text-white/50 hover:text-white hover:bg-white/5"
+                                  ? "bg-primary/10 text-primary"
+                                  : "text-slate-500 hover:text-slate-800 hover:bg-slate-100/50"
                               )}
                             >
-                              <sub.icon className={cn("h-3.5 w-3.5 shrink-0", subActive ? "text-white" : "text-white/40")} />
+                              <sub.icon className={cn("h-3.5 w-3.5 shrink-0", subActive ? "text-primary" : "text-slate-400")} />
                               <span>{sub.label}</span>
                             </button>
                           );
@@ -177,16 +177,16 @@ function SidebarNav({ collapsed, onNavigate, companyName, subStatus }: { collaps
       </nav>
 
       {/* Profile module at bottom */}
-      <div className="border-t border-white/10 p-3 space-y-2">
+      <div className="border-t border-white/30 p-3 space-y-2">
         {!collapsed && companyName && (
           <div className="px-3 py-2">
             <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-lg bg-white/15 flex items-center justify-center shrink-0">
-                <Building2 className="h-4 w-4 text-white/80" />
+              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center shrink-0">
+                <Building2 className="h-4 w-4 text-primary" />
               </div>
               <div className="min-w-0">
-                <p className="text-sm font-medium text-white/90 truncate">{companyName}</p>
-                <p className="text-[11px] text-white/40">
+                <p className="text-sm font-medium text-slate-800 truncate">{companyName}</p>
+                <p className="text-[11px] text-slate-400">
                   {subStatus === 'active' ? '● Abo aktiv' : subStatus === 'paused' ? '● Pausiert' : '● Status unbekannt'}
                 </p>
               </div>
@@ -196,7 +196,7 @@ function SidebarNav({ collapsed, onNavigate, companyName, subStatus }: { collaps
         <button
           onClick={handleLogout}
           className={cn(
-            "w-full flex items-center gap-3 rounded-xl px-3 py-2 text-[13px] font-medium text-white/40 hover:text-red-300 hover:bg-white/10 transition-all duration-200 active:scale-[0.97]",
+            "w-full flex items-center gap-3 rounded-xl px-3 py-2 text-[13px] font-medium text-slate-400 hover:text-red-500 hover:bg-red-50/50 transition-all duration-200 active:scale-[0.97]",
             collapsed && "justify-center px-0"
           )}
           title={collapsed ? "Logout" : undefined}
