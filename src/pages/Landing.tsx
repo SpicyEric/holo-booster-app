@@ -226,7 +226,7 @@ const Landing = () => {
             </div>
             <RotatingHeadline />
             <p className="text-xl text-[#4a4455] leading-relaxed mb-10 max-w-xl">
-              Verwandle anonyme Laufkundschaft in loyale Fans. Mit unserem NFC-Stempelsystem kommunizierst du so einfach wie noch nie – direkt per Push-Nachricht.
+              Die erste Kundenkarte, die dir Neukunden bringt und sich selbst verbreitet — ohne dass du etwas tust.
             </p>
             <div className="flex flex-col sm:flex-row gap-4">
               <motion.button
