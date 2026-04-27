@@ -454,25 +454,8 @@ const Landing = () => {
       </section>
 
       {/* ═══════ NETZWERK ═══════ */}
+      {/* Kein bg-Wert, damit der globale Particles-Layer hier durchscheint */}
       <section className="relative z-10 py-24 px-6 overflow-hidden">
-        {/* Lokale Partikel im Hintergrund dieser Sektion (absolut, nicht fixed) */}
-        <div
-          className="absolute inset-0 pointer-events-none [&_.particles-container]:!absolute [&_.particles-container]:!inset-0"
-          aria-hidden="true"
-        >
-          <Particles
-            particleColors={['#8B5CF6', '#3B82F6', '#8B5CF6']}
-            particleCount={100}
-            particleSpread={8}
-            speed={0.05}
-            particleBaseSize={100}
-            sizeRandomness={1.5}
-            moveParticlesOnHover={true}
-            alphaParticles={true}
-            disableRotation={false}
-            cameraDistance={20}
-          />
-        </div>
         <motion.div
           variants={staggerContainer}
           initial="hidden"
