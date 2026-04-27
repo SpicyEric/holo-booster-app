@@ -266,26 +266,26 @@ export default function MerchantSidebar() {
   return (
     <aside
       className={cn(
-        "sticky top-0 h-screen flex flex-col border-r border-white/5 bg-[hsl(262,50%,22%)] transition-all duration-300 z-20 shrink-0",
+        "sticky top-0 h-screen flex flex-col border-r border-white/30 bg-gradient-to-b from-white/90 via-[hsl(262,60%,97%)]/90 to-[hsl(262,50%,94%)]/90 backdrop-blur-xl transition-all duration-300 z-20 shrink-0",
         collapsed ? "w-[68px]" : "w-[260px]"
       )}
     >
       <div className={cn(
-        "flex items-center h-16 border-b border-white/10 px-4",
+        "flex items-center h-16 border-b border-white/30 px-4",
         collapsed ? "justify-center" : "justify-between"
       )}>
         {!collapsed && (
           <img
             src={eloyoLogo}
             alt="Eloyo"
-            className="h-7 w-auto cursor-pointer brightness-0 invert"
+            className="h-7 w-auto cursor-pointer"
             onClick={() => navigate("/kunde")}
           />
         )}
         <Button
           variant="ghost"
           size="icon"
-          className="h-8 w-8 rounded-lg text-white/50 hover:text-white hover:bg-white/10"
+          className="h-8 w-8 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100/50"
           onClick={() => setCollapsed(!collapsed)}
         >
           <ChevronLeft className={cn("h-4 w-4 transition-transform duration-200", collapsed && "rotate-180")} />
