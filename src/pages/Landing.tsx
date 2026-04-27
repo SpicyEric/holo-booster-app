@@ -326,7 +326,9 @@ const Landing = () => {
       </section>
 
       {/* ═══════ FEATURE EXPLORER (Tabs + Cards) ═══════ */}
-      <FeatureExplorer />
+      <section id="features">
+        <FeatureExplorer />
+      </section>
 
       {/* ═══════ FLAGSHIP FEATURE: Push ═══════ */}
       <section className="relative z-10 bg-[#f4f3fb] py-24 px-6">
