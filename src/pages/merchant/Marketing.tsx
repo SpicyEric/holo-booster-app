@@ -411,7 +411,21 @@ const Marketing = () => {
     if (!customerId) return;
     setSavingAutomations(true);
     try {
-      const { error } = await supabase.from('customers').update({ birthday_enabled: birthdayEnabled, birthday_message: birthdayMessage, birthday_bonus_points: birthdayBonusPoints, birthday_gift_type: birthdayGiftType, birthday_offer_title: birthdayOfferTitle || null, birthday_offer_description: birthdayOfferDescription || null } as any).eq('id', customerId);
+      const { error } = await supabase.from('customers').update({
+        birthday_enabled: birthdayEnabled,
+        birthday_message: birthdayMessage,
+        birthday_bonus_points: birthdayBonusPoints,
+        birthday_gift_type: birthdayGiftType,
+        birthday_offer_title: birthdayOfferTitle || null,
+        birthday_offer_description: birthdayOfferDescription || null,
+        winback_enabled: winbackEnabled,
+        winback_message: winbackMessage,
+        winback_inactivity_days: Math.max(7, Math.min(365, winbackInactivityDays || 90)),
+        winback_gift_type: winbackGiftType,
+        winback_bonus_points: winbackGiftType === 'points' ? (winbackBonusPoints || 0) : null,
+        winback_offer_title: winbackGiftType === 'offer' ? (winbackOfferTitle || null) : null,
+        winback_offer_description: winbackGiftType === 'offer' ? (winbackOfferDescription || null) : null,
+      } as any).eq('id', customerId);
       if (error) throw error; toast.success('Gespeichert'); setAutomationsChanged(false);
     } catch { toast.error('Fehler'); } finally { setSavingAutomations(false); }
   };
