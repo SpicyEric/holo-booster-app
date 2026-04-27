@@ -431,6 +431,28 @@ const Landing = () => {
         </div>
       </section>
 
+      {/* ═══════ GOOGLE REVIEWS ═══════ */}
+      <section className="relative z-10 py-20 px-6 bg-white border-t border-b border-[#ece6ff]">
+        <div className="max-w-6xl mx-auto grid md:grid-cols-2 gap-10 lg:gap-16 items-center">
+          {/* Text links */}
+          <div className="text-left order-2 md:order-1">
+            <span className="text-primary font-bold tracking-widest uppercase text-xs font-headline">
+              Google-Bewertungen
+            </span>
+            <h3 className="font-headline text-3xl md:text-4xl font-extrabold mt-3 mb-5 leading-tight tracking-[-0.02em] text-[#1a1b21]">
+              Mehr 5-Sterne Google Reviews
+            </h3>
+            <p className="text-[#4a4455] text-lg leading-relaxed">
+              Zufriedene Stammkunden sind deine besten Botschafter. Eloyo motiviert deine treuesten Fans, eine positive Bewertung bei Google zu hinterlassen und so dein Neukundengeschäft anzukurbeln.
+            </p>
+          </div>
+
+          {/* Live Reviews Card rechts */}
+          <div className="order-1 md:order-2">
+            <GoogleReviewsCard />
+          </div>
+        </div>
+      </section>
       {/* ═══════ FEATURE EXPLORER (Tabs + Cards) ═══════ */}
       <section id="features">
         <FeatureExplorer />
