@@ -392,54 +392,48 @@ const Landing = () => {
       {/* ═══════ REFERRAL SECTION ═══════ */}
       <ReferralSection />
 
-      {/* ═══════ FEATURE EXPLORER (Tabs + Cards) ═══════ */}
-      <section id="features">
-        <FeatureExplorer />
-      </section>
-
       {/* ═══════ PUSH-NACHRICHTEN ═══════ */}
-      <section className="relative z-10 bg-[#f4f3fb] py-24 px-6">
-        <div className="max-w-7xl mx-auto">
-          <motion.div
-            variants={glassReveal}
-            initial="hidden"
-            whileInView="visible"
-            viewport={viewportConfig}
-            className="bg-white rounded-[3rem] overflow-hidden shadow-sm flex flex-col md:flex-row items-center"
-          >
-            {/* Phone links */}
-            <div className="md:w-1/2 bg-[#eeedf5] min-h-[400px] relative flex items-center justify-center p-12 order-1">
-              <div className="w-[260px] sm:w-[280px] h-[540px] sm:h-[580px] bg-slate-900 rounded-[3rem] p-1.5 shadow-2xl border-[3px] border-slate-700">
-                <div className="w-full h-full bg-slate-100 rounded-[2.6rem] overflow-hidden relative">
-                  <img src={pushBg} alt="Eloyo App Push-Benachrichtigung" className="w-full h-full object-cover" />
-                  <div className="absolute top-1/2 -translate-y-1/2 left-3 right-3 space-y-3">
-                    <div className="bg-white/80 backdrop-blur-md p-4 rounded-2xl shadow-lg animate-bounce">
-                      <div className="flex items-center gap-2 mb-1">
-                        <div className="w-5 h-5 rounded-md overflow-hidden flex-shrink-0">
-                          <img src={eloyoLogo} alt="Eloyo" className="w-full h-full object-contain" />
-                        </div>
-                        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Eloyo · Jetzt</span>
+      <section className="relative z-10 py-20 px-6 bg-[#faf8ff]">
+        <div className="max-w-6xl mx-auto grid md:grid-cols-2 gap-10 lg:gap-16 items-center">
+          {/* Phone links */}
+          <div className="flex justify-center md:justify-start order-1">
+            <div className="w-[260px] sm:w-[280px] h-[540px] sm:h-[580px] bg-slate-900 rounded-[3rem] p-1.5 shadow-2xl border-[3px] border-slate-700">
+              <div className="w-full h-full bg-slate-100 rounded-[2.6rem] overflow-hidden relative">
+                <img src={pushBg} alt="Eloyo App Push-Benachrichtigung" className="w-full h-full object-cover" />
+                <div className="absolute top-1/2 -translate-y-1/2 left-3 right-3 space-y-3">
+                  <div className="bg-white/80 backdrop-blur-md p-4 rounded-2xl shadow-lg animate-bounce">
+                    <div className="flex items-center gap-2 mb-1">
+                      <div className="w-5 h-5 rounded-md overflow-hidden flex-shrink-0">
+                        <img src={eloyoLogo} alt="Eloyo" className="w-full h-full object-contain" />
                       </div>
-                      <p className="text-sm font-bold text-slate-900">Backstube König:</p>
-                      <p className="text-xs text-slate-600">Morgen Frühstück für 1 Person – nur 10 €. Komm vorbei! 🥐</p>
+                      <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Eloyo · Jetzt</span>
                     </div>
+                    <p className="text-sm font-bold text-slate-900">Backstube König:</p>
+                    <p className="text-xs text-slate-600">Morgen Frühstück für 1 Person – nur 10 €. Komm vorbei! 🥐</p>
                   </div>
                 </div>
               </div>
             </div>
+          </div>
 
-            {/* Text rechts */}
-            <div className="p-6 sm:p-10 lg:p-20 md:w-1/2 order-2">
-              <span className="text-primary font-bold tracking-widest uppercase text-xs font-headline">Push-Nachrichten</span>
-              <h2 className="font-headline text-2xl sm:text-4xl md:text-5xl font-extrabold mt-4 mb-6 leading-tight tracking-[-0.02em]">
-                Der direkteste Kanal zu deinen Kunden
-              </h2>
-              <p className="text-lg text-[#4a4455] leading-relaxed">
-                E-Mails werden ignoriert, SMS kosten Geld. Push-Nachrichten erscheinen direkt auf dem Sperrbildschirm – selbst wenn niemand die App öffnet. Der Kanal, den bisher nur große Konzerne hatten. Ab jetzt auch du.
-              </p>
-            </div>
-          </motion.div>
+          {/* Text rechts */}
+          <div className="text-left order-2">
+            <span className="text-primary font-bold tracking-widest uppercase text-xs font-headline">
+              Push-Nachrichten
+            </span>
+            <h3 className="font-headline text-3xl md:text-4xl font-extrabold mt-3 mb-5 leading-tight tracking-[-0.02em] text-[#1a1b21]">
+              Der direkteste Kanal zu deinen Kunden
+            </h3>
+            <p className="text-[#4a4455] text-lg leading-relaxed">
+              E-Mails werden ignoriert, SMS kosten Geld. Push-Nachrichten erscheinen direkt auf dem Sperrbildschirm – selbst wenn niemand die App öffnet. Der Kanal, den bisher nur große Konzerne hatten. Ab jetzt auch du.
+            </p>
+          </div>
         </div>
+      </section>
+
+      {/* ═══════ FEATURE EXPLORER (Tabs + Cards) ═══════ */}
+      <section id="features">
+        <FeatureExplorer />
       </section>
 
       {/* ═══════ NETZWERK ═══════ */}
