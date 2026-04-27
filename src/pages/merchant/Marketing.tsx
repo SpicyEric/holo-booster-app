@@ -11,7 +11,7 @@ import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { 
   Loader2, Plus, MessageSquare, Gift, Send, Users, Clock, UserPlus, Zap, Cake, Save, 
   ChevronDown, Rocket, CheckCircle2, Timer, Star, ExternalLink, Copy, Bot, Megaphone,
-  Edit2, Trash2, Upload, Coins, Sparkles
+  Edit2, Trash2, Upload, Coins, Sparkles, Smartphone, ArrowRight
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -57,6 +57,7 @@ const SEGMENT_OPTIONS = [
 
 const Marketing = () => {
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [customerId, setCustomerId] = useState<string | null>(null);
   const [merchantDisplayName, setMerchantDisplayName] = useState('');
