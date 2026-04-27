@@ -952,6 +952,7 @@ const Marketing = () => {
 
           {/* ========== AUTOMATIONEN TAB ========== */}
           <TabsContent value="automations" className="space-y-6 mt-6">
+            <ExplainerCarousel slides={automationenCards} />
             <Card className="rounded-2xl shadow-sm border border-border/50 bg-card">
               <CardHeader className="pb-4">
                 <div className="flex items-center gap-3">
