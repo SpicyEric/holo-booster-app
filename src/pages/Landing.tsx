@@ -256,56 +256,7 @@ const Landing = () => {
       </section>
 
       {/* ═══════ HOW IT WORKS ═══════ */}
-      <section id="how-it-works" className="relative z-10 py-24 px-6 bg-[#faf8ff]">
-        <div className="max-w-7xl mx-auto text-center mb-20">
-          <motion.h2
-            variants={glassReveal}
-            initial="hidden"
-            whileInView="visible"
-            viewport={viewportConfig}
-            className="font-headline text-4xl md:text-5xl font-extrabold mb-4 tracking-[-0.02em]"
-          >
-            So einfach wie Händeschütteln
-          </motion.h2>
-          <motion.p
-            variants={glassReveal}
-            initial="hidden"
-            whileInView="visible"
-            viewport={viewportConfig}
-            className="text-[#4a4455] text-lg"
-          >
-            Drei Schritte zu mehr Umsatz und glücklicheren Kunden.
-          </motion.p>
-        </div>
-        <Timeline
-          data={[
-            {
-              title: '1. Kunde scannt den Stempel',
-              content: (
-                <p className="text-[#4a4455] text-base md:text-lg leading-relaxed max-w-2xl">
-                  Dein Mitarbeiter hält den Eloyo-Stempel ans Handy des Kunden — ein kurzer Tap und die Punkte sind sofort gutgeschrieben.
-                </p>
-              ),
-            },
-            {
-              title: '2. Sammelt Punkte, löst Prämien ein',
-              content: (
-                <p className="text-[#4a4455] text-base md:text-lg leading-relaxed max-w-2xl">
-                  Jeder Besuch wird belohnt. Der Kunde wählt selbst was er will — das schafft echte Motivation und er kommt wieder.
-                </p>
-              ),
-            },
-            {
-              title: '3. Bringt neue Kunden rein',
-              content: (
-                <p className="text-[#4a4455] text-base md:text-lg leading-relaxed max-w-2xl">
-                  Der Kunde teilt seinen persönlichen Einladungslink. Du bekommst Neukunden — ohne einen Euro Werbekosten.
-                </p>
-              ),
-            },
-          ]}
-        />
-      </section>
+      <HowItWorks />
 
       {/* ═══════ FEATURES SECTION HEADER ═══════ */}
       <section className="relative z-10 pt-24 pb-4 px-6 bg-[#faf8ff] text-center">
