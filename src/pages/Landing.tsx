@@ -542,7 +542,7 @@ const Landing = () => {
               </motion.button>
             </div>
 
-            <div className="absolute left-6 -bottom-24 z-20 w-[min(360px,calc(100vw-48px))] rounded-xl border border-white/25 bg-white/95 p-4 text-[#1a1b21] shadow-xl backdrop-blur">
+            <div className="absolute right-6 -bottom-24 z-20 w-[min(320px,calc(100vw-48px))] rounded-xl border border-white/25 bg-white/95 p-4 text-[#1a1b21] shadow-xl backdrop-blur">
               <div className="mb-3 flex items-center justify-between gap-3">
                 <span className="text-sm font-bold">Foto nach unten</span>
                 <span className="rounded-full bg-primary/10 px-2.5 py-1 text-xs font-bold text-primary">{contactImageOffsetY}px</span>
