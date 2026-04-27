@@ -449,6 +449,7 @@ const MeinGeschaeft = () => {
         facebook: formData.facebook,
         twitter: formData.twitter,
         opening_hours: formData.opening_hours,
+        gallery_images: formData.gallery_images,
         updated_at: new Date().toISOString(),
       };
 
