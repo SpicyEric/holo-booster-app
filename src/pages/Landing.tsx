@@ -463,7 +463,10 @@ const Landing = () => {
           className="max-w-7xl mx-auto"
         >
           <div className="grid lg:grid-cols-2 gap-12 items-center">
-            <motion.div variants={glassReveal} className="space-y-6">
+            <motion.div variants={glassReveal} className="order-1">
+              <img src={businessNetwork} alt="Eloyo Geschäftsnetzwerk" className="w-full h-auto" />
+            </motion.div>
+            <motion.div variants={glassReveal} className="space-y-6 order-2">
               <h2 className="font-headline text-4xl md:text-5xl font-extrabold leading-tight tracking-[-0.02em]">
                 Das Eloyo-Netzwerk: <span className="text-primary">Deine neue Werbefläche</span>
               </h2>
@@ -473,27 +476,18 @@ const Landing = () => {
               <div className="space-y-4">
                 {[
                   { title: 'Neukunden gewinnen', desc: 'Kunden, die bei anderen Eloyo-Geschäften einkaufen, sehen auch dein Angebot in der App.' },
-                  { title: 'Neukundenprämien', desc: 'Biete Erstbesucher-Rabatte an und ziehe neue Kunden aktiv in dein Geschäft.' },
+                  { title: 'Neukundenprämien', desc: 'Biete Erstbesucherprämien an und ziehe neue Kunden ins Geschäft.' },
                   { title: 'Lokale Reichweite', desc: 'Je mehr Geschäfte in deiner Umgebung Eloyo nutzen, desto größer wird dein Kundenpotenzial.' },
                 ].map((b, i) => (
                   <motion.div
                     key={i}
                     variants={glassReveal}
-                    className="flex items-start gap-4"
                   >
-                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-blue-500 flex items-center justify-center flex-shrink-0">
-                      <CheckCircle className="h-5 w-5 text-white" />
-                    </div>
-                    <div>
-                      <h3 className="font-bold text-[#1a1b21]">{b.title}</h3>
-                      <p className="text-[#4a4455] text-sm">{b.desc}</p>
-                    </div>
+                    <h3 className="font-bold text-[#1a1b21]">{b.title}</h3>
+                    <p className="text-[#4a4455] text-sm">{b.desc}</p>
                   </motion.div>
                 ))}
               </div>
-            </motion.div>
-            <motion.div variants={glassReveal}>
-              <img src={businessNetwork} alt="Eloyo Geschäftsnetzwerk" className="w-full h-auto" />
             </motion.div>
           </div>
         </motion.div>
