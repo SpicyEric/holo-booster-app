@@ -292,7 +292,7 @@ export default function AppStores() {
                           <div className="w-full h-full bg-gradient-to-br from-purple-500 to-blue-500" />
                         )}
                       </div>
-                      <div className="absolute top-3 left-3 z-20 w-12 h-12 rounded-full overflow-hidden shadow-md">
+                      <div className="absolute top-3 left-3 z-20 w-12 h-12 rounded-full overflow-hidden">
                         {store.logo_url ? (
                           <img src={store.logo_url} alt={`${store.name} Logo`} className="w-full h-full object-cover" />
                         ) : (
