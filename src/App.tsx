@@ -5,7 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { DeepLinkProvider } from "@/app/components/DeepLinkProvider";
 import { PendingInviteDialog } from "@/app/components/PendingInviteDialog";
-import { useConsentDialogScrollLock } from "@/hooks/useConsentDialogScrollLock";
+import CookieConsent from "@/components/CookieConsent";
 import Landing from "./pages/Landing";
 import Backoffice from "./pages/Backoffice";
 import Index from "./pages/Index";
@@ -91,13 +91,12 @@ import AdminPushLogs from "./pages/admin/PushLogs";
 const queryClient = new QueryClient();
 
 const App = () => {
-  useConsentDialogScrollLock();
-
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <Toaster />
         <Sonner />
+        <CookieConsent />
         <BrowserRouter>
           <DeepLinkProvider>
             <PendingInviteDialog />

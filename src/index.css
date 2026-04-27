@@ -200,36 +200,7 @@ All colors MUST be HSL.
   }
 }
 
-/* CCM19 consent modal: lock background scrolling while the dialog is open */
-html.ccm19-modal-open,
-body.ccm19-modal-open {
-  overflow: hidden !important;
-}
-
-body.ccm19-modal-open {
-  position: relative;
-  overscroll-behavior: none !important;
-}
-
-body.ccm19-modal-open dialog.ccm-dialog-open,
-body.ccm19-modal-open dialog.ccm-dialog-open .ccm-dialog-content,
-body.ccm19-modal-open dialog.ccm-dialog-open .ccm-dialog-content-inner {
-  overscroll-behavior: contain;
-  -webkit-overflow-scrolling: touch;
-}
-
-/* Keep CCM19 compact without scaling the whole consent panel.
-   Scaling the full widget creates a shifted mobile hit-area and causes delayed/double scrolling. */
-.ccm-root [class*="ccm-widget"],
-[id*="ccm19"] [class*="ccm-widget"] {
-  transform: none !important;
-}
-
-.ccm-root .ccm-widget-icon,
-[id*="ccm19"] .ccm-widget-icon {
-  transform: scale(0.7) !important;
-  transform-origin: bottom left !important;
-}
+/* (CCM19 styles removed — replaced by in-app CookieConsent modal) */
 
 /* Hide scrollbar utility */
 .scrollbar-hide {
