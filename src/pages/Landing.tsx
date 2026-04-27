@@ -20,6 +20,7 @@ import howItWorksReferal from '@/assets/howitworks/referal.png';
 import { useEffect, useState } from 'react';
 import FeatureExplorer from '@/components/landing/FeatureExplorer';
 import RewardWheel from '@/components/landing/RewardWheel';
+import ReferralSection from '@/components/landing/ReferralSection';
 import SplitText from '@/components/ui/split-text';
 
 /* ─── Rotating animated headline ─── */
@@ -387,6 +388,9 @@ const Landing = () => {
 
       {/* ═══════ REWARD WHEEL ═══════ */}
       <RewardWheel />
+
+      {/* ═══════ REFERRAL SECTION ═══════ */}
+      <ReferralSection />
 
       {/* ═══════ FEATURE EXPLORER (Tabs + Cards) ═══════ */}
       <section id="features">

@@ -8,7 +8,6 @@ import {
   useTransform,
 } from "framer-motion";
 import { cn } from "@/lib/utils";
-import referralAnimation from "@/assets/referral-animation.mp4";
 
 type Slide = { emoji: string; title: string; text: string };
 type Tab = { id: string; label: string; emoji: string; slides: Slide[] };
@@ -99,6 +98,12 @@ const TABS: Tab[] = [
     emoji: "🔥",
     slides: [
       { emoji: "🔥", title: "Was wäre, wenn...", text: "Was wäre, wenn deine zufriedenen Kunden für dich neue Kunden ins Geschäft holen — ohne dass du einen Euro für Werbung ausgibst? Das ist kein Traum. Das ist Eloyo Empfehlungsmarketing." },
+      { emoji: "💡", title: "Der wahre Wert eines Neukunden", text: "Ein neuer Kunde ist nicht nur ein Einkauf. Er ist ein potenzieller Stammkunde, der über Monate oder Jahre bei dir kauft. Jede erfolgreiche Empfehlung kann langfristig Hunderte Euro wert sein." },
+      { emoji: "⚙️", title: "So funktioniert's", text: "Deine Kunden laden Freunde per WhatsApp ein. Der Freund hat 7 Tage Zeit bei dir vorbeizukommen und seinen ersten Stempel zu sammeln. Erst wenn er wirklich einkauft und Punkte bekommt, zählt die Einladung." },
+      { emoji: "🎁", title: "Was bekommt wer?", text: "Der Eingeladene bekommt doppelte Punkte beim ersten Stempel. Der Einladende bekommt Bonuspunkte von dir — die du selbst festlegst." },
+      { emoji: "🧮", title: "Die magische Formel", text: "Empfehle ca. 50% der Punkte einer Standardleistung als Einlader-Bonus. 2 erfolgreiche Einladungen = Gratis-Standardleistung. Das macht den Bonus unwiderstehlich." },
+      { emoji: "🛡️", title: "Du bist geschützt", text: "Nur echte Neukunden können eingeladen werden. Wer schon Punkte hat, kann nicht nochmal eingeladen werden. Kein Missbrauch möglich." },
+      { emoji: "🚀", title: "Der Schneeball-Effekt", text: "Jeder neue Kunde empfiehlt selbst weiter — weil er Bock hat sich etwas Gratis abzuholen. Dein Stammkundenkreis wächst organisch — ganz ohne Werbekosten." },
     ],
   },
   {
@@ -223,110 +228,66 @@ const FeatureExplorer = () => {
               boxShadow: "0 12px 40px rgba(82, 39, 255, 0.15)",
             }}
           >
-            {tabId === "empfehlungen" ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-10 items-center px-8 md:px-12 py-12 md:py-16">
-                {/* Text links */}
-                <div className="flex flex-col text-left">
-                  <div className="mb-4 select-none leading-none" style={{ fontSize: "56px" }} aria-hidden>
+            <button
+              type="button"
+              onClick={() => go(-1)}
+              disabled={index === 0}
+              aria-label="Vorherige Karte"
+              className="absolute left-3 md:left-5 top-1/2 -translate-y-1/2 z-10 w-11 h-11 rounded-full bg-white/90 hover:bg-white shadow-md disabled:opacity-30 disabled:hover:bg-white/90 flex items-center justify-center text-[#5227FF] transition-all backdrop-blur-sm"
+            >
+              <ChevronLeft className="h-5 w-5" />
+            </button>
+            <button
+              type="button"
+              onClick={() => go(1)}
+              disabled={index === total - 1}
+              aria-label="Nächste Karte"
+              className="absolute right-3 md:right-5 top-1/2 -translate-y-1/2 z-10 w-11 h-11 rounded-full bg-white/90 hover:bg-white shadow-md disabled:opacity-30 disabled:hover:bg-white/90 flex items-center justify-center text-[#5227FF] transition-all backdrop-blur-sm"
+            >
+              <ChevronRight className="h-5 w-5" />
+            </button>
+
+            <div
+              className="relative px-14 md:px-20 py-12 md:py-16 overflow-hidden"
+              style={{ minHeight: "320px" }}
+            >
+              <AnimatePresence mode="wait" custom={direction}>
+                <motion.div
+                  key={`${tabId}-${index}`}
+                  custom={direction}
+                  initial={{ x: direction * 80, opacity: 0 }}
+                  animate={{ x: 0, opacity: 1 }}
+                  exit={{ x: direction * -80, opacity: 0 }}
+                  transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+                  className="flex flex-col items-center text-center max-w-2xl mx-auto"
+                >
+                  <div className="mb-5 select-none leading-none" style={{ fontSize: "72px" }} aria-hidden>
                     {slide.emoji}
                   </div>
                   <div className="mb-5">
                     <GradientText>{slide.title}</GradientText>
                   </div>
-                  <p className="text-[#1a1b21]/85 leading-relaxed text-base md:text-[17px] font-medium">
-                    {slide.text}
-                  </p>
-                </div>
+                  <AnimatedWords text={slide.text} keyId={`${tabId}-${index}`} />
+                </motion.div>
+              </AnimatePresence>
+            </div>
 
-                {/* Video rechts */}
-                <div className="flex justify-center md:justify-end">
-                  <div
-                    className="relative overflow-hidden rounded-2xl bg-white"
-                    style={{
-                      width: "100%",
-                      maxWidth: "320px",
-                      aspectRatio: "1 / 1",
-                      boxShadow: "0 12px 32px rgba(82, 39, 255, 0.18)",
-                    }}
-                  >
-                    <video
-                      src={referralAnimation}
-                      autoPlay
-                      loop
-                      muted
-                      playsInline
-                      preload="auto"
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <>
+            <div className="flex items-center justify-center gap-2 pb-6">
+              {tab.slides.map((_, i) => (
                 <button
+                  key={i}
                   type="button"
-                  onClick={() => go(-1)}
-                  disabled={index === 0}
-                  aria-label="Vorherige Karte"
-                  className="absolute left-3 md:left-5 top-1/2 -translate-y-1/2 z-10 w-11 h-11 rounded-full bg-white/90 hover:bg-white shadow-md disabled:opacity-30 disabled:hover:bg-white/90 flex items-center justify-center text-[#5227FF] transition-all backdrop-blur-sm"
-                >
-                  <ChevronLeft className="h-5 w-5" />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => go(1)}
-                  disabled={index === total - 1}
-                  aria-label="Nächste Karte"
-                  className="absolute right-3 md:right-5 top-1/2 -translate-y-1/2 z-10 w-11 h-11 rounded-full bg-white/90 hover:bg-white shadow-md disabled:opacity-30 disabled:hover:bg-white/90 flex items-center justify-center text-[#5227FF] transition-all backdrop-blur-sm"
-                >
-                  <ChevronRight className="h-5 w-5" />
-                </button>
-
-                <div
-                  className="relative px-14 md:px-20 py-12 md:py-16 overflow-hidden"
-                  style={{ minHeight: "320px" }}
-                >
-                  <AnimatePresence mode="wait" custom={direction}>
-                    <motion.div
-                      key={`${tabId}-${index}`}
-                      custom={direction}
-                      initial={{ x: direction * 80, opacity: 0 }}
-                      animate={{ x: 0, opacity: 1 }}
-                      exit={{ x: direction * -80, opacity: 0 }}
-                      transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
-                      className="flex flex-col items-center text-center max-w-2xl mx-auto"
-                    >
-                      <div className="mb-5 select-none leading-none" style={{ fontSize: "72px" }} aria-hidden>
-                        {slide.emoji}
-                      </div>
-                      <div className="mb-5">
-                        <GradientText>{slide.title}</GradientText>
-                      </div>
-                      <AnimatedWords text={slide.text} keyId={`${tabId}-${index}`} />
-                    </motion.div>
-                  </AnimatePresence>
-                </div>
-
-                {total > 1 && (
-                  <div className="flex items-center justify-center gap-2 pb-6">
-                    {tab.slides.map((_, i) => (
-                      <button
-                        key={i}
-                        type="button"
-                        onClick={() => goTo(i)}
-                        aria-label={`Karte ${i + 1}`}
-                        className={cn(
-                          "rounded-full transition-all",
-                          i === index
-                            ? "w-8 h-2 bg-[#5227FF]"
-                            : "w-2 h-2 bg-[#5227FF]/25 hover:bg-[#5227FF]/50"
-                        )}
-                      />
-                    ))}
-                  </div>
-                )}
-              </>
-            )}
+                  onClick={() => goTo(i)}
+                  aria-label={`Karte ${i + 1}`}
+                  className={cn(
+                    "rounded-full transition-all",
+                    i === index
+                      ? "w-8 h-2 bg-[#5227FF]"
+                      : "w-2 h-2 bg-[#5227FF]/25 hover:bg-[#5227FF]/50"
+                  )}
+                />
+              ))}
+            </div>
           </motion.div>
         </AnimatePresence>
       </div>
