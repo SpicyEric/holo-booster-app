@@ -18,18 +18,25 @@ const ReferralSection = () => {
           </p>
         </div>
 
-        {/* Video rechts — ohne Rahmen, transparent wirkend */}
+        {/* Video rechts — Kanten weich in den weißen Hintergrund verblendet */}
         <div className="flex justify-center md:justify-end order-1 md:order-2">
-          <video
-            src={referralAnimation}
-            autoPlay
-            loop
-            muted
-            playsInline
-            preload="auto"
-            className="w-full max-w-[380px] h-auto block"
-            style={{ background: "transparent" }}
-          />
+          <div className="relative w-full max-w-[380px]">
+            <video
+              src={referralAnimation}
+              autoPlay
+              loop
+              muted
+              playsInline
+              preload="auto"
+              className="w-full h-auto block"
+              style={{ background: "transparent" }}
+            />
+            {/* Fade-Overlays über die Video-Kanten */}
+            <div className="pointer-events-none absolute inset-y-0 left-0 w-12 bg-gradient-to-r from-white to-transparent" />
+            <div className="pointer-events-none absolute inset-y-0 right-0 w-12 bg-gradient-to-l from-white to-transparent" />
+            <div className="pointer-events-none absolute inset-x-0 top-0 h-12 bg-gradient-to-b from-white to-transparent" />
+            <div className="pointer-events-none absolute inset-x-0 bottom-0 h-12 bg-gradient-to-t from-white to-transparent" />
+          </div>
         </div>
       </div>
     </section>
