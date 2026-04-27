@@ -113,6 +113,14 @@ const Marketing = () => {
   const [birthdayGiftType, setBirthdayGiftType] = useState<'points' | 'offer'>('points');
   const [birthdayOfferTitle, setBirthdayOfferTitle] = useState('');
   const [birthdayOfferDescription, setBirthdayOfferDescription] = useState('');
+  // --- Winback (Rückholnachrichten) state ---
+  const [winbackEnabled, setWinbackEnabled] = useState(false);
+  const [winbackMessage, setWinbackMessage] = useState('Wir vermissen dich! Schau doch bald wieder bei uns vorbei – wir freuen uns auf dich.');
+  const [winbackInactivityDays, setWinbackInactivityDays] = useState(90);
+  const [winbackGiftType, setWinbackGiftType] = useState<'none' | 'points' | 'offer'>('none');
+  const [winbackBonusPoints, setWinbackBonusPoints] = useState(5);
+  const [winbackOfferTitle, setWinbackOfferTitle] = useState('');
+  const [winbackOfferDescription, setWinbackOfferDescription] = useState('');
   const [savingAutomations, setSavingAutomations] = useState(false);
   const [automationsChanged, setAutomationsChanged] = useState(false);
   const automationsLoadedRef = useRef(false);
