@@ -21,6 +21,7 @@ import { useEffect, useState } from 'react';
 import FeatureExplorer from '@/components/landing/FeatureExplorer';
 import RewardWheel from '@/components/landing/RewardWheel';
 import ReferralSection from '@/components/landing/ReferralSection';
+import GoogleReviewsCard from '@/components/landing/GoogleReviewsCard';
 import SplitText from '@/components/ui/split-text';
 
 /* ─── Rotating animated headline ─── */
@@ -431,6 +432,28 @@ const Landing = () => {
         </div>
       </section>
 
+      {/* ═══════ GOOGLE REVIEWS ═══════ */}
+      <section className="relative z-10 py-20 px-6 bg-white border-t border-b border-[#ece6ff]">
+        <div className="max-w-6xl mx-auto grid md:grid-cols-2 gap-10 lg:gap-16 items-center">
+          {/* Text links */}
+          <div className="text-left order-2 md:order-1">
+            <span className="text-primary font-bold tracking-widest uppercase text-xs font-headline">
+              Google-Bewertungen
+            </span>
+            <h3 className="font-headline text-3xl md:text-4xl font-extrabold mt-3 mb-5 leading-tight tracking-[-0.02em] text-[#1a1b21]">
+              Mehr 5-Sterne Google Reviews
+            </h3>
+            <p className="text-[#4a4455] text-lg leading-relaxed">
+              Zufriedene Stammkunden sind deine besten Botschafter. Eloyo motiviert deine treuesten Fans, eine positive Bewertung bei Google zu hinterlassen und so dein Neukundengeschäft anzukurbeln.
+            </p>
+          </div>
+
+          {/* Live Reviews Card rechts */}
+          <div className="order-1 md:order-2">
+            <GoogleReviewsCard />
+          </div>
+        </div>
+      </section>
       {/* ═══════ FEATURE EXPLORER (Tabs + Cards) ═══════ */}
       <section id="features">
         <FeatureExplorer />
@@ -481,58 +504,6 @@ const Landing = () => {
           </div>
         </motion.div>
       </section>
-      {/* ═══════ GOOGLE REVIEWS ═══════ */}
-      <section className="relative z-10 py-24 px-6">
-        <motion.div
-          variants={staggerContainer}
-          initial="hidden"
-          whileInView="visible"
-          viewport={viewportConfig}
-          className="max-w-7xl mx-auto flex flex-col lg:flex-row items-center gap-16"
-        >
-          <motion.div variants={glassReveal} className="lg:w-1/2">
-            <div className="bg-primary/10 w-16 h-16 rounded-2xl flex items-center justify-center mb-6">
-              <span className="text-3xl">⭐</span>
-            </div>
-            <h2 className="font-headline text-4xl font-extrabold mb-6 tracking-[-0.02em]">Mehr 5-Sterne Google Reviews</h2>
-            <p className="text-lg text-[#4a4455] leading-relaxed mb-8">
-              Zufriedene Stammkunden sind deine besten Botschafter. Eloyo motiviert deine treuesten Fans, eine positive Bewertung bei Google zu hinterlassen und so dein Neukundengeschäft anzukurbeln.
-            </p>
-          </motion.div>
-
-          <motion.div variants={glassReveal} className="lg:w-1/2 relative">
-            <div className="absolute inset-0 bg-primary/10 blur-[100px] rounded-full" />
-            <motion.div
-              {...cardHover}
-              className="relative bg-white rounded-3xl p-8 shadow-2xl space-y-6 cursor-default transition-shadow hover:shadow-[0_20px_60px_rgba(124,58,237,0.15)]"
-            >
-              <div className="flex justify-between items-end pb-4" style={{ borderBottom: '1px solid rgba(204,195,216,0.2)' }}>
-                <div>
-                  <p className="text-sm font-bold text-[#4a4455]">Google Sichtbarkeit</p>
-                  <p className="text-3xl font-black font-headline">+240%</p>
-                </div>
-                <div className="flex gap-1 items-end h-16">
-                  {[4, 8, 6, 10, 16].map((h, i) => (
-                    <div key={i} className={`w-4 rounded-t ${i === 4 ? 'bg-primary' : 'bg-primary/20'}`} style={{ height: `${h * 4}px` }} />
-                  ))}
-                </div>
-              </div>
-              <div className="space-y-4">
-                {['Vor 2 Min.', 'Vor 1 Std.'].map((time, i) => (
-                  <div key={i} className="flex items-center justify-between p-3 bg-[#eeedf5] rounded-xl">
-                    <div className="flex items-center gap-3">
-                      <Star className="h-5 w-5 text-yellow-500" fill="currentColor" />
-                      <span className="text-sm font-bold">Neue 5-Sterne Bewertung</span>
-                    </div>
-                    <span className="text-xs text-[#4a4455]">{time}</span>
-                  </div>
-                ))}
-              </div>
-            </motion.div>
-          </motion.div>
-        </motion.div>
-      </section>
-
       {/* ═══════ GAMIFICATION ═══════ */}
       <section className="relative z-10 py-24 px-6 bg-[#f4f3fb]">
         <motion.div
