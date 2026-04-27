@@ -100,6 +100,7 @@ const App = () => {
         <Sonner />
         <CookieConsent />
         <BrowserRouter>
+          <ScrollToTop />
           <DeepLinkProvider>
             <PendingInviteDialog />
             <Routes>
