@@ -8,7 +8,13 @@ type Review = {
   age: number; // age in seconds since insertion
 };
 
-const STAR_POOL: (4 | 5)[] = [5, 5, 5, 5, 5, 5, 5, 5, 4, 5]; // ~80% 5-star
+// Sterne-Logik: meist abwechselnd zwischen 5 und 4, gelegentlich (~25 %) gleicher Stern wie zuletzt
+const pickStars = (last: 4 | 5 | null): 4 | 5 => {
+  if (last === null) return 5;
+  const repeat = Math.random() < 0.25;
+  if (repeat) return last;
+  return last === 5 ? 4 : 5;
+};
 // Unregelmäßige Pausen-Sequenz (in ms) → wirkt wie echte Echtzeit-Bewertungen.
 // Mischung aus schnellen Bursts und längeren Wartepausen.
 const DELAY_PATTERN = [
