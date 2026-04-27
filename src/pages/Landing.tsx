@@ -16,6 +16,53 @@ import contactPerson from '@/assets/contact-person.png';
 import contactCtaButton from '@/assets/contact-cta-button.png';
 import { useEffect, useState } from 'react';
 import FeatureExplorer from '@/components/landing/FeatureExplorer';
+import SplitText from '@/components/ui/split-text';
+
+/* ─── Rotating animated headline ─── */
+const ROTATING_HEADLINES = [
+  'Deine Stammkunden bringen dir neue Kunden — automatisch.',
+  'Schreib deinen Kunden direkt aufs Handy.',
+  'Verwandle jeden Besuch in echte Treue.',
+];
+
+const RotatingHeadline = () => {
+  const [index, setIndex] = useState(0);
+  const [visible, setVisible] = useState(true);
+
+  useEffect(() => {
+    const fadeOutTimer = setTimeout(() => setVisible(false), 4000);
+    const advanceTimer = setTimeout(() => {
+      setIndex((prev) => (prev + 1) % ROTATING_HEADLINES.length);
+      setVisible(true);
+    }, 4500);
+    return () => {
+      clearTimeout(fadeOutTimer);
+      clearTimeout(advanceTimer);
+    };
+  }, [index]);
+
+  return (
+    <h1 className="font-headline text-5xl md:text-7xl font-extrabold text-[#1a1b21] leading-[1.1] mb-6 tracking-[-0.02em] min-h-[2.4em]">
+      <motion.span
+        key={index}
+        initial={{ opacity: 1 }}
+        animate={{ opacity: visible ? 1 : 0 }}
+        transition={{ duration: 0.4, ease: 'easeOut' }}
+        className="inline-block"
+      >
+        <SplitText
+          key={`split-${index}`}
+          text={ROTATING_HEADLINES[index]}
+          splitType="words"
+          from={{ opacity: 0, y: 30 }}
+          to={{ opacity: 1, y: 0 }}
+          duration={0.8}
+          delay={80}
+        />
+      </motion.span>
+    </h1>
+  );
+};
 
 /* ─── Apple-style cubic-bezier ─── */
 const appleEase = [0.16, 1, 0.3, 1] as const;
@@ -177,9 +224,7 @@ const Landing = () => {
               <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
               Digitales Stempelsystem 2.0
             </div>
-            <h1 className="font-headline text-5xl md:text-7xl font-extrabold text-[#1a1b21] leading-[1.1] mb-6 tracking-[-0.02em]">
-              Schreib deinen Stammkunden direkt aufs Handy
-            </h1>
+            <RotatingHeadline />
             <p className="text-xl text-[#4a4455] leading-relaxed mb-10 max-w-xl">
               Verwandle anonyme Laufkundschaft in loyale Fans. Mit unserem NFC-Stempelsystem kommunizierst du so einfach wie noch nie – direkt per Push-Nachricht.
             </p>
@@ -206,6 +251,77 @@ const Landing = () => {
           <motion.div variants={glassReveal} className="relative flex justify-center">
             <HeroMockupWithNotifications />
           </motion.div>
+        </motion.div>
+      </section>
+
+      {/* ═══════ HOW IT WORKS ═══════ */}
+      <section id="how-it-works" className="relative z-10 py-24 px-6 bg-[#faf8ff]">
+        <div className="max-w-7xl mx-auto text-center mb-20">
+          <motion.h2
+            variants={glassReveal}
+            initial="hidden"
+            whileInView="visible"
+            viewport={viewportConfig}
+            className="font-headline text-4xl md:text-5xl font-extrabold mb-4 tracking-[-0.02em]"
+          >
+            So einfach wie Händeschütteln
+          </motion.h2>
+          <motion.p
+            variants={glassReveal}
+            initial="hidden"
+            whileInView="visible"
+            viewport={viewportConfig}
+            className="text-[#4a4455] text-lg"
+          >
+            Drei Schritte zu mehr Umsatz und glücklicheren Kunden.
+          </motion.p>
+        </div>
+        <motion.div
+          variants={staggerContainer}
+          initial="hidden"
+          whileInView="visible"
+          viewport={viewportConfig}
+          className="max-w-7xl mx-auto grid md:grid-cols-3 gap-8 lg:gap-12"
+        >
+          {[
+            { step: '1', title: 'Kunde scannt den Stempel', desc: 'Dein Mitarbeiter hält den Eloyo-Stempel ans Handy des Kunden — ein kurzer Tap und die Punkte sind sofort gutgeschrieben.', icon: '📱' },
+            { step: '2', title: 'Sammelt Punkte, löst Prämien ein', desc: 'Jeder Besuch wird belohnt. Der Kunde wählt selbst was er will — das schafft echte Motivation und er kommt wieder.', icon: '⭐' },
+            { step: '3', title: 'Bringt neue Kunden rein', desc: 'Der Kunde teilt seinen persönlichen Einladungslink. Du bekommst Neukunden — ohne einen Euro Werbekosten.', icon: '🚀' },
+          ].map((item, i) => (
+            <motion.div
+              key={i}
+              variants={glassReveal}
+              {...cardHover}
+              className="relative group cursor-default"
+            >
+              <div className="bg-[#e8e7ef] rounded-[2.5rem] p-10 h-full transition-shadow hover:shadow-[0_20px_60px_rgba(124,58,237,0.15)]">
+                <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center shadow-lg mb-8 text-2xl group-hover:bg-gradient-to-br group-hover:from-primary group-hover:to-blue-500 transition-colors">
+                  <span className="group-hover:brightness-200">{item.icon}</span>
+                </div>
+                <h3 className="font-headline text-2xl font-bold mb-4">{item.step}. {item.title}</h3>
+                <p className="text-[#4a4455]">{item.desc}</p>
+              </div>
+              {i < 2 && (
+                <div className="hidden md:block absolute top-1/2 -right-6 -translate-y-1/2 text-[#ccc3d8] text-3xl">→</div>
+              )}
+            </motion.div>
+          ))}
+        </motion.div>
+      </section>
+
+      {/* ═══════ FEATURES SECTION HEADER ═══════ */}
+      <section className="relative z-10 pt-24 pb-4 px-6 bg-[#faf8ff] text-center">
+        <motion.div
+          variants={glassReveal}
+          initial="hidden"
+          whileInView="visible"
+          viewport={viewportConfig}
+          className="max-w-4xl mx-auto"
+        >
+          <span className="text-primary font-bold tracking-widest uppercase text-xs font-headline">Features</span>
+          <h2 className="font-headline text-4xl md:text-5xl font-extrabold mt-3 tracking-[-0.02em]">
+            Alles was du brauchst — in einem System
+          </h2>
         </motion.div>
       </section>
 
@@ -258,63 +374,8 @@ const Landing = () => {
         </div>
       </section>
 
-      {/* ═══════ HOW IT WORKS ═══════ */}
-      <section id="how-it-works" className="relative z-10 py-24 px-6 bg-[#faf8ff]">
-        <div className="max-w-7xl mx-auto text-center mb-20">
-          <motion.h2
-            variants={glassReveal}
-            initial="hidden"
-            whileInView="visible"
-            viewport={viewportConfig}
-            className="font-headline text-4xl md:text-5xl font-extrabold mb-4 tracking-[-0.02em]"
-          >
-            So einfach wie Händeschütteln
-          </motion.h2>
-          <motion.p
-            variants={glassReveal}
-            initial="hidden"
-            whileInView="visible"
-            viewport={viewportConfig}
-            className="text-[#4a4455] text-lg"
-          >
-            Drei Schritte zu mehr Umsatz und glücklicheren Kunden.
-          </motion.p>
-        </div>
-        <motion.div
-          variants={staggerContainer}
-          initial="hidden"
-          whileInView="visible"
-          viewport={viewportConfig}
-          className="max-w-7xl mx-auto grid md:grid-cols-3 gap-8 lg:gap-12"
-        >
-          {[
-            { step: '1', title: 'Kunde scannt Stempel', desc: 'Dein Mitarbeiter hält den Eloyo-Stempel ans Handy des Kunden – ein kurzer Tap und die Punkte sind sofort gutgeschrieben.', icon: '📱' },
-            { step: '2', title: 'sammelt Punkte', desc: 'Jeder Besuch wird belohnt. Der Kunde sieht seinen Punktestand sofort in der Eloyo-App.', icon: '⭐' },
-            { step: '3', title: 'Händler schickt Push', desc: 'Erreiche deine Kunden jederzeit mit persönlichen Angeboten, um sie wieder in den Laden zu holen.', icon: '🚀' },
-          ].map((item, i) => (
-            <motion.div
-              key={i}
-              variants={glassReveal}
-              {...cardHover}
-              className="relative group cursor-default"
-            >
-              <div className="bg-[#e8e7ef] rounded-[2.5rem] p-10 h-full transition-shadow hover:shadow-[0_20px_60px_rgba(124,58,237,0.15)]">
-                <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center shadow-lg mb-8 text-2xl group-hover:bg-gradient-to-br group-hover:from-primary group-hover:to-blue-500 transition-colors">
-                  <span className="group-hover:brightness-200">{item.icon}</span>
-                </div>
-                <h3 className="font-headline text-2xl font-bold mb-4">{item.step}. {item.title}</h3>
-                <p className="text-[#4a4455]">{item.desc}</p>
-              </div>
-              {i < 2 && (
-                <div className="hidden md:block absolute top-1/2 -right-6 -translate-y-1/2 text-[#ccc3d8] text-3xl">→</div>
-              )}
-            </motion.div>
-          ))}
-        </motion.div>
-      </section>
-
       {/* ═══════ NETZWERK ═══════ */}
-      <section className="relative z-10 py-24 px-6 bg-[#f4f3fb]">
+      <section className="relative z-10 py-24 px-6 bg-[#faf8ff]">
         <motion.div
           variants={staggerContainer}
           initial="hidden"
@@ -358,67 +419,6 @@ const Landing = () => {
           </div>
         </motion.div>
       </section>
-
-      {/* ═══════ BENTO GRID FEATURES ═══════ */}
-      <section className="relative z-10 py-24 px-6 bg-[#faf8ff]">
-        <motion.div
-          variants={staggerContainer}
-          initial="hidden"
-          whileInView="visible"
-          viewport={viewportConfig}
-          className="max-w-7xl mx-auto"
-        >
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Die Eloyo-App */}
-            <motion.div
-              variants={glassReveal}
-              {...cardHover}
-              className="bg-white/80 backdrop-blur-2xl rounded-[2rem] p-8 relative overflow-hidden group border border-[#ccc3d8]/30 cursor-default transition-shadow hover:shadow-[0_20px_60px_rgba(124,58,237,0.15)]"
-            >
-              <div className="relative z-10">
-                <span className="text-3xl mb-4 block">📲</span>
-                <h3 className="text-2xl font-bold mb-2 font-headline">Die Eloyo-App</h3>
-                <p className="text-[#4a4455]">Deine Kunden laden die kostenlose Eloyo-App einmal herunter – einmal eingerichtet, sammeln sie automatisch Punkte bei jedem Besuch.</p>
-              </div>
-              <div className="absolute bottom-[-20px] right-[-20px] w-48 h-48 bg-gradient-to-br from-primary to-blue-500 opacity-10 rounded-full blur-3xl group-hover:scale-150 transition-transform" />
-            </motion.div>
-
-            {/* Flexible Belohnungen */}
-            <motion.div
-              variants={glassReveal}
-              {...cardHover}
-              className="bg-white/80 backdrop-blur-2xl rounded-[2rem] p-8 border border-[#ccc3d8]/30 cursor-default transition-shadow hover:shadow-[0_20px_60px_rgba(124,58,237,0.15)]"
-            >
-              <span className="text-3xl mb-4 block">🎁</span>
-              <h3 className="text-2xl font-bold mb-2 font-headline">Flexible Belohnungen</h3>
-              <p className="text-[#4a4455]">Bestimme selbst, was deine Kunden für ihre Treue bekommen – vom kostenlosen Kaffee bis zum exklusiven Rabatt.</p>
-            </motion.div>
-
-            {/* Automationen */}
-            <motion.div
-              variants={glassReveal}
-              {...cardHover}
-              className="bg-white/80 backdrop-blur-2xl rounded-[2rem] p-8 border border-[#ccc3d8]/30 cursor-default transition-shadow hover:shadow-[0_20px_60px_rgba(124,58,237,0.15)]"
-            >
-              <span className="text-3xl mb-4 block">⚙️</span>
-              <h3 className="text-2xl font-bold mb-2 font-headline">Automationen</h3>
-              <p className="text-[#4a4455]">Einmal eingerichtet, erhalten deine Kunden zum Geburtstag automatisch einen persönlichen Gruß inklusive Geburtstagsangebot – ganz ohne Aufwand.</p>
-            </motion.div>
-
-            {/* Neukundenprämien */}
-            <motion.div
-              variants={glassReveal}
-              {...cardHover}
-              className="bg-white/80 backdrop-blur-2xl rounded-[2rem] p-8 border border-[#ccc3d8]/30 cursor-default transition-shadow hover:shadow-[0_20px_60px_rgba(124,58,237,0.15)]"
-            >
-              <span className="text-3xl mb-4 block">🎯</span>
-              <h3 className="text-2xl font-bold mb-2 font-headline">Neukundenprämien</h3>
-              <p className="text-[#4a4455]">Richte exklusive Willkommensangebote ein, die gezielt Kunden ansprechen, die zum ersten Mal in dein Geschäft kommen.</p>
-            </motion.div>
-          </div>
-        </motion.div>
-      </section>
-
       {/* ═══════ GOOGLE REVIEWS ═══════ */}
       <section className="relative z-10 py-24 px-6">
         <motion.div
