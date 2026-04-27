@@ -25,6 +25,7 @@ export const viewportConfig = { once: true, margin: '-80px' as any };
 
 const navItems = [
   { label: 'Home', href: '/' },
+  { label: 'Empfehlungen', href: '/empfehlungen' },
   { label: 'Backoffice', href: '/backoffice' },
   { label: 'Karriere', href: '/karriere' },
   { label: 'Kontakt', href: '/kontakt' },
