@@ -209,9 +209,10 @@ const Empfehlungen = () => {
             variants={glassReveal}
             className="font-headline text-4xl md:text-6xl font-extrabold text-[#1a1b21] leading-[1.1] mb-6 tracking-[-0.02em]"
           >
-            Stell dir vor: Du gehst zum Haarschnitt.
+            <span className="text-primary">Stell dir vor:</span>{' '}
+            Du gehst zum Haarschnitt kostenlos,
             <br />
-            <span className="text-primary">Kostenlos. Nur weil du zwei Freunde mitgebracht hast.</span>
+            <span className="text-primary">nur weil du zwei Freunde mitgebracht hast.</span>
           </motion.h1>
 
           <motion.p
