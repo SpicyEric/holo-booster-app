@@ -177,8 +177,8 @@ const Landing = () => {
   useEffect(() => {
     // Sequence: card 0 on (1.6s) → off (0.4s) → card 1 on → off → card 2 on → off → loop
     const sequence = [0, -1, 1, -1, 2, -1];
-    const onDuration = 1600;
-    const offDuration = 400;
+    const onDuration = 900;
+    const offDuration = 300;
     let i = 0;
     setActiveStep(sequence[0]);
     const tick = () => {
@@ -333,8 +333,8 @@ const Landing = () => {
                 className="relative cursor-default"
               >
                 <div
-                  className={`group relative overflow-hidden bg-[#e8e7ef] rounded-[2.5rem] p-8 h-64 transition-shadow duration-500 ${
-                    isActive ? 'shadow-[0_20px_60px_rgba(124,58,237,0.18)]' : ''
+                  className={`group relative overflow-hidden bg-[#e8e7ef] rounded-[2.5rem] p-8 h-64 transition-shadow duration-300 ${
+                    isActive ? 'shadow-[0_6px_18px_rgba(124,58,237,0.45)]' : ''
                   }`}
                 >
                   {/* Background icon */}
