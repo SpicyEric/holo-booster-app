@@ -14,6 +14,9 @@ import pushBg from '@/assets/push-bg.jpeg';
 import businessNetwork from '@/assets/business-network-v2.png';
 import contactPerson from '@/assets/contact-person.png';
 import contactCtaButton from '@/assets/contact-cta-button.png';
+import howItWorksStamp from '@/assets/howitworks/stamp.png';
+import howItWorksPresent from '@/assets/howitworks/present.png';
+import howItWorksReferal from '@/assets/howitworks/referal.png';
 import { useEffect, useState } from 'react';
 import FeatureExplorer from '@/components/landing/FeatureExplorer';
 import SplitText from '@/components/ui/split-text';
@@ -316,9 +319,9 @@ const Landing = () => {
           className="max-w-7xl mx-auto grid md:grid-cols-3 gap-8 lg:gap-12"
         >
           {[
-            { step: '1', title: 'Kunde scannt den Stempel', desc: 'Dein Mitarbeiter hält den Eloyo-Stempel ans Handy des Kunden — ein kurzer Tap und die Punkte sind sofort gutgeschrieben.', icon: '📱' },
-            { step: '2', title: 'Sammelt Punkte, löst Prämien ein', desc: 'Jeder Besuch wird belohnt. Der Kunde wählt selbst was er will — das schafft echte Motivation und er kommt wieder.', icon: '⭐' },
-            { step: '3', title: 'Bringt neue Kunden rein', desc: 'Der Kunde teilt seinen persönlichen Einladungslink. Du bekommst Neukunden — ohne einen Euro Werbekosten.', icon: '🚀' },
+            { step: '1', title: 'Kunde scannt den Stempel', desc: 'Dein Mitarbeiter hält den Eloyo-Stempel ans Handy des Kunden — ein kurzer Tap und die Punkte sind sofort gutgeschrieben.', bg: howItWorksStamp },
+            { step: '2', title: 'Sammelt Punkte, löst Prämien ein', desc: 'Jeder Besuch wird belohnt. Der Kunde wählt selbst was er will — das schafft echte Motivation und er kommt wieder.', bg: howItWorksPresent },
+            { step: '3', title: 'Bringt neue Kunden rein', desc: 'Der Kunde teilt seinen persönlichen Einladungslink. Du bekommst Neukunden — ohne einen Euro Werbekosten.', bg: howItWorksReferal },
           ].map((item, i) => {
             const isActive = activeStep === i;
             return (
@@ -330,27 +333,27 @@ const Landing = () => {
                 className="relative cursor-default"
               >
                 <div
-                  className={`bg-[#e8e7ef] rounded-[2.5rem] p-10 h-full transition-shadow duration-500 ${
+                  className={`relative overflow-hidden bg-[#e8e7ef] rounded-[2.5rem] p-8 h-full transition-shadow duration-500 ${
                     isActive ? 'shadow-[0_20px_60px_rgba(124,58,237,0.18)]' : ''
                   }`}
                 >
-                  <div
-                    className={`w-16 h-16 rounded-2xl flex items-center justify-center shadow-lg mb-8 text-2xl transition-colors duration-500 ${
-                      isActive
-                        ? 'bg-gradient-to-br from-primary to-blue-500'
-                        : 'bg-white'
+                  {/* Background icon */}
+                  <img
+                    src={item.bg}
+                    alt=""
+                    aria-hidden="true"
+                    className={`pointer-events-none select-none absolute inset-0 w-full h-full object-contain p-6 transition-opacity duration-500 ${
+                      isActive ? 'opacity-25' : 'opacity-15'
                     }`}
-                  >
-                    <span
-                      className={`transition-[filter] duration-500 ${
-                        isActive ? 'brightness-200' : ''
-                      }`}
-                    >
-                      {item.icon}
-                    </span>
+                    style={{
+                      filter:
+                        'brightness(0) saturate(100%) invert(11%) sepia(78%) saturate(5736%) hue-rotate(269deg) brightness(82%) contrast(105%)',
+                    }}
+                  />
+                  <div className="relative z-10">
+                    <h3 className="font-headline text-2xl font-bold mb-4">{item.step}. {item.title}</h3>
+                    <p className="text-[#4a4455]">{item.desc}</p>
                   </div>
-                  <h3 className="font-headline text-2xl font-bold mb-4">{item.step}. {item.title}</h3>
-                  <p className="text-[#4a4455]">{item.desc}</p>
                 </div>
                 {i < 2 && (
                   <div className="hidden md:block absolute top-1/2 -right-6 -translate-y-1/2 text-[#ccc3d8] text-3xl">→</div>
