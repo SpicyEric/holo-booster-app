@@ -239,11 +239,11 @@ const Landing = () => {
               <motion.button
                 {...buttonMotion}
                 onClick={() => {
-                  document.getElementById('how-it-works')?.scrollIntoView({ behavior: 'smooth' });
+                  document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' });
                 }}
                 className="bg-[#f4f3fb] text-[#1a1b21] border border-[#ccc3d8]/30 px-8 py-4 rounded-xl text-lg font-bold hover:bg-[#eeedf5] transition-colors"
               >
-                Wie es funktioniert
+                Unsere Features
               </motion.button>
             </div>
           </motion.div>
@@ -326,7 +326,9 @@ const Landing = () => {
       </section>
 
       {/* ═══════ FEATURE EXPLORER (Tabs + Cards) ═══════ */}
-      <FeatureExplorer />
+      <section id="features">
+        <FeatureExplorer />
+      </section>
 
       {/* ═══════ FLAGSHIP FEATURE: Push ═══════ */}
       <section className="relative z-10 bg-[#f4f3fb] py-24 px-6">
