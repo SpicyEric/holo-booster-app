@@ -1043,7 +1043,7 @@ const MeinGeschaeft = () => {
                 {/* Spalte links: Beschreibung + Kontakt */}
                 <div className="space-y-4 h-full flex flex-col">
                 {/* Section 3: Beschreibung */}
-                <Card className="rounded-xl border border-border/60 bg-white p-5 shadow-sm">
+                <Card className="rounded-xl border border-border/60 bg-white p-5 shadow-sm flex-1 flex flex-col">
                   <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-2">
                       <Edit2 className="w-4 h-4 text-primary" />
