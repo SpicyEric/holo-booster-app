@@ -11,15 +11,9 @@
     <title>Eloyo | Modernes Kundenbindungssystem</title>
     <meta name="description" content="Das moderne NFC-Stempelsystem für lokale Geschäfte. Digitale Bonuskarten, automatische Kundengewinnung und Echtzeit-Statistiken. DSGVO-konform." />
     <script>
-      // CCM19 nur im Web laden – niemals in der nativen App (Capacitor)
-      const isNativeApp = Boolean(
-        window.Capacitor &&
-        typeof window.Capacitor.isNativePlatform === 'function' &&
-        window.Capacitor.isNativePlatform()
-      );
+      // Website immer im Light Mode halten (auch bei aggressiven Mobile-Dark-Mode-Overlays)
       const isAppRoute = window.location.pathname.startsWith('/app');
 
-      // Website immer im Light Mode halten (auch bei aggressiven Mobile-Dark-Mode-Overlays)
       let isApplyingWebsiteLightMode = false;
       const enforceWebsiteLightMode = () => {
         const root = document.documentElement;
@@ -56,23 +50,7 @@
       } else {
         document.documentElement.setAttribute('data-app-route', 'true');
       }
-
-      if (!isNativeApp && !isAppRoute) {
-        const s = document.createElement('script');
-        s.src = 'https://cloud.ccm19.de/app.js?apiKey=660ca115503b9572cc20f9b9f880685037ec819b9416cb24&domain=69bbb80b3fbf0a75fd05cc62';
-        s.referrerPolicy = 'origin';
-        document.head.appendChild(s);
-      }
     </script>
-    <style>
-      /* Hide CCM19 cookie widget completely when logged in */
-      body.ccm19-right .ccm-root,
-      body.ccm19-right [id*="ccm19"],
-      body.ccm19-right [class*="ccm-widget"],
-      body.ccm19-right [class*="ccm19"] {
-        display: none !important;
-      }
-    </style>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
