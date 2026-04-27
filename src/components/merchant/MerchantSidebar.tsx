@@ -236,22 +236,22 @@ export default function MerchantSidebar() {
         <Button
           variant="ghost"
           size="icon"
-          className="fixed top-3 left-3 z-50 h-10 w-10 rounded-xl bg-card/80 backdrop-blur-sm shadow-sm border border-border/50"
+          className="fixed top-3 left-3 z-50 h-10 w-10 rounded-xl bg-white/80 backdrop-blur-sm shadow-sm border border-white/40"
           onClick={() => setMobileOpen(true)}
         >
-          <Menu className="h-5 w-5" />
+          <Menu className="h-5 w-5 text-slate-700" />
         </Button>
 
         <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
-          <SheetContent side="left" className="w-[280px] p-0 flex flex-col bg-[hsl(262,50%,22%)] border-white/10">
-            <div className="flex items-center justify-between h-16 border-b border-white/10 px-4">
+          <SheetContent side="left" className="w-[280px] p-0 flex flex-col bg-gradient-to-b from-white/95 via-[hsl(262,60%,97%)]/95 to-[hsl(262,50%,94%)]/95 backdrop-blur-xl border-white/30">
+            <div className="flex items-center justify-between h-16 border-b border-white/40 px-4">
               <img
                 src={eloyoLogo}
                 alt="Eloyo"
-                className="h-7 w-auto cursor-pointer brightness-0 invert"
+                className="h-7 w-auto cursor-pointer"
                 onClick={() => { navigate("/kunde"); setMobileOpen(false); }}
               />
-              <Button variant="ghost" size="icon" className="h-8 w-8 text-white/50 hover:text-white hover:bg-white/10" onClick={() => setMobileOpen(false)}>
+              <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-slate-700 hover:bg-slate-100/50" onClick={() => setMobileOpen(false)}>
                 <X className="h-4 w-4" />
               </Button>
             </div>
