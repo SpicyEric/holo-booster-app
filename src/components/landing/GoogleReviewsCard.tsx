@@ -8,7 +8,13 @@ type Review = {
   age: number; // age in seconds since insertion
 };
 
-const STAR_POOL: (4 | 5)[] = [5, 5, 5, 5, 5, 5, 5, 5, 4, 5]; // ~80% 5-star
+// Sterne-Logik: meist abwechselnd zwischen 5 und 4, gelegentlich (~25 %) gleicher Stern wie zuletzt
+const pickStars = (last: 4 | 5 | null): 4 | 5 => {
+  if (last === null) return 5;
+  const repeat = Math.random() < 0.25;
+  if (repeat) return last;
+  return last === 5 ? 4 : 5;
+};
 // Unregelmäßige Pausen-Sequenz (in ms) → wirkt wie echte Echtzeit-Bewertungen.
 // Mischung aus schnellen Bursts und längeren Wartepausen.
 const DELAY_PATTERN = [
@@ -44,6 +50,7 @@ const GoogleReviewsCard = () => {
   const [, force] = useState(0);
   const nextIdRef = useRef(3);
   const patternIndexRef = useRef(0);
+  const lastStarsRef = useRef<4 | 5>(5);
 
   // Insert neue Bewertung gemäß DELAY_PATTERN (loopt durch)
   useEffect(() => {
@@ -53,7 +60,8 @@ const GoogleReviewsCard = () => {
       const delay = DELAY_PATTERN[patternIndexRef.current % DELAY_PATTERN.length];
       patternIndexRef.current += 1;
       timeoutId = window.setTimeout(() => {
-        const stars = STAR_POOL[Math.floor(Math.random() * STAR_POOL.length)];
+        const stars = pickStars(lastStarsRef.current);
+        lastStarsRef.current = stars;
         setReviews((prev) => {
           const next: Review = { id: nextIdRef.current++, stars, age: 0 };
           // Maximal 4 anzeigen, älteste fliegt raus
@@ -103,7 +111,7 @@ const GoogleReviewsCard = () => {
         </div>
 
         {/* Live review feed */}
-        <div className="space-y-3 min-h-[224px]">
+        <div className="space-y-3 h-[260px] overflow-hidden">
           <AnimatePresence initial={false}>
             {reviews.map((r) => (
               <motion.div
