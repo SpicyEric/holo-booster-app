@@ -292,11 +292,13 @@ export default function AppStores() {
                           <div className="w-full h-full bg-gradient-to-br from-purple-500 to-blue-500" />
                         )}
                       </div>
-                      <div className="absolute top-3 left-3 z-20 w-12 h-12 rounded-full bg-primary border-2 border-card shadow-lg flex items-center justify-center overflow-hidden">
+                      <div className="absolute top-3 left-3 z-20 w-12 h-12 rounded-full overflow-hidden shadow-md">
                         {store.logo_url ? (
                           <img src={store.logo_url} alt={`${store.name} Logo`} className="w-full h-full object-cover" />
                         ) : (
-                          <span className="text-lg font-bold text-white">{store.name?.charAt(0)?.toUpperCase() || '?'}</span>
+                          <div className="w-full h-full bg-primary flex items-center justify-center">
+                            <span className="text-lg font-bold text-white">{store.name?.charAt(0)?.toUpperCase() || '?'}</span>
+                          </div>
                         )}
                       </div>
                       {store.distance !== undefined && (
