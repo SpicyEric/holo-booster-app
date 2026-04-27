@@ -99,6 +99,12 @@ const TABS: Tab[] = [
     emoji: "🔥",
     slides: [
       { emoji: "🔥", title: "Was wäre, wenn...", text: "Was wäre, wenn deine zufriedenen Kunden für dich neue Kunden ins Geschäft holen — ohne dass du einen Euro für Werbung ausgibst? Das ist kein Traum. Das ist Eloyo Empfehlungsmarketing." },
+      { emoji: "💡", title: "Der wahre Wert eines Neukunden", text: "Ein neuer Kunde ist nicht nur ein Einkauf. Er ist ein potenzieller Stammkunde, der über Monate oder Jahre bei dir kauft. Jede erfolgreiche Empfehlung kann langfristig Hunderte Euro wert sein." },
+      { emoji: "⚙️", title: "So funktioniert's", text: "Deine Kunden laden Freunde per WhatsApp ein. Der Freund hat 7 Tage Zeit bei dir vorbeizukommen und seinen ersten Stempel zu sammeln. Erst wenn er wirklich einkauft und Punkte bekommt, zählt die Einladung." },
+      { emoji: "🎁", title: "Was bekommt wer?", text: "Der Eingeladene bekommt doppelte Punkte beim ersten Stempel. Der Einladende bekommt Bonuspunkte von dir — die du selbst festlegst." },
+      { emoji: "🧮", title: "Die magische Formel", text: "Empfehle ca. 50% der Punkte einer Standardleistung als Einlader-Bonus. 2 erfolgreiche Einladungen = Gratis-Standardleistung. Das macht den Bonus unwiderstehlich." },
+      { emoji: "🛡️", title: "Du bist geschützt", text: "Nur echte Neukunden können eingeladen werden. Wer schon Punkte hat, kann nicht nochmal eingeladen werden. Kein Missbrauch möglich." },
+      { emoji: "🚀", title: "Der Schneeball-Effekt", text: "Jeder neue Kunde empfiehlt selbst weiter — weil er Bock hat sich etwas Gratis abzuholen. Dein Stammkundenkreis wächst organisch — ganz ohne Werbekosten." },
     ],
   },
   {
