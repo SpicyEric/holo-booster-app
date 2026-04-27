@@ -15,6 +15,7 @@ import businessNetwork from '@/assets/business-network-v2.png';
 import contactPerson from '@/assets/contact-person.png';
 import contactCtaButton from '@/assets/contact-cta-button.png';
 import { useEffect, useState } from 'react';
+import FeatureExplorer from '@/components/landing/FeatureExplorer';
 
 /* ─── Apple-style cubic-bezier ─── */
 const appleEase = [0.16, 1, 0.3, 1] as const;
