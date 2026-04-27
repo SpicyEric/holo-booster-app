@@ -913,6 +913,7 @@ const MeinGeschaeft = () => {
 
               {/* Info Tab */}
               <TabsContent value="info" className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
                 {/* Section 1: Bilder — kompakt */}
                 <Card className="rounded-xl border border-border/60 bg-white p-5 shadow-sm">
                   <div className="flex items-center gap-2 mb-4">
@@ -1036,7 +1037,9 @@ const MeinGeschaeft = () => {
                   </div>
                 </Card>
 
-                {/* Section 3: Beschreibung — eigene große Karte */}
+                {/* Spalte links: Beschreibung + Kontakt */}
+                <div className="space-y-4">
+                {/* Section 3: Beschreibung */}
                 <Card className="rounded-xl border border-border/60 bg-white p-5 shadow-sm">
                   <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-2">
@@ -1082,7 +1085,59 @@ const MeinGeschaeft = () => {
                   </div>
                 </Card>
 
-                {/* Section 4: Öffnungszeiten — kompakt 2-spaltig */}
+                {/* Section 5 (in linke Spalte verschoben): Kontakt & Links */}
+                <Card className="rounded-xl border border-border/60 bg-white p-5 shadow-sm">
+                  <div className="flex items-center gap-2 mb-4">
+                    <Globe className="w-4 h-4 text-primary" />
+                    <h3 className="text-sm font-semibold text-foreground">Kontakt & Links</h3>
+                  </div>
+                  <div className="grid grid-cols-1 gap-3">
+                    <div className="relative">
+                      <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                      <Input
+                        value={formData.phone}
+                        onChange={(e) => handleInputChange("phone", e.target.value)}
+                        onFocus={() => setScrollTarget('contact')}
+                        placeholder="Telefon"
+                        className="h-9 pl-10 rounded-lg bg-slate-50 border-slate-300 focus-visible:border-primary focus-visible:ring-primary/30 text-foreground placeholder:text-slate-400"
+                      />
+                    </div>
+                    <div className="relative">
+                      <Globe className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                      <Input
+                        value={formData.website}
+                        onChange={(e) => handleInputChange("website", e.target.value)}
+                        onFocus={() => setScrollTarget('contact')}
+                        placeholder="Website"
+                        className="h-9 pl-10 rounded-lg bg-slate-50 border-slate-300 focus-visible:border-primary focus-visible:ring-primary/30 text-foreground placeholder:text-slate-400"
+                      />
+                    </div>
+                    <div className="relative">
+                      <Instagram className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                      <Input
+                        value={formData.instagram}
+                        onChange={(e) => handleInputChange("instagram", e.target.value)}
+                        onFocus={() => setScrollTarget('contact')}
+                        placeholder="Instagram-URL"
+                        className="h-9 pl-10 rounded-lg bg-slate-50 border-slate-300 focus-visible:border-primary focus-visible:ring-primary/30 text-foreground placeholder:text-slate-400"
+                      />
+                    </div>
+                    <div className="relative">
+                      <Facebook className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                      <Input
+                        value={formData.facebook}
+                        onChange={(e) => handleInputChange("facebook", e.target.value)}
+                        onFocus={() => setScrollTarget('contact')}
+                        placeholder="Facebook-URL"
+                        className="h-9 pl-10 rounded-lg bg-slate-50 border-slate-300 focus-visible:border-primary focus-visible:ring-primary/30 text-foreground placeholder:text-slate-400"
+                      />
+                    </div>
+                  </div>
+                </Card>
+                </div>
+                {/* Ende linke Spalte (Beschreibung + Kontakt) */}
+
+                {/* Section 4: Öffnungszeiten — kompakt 2-spaltig (rechte Spalte) */}
                 <Card className="rounded-xl border border-border/60 bg-white p-5 shadow-sm">
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-2">
@@ -1145,56 +1200,8 @@ const MeinGeschaeft = () => {
                     </p>
                   )}
                 </Card>
-
-                {/* Section 5: Kontakt & Links — 2-spaltig */}
-                <Card className="rounded-xl border border-border/60 bg-white p-5 shadow-sm">
-                  <div className="flex items-center gap-2 mb-4">
-                    <Globe className="w-4 h-4 text-primary" />
-                    <h3 className="text-sm font-semibold text-foreground">Kontakt & Links</h3>
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    <div className="relative">
-                      <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                      <Input
-                        value={formData.phone}
-                        onChange={(e) => handleInputChange("phone", e.target.value)}
-                        onFocus={() => setScrollTarget('contact')}
-                        placeholder="Telefon"
-                        className="h-9 pl-10 rounded-lg bg-slate-50 border-slate-300 focus-visible:border-primary focus-visible:ring-primary/30 text-foreground placeholder:text-slate-400"
-                      />
-                    </div>
-                    <div className="relative">
-                      <Globe className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                      <Input
-                        value={formData.website}
-                        onChange={(e) => handleInputChange("website", e.target.value)}
-                        onFocus={() => setScrollTarget('contact')}
-                        placeholder="Website"
-                        className="h-9 pl-10 rounded-lg bg-slate-50 border-slate-300 focus-visible:border-primary focus-visible:ring-primary/30 text-foreground placeholder:text-slate-400"
-                      />
-                    </div>
-                    <div className="relative">
-                      <Instagram className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                      <Input
-                        value={formData.instagram}
-                        onChange={(e) => handleInputChange("instagram", e.target.value)}
-                        onFocus={() => setScrollTarget('contact')}
-                        placeholder="Instagram-URL"
-                        className="h-9 pl-10 rounded-lg bg-slate-50 border-slate-300 focus-visible:border-primary focus-visible:ring-primary/30 text-foreground placeholder:text-slate-400"
-                      />
-                    </div>
-                    <div className="relative">
-                      <Facebook className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                      <Input
-                        value={formData.facebook}
-                        onChange={(e) => handleInputChange("facebook", e.target.value)}
-                        onFocus={() => setScrollTarget('contact')}
-                        placeholder="Facebook-URL"
-                        className="h-9 pl-10 rounded-lg bg-slate-50 border-slate-300 focus-visible:border-primary focus-visible:ring-primary/30 text-foreground placeholder:text-slate-400"
-                      />
-                    </div>
-                  </div>
-                </Card>
+                </div>
+                {/* Ende 2-spaltiges Profil-Grid */}
               </TabsContent>
 
                 {/* Stempel Tab */}
@@ -1511,7 +1518,7 @@ const MeinGeschaeft = () => {
                 Live-Vorschau
               </p>
               <div className="flex justify-center">
-                <div className="scale-110 origin-top">
+                <div className="scale-[1.3] origin-top">
                   <PhoneFrame>
                     <MerchantPreviewLive 
                       data={{
