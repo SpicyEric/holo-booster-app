@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import transactionsImg from '@/assets/backoffice-transactions.png';
 import eloyoAppMockup from '@/assets/eloyo-app-mockup.jpg';
+import CountUp from '@/components/CountUp';
 
 /* ─── Apple-style cubic-bezier ─── */
 const appleEase = [0.16, 1, 0.3, 1] as const;
@@ -47,10 +48,15 @@ const buttonMotion = {
   whileTap: { scale: 0.97 },
 };
 
-const stats = [
-  { value: '98%', label: 'Push-Öffnungsrate' },
+const stats: Array<{
+  value: string;
+  label: string;
+  countTo?: number;
+  suffix?: string;
+}> = [
+  { value: '98%', label: 'Push-Öffnungsrate', countTo: 98, suffix: '%' },
   { value: 'Ø 3 Min.', label: 'Einrichtungszeit pro Kunde' },
-  { value: '100%', label: 'Automatisch im Hintergrund' },
+  { value: '100%', label: 'Automatisch im Hintergrund', countTo: 100, suffix: '%' },
 ];
 
 const features = [
@@ -180,10 +186,10 @@ const Backoffice = () => {
               {/* KPI-Kacheln */}
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                 {[
-                  { icon: Users, value: '832', label: 'Kunden gesamt', trend: '+117 diese Woche', iconBg: 'bg-primary/10', iconColor: 'text-primary' },
-                  { icon: Trophy, value: '6.102', label: 'Stempel gesamt', sub: 'Gesamt seit Start', iconBg: 'bg-emerald-50', iconColor: 'text-emerald-600' },
-                  { icon: Gift, value: '312', label: 'Prämien eingelöst', iconBg: 'bg-amber-50', iconColor: 'text-amber-600' },
-                  { icon: Zap, value: '387', label: 'Netzwerkeffekt', sub: 'Neukundenprämien eingelöst', iconBg: 'bg-primary/10', iconColor: 'text-primary' },
+                  { icon: Users, countTo: 832, separator: '.', label: 'Kunden gesamt', trend: '+117 diese Woche', iconBg: 'bg-primary/10', iconColor: 'text-primary' },
+                  { icon: Trophy, countTo: 6102, separator: '.', label: 'Stempel gesamt', sub: 'Gesamt seit Start', iconBg: 'bg-emerald-50', iconColor: 'text-emerald-600' },
+                  { icon: Gift, countTo: 312, separator: '.', label: 'Prämien eingelöst', iconBg: 'bg-amber-50', iconColor: 'text-amber-600' },
+                  { icon: Zap, countTo: 387, separator: '.', label: 'Netzwerkeffekt', sub: 'Neukundenprämien eingelöst', iconBg: 'bg-primary/10', iconColor: 'text-primary' },
                 ].map((k) => (
                   <div key={k.label} className="bg-white rounded-2xl p-5 border border-border/30 shadow-[0_1px_3px_hsl(262,30%,80%/0.3)]">
                     <div className="flex items-center justify-between mb-3">
@@ -196,7 +202,9 @@ const Backoffice = () => {
                         </span>
                       )}
                     </div>
-                    <p className="font-bold text-foreground tracking-tight text-3xl lg:text-4xl">{k.value}</p>
+                    <p className="font-bold text-foreground tracking-tight text-3xl lg:text-4xl">
+                      <CountUp to={k.countTo} separator={k.separator} duration={2.2} />
+                    </p>
                     <p className="text-sm text-muted-foreground mt-1">{k.label}</p>
                     {k.sub && <p className="text-xs text-muted-foreground/70 mt-0.5">{k.sub}</p>}
                   </div>
@@ -303,7 +311,11 @@ const Backoffice = () => {
                 className="text-center"
               >
                 <div className="font-headline text-5xl md:text-6xl font-extrabold bg-gradient-to-r from-primary to-blue-500 bg-clip-text text-transparent tracking-[-0.02em] mb-3">
-                  {s.value}
+                  {typeof s.countTo === 'number' ? (
+                    <CountUp to={s.countTo} duration={2} suffix={s.suffix ?? ''} />
+                  ) : (
+                    s.value
+                  )}
                 </div>
                 <div className="text-sm md:text-base text-[#7b7487] font-medium">
                   {s.label}
