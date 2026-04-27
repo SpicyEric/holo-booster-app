@@ -48,9 +48,9 @@ const slides: Slide[] = [
     text: "Nur echte Neukunden können eingeladen werden — wer bei dir schon Punkte hat, kann nicht nochmal eingeladen werden. Jede Person kann auch nur von einem Freund gleichzeitig eingeladen werden. Kein Missbrauch möglich.",
   },
   {
-    emoji: "🌨️",
+    emoji: "🚀",
     title: "Der Schneeball-Effekt",
-    text: "Jeder neue Kunde, der durch eine Empfehlung kommt, empfiehlt selbst weiter — weil er Bock hat, sich etwas Gratis abzuholen. Mit der Zeit wächst dein Stammkundenkreis organisch — ganz ohne Werbekosten.",
+    text: "Jeder Kunde, der durch eine Empfehlung kommt, empfiehlt sehr wahrscheinlich selbst weiter – weil es auch ihn reizt, sich etwas gratis abzuholen. Mit der Zeit wächst dein Stammkundenkreis organisch – ganz ohne Werbekosten.",
   },
 ];
 
