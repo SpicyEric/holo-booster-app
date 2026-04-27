@@ -412,6 +412,39 @@ const MeinGeschaeft = () => {
     }
   };
 
+  const handleGalleryUpload = async (file: File) => {
+    if (!customerId) return;
+    if (formData.gallery_images.length >= 5) {
+      toast.error("Maximal 5 Galerie-Bilder erlaubt");
+      return;
+    }
+    setUploadingGallery(true);
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${customerId}/gallery_${Date.now()}.${fileExt}`;
+      const { error: uploadError } = await supabase.storage
+        .from("customer-assets")
+        .upload(fileName, file, { upsert: true });
+      if (uploadError) throw uploadError;
+      const { data: { publicUrl } } = supabase.storage
+        .from("customer-assets")
+        .getPublicUrl(fileName);
+      setFormData(prev => ({ ...prev, gallery_images: [...prev.gallery_images, publicUrl] }));
+      toast.success("Bild hinzugefügt");
+    } catch {
+      toast.error("Fehler beim Hochladen");
+    } finally {
+      setUploadingGallery(false);
+    }
+  };
+
+  const handleRemoveGalleryImage = (index: number) => {
+    setFormData(prev => ({
+      ...prev,
+      gallery_images: prev.gallery_images.filter((_, i) => i !== index),
+    }));
+  };
+
   const geocodeAddress = async (street: string, houseNumber: string, postalCode: string, city: string) => {
     try {
       const { data } = await supabase.functions.invoke('geocode-address', {
