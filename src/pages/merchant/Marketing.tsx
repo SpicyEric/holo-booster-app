@@ -207,11 +207,14 @@ const Marketing = () => {
         setReferralInviteePoints((cd as any).referral_invitee_points ?? 1);
       }
 
-      // Referral statistics
+      // Referral statistics — nur tatsächlich verschickte Einladungen zählen
+      // (status != 'pending' = User hat auf "Über WhatsApp einladen" geklickt
+      // oder der Empfänger hat bereits angenommen/konvertiert)
       const { data: invites } = await supabase
         .from('invitations')
-        .select('id')
-        .eq('merchant_customer_id', assignment.customer_id);
+        .select('id, status')
+        .eq('merchant_customer_id', assignment.customer_id)
+        .neq('status', 'pending');
       const inviteIds = (invites || []).map((i) => i.id);
       let acceptedCount = 0;
       let convertedCount = 0;
