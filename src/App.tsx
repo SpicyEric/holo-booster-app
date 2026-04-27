@@ -8,6 +8,7 @@ import { PendingInviteDialog } from "@/app/components/PendingInviteDialog";
 import CookieConsent from "@/components/CookieConsent";
 import Landing from "./pages/Landing";
 import Backoffice from "./pages/Backoffice";
+import Empfehlungen from "./pages/Empfehlungen";
 import Index from "./pages/Index";
 import Karriere from "./pages/Karriere";
 import Kontakt from "./pages/Kontakt";
@@ -107,6 +108,7 @@ const App = () => {
               {/* ===== WEB ROUTES ===== */}
               <Route path="/home" element={<Landing />} />
               <Route path="/backoffice" element={<Backoffice />} />
+              <Route path="/empfehlungen" element={<Empfehlungen />} />
               <Route path="/karriere" element={<Karriere />} />
               <Route path="/kontakt" element={<Kontakt />} />
               <Route path="/impressum" element={<Impressum />} />
