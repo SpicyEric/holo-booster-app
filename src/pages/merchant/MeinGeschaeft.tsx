@@ -879,62 +879,31 @@ const MeinGeschaeft = () => {
     );
   }
 
-  return (
-    <div className="min-h-screen">
-      <div className="max-w-7xl mx-auto p-6 sm:p-8">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-          {/* Phone Preview - sticky left column (35%) */}
-          <div className="lg:col-span-4 order-2 lg:order-1">
-            <div className="sticky top-6">
-              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3 px-1">
-                Live-Vorschau
-              </p>
-              <PhoneFrame title="Live-Vorschau">
-                <MerchantPreviewLive 
-                  data={{
-                    name: formData.name || "Geschäftsname",
-                    description: formData.description,
-                    logo_url: formData.logo_url,
-                    cover_image_url: formData.cover_image_url,
-                    street: formData.street,
-                    house_number: formData.house_number,
-                    postal_code: formData.postal_code,
-                    city: formData.city,
-                    phone: formData.phone,
-                    website: formData.website,
-                    instagram: formData.instagram,
-                    facebook: formData.facebook,
-                    twitter: formData.twitter,
-                    opening_hours: formData.opening_hours,
-                  }}
-                  rewards={rewards}
-                  activeTab={activeTab === 'info' ? 'info' : 'rewards'}
-                  onTabChange={(tab) => setActiveTab(tab === 'info' ? 'info' : 'stempel')}
-                  userPoints={25}
-                  scrollTarget={scrollTarget}
-                />
-              </PhoneFrame>
-              
-              {/* Always-visible Save Button */}
-              {activeTab === 'info' && (
-                <Button
-                  onClick={handleSaveInfo}
-                  disabled={saving || !profileDirty}
-                  className={cn(
-                    "w-full rounded-xl mt-4 transition-all",
-                    profileDirty && "animate-pulse shadow-lg shadow-primary/30"
-                  )}
-                  size="lg"
-                >
-                  {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
-                  {profileDirty ? "Änderungen speichern" : "Gespeichert"}
-                </Button>
-              )}
-            </div>
-          </div>
+  const handleDiscardChanges = () => {
+    if (initialFormDataRef.current) {
+      setFormData(initialFormDataRef.current);
+      toast.info("Änderungen verworfen");
+    }
+  };
 
-          {/* Content - right column (65%) */}
-          <div className="lg:col-span-8 order-1 lg:order-2">
+  const handleDiscardStampChanges = () => {
+    if (initialStampState) {
+      setStampMode(initialStampState.stampMode as 'classic' | 'revenue');
+      setAvgRevenue(initialStampState.avgRevenue);
+      setManualMode(initialStampState.manualMode);
+      setSelectedVariant(initialStampState.selectedVariant as 'balanced' | 'umsatzboost');
+      toast.info("Änderungen verworfen");
+    }
+  };
+
+  const showSaveBar = (activeTab === 'info' && profileDirty) || (activeTab === 'stempel' && stampSettingsDirty);
+
+  return (
+    <div className="min-h-screen pb-24">
+      <div className="max-w-[1400px] mx-auto p-6 sm:p-8">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+          {/* Content - LEFT column (fields) */}
+          <div className="lg:col-span-7 order-2 lg:order-1">
             <Tabs value={activeTab} onValueChange={handleTabChange}>
               <TabsList className="hidden">
                 <TabsTrigger value="info" />
@@ -943,18 +912,18 @@ const MeinGeschaeft = () => {
 
 
               {/* Info Tab */}
-              <TabsContent value="info" className="space-y-5">
-                {/* Section 1: Bilder */}
-                <Card className="rounded-xl border border-border/60 bg-white p-6 shadow-sm">
-                  <div className="flex items-center gap-2 mb-5">
+              <TabsContent value="info" className="space-y-4">
+                {/* Section 1: Bilder — kompakt */}
+                <Card className="rounded-xl border border-border/60 bg-white p-5 shadow-sm">
+                  <div className="flex items-center gap-2 mb-4">
                     <ImageLucide className="w-4 h-4 text-primary" />
-                    <h3 className="text-base font-semibold text-foreground">Bilder</h3>
+                    <h3 className="text-sm font-semibold text-foreground">Bilder</h3>
                   </div>
 
-                  <div className="grid grid-cols-[auto_1fr] gap-5 items-start">
+                  <div className="grid grid-cols-[80px_1fr] gap-4 items-start">
                     {/* Logo */}
                     <div>
-                      <Label className="text-xs font-medium text-muted-foreground mb-2 block">Logo</Label>
+                      <Label className="text-[11px] font-medium text-muted-foreground mb-1.5 block">Logo</Label>
                       <label className="group relative w-20 h-20 rounded-xl bg-muted/40 border border-border overflow-hidden flex items-center justify-center cursor-pointer hover:border-primary/50 transition-colors block">
                         <input type="file" accept="image/*" className="hidden" onChange={(e) => { const file = e.target.files?.[0]; if (file) handleImageUpload(file, "logo"); }} />
                         {formData.logo_url ? (
@@ -968,23 +937,19 @@ const MeinGeschaeft = () => {
                           </div>
                         )}
                       </label>
-                      <label className="cursor-pointer block mt-2">
-                        <input type="file" accept="image/*" className="hidden" onChange={(e) => { const file = e.target.files?.[0]; if (file) handleImageUpload(file, "logo"); }} />
-                        <span className="text-xs font-medium text-primary hover:underline">Ändern</span>
-                      </label>
                     </div>
 
-                    {/* Cover */}
+                    {/* Cover — kompakt, max-Höhe 120px */}
                     <div>
-                      <Label className="text-xs font-medium text-muted-foreground mb-2 block">Titelbild</Label>
-                      <label className="group relative w-full aspect-[16/9] rounded-xl bg-muted/40 border border-border overflow-hidden flex items-center justify-center cursor-pointer hover:border-primary/50 transition-colors block">
+                      <Label className="text-[11px] font-medium text-muted-foreground mb-1.5 block">Titelbild</Label>
+                      <label className="group relative w-full h-[120px] rounded-xl bg-muted/40 border border-border overflow-hidden flex items-center justify-center cursor-pointer hover:border-primary/50 transition-colors block">
                         <input type="file" accept="image/*" className="hidden" onChange={(e) => { const file = e.target.files?.[0]; if (file) handleImageUpload(file, "cover"); }} />
                         {formData.cover_image_url ? (
                           <img src={formData.cover_image_url} alt="Titelbild" className="w-full h-full object-cover" />
                         ) : (
                           <div className="flex flex-col items-center gap-1 text-muted-foreground/60">
-                            <ImageIcon className="w-6 h-6" />
-                            <span className="text-xs">Titelbild hochladen</span>
+                            <ImageIcon className="w-5 h-5" />
+                            <span className="text-[11px]">Titelbild hochladen</span>
                           </div>
                         )}
                         {uploadingCover && (
@@ -993,154 +958,139 @@ const MeinGeschaeft = () => {
                           </div>
                         )}
                       </label>
-                      <label className="cursor-pointer block mt-2">
-                        <input type="file" accept="image/*" className="hidden" onChange={(e) => { const file = e.target.files?.[0]; if (file) handleImageUpload(file, "cover"); }} />
-                        <span className="text-xs font-medium text-primary hover:underline">Ändern</span>
-                      </label>
                     </div>
                   </div>
 
-                  {/* Galerie */}
-                  <div className="mt-6 pt-6 border-t border-border/60">
-                    <div className="mb-3">
-                      <h4 className="text-sm font-semibold text-foreground">Weitere Bilder (Slideshow)</h4>
-                      <p className="text-xs text-muted-foreground mt-0.5">
-                        Kunden können durch diese Bilder in deinem Store-Profil swipen.
-                      </p>
+                  {/* Galerie — kompakt */}
+                  <div className="mt-4 pt-4 border-t border-border/60">
+                    <div className="flex items-center justify-between mb-2">
+                      <h4 className="text-xs font-semibold text-foreground">Weitere Bilder (Slideshow)</h4>
+                      <span className="text-[11px] text-muted-foreground">{formData.gallery_images.length}/5</span>
                     </div>
                     <div className="flex flex-wrap gap-2">
                       {formData.gallery_images.map((url, i) => (
-                        <div key={i} className="relative group w-[100px] h-[70px] rounded-lg overflow-hidden border border-border bg-muted/40">
+                        <div key={i} className="relative group w-[72px] h-[54px] rounded-lg overflow-hidden border border-border bg-muted/40">
                           <img src={url} alt={`Galerie ${i + 1}`} className="w-full h-full object-cover" />
                           <button
                             type="button"
                             onClick={() => handleRemoveGalleryImage(i)}
-                            className="absolute top-1 right-1 w-5 h-5 rounded-full bg-black/60 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black/80"
+                            className="absolute top-0.5 right-0.5 w-4 h-4 rounded-full bg-black/60 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black/80"
                           >
-                            <X className="w-3 h-3" />
+                            <X className="w-2.5 h-2.5" />
                           </button>
                         </div>
                       ))}
                       {formData.gallery_images.length < 5 && (
-                        <label className="w-[100px] h-[70px] rounded-lg border-2 border-dashed border-border bg-muted/30 hover:border-primary/50 hover:bg-primary/5 flex items-center justify-center cursor-pointer transition-colors">
+                        <label className="w-[72px] h-[54px] rounded-lg border-2 border-dashed border-border bg-muted/30 hover:border-primary/50 hover:bg-primary/5 flex items-center justify-center cursor-pointer transition-colors">
                           <input type="file" accept="image/*" className="hidden" onChange={(e) => { const file = e.target.files?.[0]; if (file) handleGalleryUpload(file); }} />
                           {uploadingGallery ? (
                             <Loader2 className="w-4 h-4 text-muted-foreground animate-spin" />
                           ) : (
-                            <Plus className="w-5 h-5 text-muted-foreground/60" />
+                            <Plus className="w-4 h-4 text-muted-foreground/60" />
                           )}
                         </label>
                       )}
                     </div>
-                    <p className="text-[11px] text-muted-foreground mt-2">
-                      {formData.gallery_images.length}/5 Bilder
-                    </p>
                   </div>
                 </Card>
 
-                {/* Section 2: Geschäftsinformationen */}
-                <Card className="rounded-xl border border-border/60 bg-white p-6 shadow-sm">
-                  <div className="flex items-center gap-2 mb-5">
+                {/* Section 2: Geschäftsinfos + Adresse kombiniert */}
+                <Card className="rounded-xl border border-border/60 bg-white p-5 shadow-sm">
+                  <div className="flex items-center gap-2 mb-4">
                     <Store className="w-4 h-4 text-primary" />
-                    <h3 className="text-base font-semibold text-foreground">Geschäftsinformationen</h3>
+                    <h3 className="text-sm font-semibold text-foreground">Geschäftsinformationen</h3>
                   </div>
-                  <div className="space-y-4">
-                    <div>
-                      <Label className="text-xs font-medium text-muted-foreground mb-1.5 block">Geschäftsname *</Label>
-                      <Input value={formData.name} onChange={(e) => handleInputChange("name", e.target.value)} placeholder="z.B. Café Sonnenschein" className="rounded-lg bg-slate-50 border-slate-300 focus-visible:border-primary focus-visible:ring-primary/30 text-foreground placeholder:text-slate-400" />
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-3">
+                    <div className="grid grid-cols-2 gap-3">
                       <div>
-                        <Label className="text-xs font-medium text-muted-foreground mb-1.5 block">Branche</Label>
+                        <Label className="text-[11px] font-medium text-muted-foreground mb-1 block">Geschäftsname *</Label>
+                        <Input value={formData.name} onChange={(e) => handleInputChange("name", e.target.value)} placeholder="z.B. Café Sonnenschein" className="h-9 rounded-lg bg-slate-50 border-slate-300 focus-visible:border-primary focus-visible:ring-primary/30 text-foreground placeholder:text-slate-400" />
+                      </div>
+                      <div>
+                        <Label className="text-[11px] font-medium text-muted-foreground mb-1 block">Branche</Label>
                         <Select value={formData.industry} onValueChange={(value) => handleInputChange("industry", value)}>
-                          <SelectTrigger className="rounded-lg bg-slate-50 border-slate-300 focus-visible:border-primary focus-visible:ring-primary/30 text-foreground placeholder:text-slate-400"><SelectValue placeholder="Branche auswählen" /></SelectTrigger>
+                          <SelectTrigger className="h-9 rounded-lg bg-slate-50 border-slate-300 focus-visible:border-primary focus-visible:ring-primary/30 text-foreground"><SelectValue placeholder="Branche auswählen" /></SelectTrigger>
                           <SelectContent>{INDUSTRIES.map((ind) => (<SelectItem key={ind.value} value={ind.value}>{ind.label}</SelectItem>))}</SelectContent>
                         </Select>
                       </div>
-                      <div />
                     </div>
-                    <div>
-                      <Label className="text-xs font-medium text-muted-foreground mb-1.5 block">Beschreibung</Label>
-                      <div style={{ resize: 'vertical', overflow: 'auto', minHeight: 120 }} className="rounded-lg bg-slate-50 border-slate-300 focus-visible:border-primary focus-visible:ring-primary/30 text-foreground placeholder:text-slate-400">
-                        <RichTextEditor
-                          value={formData.description}
-                          onChange={(value) => handleInputChange("description", value)}
-                          placeholder="Erzähle etwas über dein Geschäft..."
-                          rows={5}
-                        />
+                    {/* Adresse — eine Zeile */}
+                    <div className="grid grid-cols-12 gap-2">
+                      <div className="col-span-6">
+                        <Label className="text-[11px] font-medium text-muted-foreground mb-1 block">Straße</Label>
+                        <Input value={formData.street} onChange={(e) => handleInputChange("street", e.target.value)} placeholder="Hauptstraße" className="h-9 rounded-lg bg-slate-50 border-slate-300 focus-visible:border-primary focus-visible:ring-primary/30 text-foreground placeholder:text-slate-400" />
                       </div>
-                      <div className="mt-3">
-                        <p className="text-[11px] text-muted-foreground mb-1.5 flex items-center gap-1">
-                          <Sparkles className="w-3 h-3" /> Vorlagen einfügen (kannst du anschließend frei anpassen):
-                        </p>
-                        <div className="flex flex-wrap gap-1.5">
-                          {[
-                            { label: "👋 Willkommen", text: `Herzlich willkommen bei ${formData.name || "uns"}! Wir freuen uns auf deinen Besuch und darauf, dich mit unseren Lieblingsprodukten zu verwöhnen. ✨` },
-                            { label: "🎁 Treue belohnt", text: "Bei uns lohnt sich jeder Besuch: Sammle Punkte, sichere dir tolle Prämien und genieße exklusive Vorteile als Stammgast. 💜" },
-                            { label: "🤝 Freunde einladen", text: `Lade 2 Freunde ein, die noch nie bei uns waren — und du hast direkt genug Punkte für eine tolle Prämie! 🎁 Deine Freunde bekommen beim ersten Besuch doppelte Punkte, du bekommst deinen Bonus.` },
-                            { label: "⭐ Qualität & Leidenschaft", text: "Mit Liebe zum Detail und höchsten Qualitätsansprüchen sorgen wir dafür, dass jeder Besuch bei uns zu einem kleinen Highlight wird." },
-                            { label: "📍 Mitten in der Stadt", text: `Du findest uns zentral gelegen${formData.city ? ` in ${formData.city}` : ""} — perfekt für einen kurzen Stopp oder einen entspannten Aufenthalt. Wir freuen uns auf dich!` },
-                          ].map((tpl) => (
-                            <Button
-                              key={tpl.label}
-                              type="button"
-                              variant="outline"
-                              size="sm"
-                              onClick={() => {
-                                const current = formData.description?.trim() || "";
-                                const next = current ? `${current}\n\n${tpl.text}` : tpl.text;
-                                handleInputChange("description", next);
-                              }}
-                              className="h-7 px-2.5 text-xs rounded-lg bg-slate-100 border-slate-300 hover:bg-primary/10 hover:border-primary/50 hover:text-primary transition-colors"
-                            >
-                              {tpl.label}
-                            </Button>
-                          ))}
-                        </div>
+                      <div className="col-span-2">
+                        <Label className="text-[11px] font-medium text-muted-foreground mb-1 block">Nr.</Label>
+                        <Input value={formData.house_number} onChange={(e) => handleInputChange("house_number", e.target.value)} placeholder="12" className="h-9 rounded-lg bg-slate-50 border-slate-300 focus-visible:border-primary focus-visible:ring-primary/30 text-foreground placeholder:text-slate-400" />
+                      </div>
+                      <div className="col-span-2">
+                        <Label className="text-[11px] font-medium text-muted-foreground mb-1 block">PLZ</Label>
+                        <Input value={formData.postal_code} onChange={(e) => handleInputChange("postal_code", e.target.value)} placeholder="12345" className="h-9 rounded-lg bg-slate-50 border-slate-300 focus-visible:border-primary focus-visible:ring-primary/30 text-foreground placeholder:text-slate-400" />
+                      </div>
+                      <div className="col-span-2">
+                        <Label className="text-[11px] font-medium text-muted-foreground mb-1 block">Ort</Label>
+                        <Input value={formData.city} onChange={(e) => handleInputChange("city", e.target.value)} placeholder="Berlin" className="h-9 rounded-lg bg-slate-50 border-slate-300 focus-visible:border-primary focus-visible:ring-primary/30 text-foreground placeholder:text-slate-400" />
                       </div>
                     </div>
                   </div>
                 </Card>
 
-                {/* Section 3: Adresse */}
-                <Card className="rounded-xl border border-border/60 bg-white p-6 shadow-sm">
-                  <div className="flex items-center gap-2 mb-5">
-                    <MapPin className="w-4 h-4 text-primary" />
-                    <h3 className="text-base font-semibold text-foreground">Adresse</h3>
-                  </div>
-                  <div className="space-y-4">
-                    <div className="grid grid-cols-4 gap-3">
-                      <div className="col-span-3">
-                        <Label className="text-xs font-medium text-muted-foreground mb-1.5 block">Straße</Label>
-                        <Input value={formData.street} onChange={(e) => handleInputChange("street", e.target.value)} placeholder="Hauptstraße" className="rounded-lg bg-slate-50 border-slate-300 focus-visible:border-primary focus-visible:ring-primary/30 text-foreground placeholder:text-slate-400" />
-                      </div>
-                      <div>
-                        <Label className="text-xs font-medium text-muted-foreground mb-1.5 block">Nr.</Label>
-                        <Input value={formData.house_number} onChange={(e) => handleInputChange("house_number", e.target.value)} placeholder="123" className="rounded-lg bg-slate-50 border-slate-300 focus-visible:border-primary focus-visible:ring-primary/30 text-foreground placeholder:text-slate-400" />
-                      </div>
+                {/* Section 3: Beschreibung — eigene große Karte */}
+                <Card className="rounded-xl border border-border/60 bg-white p-5 shadow-sm">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                      <Edit2 className="w-4 h-4 text-primary" />
+                      <h3 className="text-sm font-semibold text-foreground">Beschreibung</h3>
                     </div>
-                    <div className="grid grid-cols-10 gap-3">
-                      <div className="col-span-3">
-                        <Label className="text-xs font-medium text-muted-foreground mb-1.5 block">PLZ</Label>
-                        <Input value={formData.postal_code} onChange={(e) => handleInputChange("postal_code", e.target.value)} placeholder="12345" className="rounded-lg bg-slate-50 border-slate-300 focus-visible:border-primary focus-visible:ring-primary/30 text-foreground placeholder:text-slate-400" />
-                      </div>
-                      <div className="col-span-7">
-                        <Label className="text-xs font-medium text-muted-foreground mb-1.5 block">Ort</Label>
-                        <Input value={formData.city} onChange={(e) => handleInputChange("city", e.target.value)} placeholder="Berlin" className="rounded-lg bg-slate-50 border-slate-300 focus-visible:border-primary focus-visible:ring-primary/30 text-foreground placeholder:text-slate-400" />
-                      </div>
+                    <span className="text-[11px] text-muted-foreground">{formData.description?.length || 0} Zeichen</span>
+                  </div>
+                  <RichTextEditor
+                    value={formData.description}
+                    onChange={(value) => handleInputChange("description", value)}
+                    placeholder="Erzähle etwas über dein Geschäft..."
+                    rows={7}
+                  />
+                  <div className="mt-3">
+                    <p className="text-[11px] text-muted-foreground mb-1.5 flex items-center gap-1">
+                      <Sparkles className="w-3 h-3" /> Vorlagen einfügen:
+                    </p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {[
+                        { label: "👋 Willkommen", text: `Herzlich willkommen bei ${formData.name || "uns"}! Wir freuen uns auf deinen Besuch und darauf, dich mit unseren Lieblingsprodukten zu verwöhnen. ✨` },
+                        { label: "🎁 Treue belohnt", text: "Bei uns lohnt sich jeder Besuch: Sammle Punkte, sichere dir tolle Prämien und genieße exklusive Vorteile als Stammgast. 💜" },
+                        { label: "🤝 Freunde einladen", text: `Lade 2 Freunde ein, die noch nie bei uns waren — und du hast direkt genug Punkte für eine tolle Prämie! 🎁` },
+                        { label: "⭐ Qualität", text: "Mit Liebe zum Detail und höchsten Qualitätsansprüchen sorgen wir dafür, dass jeder Besuch zu einem kleinen Highlight wird." },
+                        { label: "📍 Zentral", text: `Du findest uns zentral gelegen${formData.city ? ` in ${formData.city}` : ""} — perfekt für einen kurzen Stopp. Wir freuen uns auf dich!` },
+                      ].map((tpl) => (
+                        <Button
+                          key={tpl.label}
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            const current = formData.description?.trim() || "";
+                            const next = current ? `${current}\n\n${tpl.text}` : tpl.text;
+                            handleInputChange("description", next);
+                          }}
+                          className="h-7 px-2.5 text-xs rounded-lg bg-slate-100 border-slate-300 hover:bg-primary/10 hover:border-primary/50 hover:text-primary transition-colors"
+                        >
+                          {tpl.label}
+                        </Button>
+                      ))}
                     </div>
                   </div>
                 </Card>
 
-                {/* Section 4: Öffnungszeiten */}
-                <Card className="rounded-xl border border-border/60 bg-white p-6 shadow-sm">
-                  <div className="flex items-center justify-between mb-5">
+                {/* Section 4: Öffnungszeiten — kompakt 2-spaltig */}
+                <Card className="rounded-xl border border-border/60 bg-white p-5 shadow-sm">
+                  <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-2">
                       <Clock className="w-4 h-4 text-primary" />
-                      <h3 className="text-base font-semibold text-foreground">Öffnungszeiten</h3>
+                      <h3 className="text-sm font-semibold text-foreground">Öffnungszeiten</h3>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="text-xs text-muted-foreground">Anzeigen</span>
+                      <span className="text-[11px] text-muted-foreground">Anzeigen</span>
                       <Switch
                         checked={Object.keys(formData.opening_hours).length > 0}
                         onCheckedChange={(checked) => {
@@ -1158,56 +1108,59 @@ const MeinGeschaeft = () => {
                     </div>
                   </div>
                   {Object.keys(formData.opening_hours).length > 0 ? (
-                    <div className="space-y-2">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-1.5">
                       {DAYS.map((day) => {
                         const closed = formData.opening_hours[day.key]?.closed || false;
                         return (
-                          <div key={day.key} className="flex items-center gap-3 py-1.5">
-                            <div className="w-20 text-sm font-medium text-foreground">{day.label}</div>
-                            <label className="flex items-center gap-1.5 cursor-pointer text-xs text-muted-foreground w-28">
-                              <input
-                                type="checkbox"
-                                checked={closed}
-                                onChange={(e) => handleOpeningHoursChange(day.key, "closed", e.target.checked)}
-                                className="rounded border-border"
-                              />
-                              <span>Geschlossen</span>
-                            </label>
+                          <div key={day.key} className="flex items-center gap-2 py-0.5">
+                            <div className="w-10 text-xs font-medium text-foreground">{day.label.slice(0, 2)}</div>
                             {!closed ? (
-                              <div className="flex items-center gap-2 flex-1">
-                                <Input type="time" value={formData.opening_hours[day.key]?.open || "09:00"} onChange={(e) => handleOpeningHoursChange(day.key, "open", e.target.value)} className="w-28 h-9 rounded-lg text-sm bg-slate-50 border-slate-300 focus-visible:border-primary focus-visible:ring-primary/30 text-foreground placeholder:text-slate-400" />
-                                <span className="text-muted-foreground text-xs">bis</span>
-                                <Input type="time" value={formData.opening_hours[day.key]?.close || "18:00"} onChange={(e) => handleOpeningHoursChange(day.key, "close", e.target.value)} className="w-28 h-9 rounded-lg text-sm bg-slate-50 border-slate-300 focus-visible:border-primary focus-visible:ring-primary/30 text-foreground placeholder:text-slate-400" />
+                              <div className="flex items-center gap-1 flex-1">
+                                <Input type="time" value={formData.opening_hours[day.key]?.open || "09:00"} onChange={(e) => handleOpeningHoursChange(day.key, "open", e.target.value)} className="h-8 px-2 text-xs rounded-md bg-slate-50 border-slate-300 focus-visible:border-primary focus-visible:ring-primary/30 text-foreground flex-1" />
+                                <span className="text-muted-foreground text-[11px]">–</span>
+                                <Input type="time" value={formData.opening_hours[day.key]?.close || "18:00"} onChange={(e) => handleOpeningHoursChange(day.key, "close", e.target.value)} className="h-8 px-2 text-xs rounded-md bg-slate-50 border-slate-300 focus-visible:border-primary focus-visible:ring-primary/30 text-foreground flex-1" />
                               </div>
                             ) : (
-                              <div className="flex-1 text-xs text-muted-foreground italic">Geschlossen</div>
+                              <div className="flex-1 text-[11px] text-muted-foreground italic">Geschlossen</div>
                             )}
+                            <button
+                              type="button"
+                              onClick={() => handleOpeningHoursChange(day.key, "closed", !closed)}
+                              className={cn(
+                                "text-[10px] px-2 py-1 rounded-md font-medium transition-colors",
+                                closed
+                                  ? "bg-slate-200 text-slate-700 hover:bg-slate-300"
+                                  : "bg-slate-50 text-slate-500 hover:bg-slate-100 border border-slate-200"
+                              )}
+                            >
+                              {closed ? "Zu" : "Auf"}
+                            </button>
                           </div>
                         );
                       })}
                     </div>
                   ) : (
-                    <p className="text-sm text-muted-foreground text-center py-6">
-                      Öffnungszeiten sind deaktiviert. Schalte den Regler oben ein, um sie anzuzeigen.
+                    <p className="text-xs text-muted-foreground text-center py-4">
+                      Öffnungszeiten sind deaktiviert.
                     </p>
                   )}
                 </Card>
 
-                {/* Section 5: Kontakt & Links */}
-                <Card className="rounded-xl border border-border/60 bg-white p-6 shadow-sm">
-                  <div className="flex items-center gap-2 mb-5">
+                {/* Section 5: Kontakt & Links — 2-spaltig */}
+                <Card className="rounded-xl border border-border/60 bg-white p-5 shadow-sm">
+                  <div className="flex items-center gap-2 mb-4">
                     <Globe className="w-4 h-4 text-primary" />
-                    <h3 className="text-base font-semibold text-foreground">Kontakt & Links</h3>
+                    <h3 className="text-sm font-semibold text-foreground">Kontakt & Links</h3>
                   </div>
-                  <div className="space-y-3">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     <div className="relative">
                       <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                       <Input
                         value={formData.phone}
                         onChange={(e) => handleInputChange("phone", e.target.value)}
                         onFocus={() => setScrollTarget('contact')}
-                        placeholder="Telefon — z.B. +49 123 456789"
-                        className="pl-10 rounded-lg bg-slate-50 border-slate-300 focus-visible:border-primary focus-visible:ring-primary/30 text-foreground placeholder:text-slate-400"
+                        placeholder="Telefon"
+                        className="h-9 pl-10 rounded-lg bg-slate-50 border-slate-300 focus-visible:border-primary focus-visible:ring-primary/30 text-foreground placeholder:text-slate-400"
                       />
                     </div>
                     <div className="relative">
@@ -1216,8 +1169,8 @@ const MeinGeschaeft = () => {
                         value={formData.website}
                         onChange={(e) => handleInputChange("website", e.target.value)}
                         onFocus={() => setScrollTarget('contact')}
-                        placeholder="Website — https://..."
-                        className="pl-10 rounded-lg bg-slate-50 border-slate-300 focus-visible:border-primary focus-visible:ring-primary/30 text-foreground placeholder:text-slate-400"
+                        placeholder="Website"
+                        className="h-9 pl-10 rounded-lg bg-slate-50 border-slate-300 focus-visible:border-primary focus-visible:ring-primary/30 text-foreground placeholder:text-slate-400"
                       />
                     </div>
                     <div className="relative">
@@ -1226,8 +1179,8 @@ const MeinGeschaeft = () => {
                         value={formData.instagram}
                         onChange={(e) => handleInputChange("instagram", e.target.value)}
                         onFocus={() => setScrollTarget('contact')}
-                        placeholder="Instagram — https://instagram.com/..."
-                        className="pl-10 rounded-lg bg-slate-50 border-slate-300 focus-visible:border-primary focus-visible:ring-primary/30 text-foreground placeholder:text-slate-400"
+                        placeholder="Instagram-URL"
+                        className="h-9 pl-10 rounded-lg bg-slate-50 border-slate-300 focus-visible:border-primary focus-visible:ring-primary/30 text-foreground placeholder:text-slate-400"
                       />
                     </div>
                     <div className="relative">
@@ -1236,8 +1189,8 @@ const MeinGeschaeft = () => {
                         value={formData.facebook}
                         onChange={(e) => handleInputChange("facebook", e.target.value)}
                         onFocus={() => setScrollTarget('contact')}
-                        placeholder="Facebook — https://facebook.com/..."
-                        className="pl-10 rounded-lg bg-slate-50 border-slate-300 focus-visible:border-primary focus-visible:ring-primary/30 text-foreground placeholder:text-slate-400"
+                        placeholder="Facebook-URL"
+                        className="h-9 pl-10 rounded-lg bg-slate-50 border-slate-300 focus-visible:border-primary focus-visible:ring-primary/30 text-foreground placeholder:text-slate-400"
                       />
                     </div>
                   </div>
@@ -1550,7 +1503,78 @@ const MeinGeschaeft = () => {
               </TabsContent>
             </Tabs>
           </div>
+
+          {/* Phone Preview - RIGHT column, sticky, größer */}
+          <div className="lg:col-span-5 order-1 lg:order-2">
+            <div className="sticky top-6">
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-3 px-1">
+                Live-Vorschau
+              </p>
+              <div className="flex justify-center">
+                <div className="scale-110 origin-top">
+                  <PhoneFrame>
+                    <MerchantPreviewLive 
+                      data={{
+                        name: formData.name || "Geschäftsname",
+                        description: formData.description,
+                        logo_url: formData.logo_url,
+                        cover_image_url: formData.cover_image_url,
+                        street: formData.street,
+                        house_number: formData.house_number,
+                        postal_code: formData.postal_code,
+                        city: formData.city,
+                        phone: formData.phone,
+                        website: formData.website,
+                        instagram: formData.instagram,
+                        facebook: formData.facebook,
+                        twitter: formData.twitter,
+                        opening_hours: formData.opening_hours,
+                      }}
+                      rewards={rewards}
+                      activeTab={activeTab === 'info' ? 'info' : 'rewards'}
+                      onTabChange={(tab) => setActiveTab(tab === 'info' ? 'info' : 'stempel')}
+                      userPoints={25}
+                      scrollTarget={scrollTarget}
+                    />
+                  </PhoneFrame>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
+
+        {/* Sticky Save Bar — taucht nur auf bei Änderungen */}
+        {showSaveBar && (
+          <div className="fixed bottom-0 left-0 right-0 z-50 animate-in slide-in-from-bottom-4 duration-200">
+            <div className="bg-white/95 backdrop-blur-md border-t border-border shadow-[0_-4px_20px_rgba(0,0,0,0.08)]">
+              <div className="max-w-[1400px] mx-auto px-6 sm:px-8 py-3 flex items-center justify-between gap-4">
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+                  <span className="text-sm font-medium text-foreground">Du hast ungespeicherte Änderungen</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="ghost"
+                    onClick={activeTab === 'info' ? handleDiscardChanges : handleDiscardStampChanges}
+                    disabled={saving || savingChips}
+                    className="rounded-lg"
+                  >
+                    Verwerfen
+                  </Button>
+                  <Button
+                    onClick={activeTab === 'info' ? handleSaveInfo : handleSaveChips}
+                    disabled={saving || savingChips}
+                    className="rounded-lg bg-primary hover:bg-primary/90"
+                  >
+                    {(saving || savingChips) ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
+                    Änderungen speichern
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
 
         {/* Reward Dialog */}
         <Dialog open={showRewardDialog} onOpenChange={setShowRewardDialog}>
