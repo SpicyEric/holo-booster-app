@@ -53,11 +53,11 @@ const RotatingHeadline = () => {
         <SplitText
           key={`split-${index}`}
           text={ROTATING_HEADLINES[index]}
-          splitType="words"
-          from={{ opacity: 0, y: 30 }}
+          splitType="chars"
+          from={{ opacity: 0, y: 40 }}
           to={{ opacity: 1, y: 0 }}
-          duration={0.8}
-          delay={80}
+          duration={1.25}
+          delay={50}
         />
       </motion.span>
     </h1>
