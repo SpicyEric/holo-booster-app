@@ -1554,7 +1554,7 @@ const MeinGeschaeft = () => {
         {showSaveBar && (
           <div className="fixed bottom-0 left-0 right-0 z-50 animate-in slide-in-from-bottom-4 duration-200">
             <div className="bg-white/95 backdrop-blur-md border-t border-border shadow-[0_-4px_20px_rgba(0,0,0,0.08)]">
-              <div className="max-w-[1400px] mx-auto px-6 sm:px-8 py-3 flex items-center justify-between gap-4">
+              <div className="w-full mx-auto px-6 sm:px-10 py-3 flex items-center justify-between gap-4">
                 <div className="flex items-center gap-2">
                   <div className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
                   <span className="text-sm font-medium text-foreground">Du hast ungespeicherte Änderungen</span>
