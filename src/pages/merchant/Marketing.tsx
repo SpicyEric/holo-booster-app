@@ -150,7 +150,7 @@ const Marketing = () => {
   // Track automation changes
   useEffect(() => {
     if (automationsLoadedRef.current) setAutomationsChanged(true);
-  }, [birthdayEnabled, birthdayMessage, birthdayBonusPoints, birthdayGiftType, birthdayOfferTitle, birthdayOfferDescription]);
+  }, [birthdayEnabled, birthdayMessage, birthdayBonusPoints, birthdayGiftType, birthdayOfferTitle, birthdayOfferDescription, winbackEnabled, winbackMessage, winbackInactivityDays, winbackGiftType, winbackBonusPoints, winbackOfferTitle, winbackOfferDescription]);
 
   useEffect(() => { loadData(); }, []);
 
