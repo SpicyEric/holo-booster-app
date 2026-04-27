@@ -1516,10 +1516,7 @@ const MeinGeschaeft = () => {
 
           {/* Phone Preview - RIGHT column, sticky, größer */}
           <div className="lg:col-span-5 order-1 lg:order-2">
-            <div className="sticky top-6">
-              <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-3 px-1">
-                Live-Vorschau
-              </p>
+            <div className="sticky top-6 pt-16">
               <div className="flex justify-center">
                 <div className="scale-[1.3] origin-top">
                   <PhoneFrame>
