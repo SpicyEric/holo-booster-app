@@ -268,6 +268,7 @@ const MeinGeschaeft = () => {
           facebook: customer.facebook || "",
           twitter: customer.twitter || "",
           opening_hours: (customer.opening_hours as OpeningHours) || defaultOpeningHours,
+          gallery_images: ((customer as any).gallery_images as string[]) || [],
         });
         // Store initial form data for dirty tracking
         const loadedFormData = {
@@ -286,6 +287,7 @@ const MeinGeschaeft = () => {
           facebook: customer.facebook || "",
           twitter: customer.twitter || "",
           opening_hours: (customer.opening_hours as OpeningHours) || defaultOpeningHours,
+          gallery_images: ((customer as any).gallery_images as string[]) || [],
         };
         initialFormDataRef.current = loadedFormData;
         // Restore stamp settings
