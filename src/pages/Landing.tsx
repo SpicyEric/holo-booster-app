@@ -384,7 +384,9 @@ const Landing = () => {
       </section>
 
       {/* ═══════ REWARD WHEEL ═══════ */}
-      <RewardWheel />
+      <div id="features">
+        <RewardWheel />
+      </div>
 
       {/* ═══════ REFERRAL SECTION ═══════ */}
       <ReferralSection />
