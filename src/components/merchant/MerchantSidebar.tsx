@@ -52,11 +52,11 @@ const NAV_GROUPS: NavGroup[] = [
         icon: Megaphone,
         subItems: [
           { tab: "praemien", label: "Prämien", icon: Gift },
-          { tab: "boost", label: "Neukunden", icon: Rocket },
           { tab: "referral", label: "Empfehlungen", icon: UserPlus },
-          { tab: "reviews", label: "Bewertungen", icon: Star },
+          { tab: "boost", label: "Neukunden", icon: Rocket },
           { tab: "messages", label: "Nachrichten", icon: MessageSquare },
           { tab: "automations", label: "Automationen", icon: Zap },
+          { tab: "reviews", label: "Bewertungen", icon: Star },
         ],
       },
     ],

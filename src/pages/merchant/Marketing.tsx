@@ -557,19 +557,6 @@ const Marketing = () => {
                 </CardContent>
               </Card>
 
-              {/* Right column: Info row + Example Rewards */}
-              <div className="space-y-6">
-                {/* Stamp overview + Tips row */}
-                {/* Example Rewards Panel */}
-                <RewardSuggestionsPanel
-                  merchantIndustry={merchantIndustry}
-                  onSelectReward={(title) => {
-                    setEditingReward(null);
-                    setRewardForm({ title, description: '', points_required: 10, image_url: '' });
-                    setShowRewardDialog(true);
-                  }}
-                />
-              </div>
             </div>
           </TabsContent>
 
@@ -583,7 +570,6 @@ const Marketing = () => {
                   <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center"><UserPlus className="h-5 w-5 text-primary" /></div>
                   <div>
                     <CardTitle className="text-lg font-semibold">Neukundenprämie</CardTitle>
-                    <CardDescription>Gewinne neue Kunden mit einem attraktiven Willkommensangebot</CardDescription>
                   </div>
                 </div>
                 <Button variant={newCustomerOffer ? "outline" : "default"} onClick={() => { if (newCustomerOffer) { setNcoForm({ title: newCustomerOffer.title, description: newCustomerOffer.description || '', is_active: newCustomerOffer.is_active ?? true, image_url: newCustomerOffer.image_url || '' }); } else { setNcoForm({ title: '', description: '', is_active: true, image_url: '' }); } setShowNcoDialog(true); }} className="rounded-xl">
@@ -591,15 +577,6 @@ const Marketing = () => {
                 </Button>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="p-4 bg-primary/5 rounded-xl border border-primary/10 text-sm text-muted-foreground space-y-2">
-                  <p className="font-medium text-foreground">💡 Was ist die Neukundenprämie?</p>
-                  <p>Die Neukundenprämie wird nur Kunden angezeigt, die bei dir <strong>noch keine Punkte gesammelt haben</strong>. Sobald ein Kunde seine ersten Punkte bei dir sammelt, verschwindet das Angebot automatisch.</p>
-                  <p>Das macht sie perfekt für zwei Dinge:</p>
-                  <ul className="list-disc pl-5 space-y-1">
-                    <li><strong>Andere eloyo-Nutzer ins Geschäft holen</strong> – dein Angebot erscheint bei Nutzern in deiner Umgebung, die dich noch nicht kennen.</li>
-                    <li><strong>Bestehende Laufkundschaft digital aktivieren</strong> – biete deinen Stammkunden einen Grund, sich die App herunterzuladen und beim nächsten Besuch direkt einzulösen.</li>
-                  </ul>
-                </div>
                 {newCustomerOffer ? (
                   <div className="flex items-center justify-between p-4 bg-card rounded-xl border border-border/30">
                     <div className="flex items-center gap-3">
@@ -788,8 +765,7 @@ const Marketing = () => {
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center"><Star className="w-6 h-6 text-amber-600 fill-amber-500" /></div>
                   <div>
-                    <CardTitle className="text-lg font-semibold">Bewertungs-Bonus</CardTitle>
-                    <CardDescription>Belohne Kunden mit Bonuspunkten für eine Google-Bewertung – mehr Bewertungen = mehr Sichtbarkeit</CardDescription>
+                    <CardTitle className="text-lg font-semibold">Belohne Kunden mit Bonuspunkten für eine Google-Bewertung</CardTitle>
                   </div>
                 </div>
               </CardHeader>
@@ -805,7 +781,6 @@ const Marketing = () => {
                   <>
                     <div className="p-4 bg-card rounded-xl border border-border/30 space-y-3">
                       <Label className="font-medium">Google-Bewertungslink</Label>
-                      <p className="text-sm text-muted-foreground">Wird nach dem Stempeln angezeigt, damit Kunden dich direkt bei Google bewerten können.</p>
                       <div className="flex gap-2">
                         <div className="relative flex-1">
                           <Star className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-amber-500" />
@@ -924,8 +899,7 @@ const Marketing = () => {
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-xl bg-purple-100 flex items-center justify-center"><Zap className="h-5 w-5 text-purple-600" /></div>
                   <div>
-                    <CardTitle className="text-lg font-semibold">Automatisierungen</CardTitle>
-                    <CardDescription>Automatische Nachrichten und Geschenke an deine Kunden</CardDescription>
+                    <CardTitle className="text-lg font-semibold">Automatische Nachrichten und Geschenke an deine Kunden</CardTitle>
                   </div>
                 </div>
               </CardHeader>
@@ -1184,7 +1158,7 @@ const Marketing = () => {
               <div>
                 <Label>Beschreibung</Label>
                 <div className="mt-1">
-                  <RichTextEditor value={ncoForm.description} onChange={v => setNcoForm({...ncoForm, description: v})} placeholder="Details zum Angebot..." rows={2} />
+                  <RichTextEditor value={ncoForm.description} onChange={v => setNcoForm({...ncoForm, description: v})} placeholder="z.B. nur zu einer Bestellung ab 10 € / nur in Verbindung mit einem Haarschnitt / ein Goodie pro Besuch" rows={2} />
                 </div>
               </div>
               <div>
