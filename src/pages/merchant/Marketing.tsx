@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,7 +11,7 @@ import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { 
   Loader2, Plus, MessageSquare, Gift, Send, Users, Clock, UserPlus, Zap, Cake, Save, 
   ChevronDown, Rocket, CheckCircle2, Timer, Star, ExternalLink, Copy, Bot, Megaphone,
-  Edit2, Trash2, Upload, Coins, Sparkles
+  Edit2, Trash2, Upload, Coins, Sparkles, Smartphone, ArrowRight
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -57,6 +57,7 @@ const SEGMENT_OPTIONS = [
 
 const Marketing = () => {
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [customerId, setCustomerId] = useState<string | null>(null);
   const [merchantDisplayName, setMerchantDisplayName] = useState('');
@@ -552,6 +553,28 @@ const Marketing = () => {
                     ))}
                   </div>
                 )}
+              </CardContent>
+            </Card>
+
+            {/* Sprung zur Live-Vorschau in Mein Geschäft → System */}
+            <Card className="rounded-2xl shadow-sm border-0 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent">
+              <CardContent className="p-6 flex flex-col items-center text-center gap-3">
+                <div className="w-12 h-12 rounded-2xl bg-primary/15 flex items-center justify-center">
+                  <Smartphone className="h-6 w-6 text-primary" />
+                </div>
+                <div>
+                  <p className="font-semibold text-foreground">So sehen deine Kunden es in der App</p>
+                  <p className="text-sm text-muted-foreground">Schau dir die Live-Vorschau deines Geschäfts an</p>
+                </div>
+                <Button
+                  onClick={() => navigate('/kunde/mein-geschaeft?tab=stempel')}
+                  className="rounded-xl gap-2"
+                  size="lg"
+                >
+                  <Smartphone className="h-4 w-4" />
+                  Zur Vorschau
+                  <ArrowRight className="h-4 w-4" />
+                </Button>
               </CardContent>
             </Card>
           </TabsContent>

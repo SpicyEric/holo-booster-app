@@ -16,8 +16,9 @@ import {
 import { toast } from "sonner";
 import {
   Upload, Save, MapPin, Phone, Globe, Instagram, Facebook, Twitter,
-  Clock, Store, Gift, Info, UserPlus, Plus, Trash2, Edit2, Loader2, Package, ImageIcon, BarChart3, Stamp
+  Clock, Store, Gift, Info, UserPlus, Plus, Trash2, Edit2, Loader2, Package, ImageIcon, BarChart3, Stamp, ArrowRight
 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { Switch } from "@/components/ui/switch";
 import { Slider } from "@/components/ui/slider";
 import {
@@ -129,6 +130,7 @@ const MeinGeschaeft = () => {
   const [uploadingCover, setUploadingCover] = useState(false);
   const [customerId, setCustomerId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState("info");
+  const navigate = useNavigate();
   const [scrollTarget, setScrollTarget] = useState<'description' | 'hours' | 'contact' | 'bottom' | null>(null);
   
   // Business Info
@@ -1180,8 +1182,30 @@ const MeinGeschaeft = () => {
                 </Card>
               </TabsContent>
 
-               {/* Stempel Tab */}
+                {/* Stempel Tab */}
               <TabsContent value="stempel" className="space-y-6">
+                {/* Schnellzugriff: Zu deinen Prämien */}
+                <Card className="rounded-2xl shadow-sm border-0 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent">
+                  <CardContent className="p-6 flex flex-col items-center text-center gap-3">
+                    <div className="w-12 h-12 rounded-2xl bg-primary/15 flex items-center justify-center">
+                      <Gift className="h-6 w-6 text-primary" />
+                    </div>
+                    <div>
+                      <p className="font-semibold text-foreground">Verwalte deine Prämien</p>
+                      <p className="text-sm text-muted-foreground">Lege fest, wofür Kunden ihre Punkte einlösen können</p>
+                    </div>
+                    <Button
+                      onClick={() => navigate('/kunde/marketing?tab=praemien')}
+                      className="rounded-xl gap-2"
+                      size="lg"
+                    >
+                      <Gift className="h-4 w-4" />
+                      Zu deinen Prämien
+                      <ArrowRight className="h-4 w-4" />
+                    </Button>
+                  </CardContent>
+                </Card>
+
                 {/* Automatisches Stempelsystem */}
                 <Card className="rounded-2xl shadow-sm border-0 bg-muted/40">
                   <CardHeader className="pb-4">
