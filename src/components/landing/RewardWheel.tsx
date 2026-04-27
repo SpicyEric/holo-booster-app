@@ -70,8 +70,7 @@ const RewardWheel = () => {
           </h3>
           <p className="text-[#4a4455] text-lg leading-relaxed">
             Kunden wählen selbst, was sie wollen. Das fühlt sich persönlicher an
-            als ein automatischer Gratiskaffee nach dem zehnten Besuch. Wer wählen
-            kann, kommt öfter wieder.
+            als ein Gratiskaffee nach dem zehnten Besuch.
           </p>
         </div>
       </div>
