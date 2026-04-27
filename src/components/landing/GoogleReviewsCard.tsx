@@ -50,6 +50,7 @@ const GoogleReviewsCard = () => {
   const [, force] = useState(0);
   const nextIdRef = useRef(3);
   const patternIndexRef = useRef(0);
+  const lastStarsRef = useRef<4 | 5>(5);
 
   // Insert neue Bewertung gemäß DELAY_PATTERN (loopt durch)
   useEffect(() => {
@@ -59,7 +60,8 @@ const GoogleReviewsCard = () => {
       const delay = DELAY_PATTERN[patternIndexRef.current % DELAY_PATTERN.length];
       patternIndexRef.current += 1;
       timeoutId = window.setTimeout(() => {
-        const stars = STAR_POOL[Math.floor(Math.random() * STAR_POOL.length)];
+        const stars = pickStars(lastStarsRef.current);
+        lastStarsRef.current = stars;
         setReviews((prev) => {
           const next: Review = { id: nextIdRef.current++, stars, age: 0 };
           // Maximal 4 anzeigen, älteste fliegt raus
