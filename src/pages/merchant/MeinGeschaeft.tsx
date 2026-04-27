@@ -1041,7 +1041,7 @@ const MeinGeschaeft = () => {
                 </Card>
 
                 {/* Spalte links: Beschreibung + Kontakt */}
-                <div className="space-y-4">
+                <div className="space-y-4 h-full flex flex-col">
                 {/* Section 3: Beschreibung */}
                 <Card className="rounded-xl border border-border/60 bg-white p-5 shadow-sm">
                   <div className="flex items-center justify-between mb-3">
