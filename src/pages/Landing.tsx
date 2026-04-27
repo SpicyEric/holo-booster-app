@@ -174,15 +174,6 @@ const HeroMockupWithNotifications = () => {
 
 const Landing = () => {
   const navigate = useNavigate();
-  const [contactImageOffsetY, setContactImageOffsetY] = useState(20);
-  const [contactImageCopied, setContactImageCopied] = useState(false);
-
-  const copyContactImageValues = async () => {
-    const values = `CTA Foto Werte:\noffsetY: ${contactImageOffsetY}px\nposition: absolute; bottom: 0; left: 0;\nwidth: mobile 160px / desktop 192px`;
-    await navigator.clipboard.writeText(values);
-    setContactImageCopied(true);
-    window.setTimeout(() => setContactImageCopied(false), 1600);
-  };
 
   // Auto-cycling "hover" highlight for the 3 step cards (1 → 2 → 3 → off → repeat)
   const [activeStep, setActiveStep] = useState<number>(0);
