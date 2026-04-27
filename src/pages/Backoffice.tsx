@@ -9,8 +9,16 @@ import {
   Cake,
   HeartHandshake,
   Check,
+  Sparkles,
+  Trophy,
+  Zap,
+  Target,
+  CheckCircle2,
+  Circle,
+  UserPlus,
+  ChevronRight,
+  Star,
 } from 'lucide-react';
-import dashboardImg from '@/assets/backoffice-dashboard.png';
 import transactionsImg from '@/assets/backoffice-transactions.png';
 import eloyoAppMockup from '@/assets/eloyo-app-mockup.jpg';
 
