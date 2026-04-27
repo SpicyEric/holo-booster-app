@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import {
   LayoutDashboard, Store, Users, Megaphone, Settings,
   LogOut, ChevronLeft, ChevronDown, Menu, X, Building2,
-  Gift, Rocket, UserPlus, Star, MessageSquare, Zap,
+  Gift, Rocket, UserPlus, Star, MessageSquare, Zap, Info, Package,
 } from "lucide-react";
 import eloyoLogo from "@/assets/eloyo-logo.png";
 import { cn } from "@/lib/utils";
@@ -34,7 +34,15 @@ const NAV_GROUPS: NavGroup[] = [
     label: "BUSINESS",
     items: [
       { path: "/kunde", label: "Dashboard", icon: LayoutDashboard },
-      { path: "/kunde/mein-geschaeft", label: "Mein Geschäft", icon: Store },
+      {
+        path: "/kunde/mein-geschaeft",
+        label: "Mein Geschäft",
+        icon: Store,
+        subItems: [
+          { tab: "info", label: "Profil", icon: Info },
+          { tab: "stempel", label: "System", icon: Package },
+        ],
+      },
     ],
   },
   {
