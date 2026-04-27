@@ -190,15 +190,7 @@ const FeatureExplorer = () => {
   return (
     <section className="relative z-10 py-24 px-6 bg-gradient-to-b from-[#faf8ff] via-[#f4f0ff] to-[#faf8ff]">
       <div className="max-w-5xl mx-auto">
-        <div className="text-center mb-12">
-          <h2 className="font-display text-4xl md:text-5xl font-bold text-[#1a1b21] mb-4">
-            Alles was dein Laden braucht
-          </h2>
-          <p className="text-[#4a4455] text-lg md:text-xl max-w-2xl mx-auto">
-            Sechs Werkzeuge, ein System. Klick dich durch — wir zeigen dir, wie Eloyo dein Geschäft auf das nächste Level bringt.
-          </p>
-        </div>
-
+        {/* Headline removed — replaced by section above */}
         {/* Tabs */}
         <div className="mb-8 -mx-6 px-6 overflow-x-auto scrollbar-hide">
           <div className="flex gap-2 md:gap-3 justify-start md:justify-center min-w-min pb-2">
