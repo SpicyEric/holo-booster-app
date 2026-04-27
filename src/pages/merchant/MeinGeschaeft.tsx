@@ -913,6 +913,7 @@ const MeinGeschaeft = () => {
 
               {/* Info Tab */}
               <TabsContent value="info" className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
                 {/* Section 1: Bilder — kompakt */}
                 <Card className="rounded-xl border border-border/60 bg-white p-5 shadow-sm">
                   <div className="flex items-center gap-2 mb-4">
