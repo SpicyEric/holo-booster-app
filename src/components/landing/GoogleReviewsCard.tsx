@@ -111,7 +111,7 @@ const GoogleReviewsCard = () => {
         </div>
 
         {/* Live review feed */}
-        <div className="space-y-3 min-h-[224px]">
+        <div className="space-y-3 h-[260px] overflow-hidden">
           <AnimatePresence initial={false}>
             {reviews.map((r) => (
               <motion.div
