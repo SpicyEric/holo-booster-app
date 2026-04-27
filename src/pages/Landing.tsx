@@ -419,67 +419,6 @@ const Landing = () => {
           </div>
         </motion.div>
       </section>
-
-      {/* ═══════ BENTO GRID FEATURES ═══════ */}
-      <section className="relative z-10 py-24 px-6 bg-[#faf8ff]">
-        <motion.div
-          variants={staggerContainer}
-          initial="hidden"
-          whileInView="visible"
-          viewport={viewportConfig}
-          className="max-w-7xl mx-auto"
-        >
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Die Eloyo-App */}
-            <motion.div
-              variants={glassReveal}
-              {...cardHover}
-              className="bg-white/80 backdrop-blur-2xl rounded-[2rem] p-8 relative overflow-hidden group border border-[#ccc3d8]/30 cursor-default transition-shadow hover:shadow-[0_20px_60px_rgba(124,58,237,0.15)]"
-            >
-              <div className="relative z-10">
-                <span className="text-3xl mb-4 block">📲</span>
-                <h3 className="text-2xl font-bold mb-2 font-headline">Die Eloyo-App</h3>
-                <p className="text-[#4a4455]">Deine Kunden laden die kostenlose Eloyo-App einmal herunter – einmal eingerichtet, sammeln sie automatisch Punkte bei jedem Besuch.</p>
-              </div>
-              <div className="absolute bottom-[-20px] right-[-20px] w-48 h-48 bg-gradient-to-br from-primary to-blue-500 opacity-10 rounded-full blur-3xl group-hover:scale-150 transition-transform" />
-            </motion.div>
-
-            {/* Flexible Belohnungen */}
-            <motion.div
-              variants={glassReveal}
-              {...cardHover}
-              className="bg-white/80 backdrop-blur-2xl rounded-[2rem] p-8 border border-[#ccc3d8]/30 cursor-default transition-shadow hover:shadow-[0_20px_60px_rgba(124,58,237,0.15)]"
-            >
-              <span className="text-3xl mb-4 block">🎁</span>
-              <h3 className="text-2xl font-bold mb-2 font-headline">Flexible Belohnungen</h3>
-              <p className="text-[#4a4455]">Bestimme selbst, was deine Kunden für ihre Treue bekommen – vom kostenlosen Kaffee bis zum exklusiven Rabatt.</p>
-            </motion.div>
-
-            {/* Automationen */}
-            <motion.div
-              variants={glassReveal}
-              {...cardHover}
-              className="bg-white/80 backdrop-blur-2xl rounded-[2rem] p-8 border border-[#ccc3d8]/30 cursor-default transition-shadow hover:shadow-[0_20px_60px_rgba(124,58,237,0.15)]"
-            >
-              <span className="text-3xl mb-4 block">⚙️</span>
-              <h3 className="text-2xl font-bold mb-2 font-headline">Automationen</h3>
-              <p className="text-[#4a4455]">Einmal eingerichtet, erhalten deine Kunden zum Geburtstag automatisch einen persönlichen Gruß inklusive Geburtstagsangebot – ganz ohne Aufwand.</p>
-            </motion.div>
-
-            {/* Neukundenprämien */}
-            <motion.div
-              variants={glassReveal}
-              {...cardHover}
-              className="bg-white/80 backdrop-blur-2xl rounded-[2rem] p-8 border border-[#ccc3d8]/30 cursor-default transition-shadow hover:shadow-[0_20px_60px_rgba(124,58,237,0.15)]"
-            >
-              <span className="text-3xl mb-4 block">🎯</span>
-              <h3 className="text-2xl font-bold mb-2 font-headline">Neukundenprämien</h3>
-              <p className="text-[#4a4455]">Richte exklusive Willkommensangebote ein, die gezielt Kunden ansprechen, die zum ersten Mal in dein Geschäft kommen.</p>
-            </motion.div>
-          </div>
-        </motion.div>
-      </section>
-
       {/* ═══════ GOOGLE REVIEWS ═══════ */}
       <section className="relative z-10 py-24 px-6">
         <motion.div
