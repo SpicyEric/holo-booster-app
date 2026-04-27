@@ -181,7 +181,7 @@ export default function KundeDashboard() {
         description: "Neue Kunden mit einem Willkommensangebot gewinnen",
         tooltip: "Erstelle eine Neukundenprämie, die nur Nutzern angezeigt wird, die noch keine Punkte bei dir gesammelt haben – perfekt, um neue Kunden ins Geschäft zu holen.",
         completed: false,
-        path: "/kunde/marketing?tab=neukunden",
+        path: "/kunde/marketing?tab=boost",
         icon: UserPlus,
       },
     ];
