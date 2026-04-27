@@ -422,7 +422,7 @@ const Landing = () => {
               Der direkteste Kanal zu deinen Kunden
             </h3>
             <p className="text-[#4a4455] text-lg leading-relaxed">
-              E-Mails werden ignoriert, SMS kosten Geld. Push-Nachrichten erscheinen direkt auf dem Sperrbildschirm – selbst wenn niemand die App öffnet. Der Kanal, den bisher nur große Konzerne hatten. Ab jetzt auch du.
+              E-Mails werden ignoriert, SMS kosten Geld. Push-Nachrichten erscheinen direkt auf dem Sperrbildschirm – selbst wenn niemand die App öffnet. Neue Angebote, freie Termine, neue Produkte, Sonderaktionen – alles geht.
             </p>
           </div>
         </div>
