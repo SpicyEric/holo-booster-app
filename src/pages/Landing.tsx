@@ -375,7 +375,7 @@ const Landing = () => {
       </section>
 
       {/* ═══════ NETZWERK ═══════ */}
-      <section className="relative z-10 py-24 px-6 bg-[#f4f3fb]">
+      <section className="relative z-10 py-24 px-6 bg-[#faf8ff]">
         <motion.div
           variants={staggerContainer}
           initial="hidden"
