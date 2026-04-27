@@ -202,7 +202,7 @@ const Marketing = () => {
       const midPoints = chipMap.blue;
       setMiddleStampPoints(midPoints);
 
-      const { data: cd } = await supabase.from('customers').select('google_review_url, google_review_points_enabled, google_review_points_value, birthday_enabled, birthday_message, birthday_bonus_points, birthday_gift_type, birthday_offer_title, birthday_offer_description, industry, avg_revenue, company_name, name, referral_enabled, referral_inviter_points, referral_invitee_points').eq('id', assignment.customer_id).maybeSingle();
+      const { data: cd } = await supabase.from('customers').select('google_review_url, google_review_points_enabled, google_review_points_value, birthday_enabled, birthday_message, birthday_bonus_points, birthday_gift_type, birthday_offer_title, birthday_offer_description, industry, avg_revenue, company_name, name, referral_enabled, referral_inviter_points, referral_invitee_points, winback_enabled, winback_message, winback_inactivity_days, winback_gift_type, winback_bonus_points, winback_offer_title, winback_offer_description').eq('id', assignment.customer_id).maybeSingle();
       if (cd) {
         setGoogleReviewUrl(cd.google_review_url || "");
         setReviewPointsEnabled(cd.google_review_points_enabled || false);
@@ -222,6 +222,14 @@ const Marketing = () => {
         setReferralEnabled((cd as any).referral_enabled ?? true);
         setReferralInviterPoints((cd as any).referral_inviter_points ?? 20);
         setReferralInviteePoints((cd as any).referral_invitee_points ?? 1);
+        // Winback settings
+        setWinbackEnabled((cd as any).winback_enabled ?? false);
+        if ((cd as any).winback_message) setWinbackMessage((cd as any).winback_message);
+        setWinbackInactivityDays((cd as any).winback_inactivity_days ?? 90);
+        setWinbackGiftType(((cd as any).winback_gift_type as 'none' | 'points' | 'offer') || 'none');
+        setWinbackBonusPoints((cd as any).winback_bonus_points ?? (midPoints ?? 5));
+        setWinbackOfferTitle((cd as any).winback_offer_title || '');
+        setWinbackOfferDescription((cd as any).winback_offer_description || '');
       }
 
       // Referral statistics — nur tatsächlich verschickte Einladungen zählen
