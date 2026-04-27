@@ -19,9 +19,19 @@ import {
   ChevronRight,
   Star,
 } from 'lucide-react';
-import transactionsImg from '@/assets/backoffice-transactions.png';
 import eloyoAppMockup from '@/assets/eloyo-app-mockup.jpg';
 import CountUp from '@/components/CountUp';
+import {
+  AreaChart,
+  Area,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  ResponsiveContainer,
+  Clock,
+} from 'recharts';
+import { Clock as ClockIcon } from 'lucide-react';
 
 /* ─── Apple-style cubic-bezier ─── */
 const appleEase = [0.16, 1, 0.3, 1] as const;
