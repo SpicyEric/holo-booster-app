@@ -18,7 +18,7 @@ import howItWorksStamp from '@/assets/howitworks/stamp.png';
 import howItWorksPresent from '@/assets/howitworks/present.png';
 import howItWorksReferal from '@/assets/howitworks/referal.png';
 import { useEffect, useState } from 'react';
-import FeatureExplorer from '@/components/landing/FeatureExplorer';
+
 import RewardWheel from '@/components/landing/RewardWheel';
 import ReferralSection from '@/components/landing/ReferralSection';
 import GoogleReviewsCard from '@/components/landing/GoogleReviewsCard';
@@ -260,7 +260,7 @@ const Landing = () => {
           <motion.div variants={glassReveal} className="text-left">
             <div className="inline-flex items-center gap-2 bg-primary/10 text-primary px-4 py-1.5 rounded-full text-sm font-bold mb-6">
               <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-              Digitales Stempelsystem 2.0
+              Stempelkarte 2.0
             </div>
             <RotatingHeadline />
             <p className="text-xl text-[#4a4455] leading-relaxed mb-10 max-w-xl">
@@ -384,7 +384,9 @@ const Landing = () => {
       </section>
 
       {/* ═══════ REWARD WHEEL ═══════ */}
-      <RewardWheel />
+      <div id="features">
+        <RewardWheel />
+      </div>
 
       {/* ═══════ REFERRAL SECTION ═══════ */}
       <ReferralSection />
@@ -422,7 +424,7 @@ const Landing = () => {
               Der direkteste Kanal zu deinen Kunden
             </h3>
             <p className="text-[#4a4455] text-lg leading-relaxed">
-              E-Mails werden ignoriert, SMS kosten Geld. Push-Nachrichten erscheinen direkt auf dem Sperrbildschirm – selbst wenn niemand die App öffnet. Der Kanal, den bisher nur große Konzerne hatten. Ab jetzt auch du.
+              E-Mails werden ignoriert, SMS kosten Geld. Push-Nachrichten erscheinen direkt auf dem Sperrbildschirm – selbst wenn niemand die App öffnet. Neue Angebote, freie Termine, neue Produkte, Sonderaktionen – alles geht.
             </p>
           </div>
         </div>
@@ -437,10 +439,10 @@ const Landing = () => {
               Google-Bewertungen
             </span>
             <h3 className="font-headline text-3xl md:text-4xl font-extrabold mt-3 mb-5 leading-tight tracking-[-0.02em] text-[#1a1b21]">
-              Mehr 5-Sterne Google Reviews
+              Mehr Google-Bewertungen, ohne ein Wort zu sagen
             </h3>
             <p className="text-[#4a4455] text-lg leading-relaxed">
-              Zufriedene Stammkunden sind deine besten Botschafter. Eloyo motiviert deine treuesten Fans, eine positive Bewertung bei Google zu hinterlassen und so dein Neukundengeschäft anzukurbeln.
+              Du musst keinen Kunden mehr bitten, dir eine Bewertung zu hinterlassen. Eloyo macht das automatisch für dich.
             </p>
           </div>
 
@@ -449,10 +451,6 @@ const Landing = () => {
             <GoogleReviewsCard />
           </div>
         </div>
-      </section>
-      {/* ═══════ FEATURE EXPLORER (Tabs + Cards) ═══════ */}
-      <section id="features">
-        <FeatureExplorer />
       </section>
 
       {/* ═══════ NETZWERK ═══════ */}
@@ -500,48 +498,6 @@ const Landing = () => {
           </div>
         </motion.div>
       </section>
-      {/* ═══════ GAMIFICATION ═══════ */}
-      <section className="relative z-10 py-24 px-6 bg-[#f4f3fb]">
-        <motion.div
-          variants={staggerContainer}
-          initial="hidden"
-          whileInView="visible"
-          viewport={viewportConfig}
-          className="max-w-7xl mx-auto"
-        >
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
-            <motion.div variants={glassReveal} className="order-2 lg:order-1">
-              <img src={eloyoAppMockup} alt="Eloyo App mit Gamification" className="w-full max-w-md mx-auto h-auto rounded-2xl shadow-2xl" />
-            </motion.div>
-            <motion.div variants={glassReveal} className="space-y-6 order-1 lg:order-2">
-              <h2 className="font-headline text-4xl md:text-5xl font-extrabold leading-tight tracking-[-0.02em]">
-                Deine Kunden kommen <span className="text-primary">von selbst wieder</span>
-              </h2>
-              <p className="text-lg text-[#4a4455]">
-                Vergiss langweilige Stempelkarten, die niemand einlöst. Bei Eloyo entscheiden deine Kunden selbst, wie sie ihre Punkte ausgeben – das schafft echte Motivation und emotionale Bindung.
-              </p>
-              <ul className="space-y-3">
-                {[
-                  'Mehrere Prämien zur Auswahl – der Kunde entscheidet',
-                  'Sichtbarer Fortschritt motiviert zum Wiederkommen',
-                  'Persönliche Belohnungen schaffen emotionale Bindung',
-                  'Punkte können nicht verfallen – maximale Fairness'
-                ].map((point, i) => (
-                  <motion.li
-                    key={i}
-                    variants={glassReveal}
-                    className="flex items-center gap-3"
-                  >
-                    <CheckCircle className="h-5 w-5 text-primary flex-shrink-0" />
-                    <span className="text-[#1a1b21]">{point}</span>
-                  </motion.li>
-                ))}
-              </ul>
-            </motion.div>
-          </div>
-        </motion.div>
-      </section>
-
       {/* ═══════ FINAL CTA ═══════ */}
       <section className="relative z-10 py-10 px-6">
         <div className="max-w-5xl mx-auto">
