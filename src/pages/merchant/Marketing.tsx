@@ -612,6 +612,7 @@ const Marketing = () => {
 
           {/* ========== NEUKUNDEN TAB ========== */}
           <TabsContent value="boost" className="space-y-6 mt-6">
+            <ExplainerCarousel slides={neukundenCards} />
             {/* Neukundenprämie */}
             <Card className="rounded-2xl shadow-sm border border-primary/10 bg-primary/[0.03]">
               <CardHeader className="flex flex-row items-center justify-between pb-4">
@@ -818,6 +819,7 @@ const Marketing = () => {
 
           {/* ========== BEWERTUNGEN TAB ========== */}
           <TabsContent value="reviews" className="space-y-6 mt-6">
+            <ExplainerCarousel slides={bewertungenCards} />
             <Card className="rounded-2xl shadow-sm border border-primary/10 bg-primary/[0.03]">
               <CardHeader className="pb-4">
                 <div className="flex items-center gap-3">
@@ -874,6 +876,7 @@ const Marketing = () => {
 
           {/* ========== NACHRICHTEN TAB ========== */}
            <TabsContent value="messages" className="space-y-6 mt-6">
+            <ExplainerCarousel slides={nachrichtenCards} />
             {/* Push Limit Banner */}
             {!pushLimit.loading && (
               <div className={`p-4 rounded-2xl border ${pushLimit.isLimitReached ? 'bg-destructive/5 border-destructive/20' : 'bg-muted/30 border-border/50'}`}>
