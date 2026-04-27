@@ -518,7 +518,7 @@ const Landing = () => {
                 src={contactPerson}
                 alt="Eloyo Geschäftsinhaber"
                 className="absolute left-0 bottom-0 w-40 sm:w-48 h-auto object-contain pointer-events-none select-none"
-                style={{ transform: `translateY(${contactImageOffsetY}px)`, maxHeight: 'none' }}
+                style={{ transform: 'translateY(32px)', maxHeight: 'none' }}
               />
             </div>
 
