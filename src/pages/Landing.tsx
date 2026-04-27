@@ -16,6 +16,53 @@ import contactPerson from '@/assets/contact-person.png';
 import contactCtaButton from '@/assets/contact-cta-button.png';
 import { useEffect, useState } from 'react';
 import FeatureExplorer from '@/components/landing/FeatureExplorer';
+import SplitText from '@/components/ui/split-text';
+
+/* ─── Rotating animated headline ─── */
+const ROTATING_HEADLINES = [
+  'Deine Stammkunden bringen dir neue Kunden — automatisch.',
+  'Schreib deinen Kunden direkt aufs Handy.',
+  'Verwandle jeden Besuch in echte Treue.',
+];
+
+const RotatingHeadline = () => {
+  const [index, setIndex] = useState(0);
+  const [visible, setVisible] = useState(true);
+
+  useEffect(() => {
+    const fadeOutTimer = setTimeout(() => setVisible(false), 4000);
+    const advanceTimer = setTimeout(() => {
+      setIndex((prev) => (prev + 1) % ROTATING_HEADLINES.length);
+      setVisible(true);
+    }, 4500);
+    return () => {
+      clearTimeout(fadeOutTimer);
+      clearTimeout(advanceTimer);
+    };
+  }, [index]);
+
+  return (
+    <h1 className="font-headline text-5xl md:text-7xl font-extrabold text-[#1a1b21] leading-[1.1] mb-6 tracking-[-0.02em] min-h-[2.4em]">
+      <motion.span
+        key={index}
+        initial={{ opacity: 1 }}
+        animate={{ opacity: visible ? 1 : 0 }}
+        transition={{ duration: 0.4, ease: 'easeOut' }}
+        className="inline-block"
+      >
+        <SplitText
+          key={`split-${index}`}
+          text={ROTATING_HEADLINES[index]}
+          splitType="words"
+          from={{ opacity: 0, y: 30 }}
+          to={{ opacity: 1, y: 0 }}
+          duration={0.8}
+          delay={80}
+        />
+      </motion.span>
+    </h1>
+  );
+};
 
 /* ─── Apple-style cubic-bezier ─── */
 const appleEase = [0.16, 1, 0.3, 1] as const;
