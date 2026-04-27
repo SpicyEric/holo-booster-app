@@ -2,7 +2,7 @@ import referralAnimation from "@/assets/referral-animation.mp4";
 
 const ReferralSection = () => {
   return (
-    <section className="relative z-10 py-20 px-6 bg-[#faf8ff]">
+    <section className="relative z-10 py-20 px-6 bg-white border-t border-b border-[#ece6ff]">
       <div className="max-w-6xl mx-auto grid md:grid-cols-2 gap-10 lg:gap-16 items-center">
         {/* Text links */}
         <div className="text-left order-2 md:order-1">
@@ -18,27 +18,18 @@ const ReferralSection = () => {
           </p>
         </div>
 
-        {/* Video rechts */}
+        {/* Video rechts — ohne Rahmen, transparent wirkend */}
         <div className="flex justify-center md:justify-end order-1 md:order-2">
-          <div
-            className="relative overflow-hidden rounded-[2rem] bg-white border border-[#e5dfff]"
-            style={{
-              width: "100%",
-              maxWidth: "380px",
-              aspectRatio: "1 / 1",
-              boxShadow: "0 12px 40px rgba(82, 39, 255, 0.15)",
-            }}
-          >
-            <video
-              src={referralAnimation}
-              autoPlay
-              loop
-              muted
-              playsInline
-              preload="auto"
-              className="w-full h-full object-cover"
-            />
-          </div>
+          <video
+            src={referralAnimation}
+            autoPlay
+            loop
+            muted
+            playsInline
+            preload="auto"
+            className="w-full max-w-[380px] h-auto block"
+            style={{ background: "transparent" }}
+          />
         </div>
       </div>
     </section>
