@@ -555,6 +555,28 @@ const Marketing = () => {
                 )}
               </CardContent>
             </Card>
+
+            {/* Sprung zur Live-Vorschau in Mein Geschäft → System */}
+            <Card className="rounded-2xl shadow-sm border-0 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent">
+              <CardContent className="p-6 flex flex-col items-center text-center gap-3">
+                <div className="w-12 h-12 rounded-2xl bg-primary/15 flex items-center justify-center">
+                  <Smartphone className="h-6 w-6 text-primary" />
+                </div>
+                <div>
+                  <p className="font-semibold text-foreground">So sehen deine Kunden es in der App</p>
+                  <p className="text-sm text-muted-foreground">Schau dir die Live-Vorschau deines Geschäfts an</p>
+                </div>
+                <Button
+                  onClick={() => navigate('/kunde/mein-geschaeft?tab=stempel')}
+                  className="rounded-xl gap-2"
+                  size="lg"
+                >
+                  <Smartphone className="h-4 w-4" />
+                  Zur Vorschau
+                  <ArrowRight className="h-4 w-4" />
+                </Button>
+              </CardContent>
+            </Card>
           </TabsContent>
 
           {/* ========== NEUKUNDEN TAB ========== */}
