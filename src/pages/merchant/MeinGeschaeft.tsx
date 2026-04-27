@@ -882,10 +882,13 @@ const MeinGeschaeft = () => {
   return (
     <div className="min-h-screen">
       <div className="max-w-7xl mx-auto p-6 sm:p-8">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Phone Preview */}
-          <div className="lg:col-span-1 order-2 lg:order-1">
-            <div className="sticky top-24">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+          {/* Phone Preview - sticky left column (35%) */}
+          <div className="lg:col-span-4 order-2 lg:order-1">
+            <div className="sticky top-6">
+              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3 px-1">
+                Live-Vorschau
+              </p>
               <PhoneFrame title="Live-Vorschau">
                 <MerchantPreviewLive 
                   data={{
@@ -912,18 +915,26 @@ const MeinGeschaeft = () => {
                 />
               </PhoneFrame>
               
-              {/* Global Save Button below phone */}
-              {activeTab === 'info' && profileDirty && (
-                <Button onClick={handleSaveInfo} disabled={saving} className="w-full rounded-xl mt-4 animate-pulse" size="lg">
+              {/* Always-visible Save Button */}
+              {activeTab === 'info' && (
+                <Button
+                  onClick={handleSaveInfo}
+                  disabled={saving || !profileDirty}
+                  className={cn(
+                    "w-full rounded-xl mt-4 transition-all",
+                    profileDirty && "animate-pulse shadow-lg shadow-primary/30"
+                  )}
+                  size="lg"
+                >
                   {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
-                  Änderungen speichern
+                  {profileDirty ? "Änderungen speichern" : "Gespeichert"}
                 </Button>
               )}
             </div>
           </div>
 
-          {/* Content */}
-          <div className="lg:col-span-2 order-1 lg:order-2">
+          {/* Content - right column (65%) */}
+          <div className="lg:col-span-8 order-1 lg:order-2">
             <Tabs value={activeTab} onValueChange={handleTabChange}>
               <TabsList className="hidden">
                 <TabsTrigger value="info" />
