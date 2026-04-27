@@ -510,7 +510,8 @@ const Marketing = () => {
         <Tabs value={activeTab} onValueChange={setActiveTab}>
 
           {/* ========== PRÄMIEN TAB ========== */}
-          <TabsContent value="praemien" className="mt-6">
+          <TabsContent value="praemien" className="mt-6 space-y-6">
+            <ExplainerCarousel slides={praemienCards} />
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Left: Active Rewards */}
               <Card className="rounded-2xl shadow-sm border border-primary/10 bg-primary/[0.03]">
