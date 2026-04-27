@@ -89,10 +89,6 @@ const TABS: Tab[] = [
     emoji: "🎯",
     slides: [
       { emoji: "🎯", title: "Warum Prämien besser sind als eine Stempelkarte", text: "Kunden wählen selbst was sie wollen — das fühlt sich persönlicher an als ein automatischer Gratis-Kaffee nach dem zehnten Besuch. Wer wählen kann, kommt öfter wieder." },
-      { emoji: "💫", title: "Die Macht der Auswahl", text: "Mit mindestens 5 Prämien — ideal 9 — ist für jeden Kundentyp etwas dabei. Kunden sparen gezielt auf ihre Lieblingsprämie. Das schafft echte Bindung." },
-      { emoji: "🎁", title: "Die erste kleine Belohnung", text: "Die erste Prämie sollte nach etwa 5 Besuchen erreichbar sein. Klein aber erstrebenswert — das motiviert zum Wiederkommen, bevor die Gewohnheit entsteht." },
-      { emoji: "⭐", title: "Der Kassenschlager", text: "Eine Gratis-Standardleistung — der Haarschnitt, der Eisbecher, das Frühstück — erreichbar nach etwa 8–10 Besuchen. Das ist die Prämie, auf die alle hinsparen." },
-      { emoji: "🎨", title: "Sei kreativ", text: "Rabatte, Gratis-Produkte, Add-ons, Upgrades — je vielfältiger die Auswahl, desto mehr Spaß macht es, die App zu öffnen und reinzuschauen." },
       { emoji: "🏆", title: "Denk auch an die Treuen", text: "Bau eine große Traumprämie ein — etwas das sich wirklich lohnt drauf zu sparen. Das weckt Long-Term-Denken und macht aus Gelegenheitskunden echte Fans." },
     ],
   },
