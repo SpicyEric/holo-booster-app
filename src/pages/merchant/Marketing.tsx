@@ -28,6 +28,14 @@ import {
 import RichTextEditor from '@/components/merchant/RichTextEditor';
 import RewardSuggestionsPanel from '@/components/merchant/RewardSuggestionsPanel';
 import ReferralExplainerCarousel from '@/components/merchant/ReferralExplainerCarousel';
+import { ExplainerCarousel } from '@/components/merchant/ExplainerCarousel';
+import {
+  praemienCards,
+  neukundenCards,
+  bewertungenCards,
+  nachrichtenCards,
+  automationenCards,
+} from '@/components/merchant/explainerCarouselsData';
 import EmojiPicker from '@/components/EmojiPicker';
 import { cn } from '@/lib/utils';
 import { usePushLimit } from '@/hooks/usePushLimit';
@@ -502,7 +510,8 @@ const Marketing = () => {
         <Tabs value={activeTab} onValueChange={setActiveTab}>
 
           {/* ========== PRÄMIEN TAB ========== */}
-          <TabsContent value="praemien" className="mt-6">
+          <TabsContent value="praemien" className="mt-6 space-y-6">
+            <ExplainerCarousel slides={praemienCards} />
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Left: Active Rewards */}
               <Card className="rounded-2xl shadow-sm border border-primary/10 bg-primary/[0.03]">
@@ -551,44 +560,6 @@ const Marketing = () => {
               {/* Right column: Info row + Example Rewards */}
               <div className="space-y-6">
                 {/* Stamp overview + Tips row */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {/* Stamp Overview Card */}
-                  {stampPoints && (stampPoints.green || stampPoints.blue || stampPoints.red) && (
-                    <Card className="rounded-2xl shadow-sm border border-primary/15 bg-primary/5">
-                      <CardHeader className="pb-3">
-                        <CardTitle className="text-base font-semibold">Dein Stempelsystem</CardTitle>
-                        <CardDescription>
-                          Dein Durchschnittsbon liegt bei <span className="font-medium text-foreground">{avgOrderValue} €</span>
-                        </CardDescription>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="flex flex-wrap items-center gap-2">
-                          {stampPoints.green != null && (
-                            <Badge className="rounded-full text-xs font-medium border-emerald-300 bg-emerald-50 text-emerald-700">Stempel: {stampPoints.green} Pkt.</Badge>
-                          )}
-                          {stampPoints.blue != null && (
-                            <Badge className="rounded-full text-xs font-medium border-blue-300 bg-blue-50 text-blue-700">Stempel: {stampPoints.blue} Pkt.</Badge>
-                          )}
-                          {stampPoints.red != null && (
-                            <Badge className="rounded-full text-xs font-medium border-red-300 bg-red-50 text-red-700">Stempel: {stampPoints.red} Pkt.</Badge>
-                          )}
-                        </div>
-                      </CardContent>
-                    </Card>
-                  )}
-
-                  {/* Tips Card */}
-                  <Card className="rounded-2xl shadow-sm border border-primary/15 bg-primary/5">
-                    <CardHeader className="pb-3">
-                      <CardTitle className="text-base font-semibold">💡 Tipps</CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-2 text-sm text-muted-foreground">
-                      <p>Die <span className="font-medium text-foreground">erste kleine Belohnung</span> sollte bereits nach ca. 5 Besuchen eines Durchschnittskunden erreichbar sein – das motiviert zum Wiederkommen.</p>
-                      <p>Wir empfehlen, mindestens <span className="font-medium text-foreground">9 Prämien</span> anzubieten, damit für jeden Kundentyp etwas dabei ist.</p>
-                    </CardContent>
-                  </Card>
-                </div>
-
                 {/* Example Rewards Panel */}
                 <RewardSuggestionsPanel
                   merchantIndustry={merchantIndustry}
@@ -604,6 +575,7 @@ const Marketing = () => {
 
           {/* ========== NEUKUNDEN TAB ========== */}
           <TabsContent value="boost" className="space-y-6 mt-6">
+            <ExplainerCarousel slides={neukundenCards} />
             {/* Neukundenprämie */}
             <Card className="rounded-2xl shadow-sm border border-primary/10 bg-primary/[0.03]">
               <CardHeader className="flex flex-row items-center justify-between pb-4">
@@ -810,6 +782,7 @@ const Marketing = () => {
 
           {/* ========== BEWERTUNGEN TAB ========== */}
           <TabsContent value="reviews" className="space-y-6 mt-6">
+            <ExplainerCarousel slides={bewertungenCards} />
             <Card className="rounded-2xl shadow-sm border border-primary/10 bg-primary/[0.03]">
               <CardHeader className="pb-4">
                 <div className="flex items-center gap-3">
@@ -866,6 +839,7 @@ const Marketing = () => {
 
           {/* ========== NACHRICHTEN TAB ========== */}
            <TabsContent value="messages" className="space-y-6 mt-6">
+            <ExplainerCarousel slides={nachrichtenCards} />
             {/* Push Limit Banner */}
             {!pushLimit.loading && (
               <div className={`p-4 rounded-2xl border ${pushLimit.isLimitReached ? 'bg-destructive/5 border-destructive/20' : 'bg-muted/30 border-border/50'}`}>
@@ -944,6 +918,7 @@ const Marketing = () => {
 
           {/* ========== AUTOMATIONEN TAB ========== */}
           <TabsContent value="automations" className="space-y-6 mt-6">
+            <ExplainerCarousel slides={automationenCards} />
             <Card className="rounded-2xl shadow-sm border border-border/50 bg-card">
               <CardHeader className="pb-4">
                 <div className="flex items-center gap-3">
