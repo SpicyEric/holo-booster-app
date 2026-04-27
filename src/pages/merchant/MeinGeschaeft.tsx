@@ -879,62 +879,31 @@ const MeinGeschaeft = () => {
     );
   }
 
-  return (
-    <div className="min-h-screen">
-      <div className="max-w-7xl mx-auto p-6 sm:p-8">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-          {/* Phone Preview - sticky left column (35%) */}
-          <div className="lg:col-span-4 order-2 lg:order-1">
-            <div className="sticky top-6">
-              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3 px-1">
-                Live-Vorschau
-              </p>
-              <PhoneFrame title="Live-Vorschau">
-                <MerchantPreviewLive 
-                  data={{
-                    name: formData.name || "Geschäftsname",
-                    description: formData.description,
-                    logo_url: formData.logo_url,
-                    cover_image_url: formData.cover_image_url,
-                    street: formData.street,
-                    house_number: formData.house_number,
-                    postal_code: formData.postal_code,
-                    city: formData.city,
-                    phone: formData.phone,
-                    website: formData.website,
-                    instagram: formData.instagram,
-                    facebook: formData.facebook,
-                    twitter: formData.twitter,
-                    opening_hours: formData.opening_hours,
-                  }}
-                  rewards={rewards}
-                  activeTab={activeTab === 'info' ? 'info' : 'rewards'}
-                  onTabChange={(tab) => setActiveTab(tab === 'info' ? 'info' : 'stempel')}
-                  userPoints={25}
-                  scrollTarget={scrollTarget}
-                />
-              </PhoneFrame>
-              
-              {/* Always-visible Save Button */}
-              {activeTab === 'info' && (
-                <Button
-                  onClick={handleSaveInfo}
-                  disabled={saving || !profileDirty}
-                  className={cn(
-                    "w-full rounded-xl mt-4 transition-all",
-                    profileDirty && "animate-pulse shadow-lg shadow-primary/30"
-                  )}
-                  size="lg"
-                >
-                  {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
-                  {profileDirty ? "Änderungen speichern" : "Gespeichert"}
-                </Button>
-              )}
-            </div>
-          </div>
+  const handleDiscardChanges = () => {
+    if (initialFormDataRef.current) {
+      setFormData(initialFormDataRef.current);
+      toast.info("Änderungen verworfen");
+    }
+  };
 
-          {/* Content - right column (65%) */}
-          <div className="lg:col-span-8 order-1 lg:order-2">
+  const handleDiscardStampChanges = () => {
+    if (initialStampState) {
+      setStampMode(initialStampState.stampMode as 'classic' | 'revenue');
+      setAvgRevenue(initialStampState.avgRevenue);
+      setManualMode(initialStampState.manualMode);
+      setSelectedVariant(initialStampState.selectedVariant as 'balanced' | 'umsatzboost');
+      toast.info("Änderungen verworfen");
+    }
+  };
+
+  const showSaveBar = (activeTab === 'info' && profileDirty) || (activeTab === 'stempel' && stampSettingsDirty);
+
+  return (
+    <div className="min-h-screen pb-24">
+      <div className="max-w-[1400px] mx-auto p-6 sm:p-8">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+          {/* Content - LEFT column (fields) */}
+          <div className="lg:col-span-7 order-2 lg:order-1">
             <Tabs value={activeTab} onValueChange={handleTabChange}>
               <TabsList className="hidden">
                 <TabsTrigger value="info" />
@@ -943,7 +912,7 @@ const MeinGeschaeft = () => {
 
 
               {/* Info Tab */}
-              <TabsContent value="info" className="space-y-5">
+              <TabsContent value="info" className="space-y-4">
                 {/* Section 1: Bilder */}
                 <Card className="rounded-xl border border-border/60 bg-white p-6 shadow-sm">
                   <div className="flex items-center gap-2 mb-5">
