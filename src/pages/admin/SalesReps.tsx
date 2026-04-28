@@ -58,9 +58,25 @@ interface SalesRepAccount {
   total_conversions: number;
   total_commission_cents: number;
   active_boxes: number;
+  // Digital angenommener Vertrag (sign-contract Edge Function)
+  vertrag_version: string | null;
+  vertrag_angenommen_am: string | null;
+  vertrag_pdf_url: string | null;
+  vertrag_ip: string | null;
+  vertrag_user_agent: string | null;
+  vertrag_outdated: boolean | null;
+  vertrag_inaktiv: boolean | null;
 }
 
+// "Digital angenommen" = Vertrag wurde über den Wizard signiert (sign-contract).
+const isDigitallySigned = (rep: SalesRepAccount): boolean =>
+  rep.contract_status === "angenommen" && !!rep.vertrag_angenommen_am;
+
 const getStatusLabel = (rep: SalesRepAccount): { label: string; variant: "default" | "secondary" | "destructive" | "outline" } => {
+  // Digital angenommener Vertrag = aktiv (auch ohne separates activated_at)
+  if (isDigitallySigned(rep) && !rep.vertrag_inaktiv) {
+    return { label: "Aktiv", variant: "default" };
+  }
   if (rep.contract_status === "approved" && rep.is_active && rep.activated_at) {
     return { label: "Aktiv", variant: "default" };
   }
@@ -182,6 +198,13 @@ const SalesReps = () => {
           total_conversions: convMap[sr.user_id] || 0,
           total_commission_cents: commMap[sr.user_id] || 0,
           active_boxes: boxMap[sr.user_id] || 0,
+          vertrag_version: (sr as any).vertrag_version || null,
+          vertrag_angenommen_am: (sr as any).vertrag_angenommen_am || null,
+          vertrag_pdf_url: (sr as any).vertrag_pdf_url || null,
+          vertrag_ip: (sr as any).vertrag_ip || null,
+          vertrag_user_agent: (sr as any).vertrag_user_agent || null,
+          vertrag_outdated: (sr as any).vertrag_outdated ?? null,
+          vertrag_inaktiv: (sr as any).vertrag_inaktiv ?? null,
         };
       });
 
@@ -211,15 +234,27 @@ const SalesReps = () => {
     }
   };
 
-  const downloadContract = async (filePath: string, fileName: string) => {
+  const downloadContract = async (filePath: string, fileName: string, bucket: "sales-rep-contracts" | "vertraege" = "sales-rep-contracts") => {
     try {
       const { data, error } = await supabase.storage
-        .from("sales-rep-contracts")
+        .from(bucket)
         .createSignedUrl(filePath, 60, { download: fileName });
       if (error) throw error;
       if (data?.signedUrl) window.open(data.signedUrl, "_blank");
     } catch (e: any) {
       toast.error("Fehler beim Download: " + e.message);
+    }
+  };
+
+  const viewContract = async (filePath: string, bucket: "sales-rep-contracts" | "vertraege" = "vertraege") => {
+    try {
+      const { data, error } = await supabase.storage
+        .from(bucket)
+        .createSignedUrl(filePath, 60);
+      if (error) throw error;
+      if (data?.signedUrl) window.open(data.signedUrl, "_blank");
+    } catch (e: any) {
+      toast.error("Fehler beim Öffnen: " + e.message);
     }
   };
 
@@ -446,38 +481,80 @@ const SalesReps = () => {
               </div>
             </div>
 
-            {/* Activation Banner */}
-            {selected.contract_status !== "approved" && (
-              <div className={`flex items-start gap-3 p-4 rounded-lg ${
-                canActivate
-                  ? "bg-green-50 border border-green-200"
-                  : "bg-muted/50 border border-border"
-              }`}>
-                {canActivate ? (
-                  <>
-                    <CheckCircle className="h-5 w-5 text-green-600 shrink-0 mt-0.5" />
-                    <div className="flex-1">
-                      <p className="font-medium text-green-700">Alle Verträge bestätigt</p>
-                      <p className="text-sm text-green-600">Account kann jetzt aktiviert werden. Der 90-Tage-Timer startet mit der Aktivierung.</p>
-                    </div>
-                    <Button size="sm" onClick={() => setActivateDialogOpen(true)} className="shrink-0">
-                      <CheckCircle className="w-3.5 h-3.5 mr-1" /> Account aktivieren
+            {/* Activation Banner — Vertrag digital angenommen ODER alter Upload-Flow */}
+            {(() => {
+              const digSigned = isDigitallySigned(selected);
+              const fullyActive = digSigned || (selected.contract_status === "approved" && selected.is_active);
+              if (fullyActive) return null;
+              return (
+                <div className={`flex items-start gap-3 p-4 rounded-lg ${
+                  canActivate
+                    ? "bg-green-50 border border-green-200"
+                    : "bg-muted/50 border border-border"
+                }`}>
+                  {canActivate ? (
+                    <>
+                      <CheckCircle className="h-5 w-5 text-green-600 shrink-0 mt-0.5" />
+                      <div className="flex-1">
+                        <p className="font-medium text-green-700">Alle Verträge bestätigt</p>
+                        <p className="text-sm text-green-600">Account kann jetzt aktiviert werden. Der 90-Tage-Timer startet mit der Aktivierung.</p>
+                      </div>
+                      <Button size="sm" onClick={() => setActivateDialogOpen(true)} className="shrink-0">
+                        <CheckCircle className="w-3.5 h-3.5 mr-1" /> Account aktivieren
+                      </Button>
+                    </>
+                  ) : (
+                    <>
+                      <Clock className="h-5 w-5 text-muted-foreground shrink-0 mt-0.5" />
+                      <div>
+                        <p className="font-medium text-foreground">Vertrag noch nicht angenommen</p>
+                        <p className="text-sm text-muted-foreground">
+                          Der Vertriebspartner hat den Vertrag noch nicht digital im Backoffice angenommen.
+                          Sobald er den Vertrag akzeptiert, ist der Account automatisch aktiv.
+                        </p>
+                      </div>
+                    </>
+                  )}
+                </div>
+              );
+            })()}
+
+            {/* Banner: Aktiv via digitale Annahme */}
+            {isDigitallySigned(selected) && !selected.vertrag_inaktiv && (
+              <div className="flex items-start gap-3 p-4 rounded-lg bg-green-50 border border-green-200">
+                <CheckCircle className="h-5 w-5 text-green-600 shrink-0 mt-0.5" />
+                <div className="flex-1">
+                  <p className="font-medium text-green-700">
+                    Vertrag digital angenommen{selected.vertrag_version ? ` (${selected.vertrag_version})` : ""}
+                  </p>
+                  <p className="text-sm text-green-600">
+                    Angenommen am {fmt(selected.vertrag_angenommen_am)}
+                    {selected.vertrag_ip ? ` · IP: ${selected.vertrag_ip.split(",")[0].trim()}` : ""}
+                  </p>
+                </div>
+                {selected.vertrag_pdf_url && (
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-8 text-xs"
+                      onClick={() => viewContract(selected.vertrag_pdf_url!, "vertraege")}
+                    >
+                      <Eye className="w-3.5 h-3.5 mr-1" /> Ansehen
                     </Button>
-                  </>
-                ) : (
-                  <>
-                    <Clock className="h-5 w-5 text-muted-foreground shrink-0 mt-0.5" />
-                    <div>
-                      <p className="font-medium text-foreground">Account noch nicht aktiviert</p>
-                      <p className="text-sm text-muted-foreground">
-                        {contractUploads.length === 0
-                          ? "Noch kein Vertrag hochgeladen."
-                          : hasUnconfirmedContracts
-                            ? "Es gibt noch unbestätigte Verträge. Bitte zuerst alle Verträge prüfen und bestätigen."
-                            : "Verträge bestätigt — Aktivierung möglich."}
-                      </p>
-                    </div>
-                  </>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-8 text-xs"
+                      onClick={() => downloadContract(
+                        selected.vertrag_pdf_url!,
+                        `Vertriebspartnervertrag_PID-${selected.employee_number || "VP"}_${selected.vertrag_version || ""}.pdf`,
+                        "vertraege"
+                      )}
+                    >
+                      <Download className="w-3.5 h-3.5 mr-1" /> PDF
+                    </Button>
+                  </div>
                 )}
               </div>
             )}
@@ -493,15 +570,62 @@ const SalesReps = () => {
 
             <Separator />
 
-            {/* Contract Uploads */}
-            <Section title="Vertragsdokumente">
-              {loadingContracts ? (
+            {/* Vertragsdokumente — bevorzugt digital, sonst alte Uploads */}
+            <Section title="Vertragsdokument">
+              {isDigitallySigned(selected) && selected.vertrag_pdf_url ? (
+                <div className="flex items-center gap-3 p-3 rounded-lg border bg-green-50/50 border-green-200 mt-2">
+                  <FileText className="h-5 w-5 shrink-0 text-green-600" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium truncate">
+                      Vertriebspartnervertrag {selected.vertrag_version || ""}
+                    </p>
+                    <div className="flex items-center gap-2 text-[11px] text-muted-foreground flex-wrap">
+                      <span className="text-green-600 font-medium">✓ Digital angenommen am {fmt(selected.vertrag_angenommen_am)}</span>
+                      {selected.vertrag_ip && (
+                        <>
+                          <span>·</span>
+                          <span>IP: {selected.vertrag_ip.split(",")[0].trim()}</span>
+                        </>
+                      )}
+                    </div>
+                    {selected.vertrag_user_agent && (
+                      <p className="text-[10px] text-muted-foreground truncate mt-0.5" title={selected.vertrag_user_agent}>
+                        {selected.vertrag_user_agent}
+                      </p>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-7 w-7 p-0"
+                      onClick={() => viewContract(selected.vertrag_pdf_url!, "vertraege")}
+                      title="Ansehen"
+                    >
+                      <Eye className="h-3.5 w-3.5" />
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-7 w-7 p-0"
+                      onClick={() => downloadContract(
+                        selected.vertrag_pdf_url!,
+                        `Vertriebspartnervertrag_PID-${selected.employee_number || "VP"}_${selected.vertrag_version || ""}.pdf`,
+                        "vertraege"
+                      )}
+                      title="Herunterladen"
+                    >
+                      <Download className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+                </div>
+              ) : loadingContracts ? (
                 <div className="flex items-center gap-2 py-4 text-muted-foreground">
                   <Loader2 className="h-4 w-4 animate-spin" />
                   <span className="text-sm">Lade Verträge…</span>
                 </div>
               ) : contractUploads.length === 0 ? (
-                <p className="text-sm text-muted-foreground py-3">Noch keine Verträge hochgeladen.</p>
+                <p className="text-sm text-muted-foreground py-3">Noch kein Vertrag angenommen.</p>
               ) : (
                 <div className="space-y-2 mt-2">
                   {contractUploads.map(upload => (
@@ -590,11 +714,33 @@ const SalesReps = () => {
             {/* Vertrag Status */}
             <Section title="Vertragsstatus">
               <InfoRow icon={<Shield className="w-3.5 h-3.5" />} label="Status" value={
+                selected.contract_status === "angenommen" ? "✅ Digital angenommen" :
                 selected.contract_status === "approved" ? "✅ Genehmigt" :
                 selected.contract_status === "submitted" ? "📋 Eingereicht — zu bearbeiten" :
                 selected.contract_status === "pending" ? "⏳ Ausstehend (Neu)" :
                 selected.contract_status === "rejected" ? "❌ Abgelehnt" : "—"
               } />
+              {selected.vertrag_version && (
+                <InfoRow icon={<FileText className="w-3.5 h-3.5" />} label="Vertragsversion" value={selected.vertrag_version} />
+              )}
+              {selected.vertrag_angenommen_am && (
+                <InfoRow icon={<CheckCircle className="w-3.5 h-3.5" />} label="Angenommen am" value={
+                  new Date(selected.vertrag_angenommen_am).toLocaleString("de-DE")
+                } />
+              )}
+              {selected.vertrag_ip && (
+                <InfoRow icon={<Shield className="w-3.5 h-3.5" />} label="IP-Adresse (Annahme)" value={selected.vertrag_ip.split(",")[0].trim()} />
+              )}
+              {selected.vertrag_outdated && (
+                <InfoRow icon={<Clock className="w-3.5 h-3.5" />} label="Hinweis" value={
+                  <span className="text-destructive">Neue Vertragsversion verfügbar — Annahme ausstehend</span>
+                } />
+              )}
+              {selected.vertrag_inaktiv && (
+                <InfoRow icon={<Clock className="w-3.5 h-3.5" />} label="Hinweis" value={
+                  <span className="text-destructive">Vertrag inaktiv — neue Version nicht innerhalb von 30 Tagen angenommen</span>
+                } />
+              )}
               <InfoRow icon={<Calendar className="w-3.5 h-3.5" />} label="Vertragsfrist" value={fmt(selected.contract_deadline)} />
               {selected.activated_at && (
                 <InfoRow icon={<CheckCircle className="w-3.5 h-3.5" />} label="Aktiviert am" value={fmt(selected.activated_at)} />
