@@ -234,15 +234,27 @@ const SalesReps = () => {
     }
   };
 
-  const downloadContract = async (filePath: string, fileName: string) => {
+  const downloadContract = async (filePath: string, fileName: string, bucket: "sales-rep-contracts" | "vertraege" = "sales-rep-contracts") => {
     try {
       const { data, error } = await supabase.storage
-        .from("sales-rep-contracts")
+        .from(bucket)
         .createSignedUrl(filePath, 60, { download: fileName });
       if (error) throw error;
       if (data?.signedUrl) window.open(data.signedUrl, "_blank");
     } catch (e: any) {
       toast.error("Fehler beim Download: " + e.message);
+    }
+  };
+
+  const viewContract = async (filePath: string, bucket: "sales-rep-contracts" | "vertraege" = "vertraege") => {
+    try {
+      const { data, error } = await supabase.storage
+        .from(bucket)
+        .createSignedUrl(filePath, 60);
+      if (error) throw error;
+      if (data?.signedUrl) window.open(data.signedUrl, "_blank");
+    } catch (e: any) {
+      toast.error("Fehler beim Öffnen: " + e.message);
     }
   };
 
