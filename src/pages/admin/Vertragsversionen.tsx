@@ -113,12 +113,33 @@ export default function AdminVertragsversionen() {
 
   const handleDownload = async (v: Version) => {
     try {
-      const { data, error } = await supabase.storage.from("vertraege-vorlagen").download(v.pdf_url);
+      // Versuche zuerst den klassischen Storage-Download (für hochgeladene PDF-Vorlagen)
+      const isCodeGenerated = !v.pdf_url || v.pdf_url.startsWith("generated/");
+      if (!isCodeGenerated) {
+        const { data, error } = await supabase.storage.from("vertraege-vorlagen").download(v.pdf_url);
+        if (!error && data) {
+          const url = URL.createObjectURL(data);
+          const link = document.createElement("a");
+          link.href = url;
+          link.download = `Vertrag_${v.version}.pdf`;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          URL.revokeObjectURL(url);
+          return;
+        }
+      }
+
+      // Fallback / Code-Generated: Vorlage über Edge Function rendern
+      const { data, error } = await supabase.functions.invoke("preview-contract-template", {
+        body: { version: v.version },
+      });
       if (error) throw error;
-      const url = URL.createObjectURL(data);
+      const blob = data instanceof Blob ? data : new Blob([data as any], { type: "application/pdf" });
+      const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
-      link.download = `Vertrag_${v.version}.pdf`;
+      link.download = `Vertragsvorlage_${v.version}.pdf`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
