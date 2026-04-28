@@ -151,7 +151,7 @@ serve(async (req: Request) => {
           body: JSON.stringify({
             from: "ELOYO <noreply@eloyo.de>",
             to: [profile.email],
-            subject: "Dein Vertriebspartnervertrag – Eloyo",
+            subject: "Dein Vertriebspartnervertrag - Eloyo",
             html: `
               <p>Hallo ${profile.first_name},</p>
               <p>dein Vertriebspartnervertrag wurde am <strong>${datumFormatiert}</strong> um <strong>${uhrzeitFormatiert} Uhr</strong> erfolgreich angenommen.</p>
@@ -232,7 +232,7 @@ function generateContractPdf(d: ContractData): Uint8Array {
   const addFooter = () => {
     doc.setFontSize(8);
     doc.setTextColor(150);
-    doc.text(`Stand: April 2026 – Version ${d.version} – Eloyo, Fuggerstr. 2, 86836 Untermeitingen – support@eloyo.de`, pw / 2, 290, { align: "center" });
+    doc.text(`Stand: April 2026 - Version ${d.version} - Eloyo, Fuggerstr. 2, 86836 Untermeitingen - support@eloyo.de`, pw / 2, 290, { align: "center" });
     doc.setTextColor(0);
   };
 
@@ -346,14 +346,14 @@ function generateContractPdf(d: ContractData): Uint8Array {
   kvRow("Vertragsdatum", d.vertragsdatum);
   kvRow("Vertragsversion", d.version);
 
-  // ===== A – Vertragsart & Grundlage =====
+  // ===== A - Vertragsart & Grundlage =====
   addPage();
-  heading("A – Vertragsart & Grundlage");
+  heading("A - Vertragsart & Grundlage");
   paragraph("Dieser Vertrag begründet ein freies Kooperationsverhältnis im Sinne eines handelsvertreterähnlichen Verhältnisses zwischen ELOYO und dem Vertriebspartner. Es handelt sich ausdrücklich um keinen Arbeitsvertrag und kein Anstellungsverhältnis. Für diesen Vertrag gilt deutsches Recht. Ausschließlicher Gerichtsstand ist Augsburg.");
   paragraph("Vertragsanpassungen: ELOYO behält sich das Recht vor, diesen Vertrag bei Bedarf anzupassen. Der Vertriebspartner wird über Änderungen im Backoffice informiert und muss den aktualisierten Vertrag innerhalb von 30 Tagen erneut annehmen. Wird der aktualisierte Vertrag nicht innerhalb dieser Frist angenommen, wird der Account bis zur Annahme als inaktiv markiert. Bereits angenommene ältere Vertragsversionen werden durch die neue Version ersetzt und sind ab dem Zeitpunkt der erneuten Annahme nicht mehr gültig.");
 
-  // ===== B – Selbstständigkeit & Wettbewerb =====
-  heading("B – Selbstständigkeit & Wettbewerb");
+  // ===== B - Selbstständigkeit & Wettbewerb =====
+  heading("B - Selbstständigkeit & Wettbewerb");
   paragraph("Der Vertriebspartner ist gewerblich selbstständig tätig. Es besteht kein Arbeitsverhältnis im Sinne des deutschen Arbeitsrechts. Im Einzelnen gilt:");
   bullet("Der Vertriebspartner ist in der Gestaltung seiner Tätigkeit frei — es besteht keine Weisungsgebundenheit hinsichtlich Ort, Zeit, Art und Umfang der Tätigkeit.");
   bullet("Er trägt das eigene unternehmerische Risiko und ist für die Anmeldung, Versteuerung und steuerliche Meldung seiner Einnahmen selbst verantwortlich.");
@@ -364,12 +364,12 @@ function generateContractPdf(d: ContractData): Uint8Array {
   subheading("Wettbewerbsregelung");
   paragraph("Während der Laufzeit dieses Vertrags ist es dem Vertriebspartner untersagt, aktiv für Unternehmen tätig zu sein, die digitale Kundenbindungsprogramme, Loyalty-Systeme oder digitales Direktmarketing für lokale Einzelhändler und Gewerbebetriebe anbieten und damit in direktem Wettbewerb zu ELOYO stehen. Als „aktiv tätig\" gilt insbesondere die Tätigkeit als Vertriebspartner, Handelsvertreter oder Berater. Eine passive Beteiligung ist nicht erfasst. Ein Verstoß berechtigt ELOYO zur außerordentlichen fristlosen Kündigung.");
 
-  // ===== C – Auftreten nach außen =====
-  heading("C – Auftreten nach außen");
+  // ===== C - Auftreten nach außen =====
+  heading("C - Auftreten nach außen");
   paragraph("Der Vertriebspartner ist nicht berechtigt, im Namen von ELOYO rechtsverbindliche Erklärungen abzugeben oder Verträge zu schließen. Gegenüber Kunden und Dritten hat er sich ausschließlich als „Vertriebspartner von ELOYO\" vorzustellen. Die korrekte Darstellung seiner Selbstständigkeit liegt in seiner eigenen Verantwortung.");
 
-  // ===== D – Registrierung & Account-Aktivierung =====
-  heading("D – Registrierung & Account-Aktivierung");
+  // ===== D - Registrierung & Account-Aktivierung =====
+  heading("D - Registrierung & Account-Aktivierung");
   paragraph("Der Vertriebspartner-Account wird wie folgt aktiviert:");
   bullet("1. ELOYO legt den Account im Backoffice an.");
   bullet("2. Der Vertriebspartner erhält eine E-Mail mit Link zur Passwortvergabe.");
@@ -377,20 +377,20 @@ function generateContractPdf(d: ContractData): Uint8Array {
   bullet("4. Erst nach vollständiger Dateneingabe ist die Vertragsvorlage verfügbar.");
   bullet("5. Der Vertrag muss digital angenommen werden. Kunden abschließen ist sofort möglich. Auszahlungen erfolgen erst nach Hinterlegung der Steuernummer und Bankverbindung.");
 
-  // ===== E – Vergütung / Provisionsmodell =====
-  heading("E – Vergütung / Provisionsmodell");
+  // ===== E - Vergütung / Provisionsmodell =====
+  heading("E - Vergütung / Provisionsmodell");
 
   subheading("1. Direktprovision");
   paragraph("Der Vertriebspartner erhält für jeden erfolgreich abgeschlossenen Neukunden eine Direktprovision in Höhe von 50,00 € netto. Als Abschluss gilt der bestätigte Zahlungseingang der Einmalzahlung des Neukunden. Die Provision erscheint sofort als „vorgemerkt\" im Backoffice und wird nach einer Freigabefrist von 7 Kalendertagen auf „zur Auszahlung bereit\" gesetzt. Bei Stornierung innerhalb der 7 Tage verfällt die Provision ersatzlos.");
 
   subheading("2. Rabattsystem");
   paragraph("Der Vertriebspartner hat die Möglichkeit, beim Abschluss eines Neukunden einen Rabatt auf die Einmalzahlung zu gewähren. Zulässige Rabattstufen sind 10 €, 20 €, 30 €, 40 € oder 50 €. Die Gewährung eines Rabatts ist ausschließlich über die dafür vorgesehenen Gutscheincodes (ELOYO10 bis ELOYO50) zulässig. Der gewährte Rabattbetrag wird direkt von der Direktprovision abgezogen. Nicht autorisierte Rabatte oder selbst erstellte Codes sind unzulässig und können zum sofortigen Vertragsausschluss führen.");
-  paragraph("Beispiel: 30 € Rabatt gewährt → Direktprovision = 20 € netto.", { bold: true });
+  paragraph("Beispiel: 30 € Rabatt gewährt -> Direktprovision = 20 € netto.", { bold: true });
 
   subheading("3. Monatliche Folgeprovision");
   paragraph("Für jeden aktiven Kunden in seinem Portfolio erhält der Vertriebspartner eine monatliche Folgeprovision in Höhe von 12,00 € netto. Die Berechnung erfolgt nach dem Snapshot-Prinzip: Am 1. eines jeden Monats wird ermittelt, wie viele aktive Kunden dem Vertriebspartner zu diesem Stichtag zugeordnet sind. Ein Kunde gilt ab dem Tag des Zahlungseingangs seiner ersten Zahlung als aktiv.");
   paragraph("Wichtig: Nicht ausgezahlte Folgeprovisionen aus Inaktivitätsmonaten oder Monaten ohne hinterlegte Steuernummer/Bankverbindung werden nicht angestaut und nicht nachgeholt. Sie verfallen ersatzlos.", { bold: true });
-  paragraph("Beispiel: Abschluss am 20. März → Zahlung geht ein → Kunde sofort aktiv. 27. März: 7 Tage abgelaufen → 50 € Direktprovision zur Auszahlung bereit. 1. April (Snapshot): Kunde ist aktiv → 12 € Folgeprovision für April. Auszahlung am 1. April: 50 € + 12 € = 62 €.");
+  paragraph("Beispiel: Abschluss am 20. März -> Zahlung geht ein -> Kunde sofort aktiv. 27. März: 7 Tage abgelaufen -> 50 € Direktprovision zur Auszahlung bereit. 1. April (Snapshot): Kunde ist aktiv -> 12 € Folgeprovision für April. Auszahlung am 1. April: 50 € + 12 € = 62 €.");
 
   subheading("4. Sponsor-Bonus");
   paragraph("Empfiehlt der Vertriebspartner eine Person als neuen Vertriebspartner und wird diese von ELOYO aufgenommen, erhält er als „Sponsor\" einen monatlichen Bonus von 5,00 € netto pro aktivem Kunden des gesponserten Vertriebspartners. Diese Regelung gilt ausschließlich für eine Ebene (kein MLM). Die Entscheidung über die Aufnahme liegt ausschließlich bei ELOYO. Der Sponsor-Bonus unterliegt denselben Inaktivitäts- und Kündigungsregeln wie die Folgeprovision.");
@@ -403,43 +403,43 @@ function generateContractPdf(d: ContractData): Uint8Array {
   bullet("Auszahlungssperre: Ohne hinterlegte Steuernummer und Bankverbindung ist keine Auszahlung möglich. Anfallende Provisionen in solchen Monaten verfallen ersatzlos.");
   paragraph("Die Abrechnung erfolgt im Gutschriftverfahren. ELOYO erstellt die Abrechnungsdokumente monatlich und stellt diese im Backoffice zum Download bereit.");
 
-  // ===== F – Auszahlung =====
-  heading("F – Auszahlung");
+  // ===== F - Auszahlung =====
+  heading("F - Auszahlung");
   paragraph("Die Auszahlung erfolgt monatlich. ELOYO initiiert die Überweisung zum 1. eines jeden Monats; der Zahlungseingang beim Vertriebspartner erfolgt spätestens bis zum 5. des Monats. Bei Wochenenden oder Feiertagen kann sich die Auszahlung entsprechend verschieben. Maßgeblich für die Überweisung sind ausschließlich die im Backoffice hinterlegten Bankdaten.");
 
-  // ===== G – Inaktivität & Konsequenzen =====
-  heading("G – Inaktivität & Konsequenzen");
+  // ===== G - Inaktivität & Konsequenzen =====
+  heading("G - Inaktivität & Konsequenzen");
   paragraph("Aktivitätsdefinition: Als Aktivität gilt ausschließlich der bestätigte Zahlungseingang eines Neukunden. Kundenkontakte, Termine oder die Nutzung des Backoffice begründen keine Aktivität. Ab dem Tag des letzten Zahlungseingangs läuft ein Zähler in Kalendertagen. Bei jedem neuen bestätigten Zahlungseingang wird er automatisch auf 0 zurückgesetzt.");
-  bullet("Tag 1–180: AKTIV — Folgeprovision wird am Stichtag (1. des Monats) normal berechnet und ausgezahlt.");
+  bullet("Tag 1-180: AKTIV — Folgeprovision wird am Stichtag (1. des Monats) normal berechnet und ausgezahlt.");
   bullet("Ab Tag 181: INAKTIV — Folgeprovision wird nicht ausgezahlt, nicht angestaut und nicht nachgeholt. Account bleibt weitere 180 Tage (ca. 6 Monate) eingefroren. In dieser Zeit kann der Vertriebspartner durch einen neuen bestätigten Zahlungseingang reaktiviert werden — die bestehenden Kundenzuordnungen bleiben in dieser Zeit erhalten.");
   bullet("Ab Tag 361: ACCOUNT GELÖSCHT — Vollständige Löschung des Accounts, Kundenzuordnung wird aufgehoben.");
   paragraph("Wird innerhalb der 9-monatigen Einfrierphase ein neuer Kunde abgeschlossen, wechselt der Status sofort wieder auf aktiv. Die Folgeprovision läuft ab dem nächsten Stichtag wieder normal. Das Backoffice zeigt den aktuellen Zählerstand jederzeit an. Bei Erreichen von Tag 75 wird der Vertriebspartner automatisch per E-Mail gewarnt.");
 
-  // ===== H – Kündigung & Provisionen nach Vertragsende =====
-  heading("H – Kündigung & Provisionen nach Vertragsende");
+  // ===== H - Kündigung & Provisionen nach Vertragsende =====
+  heading("H - Kündigung & Provisionen nach Vertragsende");
   paragraph("Dieser Vertrag kann von beiden Parteien mit einer Frist von einem Monat zum Monatsende ordentlich gekündigt werden. Das Recht zur außerordentlichen fristlosen Kündigung aus wichtigem Grund bleibt unberührt — insbesondere bei Verstoß gegen die Wettbewerbsregelung, Rufschädigung oder Verstößen gegen geltendes Recht.");
   paragraph("Nach Kündigung gelten für Provisionen dieselben Regeln wie bei Inaktivität. Die Folgeprovision läuft weiter, solange der Zähler unter 180 Tagen liegt. Sobald der Zähler 180 Tage überschreitet oder die Kündigung wirksam wird — je nachdem was früher eintritt — wird kein Geldfluss mehr ausgelöst. Account bleibt anschließend 180 Tage eingefroren (Reaktivierung in dieser Zeit möglich, Kundenzuordnung bleibt erhalten); nach insgesamt 360 Tagen wird der Account gelöscht und die Kundenzuordnung aufgehoben.");
 
-  // ===== I – eloyo Boxen & Bestellsystem =====
-  heading("I – eloyo Boxen & Bestellsystem");
+  // ===== I - eloyo Boxen & Bestellsystem =====
+  heading("I - eloyo Boxen & Bestellsystem");
   paragraph("Der Vertriebspartner kann über das Backoffice zwei Pakete bestellen, die jeweils eloyo Boxen enthalten. Jede eloyo Box hat einen Warenwert von 30,00 € brutto (inkl. MwSt.). Es kann immer nur ein Paket gleichzeitig bestellt werden.");
   bullet("Starterpaket: 4 eloyo Boxen — 120,00 € — keine Voraussetzung.");
   bullet("Vertriebspaket: 7 eloyo Boxen — 210,00 € — Voraussetzung: mind. 4 aktive Kunden.");
   paragraph("Preisfixierung: Der Warenwert von 30,00 € pro eloyo Box wird zum Zeitpunkt der Bestellung protokolliert und ist verbindlich. Spätere Preisänderungen haben keinen Einfluss auf bereits aufgegebene Bestellungen.", { bold: true });
   paragraph("90-Tage-Frist: Ab dem Versanddatum durch ELOYO läuft für jede einzelne eloyo Box eine Frist von 90 Kalendertagen. Innerhalb dieser Frist muss jede Box einem Kunden zugewiesen (abgeschlossen) oder unversehrt an ELOYO zurückgesendet werden. Der Warenwert wird pro Box einzeln berechnet — nicht pauschal für das gesamte Paket.", { bold: true });
   paragraph("Ist beides nach 90 Tagen nicht erfolgt, werden 30,00 € pro betroffener Box automatisch in Rechnung gestellt — primär verrechnet mit offenen Provisionen, andernfalls als separate Rechnung. Der Vertriebspartner wird 15 Tage vor Fristablauf automatisch gewarnt.");
-  paragraph("Beispiel: Starterpaket: 4 Boxen à 30 €. Nach 90 Tagen: 3 abgeschlossen, 1 nicht → Rechnung über 30 € (nur für die 1 nicht abgeschlossene Box). Nachträglicher Abschluss möglich → volle 50 € Direktprovision + 12 €/Monat Folgeprovision. Boxrechnung bleibt bestehen. Effektiv: 50 € – 30 € = 20 € Einmalgewinn, plus Folgeprovision.");
+  paragraph("Beispiel: Starterpaket: 4 Boxen à 30 €. Nach 90 Tagen: 3 abgeschlossen, 1 nicht -> Rechnung über 30 € (nur für die 1 nicht abgeschlossene Box). Nachträglicher Abschluss möglich -> volle 50 € Direktprovision + 12 €/Monat Folgeprovision. Boxrechnung bleibt bestehen. Effektiv: 50 € - 30 € = 20 € Einmalgewinn, plus Folgeprovision.");
 
-  // ===== J – Empfehlung neuer Vertriebspartner =====
-  heading("J – Empfehlung neuer Vertriebspartner");
+  // ===== J - Empfehlung neuer Vertriebspartner =====
+  heading("J - Empfehlung neuer Vertriebspartner");
   paragraph("Der Vertriebspartner kann Personen als potenzielle neue Vertriebspartner bei ELOYO vorschlagen. Die Entscheidung über die Aufnahme liegt ausschließlich bei ELOYO. Bei Aufnahme wird der empfehlende Partner als „Sponsor\" geführt und erhält den Sponsor-Bonus gemäß Abschnitt E, Ziffer 4. Es gilt ausschließlich eine Sponsor-Ebene — kein Strukturvertrieb.");
 
-  // ===== K – Schulungsangebot =====
-  heading("K – Schulungsangebot");
+  // ===== K - Schulungsangebot =====
+  heading("K - Schulungsangebot");
   paragraph("ELOYO stellt im Backoffice Schulungsvideos und Materialien kostenfrei zur Verfügung. Die Nutzung ist freiwillig. Es handelt sich um ein unentgeltliches Informationsangebot ohne Lehrplan, Prüfungen oder Abschluss. Ein Ausbildungsverhältnis im Sinne des FernUSG wird hierdurch nicht begründet.");
 
-  // ===== L – Datenschutz & Auftragsverarbeitung =====
-  heading("L – Datenschutz & Auftragsverarbeitung");
+  // ===== L - Datenschutz & Auftragsverarbeitung =====
+  heading("L - Datenschutz & Auftragsverarbeitung");
   paragraph("Im Rahmen seiner Tätigkeit erhält der Vertriebspartner über das Backoffice Zugang zu personenbezogenen Daten seiner abgeschlossenen Kunden. Er gilt in diesem Umfang als Auftragsverarbeiter im Sinne des Art. 28 DSGVO. Mit Unterzeichnung dieses Vertrags verpflichtet er sich:");
   bullet("Diese Daten ausschließlich zur Erfüllung seiner vertraglichen Pflichten zu verarbeiten.");
   bullet("Angemessene technische und organisatorische Schutzmaßnahmen zu treffen.");
@@ -447,12 +447,12 @@ function generateContractPdf(d: ContractData): Uint8Array {
   bullet("Datenpannen unverzüglich an ELOYO zu melden.");
   paragraph("Diese Regelung ersetzt ein separates AVV-Dokument und gilt mit Unterzeichnung als vereinbart.");
 
-  // ===== M – Haftungsbeschränkung =====
-  heading("M – Haftungsbeschränkung");
+  // ===== M - Haftungsbeschränkung =====
+  heading("M - Haftungsbeschränkung");
   paragraph("ELOYO haftet nicht für Schäden, die durch technische Ausfälle, Fehlfunktionen des Systems oder höhere Gewalt entstehen. Im Falle nachweislich fehlerhafter Provisionsberechnungen wird der korrekte Betrag in der nächsten regulären Abrechnung berichtigt. Ein Anspruch auf Sonderauszahlungen oder Verzugszinsen besteht nicht.");
 
-  // ===== N – Sonstige Klauseln =====
-  heading("N – Sonstige Klauseln");
+  // ===== N - Sonstige Klauseln =====
+  heading("N - Sonstige Klauseln");
   paragraph("Salvatorische Klausel: Sollte eine Bestimmung dieses Vertrags ganz oder teilweise unwirksam sein, berührt dies die Gültigkeit der übrigen Bestimmungen nicht.", { bold: true });
   paragraph("Schriftformklausel: Änderungen dieses Vertrags bedürfen der Schriftform oder der Bestätigung im Backoffice-System. Mündliche Nebenabreden bestehen nicht.", { bold: true });
   paragraph("Vertragsanpassungen: ELOYO behält sich vor, diesen Vertrag bei geänderten rechtlichen, wirtschaftlichen oder technischen Rahmenbedingungen anzupassen. Der Vertriebspartner wird im Backoffice darüber informiert und hat 30 Tage Zeit, den aktualisierten Vertrag anzunehmen.", { bold: true });
@@ -514,8 +514,8 @@ function generateContractPdf(d: ContractData): Uint8Array {
 
   doc.setFontSize(9);
   doc.setFont("helvetica", "bold");
-  doc.text("Klaus Eric Pfadisch – ELOYO", margin, y);
-  doc.text(`${d.fullName} – Vertriebspartner`, pw / 2 + 5, y);
+  doc.text("Klaus Eric Pfadisch - ELOYO", margin, y);
+  doc.text(`${d.fullName} - Vertriebspartner`, pw / 2 + 5, y);
   y += 5;
   doc.setFont("helvetica", "normal");
   doc.setFontSize(8);
