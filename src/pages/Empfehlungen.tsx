@@ -537,6 +537,26 @@ const Empfehlungen = () => {
       </motion.footer>
 
       <ERecht24Badge />
+
+      {/* 🔧 TEMP: Mobile-only Slider zum Justieren der Foto-Position im CTA-Banner */}
+      <div className="sm:hidden fixed bottom-4 left-1/2 -translate-x-1/2 z-[9999] bg-black/85 text-white rounded-2xl px-4 py-3 shadow-2xl backdrop-blur-md w-[88%] max-w-sm">
+        <div className="flex items-center justify-between mb-1.5">
+          <span className="text-[11px] font-medium opacity-80">Foto Y-Offset (Mobile)</span>
+          <span className="text-[11px] font-mono tabular-nums">{mobilePhotoOffset}px</span>
+        </div>
+        <input
+          type="range"
+          min={-150}
+          max={50}
+          step={1}
+          value={mobilePhotoOffset}
+          onChange={(e) => setMobilePhotoOffset(Number(e.target.value))}
+          className="w-full accent-primary"
+        />
+        <div className="flex justify-between text-[10px] opacity-50 mt-0.5">
+          <span>-150</span><span>0</span><span>+50</span>
+        </div>
+      </div>
     </div>
   );
 };
