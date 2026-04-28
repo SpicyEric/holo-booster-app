@@ -175,10 +175,6 @@ const HeroMockupWithNotifications = () => {
 const Landing = () => {
   const navigate = useNavigate();
 
-  // 🔧 TEMP: Mobile-only vertical offset for the contact-person photo in the final CTA banner
-  // Negative = Bild nach oben, Positive = nach unten. Wirkt NUR auf Mobile (<640px).
-  const [mobilePhotoOffset, setMobilePhotoOffset] = useState<number>(-32);
-
   // Auto-cycling "hover" highlight for the 3 step cards (1 → 2 → 3 → off → repeat)
   const [activeStep, setActiveStep] = useState<number>(0);
   useEffect(() => {
