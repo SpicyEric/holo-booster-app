@@ -229,6 +229,13 @@ export function PendingInviteDialog() {
       clearPendingInvite();
       if (!result.success) {
         console.warn('[consume_invitation] FAILED:', result.error, '(code:', result.error_code, ')');
+        // Bei Geräte-Sperre für diesen Merchant: dem User klar sagen warum.
+        if (result.error_code === 'device_already_redeemed_for_merchant') {
+          const { toast } = await import('sonner');
+          toast.error('Auf diesem Gerät wurde bereits eine Einladung für dieses Geschäft eingelöst.', {
+            duration: 6000,
+          });
+        }
         setOpen(false);
         return;
       }
