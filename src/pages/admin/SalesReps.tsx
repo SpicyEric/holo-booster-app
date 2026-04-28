@@ -714,11 +714,33 @@ const SalesReps = () => {
             {/* Vertrag Status */}
             <Section title="Vertragsstatus">
               <InfoRow icon={<Shield className="w-3.5 h-3.5" />} label="Status" value={
+                selected.contract_status === "angenommen" ? "✅ Digital angenommen" :
                 selected.contract_status === "approved" ? "✅ Genehmigt" :
                 selected.contract_status === "submitted" ? "📋 Eingereicht — zu bearbeiten" :
                 selected.contract_status === "pending" ? "⏳ Ausstehend (Neu)" :
                 selected.contract_status === "rejected" ? "❌ Abgelehnt" : "—"
               } />
+              {selected.vertrag_version && (
+                <InfoRow icon={<FileText className="w-3.5 h-3.5" />} label="Vertragsversion" value={selected.vertrag_version} />
+              )}
+              {selected.vertrag_angenommen_am && (
+                <InfoRow icon={<CheckCircle className="w-3.5 h-3.5" />} label="Angenommen am" value={
+                  new Date(selected.vertrag_angenommen_am).toLocaleString("de-DE")
+                } />
+              )}
+              {selected.vertrag_ip && (
+                <InfoRow icon={<Shield className="w-3.5 h-3.5" />} label="IP-Adresse (Annahme)" value={selected.vertrag_ip.split(",")[0].trim()} />
+              )}
+              {selected.vertrag_outdated && (
+                <InfoRow icon={<Clock className="w-3.5 h-3.5" />} label="Hinweis" value={
+                  <span className="text-destructive">Neue Vertragsversion verfügbar — Annahme ausstehend</span>
+                } />
+              )}
+              {selected.vertrag_inaktiv && (
+                <InfoRow icon={<Clock className="w-3.5 h-3.5" />} label="Hinweis" value={
+                  <span className="text-destructive">Vertrag inaktiv — neue Version nicht innerhalb von 30 Tagen angenommen</span>
+                } />
+              )}
               <InfoRow icon={<Calendar className="w-3.5 h-3.5" />} label="Vertragsfrist" value={fmt(selected.contract_deadline)} />
               {selected.activated_at && (
                 <InfoRow icon={<CheckCircle className="w-3.5 h-3.5" />} label="Aktiviert am" value={fmt(selected.activated_at)} />
