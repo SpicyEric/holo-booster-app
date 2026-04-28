@@ -58,9 +58,25 @@ interface SalesRepAccount {
   total_conversions: number;
   total_commission_cents: number;
   active_boxes: number;
+  // Digital angenommener Vertrag (sign-contract Edge Function)
+  vertrag_version: string | null;
+  vertrag_angenommen_am: string | null;
+  vertrag_pdf_url: string | null;
+  vertrag_ip: string | null;
+  vertrag_user_agent: string | null;
+  vertrag_outdated: boolean | null;
+  vertrag_inaktiv: boolean | null;
 }
 
+// "Digital angenommen" = Vertrag wurde über den Wizard signiert (sign-contract).
+const isDigitallySigned = (rep: SalesRepAccount): boolean =>
+  rep.contract_status === "angenommen" && !!rep.vertrag_angenommen_am;
+
 const getStatusLabel = (rep: SalesRepAccount): { label: string; variant: "default" | "secondary" | "destructive" | "outline" } => {
+  // Digital angenommener Vertrag = aktiv (auch ohne separates activated_at)
+  if (isDigitallySigned(rep) && !rep.vertrag_inaktiv) {
+    return { label: "Aktiv", variant: "default" };
+  }
   if (rep.contract_status === "approved" && rep.is_active && rep.activated_at) {
     return { label: "Aktiv", variant: "default" };
   }
