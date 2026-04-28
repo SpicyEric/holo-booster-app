@@ -198,6 +198,13 @@ const SalesReps = () => {
           total_conversions: convMap[sr.user_id] || 0,
           total_commission_cents: commMap[sr.user_id] || 0,
           active_boxes: boxMap[sr.user_id] || 0,
+          vertrag_version: (sr as any).vertrag_version || null,
+          vertrag_angenommen_am: (sr as any).vertrag_angenommen_am || null,
+          vertrag_pdf_url: (sr as any).vertrag_pdf_url || null,
+          vertrag_ip: (sr as any).vertrag_ip || null,
+          vertrag_user_agent: (sr as any).vertrag_user_agent || null,
+          vertrag_outdated: (sr as any).vertrag_outdated ?? null,
+          vertrag_inaktiv: (sr as any).vertrag_inaktiv ?? null,
         };
       });
 
