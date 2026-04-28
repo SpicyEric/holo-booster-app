@@ -118,6 +118,9 @@ const SnowballCalculator = () => {
 const Empfehlungen = () => {
   const navigate = useNavigate();
 
+  // 🔧 TEMP: Mobile-only Y-Offset für das Foto im CTA-Banner
+  const [mobilePhotoOffset, setMobilePhotoOffset] = useState<number>(-32);
+
   const winners = [
     {
       icon: Store,
