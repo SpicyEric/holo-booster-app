@@ -175,6 +175,10 @@ const HeroMockupWithNotifications = () => {
 const Landing = () => {
   const navigate = useNavigate();
 
+  // 🔧 TEMP: Mobile-only vertical offset for the contact-person photo in the final CTA banner
+  // Negative = Bild nach oben, Positive = nach unten. Wirkt NUR auf Mobile (<640px).
+  const [mobilePhotoOffset, setMobilePhotoOffset] = useState<number>(-32);
+
   // Auto-cycling "hover" highlight for the 3 step cards (1 → 2 → 3 → off → repeat)
   const [activeStep, setActiveStep] = useState<number>(0);
   useEffect(() => {
@@ -510,8 +514,11 @@ const Landing = () => {
               <img
                 src={contactPerson}
                 alt="Eloyo Geschäftsinhaber"
-                className="absolute left-0 bottom-0 w-40 sm:w-48 h-auto object-contain pointer-events-none select-none"
-                style={{ transform: 'translateY(32px)', maxHeight: 'none' }}
+                className="absolute left-0 bottom-0 w-40 sm:w-48 h-auto object-contain pointer-events-none select-none translate-y-[var(--photo-offset-mobile)] sm:!translate-y-[32px]"
+                style={{
+                  ['--photo-offset-mobile' as any]: `${mobilePhotoOffset}px`,
+                  maxHeight: 'none',
+                }}
               />
             </div>
 
@@ -565,6 +572,26 @@ const Landing = () => {
       </motion.footer>
 
       <ERecht24Badge />
+
+      {/* 🔧 TEMP: Mobile-only slider zum Justieren der Foto-Position im CTA-Banner */}
+      <div className="sm:hidden fixed bottom-4 left-1/2 -translate-x-1/2 z-[9999] bg-black/85 text-white rounded-2xl px-4 py-3 shadow-2xl backdrop-blur-md w-[88%] max-w-sm">
+        <div className="flex items-center justify-between mb-1.5">
+          <span className="text-[11px] font-medium opacity-80">Foto Y-Offset (Mobile)</span>
+          <span className="text-[11px] font-mono tabular-nums">{mobilePhotoOffset}px</span>
+        </div>
+        <input
+          type="range"
+          min={-150}
+          max={50}
+          step={1}
+          value={mobilePhotoOffset}
+          onChange={(e) => setMobilePhotoOffset(Number(e.target.value))}
+          className="w-full accent-primary"
+        />
+        <div className="flex justify-between text-[10px] opacity-50 mt-0.5">
+          <span>-150</span><span>0</span><span>+50</span>
+        </div>
+      </div>
     </div>
   );
 };
