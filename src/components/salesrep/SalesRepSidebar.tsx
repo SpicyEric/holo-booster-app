@@ -3,12 +3,12 @@ import { signOut } from "@/lib/auth";
 import { toast } from "sonner";
 import {
   LayoutDashboard, Users, Package, BarChart3, Euro, Mail, Receipt, FileText,
-  ShoppingCart, Settings, LogOut, ChevronLeft, Menu, X, Map, GitBranch, Search, CalendarDays,
+  ShoppingCart, Settings, LogOut, ChevronLeft, ChevronDown, Menu, X, Map, GitBranch, Search, CalendarDays,
 } from "lucide-react";
 import eloyoLogo from "@/assets/eloyo-logo.png";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 
@@ -21,11 +21,13 @@ interface NavItem {
 interface NavGroup {
   label: string;
   items: NavItem[];
+  alwaysOpen?: boolean;
 }
 
 const NAV_GROUPS: NavGroup[] = [
   {
     label: "ÜBERSICHT",
+    alwaysOpen: true,
     items: [
       { path: "/vertriebler", label: "Dashboard", icon: LayoutDashboard },
       { path: "/vertriebler/provisionen", label: "Provisionen", icon: Euro },
@@ -69,6 +71,27 @@ function SidebarNav({ collapsed, onNavigate }: { collapsed: boolean; onNavigate?
     return location.pathname.startsWith(path);
   };
 
+  const groupHasActive = (group: NavGroup) => group.items.some((i) => isActive(i.path));
+
+  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() => {
+    const init: Record<string, boolean> = {};
+    NAV_GROUPS.forEach((g) => {
+      if (!g.alwaysOpen) init[g.label] = groupHasActive(g);
+    });
+    return init;
+  });
+
+  useEffect(() => {
+    setOpenGroups((prev) => {
+      const next = { ...prev };
+      NAV_GROUPS.forEach((g) => {
+        if (!g.alwaysOpen && groupHasActive(g)) next[g.label] = true;
+      });
+      return next;
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.pathname]);
+
   const handleLogout = async () => {
     const { error } = await signOut();
     if (error) {
@@ -86,42 +109,67 @@ function SidebarNav({ collapsed, onNavigate }: { collapsed: boolean; onNavigate?
 
   return (
     <>
-      <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-6">
-        {NAV_GROUPS.map((group) => (
-          <div key={group.label}>
-            {!collapsed && (
-              <p className="text-[10px] font-bold tracking-[0.12em] text-white/40 uppercase mb-2 px-3">
-                {group.label}
-              </p>
-            )}
-            <div className="space-y-1">
-              {group.items.map((item) => {
-                const active = isActive(item.path);
-                return (
+      <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-3">
+        {NAV_GROUPS.map((group) => {
+          const hasActive = groupHasActive(group);
+          const isOpen = group.alwaysOpen || collapsed || openGroups[group.label];
+
+          return (
+            <div key={group.label}>
+              {!collapsed && (
+                group.alwaysOpen ? (
+                  <p className="text-[10px] font-bold tracking-[0.12em] text-white/40 uppercase mb-2 px-3">
+                    {group.label}
+                  </p>
+                ) : (
                   <button
-                    key={item.path}
-                    onClick={() => handleNav(item.path)}
-                    className={cn(
-                      "w-full flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200 relative",
-                      "hover:bg-white/10 active:scale-[0.97]",
-                      active
-                        ? "bg-white/15 text-white shadow-sm"
-                        : "text-white/60 hover:text-white",
-                      collapsed && "justify-center px-0"
-                    )}
-                    title={collapsed ? item.label : undefined}
+                    onClick={() => setOpenGroups((p) => ({ ...p, [group.label]: !p[group.label] }))}
+                    className="w-full flex items-center justify-between rounded-lg px-3 py-1.5 mb-1 transition-colors group hover:bg-white/5"
                   >
-                    {active && (
-                      <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 bg-white rounded-r-full" />
-                    )}
-                    <item.icon className={cn("h-[18px] w-[18px] shrink-0 transition-colors", active ? "text-white" : "text-white/50")} />
-                    {!collapsed && <span>{item.label}</span>}
+                    <span className={cn(
+                      "text-[10px] font-bold tracking-[0.12em] uppercase transition-colors",
+                      hasActive ? "text-white/70" : "text-white/40 group-hover:text-white/60"
+                    )}>
+                      {group.label}
+                    </span>
+                    <ChevronDown className={cn(
+                      "h-3 w-3 text-white/40 transition-transform duration-200",
+                      isOpen && "rotate-180"
+                    )} />
                   </button>
-                );
-              })}
+                )
+              )}
+              {isOpen && (
+                <div className={cn("space-y-1", !group.alwaysOpen && !collapsed && "animate-accordion-down")}>
+                  {group.items.map((item) => {
+                    const active = isActive(item.path);
+                    return (
+                      <button
+                        key={item.path}
+                        onClick={() => handleNav(item.path)}
+                        className={cn(
+                          "w-full flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200 relative",
+                          "hover:bg-white/10 active:scale-[0.97]",
+                          active
+                            ? "bg-white/15 text-white shadow-sm"
+                            : "text-white/60 hover:text-white",
+                          collapsed && "justify-center px-0"
+                        )}
+                        title={collapsed ? item.label : undefined}
+                      >
+                        {active && (
+                          <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 bg-white rounded-r-full" />
+                        )}
+                        <item.icon className={cn("h-[18px] w-[18px] shrink-0 transition-colors", active ? "text-white" : "text-white/50")} />
+                        {!collapsed && <span>{item.label}</span>}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
             </div>
-          </div>
-        ))}
+          );
+        })}
       </nav>
 
       <div className="border-t border-white/10 p-3 space-y-2">
