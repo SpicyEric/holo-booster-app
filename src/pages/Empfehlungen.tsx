@@ -476,11 +476,8 @@ const Empfehlungen = () => {
               <img
                 src={contactPerson}
                 alt="Eric von Eloyo"
-                className="absolute left-0 bottom-0 w-40 sm:w-48 h-auto object-contain pointer-events-none select-none translate-y-[var(--photo-offset-mobile)] sm:!translate-y-[32px]"
-                style={{
-                  ['--photo-offset-mobile' as any]: `${mobilePhotoOffset}px`,
-                  maxHeight: 'none',
-                }}
+                className="absolute left-0 bottom-0 w-40 sm:w-48 h-auto object-contain pointer-events-none select-none -translate-y-8 sm:!translate-y-[32px]"
+                style={{ maxHeight: 'none' }}
               />
             </div>
 
