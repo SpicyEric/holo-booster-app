@@ -740,6 +740,18 @@ const BoxManagement = () => {
                         <Button size="sm" variant={registered ? "outline" : "default"} disabled={isScanning} onClick={() => startStampRegistration(value)}>
                           {isScanning ? <><Loader2 className="w-3 h-3 mr-1 animate-spin" />Scanne...</> : registered ? "Neu scannen" : "Registrieren"}
                         </Button>
+                        {registered && (
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                            disabled={isScanning}
+                            onClick={() => handleDeleteChip(registered.id, value, "stamp")}
+                            title="Stempel entfernen"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        )}
                       </div>
                     </div>
                   );
