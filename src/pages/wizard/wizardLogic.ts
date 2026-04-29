@@ -137,7 +137,7 @@ export const GOAL_OPTIONS = [
   {
     value: "gamify",
     label: "Spielerisch motivieren",
-    description: "Mehr Dynamik, visuell stärker, Stempelgrößen",
+    description: "Mehr Dynamik, visuell stärker, Punktwerte",
     icon: "trophy",
   },
 ];
@@ -152,7 +152,7 @@ export const STEP_META = [
   { title: "Deine Branche", subtitle: "Wähle deine Branche aus" },
   { title: "Durchschnittlicher Einkaufswert", subtitle: "Wie viel gibt ein Kunde pro Besuch aus?" },
   { title: "Ziel des Bonussystems", subtitle: "Was ist dir am wichtigsten?" },
-  { title: "Dein Stempelsystem", subtitle: "Unser Vorschlag basierend auf deinen Angaben" },
+  { title: "Dein Karten-System", subtitle: "Unser Vorschlag basierend auf deinen Angaben" },
   { title: "Erste Prämie erstellen", subtitle: "Gib deinen Kunden einen Grund wiederzukommen" },
   { title: "Geschafft! 🎉", subtitle: "Dein Bonussystem ist bereit" },
 ];

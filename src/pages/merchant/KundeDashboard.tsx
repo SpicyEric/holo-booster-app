@@ -118,7 +118,7 @@ export default function KundeDashboard() {
         customerData = await getUserCustomer(user.id);
         if (customerData) {
           // Wizard deaktiviert: Händler werden direkt ins Dashboard gelassen,
-          // Box-ID und Stempelsystem werden vom Vertriebler/Admin oder
+          // Box-ID und Karten-System werden vom Vertriebler/Admin oder
           // im Bereich "Mein Geschäft" gepflegt.
           setCustomer({ id: customerData.id, name: customerData.name, email: customerData.email || user.email || "", company_name: customerData.company_name, status: customerData.status || "active", customer_number: customerData.customer_number, created_at: customerData.created_at, postal_code: customerData.postal_code, birthday_enabled: customerData.birthday_enabled });
         }

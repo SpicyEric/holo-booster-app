@@ -431,10 +431,10 @@ export default function Transaktionen() {
               </div>
             </div>
 
-            {/* Stempelzeiten */}
+            {/* Sammelzeiten */}
             <div className="bg-white rounded-xl p-4 border border-border/30 shadow-[0_1px_3px_hsl(262,30%,80%/0.3)]">
               <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-2"><Clock className="w-4 h-4 text-muted-foreground" /><h3 className="text-sm font-semibold text-foreground">Stempelzeiten</h3></div>
+                <div className="flex items-center gap-2"><Clock className="w-4 h-4 text-muted-foreground" /><h3 className="text-sm font-semibold text-foreground">Sammelzeiten</h3></div>
                 <DateRangeSelector value={hourlyRange} onChange={setHourlyRange} />
               </div>
               <div className="h-[140px] w-full">

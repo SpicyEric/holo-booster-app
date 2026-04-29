@@ -238,7 +238,7 @@ export function DashboardCharts({ merchantId }: DashboardChartsProps) {
 
   return (
     <div className="space-y-6">
-      {/* Stempelzeiten Chart */}
+      {/* Sammelzeiten Chart */}
       <Card>
         <CardHeader className="pb-2">
           <div className="flex items-center justify-between">

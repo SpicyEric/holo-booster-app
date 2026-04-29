@@ -821,7 +821,7 @@ const MeinGeschaeft = () => {
 
       const stampIdValue = newBoxId.trim().toUpperCase();
 
-      // Persistiere die Stempel-ID auch direkt am Händler-Datensatz
+      // Persistiere die Karten-ID auch direkt am Händler-Datensatz
       await supabase
         .from('customers')
         .update({ stamp_id: stampIdValue })
@@ -1216,10 +1216,10 @@ const MeinGeschaeft = () => {
                 {/* Ende 2-spaltiges Profil-Grid */}
               </TabsContent>
 
-                {/* Stempel Tab - 2-spaltiges Layout wie Profil */}
+                {/* Karte Tab - 2-spaltiges Layout wie Profil */}
               <TabsContent value="karte" className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
-                {/* LINKS: Automatisches Stempelsystem */}
+                {/* LINKS: Automatisches Karten-System */}
                 <Card className="rounded-2xl shadow-sm border-0 bg-muted/40">
                   <CardHeader className="pb-4">
                     <div className="flex items-center justify-between">
@@ -1376,7 +1376,7 @@ const MeinGeschaeft = () => {
                   )}
                 </Card>
 
-                {/* Manuelles Stempelsystem */}
+                {/* Manuelles Karten-System */}
                 <Card className="rounded-2xl shadow-sm border-0 bg-muted/40">
                   <CardHeader className="pb-4">
                     <div className="flex items-center justify-between">
@@ -1395,7 +1395,7 @@ const MeinGeschaeft = () => {
                   </CardHeader>
                   {manualMode && nfcChips.length > 0 && (
                     <CardContent className="space-y-4">
-                      <p className="text-sm text-muted-foreground">Punktzahl pro Stempelfarbe selbst festlegen</p>
+                      <p className="text-sm text-muted-foreground">Punktzahl pro Kartenfarbe selbst festlegen</p>
                       {(() => {
                         const seen = new Set<string>();
                         return nfcChips.filter((chip) => {
@@ -1440,9 +1440,9 @@ const MeinGeschaeft = () => {
                   )}
                 </Card>
 
-                {/* RECHTE SPALTE: Stempel-IDs + Prämien */}
+                {/* RECHTE SPALTE: Karten-IDs + Prämien */}
                 <div className="flex flex-col gap-4">
-                {/* Stempel-IDs */}
+                {/* Karten-IDs */}
                 <Card className="rounded-2xl shadow-sm border-0 bg-gray-50/80">
                   <CardHeader className="pb-4">
                     <div className="flex items-center gap-3">
@@ -1505,7 +1505,7 @@ const MeinGeschaeft = () => {
                 </div>
                 {/* Ende rechte Spalte */}
                 </div>
-                {/* Ende 2-spaltiges Stempel-Grid */}
+                {/* Ende 2-spaltiges Karte-Grid */}
               </TabsContent>
             </Tabs>
           </div>

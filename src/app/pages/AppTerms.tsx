@@ -57,7 +57,7 @@ export default function AppTerms() {
             <li>Jede Nutzung, die unter Ihren Zugangsdaten erfolgt, wird Ihnen zugerechnet.</li>
           </ul>
 
-          {/* 4. Punkte, Stempel und Prämien */}
+          {/* 4. Punkte, Karte und Prämien */}
           <h3 className="font-semibold mt-6 mb-2">4. Punkte, Karte und Prämien</h3>
           <ul className="text-sm list-disc list-inside mb-4 space-y-1">
             <li>Gesammelte Punkte und Karte haben keinen Bargeldwert und sind nicht auf andere Nutzer oder Konten übertragbar.</li>
@@ -74,7 +74,7 @@ export default function AppTerms() {
             in den Geschäftsräumen teilnehmender Händler. Dabei gilt:
           </p>
           <ul className="text-sm list-disc list-inside mb-4 space-y-1">
-            <li>Das Scannen darf nur an den dafür vorgesehenen Geräten und Stempelpunkten des Händlers erfolgen.</li>
+            <li>Das Scannen darf nur an den dafür vorgesehenen Geräten und Sammelpunkten des Händlers erfolgen.</li>
             <li>Jeder Versuch, NFC-Chips zu kopieren, zu manipulieren oder außerhalb des vorgesehenen Kontexts zu verwenden, ist strengstens untersagt.</li>
             <li>Das Auslesen der NFC-Chip-ID dient ausschließlich der Zuordnung Ihres Stempels. Es werden keine Daten auf den NFC-Chip geschrieben.</li>
           </ul>

@@ -29,7 +29,7 @@ interface NewCustomerOfferDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   /**
-   * 'preview' = Kunde hat noch nicht gestempelt → reine Info-Anzeige.
+   * 'preview' = Kunde hat noch nicht gescannt → reine Info-Anzeige.
    * 'unlocked' = Kunde hat erstmals Punkte gesammelt → Prämie freigeschaltet, an der Kasse abholen.
    */
   mode?: 'preview' | 'unlocked';

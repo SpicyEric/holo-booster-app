@@ -463,11 +463,11 @@ const Backoffice = () => {
               <div className="absolute -inset-8 bg-gradient-to-br from-blue-400/20 to-primary/10 blur-3xl rounded-full pointer-events-none" />
               <div className="relative grid grid-cols-2 gap-4">
 
-                {/* Stempelzeiten */}
+                {/* Sammelzeiten */}
                 <div className="bg-white rounded-2xl p-4 border border-[#e8e7ef] shadow-[0_1px_3px_hsl(262,30%,80%/0.3)]">
                   <div className="flex items-center gap-2 mb-1">
                     <ClockIcon className="w-3.5 h-3.5 text-primary" />
-                    <h4 className="text-[13px] font-semibold text-[#1a1b21]">Stempelzeiten</h4>
+                    <h4 className="text-[13px] font-semibold text-[#1a1b21]">Sammelzeiten</h4>
                   </div>
                   <p className="text-[10px] text-[#7b7487] mb-2">Verteilung nach Uhrzeit</p>
                   <div className="h-[110px] w-full">

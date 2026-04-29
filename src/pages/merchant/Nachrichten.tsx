@@ -498,7 +498,7 @@ const Nachrichten = () => {
       case 'all':
         return 'Alle Kunden';
       case 'last_stamped_days':
-        return `Gestempelt in dem Zeitraum von ${segment.value} Tagen`;
+        return `Gescannt in dem Zeitraum von ${segment.value} Tagen`;
       case 'not_stamped_days':
         return `Außerhalb des Zeitraums von ${segment.value} Tagen`;
       default:
@@ -896,7 +896,7 @@ const Nachrichten = () => {
                   <div>
                     <Label className="text-gray-700">
                       {messageForm.segment_type === 'last_stamped_days' 
-                        ? `Gestempelt innerhalb der letzten ${messageForm.segment_value} Tage`
+                        ? `Gescannt innerhalb der letzten ${messageForm.segment_value} Tage`
                         : `Nicht gescannt seit ${messageForm.segment_value} Tagen`
                       }
                     </Label>

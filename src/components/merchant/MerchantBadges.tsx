@@ -78,7 +78,7 @@ export default function MerchantBadges({ customerId, customerCreatedAt, postalCo
   const checkAndAwardBadges = async () => {
     try {
       const checks = await Promise.all([
-        // 1. Erster Stempel: totalStamps >= 1
+        // 1. Erster Karte: totalStamps >= 1
         supabase.from("point_transactions").select("*", { count: "exact", head: true }).eq("merchant_customer_id", customerId).eq("transaction_type", "nfc_stamp"),
         // 2. Erster Bonus: totalRedemptions >= 1
         supabase.from("reward_redemptions").select("*", { count: "exact", head: true }).eq("merchant_customer_id", customerId),
@@ -98,7 +98,7 @@ export default function MerchantBadges({ customerId, customerCreatedAt, postalCo
 
       const newBadges: { key: string; metadata?: Record<string, any> }[] = [];
 
-      // Erster Stempel
+      // Erster Karte
       if (totalStamps >= 1) newBadges.push({ key: "erster_stempel" });
 
       // Erster Bonus
