@@ -680,7 +680,18 @@ const BoxManagement = () => {
                                 )}
                               </div>
                             </div>
-                            <span className="text-xs text-muted-foreground">{s.points_value} Punkt{s.points_value !== 1 ? "e" : ""}</span>
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs text-muted-foreground">{s.points_value} Punkt{s.points_value !== 1 ? "e" : ""}</span>
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                className="h-7 w-7 text-destructive hover:text-destructive hover:bg-destructive/10"
+                                onClick={() => handleDeleteChip(s.id, s.stamp_color, "detail")}
+                                title="Stempel entfernen"
+                              >
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </Button>
+                            </div>
                           </div>
                         );
                       })}
