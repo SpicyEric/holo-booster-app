@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
-import { Home, MessageSquare, Search, Settings, Stamp, LucideIcon } from 'lucide-react';
+import { Home, MessageSquare, Search, Settings, LucideIcon } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import nfcIcon from '@/assets/nfc-icon.png';
 
 interface NavItem {
   icon: LucideIcon;
@@ -173,8 +174,13 @@ export const BottomNav = ({ onNavigate, currentIndex }: BottomNavProps) => {
             onClick={handleCenterButtonClick}
             className="flex items-center justify-center rounded-full shadow-lg bg-gradient-to-br from-primary to-secondary hover:shadow-xl transition-all text-white"
             style={{ height: '72px', width: '72px' }}
+            aria-label="Scannen"
           >
-            <Stamp size={38} strokeWidth={2.2} />
+            <img
+              src={nfcIcon}
+              alt=""
+              style={{ height: 38, width: 38, filter: 'brightness(0) invert(1)' }}
+            />
           </button>
         </div>
         <NavButton item={navItems[2]} />
