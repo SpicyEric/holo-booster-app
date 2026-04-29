@@ -244,12 +244,12 @@ export function DashboardCharts({ merchantId }: DashboardChartsProps) {
           <div className="flex items-center justify-between">
             <CardTitle className="text-sm flex items-center gap-2">
               <Clock className="w-4 h-4" />
-              Stempelzeiten
+              Sammelzeiten
             </CardTitle>
             <DateRangeSelector value={hourlyRange} onChange={setHourlyRange} />
           </div>
           <p className="text-xs text-muted-foreground">
-            Verteilung der Stempel nach Uhrzeit
+            Verteilung der Scans nach Uhrzeit
           </p>
         </CardHeader>
         <CardContent>
