@@ -14,7 +14,7 @@ export const praemienCards: ExplainerSlide[] = [
   {
     emoji: "🎁",
     title: "Die erste kleine Belohnung",
-    text: "Die erste Prämie sollte bereits nach etwa 5 Besuchen erreichbar sein. Klein, aber erstrebenswert — das motiviert zum Wiederkommen, bevor die Gewohnheit entsteht. Orientiere dich: Stempelwert × 5 = erste Prämie.",
+    text: "Die erste Prämie sollte bereits nach etwa 5 Besuchen erreichbar sein. Klein, aber erstrebenswert — das motiviert zum Wiederkommen, bevor die Gewohnheit entsteht. Orientiere dich: Punktwert × 5 = erste Prämie.",
   },
   {
     emoji: "⭐",
@@ -42,7 +42,7 @@ export const neukundenCards: ExplainerSlide[] = [
   {
     emoji: "📱",
     title: "So funktioniert's",
-    text: "Sobald ein Kunde zum ersten Mal bei dir stempelt, erscheint automatisch sein Willkommensangebot auf seinem Handy. Er zeigt es dir an der Kasse — du gibst ihm sein Goodie. Kein Aufwand, null Erklärung nötig.",
+    text: "Sobald ein Kunde zum ersten Mal bei dir scannt, erscheint automatisch sein Willkommensangebot auf seinem Handy. Er zeigt es dir an der Kasse — du gibst ihm sein Goodie. Kein Aufwand, null Erklärung nötig.",
   },
   {
     emoji: "🎪",

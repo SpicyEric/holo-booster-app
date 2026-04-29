@@ -1062,7 +1062,7 @@ const Marketing = () => {
                           <span className="text-sm text-muted-foreground">Tage (Standard: 90)</span>
                         </div>
                         <p className="text-xs text-muted-foreground mt-1">
-                          Sobald ein Kunde {winbackInactivityDays} Tage lang keinen Stempel gesammelt hat, bekommt er automatisch deine Nachricht – auch als Push.
+                          Sobald ein Kunde {winbackInactivityDays} Tage lang keine Punkte gesammelt hat, bekommt er automatisch deine Nachricht – auch als Push.
                         </p>
                       </div>
 

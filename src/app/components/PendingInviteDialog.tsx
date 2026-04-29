@@ -361,7 +361,7 @@ export function PendingInviteDialog() {
                 <p className="text-sm text-muted-foreground leading-relaxed mb-5">
                   Eine andere Person hat dich bereits eingeladen. Sammle innerhalb der nächsten{' '}
                   <span className="font-semibold text-foreground">{daysLeft} {daysLeft === 1 ? 'Tag' : 'Tage'}</span>{' '}
-                  deinen ersten Stempel, um den Bonus zu erhalten.
+                  deine ersten Punkte, um den Bonus zu erhalten.
                   Eine neue Einladung ist erst möglich, wenn diese abgelaufen ist.
                 </p>
               </>

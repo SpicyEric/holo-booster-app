@@ -23,7 +23,7 @@ const RECENT_TTL_MS = 30_000; // 30 Sekunden
  * Prüft nach einem erfolgreichen Karte/Punkte-Vorgang, ob für diesen User
  * eine offene Einladung beim aktuellen Händler existiert. Falls ja wird der
  * Empfehlungs-Bonus für Inviter & Invitee ausgezahlt und beide via Push
- * benachrichtigt. Wirft niemals — schlägt still fehl, damit der Stempelvorgang
+ * benachrichtigt. Wirft niemals — schlägt still fehl, damit der Scan-Vorgang
  * niemals durch Bonus-Probleme beeinträchtigt wird.
  */
 export async function maybeAwardReferralBonus(params: {

@@ -39,10 +39,10 @@ export default function WizardStepBoxId({ state, onChange }: Props) {
           <Package className="h-5 w-5 text-primary mt-0.5 shrink-0" />
           <div>
             <p className="text-base font-medium text-foreground">
-              Stempel-ID eingeben
+              Karten-ID eingeben
             </p>
             <p className="text-sm text-muted-foreground mt-1">
-              Du findest deine Stempel-ID auf der Innenseite des Deckels deiner
+              Du findest deine Karten-ID auf der Innenseite des Deckels deiner
               Starterbox.
             </p>
           </div>

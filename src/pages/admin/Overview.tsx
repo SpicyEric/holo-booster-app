@@ -94,7 +94,7 @@ const Overview = () => {
         const activeIds = new Set((recentActivity || []).map((r) => r.merchant_customer_id));
         const inactive = activeCustomers.filter((c) => !activeIds.has(c.id));
         if (inactive.length > 0) {
-          newAlerts.push({ type: "warning", message: `${inactive.length} Kunde${inactive.length > 1 ? "n" : ""} ohne Stempelaktivität (14+ Tage)`, action: "Anzeigen", link: customersPath });
+          newAlerts.push({ type: "warning", message: `${inactive.length} Kunde${inactive.length > 1 ? "n" : ""} ohne Aktivität (14+ Tage)`, action: "Anzeigen", link: customersPath });
         }
       }
     } catch (e) { console.error(e); }
@@ -381,8 +381,8 @@ const Overview = () => {
               <h4 className="text-xs font-semibold mb-2 text-muted-foreground">Berechnung der Aktivitätsrate</h4>
               <div className="space-y-1.5 text-sm">
                 <div className="flex justify-between"><span>Aktive Kunden gesamt</span><span className="font-bold">{kpis.activeCustomers}</span></div>
-                <div className="flex justify-between"><span>Davon mit Stempelaktivität (7 Tage)</span><span className="font-bold text-green-600">{kpis.activeWithStamps}</span></div>
-                <div className="flex justify-between"><span>Ohne Stempelaktivität</span><span className="font-bold text-amber-600">{kpis.activeCustomers - kpis.activeWithStamps}</span></div>
+                <div className="flex justify-between"><span>Davon mit Scan-Aktivität (7 Tage)</span><span className="font-bold text-green-600">{kpis.activeWithStamps}</span></div>
+                <div className="flex justify-between"><span>Ohne Scan-Aktivität</span><span className="font-bold text-amber-600">{kpis.activeCustomers - kpis.activeWithStamps}</span></div>
                 <div className="border-t pt-1.5 mt-1.5">
                   <p className="text-xs text-muted-foreground">
                     Formel: {kpis.activeWithStamps} von {kpis.activeCustomers} aktiven Kunden haben in den letzten 7 Tagen mindestens eine Stempeltransaktion (NFC) durchgeführt = <strong>{kpis.activityRate}%</strong>

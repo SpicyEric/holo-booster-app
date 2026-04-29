@@ -108,7 +108,7 @@ export default function AppMyCards() {
             <h3 className="font-semibold text-lg mb-2">Keine Punktekarten</h3>
             <p className="text-muted-foreground text-sm">
               Du hast noch keine Punkte bei Händlern gesammelt. 
-              Besuche einen teilnehmenden Shop und scanne deinen ersten NFC-Stempel!
+              Besuche einen teilnehmenden Shop und scanne deine erste NFC-Karte!
             </p>
           </Card>
         ) : (

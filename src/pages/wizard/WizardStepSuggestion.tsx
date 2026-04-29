@@ -60,7 +60,7 @@ export default function WizardStepSuggestion({ state, onChange }: Props) {
         <div className="bg-card border-2 border-primary rounded-xl p-6 text-center">
           <Stamp className="h-10 w-10 text-primary mx-auto mb-3" />
           <h4 className="font-bold text-foreground text-lg">
-            Ein Stempel pro Besuch
+            Ein Scan pro Besuch
           </h4>
           <p className="text-2xl font-bold text-primary mt-2">
             5 Punkte / Besuch
@@ -160,7 +160,7 @@ export default function WizardStepSuggestion({ state, onChange }: Props) {
       {/* Customization hint */}
       <div className="bg-muted/50 rounded-lg p-4 border border-border">
         <p className="text-sm text-muted-foreground">
-          💡 Dies ist nur deine Ersteinrichtung – du kannst dein Stempelsystem
+          💡 Dies ist nur deine Ersteinrichtung – du kannst dein Karten-System
           jederzeit im Dashboard individuell anpassen.
         </p>
       </div>

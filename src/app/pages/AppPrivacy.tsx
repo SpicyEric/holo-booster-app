@@ -50,7 +50,7 @@ export default function AppPrivacy() {
           <h4 className="font-medium mt-4 mb-1 text-sm">c) NFC-Daten</h4>
           <p className="text-sm mb-3">
             Beim Scannen von NFC-Chips in teilnehmenden Geschäften wird die Chip-ID ausgelesen, 
-            um Ihren Stempel oder Ihre Punkte zu erfassen. Es werden dabei keine Daten auf den 
+            um Ihre Punkte zu erfassen. Es werden dabei keine Daten auf den 
             NFC-Chip geschrieben. Die NFC-Berechtigung wird nur aktiv genutzt, wenn Sie die 
             Scan-Funktion in der App verwenden.
           </p>

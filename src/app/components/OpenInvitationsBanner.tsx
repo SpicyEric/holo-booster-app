@@ -155,7 +155,7 @@ export function OpenInvitationsBanner() {
               </div>
               <div className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
                 <Clock className="h-3 w-3" />
-                Sammel deinen ersten Stempel — noch {days} {days === 1 ? 'Tag' : 'Tage'}
+                Sammel deine ersten Punkte — noch {days} {days === 1 ? 'Tag' : 'Tage'}
               </div>
             </div>
           </button>

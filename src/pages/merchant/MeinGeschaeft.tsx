@@ -1225,7 +1225,7 @@ const MeinGeschaeft = () => {
                     <div className="flex items-center justify-between">
                       <CardTitle className="flex items-center gap-3 text-lg font-semibold">
                         <span className="text-lg">⚙️</span>
-                        Automatisches Stempelsystem
+                        Automatisches Karten-System
                         <Badge variant="outline" className={cn("text-xs", !manualMode ? "bg-emerald-50 text-emerald-700 border-emerald-300" : "bg-muted text-muted-foreground")}>
                           {!manualMode ? "aktiviert" : "deaktiviert"}
                         </Badge>
@@ -1273,7 +1273,7 @@ const MeinGeschaeft = () => {
                           {stampSettingsDirty && (
                             <Button onClick={handleSaveChips} disabled={savingChips} className="rounded-xl w-full animate-pulse">
                               {savingChips ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
-                              Stempel speichern
+                              Karte speichern
                             </Button>
                           )}
                         </div>
@@ -1382,7 +1382,7 @@ const MeinGeschaeft = () => {
                     <div className="flex items-center justify-between">
                       <CardTitle className="flex items-center gap-3 text-lg font-semibold">
                         <span className="text-lg">🔖</span>
-                        Manuelles Stempelsystem
+                        Manuelles Karten-System
                         <Badge variant="outline" className={cn("text-xs", manualMode ? "bg-emerald-50 text-emerald-700 border-emerald-300" : "bg-muted text-muted-foreground")}>
                           {manualMode ? "aktiviert" : "deaktiviert"}
                         </Badge>
@@ -1434,7 +1434,7 @@ const MeinGeschaeft = () => {
 
                       <Button onClick={handleSaveChips} disabled={savingChips} className="rounded-xl w-full animate-pulse">
                         {savingChips ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
-                        Stempel speichern
+                        Karte speichern
                       </Button>
                     </CardContent>
                   )}

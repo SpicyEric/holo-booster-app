@@ -412,7 +412,7 @@ const AppMessageDetail = () => {
                     ) : (
                       <div className="space-y-2">
                         <p className="text-xs text-muted-foreground text-center">
-                          Zeige dieses Angebot im Geschäft und halte den Stempel an dein Handy
+                          Zeige dieses Angebot im Geschäft und halte die Karte an dein Handy
                         </p>
                         <Button 
                           onClick={handleRedeemOfferClick} 
@@ -420,7 +420,7 @@ const AppMessageDetail = () => {
                           className="w-full rounded-xl"
                         >
                           <Smartphone className="h-4 w-4 mr-2" />
-                          Angebot per Stempel einlösen
+                          Angebot per NFC einlösen
                         </Button>
                       </div>
                     )}
@@ -438,7 +438,7 @@ const AppMessageDetail = () => {
           <DialogHeader>
             <DialogTitle className="text-center">Angebot einlösen</DialogTitle>
             <DialogDescription className="text-center">
-              Halte jetzt den NFC-Stempel von {message?.customer?.company_name || message?.customer?.name || 'dem Geschäft'} an dein Handy, um das Angebot einzulösen.
+              Halte jetzt die NFC-Karte von {message?.customer?.company_name || message?.customer?.name || 'dem Geschäft'} an dein Handy, um das Angebot einzulösen.
             </DialogDescription>
           </DialogHeader>
           <div className="flex flex-col items-center gap-4 py-6">

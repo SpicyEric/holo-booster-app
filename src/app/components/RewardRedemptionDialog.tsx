@@ -269,7 +269,7 @@ export const RewardRedemptionDialog = ({
           ) : canRedeem ? (
             <div className="space-y-3">
               <p className="text-sm text-center text-muted-foreground">
-                Zeige dem Mitarbeiter diesen Bildschirm und lasse dir die Prämie abstempeln.
+                Zeige dem Mitarbeiter diesen Bildschirm und lasse dir die Prämie freischalten.
               </p>
               <Button onClick={handleStartRedemption} className="w-full" size="lg">
                 Jetzt einlösen

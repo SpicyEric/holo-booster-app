@@ -70,13 +70,13 @@ export default function AppTerms() {
           {/* 5. NFC- und QR-Code-Nutzung */}
           <h3 className="font-semibold mt-6 mb-2">5. NFC- und QR-Code-Nutzung</h3>
           <p className="text-sm mb-4">
-            Das Sammeln von Punkten erfolgt durch das Scannen von NFC-Stempeln oder QR-Codes 
+            Das Sammeln von Punkten erfolgt durch das Scannen von NFC-Karten oder QR-Codes 
             in den Geschäftsräumen teilnehmender Händler. Dabei gilt:
           </p>
           <ul className="text-sm list-disc list-inside mb-4 space-y-1">
             <li>Das Scannen darf nur an den dafür vorgesehenen Geräten und Sammelpunkten des Händlers erfolgen.</li>
             <li>Jeder Versuch, NFC-Chips zu kopieren, zu manipulieren oder außerhalb des vorgesehenen Kontexts zu verwenden, ist strengstens untersagt.</li>
-            <li>Das Auslesen der NFC-Chip-ID dient ausschließlich der Zuordnung Ihres Stempels. Es werden keine Daten auf den NFC-Chip geschrieben.</li>
+            <li>Das Auslesen der NFC-Chip-ID dient ausschließlich der Zuordnung Ihrer Punkte. Es werden keine Daten auf den NFC-Chip geschrieben.</li>
           </ul>
 
           {/* 6. Push-Benachrichtigungen */}

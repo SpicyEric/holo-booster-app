@@ -146,7 +146,7 @@ export default function CheckoutSuccess() {
                     <p className="text-muted-foreground">
                       Der Kunde erhält in Kürze eine E-Mail mit einem Link zum
                       Festlegen seines Passworts. Bis dahin kannst du den
-                      Account hier direkt einrichten (Box-ID, Stempelsystem
+                      Account hier direkt einrichten (Box-ID, Karten-System
                       usw.).
                     </p>
                   </div>

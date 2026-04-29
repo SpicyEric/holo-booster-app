@@ -690,7 +690,7 @@ export const AppScan = () => {
               <motion.div key="idle" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="text-center space-y-3">
                 <h2 className="text-xl font-bold">Bereit zum Scannen</h2>
                 <p className="text-muted-foreground text-sm max-w-xs mx-auto">
-                  Tippe auf den Button und halte dein Handy an den Eloyo-Stempel
+                  Tippe auf den Button und halte dein Handy an die Eloyo-Karte
                 </p>
                 <Button onClick={startNFCScan} className="w-full max-w-xs">
                   <Nfc className="h-4 w-4 mr-2" />
@@ -703,7 +703,7 @@ export const AppScan = () => {
               <motion.div key="scanning" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="text-center space-y-3">
                 <h2 className="text-xl font-bold">Handy an Karte halten</h2>
                 <p className="text-muted-foreground text-sm max-w-xs mx-auto">
-                  Halte jetzt die obere Rückseite deines Handys an den Eloyo-Stempel
+                  Halte jetzt die obere Rückseite deines Handys an die Eloyo-Karte
                 </p>
                 <Button variant="outline" onClick={cancelScan}>Abbrechen</Button>
               </motion.div>

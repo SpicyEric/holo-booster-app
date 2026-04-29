@@ -361,7 +361,7 @@ const Backoffice = () => {
               variants={glassReveal}
               className="text-lg text-[#4a4455] leading-relaxed"
             >
-              Sieh auf einen Blick wie viele Kunden du hast, wie viele Stempel
+              Sieh auf einen Blick wie viele Kunden du hast, wie viele Punkte
               gesammelt wurden und welche Prämien eingelöst werden. Alle
               Kennzahlen in Echtzeit — übersichtlich, klar, immer aktuell.
             </motion.p>
