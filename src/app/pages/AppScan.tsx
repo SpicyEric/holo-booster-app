@@ -409,7 +409,7 @@ export const AppScan = () => {
           merchantName = merchant?.company_name || merchant?.name || 'Händler';
         }
         setResult({ success: true, points: response.points_awarded, totalPoints: response.total_points, merchantName, merchantCustomerId: response.merchant_customer_id });
-        toast.success(`+${response.points_awarded} Punkte gesammelt!`);
+        // Toast entfernt — UI zeigt die Punkte bereits visuell an
         console.log('[AppScan] setResult called with merchantCustomerId:', response.merchant_customer_id);
 
         // Referral-Bonus prüfen (Phase 2: Joint Visit, 7 Tage)
