@@ -425,7 +425,9 @@ const BoxManagement = () => {
     if (!stampDialogRow?.stempel_id || !webNfcSupported) { toast.error("Web NFC nicht verfügbar"); return; }
     setScanningStampColor(color);
     const chipUid = stampDialogRow.stempel_id;
-    const ndefText = `${chipUid}:${color}`;
+    // Nur eine einfache Zahl pro Farbe auf den Chip schreiben: grün=1, blau=2, rot=3
+    const colorNumberMap: Record<string, string> = { grün: "1", gruen: "1", green: "1", blau: "2", blue: "2", rot: "3", red: "3" };
+    const ndefText = colorNumberMap[color.toLowerCase()] ?? "1";
     try {
       const ndef = new (window as any).NDEFReader();
       const abortController = new AbortController();
