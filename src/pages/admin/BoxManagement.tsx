@@ -459,15 +459,33 @@ const BoxManagement = () => {
             const { data: byMerchant } = await supabase.from("nfc_chips").select("id").eq("merchant_customer_id", merchantCustomerId).eq("stamp_color", color).maybeSingle();
             existing = byMerchant;
           }
+          // Punkte-Wert ermitteln: zuerst bestehenden Wert vom Händler für diese Farbe übernehmen,
+          // sonst Default 1/2/3 (grün/blau/rot). So überschreiben wir keine Händler-Konfiguration.
+          const defaultPoints = color === 'grün' ? 1 : color === 'blau' ? 2 : 3;
+          let pointsValue = defaultPoints;
+          if (merchantCustomerId) {
+            const { data: existingChipForColor } = await supabase
+              .from("nfc_chips")
+              .select("points_value")
+              .eq("merchant_customer_id", merchantCustomerId)
+              .eq("stamp_color", color)
+              .not("points_value", "is", null)
+              .order("points_value", { ascending: false })
+              .limit(1)
+              .maybeSingle();
+            if (existingChipForColor?.points_value != null) {
+              pointsValue = existingChipForColor.points_value;
+            }
+          }
           if (existing) {
             await supabase.from("nfc_chips").update({ hardware_uid: hardwareUid, chip_uid: chipUid, merchant_customer_id: merchantCustomerId }).eq("id", existing.id);
           } else {
-            await supabase.from("nfc_chips").insert({ chip_uid: chipUid, stamp_color: color, stamp_name: color.charAt(0).toUpperCase() + color.slice(1), hardware_uid: hardwareUid, points_value: color === 'grün' ? 1 : color === 'blau' ? 2 : 3, is_active: true, merchant_customer_id: merchantCustomerId });
+            await supabase.from("nfc_chips").insert({ chip_uid: chipUid, stamp_color: color, stamp_name: color.charAt(0).toUpperCase() + color.slice(1), hardware_uid: hardwareUid, points_value: pointsValue, is_active: true, merchant_customer_id: merchantCustomerId });
           }
           toast.success(`Karte "${color}" registriert`);
           setRegisteredStamps(prev => {
             const filtered = prev.filter(s => s.stamp_color !== color);
-            return [...filtered, { id: existing?.id || 'temp-' + Date.now(), stamp_color: color, hardware_uid: hardwareUid, chip_uid: chipUid, points_value: color === 'grün' ? 1 : color === 'blau' ? 2 : 3 }];
+            return [...filtered, { id: existing?.id || 'temp-' + Date.now(), stamp_color: color, hardware_uid: hardwareUid, chip_uid: chipUid, points_value: pointsValue }];
           });
         } catch { toast.error("DB Fehler"); }
         setScanningStampColor(null);
