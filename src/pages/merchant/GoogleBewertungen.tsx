@@ -194,7 +194,7 @@ const GoogleBewertungen = () => {
                   Dein Google-Bewertungslink
                 </h3>
                 <p className="text-sm text-amber-700 mb-4">
-                  Dieser Link wird nach dem Stempeln angezeigt, damit Kunden dich direkt bei Google bewerten können. 
+                  Dieser Link wird nach dem Scannen angezeigt, damit Kunden dich direkt bei Google bewerten können. 
                   Mehr Bewertungen bedeuten mehr Sichtbarkeit!
                 </p>
                 

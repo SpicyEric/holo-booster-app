@@ -24,13 +24,13 @@ interface BadgeDef {
 }
 
 const BADGE_DEFS: BadgeDef[] = [
-  { key: "erster_stempel", label: "Erster Stempel", icon: badgeErsterStempel, getTooltip: () => "Dein erster Stempel wurde vergeben!" },
-  { key: "stammkunden_ring", label: "Stammkundenring", icon: badgeStammkundenRing, getTooltip: () => "8 Stammkunden gewonnen (6+ Stempel)" },
+  { key: "erster_stempel", label: "Erster Scan", icon: badgeErsterStempel, getTooltip: () => "Dein erster Scan wurde vergeben!" },
+  { key: "stammkunden_ring", label: "Stammkundenring", icon: badgeStammkundenRing, getTooltip: () => "8 Stammkunden gewonnen (6+ Scans)" },
   { key: "erster_bonus", label: "Erster Bonus", icon: badgeErsterBonus, getTooltip: () => "Die erste Prämie wurde eingelöst!" },
   { key: "treue_schild", label: "Treueschild", icon: badgeTreueSchild, getTooltip: () => "6 Monate dabei – danke für deine Treue!" },
   { key: "netzwerk_star", label: "Netzwerkstar", icon: badgeNetzwerkStar, getTooltip: (m) => `${m?.count || 3}+ Geschäfte in deiner PLZ nutzen Eloyo` },
   { key: "jubilaeum", label: "Jubiläum", icon: badgeJubilaeum, getTooltip: () => "1 Jahr dabei – vielen Dank, dass du mit uns arbeitest!" },
-  { key: "vip_stammkunde", label: "VIP-Stammkunde", icon: badgeVipStammkunde, getTooltip: () => "5 VIP-Stammkunden (15+ Stempel)" },
+  { key: "vip_stammkunde", label: "VIP-Stammkunde", icon: badgeVipStammkunde, getTooltip: () => "5 VIP-Stammkunden (15+ Karte)" },
   { key: "geburtstagskind", label: "Geburtstagskind", icon: badgeGeburtstagskind, getTooltip: () => "Erster Geburtstagsgruß versendet!" },
   { key: "stimme_erhoben", label: "Stimme erhoben", icon: badgeStimmeErhoben, getTooltip: () => "Erste Google-Bewertung über Eloyo erhalten!" },
   { key: "punkt_sammler", label: "Punktesammler", icon: badgePunktSammler, getTooltip: () => "500 Punkte insgesamt vergeben!" },
@@ -78,7 +78,7 @@ export default function MerchantBadges({ customerId, customerCreatedAt, postalCo
   const checkAndAwardBadges = async () => {
     try {
       const checks = await Promise.all([
-        // 1. Erster Stempel: totalStamps >= 1
+        // 1. Erster Karte: totalStamps >= 1
         supabase.from("point_transactions").select("*", { count: "exact", head: true }).eq("merchant_customer_id", customerId).eq("transaction_type", "nfc_stamp"),
         // 2. Erster Bonus: totalRedemptions >= 1
         supabase.from("reward_redemptions").select("*", { count: "exact", head: true }).eq("merchant_customer_id", customerId),
@@ -98,7 +98,7 @@ export default function MerchantBadges({ customerId, customerCreatedAt, postalCo
 
       const newBadges: { key: string; metadata?: Record<string, any> }[] = [];
 
-      // Erster Stempel
+      // Erster Karte
       if (totalStamps >= 1) newBadges.push({ key: "erster_stempel" });
 
       // Erster Bonus

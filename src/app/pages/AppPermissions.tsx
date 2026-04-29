@@ -227,7 +227,7 @@ export const AppPermissions = () => {
               <div>
                 <h1 className="text-2xl font-bold mb-3">NFC aktivieren</h1>
                 <p className="text-muted-foreground">
-                  Mit NFC kannst du bei teilnehmenden Händlern Punkte sammeln, indem du dein Handy an den Stempel hältst.
+                  Mit NFC kannst du bei teilnehmenden Händlern Punkte sammeln, indem du dein Handy an die Karte hältst.
                 </p>
               </div>
 

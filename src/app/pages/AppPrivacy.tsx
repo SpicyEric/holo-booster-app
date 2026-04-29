@@ -41,7 +41,7 @@ export default function AppPrivacy() {
 
           <h4 className="font-medium mt-4 mb-1 text-sm">b) Treueprogramm-Daten</h4>
           <ul className="text-sm list-disc list-inside mb-3 space-y-1">
-            <li>Gesammelte Punkte und Stempel</li>
+            <li>Gesammelte Punkte und Karte</li>
             <li>Eingelöste Prämien und Angebote</li>
             <li>Teilnehmende Geschäfte, bei denen Sie Kunde sind</li>
             <li>Transaktionshistorie</li>
@@ -50,7 +50,7 @@ export default function AppPrivacy() {
           <h4 className="font-medium mt-4 mb-1 text-sm">c) NFC-Daten</h4>
           <p className="text-sm mb-3">
             Beim Scannen von NFC-Chips in teilnehmenden Geschäften wird die Chip-ID ausgelesen, 
-            um Ihren Stempel oder Ihre Punkte zu erfassen. Es werden dabei keine Daten auf den 
+            um Ihre Punkte zu erfassen. Es werden dabei keine Daten auf den 
             NFC-Chip geschrieben. Die NFC-Berechtigung wird nur aktiv genutzt, wenn Sie die 
             Scan-Funktion in der App verwenden.
           </p>
@@ -80,7 +80,7 @@ export default function AppPrivacy() {
           <h3 className="font-semibold mt-6 mb-2">4. Zweck der Verarbeitung</h3>
           <ul className="text-sm list-disc list-inside mb-4 space-y-1">
             <li>Bereitstellung und Verwaltung Ihres Treuepunkte-Kontos</li>
-            <li>Zuordnung von Stempeln und Punkten zu Ihrem Konto beim NFC-Scan</li>
+            <li>Zuordnung von Scannen und Punkten zu Ihrem Konto beim NFC-Scan</li>
             <li>Versand von Push-Benachrichtigungen (Angebote, Nachrichten, Prämien)</li>
             <li>Anzeige nahegelegener Geschäfte (Kartenansicht)</li>
             <li>Personalisierung von Angeboten (z.&nbsp;B. Geburtstagsangebote)</li>
@@ -153,7 +153,7 @@ export default function AppPrivacy() {
           <h3 className="font-semibold mt-6 mb-2">9. App-Berechtigungen</h3>
           <p className="text-sm mb-2">Die App kann folgende Geräte-Berechtigungen anfordern:</p>
           <ul className="text-sm list-disc list-inside mb-4 space-y-1">
-            <li><strong>NFC:</strong> Zum Scannen von NFC-Stempeln in Geschäften</li>
+            <li><strong>NFC:</strong> Zum Scannen von NFC-Karten in Geschäften</li>
             <li><strong>Kamera:</strong> Zum Scannen von QR-Codes</li>
             <li><strong>Standort:</strong> Zur Anzeige nahegelegener Geschäfte</li>
             <li><strong>Push-Benachrichtigungen:</strong> Für Nachrichten und Angebote</li>

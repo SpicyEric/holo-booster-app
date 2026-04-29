@@ -239,7 +239,7 @@ export default function CheckoutForm({ backPath, backLabel, partnerUserId }: Che
               </p>
             )}
             <ul className="space-y-1">
-              {["NFC-Holzstempel pro Standort", "Einrichtung & Onboarding", "Premium Support"].map((f, i) => (
+              {["NFC-Karten pro Standort", "Einrichtung & Onboarding", "Premium Support"].map((f, i) => (
                 <li key={i} className="flex items-center gap-2 text-xs"><Check className="h-3 w-3 text-primary" />{f}</li>
               ))}
             </ul>
@@ -278,7 +278,7 @@ export default function CheckoutForm({ backPath, backLabel, partnerUserId }: Che
               </p>
             )}
             <ul className="space-y-1">
-              {["Digitale Stempelkarte", "Dashboard-Zugang", "Kundenverwaltung", "Google Bewertungen"].map((f, i) => (
+              {["Digitale Punktekarte", "Dashboard-Zugang", "Kundenverwaltung", "Google Bewertungen"].map((f, i) => (
                 <li key={i} className="flex items-center gap-2 text-xs"><Check className="h-3 w-3 text-primary" />{f}</li>
               ))}
             </ul>

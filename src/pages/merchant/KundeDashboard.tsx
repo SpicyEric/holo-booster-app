@@ -118,7 +118,7 @@ export default function KundeDashboard() {
         customerData = await getUserCustomer(user.id);
         if (customerData) {
           // Wizard deaktiviert: Händler werden direkt ins Dashboard gelassen,
-          // Box-ID und Stempelsystem werden vom Vertriebler/Admin oder
+          // Box-ID und Karten-System werden vom Vertriebler/Admin oder
           // im Bereich "Mein Geschäft" gepflegt.
           setCustomer({ id: customerData.id, name: customerData.name, email: customerData.email || user.email || "", company_name: customerData.company_name, status: customerData.status || "active", customer_number: customerData.customer_number, created_at: customerData.created_at, postal_code: customerData.postal_code, birthday_enabled: customerData.birthday_enabled });
         }
@@ -128,7 +128,7 @@ export default function KundeDashboard() {
         if (customerData.id === DEMO_MERCHANT_ID) {
           setStats(DEMO_STATS);
           setNotifications([
-            { id: "demo-stamps-24h", icon: Trophy, text: "50 neue Stempel in den letzten 24 Stunden", time: "Heute", color: "text-emerald-600" },
+            { id: "demo-stamps-24h", icon: Trophy, text: "50 neue Karte in den letzten 24 Stunden", time: "Heute", color: "text-emerald-600" },
             { id: "demo-customers-7d", icon: UserPlus, text: "117 neue Kunden diese Woche", time: "Diese Woche", color: "text-primary" },
           ]);
           setAllMissionsDoneOver24h(true);
@@ -252,7 +252,7 @@ export default function KundeDashboard() {
         .eq("transaction_type", "nfc_stamp")
         .gte("created_at", yesterday);
       if (recentStamps && recentStamps > 0) {
-        items.push({ id: "stamps-24h", icon: Trophy, text: `${recentStamps} neue Stempel in den letzten 24 Stunden`, time: "Heute", color: "text-emerald-600" });
+        items.push({ id: "stamps-24h", icon: Trophy, text: `${recentStamps} neue Karte in den letzten 24 Stunden`, time: "Heute", color: "text-emerald-600" });
       }
 
       // Recent new customers (last 7 days)
@@ -387,7 +387,7 @@ export default function KundeDashboard() {
           {/* ====== KPI Cards ====== */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             <KpiCard icon={Users} label="Kunden gesamt" countTo={stats?.totalContacts ?? 0} trend={stats && stats.newContactsThisWeek > 0 ? `+${stats.newContactsThisWeek} diese Woche` : undefined} iconBg="bg-primary/10" iconColor="text-primary" bigNumber />
-            <KpiCard icon={Trophy} label="Stempel gesamt" countTo={stats?.totalStamps ?? 0} sub="Gesamt seit Start" iconBg="bg-emerald-50" iconColor="text-emerald-600" bigNumber />
+            <KpiCard icon={Trophy} label="Karte gesamt" countTo={stats?.totalStamps ?? 0} sub="Gesamt seit Start" iconBg="bg-emerald-50" iconColor="text-emerald-600" bigNumber />
             <KpiCard icon={Gift} label="Prämien eingelöst" countTo={stats?.totalRedemptions ?? 0} iconBg="bg-amber-50" iconColor="text-amber-600" />
             <KpiCard
               icon={Zap}

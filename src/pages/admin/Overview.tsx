@@ -6,7 +6,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
   Users, AlertTriangle, RefreshCw,
-  TrendingUp, Activity, Stamp, ArrowRight, UserPlus, CalendarDays,
+  TrendingUp, Activity, Nfc, ArrowRight, UserPlus, CalendarDays,
 } from "lucide-react";
 import { format } from "date-fns";
 import { de } from "date-fns/locale";
@@ -94,7 +94,7 @@ const Overview = () => {
         const activeIds = new Set((recentActivity || []).map((r) => r.merchant_customer_id));
         const inactive = activeCustomers.filter((c) => !activeIds.has(c.id));
         if (inactive.length > 0) {
-          newAlerts.push({ type: "warning", message: `${inactive.length} Kunde${inactive.length > 1 ? "n" : ""} ohne Stempelaktivität (14+ Tage)`, action: "Anzeigen", link: customersPath });
+          newAlerts.push({ type: "warning", message: `${inactive.length} Kunde${inactive.length > 1 ? "n" : ""} ohne Aktivität (14+ Tage)`, action: "Anzeigen", link: customersPath });
         }
       }
     } catch (e) { console.error(e); }
@@ -135,7 +135,7 @@ const Overview = () => {
         const assignedIds = new Set((assignedBoxes || []).map((b) => b.box_id));
         const available = (allBoxes || []).filter((b) => !assignedIds.has(b.id)).length;
         if (available < 3) {
-          newAlerts.push({ type: available === 0 ? "error" : "warning", message: available === 0 ? "Keine Stempel-IDs mehr verfügbar!" : `Nur noch ${available} Stempel-ID${available > 1 ? "s" : ""} verfügbar`, action: "Stempel-IDs verwalten", link: "/admin/boxes" });
+          newAlerts.push({ type: available === 0 ? "error" : "warning", message: available === 0 ? "Keine Karte-IDs mehr verfügbar!" : `Nur noch ${available} Karte-ID${available > 1 ? "s" : ""} verfügbar`, action: "Karte-IDs verwalten", link: "/admin/boxes" });
         }
       } catch (e) { console.error(e); }
     }
@@ -381,11 +381,11 @@ const Overview = () => {
               <h4 className="text-xs font-semibold mb-2 text-muted-foreground">Berechnung der Aktivitätsrate</h4>
               <div className="space-y-1.5 text-sm">
                 <div className="flex justify-between"><span>Aktive Kunden gesamt</span><span className="font-bold">{kpis.activeCustomers}</span></div>
-                <div className="flex justify-between"><span>Davon mit Stempelaktivität (7 Tage)</span><span className="font-bold text-green-600">{kpis.activeWithStamps}</span></div>
-                <div className="flex justify-between"><span>Ohne Stempelaktivität</span><span className="font-bold text-amber-600">{kpis.activeCustomers - kpis.activeWithStamps}</span></div>
+                <div className="flex justify-between"><span>Davon mit Scan-Aktivität (7 Tage)</span><span className="font-bold text-green-600">{kpis.activeWithStamps}</span></div>
+                <div className="flex justify-between"><span>Ohne Scan-Aktivität</span><span className="font-bold text-amber-600">{kpis.activeCustomers - kpis.activeWithStamps}</span></div>
                 <div className="border-t pt-1.5 mt-1.5">
                   <p className="text-xs text-muted-foreground">
-                    Formel: {kpis.activeWithStamps} von {kpis.activeCustomers} aktiven Kunden haben in den letzten 7 Tagen mindestens eine Stempeltransaktion (NFC) durchgeführt = <strong>{kpis.activityRate}%</strong>
+                    Formel: {kpis.activeWithStamps} von {kpis.activeCustomers} aktiven Kunden haben in den letzten 7 Tagen mindestens eine Scan-Transaktion (NFC) durchgeführt = <strong>{kpis.activityRate}%</strong>
                   </p>
                 </div>
               </div>
@@ -456,7 +456,7 @@ const Overview = () => {
               <Tooltip contentStyle={{ fontSize: "12px", borderRadius: "8px" }} />
               <Legend wrapperStyle={{ fontSize: "12px" }} />
               <Line type="monotone" dataKey="kunden" stroke="hsl(262, 50%, 55%)" name="Kundenwachstum" strokeWidth={2} dot={false} />
-              <Line type="monotone" dataKey="stempel" stroke="hsl(150, 50%, 45%)" name="Stempelaktivität" strokeWidth={2} dot={false} />
+              <Line type="monotone" dataKey="karte" stroke="hsl(150, 50%, 45%)" name="Scan-Aktivität" strokeWidth={2} dot={false} />
             </LineChart>
           </ResponsiveContainer>
         </Card>
@@ -472,7 +472,7 @@ const Overview = () => {
               liveFeed.map((tx) => (
                 <div key={tx.id} className="flex items-start gap-3 p-2.5 rounded-lg bg-muted/30">
                   <div className="w-7 h-7 rounded-full bg-[hsl(262,40%,90%)] flex items-center justify-center shrink-0 mt-0.5">
-                    <Stamp className="w-3.5 h-3.5 text-[hsl(262,50%,45%)]" />
+                    <Nfc className="w-3.5 h-3.5 text-[hsl(262,50%,45%)]" />
                   </div>
                   <div className="min-w-0">
                     <p className="text-sm font-medium truncate">{tx.merchant?.name || "Unbekannt"}</p>

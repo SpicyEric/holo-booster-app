@@ -20,7 +20,7 @@ export const OfflineBanner = () => {
           <WifiOff className="h-3.5 w-3.5" />
           <span>
             Kein Internet – eingeschränkter Modus
-            {pendingCount > 0 && ` (${pendingCount} Stempel ausstehend)`}
+            {pendingCount > 0 && ` (${pendingCount} Karte ausstehend)`}
           </span>
         </motion.div>
       )}

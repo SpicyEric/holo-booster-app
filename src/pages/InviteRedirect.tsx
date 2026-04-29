@@ -208,10 +208,10 @@ export default function InviteRedirect() {
           </h1>
           <div className="rounded-xl bg-primary/10 px-3 py-2.5 mb-5">
             <div className="text-xs text-muted-foreground">Dein Willkommensbonus</div>
-            <div className="text-base font-bold text-primary">Doppelte Punkte für deinen ersten Stempel</div>
+            <div className="text-base font-bold text-primary">Doppelte Punkte für deinen ersten Karte</div>
           </div>
           <p className="text-sm text-muted-foreground mb-5 leading-relaxed">
-            Öffne Eloyo, sammle innerhalb 7 Tagen deinen ersten Stempel — ihr bekommt beide Bonus.
+            Öffne Eloyo, sammle innerhalb 7 Tagen deine ersten Punkte — ihr bekommt beide Bonus.
           </p>
           <div className="space-y-2">
             <Button asChild className="w-full h-11 rounded-xl">

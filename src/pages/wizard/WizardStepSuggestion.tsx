@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils";
-import { Stamp, Info } from "lucide-react";
+import { Nfc, Info } from "lucide-react";
 import { calculateSuggestion } from "./wizardLogic";
 import type { WizardState, StampSuggestion } from "./wizardLogic";
 
@@ -43,7 +43,7 @@ export default function WizardStepSuggestion({ state, onChange }: Props) {
       if (amount >= tiers[i].threshold)
         return `${tiers[i].label} (${tiers[i].points} Pkt.)`;
     }
-    return "Kein Stempel";
+    return "Kein Karte";
   };
 
   return (
@@ -58,9 +58,9 @@ export default function WizardStepSuggestion({ state, onChange }: Props) {
       {/* Simple system */}
       {isSimpleOnly ? (
         <div className="bg-card border-2 border-primary rounded-xl p-6 text-center">
-          <Stamp className="h-10 w-10 text-primary mx-auto mb-3" />
+          <Nfc className="h-10 w-10 text-primary mx-auto mb-3" />
           <h4 className="font-bold text-foreground text-lg">
-            Ein Stempel pro Besuch
+            Ein Scan pro Besuch
           </h4>
           <p className="text-2xl font-bold text-primary mt-2">
             5 Punkte / Besuch
@@ -109,7 +109,7 @@ export default function WizardStepSuggestion({ state, onChange }: Props) {
                   COLOR_MAP[tier.color]
                 )}
               >
-                <Stamp
+                <Nfc
                   className={cn("h-8 w-8 mx-auto mb-2", STAMP_COLOR[tier.color])}
                 />
                 <p className="font-bold text-base">{tier.label}</p>
@@ -144,7 +144,7 @@ export default function WizardStepSuggestion({ state, onChange }: Props) {
                 <span
                   className={cn(
                     "font-medium",
-                    label === "Kein Stempel"
+                    label === "Kein Karte"
                       ? "text-muted-foreground"
                       : "text-foreground"
                   )}
@@ -160,7 +160,7 @@ export default function WizardStepSuggestion({ state, onChange }: Props) {
       {/* Customization hint */}
       <div className="bg-muted/50 rounded-lg p-4 border border-border">
         <p className="text-sm text-muted-foreground">
-          💡 Dies ist nur deine Ersteinrichtung – du kannst dein Stempelsystem
+          💡 Dies ist nur deine Ersteinrichtung – du kannst dein Karten-System
           jederzeit im Dashboard individuell anpassen.
         </p>
       </div>

@@ -101,7 +101,7 @@ export default function Transaktionen() {
         // Generate fake transactions for demo
         const demoTx: Transaction[] = [];
         const txTypes = ['nfc_stamp', 'nfc_stamp', 'nfc_stamp', 'nfc_stamp', 'nfc_stamp', 'reward_redeemed', 'offer_redeemed', 'google_review', 'birthday_bonus', 'welcome_bonus'];
-        const stampDescs = ['Stempel gesammelt', 'Punkte erhalten', 'NFC Stempel'];
+        const stampDescs = ['Punkte gesammelt', 'Punkte erhalten', 'NFC-Karte'];
         const rewardDescs = ['Gratis Kaffee eingelöst', 'Rabatt 10% eingelöst', 'Gratis Brötchen eingelöst', 'Kuchen-Gutschein eingelöst', 'Frühstücks-Deal eingelöst'];
         const now = new Date();
         for (let i = 0; i < 200; i++) {
@@ -240,7 +240,7 @@ export default function Transaktionen() {
 
   const getTypeLabel = (type: string | null) => {
     switch (type) {
-      case 'nfc_stamp': return 'Stempel';
+      case 'nfc_stamp': return 'Karte';
       case 'reward_redeemed': return 'Einlösung';
       case 'offer_redeemed': return 'Angebot';
       case 'google_review': return 'Bewertung';
@@ -277,7 +277,7 @@ export default function Transaktionen() {
         {/* KPI Row */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
           {[
-            { label: "Stempel heute", value: todayStamps, icon: Stamp, color: "text-primary", bg: "bg-primary/10" },
+            { label: "Karte heute", value: todayStamps, icon: Stamp, color: "text-primary", bg: "bg-primary/10" },
             { label: "Einlösungen heute", value: todayRedemptions, icon: Gift, color: "text-amber-600", bg: "bg-amber-100" },
             { label: "Gesamt-Transaktionen", value: totalTxCount, icon: Activity, color: "text-secondary", bg: "bg-secondary/10" },
             { label: "Kunden-Segmente", value: segments.reduce((s, seg) => s + seg.count, 0), icon: Users, color: "text-blue-600", bg: "bg-blue-50" },
@@ -321,7 +321,7 @@ export default function Transaktionen() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">Alle Typen</SelectItem>
-                      <SelectItem value="stamps">Stempel</SelectItem>
+                      <SelectItem value="stamps">Karte</SelectItem>
                       <SelectItem value="redemptions">Einlösungen</SelectItem>
                       <SelectItem value="bonus">Bonus</SelectItem>
                     </SelectContent>
@@ -431,10 +431,10 @@ export default function Transaktionen() {
               </div>
             </div>
 
-            {/* Stempelzeiten */}
+            {/* Sammelzeiten */}
             <div className="bg-white rounded-xl p-4 border border-border/30 shadow-[0_1px_3px_hsl(262,30%,80%/0.3)]">
               <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-2"><Clock className="w-4 h-4 text-muted-foreground" /><h3 className="text-sm font-semibold text-foreground">Stempelzeiten</h3></div>
+                <div className="flex items-center gap-2"><Clock className="w-4 h-4 text-muted-foreground" /><h3 className="text-sm font-semibold text-foreground">Sammelzeiten</h3></div>
                 <DateRangeSelector value={hourlyRange} onChange={setHourlyRange} />
               </div>
               <div className="h-[140px] w-full">
@@ -443,7 +443,7 @@ export default function Transaktionen() {
                     <defs><linearGradient id="colorHourT" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="hsl(262,83%,58%)" stopOpacity={0.3} /><stop offset="95%" stopColor="hsl(262,83%,58%)" stopOpacity={0} /></linearGradient></defs>
                     <XAxis dataKey="hour" tick={{ fontSize: 9, fill: 'hsl(0,0%,45%)' }} tickLine={false} axisLine={false} interval={4} />
                     <YAxis tick={{ fontSize: 9, fill: 'hsl(0,0%,45%)' }} tickLine={false} axisLine={false} width={30} />
-                    <RechartsTooltip contentStyle={{ backgroundColor: "hsl(0,0%,100%)", border: "1px solid hsl(0,0%,90%)", borderRadius: "8px", fontSize: "12px" }} formatter={(v: number) => [`${v}`, "Stempel"]} />
+                    <RechartsTooltip contentStyle={{ backgroundColor: "hsl(0,0%,100%)", border: "1px solid hsl(0,0%,90%)", borderRadius: "8px", fontSize: "12px" }} formatter={(v: number) => [`${v}`, "Karte"]} />
                     <Area type="monotone" dataKey="count" stroke="hsl(262,83%,58%)" strokeWidth={2} fill="url(#colorHourT)" />
                   </AreaChart>
                 </ResponsiveContainer>
@@ -456,10 +456,10 @@ export default function Transaktionen() {
               <div className="space-y-2">
                 {segments.map(seg => {
                   const segTooltips: Record<string, string> = {
-                    "Neu": "Kunden, die einmal gestempelt haben",
-                    "Kunden": "Kunden, die 2–5 mal gestempelt haben",
-                    "Stammkunden": "Kunden, die 6–15 mal gestempelt haben",
-                    "VIP-Stammkunden": "Kunden, die mehr als 15 mal gestempelt haben",
+                    "Neu": "Kunden, die einmal gescannt haben",
+                    "Kunden": "Kunden, die 2–5 mal gescannt haben",
+                    "Stammkunden": "Kunden, die 6–15 mal gescannt haben",
+                    "VIP-Stammkunden": "Kunden, die mehr als 15 mal gescannt haben",
                   };
                   return (
                     <Tooltip key={seg.name}>

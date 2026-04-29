@@ -449,7 +449,7 @@ const AppHomeContent = () => {
           </div>
           <h3 className="font-semibold text-foreground mb-2">Dein Feed ist noch leer</h3>
           <p className="text-sm text-muted-foreground">
-            Besuche einen teilnehmenden Shop und scanne deinen ersten NFC-Stempel, um Posts zu sehen!
+            Besuche einen teilnehmenden Shop und scanne deine erste NFC-Karte, um Posts zu sehen!
           </p>
         </div>
       </PullToRefresh>
@@ -1016,7 +1016,7 @@ const AppProfileContent = () => {
   const menuItems = [
     { icon: User, label: 'Kontoeinstellungen', action: () => navigate('/app/settings') },
     { icon: Sparkles, label: 'Shop vorschlagen', action: () => navigate('/app/suggest-shop') },
-    { icon: Store, label: 'Meine Stempelkarten', action: () => navigate('/app/my-cards') },
+    { icon: Store, label: 'Meine Punktekarten', action: () => navigate('/app/my-cards') },
     { icon: History, label: 'Transaktionen', action: () => navigate('/app/history') },
   ];
 

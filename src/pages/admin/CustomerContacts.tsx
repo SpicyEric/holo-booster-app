@@ -128,7 +128,7 @@ const CustomerContacts = ({ customerId }: CustomerContactsProps) => {
               <TableRow>
                 <TableHead>Telefonnummer</TableHead>
                 <TableHead className="text-center">Scans</TableHead>
-                <TableHead className="text-center">Stempel</TableHead>
+                <TableHead className="text-center">Karte</TableHead>
                 <TableHead>Letzter Scan</TableHead>
                 <TableHead className="text-center">Opt-In</TableHead>
               </TableRow>

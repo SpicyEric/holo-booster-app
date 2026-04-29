@@ -58,7 +58,7 @@ const KontoLoeschen = () => {
               </div>
               <ul className="space-y-3">
                 <li className="flex items-start gap-2"><span className="text-red-500 font-bold mt-0.5">•</span><span>Diese Aktion kann <strong>nicht rückgängig</strong> gemacht werden.</span></li>
-                <li className="flex items-start gap-2"><span className="text-red-500 font-bold mt-0.5">•</span><span>Alle gesammelten <strong>Punkte und Stempel</strong> gehen unwiderruflich verloren.</span></li>
+                <li className="flex items-start gap-2"><span className="text-red-500 font-bold mt-0.5">•</span><span>Alle gesammelten <strong>Punkte und Karte</strong> gehen unwiderruflich verloren.</span></li>
                 <li className="flex items-start gap-2"><span className="text-red-500 font-bold mt-0.5">•</span><span>Dein Konto wird <strong>dauerhaft und vollständig gelöscht</strong>.</span></li>
               </ul>
             </div>

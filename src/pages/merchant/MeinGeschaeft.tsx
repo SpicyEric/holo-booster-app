@@ -16,7 +16,7 @@ import {
 import { toast } from "sonner";
 import {
   Upload, Save, MapPin, Phone, Globe, Instagram, Facebook, Twitter,
-  Clock, Store, Gift, Info, UserPlus, Plus, Trash2, Edit2, Loader2, Package, ImageIcon, BarChart3, Stamp, ArrowRight, X, Image as ImageLucide, Sparkles
+  Clock, Store, Gift, Info, UserPlus, Plus, Trash2, Edit2, Loader2, Package, ImageIcon, BarChart3, Nfc, ArrowRight, X, Image as ImageLucide, Sparkles
 } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Switch } from "@/components/ui/switch";
@@ -137,7 +137,7 @@ const MeinGeschaeft = () => {
   // Sync activeTab with ?tab= URL parameter (Sidebar Sub-Items)
   useEffect(() => {
     const tabParam = searchParams.get('tab');
-    if (tabParam === 'info' || tabParam === 'stempel') {
+    if (tabParam === 'info' || tabParam === 'karte') {
       setActiveTab(tabParam);
     }
   }, [searchParams]);
@@ -712,7 +712,7 @@ const MeinGeschaeft = () => {
       setNfcChips(chipsToSave);
       setInitialStampState({ stampMode, avgRevenue, manualMode, selectedVariant });
       setStampSettingsDirty(false);
-      toast.success('Stempel gespeichert');
+      toast.success('Karte gespeichert');
     } catch {
       toast.error('Fehler beim Speichern');
     } finally {
@@ -734,17 +734,17 @@ const MeinGeschaeft = () => {
     
     if (boxPreset === 'standard_3') {
       stampConfigs.push(
-        { stamp_name: 'Stempel 1', stamp_color: 'grün', points_value: 1 },
-        { stamp_name: 'Stempel 2', stamp_color: 'blau', points_value: 1 },
-        { stamp_name: 'Stempel 3', stamp_color: 'rot', points_value: 1 }
+        { stamp_name: 'Karte 1', stamp_color: 'grün', points_value: 1 },
+        { stamp_name: 'Karte 2', stamp_color: 'blau', points_value: 1 },
+        { stamp_name: 'Karte 3', stamp_color: 'rot', points_value: 1 }
       );
     } else if (boxPreset === 'standard_5') {
       stampConfigs.push(
-        { stamp_name: 'Stempel 1', stamp_color: 'grün', points_value: 1 },
-        { stamp_name: 'Stempel 2', stamp_color: 'blau', points_value: 1 },
-        { stamp_name: 'Stempel 3', stamp_color: 'rot', points_value: 1 },
-        { stamp_name: 'Stempel 4', stamp_color: 'gelb', points_value: 1 },
-        { stamp_name: 'Stempel 5', stamp_color: 'lila', points_value: 1 }
+        { stamp_name: 'Karte 1', stamp_color: 'grün', points_value: 1 },
+        { stamp_name: 'Karte 2', stamp_color: 'blau', points_value: 1 },
+        { stamp_name: 'Karte 3', stamp_color: 'rot', points_value: 1 },
+        { stamp_name: 'Karte 4', stamp_color: 'gelb', points_value: 1 },
+        { stamp_name: 'Karte 5', stamp_color: 'lila', points_value: 1 }
       );
     }
 
@@ -791,7 +791,7 @@ const MeinGeschaeft = () => {
         .maybeSingle();
 
       if (!boxData) {
-        toast.error('Stempel-ID existiert nicht');
+        toast.error('Karte-ID existiert nicht');
         return;
       }
 
@@ -803,7 +803,7 @@ const MeinGeschaeft = () => {
         .maybeSingle();
 
       if (ownAssignment) {
-        toast.error('Stempel-ID bereits verknüpft');
+        toast.error('Karte-ID bereits verknüpft');
         return;
       }
 
@@ -813,7 +813,7 @@ const MeinGeschaeft = () => {
         .eq('box_id', boxData.id);
 
       if (count && count > 0) {
-        toast.error('Stempel-ID bereits vergeben');
+        toast.error('Karte-ID bereits vergeben');
         return;
       }
 
@@ -821,7 +821,7 @@ const MeinGeschaeft = () => {
 
       const stampIdValue = newBoxId.trim().toUpperCase();
 
-      // Persistiere die Stempel-ID auch direkt am Händler-Datensatz
+      // Persistiere die Karten-ID auch direkt am Händler-Datensatz
       await supabase
         .from('customers')
         .update({ stamp_id: stampIdValue })
@@ -847,7 +847,7 @@ const MeinGeschaeft = () => {
 
       await createDefaultStamps(boxData.stamp_preset || 'standard_3', customerId);
 
-      toast.success('Stempel-ID hinzugefügt');
+      toast.success('Karte-ID hinzugefügt');
       setNewBoxId('');
       loadData();
     } catch {
@@ -905,7 +905,7 @@ const MeinGeschaeft = () => {
     }
   };
 
-  const showSaveBar = (activeTab === 'info' && profileDirty) || (activeTab === 'stempel' && stampSettingsDirty);
+  const showSaveBar = (activeTab === 'info' && profileDirty) || (activeTab === 'karte' && stampSettingsDirty);
 
   return (
     <div className="min-h-screen pb-24">
@@ -916,7 +916,7 @@ const MeinGeschaeft = () => {
             <Tabs value={activeTab} onValueChange={handleTabChange}>
               <TabsList className="hidden">
                 <TabsTrigger value="info" />
-                <TabsTrigger value="stempel" />
+                <TabsTrigger value="karte" />
               </TabsList>
 
 
@@ -1216,16 +1216,16 @@ const MeinGeschaeft = () => {
                 {/* Ende 2-spaltiges Profil-Grid */}
               </TabsContent>
 
-                {/* Stempel Tab - 2-spaltiges Layout wie Profil */}
-              <TabsContent value="stempel" className="space-y-4">
+                {/* Karte Tab - 2-spaltiges Layout wie Profil */}
+              <TabsContent value="karte" className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
-                {/* LINKS: Automatisches Stempelsystem */}
+                {/* LINKS: Automatisches Karten-System */}
                 <Card className="rounded-2xl shadow-sm border-0 bg-muted/40">
                   <CardHeader className="pb-4">
                     <div className="flex items-center justify-between">
                       <CardTitle className="flex items-center gap-3 text-lg font-semibold">
                         <span className="text-lg">⚙️</span>
-                        Automatisches Stempelsystem
+                        Automatisches Karten-System
                         <Badge variant="outline" className={cn("text-xs", !manualMode ? "bg-emerald-50 text-emerald-700 border-emerald-300" : "bg-muted text-muted-foreground")}>
                           {!manualMode ? "aktiviert" : "deaktiviert"}
                         </Badge>
@@ -1273,7 +1273,7 @@ const MeinGeschaeft = () => {
                           {stampSettingsDirty && (
                             <Button onClick={handleSaveChips} disabled={savingChips} className="rounded-xl w-full animate-pulse">
                               {savingChips ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
-                              Stempel speichern
+                              Karte speichern
                             </Button>
                           )}
                         </div>
@@ -1331,7 +1331,7 @@ const MeinGeschaeft = () => {
                                       key={tier.label}
                                       className={cn("rounded-xl border-2 p-4 text-center", colorStyles[tier.color])}
                                     >
-                                      <Stamp className={cn("h-8 w-8 mx-auto mb-2", stampColor[tier.color])} />
+                                      <Nfc className={cn("h-8 w-8 mx-auto mb-2", stampColor[tier.color])} />
                                       <p className="font-bold text-base">{tier.label}</p>
                                       <p className="text-sm mt-1">ab {tier.threshold} €</p>
                                       <p className="text-xl font-bold mt-1">{tier.points} Pkt.</p>
@@ -1349,7 +1349,7 @@ const MeinGeschaeft = () => {
                                 <div className="space-y-2">
                                   {[avgRevenue * 0.5, avgRevenue * 0.8, avgRevenue * 1.3, avgRevenue * 2.8].map((amt) => {
                                     const formatted = amt.toFixed(2).replace(".", ",");
-                                    let label = "Kein Stempel";
+                                    let label = "Kein Karte";
                                     const tiers = suggestion.tiers!;
                                     for (let i = tiers.length - 1; i >= 0; i--) {
                                       if (amt >= tiers[i].threshold) {
@@ -1360,7 +1360,7 @@ const MeinGeschaeft = () => {
                                     return (
                                       <div key={amt} className="flex justify-between text-sm">
                                         <span className="text-muted-foreground">Einkauf: {formatted} €</span>
-                                        <span className={cn("font-medium", label === "Kein Stempel" ? "text-muted-foreground" : "text-foreground")}>
+                                        <span className={cn("font-medium", label === "Kein Karte" ? "text-muted-foreground" : "text-foreground")}>
                                           → {label}
                                         </span>
                                       </div>
@@ -1376,13 +1376,13 @@ const MeinGeschaeft = () => {
                   )}
                 </Card>
 
-                {/* Manuelles Stempelsystem */}
+                {/* Manuelles Karten-System */}
                 <Card className="rounded-2xl shadow-sm border-0 bg-muted/40">
                   <CardHeader className="pb-4">
                     <div className="flex items-center justify-between">
                       <CardTitle className="flex items-center gap-3 text-lg font-semibold">
                         <span className="text-lg">🔖</span>
-                        Manuelles Stempelsystem
+                        Manuelles Karten-System
                         <Badge variant="outline" className={cn("text-xs", manualMode ? "bg-emerald-50 text-emerald-700 border-emerald-300" : "bg-muted text-muted-foreground")}>
                           {manualMode ? "aktiviert" : "deaktiviert"}
                         </Badge>
@@ -1395,7 +1395,7 @@ const MeinGeschaeft = () => {
                   </CardHeader>
                   {manualMode && nfcChips.length > 0 && (
                     <CardContent className="space-y-4">
-                      <p className="text-sm text-muted-foreground">Punktzahl pro Stempelfarbe selbst festlegen</p>
+                      <p className="text-sm text-muted-foreground">Punktzahl pro Kartenfarbe selbst festlegen</p>
                       {(() => {
                         const seen = new Set<string>();
                         return nfcChips.filter((chip) => {
@@ -1434,15 +1434,15 @@ const MeinGeschaeft = () => {
 
                       <Button onClick={handleSaveChips} disabled={savingChips} className="rounded-xl w-full animate-pulse">
                         {savingChips ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
-                        Stempel speichern
+                        Karte speichern
                       </Button>
                     </CardContent>
                   )}
                 </Card>
 
-                {/* RECHTE SPALTE: Stempel-IDs + Prämien */}
+                {/* RECHTE SPALTE: Karten-IDs + Prämien */}
                 <div className="flex flex-col gap-4">
-                {/* Stempel-IDs */}
+                {/* Karten-IDs */}
                 <Card className="rounded-2xl shadow-sm border-0 bg-gray-50/80">
                   <CardHeader className="pb-4">
                     <div className="flex items-center gap-3">
@@ -1450,8 +1450,8 @@ const MeinGeschaeft = () => {
                         <Package className="h-5 w-5 text-primary" />
                       </div>
                       <div>
-                        <CardTitle className="text-lg font-semibold text-gray-900">Stempel-IDs</CardTitle>
-                        <CardDescription className="text-gray-500">Verknüpfen Sie Ihre Stempel-ID</CardDescription>
+                        <CardTitle className="text-lg font-semibold text-gray-900">Karte-IDs</CardTitle>
+                        <CardDescription className="text-gray-500">Verknüpfen Sie Ihre Karte-ID</CardDescription>
                       </div>
                     </div>
                   </CardHeader>
@@ -1505,7 +1505,7 @@ const MeinGeschaeft = () => {
                 </div>
                 {/* Ende rechte Spalte */}
                 </div>
-                {/* Ende 2-spaltiges Stempel-Grid */}
+                {/* Ende 2-spaltiges Karte-Grid */}
               </TabsContent>
             </Tabs>
           </div>
@@ -1535,7 +1535,7 @@ const MeinGeschaeft = () => {
                       }}
                       rewards={rewards}
                       activeTab={activeTab === 'info' ? 'info' : 'rewards'}
-                      onTabChange={(tab) => setActiveTab(tab === 'info' ? 'info' : 'stempel')}
+                      onTabChange={(tab) => setActiveTab(tab === 'info' ? 'info' : 'karte')}
                       userPoints={25}
                       scrollTarget={scrollTarget}
                     />

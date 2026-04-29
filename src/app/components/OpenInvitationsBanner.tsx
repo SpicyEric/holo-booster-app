@@ -21,7 +21,7 @@ function daysUntil(dateStr: string): number {
 
 /**
  * Zeigt offene Einladungen an, bei denen der aktuelle User der EINGELADENE ist
- * (also: jemand hat mich eingeladen, ich habe angenommen, aber noch keinen Stempel).
+ * (also: jemand hat mich eingeladen, ich habe angenommen, aber noch keinen Karte).
  * Eigene verschickte Einladungen werden hier nicht angezeigt.
  */
 export function OpenInvitationsBanner() {
@@ -63,7 +63,7 @@ export function OpenInvitationsBanner() {
   const load = async () => {
     if (!user) return;
     try {
-      // Nur als EINGELADENER: Redemptions wo ich invitee bin, noch nicht gestempelt, Bonus noch offen
+      // Nur als EINGELADENER: Redemptions wo ich invitee bin, noch nicht gescannt, Bonus noch offen
       const { data: redemptions } = await supabase
         .from('invitation_redemptions')
         .select('id, invitation_id, accepted_at, bonus_window_starts_at, invitee_stamped_at, bonus_awarded_at')
@@ -155,7 +155,7 @@ export function OpenInvitationsBanner() {
               </div>
               <div className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
                 <Clock className="h-3 w-3" />
-                Sammel deinen ersten Stempel — noch {days} {days === 1 ? 'Tag' : 'Tage'}
+                Sammel deine ersten Punkte — noch {days} {days === 1 ? 'Tag' : 'Tage'}
               </div>
             </div>
           </button>

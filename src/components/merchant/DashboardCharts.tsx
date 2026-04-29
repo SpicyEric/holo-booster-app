@@ -238,18 +238,18 @@ export function DashboardCharts({ merchantId }: DashboardChartsProps) {
 
   return (
     <div className="space-y-6">
-      {/* Stempelzeiten Chart */}
+      {/* Sammelzeiten Chart */}
       <Card>
         <CardHeader className="pb-2">
           <div className="flex items-center justify-between">
             <CardTitle className="text-sm flex items-center gap-2">
               <Clock className="w-4 h-4" />
-              Stempelzeiten
+              Sammelzeiten
             </CardTitle>
             <DateRangeSelector value={hourlyRange} onChange={setHourlyRange} />
           </div>
           <p className="text-xs text-muted-foreground">
-            Verteilung der Stempel nach Uhrzeit
+            Verteilung der Scans nach Uhrzeit
           </p>
         </CardHeader>
         <CardContent>
@@ -281,7 +281,7 @@ export function DashboardCharts({ merchantId }: DashboardChartsProps) {
                     borderRadius: "8px",
                     fontSize: "12px"
                   }}
-                  formatter={(value: number) => [`${value} Stempel`, "Anzahl"]}
+                  formatter={(value: number) => [`${value} Karte`, "Anzahl"]}
                 />
                 <Area 
                   type="monotone" 

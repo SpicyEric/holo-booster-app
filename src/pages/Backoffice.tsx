@@ -87,7 +87,7 @@ const features = [
   {
     icon: Activity,
     title: 'Live-Aktivitäten',
-    desc: 'Jede Transaktion, jeder Stempel — alles live im Überblick.',
+    desc: 'Jede Transaktion, jeder Karte — alles live im Überblick.',
   },
 ];
 
@@ -196,7 +196,7 @@ const Backoffice = () => {
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                 {[
                   { icon: Users, countTo: 832, separator: '.', label: 'Kunden gesamt', trend: '+117 diese Woche', iconBg: 'bg-primary/10', iconColor: 'text-primary' },
-                  { icon: Trophy, countTo: 6102, separator: '.', label: 'Stempel gesamt', sub: 'Gesamt seit Start', iconBg: 'bg-emerald-50', iconColor: 'text-emerald-600' },
+                  { icon: Trophy, countTo: 6102, separator: '.', label: 'Karte gesamt', sub: 'Gesamt seit Start', iconBg: 'bg-emerald-50', iconColor: 'text-emerald-600' },
                   { icon: Gift, countTo: 312, separator: '.', label: 'Prämien eingelöst', iconBg: 'bg-amber-50', iconColor: 'text-amber-600' },
                   { icon: Zap, countTo: 387, separator: '.', label: 'Netzwerkeffekt', sub: 'Neukundenprämien eingelöst', iconBg: 'bg-primary/10', iconColor: 'text-primary' },
                 ].map((k) => (
@@ -361,7 +361,7 @@ const Backoffice = () => {
               variants={glassReveal}
               className="text-lg text-[#4a4455] leading-relaxed"
             >
-              Sieh auf einen Blick wie viele Kunden du hast, wie viele Stempel
+              Sieh auf einen Blick wie viele Kunden du hast, wie viele Punkte
               gesammelt wurden und welche Prämien eingelöst werden. Alle
               Kennzahlen in Echtzeit — übersichtlich, klar, immer aktuell.
             </motion.p>
@@ -463,11 +463,11 @@ const Backoffice = () => {
               <div className="absolute -inset-8 bg-gradient-to-br from-blue-400/20 to-primary/10 blur-3xl rounded-full pointer-events-none" />
               <div className="relative grid grid-cols-2 gap-4">
 
-                {/* Stempelzeiten */}
+                {/* Sammelzeiten */}
                 <div className="bg-white rounded-2xl p-4 border border-[#e8e7ef] shadow-[0_1px_3px_hsl(262,30%,80%/0.3)]">
                   <div className="flex items-center gap-2 mb-1">
                     <ClockIcon className="w-3.5 h-3.5 text-primary" />
-                    <h4 className="text-[13px] font-semibold text-[#1a1b21]">Stempelzeiten</h4>
+                    <h4 className="text-[13px] font-semibold text-[#1a1b21]">Sammelzeiten</h4>
                   </div>
                   <p className="text-[10px] text-[#7b7487] mb-2">Verteilung nach Uhrzeit</p>
                   <div className="h-[110px] w-full">

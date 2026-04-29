@@ -3,8 +3,8 @@ import type { ExplainerSlide } from "./ExplainerCarousel";
 export const praemienCards: ExplainerSlide[] = [
   {
     emoji: "🎯",
-    title: "Warum Prämien besser sind als eine Stempelkarte",
-    text: "Bei einer normalen Stempelkarte bekommt jeder dasselbe — nach dem zehnten Kaffee gibt's einen gratis. Langweilig. Mit einem Prämienkatalog darf dein Kunde selbst entscheiden, was er sich verdient. Das fühlt sich persönlicher an — und persönlich bindet.",
+    title: "Warum Prämien besser sind als eine Punktekarte",
+    text: "Bei einer normalen Punktekarte bekommt jeder dasselbe — nach dem zehnten Kaffee gibt's einen gratis. Langweilig. Mit einem Prämienkatalog darf dein Kunde selbst entscheiden, was er sich verdient. Das fühlt sich persönlicher an — und persönlich bindet.",
   },
   {
     emoji: "💫",
@@ -14,7 +14,7 @@ export const praemienCards: ExplainerSlide[] = [
   {
     emoji: "🎁",
     title: "Die erste kleine Belohnung",
-    text: "Die erste Prämie sollte bereits nach etwa 5 Besuchen erreichbar sein. Klein, aber erstrebenswert — das motiviert zum Wiederkommen, bevor die Gewohnheit entsteht. Orientiere dich: Stempelwert × 5 = erste Prämie.",
+    text: "Die erste Prämie sollte bereits nach etwa 5 Besuchen erreichbar sein. Klein, aber erstrebenswert — das motiviert zum Wiederkommen, bevor die Gewohnheit entsteht. Orientiere dich: Punktwert × 5 = erste Prämie.",
   },
   {
     emoji: "⭐",
@@ -42,7 +42,7 @@ export const neukundenCards: ExplainerSlide[] = [
   {
     emoji: "📱",
     title: "So funktioniert's",
-    text: "Sobald ein Kunde zum ersten Mal bei dir stempelt, erscheint automatisch sein Willkommensangebot auf seinem Handy. Er zeigt es dir an der Kasse — du gibst ihm sein Goodie. Kein Aufwand, null Erklärung nötig.",
+    text: "Sobald ein Kunde zum ersten Mal bei dir scannt, erscheint automatisch sein Willkommensangebot auf seinem Handy. Er zeigt es dir an der Kasse — du gibst ihm sein Goodie. Kein Aufwand, null Erklärung nötig.",
   },
   {
     emoji: "🎪",
@@ -65,7 +65,7 @@ export const bewertungenCards: ExplainerSlide[] = [
   {
     emoji: "⭐",
     title: "Mehr Google-Bewertungen ohne ein Wort zu sagen",
-    text: "Du musst keinen Kunden mehr bitten, dir eine Bewertung zu hinterlassen. Eloyo macht das automatisch — nach jedem Stempel-Scan wird dem Kunden die Möglichkeit angezeigt, Punkte gegen eine Google-Bewertung zu tauschen.",
+    text: "Du musst keinen Kunden mehr bitten, dir eine Bewertung zu hinterlassen. Eloyo macht das automatisch — nach jedem Karte-Scan wird dem Kunden die Möglichkeit angezeigt, Punkte gegen eine Google-Bewertung zu tauschen.",
   },
   {
     emoji: "📈",

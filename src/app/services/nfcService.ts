@@ -387,7 +387,7 @@ class NfcService {
       this.nfcListenerHandles = [tagListener, sessionErrorListener, sessionCanceledListener];
 
       await Nfc.startScanSession({
-        alertMessage: 'Halte dein Handy an den NFC-Stempel'
+        alertMessage: 'Halte dein Handy an den NFC-Karte'
       });
 
       console.log('[NFC] Scan session started');
@@ -435,7 +435,7 @@ class NfcService {
       onRead({
         chipData: '',
         success: false,
-        error: 'Fehler beim Lesen des NFC-Stempels'
+        error: 'Fehler beim Lesen des NFC-Kartes'
       });
     }
   }
@@ -528,7 +528,7 @@ class NfcService {
           chipData: '',
           hardwareUid,
           success: false,
-          error: 'Kein gültiger Eloyo-Stempel erkannt. Bitte versuche es erneut.'
+          error: 'Kein gültiger Eloyo-Karte erkannt. Bitte versuche es erneut.'
         });
       });
 

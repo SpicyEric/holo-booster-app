@@ -77,7 +77,7 @@ export const AppHistory = () => {
 
   const getTransactionLabel = (type: string) => {
     switch (type) {
-      case 'stamp': return 'Stempel';
+      case 'stamp': return 'Karte';
       case 'redeem': return 'Eingelöst';
       case 'bonus': return 'Bonus';
       case 'adjustment': return 'Anpassung';

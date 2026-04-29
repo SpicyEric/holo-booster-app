@@ -179,8 +179,8 @@ export const RewardRedemptionDialog = ({
             <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4 animate-pulse">
               <Smartphone className="h-10 w-10 text-primary" />
             </div>
-            <h2 className="text-xl font-bold text-foreground mb-2">Stempel scannen</h2>
-            <p className="text-muted-foreground mb-4">Bitte halte jetzt den NFC-Stempel von <strong>{merchantName}</strong> an dein Handy.</p>
+            <h2 className="text-xl font-bold text-foreground mb-2">Karte scannen</h2>
+            <p className="text-muted-foreground mb-4">Bitte halte jetzt den NFC-Karte von <strong>{merchantName}</strong> an dein Handy.</p>
             <div className="bg-muted rounded-lg p-4 mb-4">
               <p className="text-sm text-muted-foreground">Einzulösende Prämie:</p>
               <p className="font-semibold text-foreground">{reward.title}</p>
@@ -269,7 +269,7 @@ export const RewardRedemptionDialog = ({
           ) : canRedeem ? (
             <div className="space-y-3">
               <p className="text-sm text-center text-muted-foreground">
-                Zeige dem Mitarbeiter diesen Bildschirm und lasse dir die Prämie abstempeln.
+                Zeige dem Mitarbeiter diesen Bildschirm und lasse dir die Prämie freischalten.
               </p>
               <Button onClick={handleStartRedemption} className="w-full" size="lg">
                 Jetzt einlösen

@@ -347,7 +347,7 @@ export const AppHome = () => {
           </div>
           <h3 className="font-semibold text-foreground mb-2">Dein Feed ist noch leer</h3>
           <p className="text-sm text-muted-foreground">
-            Besuche einen teilnehmenden Shop und scanne deinen ersten NFC-Stempel, um Posts zu sehen!
+            Besuche einen teilnehmenden Shop und scanne deine erste NFC-Karte, um Posts zu sehen!
           </p>
         </div>
       ) : (

@@ -67,7 +67,7 @@ export const InviteFriendDialog = ({
 
   const inviteUrl = shareCode ? `${INVITE_BASE_URL}/${shareCode}` : '';
   const shareText = shareCode
-    ? `Hey! 😊 Ich lad dich zu ${merchantName} ein — wenn du dort innerhalb der nächsten 7 Tage vorbeischaust und deinen ersten Stempel sammelst, bekommst du direkt doppelte Punkte. Und ich krieg dafür auch einen kleinen Bonus 😄 Hier der Link: ${inviteUrl}`
+    ? `Hey! 😊 Ich lad dich zu ${merchantName} ein — wenn du dort innerhalb der nächsten 7 Tage vorbeischaust und deinen ersten Karte sammelst, bekommst du direkt doppelte Punkte. Und ich krieg dafür auch einen kleinen Bonus 😄 Hier der Link: ${inviteUrl}`
     : '';
 
   const openWhatsApp = () => {
@@ -102,7 +102,7 @@ export const InviteFriendDialog = ({
           <DialogDescription className="text-sm leading-relaxed">
             Lade eine Person zu <span className="font-semibold text-foreground">{merchantName}</span> ein,
             indem du ihr deinen persönlichen Link schickst. Sammelt sie innerhalb von{' '}
-            <span className="font-semibold text-foreground">7 Tagen</span> dort ihren ersten Stempel,
+            <span className="font-semibold text-foreground">7 Tagen</span> dort ihren ersten Karte,
             bekommt ihr <span className="font-semibold text-foreground">beide</span> einen Bonus:
           </DialogDescription>
         </DialogHeader>
@@ -116,7 +116,7 @@ export const InviteFriendDialog = ({
           <div className="rounded-xl bg-muted/50 px-3 py-3 text-center">
             <div className="text-xs text-muted-foreground">Dein Freund</div>
             <div className="text-lg font-bold text-primary leading-tight">Punkte ×2</div>
-            <div className="text-[10px] text-muted-foreground mt-0.5 leading-tight">auf den ersten Stempel</div>
+            <div className="text-[10px] text-muted-foreground mt-0.5 leading-tight">auf den ersten Karte</div>
           </div>
         </div>
 

@@ -1,7 +1,7 @@
 import { supabase } from '@/integrations/supabase/client';
 
 /**
- * Prüft nach einem Stempel, ob eine aktive Neukundenprämie für diesen Händler existiert
+ * Prüft nach einem Karte, ob eine aktive Neukundenprämie für diesen Händler existiert
  * und ob diese noch nicht für den User als "freigeschaltet" markiert wurde.
  * Wenn ja: legt eine point_transaction vom Typ 'new_customer_offer_unlocked' an (0 Punkte).
  *

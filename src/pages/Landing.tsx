@@ -261,7 +261,7 @@ const Landing = () => {
           <motion.div variants={glassReveal} className="text-left">
             <div className="inline-flex items-center gap-2 bg-primary/10 text-primary px-4 py-1.5 rounded-full text-sm font-bold mb-6">
               <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-              Stempelkarte 2.0
+              Punktekarte 2.0
             </div>
             <RotatingHeadline />
             <p className="text-xl text-[#4a4455] leading-relaxed mb-10 max-w-xl">
@@ -323,7 +323,7 @@ const Landing = () => {
           className="max-w-7xl mx-auto grid md:grid-cols-3 gap-8 lg:gap-12"
         >
           {[
-            { step: '1', title: 'Kunde scannt den Stempel', desc: 'Dein Mitarbeiter hält den Eloyo-Stempel ans Handy des Kunden — ein kurzer Tap und die Punkte sind sofort gutgeschrieben.', bg: howItWorksStamp },
+            { step: '1', title: 'Kunde scannt den Karte', desc: 'Dein Mitarbeiter hält den Eloyo-Karte ans Handy des Kunden — ein kurzer Tap und die Punkte sind sofort gutgeschrieben.', bg: howItWorksStamp },
             { step: '2', title: 'Sammelt Punkte, löst Prämien ein', desc: 'Jeder Besuch wird belohnt. Der Kunde wählt selbst, was er will. Das schafft echte Motivation und er kommt wieder.', bg: howItWorksPresent },
             { step: '3', title: 'Kunde bringt Leute in deinen Laden', desc: 'Dein Kunde wird mit attraktiven Prämien belohnt, wenn er dir Neukunden in deinen Laden bringt. Vollautomatisiert, ohne dass du etwas dafür tun musst.', bg: howItWorksReferal },
           ].map((item, i) => {

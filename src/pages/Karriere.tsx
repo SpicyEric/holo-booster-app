@@ -31,7 +31,7 @@ const Karriere = () => {
       subtitle: '(m/w/d)',
       location: 'München / Remote',
       type: 'Vollzeit',
-      description: 'Du bist der erste Kontakt für potenzielle Kunden und begeisterst sie für unser innovatives NFC-Stempelsystem.',
+      description: 'Du bist der erste Kontakt für potenzielle Kunden und begeisterst sie für unser innovatives NFC-Kartesystem.',
       tasks: [
         'Aktiver Vertrieb unseres digitalen Kundenbindungssystems per Telefon und Video-Call',
         'Aufbau langfristiger Kundenbeziehungen mit lokalen Geschäften und Gastronomiebetrieben',

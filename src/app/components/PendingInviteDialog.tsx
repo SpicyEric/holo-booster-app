@@ -361,7 +361,7 @@ export function PendingInviteDialog() {
                 <p className="text-sm text-muted-foreground leading-relaxed mb-5">
                   Eine andere Person hat dich bereits eingeladen. Sammle innerhalb der nächsten{' '}
                   <span className="font-semibold text-foreground">{daysLeft} {daysLeft === 1 ? 'Tag' : 'Tage'}</span>{' '}
-                  deinen ersten Stempel, um den Bonus zu erhalten.
+                  deine ersten Punkte, um den Bonus zu erhalten.
                   Eine neue Einladung ist erst möglich, wenn diese abgelaufen ist.
                 </p>
               </>
@@ -421,12 +421,12 @@ export function PendingInviteDialog() {
           </h2>
           <p className="text-sm text-muted-foreground leading-relaxed mb-4">
             Sammle innerhalb der nächsten <span className="font-semibold text-foreground">7 Tage</span> dort
-            deinen ersten Stempel und bekomme <span className="font-semibold text-foreground">doppelte Punkte</span>{' '}
+            deinen ersten Karte und bekomme <span className="font-semibold text-foreground">doppelte Punkte</span>{' '}
             auf deinen ersten Einkauf!
           </p>
           <div className="rounded-xl bg-primary/10 px-3 py-2.5 mb-5">
             <div className="text-xs text-muted-foreground">Dein Willkommensbonus</div>
-            <div className="text-base font-bold text-primary">Doppelte Punkte für deinen ersten Stempel</div>
+            <div className="text-base font-bold text-primary">Doppelte Punkte für deinen ersten Karte</div>
           </div>
 
           {isAccepted ? (

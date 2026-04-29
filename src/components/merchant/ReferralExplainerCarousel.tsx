@@ -14,12 +14,12 @@ const slides: ExplainerSlide[] = [
   {
     emoji: "⚙️",
     title: "So funktioniert's",
-    text: "Deine Kunden laden Freunde per WhatsApp ein. Der Freund hat 7 Tage Zeit, bei dir vorbeizukommen und seinen ersten Stempel zu sammeln. Erst wenn er wirklich einkauft und Punkte bekommt, zählt die Einladung.",
+    text: "Deine Kunden laden Freunde per WhatsApp ein. Der Freund hat 7 Tage Zeit, bei dir vorbeizukommen und seinen ersten Karte zu sammeln. Erst wenn er wirklich einkauft und Punkte bekommt, zählt die Einladung.",
   },
   {
     emoji: "🎁",
     title: "Was bekommt wer?",
-    text: "Der Eingeladene bekommt doppelte Punkte beim ersten Stempel — als Willkommensbonus. Der Einladende bekommt Bonuspunkte von dir — die du selbst festlegst.",
+    text: "Der Eingeladene bekommt doppelte Punkte beim ersten Karte — als Willkommensbonus. Der Einladende bekommt Bonuspunkte von dir — die du selbst festlegst.",
   },
   {
     emoji: "🧮",

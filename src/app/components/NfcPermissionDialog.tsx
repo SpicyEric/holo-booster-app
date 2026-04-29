@@ -44,7 +44,7 @@ export const NfcPermissionDialog = ({
           <DialogDescription className="text-center">
             {isDisabled 
               ? 'Bitte aktiviere NFC in deinen Geräteeinstellungen, um Punkte sammeln zu können.'
-              : 'Die App benötigt Zugriff auf NFC, um Stempel scannen zu können. Bitte erlaube den Zugriff in den Einstellungen.'
+              : 'Die App benötigt Zugriff auf NFC, um Karte scannen zu können. Bitte erlaube den Zugriff in den Einstellungen.'
             }
           </DialogDescription>
         </DialogHeader>

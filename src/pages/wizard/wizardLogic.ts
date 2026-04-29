@@ -125,19 +125,19 @@ export const GOAL_OPTIONS = [
   {
     value: "basket",
     label: "Höherer Warenkorb",
-    description: "Stärkere Staffelung, große Stempel ab höherem Betrag",
+    description: "Stärkere Staffelung, große Karte ab höherem Betrag",
     icon: "trending-up",
   },
   {
     value: "simple",
-    label: "Ein Stempel pro Besuch",
+    label: "Ein Karte pro Besuch",
     description: "Maximale Klarheit",
     icon: "check-circle",
   },
   {
     value: "gamify",
     label: "Spielerisch motivieren",
-    description: "Mehr Dynamik, visuell stärker, Stempelgrößen",
+    description: "Mehr Dynamik, visuell stärker, Punktwerte",
     icon: "trophy",
   },
 ];
@@ -148,11 +148,11 @@ export const TOTAL_STEPS = 8;
 
 export const STEP_META = [
   { title: "Passwort erstellen", subtitle: "Sichere dein Konto mit einem Passwort" },
-  { title: "Stempel-ID verknüpfen", subtitle: "Verbinde deine Stempel-ID" },
+  { title: "Karte-ID verknüpfen", subtitle: "Verbinde deine Karte-ID" },
   { title: "Deine Branche", subtitle: "Wähle deine Branche aus" },
   { title: "Durchschnittlicher Einkaufswert", subtitle: "Wie viel gibt ein Kunde pro Besuch aus?" },
   { title: "Ziel des Bonussystems", subtitle: "Was ist dir am wichtigsten?" },
-  { title: "Dein Stempelsystem", subtitle: "Unser Vorschlag basierend auf deinen Angaben" },
+  { title: "Dein Karten-System", subtitle: "Unser Vorschlag basierend auf deinen Angaben" },
   { title: "Erste Prämie erstellen", subtitle: "Gib deinen Kunden einen Grund wiederzukommen" },
   { title: "Geschafft! 🎉", subtitle: "Dein Bonussystem ist bereit" },
 ];

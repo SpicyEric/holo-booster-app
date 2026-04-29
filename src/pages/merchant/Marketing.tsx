@@ -51,8 +51,8 @@ interface Reward { id: string; title: string; description: string | null; points
 
 const SEGMENT_OPTIONS = [
   { value: 'all', label: 'Alle Kunden', description: 'Alle, die bei Ihnen schon mal Punkte gesammelt haben' },
-  { value: 'last_stamped_days', label: 'Kürzlich gestempelt', description: 'Kunden die innerhalb der letzten X Tage gestempelt haben' },
-  { value: 'not_stamped_days', label: 'Lange nicht gestempelt', description: 'Kunden die seit X Tagen nicht mehr gestempelt haben' },
+  { value: 'last_stamped_days', label: 'Kürzlich gescannt', description: 'Kunden die innerhalb der letzten X Tage gescannt haben' },
+  { value: 'not_stamped_days', label: 'Lange nicht gescannt', description: 'Kunden die seit X Tagen nicht mehr gescannt haben' },
 ];
 
 const Marketing = () => {
@@ -597,7 +597,7 @@ const Marketing = () => {
                   <p className="text-sm text-muted-foreground">Schau dir die Live-Vorschau deines Geschäfts an</p>
                 </div>
                 <Button
-                  onClick={() => navigate('/kunde/mein-geschaeft?tab=stempel')}
+                  onClick={() => navigate('/kunde/mein-geschaeft?tab=karte')}
                   className="rounded-xl gap-2"
                   size="lg"
                 >
@@ -1031,7 +1031,7 @@ const Marketing = () => {
                       </div>
                       <div>
                         <h4 className="font-semibold text-foreground">Rückholnachrichten</h4>
-                        <p className="text-xs text-muted-foreground">Automatische Nachricht an Kunden, die länger nicht mehr gestempelt haben</p>
+                        <p className="text-xs text-muted-foreground">Automatische Nachricht an Kunden, die länger nicht mehr gescannt haben</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
@@ -1049,7 +1049,7 @@ const Marketing = () => {
                       </div>
 
                       <div>
-                        <Label className="text-xs text-muted-foreground">Nach wie vielen Tagen ohne Stempel senden?</Label>
+                        <Label className="text-xs text-muted-foreground">Nach wie vielen Tagen ohne Karte senden?</Label>
                         <div className="flex items-center gap-3 mt-1">
                           <Input
                             type="number"
@@ -1062,7 +1062,7 @@ const Marketing = () => {
                           <span className="text-sm text-muted-foreground">Tage (Standard: 90)</span>
                         </div>
                         <p className="text-xs text-muted-foreground mt-1">
-                          Sobald ein Kunde {winbackInactivityDays} Tage lang keinen Stempel gesammelt hat, bekommt er automatisch deine Nachricht – auch als Push.
+                          Sobald ein Kunde {winbackInactivityDays} Tage lang keine Punkte gesammelt hat, bekommt er automatisch deine Nachricht – auch als Push.
                         </p>
                       </div>
 
