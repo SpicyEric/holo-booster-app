@@ -16,7 +16,7 @@ const menuItems = [
   { title: "Dashboard", url: "/admin", icon: Home },
   { title: "Kunden", url: "/admin/customers", icon: Users },
   { title: "Karte", url: "/admin/map", icon: Map },
-  { title: "Stempel-IDs", url: "/admin/boxes", icon: Box },
+  { title: "Karte-IDs", url: "/admin/boxes", icon: Box },
   { title: "Nachrichten", url: "/admin/orders", icon: Package },
   { title: "Accounts", url: "/admin/accounts", icon: UserCog },
   { title: "Statistiken", url: "/admin/stats", icon: BarChart3 },

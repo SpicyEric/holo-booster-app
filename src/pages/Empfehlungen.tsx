@@ -135,7 +135,7 @@ const Empfehlungen = () => {
       icon: Gift,
       title: 'Für den eingeladenen Freund',
       text:
-        'Er öffnet den Link, landet direkt in der App, sieht die Prämien deines Ladens und bekommt beim ersten Stempel sofort doppelte Punkte als Willkommensbonus.',
+        'Er öffnet den Link, landet direkt in der App, sieht die Prämien deines Ladens und bekommt beim ersten Karte sofort doppelte Punkte als Willkommensbonus.',
     },
   ];
 
@@ -149,7 +149,7 @@ const Empfehlungen = () => {
       icon: UserPlus,
       title: 'Freund kommt innerhalb von 7 Tagen',
       text:
-        'Der Freund öffnet den Link, sieht die Prämien und sammelt seinen ersten Stempel. Erst dann zählt die Einladung.',
+        'Der Freund öffnet den Link, sieht die Prämien und sammelt seinen ersten Karte. Erst dann zählt die Einladung.',
     },
     {
       icon: CheckCircle2,
@@ -161,7 +161,7 @@ const Empfehlungen = () => {
 
   const protections = [
     'Nur echte Neukunden können eingeladen werden — wer schon Punkte hat, kann nicht nochmal eingeladen werden',
-    'Bonus wird erst ausgezahlt wenn der Freund wirklich einkauft und seinen ersten Stempel sammelt',
+    'Bonus wird erst ausgezahlt wenn der Freund wirklich einkauft und seinen ersten Karte sammelt',
     'Jede Person kann nur von einem Freund gleichzeitig eingeladen werden — kein Spam möglich',
     'Device-Fingerprint erkennt Missbrauchsversuche automatisch im Hintergrund',
   ];

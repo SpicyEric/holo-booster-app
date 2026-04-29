@@ -1016,7 +1016,7 @@ const AppProfileContent = () => {
   const menuItems = [
     { icon: User, label: 'Kontoeinstellungen', action: () => navigate('/app/settings') },
     { icon: Sparkles, label: 'Shop vorschlagen', action: () => navigate('/app/suggest-shop') },
-    { icon: Store, label: 'Meine Stempelkarten', action: () => navigate('/app/my-cards') },
+    { icon: Store, label: 'Meine Punktekarten', action: () => navigate('/app/my-cards') },
     { icon: History, label: 'Transaktionen', action: () => navigate('/app/history') },
   ];
 

@@ -36,7 +36,7 @@ export const useOfflineSync = () => {
 
         if (response.success) {
           offlineQueueService.markSynced(stamp.id);
-          toast.success(`Offline-Stempel synchronisiert: +${response.points_awarded} Punkte`);
+          toast.success(`Offline-Karte synchronisiert: +${response.points_awarded} Punkte`);
 
           // Referral-Bonus prüfen (auch nach Offline-Sync)
           if (response.merchant_customer_id) {
@@ -47,7 +47,7 @@ export const useOfflineSync = () => {
           }
         } else {
           offlineQueueService.markError(stamp.id, response.error || 'Unbekannter Fehler');
-          toast.error(`Offline-Stempel abgelehnt: ${response.error}`);
+          toast.error(`Offline-Karte abgelehnt: ${response.error}`);
         }
       } catch (err: any) {
         console.error('[OfflineSync] Sync error for stamp:', stamp.id, err);

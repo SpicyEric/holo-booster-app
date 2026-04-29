@@ -137,7 +137,7 @@ const MeinGeschaeft = () => {
   // Sync activeTab with ?tab= URL parameter (Sidebar Sub-Items)
   useEffect(() => {
     const tabParam = searchParams.get('tab');
-    if (tabParam === 'info' || tabParam === 'stempel') {
+    if (tabParam === 'info' || tabParam === 'karte') {
       setActiveTab(tabParam);
     }
   }, [searchParams]);
@@ -712,7 +712,7 @@ const MeinGeschaeft = () => {
       setNfcChips(chipsToSave);
       setInitialStampState({ stampMode, avgRevenue, manualMode, selectedVariant });
       setStampSettingsDirty(false);
-      toast.success('Stempel gespeichert');
+      toast.success('Karte gespeichert');
     } catch {
       toast.error('Fehler beim Speichern');
     } finally {
@@ -734,17 +734,17 @@ const MeinGeschaeft = () => {
     
     if (boxPreset === 'standard_3') {
       stampConfigs.push(
-        { stamp_name: 'Stempel 1', stamp_color: 'grün', points_value: 1 },
-        { stamp_name: 'Stempel 2', stamp_color: 'blau', points_value: 1 },
-        { stamp_name: 'Stempel 3', stamp_color: 'rot', points_value: 1 }
+        { stamp_name: 'Karte 1', stamp_color: 'grün', points_value: 1 },
+        { stamp_name: 'Karte 2', stamp_color: 'blau', points_value: 1 },
+        { stamp_name: 'Karte 3', stamp_color: 'rot', points_value: 1 }
       );
     } else if (boxPreset === 'standard_5') {
       stampConfigs.push(
-        { stamp_name: 'Stempel 1', stamp_color: 'grün', points_value: 1 },
-        { stamp_name: 'Stempel 2', stamp_color: 'blau', points_value: 1 },
-        { stamp_name: 'Stempel 3', stamp_color: 'rot', points_value: 1 },
-        { stamp_name: 'Stempel 4', stamp_color: 'gelb', points_value: 1 },
-        { stamp_name: 'Stempel 5', stamp_color: 'lila', points_value: 1 }
+        { stamp_name: 'Karte 1', stamp_color: 'grün', points_value: 1 },
+        { stamp_name: 'Karte 2', stamp_color: 'blau', points_value: 1 },
+        { stamp_name: 'Karte 3', stamp_color: 'rot', points_value: 1 },
+        { stamp_name: 'Karte 4', stamp_color: 'gelb', points_value: 1 },
+        { stamp_name: 'Karte 5', stamp_color: 'lila', points_value: 1 }
       );
     }
 
@@ -791,7 +791,7 @@ const MeinGeschaeft = () => {
         .maybeSingle();
 
       if (!boxData) {
-        toast.error('Stempel-ID existiert nicht');
+        toast.error('Karte-ID existiert nicht');
         return;
       }
 
@@ -803,7 +803,7 @@ const MeinGeschaeft = () => {
         .maybeSingle();
 
       if (ownAssignment) {
-        toast.error('Stempel-ID bereits verknüpft');
+        toast.error('Karte-ID bereits verknüpft');
         return;
       }
 
@@ -813,7 +813,7 @@ const MeinGeschaeft = () => {
         .eq('box_id', boxData.id);
 
       if (count && count > 0) {
-        toast.error('Stempel-ID bereits vergeben');
+        toast.error('Karte-ID bereits vergeben');
         return;
       }
 
@@ -847,7 +847,7 @@ const MeinGeschaeft = () => {
 
       await createDefaultStamps(boxData.stamp_preset || 'standard_3', customerId);
 
-      toast.success('Stempel-ID hinzugefügt');
+      toast.success('Karte-ID hinzugefügt');
       setNewBoxId('');
       loadData();
     } catch {
@@ -905,7 +905,7 @@ const MeinGeschaeft = () => {
     }
   };
 
-  const showSaveBar = (activeTab === 'info' && profileDirty) || (activeTab === 'stempel' && stampSettingsDirty);
+  const showSaveBar = (activeTab === 'info' && profileDirty) || (activeTab === 'karte' && stampSettingsDirty);
 
   return (
     <div className="min-h-screen pb-24">
@@ -916,7 +916,7 @@ const MeinGeschaeft = () => {
             <Tabs value={activeTab} onValueChange={handleTabChange}>
               <TabsList className="hidden">
                 <TabsTrigger value="info" />
-                <TabsTrigger value="stempel" />
+                <TabsTrigger value="karte" />
               </TabsList>
 
 
@@ -1217,7 +1217,7 @@ const MeinGeschaeft = () => {
               </TabsContent>
 
                 {/* Stempel Tab - 2-spaltiges Layout wie Profil */}
-              <TabsContent value="stempel" className="space-y-4">
+              <TabsContent value="karte" className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
                 {/* LINKS: Automatisches Stempelsystem */}
                 <Card className="rounded-2xl shadow-sm border-0 bg-muted/40">
@@ -1349,7 +1349,7 @@ const MeinGeschaeft = () => {
                                 <div className="space-y-2">
                                   {[avgRevenue * 0.5, avgRevenue * 0.8, avgRevenue * 1.3, avgRevenue * 2.8].map((amt) => {
                                     const formatted = amt.toFixed(2).replace(".", ",");
-                                    let label = "Kein Stempel";
+                                    let label = "Kein Karte";
                                     const tiers = suggestion.tiers!;
                                     for (let i = tiers.length - 1; i >= 0; i--) {
                                       if (amt >= tiers[i].threshold) {
@@ -1360,7 +1360,7 @@ const MeinGeschaeft = () => {
                                     return (
                                       <div key={amt} className="flex justify-between text-sm">
                                         <span className="text-muted-foreground">Einkauf: {formatted} €</span>
-                                        <span className={cn("font-medium", label === "Kein Stempel" ? "text-muted-foreground" : "text-foreground")}>
+                                        <span className={cn("font-medium", label === "Kein Karte" ? "text-muted-foreground" : "text-foreground")}>
                                           → {label}
                                         </span>
                                       </div>
@@ -1450,8 +1450,8 @@ const MeinGeschaeft = () => {
                         <Package className="h-5 w-5 text-primary" />
                       </div>
                       <div>
-                        <CardTitle className="text-lg font-semibold text-gray-900">Stempel-IDs</CardTitle>
-                        <CardDescription className="text-gray-500">Verknüpfen Sie Ihre Stempel-ID</CardDescription>
+                        <CardTitle className="text-lg font-semibold text-gray-900">Karte-IDs</CardTitle>
+                        <CardDescription className="text-gray-500">Verknüpfen Sie Ihre Karte-ID</CardDescription>
                       </div>
                     </div>
                   </CardHeader>
@@ -1535,7 +1535,7 @@ const MeinGeschaeft = () => {
                       }}
                       rewards={rewards}
                       activeTab={activeTab === 'info' ? 'info' : 'rewards'}
-                      onTabChange={(tab) => setActiveTab(tab === 'info' ? 'info' : 'stempel')}
+                      onTabChange={(tab) => setActiveTab(tab === 'info' ? 'info' : 'karte')}
                       userPoints={25}
                       scrollTarget={scrollTarget}
                     />

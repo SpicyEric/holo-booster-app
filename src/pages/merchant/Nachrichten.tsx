@@ -64,8 +64,8 @@ interface NewCustomerOffer {
 
 const SEGMENT_OPTIONS = [
   { value: 'all', label: 'Alle Kunden', description: 'Alle, die bei Ihnen schon mal Punkte gesammelt haben' },
-  { value: 'last_stamped_days', label: 'Kürzlich gestempelt', description: 'Kunden die innerhalb der letzten X Tage gestempelt haben' },
-  { value: 'not_stamped_days', label: 'Lange nicht gestempelt', description: 'Kunden die seit X Tagen nicht mehr gestempelt haben' },
+  { value: 'last_stamped_days', label: 'Kürzlich gescannt', description: 'Kunden die innerhalb der letzten X Tage gescannt haben' },
+  { value: 'not_stamped_days', label: 'Lange nicht gescannt', description: 'Kunden die seit X Tagen nicht mehr gescannt haben' },
 ];
 
 const Nachrichten = () => {
@@ -819,7 +819,7 @@ const Nachrichten = () => {
                           className="mt-1 rounded-xl text-sm"
                         />
                       </div>
-                      <p className="text-xs text-gray-400">Angebot ist einlösbar über Stempel, verfällt nach 7 Tagen und kann nur einmal eingelöst werden</p>
+                      <p className="text-xs text-gray-400">Angebot ist einlösbar über Karte, verfällt nach 7 Tagen und kann nur einmal eingelöst werden</p>
                     </div>
                   )}
                 </div>
@@ -897,7 +897,7 @@ const Nachrichten = () => {
                     <Label className="text-gray-700">
                       {messageForm.segment_type === 'last_stamped_days' 
                         ? `Gestempelt innerhalb der letzten ${messageForm.segment_value} Tage`
-                        : `Nicht gestempelt seit ${messageForm.segment_value} Tagen`
+                        : `Nicht gescannt seit ${messageForm.segment_value} Tagen`
                       }
                     </Label>
                     <Input
@@ -982,7 +982,7 @@ const Nachrichten = () => {
                     </div>
                     <div className="flex items-center gap-2 text-xs text-amber-600 bg-amber-50 p-2 rounded-lg">
                       <Clock className="h-3 w-3 flex-shrink-0" />
-                      <span>Angebot ist 7 Tage gültig und einlösbar über Stempel</span>
+                      <span>Angebot ist 7 Tage gültig und einlösbar über Karte</span>
                     </div>
                   </div>
                 )}

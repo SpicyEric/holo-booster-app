@@ -159,7 +159,7 @@ const Scan = () => {
         if (data.alreadyScannedToday) {
           setShowStampCard(true);
           toast.info('Du hast heute schon gescannt! 😊', {
-            description: 'Komm morgen wieder für einen weiteren Stempel.',
+            description: 'Komm morgen wieder für einen weiteren Karte.',
           });
           return;
         }
@@ -170,13 +170,13 @@ const Scan = () => {
           setVoucherCode(data.voucherCode);
           setShowVoucher(true);
           setCountdown(900);
-          toast.success('Glückwunsch! Deine Stempelkarte ist voll! 🎉');
+          toast.success('Glückwunsch! Deine Punktekarte ist voll! 🎉');
         } else {
           // New stamp added
           playStampSound();
           setNewStampIndex(data.stampCount - 1);
           setShowStampCard(true);
-          toast.success(`Stempel erhalten! ${data.stampCount}/${customer.stamps_required}`, {
+          toast.success(`Karte erhalten! ${data.stampCount}/${customer.stamps_required}`, {
             description: `Noch ${customer.stamps_required - data.stampCount} bis zur Belohnung!`,
           });
         }
@@ -231,8 +231,8 @@ const Scan = () => {
       
       toast.success('Vielen Dank! 🎉', {
         description: isReturningCustomer 
-          ? 'Du kannst jetzt weiter Stempel sammeln!' 
-          : 'Ab jetzt kannst du Stempel sammeln für weitere Belohnungen!',
+          ? 'Du kannst jetzt weiter Punkte sammeln!' 
+          : 'Ab jetzt kannst du Punkte sammeln für weitere Belohnungen!',
         duration: 5000,
       });
       
@@ -395,7 +395,7 @@ const Scan = () => {
               </div>
             )}
             
-            <h2 className="text-3xl font-bold mb-2">Deine Stempelkarte</h2>
+            <h2 className="text-3xl font-bold mb-2">Deine Punktekarte</h2>
             <p className="text-muted-foreground mb-6">{customer.name}</p>
 
             <div className="grid grid-cols-5 gap-3 mb-6">
@@ -436,7 +436,7 @@ const Scan = () => {
             </div>
 
             <div className="bg-card/40 rounded-2xl p-4 mb-6">
-              <p className="text-sm text-muted-foreground mb-1">Stempel gesammelt</p>
+              <p className="text-sm text-muted-foreground mb-1">Punkte gesammelt</p>
               <p className="text-4xl font-bold bg-gradient-primary bg-clip-text text-transparent">
                 {stampCount} / {customer.stamps_required || 5}
               </p>
@@ -444,8 +444,8 @@ const Scan = () => {
 
             <p className="text-sm text-muted-foreground mb-4">
               {customer.stamps_required - stampCount === 1 
-                ? 'Noch 1 Stempel bis zur Belohnung!' 
-                : `Noch ${customer.stamps_required - stampCount} Stempel bis zur Belohnung!`}
+                ? 'Noch 1 Karte bis zur Belohnung!' 
+                : `Noch ${customer.stamps_required - stampCount} Karte bis zur Belohnung!`}
             </p>
 
             <div className="bg-accent/20 rounded-xl p-4">

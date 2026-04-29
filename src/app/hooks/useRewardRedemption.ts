@@ -216,9 +216,9 @@ export const useRewardRedemption = ({ userId, merchantId, merchantName, rewardTi
           setState(prev => ({
             ...prev,
             isScanning: false,
-            error: 'Dieser Stempel gehört nicht zu diesem Geschäft',
+            error: 'Dieser Karte gehört nicht zu diesem Geschäft',
           }));
-          toast.error('Falscher Stempel! Bitte verwende den Stempel von diesem Geschäft.');
+          toast.error('Falscher Karte! Bitte verwende den Karte von diesem Geschäft.');
           return;
         }
 

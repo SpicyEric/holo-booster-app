@@ -135,7 +135,7 @@ const Overview = () => {
         const assignedIds = new Set((assignedBoxes || []).map((b) => b.box_id));
         const available = (allBoxes || []).filter((b) => !assignedIds.has(b.id)).length;
         if (available < 3) {
-          newAlerts.push({ type: available === 0 ? "error" : "warning", message: available === 0 ? "Keine Stempel-IDs mehr verfügbar!" : `Nur noch ${available} Stempel-ID${available > 1 ? "s" : ""} verfügbar`, action: "Stempel-IDs verwalten", link: "/admin/boxes" });
+          newAlerts.push({ type: available === 0 ? "error" : "warning", message: available === 0 ? "Keine Karte-IDs mehr verfügbar!" : `Nur noch ${available} Karte-ID${available > 1 ? "s" : ""} verfügbar`, action: "Karte-IDs verwalten", link: "/admin/boxes" });
         }
       } catch (e) { console.error(e); }
     }
@@ -456,7 +456,7 @@ const Overview = () => {
               <Tooltip contentStyle={{ fontSize: "12px", borderRadius: "8px" }} />
               <Legend wrapperStyle={{ fontSize: "12px" }} />
               <Line type="monotone" dataKey="kunden" stroke="hsl(262, 50%, 55%)" name="Kundenwachstum" strokeWidth={2} dot={false} />
-              <Line type="monotone" dataKey="stempel" stroke="hsl(150, 50%, 45%)" name="Stempelaktivität" strokeWidth={2} dot={false} />
+              <Line type="monotone" dataKey="karte" stroke="hsl(150, 50%, 45%)" name="Stempelaktivität" strokeWidth={2} dot={false} />
             </LineChart>
           </ResponsiveContainer>
         </Card>

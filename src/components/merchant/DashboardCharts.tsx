@@ -281,7 +281,7 @@ export function DashboardCharts({ merchantId }: DashboardChartsProps) {
                     borderRadius: "8px",
                     fontSize: "12px"
                   }}
-                  formatter={(value: number) => [`${value} Stempel`, "Anzahl"]}
+                  formatter={(value: number) => [`${value} Karte`, "Anzahl"]}
                 />
                 <Area 
                   type="monotone" 

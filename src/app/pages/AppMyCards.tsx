@@ -91,7 +91,7 @@ export default function AppMyCards() {
 
   if (loading) {
     return (
-      <MainLayout title="Meine Stempelkarten" showBack>
+      <MainLayout title="Meine Punktekarten" showBack>
         <div className="flex items-center justify-center py-12">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>
@@ -100,12 +100,12 @@ export default function AppMyCards() {
   }
 
   return (
-    <MainLayout title="Meine Stempelkarten" showBack>
+    <MainLayout title="Meine Punktekarten" showBack>
       <div className="space-y-4">
         {cards.length === 0 ? (
           <Card className="p-8 text-center">
             <CreditCard className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-            <h3 className="font-semibold text-lg mb-2">Keine Stempelkarten</h3>
+            <h3 className="font-semibold text-lg mb-2">Keine Punktekarten</h3>
             <p className="text-muted-foreground text-sm">
               Du hast noch keine Punkte bei Händlern gesammelt. 
               Besuche einen teilnehmenden Shop und scanne deinen ersten NFC-Stempel!

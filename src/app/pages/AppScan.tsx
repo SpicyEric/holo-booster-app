@@ -378,16 +378,16 @@ export const AppScan = () => {
 
     if (!navigator.onLine) {
       if (offlineQueueService.hasPendingStampForUid(hardwareUid)) {
-        setResult({ success: false, error: 'Du hast bereits einen Offline-Stempel für diesen Chip in der Warteschlange.' });
+        setResult({ success: false, error: 'Du hast bereits einen Offline-Karte für diesen Chip in der Warteschlange.' });
         setScanning(false);
         return;
       }
       const pendingStamp = offlineQueueService.addStamp(hardwareUid, currentUserId);
       if (pendingStamp) {
         setResult({ success: true, isOffline: true, merchantName: 'Händler' });
-        toast.success('Stempel erkannt! Wird gutgeschrieben sobald Internet da ist.');
+        toast.success('Karte erkannt! Wird gutgeschrieben sobald Internet da ist.');
       } else {
-        setResult({ success: false, error: 'Offline-Stempel konnte nicht gespeichert werden.' });
+        setResult({ success: false, error: 'Offline-Karte konnte nicht gespeichert werden.' });
       }
       setScanning(false);
       return;
@@ -425,18 +425,18 @@ export const AppScan = () => {
           });
         }
       } else {
-        setResult({ success: false, error: response.error || 'Stempel konnte nicht verarbeitet werden.' });
-        toast.error(response.error || 'Stempel fehlgeschlagen');
+        setResult({ success: false, error: response.error || 'Karte konnte nicht verarbeitet werden.' });
+        toast.error(response.error || 'Karte fehlgeschlagen');
       }
     } catch (error: any) {
       if (error.message?.includes('fetch') || error.message?.includes('network') || error.message?.includes('Failed')) {
         if (offlineQueueService.hasPendingStampForUid(hardwareUid)) {
-          setResult({ success: false, error: 'Du hast bereits einen Offline-Stempel für diesen Chip in der Warteschlange.' });
+          setResult({ success: false, error: 'Du hast bereits einen Offline-Karte für diesen Chip in der Warteschlange.' });
         } else {
           const pendingStamp = offlineQueueService.addStamp(hardwareUid, currentUserId);
           if (pendingStamp) {
             setResult({ success: true, isOffline: true, merchantName: 'Händler' });
-            toast.success('Verbindung fehlgeschlagen – Stempel wird offline gespeichert.');
+            toast.success('Verbindung fehlgeschlagen – Karte wird offline gespeichert.');
           } else {
             setResult({ success: false, error: 'Fehler beim Speichern' });
           }
@@ -688,7 +688,7 @@ export const AppScan = () => {
 
             {isIdle && flipPhase === 'idle' && (
               <motion.div key="idle" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="text-center space-y-3">
-                <h2 className="text-xl font-bold">Bereit zum Stempeln</h2>
+                <h2 className="text-xl font-bold">Bereit zum Scannen</h2>
                 <p className="text-muted-foreground text-sm max-w-xs mx-auto">
                   Tippe auf den Button und halte dein Handy an den Eloyo-Stempel
                 </p>
@@ -701,7 +701,7 @@ export const AppScan = () => {
 
             {scanning && !result && flipPhase === 'idle' && (
               <motion.div key="scanning" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="text-center space-y-3">
-                <h2 className="text-xl font-bold">Handy an Stempel halten</h2>
+                <h2 className="text-xl font-bold">Handy an Karte halten</h2>
                 <p className="text-muted-foreground text-sm max-w-xs mx-auto">
                   Halte jetzt die obere Rückseite deines Handys an den Eloyo-Stempel
                 </p>
@@ -736,8 +736,8 @@ export const AppScan = () => {
 
             {result?.isOffline && flipPhase === 'idle' && (
               <motion.div key="offline-result" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="text-center space-y-3">
-                <h2 className="text-xl font-bold">Stempel erkannt!</h2>
-                <p className="text-muted-foreground text-sm">Du bist gerade offline. Dein Stempel wird automatisch gutgeschrieben, sobald du wieder Internet hast.</p>
+                <h2 className="text-xl font-bold">Karte erkannt!</h2>
+                <p className="text-muted-foreground text-sm">Du bist gerade offline. Dein Karte wird automatisch gutgeschrieben, sobald du wieder Internet hast.</p>
                 <div className="flex items-center justify-center gap-2 text-amber-600 font-medium">
                   <WifiOff className="h-4 w-4" />
                   Wird synchronisiert...

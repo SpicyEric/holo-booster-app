@@ -43,7 +43,7 @@ export default function WizardStepSuggestion({ state, onChange }: Props) {
       if (amount >= tiers[i].threshold)
         return `${tiers[i].label} (${tiers[i].points} Pkt.)`;
     }
-    return "Kein Stempel";
+    return "Kein Karte";
   };
 
   return (
@@ -144,7 +144,7 @@ export default function WizardStepSuggestion({ state, onChange }: Props) {
                 <span
                   className={cn(
                     "font-medium",
-                    label === "Kein Stempel"
+                    label === "Kein Karte"
                       ? "text-muted-foreground"
                       : "text-foreground"
                   )}

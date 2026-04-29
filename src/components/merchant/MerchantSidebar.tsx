@@ -40,7 +40,7 @@ const NAV_GROUPS: NavGroup[] = [
         icon: Store,
         subItems: [
           { tab: "info", label: "Profil", icon: Info },
-          { tab: "stempel", label: "System", icon: Package },
+          { tab: "karte", label: "System", icon: Package },
         ],
       },
     ],

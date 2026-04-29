@@ -87,7 +87,7 @@ const features = [
   {
     icon: Activity,
     title: 'Live-Aktivitäten',
-    desc: 'Jede Transaktion, jeder Stempel — alles live im Überblick.',
+    desc: 'Jede Transaktion, jeder Karte — alles live im Überblick.',
   },
 ];
 
@@ -196,7 +196,7 @@ const Backoffice = () => {
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                 {[
                   { icon: Users, countTo: 832, separator: '.', label: 'Kunden gesamt', trend: '+117 diese Woche', iconBg: 'bg-primary/10', iconColor: 'text-primary' },
-                  { icon: Trophy, countTo: 6102, separator: '.', label: 'Stempel gesamt', sub: 'Gesamt seit Start', iconBg: 'bg-emerald-50', iconColor: 'text-emerald-600' },
+                  { icon: Trophy, countTo: 6102, separator: '.', label: 'Karte gesamt', sub: 'Gesamt seit Start', iconBg: 'bg-emerald-50', iconColor: 'text-emerald-600' },
                   { icon: Gift, countTo: 312, separator: '.', label: 'Prämien eingelöst', iconBg: 'bg-amber-50', iconColor: 'text-amber-600' },
                   { icon: Zap, countTo: 387, separator: '.', label: 'Netzwerkeffekt', sub: 'Neukundenprämien eingelöst', iconBg: 'bg-primary/10', iconColor: 'text-primary' },
                 ].map((k) => (

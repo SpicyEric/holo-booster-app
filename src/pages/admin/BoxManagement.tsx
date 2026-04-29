@@ -219,7 +219,7 @@ const BoxManagement = () => {
       if (existingBox) { toast.error("Box-ID Kollision – bitte erneut versuchen"); setAdding(false); return; }
 
       const { data: existingStempel } = await supabase.from("boxes").select("id").eq("stamp_id", stempelId).maybeSingle();
-      if (existingStempel) { toast.error("Stempel-ID Kollision – bitte erneut versuchen"); setAdding(false); return; }
+      if (existingStempel) { toast.error("Karte-ID Kollision – bitte erneut versuchen"); setAdding(false); return; }
 
       // Create in boxes table (stempel_id)
       const { error: boxesErr } = await supabase.from("boxes").insert({ stamp_id: stempelId, stamp_preset: "standard_3" });
@@ -233,7 +233,7 @@ const BoxManagement = () => {
       });
       if (eloyoErr) throw eloyoErr;
 
-      toast.success(`Box ${boxId} mit Stempel-ID ${stempelId} erstellt`);
+      toast.success(`Box ${boxId} mit Karte-ID ${stempelId} erstellt`);
       loadRows();
     } catch (e: any) {
       console.error(e);
@@ -298,7 +298,7 @@ const BoxManagement = () => {
     try {
       const { error } = await supabase.from("nfc_chips").delete().eq("id", chipId);
       if (error) throw error;
-      toast.success(`Stempel "${color}" entfernt`);
+      toast.success(`Karte "${color}" entfernt`);
       if (source === "detail") {
         setDetailStamps(prev => prev.filter(s => s.id !== chipId));
       } else {
@@ -339,7 +339,7 @@ const BoxManagement = () => {
     if (value === detailRow?.stempel_id) { setStempelIdError(""); return; }
     const { data } = await supabase.from("boxes").select("id").eq("stamp_id", value).maybeSingle();
     const { data: eloyoData } = await supabase.from("eloyo_boxes").select("id").eq("stempel_id", value).maybeSingle();
-    setStempelIdError(data || eloyoData ? "Stempel-ID existiert bereits" : "");
+    setStempelIdError(data || eloyoData ? "Karte-ID existiert bereits" : "");
   };
 
   const handleSaveEdit = async () => {
@@ -462,7 +462,7 @@ const BoxManagement = () => {
           } else {
             await supabase.from("nfc_chips").insert({ chip_uid: chipUid, stamp_color: color, stamp_name: color.charAt(0).toUpperCase() + color.slice(1), hardware_uid: hardwareUid, points_value: color === 'grün' ? 1 : color === 'blau' ? 2 : 3, is_active: true, merchant_customer_id: merchantCustomerId });
           }
-          toast.success(`Stempel "${color}" registriert`);
+          toast.success(`Karte "${color}" registriert`);
           setRegisteredStamps(prev => {
             const filtered = prev.filter(s => s.stamp_color !== color);
             return [...filtered, { id: existing?.id || 'temp-' + Date.now(), stamp_color: color, hardware_uid: hardwareUid, chip_uid: chipUid, points_value: color === 'grün' ? 1 : color === 'blau' ? 2 : 3 }];
@@ -509,7 +509,7 @@ const BoxManagement = () => {
         <div className="flex gap-2 items-center bg-white p-2 rounded-xl border border-border/30">
           <div className="relative flex-1 max-w-xs">
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
-            <Input placeholder="Box-ID oder Stempel-ID suchen..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="h-8 pl-8 text-sm" />
+            <Input placeholder="Box-ID oder Karte-ID suchen..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="h-8 pl-8 text-sm" />
           </div>
           <Select value={filterStatus} onValueChange={setFilterStatus}>
             <SelectTrigger className="h-8 w-[180px] text-sm"><SelectValue /></SelectTrigger>
@@ -536,8 +536,8 @@ const BoxManagement = () => {
                 <TableRow className="bg-muted/30 hover:bg-muted/30">
                   <TableHead className="h-9 text-xs font-semibold">Box-ID</TableHead>
                   <TableHead className="h-9 text-xs font-semibold">Box-Status</TableHead>
-                  <TableHead className="h-9 text-xs font-semibold">Stempel-ID</TableHead>
-                  <TableHead className="h-9 text-xs font-semibold">Stempel-Status</TableHead>
+                  <TableHead className="h-9 text-xs font-semibold">Karte-ID</TableHead>
+                  <TableHead className="h-9 text-xs font-semibold">Karte-Status</TableHead>
                   <TableHead className="h-9 text-xs font-semibold">Händler</TableHead>
                   <TableHead className="h-9 text-xs font-semibold">Erstellt</TableHead>
                   <TableHead className="h-9 text-xs font-semibold w-24">Aktionen</TableHead>
@@ -584,7 +584,7 @@ const BoxManagement = () => {
                       <TableCell className="py-2" onClick={e => e.stopPropagation()}>
                         <div className="flex gap-1">
                           {row.stempel_id && (
-                            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openStampDialog(row)} title="NFC Stempel"><Nfc className="h-3.5 w-3.5" /></Button>
+                            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openStampDialog(row)} title="NFC-Karte"><Nfc className="h-3.5 w-3.5" /></Button>
                           )}
                           {canDelete && (
                             <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => setDeleteRow(row)} title="Löschen"><Trash2 className="h-3 w-3" /></Button>
@@ -604,7 +604,7 @@ const BoxManagement = () => {
           <DialogContent>
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2"><Package className="w-5 h-5" /> Box bearbeiten</DialogTitle>
-              <DialogDescription>Box-ID und Stempel-ID können manuell geändert werden.</DialogDescription>
+              <DialogDescription>Box-ID und Karte-ID können manuell geändert werden.</DialogDescription>
             </DialogHeader>
             {detailRow && (
               <div className="space-y-4">
@@ -621,9 +621,9 @@ const BoxManagement = () => {
                     {boxIdError && <p className="text-xs text-destructive">{boxIdError}</p>}
                   </div>
                   <div className="space-y-1.5">
-                    <Label htmlFor="edit-stempel-id" className="text-xs font-medium">Stempel-ID</Label>
+                    <Label htmlFor="edit-karte-id" className="text-xs font-medium">Karte-ID</Label>
                     <Input
-                      id="edit-stempel-id"
+                      id="edit-karte-id"
                       value={editStempelId}
                       onChange={(e) => { const v = e.target.value.toUpperCase(); setEditStempelId(v); }}
                       onBlur={() => validateStempelId(editStempelId)}
@@ -651,7 +651,7 @@ const BoxManagement = () => {
                     </div>
                   </div>
                   <div>
-                    <p className="text-xs text-muted-foreground">Stempel-Status</p>
+                    <p className="text-xs text-muted-foreground">Karte-Status</p>
                     <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border mt-1 ${STEMPEL_STATUS_BADGES[detailRow.stempel_status]?.color}`}>
                       {STEMPEL_STATUS_BADGES[detailRow.stempel_status]?.label}
                     </span>
@@ -660,7 +660,7 @@ const BoxManagement = () => {
                   <div><p className="text-xs text-muted-foreground">Erstellt</p><p className="mt-1">{new Date(detailRow.created_at).toLocaleDateString("de-DE")}</p></div>
                 </div>
                 <div>
-                  <p className="text-xs font-semibold mb-2">Registrierte Stempel</p>
+                  <p className="text-xs font-semibold mb-2">Registrierte Karte</p>
                   {loadingDetail ? (
                     <div className="flex justify-center py-4"><Loader2 className="h-5 w-5 animate-spin" /></div>
                   ) : detailStamps.length > 0 ? (
@@ -687,7 +687,7 @@ const BoxManagement = () => {
                                 variant="ghost"
                                 className="h-7 w-7 text-destructive hover:text-destructive hover:bg-destructive/10"
                                 onClick={() => handleDeleteChip(s.id, s.stamp_color, "detail")}
-                                title="Stempel entfernen"
+                                title="Karte entfernen"
                               >
                                 <Trash2 className="h-3.5 w-3.5" />
                               </Button>
@@ -697,7 +697,7 @@ const BoxManagement = () => {
                       })}
                     </div>
                   ) : (
-                    <p className="text-xs text-muted-foreground text-center py-3">Keine Stempel registriert</p>
+                    <p className="text-xs text-muted-foreground text-center py-3">Keine Karte registriert</p>
                   )}
                 </div>
                 <div className="flex justify-end gap-2 pt-2">
@@ -747,7 +747,7 @@ const BoxManagement = () => {
                             className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
                             disabled={isScanning}
                             onClick={() => handleDeleteChip(registered.id, value, "stamp")}
-                            title="Stempel entfernen"
+                            title="Karte entfernen"
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>
@@ -761,7 +761,7 @@ const BoxManagement = () => {
           </DialogContent>
         </Dialog>
 
-        <ConfirmActionDialog open={!!deleteRow} onOpenChange={(open) => !open && setDeleteRow(null)} onConfirm={handleDelete} title="Box löschen?" description={`Box "${deleteRow?.box_id}" und zugehörige Stempel-ID "${deleteRow?.stempel_id}" werden dauerhaft gelöscht.`} confirmText="Löschen" confirmPhrase="LÖSCHEN" destructive />
+        <ConfirmActionDialog open={!!deleteRow} onOpenChange={(open) => !open && setDeleteRow(null)} onConfirm={handleDelete} title="Box löschen?" description={`Box "${deleteRow?.box_id}" und zugehörige Karte-ID "${deleteRow?.stempel_id}" werden dauerhaft gelöscht.`} confirmText="Löschen" confirmPhrase="LÖSCHEN" destructive />
       </div>
     </TooltipProvider>
   );

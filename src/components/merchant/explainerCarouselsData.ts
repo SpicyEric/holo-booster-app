@@ -3,8 +3,8 @@ import type { ExplainerSlide } from "./ExplainerCarousel";
 export const praemienCards: ExplainerSlide[] = [
   {
     emoji: "🎯",
-    title: "Warum Prämien besser sind als eine Stempelkarte",
-    text: "Bei einer normalen Stempelkarte bekommt jeder dasselbe — nach dem zehnten Kaffee gibt's einen gratis. Langweilig. Mit einem Prämienkatalog darf dein Kunde selbst entscheiden, was er sich verdient. Das fühlt sich persönlicher an — und persönlich bindet.",
+    title: "Warum Prämien besser sind als eine Punktekarte",
+    text: "Bei einer normalen Punktekarte bekommt jeder dasselbe — nach dem zehnten Kaffee gibt's einen gratis. Langweilig. Mit einem Prämienkatalog darf dein Kunde selbst entscheiden, was er sich verdient. Das fühlt sich persönlicher an — und persönlich bindet.",
   },
   {
     emoji: "💫",
@@ -65,7 +65,7 @@ export const bewertungenCards: ExplainerSlide[] = [
   {
     emoji: "⭐",
     title: "Mehr Google-Bewertungen ohne ein Wort zu sagen",
-    text: "Du musst keinen Kunden mehr bitten, dir eine Bewertung zu hinterlassen. Eloyo macht das automatisch — nach jedem Stempel-Scan wird dem Kunden die Möglichkeit angezeigt, Punkte gegen eine Google-Bewertung zu tauschen.",
+    text: "Du musst keinen Kunden mehr bitten, dir eine Bewertung zu hinterlassen. Eloyo macht das automatisch — nach jedem Karte-Scan wird dem Kunden die Möglichkeit angezeigt, Punkte gegen eine Google-Bewertung zu tauschen.",
   },
   {
     emoji: "📈",

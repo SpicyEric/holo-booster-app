@@ -42,7 +42,7 @@ export default function AppProfile() {
     },
     {
       icon: Store,
-      label: 'Meine Stempelkarten',
+      label: 'Meine Punktekarten',
       description: 'Deine Punkte',
       action: () => navigate('/app/my-cards'),
     },

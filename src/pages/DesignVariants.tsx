@@ -31,7 +31,7 @@ const DesignVariants = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-background to-muted/30 py-8 px-4">
       <div className="max-w-7xl mx-auto">
-        <h1 className="text-3xl font-bold text-center mb-2 text-foreground">Stempelkarten Design</h1>
+        <h1 className="text-3xl font-bold text-center mb-2 text-foreground">Punktekarten Design</h1>
         <p className="text-center text-muted-foreground mb-8">Finales Template - Full-Cover + Bottom Sheet</p>
         
         <div className="flex justify-center">

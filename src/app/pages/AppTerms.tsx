@@ -32,7 +32,7 @@ export default function AppTerms() {
             Treueprogrammen teilnehmender Händler. Die Kernfunktionen umfassen:
           </p>
           <ul className="text-sm list-disc list-inside mb-4 space-y-1">
-            <li>Sammeln von Treuepunkten durch Scannen von NFC-Stempeln oder QR-Codes bei teilnehmenden Händlern</li>
+            <li>Sammeln von Treuepunkten durch Scannen von NFC-Karten oder QR-Codes bei teilnehmenden Händlern</li>
             <li>Einlösen von Prämien, die von den jeweiligen Händlern angeboten werden</li>
             <li>Empfang von Nachrichten, Angeboten und Benachrichtigungen teilnehmender Händler</li>
             <li>Anzeige nahegelegener teilnehmender Geschäfte auf einer Karte</li>
@@ -58,10 +58,10 @@ export default function AppTerms() {
           </ul>
 
           {/* 4. Punkte, Stempel und Prämien */}
-          <h3 className="font-semibold mt-6 mb-2">4. Punkte, Stempel und Prämien</h3>
+          <h3 className="font-semibold mt-6 mb-2">4. Punkte, Karte und Prämien</h3>
           <ul className="text-sm list-disc list-inside mb-4 space-y-1">
-            <li>Gesammelte Punkte und Stempel haben keinen Bargeldwert und sind nicht auf andere Nutzer oder Konten übertragbar.</li>
-            <li>Punkte und Stempel können ausschließlich bei dem Händler eingelöst werden, bei dem sie gesammelt wurden.</li>
+            <li>Gesammelte Punkte und Karte haben keinen Bargeldwert und sind nicht auf andere Nutzer oder Konten übertragbar.</li>
+            <li>Punkte und Karte können ausschließlich bei dem Händler eingelöst werden, bei dem sie gesammelt wurden.</li>
             <li>Art, Umfang und Verfügbarkeit der Prämien werden vom jeweiligen Händler festgelegt. Eloyo übernimmt keine Gewährleistung für die Einlösbarkeit oder Qualität der Prämien.</li>
             <li>Wir behalten uns das Recht vor, das Punktesystem, den Wert von Punkten oder die Bedingungen für die Einlösung jederzeit mit angemessener Ankündigungsfrist anzupassen.</li>
             <li>Bei Verdacht auf Manipulation oder Missbrauch können Punkte ohne Vorankündigung annulliert werden.</li>
@@ -93,7 +93,7 @@ export default function AppTerms() {
           <p className="text-sm mb-2">Sie verpflichten sich:</p>
           <ul className="text-sm list-disc list-inside mb-4 space-y-1">
             <li>Die App nur für den vorgesehenen Zweck (Teilnahme an Treueprogrammen) zu nutzen.</li>
-            <li>Keine betrügerischen Aktivitäten durchzuführen, insbesondere keine Punkte oder Stempel durch Manipulation zu erschleichen.</li>
+            <li>Keine betrügerischen Aktivitäten durchzuführen, insbesondere keine Punkte oder Karte durch Manipulation zu erschleichen.</li>
             <li>Keine automatisierten Zugriffe, Bots oder Scraping-Tools zu verwenden.</li>
             <li>Keine Inhalte hochzuladen oder zu verbreiten, die rechtswidrig, beleidigend oder anderweitig unangemessen sind.</li>
             <li>Die Rechte Dritter (insbesondere Urheber-, Marken- und Persönlichkeitsrechte) nicht zu verletzen.</li>
@@ -104,7 +104,7 @@ export default function AppTerms() {
           <p className="text-sm mb-2"><strong>Durch den Nutzer:</strong></p>
           <ul className="text-sm list-disc list-inside mb-3 space-y-1">
             <li>Sie können Ihr Konto jederzeit über die App-Einstellungen löschen.</li>
-            <li>Mit der Löschung verfallen alle gesammelten Punkte und Stempel unwiderruflich.</li>
+            <li>Mit der Löschung verfallen alle gesammelten Punkte und Karte unwiderruflich.</li>
           </ul>
           <p className="text-sm mb-2"><strong>Durch Eloyo:</strong></p>
           <ul className="text-sm list-disc list-inside mb-4 space-y-1">

@@ -88,7 +88,7 @@ const TABS: Tab[] = [
     label: "Prämien",
     emoji: "🎯",
     slides: [
-      { emoji: "🎯", title: "Warum Prämien besser sind als eine Stempelkarte", text: "Kunden wählen selbst was sie wollen — das fühlt sich persönlicher an als ein automatischer Gratis-Kaffee nach dem zehnten Besuch. Wer wählen kann, kommt öfter wieder." },
+      { emoji: "🎯", title: "Warum Prämien besser sind als eine Punktekarte", text: "Kunden wählen selbst was sie wollen — das fühlt sich persönlicher an als ein automatischer Gratis-Kaffee nach dem zehnten Besuch. Wer wählen kann, kommt öfter wieder." },
       { emoji: "🏆", title: "Denk auch an die Treuen", text: "Bau eine große Traumprämie ein — etwas das sich wirklich lohnt drauf zu sparen. Das weckt Long-Term-Denken und macht aus Gelegenheitskunden echte Fans." },
     ],
   },
@@ -99,8 +99,8 @@ const TABS: Tab[] = [
     slides: [
       { emoji: "🔥", title: "Was wäre, wenn...", text: "Was wäre, wenn deine zufriedenen Kunden für dich neue Kunden ins Geschäft holen — ohne dass du einen Euro für Werbung ausgibst? Das ist kein Traum. Das ist Eloyo Empfehlungsmarketing." },
       { emoji: "💡", title: "Der wahre Wert eines Neukunden", text: "Ein neuer Kunde ist nicht nur ein Einkauf. Er ist ein potenzieller Stammkunde, der über Monate oder Jahre bei dir kauft. Jede erfolgreiche Empfehlung kann langfristig Hunderte Euro wert sein." },
-      { emoji: "⚙️", title: "So funktioniert's", text: "Deine Kunden laden Freunde per WhatsApp ein. Der Freund hat 7 Tage Zeit bei dir vorbeizukommen und seinen ersten Stempel zu sammeln. Erst wenn er wirklich einkauft und Punkte bekommt, zählt die Einladung." },
-      { emoji: "🎁", title: "Was bekommt wer?", text: "Der Eingeladene bekommt doppelte Punkte beim ersten Stempel. Der Einladende bekommt Bonuspunkte von dir — die du selbst festlegst." },
+      { emoji: "⚙️", title: "So funktioniert's", text: "Deine Kunden laden Freunde per WhatsApp ein. Der Freund hat 7 Tage Zeit bei dir vorbeizukommen und seinen ersten Karte zu sammeln. Erst wenn er wirklich einkauft und Punkte bekommt, zählt die Einladung." },
+      { emoji: "🎁", title: "Was bekommt wer?", text: "Der Eingeladene bekommt doppelte Punkte beim ersten Karte. Der Einladende bekommt Bonuspunkte von dir — die du selbst festlegst." },
       { emoji: "🧮", title: "Die magische Formel", text: "Empfehle ca. 50% der Punkte einer Standardleistung als Einlader-Bonus. 2 erfolgreiche Einladungen = Gratis-Standardleistung. Das macht den Bonus unwiderstehlich." },
       { emoji: "🛡️", title: "Du bist geschützt", text: "Nur echte Neukunden können eingeladen werden. Wer schon Punkte hat, kann nicht nochmal eingeladen werden. Kein Missbrauch möglich." },
       { emoji: "🚀", title: "Der Schneeball-Effekt", text: "Jeder neue Kunde empfiehlt selbst weiter — weil er Bock hat sich etwas Gratis abzuholen. Dein Stammkundenkreis wächst organisch — ganz ohne Werbekosten." },
@@ -135,7 +135,7 @@ const TABS: Tab[] = [
     label: "Bewertungen",
     emoji: "⭐",
     slides: [
-      { emoji: "⭐", title: "Mehr Google-Bewertungen ohne ein Wort zu sagen", text: "Du musst keinen Kunden mehr bitten dir eine Bewertung zu hinterlassen. Eloyo macht das automatisch — nach jedem Stempel-Scan wird dem Kunden die Möglichkeit angezeigt, Punkte gegen eine Google-Bewertung zu tauschen." },
+      { emoji: "⭐", title: "Mehr Google-Bewertungen ohne ein Wort zu sagen", text: "Du musst keinen Kunden mehr bitten dir eine Bewertung zu hinterlassen. Eloyo macht das automatisch — nach jedem Karte-Scan wird dem Kunden die Möglichkeit angezeigt, Punkte gegen eine Google-Bewertung zu tauschen." },
       { emoji: "📈", title: "Warum Google-Bewertungen so wichtig sind", text: "Mehr Bewertungen = höhere Sichtbarkeit bei Google = mehr Neukunden die deinen Laden finden. Die günstigste Form von Werbung — und sie funktioniert 24/7." },
       { emoji: "🎯", title: "Wie viele Punkte?", text: "5–15 Punkte für eine Google-Bewertung — das entspricht dem Wert eines normalen Einkaufs. Nicht zu wenig, nicht zu viel. 10 Punkte ist ein bewährter Startwert." },
       { emoji: "🛡️", title: "Nur echte Bewertungen", text: "Jeder Kunde kann nur einmal Punkte für eine Bewertung bekommen. Dein Google-Profil bleibt authentisch und glaubwürdig." },

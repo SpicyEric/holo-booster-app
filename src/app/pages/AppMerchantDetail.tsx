@@ -647,7 +647,7 @@ export const AppMerchantDetail = () => {
             </div>
             <div className="flex-1 min-w-0">
               <Badge variant="default" className="mb-1 text-xs">Du wurdest eingeladen 🎉</Badge>
-              <h3 className="font-medium leading-tight">Sammle deinen ersten Stempel & erhalte doppelte Punkte</h3>
+              <h3 className="font-medium leading-tight">Sammle deinen ersten Karte & erhalte doppelte Punkte</h3>
               <p className="text-xs text-muted-foreground mt-0.5 flex items-center gap-1">
                 <Timer className="h-3 w-3" />
                 Noch {daysLeft} {daysLeft === 1 ? 'Tag' : 'Tage'} Zeit
@@ -1139,13 +1139,13 @@ export const AppMerchantDetail = () => {
                     <span className="font-semibold text-foreground">
                       {daysLeft} {daysLeft === 1 ? 'Tag' : 'Tage'}
                     </span>{' '}
-                    deinen <span className="font-semibold text-foreground">ersten Stempel</span> und du bekommst{' '}
+                    deinen <span className="font-semibold text-foreground">ersten Karte</span> und du bekommst{' '}
                     <span className="font-semibold text-foreground">automatisch doppelte Punkte</span> auf deinen ersten Einkauf.
                     Auch die Person, die dich eingeladen hat, erhält dafür einen kleinen Bonus 💜
                   </p>
                   <div className="rounded-xl bg-primary/10 px-3 py-2.5 mb-4 flex items-center justify-center gap-2">
                     <Sparkles className="h-4 w-4 text-primary" />
-                    <span className="text-base font-bold text-primary">Punkte ×2 auf deinen ersten Stempel</span>
+                    <span className="text-base font-bold text-primary">Punkte ×2 auf deinen ersten Karte</span>
                   </div>
                   <div className="flex items-center justify-center gap-1.5 text-xs text-muted-foreground mb-5">
                     <Timer className="h-3.5 w-3.5" />

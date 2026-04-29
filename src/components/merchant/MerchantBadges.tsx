@@ -4,7 +4,7 @@ import {
   Tooltip, TooltipContent, TooltipTrigger
 } from "@/components/ui/tooltip";
 
-import badgeErsterStempel from "@/assets/badges/badge-01-erster-stempel.svg";
+import badgeErsterStempel from "@/assets/badges/badge-01-erster-karte.svg";
 import badgeStammkundenRing from "@/assets/badges/badge-02-stammkunden-ring.svg";
 import badgeErsterBonus from "@/assets/badges/badge-03-erster-bonus.svg";
 import badgeTreueSchild from "@/assets/badges/badge-04-treue-schild.svg";
@@ -24,13 +24,13 @@ interface BadgeDef {
 }
 
 const BADGE_DEFS: BadgeDef[] = [
-  { key: "erster_stempel", label: "Erster Stempel", icon: badgeErsterStempel, getTooltip: () => "Dein erster Stempel wurde vergeben!" },
-  { key: "stammkunden_ring", label: "Stammkundenring", icon: badgeStammkundenRing, getTooltip: () => "8 Stammkunden gewonnen (6+ Stempel)" },
+  { key: "erster_stempel", label: "Erster Karte", icon: badgeErsterStempel, getTooltip: () => "Dein erster Karte wurde vergeben!" },
+  { key: "stammkunden_ring", label: "Stammkundenring", icon: badgeStammkundenRing, getTooltip: () => "8 Stammkunden gewonnen (6+ Karte)" },
   { key: "erster_bonus", label: "Erster Bonus", icon: badgeErsterBonus, getTooltip: () => "Die erste Prämie wurde eingelöst!" },
   { key: "treue_schild", label: "Treueschild", icon: badgeTreueSchild, getTooltip: () => "6 Monate dabei – danke für deine Treue!" },
   { key: "netzwerk_star", label: "Netzwerkstar", icon: badgeNetzwerkStar, getTooltip: (m) => `${m?.count || 3}+ Geschäfte in deiner PLZ nutzen Eloyo` },
   { key: "jubilaeum", label: "Jubiläum", icon: badgeJubilaeum, getTooltip: () => "1 Jahr dabei – vielen Dank, dass du mit uns arbeitest!" },
-  { key: "vip_stammkunde", label: "VIP-Stammkunde", icon: badgeVipStammkunde, getTooltip: () => "5 VIP-Stammkunden (15+ Stempel)" },
+  { key: "vip_stammkunde", label: "VIP-Stammkunde", icon: badgeVipStammkunde, getTooltip: () => "5 VIP-Stammkunden (15+ Karte)" },
   { key: "geburtstagskind", label: "Geburtstagskind", icon: badgeGeburtstagskind, getTooltip: () => "Erster Geburtstagsgruß versendet!" },
   { key: "stimme_erhoben", label: "Stimme erhoben", icon: badgeStimmeErhoben, getTooltip: () => "Erste Google-Bewertung über Eloyo erhalten!" },
   { key: "punkt_sammler", label: "Punktesammler", icon: badgePunktSammler, getTooltip: () => "500 Punkte insgesamt vergeben!" },
