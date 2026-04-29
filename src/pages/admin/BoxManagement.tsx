@@ -717,7 +717,7 @@ const BoxManagement = () => {
           <DialogContent>
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2"><Shield className="w-5 h-5" /> NFC-Stempel: {stampDialogRow?.stempel_id}</DialogTitle>
-              <DialogDescription>Registriere die NFC-Stempel für Box {stampDialogRow?.box_id}</DialogDescription>
+              <DialogDescription>Registriere die NFC-Karten für Box {stampDialogRow?.box_id}</DialogDescription>
             </DialogHeader>
             {loadingStamps ? (
               <div className="flex items-center justify-center py-8"><Loader2 className="h-6 w-6 animate-spin" /></div>

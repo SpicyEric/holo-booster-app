@@ -385,7 +385,7 @@ const Overview = () => {
                 <div className="flex justify-between"><span>Ohne Scan-Aktivität</span><span className="font-bold text-amber-600">{kpis.activeCustomers - kpis.activeWithStamps}</span></div>
                 <div className="border-t pt-1.5 mt-1.5">
                   <p className="text-xs text-muted-foreground">
-                    Formel: {kpis.activeWithStamps} von {kpis.activeCustomers} aktiven Kunden haben in den letzten 7 Tagen mindestens eine Stempeltransaktion (NFC) durchgeführt = <strong>{kpis.activityRate}%</strong>
+                    Formel: {kpis.activeWithStamps} von {kpis.activeCustomers} aktiven Kunden haben in den letzten 7 Tagen mindestens eine Scan-Transaktion (NFC) durchgeführt = <strong>{kpis.activityRate}%</strong>
                   </p>
                 </div>
               </div>
@@ -456,7 +456,7 @@ const Overview = () => {
               <Tooltip contentStyle={{ fontSize: "12px", borderRadius: "8px" }} />
               <Legend wrapperStyle={{ fontSize: "12px" }} />
               <Line type="monotone" dataKey="kunden" stroke="hsl(262, 50%, 55%)" name="Kundenwachstum" strokeWidth={2} dot={false} />
-              <Line type="monotone" dataKey="karte" stroke="hsl(150, 50%, 45%)" name="Stempelaktivität" strokeWidth={2} dot={false} />
+              <Line type="monotone" dataKey="karte" stroke="hsl(150, 50%, 45%)" name="Scan-Aktivität" strokeWidth={2} dot={false} />
             </LineChart>
           </ResponsiveContainer>
         </Card>

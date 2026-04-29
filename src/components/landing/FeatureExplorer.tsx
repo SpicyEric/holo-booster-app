@@ -112,7 +112,7 @@ const TABS: Tab[] = [
     emoji: "✨",
     slides: [
       { emoji: "✨", title: "Dein stärkster Türöffner", text: "Jeder Neukunde bekommt beim ersten Besuch automatisch ein kleines Willkommensgeschenk — ohne dass du etwas sagen musst. Die Neukundenprämie arbeitet rund um die Uhr für dich." },
-      { emoji: "📱", title: "Vollautomatisch", text: "Sobald ein Kunde zum ersten Mal bei dir stempelt, erscheint sein Willkommensangebot auf seinem Handy. Er zeigt es dir an der Kasse — du gibst ihm sein Goodie. Kein Aufwand, keine Erklärung nötig." },
+      { emoji: "📱", title: "Vollautomatisch", text: "Sobald ein Kunde zum ersten Mal bei dir scannt, erscheint sein Willkommensangebot auf seinem Handy. Er zeigt es dir an der Kasse — du gibst ihm sein Goodie. Kein Aufwand, keine Erklärung nötig." },
       { emoji: "🎪", title: "Kostenlose Werbung im Feed", text: "Deine Neukundenprämie wird allen Eloyo-Nutzern in deiner Umgebung angezeigt — auch denen die noch nie bei dir waren. Neue Gesichter in deinem Laden, ohne Werbekosten." },
       { emoji: "🔗", title: "Kunden direkt ins System ziehen", text: "Sprich Kunden an der Kasse an: „Ich schenk dir heute eine Shampooprobe — du musst nur kurz die App runterladen.\" Der Kunde lädt die App, bekommt sein Goodie, sieht deine Prämien — und kommt wieder." },
       { emoji: "🎀", title: "Was sich eignet", text: "Ein kleines Goodie — keine große Geste. Eine Shampooprobe, eine Kugel Eis extra, ein Gratis-Espresso. Klein genug um es jedem zu geben, groß genug um sich zu freuen." },

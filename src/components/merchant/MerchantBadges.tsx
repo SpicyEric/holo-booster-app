@@ -4,7 +4,7 @@ import {
   Tooltip, TooltipContent, TooltipTrigger
 } from "@/components/ui/tooltip";
 
-import badgeErsterStempel from "@/assets/badges/badge-01-erster-karte.svg";
+import badgeErsterStempel from "@/assets/badges/badge-01-erster-stempel.svg";
 import badgeStammkundenRing from "@/assets/badges/badge-02-stammkunden-ring.svg";
 import badgeErsterBonus from "@/assets/badges/badge-03-erster-bonus.svg";
 import badgeTreueSchild from "@/assets/badges/badge-04-treue-schild.svg";
@@ -24,8 +24,8 @@ interface BadgeDef {
 }
 
 const BADGE_DEFS: BadgeDef[] = [
-  { key: "erster_stempel", label: "Erster Karte", icon: badgeErsterStempel, getTooltip: () => "Dein erster Karte wurde vergeben!" },
-  { key: "stammkunden_ring", label: "Stammkundenring", icon: badgeStammkundenRing, getTooltip: () => "8 Stammkunden gewonnen (6+ Karte)" },
+  { key: "erster_stempel", label: "Erster Scan", icon: badgeErsterStempel, getTooltip: () => "Dein erster Scan wurde vergeben!" },
+  { key: "stammkunden_ring", label: "Stammkundenring", icon: badgeStammkundenRing, getTooltip: () => "8 Stammkunden gewonnen (6+ Scans)" },
   { key: "erster_bonus", label: "Erster Bonus", icon: badgeErsterBonus, getTooltip: () => "Die erste Prämie wurde eingelöst!" },
   { key: "treue_schild", label: "Treueschild", icon: badgeTreueSchild, getTooltip: () => "6 Monate dabei – danke für deine Treue!" },
   { key: "netzwerk_star", label: "Netzwerkstar", icon: badgeNetzwerkStar, getTooltip: (m) => `${m?.count || 3}+ Geschäfte in deiner PLZ nutzen Eloyo` },
