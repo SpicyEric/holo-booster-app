@@ -750,8 +750,17 @@ const MeinGeschaeft = () => {
 
     for (let i = 0; i < stampConfigs.length; i++) {
       const config = stampConfigs[i];
-      const chipUid = `${merchantCustomerId.substring(0, 8)}-${i + 1}`;
-      
+      // Pro (merchant, color) nur EINEN Eintrag — keine Duplikate erzeugen.
+      const { data: existing } = await supabase
+        .from('nfc_chips')
+        .select('id')
+        .eq('merchant_customer_id', merchantCustomerId)
+        .eq('stamp_color', config.stamp_color)
+        .maybeSingle();
+
+      if (existing) continue;
+
+      const chipUid = `${merchantCustomerId.substring(0, 8)}-${config.stamp_color}`;
       await supabase.from('nfc_chips').insert({
         merchant_customer_id: merchantCustomerId,
         chip_uid: chipUid,
