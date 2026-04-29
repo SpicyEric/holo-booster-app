@@ -294,6 +294,22 @@ const BoxManagement = () => {
     finally { setLoadingStamps(false); }
   };
 
+  const handleDeleteChip = async (chipId: string, color: string, source: "detail" | "stamp") => {
+    try {
+      const { error } = await supabase.from("nfc_chips").delete().eq("id", chipId);
+      if (error) throw error;
+      toast.success(`Stempel "${color}" entfernt`);
+      if (source === "detail") {
+        setDetailStamps(prev => prev.filter(s => s.id !== chipId));
+      } else {
+        setRegisteredStamps(prev => prev.filter(s => s.id !== chipId));
+      }
+    } catch (e: any) {
+      toast.error(e?.message ? `Löschen fehlgeschlagen: ${e.message}` : "Löschen fehlgeschlagen");
+    }
+  };
+
+
   const openDetailDialog = async (row: BoxRow) => {
     setDetailRow(row); setLoadingDetail(true);
     setEditBoxId(row.box_id);
