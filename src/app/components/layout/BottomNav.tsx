@@ -179,7 +179,7 @@ export const BottomNav = ({ onNavigate, currentIndex }: BottomNavProps) => {
             <img
               src={nfcIcon}
               alt=""
-              style={{ height: 38, width: 38, filter: 'brightness(0) invert(1)' }}
+              style={{ height: 56, width: 56, filter: 'brightness(0) invert(1)' }}
             />
           </button>
         </div>
