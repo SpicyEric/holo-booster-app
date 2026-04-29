@@ -421,7 +421,17 @@ const BoxManagement = () => {
         const hardwareUid = serialNumber ? serialNumber.toLowerCase() : null;
         try { await ndef.write({ records: [{ recordType: "text", data: ndefText, lang: "de" }] }); toast.success(`NFC-Chip beschrieben: ${ndefText}`); } catch { toast.error("Chip konnte nicht beschrieben werden"); }
         try {
-          const merchantCustomerId = stampDialogRow?.haendler_id || null;
+          // Resolve merchantCustomerId: prefer eloyo_boxes.haendler_id, fallback to customer that already
+          // owns this stempel_id (customers.stamp_id), so chips registered AFTER assignment are claimed too.
+          let merchantCustomerId: string | null = stampDialogRow?.haendler_id || null;
+          if (!merchantCustomerId && chipUid) {
+            const { data: ownerCustomer } = await supabase
+              .from("customers")
+              .select("id")
+              .eq("stamp_id", chipUid)
+              .maybeSingle();
+            if (ownerCustomer?.id) merchantCustomerId = ownerCustomer.id;
+          }
           // First try to find by chip_uid + color (exact match for re-scan)
           let existing: { id: string } | null = null;
           const { data: byChipUid } = await supabase.from("nfc_chips").select("id").eq("chip_uid", chipUid).eq("stamp_color", color).maybeSingle();
