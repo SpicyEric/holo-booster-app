@@ -144,30 +144,33 @@ export default function MerchantSetup() {
       }
 
       const preset = boxData.stamp_preset || "standard_3";
-      const configs = preset === "standard_5"
-        ? [
-            { stamp_color: "grün", points_value: 1 },
-            { stamp_color: "blau", points_value: 1 },
-            { stamp_color: "rot", points_value: 1 },
-            { stamp_color: "gelb", points_value: 1 },
-            { stamp_color: "lila", points_value: 1 },
-          ]
-        : [
-            { stamp_color: "grün", points_value: 1 },
-            { stamp_color: "blau", points_value: 1 },
-            { stamp_color: "rot", points_value: 1 },
-          ];
+      const colors = preset === "standard_5"
+        ? ["grün", "blau", "rot", "gelb", "lila"]
+        : ["grün", "blau", "rot"];
 
-      for (let i = 0; i < configs.length; i++) {
-        await supabase.from("nfc_chips").insert({
-          merchant_customer_id: customerId,
-          chip_uid: `${customerId!.substring(0, 8)}-${i + 1}`,
-          stamp_name: `Stempel ${i + 1}`,
-          stamp_color: configs[i].stamp_color,
-          points_value: configs[i].points_value,
-          is_active: true,
-          is_default: i === 0,
-        });
+      // Pro Farbe genau EINEN Eintrag sicherstellen (kein Platzhalter-Spam).
+      // Wenn ein echter Chip (Hardware) bereits per linkOrphanNfcChipsToMerchant
+      // verknüpft wurde, lassen wir den intakt — sonst legen wir den Slot an.
+      for (let i = 0; i < colors.length; i++) {
+        const color = colors[i];
+        const { data: existing } = await supabase
+          .from("nfc_chips")
+          .select("id")
+          .eq("merchant_customer_id", customerId)
+          .eq("stamp_color", color)
+          .maybeSingle();
+
+        if (!existing) {
+          await supabase.from("nfc_chips").insert({
+            merchant_customer_id: customerId,
+            chip_uid: `${customerId!.substring(0, 8)}-${color}`,
+            stamp_name: color.charAt(0).toUpperCase() + color.slice(1),
+            stamp_color: color,
+            points_value: 1,
+            is_active: true,
+            is_default: i === 0,
+          });
+        }
       }
 
       toast.success("Stempel-ID erfolgreich verknüpft! 🎉");
