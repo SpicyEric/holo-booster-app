@@ -294,6 +294,22 @@ const BoxManagement = () => {
     finally { setLoadingStamps(false); }
   };
 
+  const handleDeleteChip = async (chipId: string, color: string, source: "detail" | "stamp") => {
+    try {
+      const { error } = await supabase.from("nfc_chips").delete().eq("id", chipId);
+      if (error) throw error;
+      toast.success(`Stempel "${color}" entfernt`);
+      if (source === "detail") {
+        setDetailStamps(prev => prev.filter(s => s.id !== chipId));
+      } else {
+        setRegisteredStamps(prev => prev.filter(s => s.id !== chipId));
+      }
+    } catch (e: any) {
+      toast.error(e?.message ? `Löschen fehlgeschlagen: ${e.message}` : "Löschen fehlgeschlagen");
+    }
+  };
+
+
   const openDetailDialog = async (row: BoxRow) => {
     setDetailRow(row); setLoadingDetail(true);
     setEditBoxId(row.box_id);
@@ -421,7 +437,17 @@ const BoxManagement = () => {
         const hardwareUid = serialNumber ? serialNumber.toLowerCase() : null;
         try { await ndef.write({ records: [{ recordType: "text", data: ndefText, lang: "de" }] }); toast.success(`NFC-Chip beschrieben: ${ndefText}`); } catch { toast.error("Chip konnte nicht beschrieben werden"); }
         try {
-          const merchantCustomerId = stampDialogRow?.haendler_id || null;
+          // Resolve merchantCustomerId: prefer eloyo_boxes.haendler_id, fallback to customer that already
+          // owns this stempel_id (customers.stamp_id), so chips registered AFTER assignment are claimed too.
+          let merchantCustomerId: string | null = stampDialogRow?.haendler_id || null;
+          if (!merchantCustomerId && chipUid) {
+            const { data: ownerCustomer } = await supabase
+              .from("customers")
+              .select("id")
+              .eq("stamp_id", chipUid)
+              .maybeSingle();
+            if (ownerCustomer?.id) merchantCustomerId = ownerCustomer.id;
+          }
           // First try to find by chip_uid + color (exact match for re-scan)
           let existing: { id: string } | null = null;
           const { data: byChipUid } = await supabase.from("nfc_chips").select("id").eq("chip_uid", chipUid).eq("stamp_color", color).maybeSingle();
@@ -654,7 +680,18 @@ const BoxManagement = () => {
                                 )}
                               </div>
                             </div>
-                            <span className="text-xs text-muted-foreground">{s.points_value} Punkt{s.points_value !== 1 ? "e" : ""}</span>
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs text-muted-foreground">{s.points_value} Punkt{s.points_value !== 1 ? "e" : ""}</span>
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                className="h-7 w-7 text-destructive hover:text-destructive hover:bg-destructive/10"
+                                onClick={() => handleDeleteChip(s.id, s.stamp_color, "detail")}
+                                title="Stempel entfernen"
+                              >
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </Button>
+                            </div>
                           </div>
                         );
                       })}
@@ -703,6 +740,18 @@ const BoxManagement = () => {
                         <Button size="sm" variant={registered ? "outline" : "default"} disabled={isScanning} onClick={() => startStampRegistration(value)}>
                           {isScanning ? <><Loader2 className="w-3 h-3 mr-1 animate-spin" />Scanne...</> : registered ? "Neu scannen" : "Registrieren"}
                         </Button>
+                        {registered && (
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                            disabled={isScanning}
+                            onClick={() => handleDeleteChip(registered.id, value, "stamp")}
+                            title="Stempel entfernen"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        )}
                       </div>
                     </div>
                   );
