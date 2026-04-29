@@ -344,7 +344,7 @@ const Landing = () => {
                     src={item.bg}
                     alt=""
                     aria-hidden="true"
-                    className="pointer-events-none select-none absolute inset-0 w-full h-full object-contain p-6 opacity-30 transition-opacity duration-500 group-hover:opacity-15"
+                    className="pointer-events-none select-none absolute inset-0 w-full h-full object-contain p-12 opacity-30 transition-opacity duration-500 group-hover:opacity-15"
                     style={{
                       filter:
                         'brightness(0) saturate(100%) invert(11%) sepia(78%) saturate(5736%) hue-rotate(269deg) brightness(82%) contrast(105%)',
