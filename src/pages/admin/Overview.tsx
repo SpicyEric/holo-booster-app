@@ -6,7 +6,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
   Users, AlertTriangle, RefreshCw,
-  TrendingUp, Activity, Stamp, ArrowRight, UserPlus, CalendarDays,
+  TrendingUp, Activity, Nfc, ArrowRight, UserPlus, CalendarDays,
 } from "lucide-react";
 import { format } from "date-fns";
 import { de } from "date-fns/locale";
@@ -472,7 +472,7 @@ const Overview = () => {
               liveFeed.map((tx) => (
                 <div key={tx.id} className="flex items-start gap-3 p-2.5 rounded-lg bg-muted/30">
                   <div className="w-7 h-7 rounded-full bg-[hsl(262,40%,90%)] flex items-center justify-center shrink-0 mt-0.5">
-                    <Stamp className="w-3.5 h-3.5 text-[hsl(262,50%,45%)]" />
+                    <Nfc className="w-3.5 h-3.5 text-[hsl(262,50%,45%)]" />
                   </div>
                   <div className="min-w-0">
                     <p className="text-sm font-medium truncate">{tx.merchant?.name || "Unbekannt"}</p>

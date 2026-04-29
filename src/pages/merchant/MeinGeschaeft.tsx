@@ -16,7 +16,7 @@ import {
 import { toast } from "sonner";
 import {
   Upload, Save, MapPin, Phone, Globe, Instagram, Facebook, Twitter,
-  Clock, Store, Gift, Info, UserPlus, Plus, Trash2, Edit2, Loader2, Package, ImageIcon, BarChart3, Stamp, ArrowRight, X, Image as ImageLucide, Sparkles
+  Clock, Store, Gift, Info, UserPlus, Plus, Trash2, Edit2, Loader2, Package, ImageIcon, BarChart3, Nfc, ArrowRight, X, Image as ImageLucide, Sparkles
 } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Switch } from "@/components/ui/switch";
@@ -1331,7 +1331,7 @@ const MeinGeschaeft = () => {
                                       key={tier.label}
                                       className={cn("rounded-xl border-2 p-4 text-center", colorStyles[tier.color])}
                                     >
-                                      <Stamp className={cn("h-8 w-8 mx-auto mb-2", stampColor[tier.color])} />
+                                      <Nfc className={cn("h-8 w-8 mx-auto mb-2", stampColor[tier.color])} />
                                       <p className="font-bold text-base">{tier.label}</p>
                                       <p className="text-sm mt-1">ab {tier.threshold} €</p>
                                       <p className="text-xl font-bold mt-1">{tier.points} Pkt.</p>

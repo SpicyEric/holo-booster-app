@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils";
-import { Stamp, Info } from "lucide-react";
+import { Nfc, Info } from "lucide-react";
 import { calculateSuggestion } from "./wizardLogic";
 import type { WizardState, StampSuggestion } from "./wizardLogic";
 
@@ -58,7 +58,7 @@ export default function WizardStepSuggestion({ state, onChange }: Props) {
       {/* Simple system */}
       {isSimpleOnly ? (
         <div className="bg-card border-2 border-primary rounded-xl p-6 text-center">
-          <Stamp className="h-10 w-10 text-primary mx-auto mb-3" />
+          <Nfc className="h-10 w-10 text-primary mx-auto mb-3" />
           <h4 className="font-bold text-foreground text-lg">
             Ein Scan pro Besuch
           </h4>
@@ -109,7 +109,7 @@ export default function WizardStepSuggestion({ state, onChange }: Props) {
                   COLOR_MAP[tier.color]
                 )}
               >
-                <Stamp
+                <Nfc
                   className={cn("h-8 w-8 mx-auto mb-2", STAMP_COLOR[tier.color])}
                 />
                 <p className="font-bold text-base">{tier.label}</p>
