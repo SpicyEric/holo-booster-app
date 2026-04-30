@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { DeepLinkProvider } from "@/app/components/DeepLinkProvider";
 import { PendingInviteDialog } from "@/app/components/PendingInviteDialog";
+import { OfflineScanQueueProcessor } from "@/app/components/OfflineScanQueueProcessor";
 import { ScrollToTop } from "@/components/ScrollToTop";
 import CookieConsent from "@/components/CookieConsent";
 import Landing from "./pages/Landing";
@@ -103,6 +104,7 @@ const App = () => {
           <ScrollToTop />
           <DeepLinkProvider>
             <PendingInviteDialog />
+            <OfflineScanQueueProcessor />
             <Routes>
               {/* ===== ROOT ROUTE - handles native vs web ===== */}
               <Route path="/" element={<Index />} />
