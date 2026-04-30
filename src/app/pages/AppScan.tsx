@@ -731,12 +731,16 @@ export const AppScan = () => {
 
             {result?.isOffline && flipPhase === 'idle' && (
               <motion.div key="offline-result" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="text-center space-y-3">
-                <h2 className="text-xl font-bold">Karte erkannt!</h2>
-                <p className="text-muted-foreground text-sm">Du bist gerade offline. Dein Karte wird automatisch gutgeschrieben, sobald du wieder Internet hast.</p>
-                <div className="flex items-center justify-center gap-2 text-amber-600 font-medium">
-                  <WifiOff className="h-4 w-4" />
-                  Wird synchronisiert...
+                <div className="mx-auto w-16 h-16 rounded-full bg-green-500/15 flex items-center justify-center">
+                  <CheckCircle2 className="h-10 w-10 text-green-500" />
                 </div>
+                <h2 className="text-xl font-bold">Scan gespeichert ✓</h2>
+                <p className="text-muted-foreground text-sm max-w-xs mx-auto">
+                  Punkte werden gutgeschrieben sobald du wieder online bist.
+                </p>
+                <Button onClick={() => { setResult(null); }} variant="outline" className="w-full max-w-xs">
+                  Fertig
+                </Button>
               </motion.div>
             )}
           </AnimatePresence>
