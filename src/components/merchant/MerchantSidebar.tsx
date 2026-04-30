@@ -205,13 +205,16 @@ function SidebarNav({ collapsed, onNavigate, companyName, subStatus }: { collaps
         <button
           onClick={handleLogout}
           className={cn(
-            "w-full flex items-center gap-3 rounded-xl px-3 py-2 text-[13px] font-medium text-white/40 hover:text-red-300 hover:bg-white/10 transition-all duration-200 active:scale-[0.97]",
+            "w-full flex items-center gap-3 rounded-xl px-3 py-2 text-[13px] font-medium transition-all duration-200 active:scale-[0.97]",
+            demoActive
+              ? "text-amber-200 hover:text-amber-100 hover:bg-amber-500/15 border border-amber-400/30"
+              : "text-white/40 hover:text-red-300 hover:bg-white/10",
             collapsed && "justify-center px-0"
           )}
-          title={collapsed ? "Logout" : undefined}
+          title={collapsed ? (demoActive ? "Zurück zu meinem Konto" : "Logout") : undefined}
         >
-          <LogOut className="h-4 w-4 shrink-0" />
-          {!collapsed && <span>Logout</span>}
+          {demoActive ? <ArrowLeft className="h-4 w-4 shrink-0" /> : <LogOut className="h-4 w-4 shrink-0" />}
+          {!collapsed && <span>{demoActive ? "Zurück zu meinem Konto" : "Logout"}</span>}
         </button>
       </div>
     </>
