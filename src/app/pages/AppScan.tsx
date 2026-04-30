@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Nfc, XCircle, Settings, WifiOff } from 'lucide-react';
+import { Nfc, XCircle, Settings, CheckCircle2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
@@ -9,7 +9,7 @@ import { toast } from 'sonner';
 import { BottomNav } from '@/app/components/layout/BottomNav';
 import { nfcService, type NfcReadResult } from '@/app/services/nfcService';
 import { useNetworkStatus } from '@/app/hooks/useNetworkStatus';
-import { offlineQueueService } from '@/app/services/offlineQueueService';
+import { offlineScanQueue } from '@/app/lib/offlineScanQueue';
 import { NfcPermissionDialog } from '@/app/components/NfcPermissionDialog';
 import { OfflineBanner } from '@/app/components/OfflineBanner';
 import Particles from '@/components/Particles';
@@ -376,18 +376,15 @@ export const AppScan = () => {
     setMerchantImage(null);
     setMerchantDisplayName('');
 
-    if (!navigator.onLine) {
-      if (offlineQueueService.hasPendingStampForUid(hardwareUid)) {
-        setResult({ success: false, error: 'Du hast bereits einen Offline-Karte für diesen Chip in der Warteschlange.' });
-        setScanning(false);
-        return;
-      }
-      const pendingStamp = offlineQueueService.addStamp(hardwareUid, currentUserId);
-      if (pendingStamp) {
+    if (!isOnline || !navigator.onLine) {
+      const queued = await offlineScanQueue.addToQueue({
+        nfcId: hardwareUid,
+        userId: currentUserId,
+      });
+      if (queued) {
         setResult({ success: true, isOffline: true, merchantName: 'Händler' });
-        toast.success('Karte erkannt! Wird gutgeschrieben sobald Internet da ist.');
       } else {
-        setResult({ success: false, error: 'Offline-Karte konnte nicht gespeichert werden.' });
+        setResult({ success: false, error: 'Für diese Karte gibt es bereits einen Scan in der Warteschlange.' });
       }
       setScanning(false);
       return;
@@ -430,16 +427,14 @@ export const AppScan = () => {
       }
     } catch (error: any) {
       if (error.message?.includes('fetch') || error.message?.includes('network') || error.message?.includes('Failed')) {
-        if (offlineQueueService.hasPendingStampForUid(hardwareUid)) {
-          setResult({ success: false, error: 'Du hast bereits einen Offline-Karte für diesen Chip in der Warteschlange.' });
+        const queued = await offlineScanQueue.addToQueue({
+          nfcId: hardwareUid,
+          userId: currentUserId,
+        });
+        if (queued) {
+          setResult({ success: true, isOffline: true, merchantName: 'Händler' });
         } else {
-          const pendingStamp = offlineQueueService.addStamp(hardwareUid, currentUserId);
-          if (pendingStamp) {
-            setResult({ success: true, isOffline: true, merchantName: 'Händler' });
-            toast.success('Verbindung fehlgeschlagen – Karte wird offline gespeichert.');
-          } else {
-            setResult({ success: false, error: 'Fehler beim Speichern' });
-          }
+          setResult({ success: false, error: 'Für diese Karte gibt es bereits einen Scan in der Warteschlange.' });
         }
       } else {
         setResult({ success: false, error: error.message || 'Verbindungsfehler' });
