@@ -68,25 +68,9 @@ export const AppHome = () => {
     tryGetLocation();
   }, []);
 
-  useEffect(() => {
-    if (user) loadFeed();
-  }, [user, userLocation]);
-
-  const loadFeed = async () => {
-    setLoading(true);
-    
-    if (!navigator.onLine) {
-      const cached = offlineCacheService.get<FeedItem[]>('home_feed');
-      if (cached) {
-        setFeedItems(cached);
-        setLoading(false);
-        return;
-      }
-    }
-    
-    try {
-      const items: FeedItem[] = [];
-
+  const loadFeed = useCallback(async (): Promise<FeedItem[]> => {
+    const items: FeedItem[] = [];
+    {
       // Get active boosts
       const { data: activeBoosts, error: boostError } = await supabase
         .from('merchant_boosts')
