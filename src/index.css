@@ -364,7 +364,7 @@ All colors MUST be HSL.
 .nfc-card-fan-item {
   /* Ruhezustand = aufgefächert. Beim Mount läuft eine einmalige Keyframe-Animation. */
   transform: translateX(calc(-50% + var(--fan-x, 0px))) translateY(var(--fan-y, 0px)) rotate(var(--fan-rot, 0deg));
-  animation: nfc-card-fan-in 1.2s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: nfc-card-fan-in 1.2s cubic-bezier(0.22, 1, 0.36, 1);
   transition: transform 0.55s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
