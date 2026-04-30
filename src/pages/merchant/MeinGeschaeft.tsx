@@ -34,6 +34,7 @@ import MerchantPreviewLive from "@/components/merchant/MerchantPreviewLive";
 import RichTextEditor from "@/components/merchant/RichTextEditor";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useDemoMerchant } from "@/hooks/useDemoMerchant";
 import { calculateSuggestion, SPEND_PRESETS } from "../wizard/wizardLogic";
 import { cn } from "@/lib/utils";
 import { linkOrphanNfcChipsToMerchant } from "@/lib/nfcChipLinking";
@@ -124,6 +125,7 @@ const formatOpeningHoursPreview = (hours: OpeningHours): string => {
 
 const MeinGeschaeft = () => {
   const { user } = useAuth();
+  const isDemo = useDemoMerchant();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploadingLogo, setUploadingLogo] = useState(false);
@@ -230,25 +232,23 @@ const MeinGeschaeft = () => {
   const loadData = async () => {
     try {
       setLoading(true);
-      
-      const { data: assignment } = await supabase
-        .from("merchant_assignments")
-        .select("customer_id")
-        .eq("merchant_user_id", user?.id)
-        .maybeSingle();
-      
-      if (!assignment?.customer_id) {
+
+      const { resolveMerchantCustomerId } = await import("@/lib/resolveMerchantCustomerId");
+      const resolvedCustomerId = await resolveMerchantCustomerId(user?.id);
+
+      if (!resolvedCustomerId) {
         setLoading(false);
         return;
       }
-      
-      setCustomerId(assignment.customer_id);
-      
+
+      const assignment = { customer_id: resolvedCustomerId };
+      setCustomerId(resolvedCustomerId);
+
       // Load customer data
       const { data: customer } = await supabase
         .from("customers")
         .select("*")
-        .eq("id", assignment.customer_id)
+        .eq("id", resolvedCustomerId)
         .single();
       
       if (customer) {
@@ -1567,8 +1567,10 @@ const MeinGeschaeft = () => {
             <div className="bg-white/95 backdrop-blur-md border-t border-border shadow-[0_-4px_20px_rgba(0,0,0,0.08)]">
               <div className="w-full mx-auto px-6 sm:px-10 py-3 flex items-center justify-between gap-4">
                 <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
-                  <span className="text-sm font-medium text-foreground">Du hast ungespeicherte Änderungen</span>
+                  <div className={cn("w-2 h-2 rounded-full animate-pulse", isDemo ? "bg-amber-500" : "bg-amber-500")} />
+                  <span className="text-sm font-medium text-foreground">
+                    {isDemo ? "Demo-Modus: Änderungen werden nicht gespeichert" : "Du hast ungespeicherte Änderungen"}
+                  </span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Button

@@ -33,19 +33,16 @@ const GoogleBewertungen = () => {
       if (!user?.id) return;
       
       try {
-        const { data: linkData } = await supabase
-          .from("customer_users")
-          .select("customer_id")
-          .eq("user_id", user.id)
-          .single();
-        
-        if (linkData?.customer_id) {
-          setCustomerId(linkData.customer_id);
+        const { resolveMerchantCustomerId } = await import("@/lib/resolveMerchantCustomerId");
+        const resolvedCustomerId = await resolveMerchantCustomerId(user.id);
+
+        if (resolvedCustomerId) {
+          setCustomerId(resolvedCustomerId);
           
           const { data: customerData, error } = await supabase
             .from("customers")
             .select("id, google_review_url, auto_reply_enabled, auto_reply_min_rating, google_review_points_enabled, google_review_points_value")
-            .eq("id", linkData.customer_id)
+            .eq("id", resolvedCustomerId)
             .single();
           
           if (error && error.code !== "PGRST116") {

@@ -125,24 +125,22 @@ const Nachrichten = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      const { data: assignment } = await supabase
-        .from('merchant_assignments')
-        .select('customer_id')
-        .eq('merchant_user_id', user.id)
-        .maybeSingle();
+      const { resolveMerchantCustomerId } = await import("@/lib/resolveMerchantCustomerId");
+      const resolvedCustomerId = await resolveMerchantCustomerId(user.id);
 
-      if (!assignment) {
+      if (!resolvedCustomerId) {
         setLoading(false);
         return;
       }
 
-      setCustomerId(assignment.customer_id);
+      const assignment = { customer_id: resolvedCustomerId };
+      setCustomerId(resolvedCustomerId);
 
       // Load automation settings from customer record
       const { data: customerData } = await supabase
         .from('customers')
         .select('company_name, name, birthday_enabled, birthday_message, birthday_bonus_points, birthday_gift_type, birthday_offer_title, birthday_offer_description')
-        .eq('id', assignment.customer_id)
+        .eq('id', resolvedCustomerId)
         .maybeSingle();
 
       if (customerData) {
