@@ -373,7 +373,6 @@ export default function Transaktionen() {
         { value: "all", label: "Alle Boni" },
         { value: "referral", label: "Einladungsbonus" },
         { value: "double", label: "Doppelte Punkte" },
-        { value: "welcome", label: "Willkommensbonus" },
         { value: "birthday", label: "Geburtstagsbonus" },
         { value: "review", label: "Bewertungsbonus" },
       ];

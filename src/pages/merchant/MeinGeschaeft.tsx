@@ -791,7 +791,7 @@ const MeinGeschaeft = () => {
         .maybeSingle();
 
       if (!boxData) {
-        toast.error('Karte-ID existiert nicht');
+        toast.error('Karten-ID existiert nicht');
         return;
       }
 
@@ -803,7 +803,7 @@ const MeinGeschaeft = () => {
         .maybeSingle();
 
       if (ownAssignment) {
-        toast.error('Karte-ID bereits verknüpft');
+        toast.error('Karten-ID bereits verknüpft');
         return;
       }
 
@@ -813,7 +813,7 @@ const MeinGeschaeft = () => {
         .eq('box_id', boxData.id);
 
       if (count && count > 0) {
-        toast.error('Karte-ID bereits vergeben');
+        toast.error('Karten-ID bereits vergeben');
         return;
       }
 
@@ -847,7 +847,7 @@ const MeinGeschaeft = () => {
 
       await createDefaultStamps(boxData.stamp_preset || 'standard_3', customerId);
 
-      toast.success('Karte-ID hinzugefügt');
+      toast.success('Karten-ID hinzugefügt');
       setNewBoxId('');
       loadData();
     } catch {
@@ -1124,14 +1124,20 @@ const MeinGeschaeft = () => {
                         className="h-9 pl-10 rounded-lg bg-slate-50 border-slate-300 focus-visible:border-primary focus-visible:ring-primary/30 text-foreground placeholder:text-slate-400"
                       />
                     </div>
-                    <div className="relative">
-                      <Instagram className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                      <Input
-                        value={formData.instagram}
-                        onChange={(e) => handleInputChange("instagram", e.target.value)}
+                    <div className="relative flex items-stretch rounded-lg bg-slate-50 border border-slate-300 focus-within:border-primary focus-within:ring-1 focus-within:ring-primary/30 h-9 overflow-hidden">
+                      <div className="flex items-center gap-1.5 pl-3 pr-2 text-xs text-muted-foreground bg-slate-100 border-r border-slate-300 select-none whitespace-nowrap">
+                        <Instagram className="w-4 h-4" />
+                        <span>instagram.com/</span>
+                      </div>
+                      <input
+                        value={(formData.instagram || "").replace(/^https?:\/\/(www\.)?instagram\.com\//i, "").replace(/^@/, "")}
+                        onChange={(e) => {
+                          const handle = e.target.value.replace(/^https?:\/\/(www\.)?instagram\.com\//i, "").replace(/^@/, "").trim();
+                          handleInputChange("instagram", handle ? `https://www.instagram.com/${handle}` : "");
+                        }}
                         onFocus={() => setScrollTarget('contact')}
-                        placeholder="Instagram-URL"
-                        className="h-9 pl-10 rounded-lg bg-slate-50 border-slate-300 focus-visible:border-primary focus-visible:ring-primary/30 text-foreground placeholder:text-slate-400"
+                        placeholder="dein-name"
+                        className="flex-1 px-2 bg-transparent outline-none text-sm text-foreground placeholder:text-slate-400"
                       />
                     </div>
                     <div className="relative">
@@ -1459,8 +1465,8 @@ const MeinGeschaeft = () => {
                         <Package className="h-5 w-5 text-primary" />
                       </div>
                       <div>
-                        <CardTitle className="text-lg font-semibold text-gray-900">Karte-IDs</CardTitle>
-                        <CardDescription className="text-gray-500">Verknüpfen Sie Ihre Karte-ID</CardDescription>
+                        <CardTitle className="text-lg font-semibold text-gray-900">Karten-ID</CardTitle>
+                        <CardDescription className="text-gray-500">Verknüpfen Sie Ihre Karten-ID</CardDescription>
                       </div>
                     </div>
                   </CardHeader>

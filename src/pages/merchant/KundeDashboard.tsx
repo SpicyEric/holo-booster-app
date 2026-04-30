@@ -15,6 +15,7 @@ import {
   Store, UserPlus, MessageSquare, Cake, Rocket, Bell, X
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import OnboardingChecklist from "@/components/merchant/OnboardingChecklist";
 import CountUp from "@/components/CountUp";
 import {
   Tooltip, TooltipContent, TooltipProvider, TooltipTrigger
@@ -682,6 +683,9 @@ export default function KundeDashboard() {
                 </div>
               </div>
             ) : null}
+
+            {/* Einrichtungs-Checkliste (verschwindet, sobald Händler alles abhakt + schließt) */}
+            {customer?.id && <OnboardingChecklist customerId={customer.id} />}
 
             {/* Quick Wins / Empfohlene nächste Schritte */}
             <div>
