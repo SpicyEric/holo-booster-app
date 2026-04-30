@@ -1,11 +1,11 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Gift, MapPin, Heart, Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { MainLayout } from '@/app/components/layout/MainLayout';
 import { OpenInvitationsBanner } from '@/app/components/OpenInvitationsBanner';
-import { offlineCacheService } from '@/app/services/offlineQueueService';
+import { useOfflineCache } from '@/app/hooks/useOfflineCache';
 
 interface FeedItem {
   type: 'post' | 'offer' | 'merchant_card';
