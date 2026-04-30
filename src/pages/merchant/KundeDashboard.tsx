@@ -41,7 +41,7 @@ const DEMO_MERCHANT_ID = "e828d21a-f7c5-4c8e-bc8d-6301e3e3ab45";
 const DEMO_STATS: DashboardStats = {
   totalContacts: 832, totalPointsAwarded: 12480, totalRedemptions: 312, invitedCustomers: 87, newContactsThisWeek: 117,
   birthdayMessagesSent: 24, winbackMessagesSent: 41, topRewardTitle: "Gratis Kaffee", topRewardCount: 142,
-  nfcCards: [{ color: "grün", points: 5 }, { color: "blau", points: 10 }, { color: "rot", points: 15 }],
+  nfcCards: [{ color: "grün", points: 5, scans: 38 }, { color: "blau", points: 10, scans: 11 }, { color: "rot", points: 15, scans: 2 }],
   referralBonusPoints: 20,
 };
 
