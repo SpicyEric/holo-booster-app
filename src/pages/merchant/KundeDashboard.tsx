@@ -524,13 +524,11 @@ export default function KundeDashboard() {
                           >
                             <div className="flex items-start justify-between">
                               <span className="text-[11px] font-bold tracking-tight opacity-95">
-                                {card.points} {card.points === 1 ? 'Pkt' : 'Pkt'}
+                                {card.points} {card.points === 1 ? 'Punkt' : 'Punkte'}
                               </span>
                             </div>
-                            <div className="text-right">
-                              <p className="text-2xl font-bold leading-none">{card.points}</p>
-                              <p className="text-[9px] opacity-70 mt-0.5">{card.points === 1 ? 'Punkt' : 'Punkte'}</p>
-                            </div>
+                            <div />
+
                           </div>
                         );
                       })}
