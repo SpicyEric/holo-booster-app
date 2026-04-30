@@ -676,25 +676,28 @@ const Marketing = () => {
                 ) : (
                   <>
                     <p className="text-sm text-muted-foreground">Pushe dein Geschäft im Feed! Alle Nutzer im Umkreis sehen deinen Eintrag ganz oben – mit einer hervorgehobenen Anzeige und dem Label „Gesponsert".</p>
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                      {[
-                        { tier: '3_days', days: 3, price: '9,90 €', label: '3 Tage', radius: '10 km', borderClass: 'border-sky-300 hover:border-sky-400' },
-                        { tier: '7_days', days: 7, price: '19,90 €', label: '7 Tage', radius: '10 km', borderClass: 'border-primary/50 hover:border-primary', popular: true },
-                        { tier: '14_days', days: 14, price: '35,90 €', label: '14 Tage', radius: '15 km', borderClass: 'border-amber-400 hover:border-amber-500', best: true },
-                      ].map(opt => (
-                        <div key={opt.tier} className={`relative p-4 rounded-xl border-2 transition-all bg-card ${opt.borderClass}`}>
-                          {opt.popular && <Badge className="absolute -top-2.5 left-1/2 -translate-x-1/2 bg-primary text-white text-xs rounded-full">Beliebt</Badge>}
-                          {opt.best && <Badge className="absolute -top-2.5 left-1/2 -translate-x-1/2 bg-amber-500 text-white text-xs rounded-full">Beste Reichweite</Badge>}
-                          <div className="text-center space-y-2">
-                            <p className="text-2xl font-bold text-foreground">{opt.price}</p>
-                            <p className="text-sm font-medium text-muted-foreground">{opt.label}</p>
-                            <p className="text-xs text-muted-foreground/70">{opt.radius} Radius</p>
-                            <Button onClick={() => handleBoostPurchase(opt.tier)} disabled={boostLoading} className="w-full rounded-xl mt-2">
-                              {boostLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Jetzt buchen'}
-                            </Button>
+                    <div className="relative">
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 opacity-50 pointer-events-none select-none">
+                        {[
+                          { tier: '3_days', price: '9,90 €', label: '3 Tage', radius: '10 km', borderClass: 'border-sky-300' },
+                          { tier: '7_days', price: '19,90 €', label: '7 Tage', radius: '10 km', borderClass: 'border-primary/50', popular: true },
+                          { tier: '14_days', price: '35,90 €', label: '14 Tage', radius: '15 km', borderClass: 'border-amber-400', best: true },
+                        ].map(opt => (
+                          <div key={opt.tier} className={`relative p-4 rounded-xl border-2 bg-card ${opt.borderClass}`}>
+                            {opt.popular && <Badge className="absolute -top-2.5 left-1/2 -translate-x-1/2 bg-primary text-white text-xs rounded-full">Beliebt</Badge>}
+                            {opt.best && <Badge className="absolute -top-2.5 left-1/2 -translate-x-1/2 bg-amber-500 text-white text-xs rounded-full">Beste Reichweite</Badge>}
+                            <div className="text-center space-y-2">
+                              <p className="text-2xl font-bold text-foreground">{opt.price}</p>
+                              <p className="text-sm font-medium text-muted-foreground">{opt.label}</p>
+                              <p className="text-xs text-muted-foreground/70">{opt.radius} Radius</p>
+                              <Button disabled className="w-full rounded-xl mt-2">Jetzt buchen</Button>
+                            </div>
                           </div>
-                        </div>
-                      ))}
+                        ))}
+                      </div>
+                      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                        <Badge className="bg-foreground/80 text-background text-sm px-4 py-1.5 rounded-full shadow-lg backdrop-blur-sm">Coming soon</Badge>
+                      </div>
                     </div>
                   </>
                 )}
