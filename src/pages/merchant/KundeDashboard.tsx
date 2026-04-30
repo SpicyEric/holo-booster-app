@@ -674,53 +674,7 @@ export default function KundeDashboard() {
                   )}
                 </div>
               </div>
-            ) : missions.length > 0 && (
-              <div className="bg-white rounded-2xl p-5 border border-border/30 shadow-[0_1px_3px_hsl(262,30%,80%/0.3)]">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-2.5">
-                    <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
-                      <Target className="w-4 h-4 text-primary" />
-                    </div>
-                    <div>
-                      <h2 className="text-sm font-semibold text-foreground">Dein Fortschritt</h2>
-                      <p className="text-xs text-muted-foreground">{completedMissions}/{totalMissions} erledigt</p>
-                    </div>
-                  </div>
-                  <Badge variant="outline" className="rounded-full border-primary/30 text-primary text-xs px-2 py-0.5">
-                    {levelLabel}
-                  </Badge>
-                </div>
-                <Progress value={progressPercent} className="h-1.5 mb-3 bg-primary/10 [&>div]:bg-gradient-to-r [&>div]:from-primary [&>div]:to-secondary" />
-                <div className="space-y-1">
-                  {missions.map((mission, i) => (
-                    <Tooltip key={i}>
-                      <TooltipTrigger asChild>
-                        <button
-                          onClick={() => navigate(mission.path)}
-                          className={cn(
-                            "w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-left transition-all duration-200",
-                            mission.completed ? "bg-emerald-50/60 cursor-pointer" : "hover:bg-primary/[0.04] cursor-pointer group"
-                          )}
-                        >
-                          {mission.completed ? (
-                            <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
-                          ) : (
-                            <Circle className="w-4 h-4 text-muted-foreground/40 shrink-0 group-hover:text-primary/60 transition-colors" />
-                          )}
-                          <div className="flex-1 min-w-0">
-                            <p className={cn("text-xs font-medium", mission.completed ? "text-emerald-700 line-through" : "text-foreground")}>{mission.label}</p>
-                          </div>
-                          <ChevronRight className="w-3.5 h-3.5 text-muted-foreground/40 group-hover:text-primary transition-colors shrink-0" />
-                        </button>
-                      </TooltipTrigger>
-                      <TooltipContent side="right" className="max-w-[260px] text-xs leading-relaxed">
-                        {mission.tooltip}
-                      </TooltipContent>
-                    </Tooltip>
-                  ))}
-                </div>
-              </div>
-            )}
+            ) : null}
 
             {/* Quick Wins / Empfohlene nächste Schritte */}
             <div>
