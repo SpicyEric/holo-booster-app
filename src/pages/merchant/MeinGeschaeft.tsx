@@ -239,6 +239,7 @@ const MeinGeschaeft = () => {
         return;
       }
 
+      const assignment = { customer_id: resolvedCustomerId };
       setCustomerId(resolvedCustomerId);
 
       // Load customer data

@@ -181,6 +181,7 @@ const Marketing = () => {
       const { resolveMerchantCustomerId } = await import("@/lib/resolveMerchantCustomerId");
       const resolvedCustomerId = await resolveMerchantCustomerId(user.id);
       if (!resolvedCustomerId) { setLoading(false); return; }
+      const assignment = { customer_id: resolvedCustomerId };
       setCustomerId(resolvedCustomerId);
 
       // Fetch all stamp points for display (supports DE + EN color values)
