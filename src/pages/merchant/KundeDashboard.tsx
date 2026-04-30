@@ -333,12 +333,13 @@ export default function KundeDashboard() {
       // Sum vergebene Punkte
       const totalPointsAwarded = (pointsRes.data || []).reduce((sum: number, r: any) => sum + (r.points_change || 0), 0);
 
-      // NFC cards aggregated by color (unique color → highest/first points value)
+      // NFC cards aggregated by color → höchster konfigurierter Punktwert pro Farbe
       const cardMap = new Map<string, number>();
       (nfcChipsRes.data || []).forEach((c: any) => {
-        if (c.stamp_color && !cardMap.has(c.stamp_color)) {
-          cardMap.set(c.stamp_color, c.points_value || 0);
-        }
+        if (!c.stamp_color) return;
+        const pts = c.points_value || 0;
+        const prev = cardMap.get(c.stamp_color) ?? 0;
+        if (pts > prev) cardMap.set(c.stamp_color, pts);
       });
       const colorOrder = ["grün", "gruen", "green", "blau", "blue", "gelb", "yellow", "orange", "rot", "red", "lila", "purple"];
       const nfcCards: NfcCardInfo[] = Array.from(cardMap.entries())
@@ -523,13 +524,11 @@ export default function KundeDashboard() {
                           >
                             <div className="flex items-start justify-between">
                               <span className="text-[11px] font-bold tracking-tight opacity-95">
-                                {card.points} {card.points === 1 ? 'Pkt' : 'Pkt'}
+                                {card.points} {card.points === 1 ? 'Punkt' : 'Punkte'}
                               </span>
                             </div>
-                            <div className="text-right">
-                              <p className="text-2xl font-bold leading-none">{card.points}</p>
-                              <p className="text-[9px] opacity-70 mt-0.5">{card.points === 1 ? 'Punkt' : 'Punkte'}</p>
-                            </div>
+                            <div />
+
                           </div>
                         );
                       })}
