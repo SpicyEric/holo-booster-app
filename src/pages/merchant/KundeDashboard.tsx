@@ -138,7 +138,7 @@ export default function KundeDashboard() {
           // Wizard deaktiviert: Händler werden direkt ins Dashboard gelassen,
           // Box-ID und Karten-System werden vom Vertriebler/Admin oder
           // im Bereich "Mein Geschäft" gepflegt.
-          setCustomer({ id: customerData.id, name: customerData.name, email: customerData.email || user.email || "", company_name: customerData.company_name, status: customerData.status || "active", customer_number: customerData.customer_number, created_at: customerData.created_at, postal_code: customerData.postal_code, birthday_enabled: customerData.birthday_enabled });
+          setCustomer({ id: customerData.id, name: customerData.name, email: customerData.email || user.email || "", company_name: customerData.company_name, status: customerData.status || "active", customer_number: customerData.customer_number, created_at: customerData.created_at, postal_code: customerData.postal_code, birthday_enabled: customerData.birthday_enabled, referral_inviter_points: (customerData as any).referral_inviter_points });
         }
       }
       try { const { data: subInfo } = await supabase.functions.invoke("get-subscription-info"); if (subInfo) setSubscriptionInfo(subInfo); } catch {}
@@ -151,11 +151,11 @@ export default function KundeDashboard() {
           ]);
           setAllMissionsDoneOver24h(true);
         } else {
-          await loadDashboardStats(customerData.id);
+          await loadDashboardStats(customerData.id, (customerData as any).referral_inviter_points ?? 20);
         }
         await buildMissions(customerData);
       } else {
-        setStats({ totalContacts: 0, totalStamps: 0, totalRedemptions: 0, networkEffect: 0, newContactsThisWeek: 0 });
+        setStats({ totalContacts: 0, totalPointsAwarded: 0, totalRedemptions: 0, invitedCustomers: 0, newContactsThisWeek: 0, birthdayMessagesSent: 0, winbackMessagesSent: 0, topRewardTitle: null, topRewardCount: 0, nfcCards: [], referralBonusPoints: 20 });
       }
     } catch (e) { console.error("Error loading data:", e); } finally { setLoading(false); }
   };
