@@ -20,12 +20,30 @@ import {
   Tooltip, TooltipContent, TooltipProvider, TooltipTrigger
 } from "@/components/ui/tooltip";
 
-interface Customer { id: string; name: string; email: string; company_name: string | null; status: string; customer_number: number | null; created_at?: string; postal_code?: string | null; birthday_enabled?: boolean; }
+interface Customer { id: string; name: string; email: string; company_name: string | null; status: string; customer_number: number | null; created_at?: string; postal_code?: string | null; birthday_enabled?: boolean; referral_inviter_points?: number | null; }
 interface SubscriptionInfo { hasSubscription: boolean; status?: string; currentPeriodEnd?: string; cancelAtPeriodEnd?: boolean; cancelAt?: string | null; }
-interface DashboardStats { totalContacts: number; totalStamps: number; totalRedemptions: number; networkEffect: number; newContactsThisWeek: number; }
+interface NfcCardInfo { color: string; points: number; }
+interface DashboardStats {
+  totalContacts: number;
+  totalPointsAwarded: number;
+  totalRedemptions: number;
+  invitedCustomers: number;
+  newContactsThisWeek: number;
+  birthdayMessagesSent: number;
+  winbackMessagesSent: number;
+  topRewardTitle: string | null;
+  topRewardCount: number;
+  nfcCards: NfcCardInfo[];
+  referralBonusPoints: number;
+}
 
 const DEMO_MERCHANT_ID = "e828d21a-f7c5-4c8e-bc8d-6301e3e3ab45";
-const DEMO_STATS: DashboardStats = { totalContacts: 832, totalStamps: 6102, totalRedemptions: 312, networkEffect: 387, newContactsThisWeek: 117 };
+const DEMO_STATS: DashboardStats = {
+  totalContacts: 832, totalPointsAwarded: 12480, totalRedemptions: 312, invitedCustomers: 87, newContactsThisWeek: 117,
+  birthdayMessagesSent: 24, winbackMessagesSent: 41, topRewardTitle: "Gratis Kaffee", topRewardCount: 142,
+  nfcCards: [{ color: "grün", points: 1 }, { color: "blau", points: 2 }, { color: "rot", points: 3 }],
+  referralBonusPoints: 20,
+};
 
 const KpiCard = ({ icon: Icon, label, value, countTo, sub, trend, iconBg, iconColor, bigNumber }: { icon: React.ElementType; label: string; value?: string; countTo?: number | null; sub?: string; trend?: string; iconBg: string; iconColor: string; bigNumber?: boolean }) => (
   <div className="bg-white rounded-2xl p-5 border border-border/30 shadow-[0_1px_3px_hsl(262,30%,80%/0.3)] hover:shadow-[0_4px_12px_hsl(262,30%,80%/0.4)] transition-all duration-300 group">
