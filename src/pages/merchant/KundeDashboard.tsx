@@ -301,19 +301,78 @@ export default function KundeDashboard() {
     }
   };
 
-  const loadDashboardStats = async (cid: string) => {
+  const loadDashboardStats = async (cid: string, referralBonusPoints: number) => {
     try {
       const mondayIso = getMondayOfCurrentWeek().toISOString();
-      const [c1, c2, c3, c4, c5] = await Promise.all([
+      const [
+        contactsRes,
+        pointsRes,
+        rewardRedRes,
+        offerRedRes,
+        newContactsRes,
+        nfcChipsRes,
+        invitedRes,
+        birthdayRes,
+        winbackRes,
+        rewardsRes,
+        topRewardRedRes,
+      ] = await Promise.all([
         supabase.from("loyalty_accounts").select("*", { count: "exact", head: true }).eq("merchant_customer_id", cid),
-        supabase.from("point_transactions").select("*", { count: "exact", head: true }).eq("merchant_customer_id", cid).eq("transaction_type", "nfc_stamp"),
-        supabase.from("reward_redemptions").select("*", { count: "exact", head: true }).eq("merchant_customer_id", cid),
-        supabase.from("point_transactions").select("*", { count: "exact", head: true }).eq("merchant_customer_id", cid).eq("transaction_type", "new_customer_bonus"),
+        supabase.from("point_transactions").select("points_change").eq("merchant_customer_id", cid).eq("transaction_type", "nfc_stamp"),
+        supabase.from("reward_redemptions").select("reward_id").eq("merchant_customer_id", cid),
+        supabase.from("point_transactions").select("*", { count: "exact", head: true }).eq("merchant_customer_id", cid).eq("transaction_type", "offer_redeemed"),
         supabase.from("loyalty_accounts").select("*", { count: "exact", head: true }).eq("merchant_customer_id", cid).gte("created_at", mondayIso),
+        supabase.from("nfc_chips").select("stamp_color, points_value").eq("merchant_customer_id", cid),
+        supabase.from("invitation_redemptions").select("invitation_id, invitations!inner(merchant_customer_id)").eq("invitations.merchant_customer_id", cid).not("invitee_stamped_at", "is", null),
+        supabase.from("app_messages").select("*", { count: "exact", head: true }).eq("merchant_customer_id", cid).ilike("title", "%geburtstag%"),
+        supabase.from("app_messages").select("*", { count: "exact", head: true }).eq("merchant_customer_id", cid).or("title.ilike.%rückhol%,title.ilike.%vermiss%,title.ilike.%winback%"),
+        supabase.from("rewards").select("id, title").eq("merchant_customer_id", cid),
+        supabase.from("reward_redemptions").select("reward_id").eq("merchant_customer_id", cid),
       ]);
-      const offerRed = await supabase.from("point_transactions").select("*", { count: "exact", head: true }).eq("merchant_customer_id", cid).eq("transaction_type", "offer_redeemed");
-      setStats({ totalContacts: c1.count || 0, totalStamps: c2.count || 0, totalRedemptions: (c3.count || 0) + (offerRed.count || 0), networkEffect: c4.count || 0, newContactsThisWeek: c5.count || 0 });
-    } catch { setStats({ totalContacts: 0, totalStamps: 0, totalRedemptions: 0, networkEffect: 0, newContactsThisWeek: 0 }); }
+
+      // Sum vergebene Punkte
+      const totalPointsAwarded = (pointsRes.data || []).reduce((sum: number, r: any) => sum + (r.points_change || 0), 0);
+
+      // NFC cards aggregated by color (unique color → highest/first points value)
+      const cardMap = new Map<string, number>();
+      (nfcChipsRes.data || []).forEach((c: any) => {
+        if (c.stamp_color && !cardMap.has(c.stamp_color)) {
+          cardMap.set(c.stamp_color, c.points_value || 0);
+        }
+      });
+      const colorOrder = ["grün", "gruen", "green", "blau", "blue", "gelb", "yellow", "orange", "rot", "red", "lila", "purple"];
+      const nfcCards: NfcCardInfo[] = Array.from(cardMap.entries())
+        .sort(([a], [b]) => {
+          const ai = colorOrder.indexOf(a.toLowerCase()); const bi = colorOrder.indexOf(b.toLowerCase());
+          return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi);
+        })
+        .map(([color, points]) => ({ color, points }));
+
+      // Top reward
+      const rewardCounts = new Map<string, number>();
+      (topRewardRedRes.data || []).forEach((r: any) => {
+        if (r.reward_id) rewardCounts.set(r.reward_id, (rewardCounts.get(r.reward_id) || 0) + 1);
+      });
+      let topRewardId: string | null = null; let topRewardCount = 0;
+      rewardCounts.forEach((cnt, id) => { if (cnt > topRewardCount) { topRewardCount = cnt; topRewardId = id; } });
+      const topRewardTitle = topRewardId ? ((rewardsRes.data || []).find((r: any) => r.id === topRewardId)?.title ?? null) : null;
+
+      setStats({
+        totalContacts: contactsRes.count || 0,
+        totalPointsAwarded,
+        totalRedemptions: ((rewardRedRes.data || []).length) + (offerRedRes.count || 0),
+        invitedCustomers: (invitedRes.data || []).length,
+        newContactsThisWeek: newContactsRes.count || 0,
+        birthdayMessagesSent: birthdayRes.count || 0,
+        winbackMessagesSent: winbackRes.count || 0,
+        topRewardTitle,
+        topRewardCount,
+        nfcCards,
+        referralBonusPoints,
+      });
+    } catch {
+      setStats({ totalContacts: 0, totalPointsAwarded: 0, totalRedemptions: 0, invitedCustomers: 0, newContactsThisWeek: 0, birthdayMessagesSent: 0, winbackMessagesSent: 0, topRewardTitle: null, topRewardCount: 0, nfcCards: [], referralBonusPoints });
+    }
   };
 
   const formatDate = (ds: string) => new Date(ds).toLocaleDateString("de-DE", { year: 'numeric', month: 'long', day: 'numeric' });
