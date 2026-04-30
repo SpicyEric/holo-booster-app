@@ -505,11 +505,11 @@ export default function KundeDashboard() {
                   </div>
                   <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
                 </div>
-                <div className="flex items-end justify-center h-44 pt-4">
+                <div className="flex items-end justify-center h-44 pt-4 nfc-fan-group">
                   {stats.nfcCards.length === 0 ? (
                     <p className="text-xs text-muted-foreground self-center">Noch keine Karten registriert.</p>
                   ) : (
-                    <div className="relative" style={{ width: `${Math.max(stats.nfcCards.length * 60 + 80, 220)}px`, height: '160px' }}>
+                    <div className="relative nfc-fan-stage" style={{ width: `${Math.max(stats.nfcCards.length * 110 + 40, 360)}px`, height: '160px' }}>
                       {stats.nfcCards.map((card, i) => {
                         const total = stats.nfcCards.length;
                         const middle = (total - 1) / 2;
@@ -517,6 +517,7 @@ export default function KundeDashboard() {
                         const rotation = offset * 12;
                         const xShift = offset * 50;
                         const yShift = Math.abs(offset) * 8;
+                        const hoverX = offset * 108; // breiter Abstand wenn aufgefächert
                         return (
                           <div
                             key={`${card.color}-${i}`}
@@ -526,6 +527,7 @@ export default function KundeDashboard() {
                               ['--fan-x' as any]: `${xShift}px`,
                               ['--fan-y' as any]: `${yShift}px`,
                               ['--fan-rot' as any]: `${rotation}deg`,
+                              ['--hover-x' as any]: `${hoverX}px`,
                               animationDelay: `${0.6 + i * 0.12}s`,
                               zIndex: 10 + i,
                             }}
@@ -535,8 +537,10 @@ export default function KundeDashboard() {
                                 {card.points} {card.points === 1 ? 'Punkt' : 'Punkte'}
                               </span>
                             </div>
-                            <div />
-
+                            <div className="nfc-card-scans text-center">
+                              <p className="text-lg font-bold leading-none">{card.scans}</p>
+                              <p className="text-[9px] opacity-80 mt-0.5">{card.scans === 1 ? 'Scan' : 'Scans'}</p>
+                            </div>
                           </div>
                         );
                       })}
