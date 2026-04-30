@@ -20,12 +20,30 @@ import {
   Tooltip, TooltipContent, TooltipProvider, TooltipTrigger
 } from "@/components/ui/tooltip";
 
-interface Customer { id: string; name: string; email: string; company_name: string | null; status: string; customer_number: number | null; created_at?: string; postal_code?: string | null; birthday_enabled?: boolean; }
+interface Customer { id: string; name: string; email: string; company_name: string | null; status: string; customer_number: number | null; created_at?: string; postal_code?: string | null; birthday_enabled?: boolean; referral_inviter_points?: number | null; }
 interface SubscriptionInfo { hasSubscription: boolean; status?: string; currentPeriodEnd?: string; cancelAtPeriodEnd?: boolean; cancelAt?: string | null; }
-interface DashboardStats { totalContacts: number; totalStamps: number; totalRedemptions: number; networkEffect: number; newContactsThisWeek: number; }
+interface NfcCardInfo { color: string; points: number; }
+interface DashboardStats {
+  totalContacts: number;
+  totalPointsAwarded: number;
+  totalRedemptions: number;
+  invitedCustomers: number;
+  newContactsThisWeek: number;
+  birthdayMessagesSent: number;
+  winbackMessagesSent: number;
+  topRewardTitle: string | null;
+  topRewardCount: number;
+  nfcCards: NfcCardInfo[];
+  referralBonusPoints: number;
+}
 
 const DEMO_MERCHANT_ID = "e828d21a-f7c5-4c8e-bc8d-6301e3e3ab45";
-const DEMO_STATS: DashboardStats = { totalContacts: 832, totalStamps: 6102, totalRedemptions: 312, networkEffect: 387, newContactsThisWeek: 117 };
+const DEMO_STATS: DashboardStats = {
+  totalContacts: 832, totalPointsAwarded: 12480, totalRedemptions: 312, invitedCustomers: 87, newContactsThisWeek: 117,
+  birthdayMessagesSent: 24, winbackMessagesSent: 41, topRewardTitle: "Gratis Kaffee", topRewardCount: 142,
+  nfcCards: [{ color: "grün", points: 1 }, { color: "blau", points: 2 }, { color: "rot", points: 3 }],
+  referralBonusPoints: 20,
+};
 
 const KpiCard = ({ icon: Icon, label, value, countTo, sub, trend, iconBg, iconColor, bigNumber }: { icon: React.ElementType; label: string; value?: string; countTo?: number | null; sub?: string; trend?: string; iconBg: string; iconColor: string; bigNumber?: boolean }) => (
   <div className="bg-white rounded-2xl p-5 border border-border/30 shadow-[0_1px_3px_hsl(262,30%,80%/0.3)] hover:shadow-[0_4px_12px_hsl(262,30%,80%/0.4)] transition-all duration-300 group">
@@ -120,7 +138,7 @@ export default function KundeDashboard() {
           // Wizard deaktiviert: Händler werden direkt ins Dashboard gelassen,
           // Box-ID und Karten-System werden vom Vertriebler/Admin oder
           // im Bereich "Mein Geschäft" gepflegt.
-          setCustomer({ id: customerData.id, name: customerData.name, email: customerData.email || user.email || "", company_name: customerData.company_name, status: customerData.status || "active", customer_number: customerData.customer_number, created_at: customerData.created_at, postal_code: customerData.postal_code, birthday_enabled: customerData.birthday_enabled });
+          setCustomer({ id: customerData.id, name: customerData.name, email: customerData.email || user.email || "", company_name: customerData.company_name, status: customerData.status || "active", customer_number: customerData.customer_number, created_at: customerData.created_at, postal_code: customerData.postal_code, birthday_enabled: customerData.birthday_enabled, referral_inviter_points: (customerData as any).referral_inviter_points });
         }
       }
       try { const { data: subInfo } = await supabase.functions.invoke("get-subscription-info"); if (subInfo) setSubscriptionInfo(subInfo); } catch {}
@@ -133,11 +151,11 @@ export default function KundeDashboard() {
           ]);
           setAllMissionsDoneOver24h(true);
         } else {
-          await loadDashboardStats(customerData.id);
+          await loadDashboardStats(customerData.id, (customerData as any).referral_inviter_points ?? 20);
         }
         await buildMissions(customerData);
       } else {
-        setStats({ totalContacts: 0, totalStamps: 0, totalRedemptions: 0, networkEffect: 0, newContactsThisWeek: 0 });
+        setStats({ totalContacts: 0, totalPointsAwarded: 0, totalRedemptions: 0, invitedCustomers: 0, newContactsThisWeek: 0, birthdayMessagesSent: 0, winbackMessagesSent: 0, topRewardTitle: null, topRewardCount: 0, nfcCards: [], referralBonusPoints: 20 });
       }
     } catch (e) { console.error("Error loading data:", e); } finally { setLoading(false); }
   };
@@ -283,19 +301,78 @@ export default function KundeDashboard() {
     }
   };
 
-  const loadDashboardStats = async (cid: string) => {
+  const loadDashboardStats = async (cid: string, referralBonusPoints: number) => {
     try {
       const mondayIso = getMondayOfCurrentWeek().toISOString();
-      const [c1, c2, c3, c4, c5] = await Promise.all([
+      const [
+        contactsRes,
+        pointsRes,
+        rewardRedRes,
+        offerRedRes,
+        newContactsRes,
+        nfcChipsRes,
+        invitedRes,
+        birthdayRes,
+        winbackRes,
+        rewardsRes,
+        topRewardRedRes,
+      ] = await Promise.all([
         supabase.from("loyalty_accounts").select("*", { count: "exact", head: true }).eq("merchant_customer_id", cid),
-        supabase.from("point_transactions").select("*", { count: "exact", head: true }).eq("merchant_customer_id", cid).eq("transaction_type", "nfc_stamp"),
-        supabase.from("reward_redemptions").select("*", { count: "exact", head: true }).eq("merchant_customer_id", cid),
-        supabase.from("point_transactions").select("*", { count: "exact", head: true }).eq("merchant_customer_id", cid).eq("transaction_type", "new_customer_bonus"),
+        supabase.from("point_transactions").select("points_change").eq("merchant_customer_id", cid).eq("transaction_type", "nfc_stamp"),
+        supabase.from("reward_redemptions").select("reward_id").eq("merchant_customer_id", cid),
+        supabase.from("point_transactions").select("*", { count: "exact", head: true }).eq("merchant_customer_id", cid).eq("transaction_type", "offer_redeemed"),
         supabase.from("loyalty_accounts").select("*", { count: "exact", head: true }).eq("merchant_customer_id", cid).gte("created_at", mondayIso),
+        supabase.from("nfc_chips").select("stamp_color, points_value").eq("merchant_customer_id", cid),
+        supabase.from("invitation_redemptions").select("invitation_id, invitations!inner(merchant_customer_id)").eq("invitations.merchant_customer_id", cid).not("invitee_stamped_at", "is", null),
+        supabase.from("app_messages").select("*", { count: "exact", head: true }).eq("merchant_customer_id", cid).ilike("title", "%geburtstag%"),
+        supabase.from("app_messages").select("*", { count: "exact", head: true }).eq("merchant_customer_id", cid).or("title.ilike.%rückhol%,title.ilike.%vermiss%,title.ilike.%winback%"),
+        supabase.from("rewards").select("id, title").eq("merchant_customer_id", cid),
+        supabase.from("reward_redemptions").select("reward_id").eq("merchant_customer_id", cid),
       ]);
-      const offerRed = await supabase.from("point_transactions").select("*", { count: "exact", head: true }).eq("merchant_customer_id", cid).eq("transaction_type", "offer_redeemed");
-      setStats({ totalContacts: c1.count || 0, totalStamps: c2.count || 0, totalRedemptions: (c3.count || 0) + (offerRed.count || 0), networkEffect: c4.count || 0, newContactsThisWeek: c5.count || 0 });
-    } catch { setStats({ totalContacts: 0, totalStamps: 0, totalRedemptions: 0, networkEffect: 0, newContactsThisWeek: 0 }); }
+
+      // Sum vergebene Punkte
+      const totalPointsAwarded = (pointsRes.data || []).reduce((sum: number, r: any) => sum + (r.points_change || 0), 0);
+
+      // NFC cards aggregated by color (unique color → highest/first points value)
+      const cardMap = new Map<string, number>();
+      (nfcChipsRes.data || []).forEach((c: any) => {
+        if (c.stamp_color && !cardMap.has(c.stamp_color)) {
+          cardMap.set(c.stamp_color, c.points_value || 0);
+        }
+      });
+      const colorOrder = ["grün", "gruen", "green", "blau", "blue", "gelb", "yellow", "orange", "rot", "red", "lila", "purple"];
+      const nfcCards: NfcCardInfo[] = Array.from(cardMap.entries())
+        .sort(([a], [b]) => {
+          const ai = colorOrder.indexOf(a.toLowerCase()); const bi = colorOrder.indexOf(b.toLowerCase());
+          return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi);
+        })
+        .map(([color, points]) => ({ color, points }));
+
+      // Top reward
+      const rewardCounts = new Map<string, number>();
+      (topRewardRedRes.data || []).forEach((r: any) => {
+        if (r.reward_id) rewardCounts.set(r.reward_id, (rewardCounts.get(r.reward_id) || 0) + 1);
+      });
+      let topRewardId: string | null = null; let topRewardCount = 0;
+      rewardCounts.forEach((cnt, id) => { if (cnt > topRewardCount) { topRewardCount = cnt; topRewardId = id; } });
+      const topRewardTitle = topRewardId ? ((rewardsRes.data || []).find((r: any) => r.id === topRewardId)?.title ?? null) : null;
+
+      setStats({
+        totalContacts: contactsRes.count || 0,
+        totalPointsAwarded,
+        totalRedemptions: ((rewardRedRes.data || []).length) + (offerRedRes.count || 0),
+        invitedCustomers: (invitedRes.data || []).length,
+        newContactsThisWeek: newContactsRes.count || 0,
+        birthdayMessagesSent: birthdayRes.count || 0,
+        winbackMessagesSent: winbackRes.count || 0,
+        topRewardTitle,
+        topRewardCount,
+        nfcCards,
+        referralBonusPoints,
+      });
+    } catch {
+      setStats({ totalContacts: 0, totalPointsAwarded: 0, totalRedemptions: 0, invitedCustomers: 0, newContactsThisWeek: 0, birthdayMessagesSent: 0, winbackMessagesSent: 0, topRewardTitle: null, topRewardCount: 0, nfcCards: [], referralBonusPoints });
+    }
   };
 
   const formatDate = (ds: string) => new Date(ds).toLocaleDateString("de-DE", { year: 'numeric', month: 'long', day: 'numeric' });
@@ -387,18 +464,166 @@ export default function KundeDashboard() {
           {/* ====== KPI Cards ====== */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             <KpiCard icon={Users} label="Kunden gesamt" countTo={stats?.totalContacts ?? 0} trend={stats && stats.newContactsThisWeek > 0 ? `+${stats.newContactsThisWeek} diese Woche` : undefined} iconBg="bg-primary/10" iconColor="text-primary" bigNumber />
-            <KpiCard icon={Trophy} label="Karte gesamt" countTo={stats?.totalStamps ?? 0} sub="Gesamt seit Start" iconBg="bg-emerald-50" iconColor="text-emerald-600" bigNumber />
+            <KpiCard icon={Trophy} label="Vergebene Punkte" countTo={stats?.totalPointsAwarded ?? 0} sub="Gesamt seit Start" iconBg="bg-emerald-50" iconColor="text-emerald-600" bigNumber />
             <KpiCard icon={Gift} label="Prämien eingelöst" countTo={stats?.totalRedemptions ?? 0} iconBg="bg-amber-50" iconColor="text-amber-600" />
             <KpiCard
               icon={Zap}
-              label="Netzwerkeffekt"
-              countTo={stats && stats.networkEffect > 0 ? stats.networkEffect : null}
-              value={stats && stats.networkEffect > 0 ? undefined : '–'}
-              sub={stats && stats.networkEffect > 0 ? "Neukundenprämien eingelöst" : "Noch keine Neukundenprämien"}
+              label="Eingeladene Kunden"
+              countTo={stats && stats.invitedCustomers > 0 ? stats.invitedCustomers : null}
+              value={stats && stats.invitedCustomers > 0 ? undefined : '–'}
+              sub={stats && stats.invitedCustomers > 0 ? "Erfolgreich angenommen" : "Noch keine Einladungen"}
               iconBg="bg-purple-50"
               iconColor="text-purple-600"
             />
           </div>
+
+          {/* ====== NFC-Karten & Empfehlungsbonus ====== */}
+          {stats && (stats.nfcCards.length > 0 || stats.referralBonusPoints > 0) && (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* NFC-Karten Fächer */}
+              <div className="bg-white rounded-2xl p-5 border border-border/30 shadow-[0_1px_3px_hsl(262,30%,80%/0.3)]">
+                <div className="flex items-center gap-2.5 mb-4">
+                  <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                    <Sparkles className="w-4 h-4 text-primary" />
+                  </div>
+                  <div>
+                    <h2 className="text-sm font-semibold text-foreground">Deine NFC-Karten</h2>
+                    <p className="text-xs text-muted-foreground">Aktuelle Punktevergabe pro Karte</p>
+                  </div>
+                </div>
+                <div className="flex items-end justify-center h-44 pt-4">
+                  {stats.nfcCards.length === 0 ? (
+                    <p className="text-xs text-muted-foreground self-center">Noch keine Karten registriert.</p>
+                  ) : (
+                    <div className="relative" style={{ width: `${Math.max(stats.nfcCards.length * 60 + 80, 220)}px`, height: '160px' }}>
+                      {stats.nfcCards.map((card, i) => {
+                        const total = stats.nfcCards.length;
+                        const middle = (total - 1) / 2;
+                        const offset = i - middle;
+                        const rotation = offset * 12;
+                        const xShift = offset * 50;
+                        const yShift = Math.abs(offset) * 8;
+                        const colorMap: Record<string, string> = {
+                          'grün': 'bg-gradient-to-br from-emerald-400 to-emerald-600',
+                          'gruen': 'bg-gradient-to-br from-emerald-400 to-emerald-600',
+                          'green': 'bg-gradient-to-br from-emerald-400 to-emerald-600',
+                          'blau': 'bg-gradient-to-br from-sky-400 to-blue-600',
+                          'blue': 'bg-gradient-to-br from-sky-400 to-blue-600',
+                          'rot': 'bg-gradient-to-br from-rose-400 to-red-600',
+                          'red': 'bg-gradient-to-br from-rose-400 to-red-600',
+                          'gelb': 'bg-gradient-to-br from-yellow-300 to-amber-500',
+                          'yellow': 'bg-gradient-to-br from-yellow-300 to-amber-500',
+                          'lila': 'bg-gradient-to-br from-purple-400 to-violet-600',
+                          'purple': 'bg-gradient-to-br from-purple-400 to-violet-600',
+                          'orange': 'bg-gradient-to-br from-orange-400 to-orange-600',
+                        };
+                        const cardClass = colorMap[card.color.toLowerCase()] || 'bg-gradient-to-br from-slate-400 to-slate-600';
+                        return (
+                          <div
+                            key={card.color}
+                            className={cn("absolute left-1/2 top-2 w-24 h-36 rounded-xl shadow-[0_6px_20px_rgba(0,0,0,0.18)] flex flex-col justify-between p-2.5 text-white", cardClass)}
+                            style={{
+                              transform: `translateX(calc(-50% + ${xShift}px)) translateY(${yShift}px) rotate(${rotation}deg)`,
+                              zIndex: 10 + i,
+                            }}
+                          >
+                            <div className="flex items-start justify-between">
+                              <span className="text-[10px] font-semibold uppercase tracking-wider opacity-80 capitalize">{card.color}</span>
+                            </div>
+                            <div className="text-right">
+                              <p className="text-2xl font-bold leading-none">{card.points}</p>
+                              <p className="text-[9px] opacity-80 mt-0.5">{card.points === 1 ? 'Punkt' : 'Punkte'}</p>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+                <p className="text-[11px] text-muted-foreground/70 text-center mt-2">
+                  Konfigurierbar in „Mein Geschäft"
+                </p>
+              </div>
+
+              {/* Empfehlungsbonus + Automationen */}
+              <div className="space-y-4">
+                <button
+                  onClick={() => navigate('/kunde/marketing?tab=referral')}
+                  className="w-full bg-white rounded-2xl p-5 border border-border/30 shadow-[0_1px_3px_hsl(262,30%,80%/0.3)] hover:shadow-[0_4px_12px_hsl(262,30%,80%/0.4)] hover:border-primary/30 transition-all text-left group"
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-purple-50 flex items-center justify-center">
+                        <UserPlus className="w-5 h-5 text-purple-600" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-semibold text-foreground">Weiterempfehlungs-Bonus</p>
+                        <p className="text-xs text-muted-foreground">Pro erfolgreicher Empfehlung deines Geschäfts</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-2xl font-bold text-foreground">{stats.referralBonusPoints}</span>
+                      <span className="text-xs text-muted-foreground">{stats.referralBonusPoints === 1 ? 'Punkt' : 'Punkte'}</span>
+                      <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                    </div>
+                  </div>
+                </button>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    onClick={() => navigate('/kunde/marketing?tab=automations')}
+                    className="bg-white rounded-2xl p-4 border border-border/30 shadow-[0_1px_3px_hsl(262,30%,80%/0.3)] hover:shadow-[0_4px_12px_hsl(262,30%,80%/0.4)] hover:border-primary/30 transition-all text-left group"
+                  >
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="w-8 h-8 rounded-lg bg-pink-50 flex items-center justify-center">
+                        <Cake className="w-4 h-4 text-pink-600" />
+                      </div>
+                      <ChevronRight className="w-4 h-4 text-muted-foreground/50 group-hover:text-primary transition-colors" />
+                    </div>
+                    <p className="text-2xl font-bold text-foreground">
+                      <CountUp to={stats.birthdayMessagesSent} duration={1.5} />
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-0.5">Geburtstagsgrüße</p>
+                  </button>
+                  <button
+                    onClick={() => navigate('/kunde/marketing?tab=automations')}
+                    className="bg-white rounded-2xl p-4 border border-border/30 shadow-[0_1px_3px_hsl(262,30%,80%/0.3)] hover:shadow-[0_4px_12px_hsl(262,30%,80%/0.4)] hover:border-primary/30 transition-all text-left group"
+                  >
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="w-8 h-8 rounded-lg bg-amber-50 flex items-center justify-center">
+                        <MessageSquare className="w-4 h-4 text-amber-600" />
+                      </div>
+                      <ChevronRight className="w-4 h-4 text-muted-foreground/50 group-hover:text-primary transition-colors" />
+                    </div>
+                    <p className="text-2xl font-bold text-foreground">
+                      <CountUp to={stats.winbackMessagesSent} duration={1.5} />
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-0.5">Rückholnachrichten</p>
+                  </button>
+                </div>
+
+                {/* Top-Prämie */}
+                <div className="bg-white rounded-2xl p-4 border border-border/30 shadow-[0_1px_3px_hsl(262,30%,80%/0.3)]">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center">
+                      <Trophy className="w-5 h-5 text-amber-600" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs text-muted-foreground">Deine Top-Prämie</p>
+                      {stats.topRewardTitle ? (
+                        <>
+                          <p className="text-sm font-semibold text-foreground truncate">{stats.topRewardTitle}</p>
+                          <p className="text-xs text-muted-foreground">{stats.topRewardCount}× eingelöst</p>
+                        </>
+                      ) : (
+                        <p className="text-sm font-medium text-muted-foreground">Noch keine Prämie eingelöst</p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* ====== Compact Gamification + Quick Wins side by side ====== */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -449,53 +674,7 @@ export default function KundeDashboard() {
                   )}
                 </div>
               </div>
-            ) : missions.length > 0 && (
-              <div className="bg-white rounded-2xl p-5 border border-border/30 shadow-[0_1px_3px_hsl(262,30%,80%/0.3)]">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-2.5">
-                    <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
-                      <Target className="w-4 h-4 text-primary" />
-                    </div>
-                    <div>
-                      <h2 className="text-sm font-semibold text-foreground">Dein Fortschritt</h2>
-                      <p className="text-xs text-muted-foreground">{completedMissions}/{totalMissions} erledigt</p>
-                    </div>
-                  </div>
-                  <Badge variant="outline" className="rounded-full border-primary/30 text-primary text-xs px-2 py-0.5">
-                    {levelLabel}
-                  </Badge>
-                </div>
-                <Progress value={progressPercent} className="h-1.5 mb-3 bg-primary/10 [&>div]:bg-gradient-to-r [&>div]:from-primary [&>div]:to-secondary" />
-                <div className="space-y-1">
-                  {missions.map((mission, i) => (
-                    <Tooltip key={i}>
-                      <TooltipTrigger asChild>
-                        <button
-                          onClick={() => navigate(mission.path)}
-                          className={cn(
-                            "w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-left transition-all duration-200",
-                            mission.completed ? "bg-emerald-50/60 cursor-pointer" : "hover:bg-primary/[0.04] cursor-pointer group"
-                          )}
-                        >
-                          {mission.completed ? (
-                            <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
-                          ) : (
-                            <Circle className="w-4 h-4 text-muted-foreground/40 shrink-0 group-hover:text-primary/60 transition-colors" />
-                          )}
-                          <div className="flex-1 min-w-0">
-                            <p className={cn("text-xs font-medium", mission.completed ? "text-emerald-700 line-through" : "text-foreground")}>{mission.label}</p>
-                          </div>
-                          <ChevronRight className="w-3.5 h-3.5 text-muted-foreground/40 group-hover:text-primary transition-colors shrink-0" />
-                        </button>
-                      </TooltipTrigger>
-                      <TooltipContent side="right" className="max-w-[260px] text-xs leading-relaxed">
-                        {mission.tooltip}
-                      </TooltipContent>
-                    </Tooltip>
-                  ))}
-                </div>
-              </div>
-            )}
+            ) : null}
 
             {/* Quick Wins / Empfohlene nächste Schritte */}
             <div>
