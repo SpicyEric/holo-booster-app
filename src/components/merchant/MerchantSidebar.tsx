@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import {
   LayoutDashboard, Store, Users, Megaphone, Settings,
   LogOut, ChevronLeft, ChevronDown, Menu, X, Building2,
-  Gift, Rocket, UserPlus, Star, MessageSquare, Zap, Info, Package,
+  Gift, Rocket, UserPlus, Star, MessageSquare, Zap, Info, Package, ArrowLeft,
 } from "lucide-react";
 import eloyoLogo from "@/assets/eloyo-logo.png";
 import { cn } from "@/lib/utils";
@@ -15,6 +15,8 @@ import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { getUserCustomer } from "@/lib/auth";
+import { useDemoMerchant } from "@/hooks/useDemoMerchant";
+import { disableDemoMerchant } from "@/lib/demoMerchant";
 
 interface NavItem {
   path: string;
@@ -88,7 +90,14 @@ function SidebarNav({ collapsed, onNavigate, companyName, subStatus }: { collaps
     return location.pathname.startsWith(path);
   };
 
+  const demoActive = useDemoMerchant();
+
   const handleLogout = async () => {
+    if (demoActive) {
+      const returnPath = disableDemoMerchant();
+      navigate(returnPath, { replace: true });
+      return;
+    }
     const { error } = await signOut();
     if (error) {
       toast.error("Logout fehlgeschlagen");
