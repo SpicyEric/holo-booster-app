@@ -1,19 +1,50 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
+import { Network } from '@capacitor/network';
+import { Capacitor } from '@capacitor/core';
 
+/**
+ * Cross-platform network status hook.
+ * Uses @capacitor/network on native (more reliable than browser APIs)
+ * and the standard online/offline events on web.
+ */
 export const useNetworkStatus = () => {
-  const [isOnline, setIsOnline] = useState(navigator.onLine);
-
-  const handleOnline = useCallback(() => setIsOnline(true), []);
-  const handleOffline = useCallback(() => setIsOnline(false), []);
+  const [isOnline, setIsOnline] = useState<boolean>(
+    typeof navigator !== 'undefined' ? navigator.onLine : true
+  );
 
   useEffect(() => {
-    window.addEventListener('online', handleOnline);
-    window.addEventListener('offline', handleOffline);
+    let removeListener: (() => void) | null = null;
+    let cancelled = false;
+
+    if (Capacitor.isNativePlatform()) {
+      Network.getStatus().then((status) => {
+        if (!cancelled) setIsOnline(status.connected);
+      });
+
+      const handle = Network.addListener('networkStatusChange', (status) => {
+        setIsOnline(status.connected);
+      });
+
+      removeListener = () => {
+        // handle is a Promise<PluginListenerHandle> in newer versions
+        Promise.resolve(handle).then((h) => h.remove?.());
+      };
+    } else {
+      const onOnline = () => setIsOnline(true);
+      const onOffline = () => setIsOnline(false);
+      window.addEventListener('online', onOnline);
+      window.addEventListener('offline', onOffline);
+      removeListener = () => {
+        window.removeEventListener('online', onOnline);
+        window.removeEventListener('offline', onOffline);
+      };
+    }
+
     return () => {
-      window.removeEventListener('online', handleOnline);
-      window.removeEventListener('offline', handleOffline);
+      cancelled = true;
+      removeListener?.();
     };
-  }, [handleOnline, handleOffline]);
+  }, []);
 
   return isOnline;
 };
