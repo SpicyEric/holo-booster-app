@@ -481,15 +481,20 @@ export default function KundeDashboard() {
           {stats && (stats.nfcCards.length > 0 || stats.referralBonusPoints > 0) && (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* NFC-Karten Fächer */}
-              <div className="bg-white rounded-2xl p-5 border border-border/30 shadow-[0_1px_3px_hsl(262,30%,80%/0.3)]">
+              <button
+                type="button"
+                onClick={() => navigate('/kunde/mein-geschaeft?tab=karte')}
+                className="w-full text-left bg-white rounded-2xl p-5 border border-border/30 shadow-[0_1px_3px_hsl(262,30%,80%/0.3)] hover:shadow-[0_4px_12px_hsl(262,30%,80%/0.4)] hover:border-primary/30 transition-all group"
+              >
                 <div className="flex items-center gap-2.5 mb-4">
                   <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
                     <Sparkles className="w-4 h-4 text-primary" />
                   </div>
-                  <div>
+                  <div className="flex-1">
                     <h2 className="text-sm font-semibold text-foreground">Deine NFC-Karten</h2>
                     <p className="text-xs text-muted-foreground">Aktuelle Punktevergabe pro Karte</p>
                   </div>
+                  <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
                 </div>
                 <div className="flex items-end justify-center h-44 pt-4">
                   {stats.nfcCards.length === 0 ? (
@@ -503,36 +508,27 @@ export default function KundeDashboard() {
                         const rotation = offset * 12;
                         const xShift = offset * 50;
                         const yShift = Math.abs(offset) * 8;
-                        const colorMap: Record<string, string> = {
-                          'grün': 'bg-gradient-to-br from-emerald-400 to-emerald-600',
-                          'gruen': 'bg-gradient-to-br from-emerald-400 to-emerald-600',
-                          'green': 'bg-gradient-to-br from-emerald-400 to-emerald-600',
-                          'blau': 'bg-gradient-to-br from-sky-400 to-blue-600',
-                          'blue': 'bg-gradient-to-br from-sky-400 to-blue-600',
-                          'rot': 'bg-gradient-to-br from-rose-400 to-red-600',
-                          'red': 'bg-gradient-to-br from-rose-400 to-red-600',
-                          'gelb': 'bg-gradient-to-br from-yellow-300 to-amber-500',
-                          'yellow': 'bg-gradient-to-br from-yellow-300 to-amber-500',
-                          'lila': 'bg-gradient-to-br from-purple-400 to-violet-600',
-                          'purple': 'bg-gradient-to-br from-purple-400 to-violet-600',
-                          'orange': 'bg-gradient-to-br from-orange-400 to-orange-600',
-                        };
-                        const cardClass = colorMap[card.color.toLowerCase()] || 'bg-gradient-to-br from-slate-400 to-slate-600';
                         return (
                           <div
-                            key={card.color}
-                            className={cn("absolute left-1/2 top-2 w-24 h-36 rounded-xl shadow-[0_6px_20px_rgba(0,0,0,0.18)] flex flex-col justify-between p-2.5 text-white", cardClass)}
+                            key={`${card.color}-${i}`}
+                            className="absolute left-1/2 top-2 w-24 h-36 rounded-xl shadow-[0_6px_20px_rgba(0,0,0,0.25)] flex flex-col justify-between p-2.5 text-white nfc-card-fan-item"
                             style={{
-                              transform: `translateX(calc(-50% + ${xShift}px)) translateY(${yShift}px) rotate(${rotation}deg)`,
+                              background: 'linear-gradient(135deg, hsl(0,0%,28%) 0%, hsl(0,0%,12%) 60%, hsl(0,0%,6%) 100%)',
+                              ['--fan-x' as any]: `${xShift}px`,
+                              ['--fan-y' as any]: `${yShift}px`,
+                              ['--fan-rot' as any]: `${rotation}deg`,
+                              animationDelay: `${0.6 + i * 0.12}s`,
                               zIndex: 10 + i,
                             }}
                           >
                             <div className="flex items-start justify-between">
-                              <span className="text-[10px] font-semibold uppercase tracking-wider opacity-80 capitalize">{card.color}</span>
+                              <span className="text-[11px] font-bold tracking-tight opacity-95">
+                                {card.points} {card.points === 1 ? 'Pkt' : 'Pkt'}
+                              </span>
                             </div>
                             <div className="text-right">
                               <p className="text-2xl font-bold leading-none">{card.points}</p>
-                              <p className="text-[9px] opacity-80 mt-0.5">{card.points === 1 ? 'Punkt' : 'Punkte'}</p>
+                              <p className="text-[9px] opacity-70 mt-0.5">{card.points === 1 ? 'Punkt' : 'Punkte'}</p>
                             </div>
                           </div>
                         );
@@ -543,7 +539,7 @@ export default function KundeDashboard() {
                 <p className="text-[11px] text-muted-foreground/70 text-center mt-2">
                   Konfigurierbar in „Mein Geschäft"
                 </p>
-              </div>
+              </button>
 
               {/* Empfehlungsbonus + Automationen */}
               <div className="space-y-4">
