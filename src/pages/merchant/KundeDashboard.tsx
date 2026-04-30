@@ -22,7 +22,7 @@ import {
 
 interface Customer { id: string; name: string; email: string; company_name: string | null; status: string; customer_number: number | null; created_at?: string; postal_code?: string | null; birthday_enabled?: boolean; referral_inviter_points?: number | null; }
 interface SubscriptionInfo { hasSubscription: boolean; status?: string; currentPeriodEnd?: string; cancelAtPeriodEnd?: boolean; cancelAt?: string | null; }
-interface NfcCardInfo { color: string; points: number; }
+interface NfcCardInfo { color: string; points: number; scans: number; }
 interface DashboardStats {
   totalContacts: number;
   totalPointsAwarded: number;
