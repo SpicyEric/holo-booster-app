@@ -100,7 +100,7 @@ export default function Transaktionen() {
       const [txResult, rewardResult, cardResult, accountsResult] = await Promise.all([
         supabase.from("point_transactions").select("id, created_at, points_change, transaction_type, description").eq("merchant_customer_id", customer.id).order("created_at", { ascending: false }).limit(1000),
         supabase.from("rewards").select("id, title").eq("merchant_customer_id", customer.id).eq("is_active", true),
-        supabase.from("nfc_cards" as any).select("id, name, points, color").eq("merchant_customer_id", customer.id).then((r: any) => r).catch(() => ({ data: [] as any[] })),
+        (supabase.from("nfc_cards" as any).select("id, name, points, color").eq("merchant_customer_id", customer.id) as unknown as Promise<{ data: any[] | null }>).then(r => r).then(r => r, () => ({ data: [] as any[] })),
         supabase.from("loyalty_accounts").select("created_at").eq("merchant_customer_id", customer.id).order("created_at", { ascending: true }),
       ]);
 
