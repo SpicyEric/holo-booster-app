@@ -350,3 +350,30 @@ All colors MUST be HSL.
   animation-duration: 280ms;
   animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
 }
+
+/* NFC card fan-out animation on dashboard mount */
+@keyframes nfc-card-fan-out {
+  0% {
+    transform: translateX(-50%) translateY(0) rotate(0deg);
+    opacity: 0;
+  }
+  40% {
+    transform: translateX(-50%) translateY(0) rotate(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(calc(-50% + var(--fan-x, 0px))) translateY(var(--fan-y, 0px)) rotate(var(--fan-rot, 0deg));
+    opacity: 1;
+  }
+}
+
+.nfc-card-fan-item {
+  transform: translateX(calc(-50% + var(--fan-x, 0px))) translateY(var(--fan-y, 0px)) rotate(var(--fan-rot, 0deg));
+  animation: nfc-card-fan-out 1.2s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nfc-card-fan-item {
+    animation: none;
+  }
+}
