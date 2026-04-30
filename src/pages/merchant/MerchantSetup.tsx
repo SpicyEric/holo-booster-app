@@ -113,14 +113,14 @@ export default function MerchantSetup() {
         .eq("stamp_id", state.boxId)
         .maybeSingle();
 
-      if (!boxData) { toast.error("Karte-ID existiert nicht"); return; }
+      if (!boxData) { toast.error("Karten-ID existiert nicht"); return; }
 
       const { count } = await supabase
         .from("customer_boxes")
         .select("id", { count: "exact", head: true })
         .eq("box_id", boxData.id);
 
-      if (count && count > 0) { toast.error("Diese Karte-ID ist bereits vergeben"); return; }
+      if (count && count > 0) { toast.error("Diese Karten-ID ist bereits vergeben"); return; }
 
       await supabase.from("customer_boxes").insert({
         customer_id: customerId,
@@ -173,7 +173,7 @@ export default function MerchantSetup() {
         }
       }
 
-      toast.success("Karte-ID erfolgreich verknüpft! 🎉");
+      toast.success("Karten-ID erfolgreich verknüpft! 🎉");
       goNext();
     } catch {
       toast.error("Fehler beim Verknüpfen");

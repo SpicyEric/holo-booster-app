@@ -791,7 +791,7 @@ const MeinGeschaeft = () => {
         .maybeSingle();
 
       if (!boxData) {
-        toast.error('Karte-ID existiert nicht');
+        toast.error('Karten-ID existiert nicht');
         return;
       }
 
@@ -803,7 +803,7 @@ const MeinGeschaeft = () => {
         .maybeSingle();
 
       if (ownAssignment) {
-        toast.error('Karte-ID bereits verknüpft');
+        toast.error('Karten-ID bereits verknüpft');
         return;
       }
 
@@ -813,7 +813,7 @@ const MeinGeschaeft = () => {
         .eq('box_id', boxData.id);
 
       if (count && count > 0) {
-        toast.error('Karte-ID bereits vergeben');
+        toast.error('Karten-ID bereits vergeben');
         return;
       }
 
@@ -847,7 +847,7 @@ const MeinGeschaeft = () => {
 
       await createDefaultStamps(boxData.stamp_preset || 'standard_3', customerId);
 
-      toast.success('Karte-ID hinzugefügt');
+      toast.success('Karten-ID hinzugefügt');
       setNewBoxId('');
       loadData();
     } catch {
@@ -1459,8 +1459,8 @@ const MeinGeschaeft = () => {
                         <Package className="h-5 w-5 text-primary" />
                       </div>
                       <div>
-                        <CardTitle className="text-lg font-semibold text-gray-900">Karte-IDs</CardTitle>
-                        <CardDescription className="text-gray-500">Verknüpfen Sie Ihre Karte-ID</CardDescription>
+                        <CardTitle className="text-lg font-semibold text-gray-900">Karten-ID</CardTitle>
+                        <CardDescription className="text-gray-500">Verknüpfen Sie Ihre Karten-ID</CardDescription>
                       </div>
                     </div>
                   </CardHeader>

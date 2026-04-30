@@ -50,7 +50,7 @@ export default function WizardStepBoxId({ state, onChange }: Props) {
       </div>
 
       <div>
-        <Label htmlFor="boxId">Karte-ID</Label>
+        <Label htmlFor="boxId">Karten-ID</Label>
         <Input
           id="boxId"
           placeholder="XXXXX-XXXXX-XXXXX"
