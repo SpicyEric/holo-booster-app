@@ -1395,21 +1395,30 @@ const MeinGeschaeft = () => {
                   </CardHeader>
                   {manualMode && nfcChips.length > 0 && (
                     <CardContent className="space-y-4">
-                      <p className="text-sm text-muted-foreground">Punktzahl pro Kartenfarbe selbst festlegen</p>
+                      <p className="text-sm text-muted-foreground">Punktzahl pro Karte selbst festlegen</p>
                       {(() => {
+                        // Eindeutige Karten nach stamp_color, sortiert in fixer Reihenfolge: grün → blau → rot → andere
+                        const order = ['grün', 'gruen', 'green', 'blau', 'blue', 'rot', 'red', 'gelb', 'yellow', 'lila', 'purple', 'orange'];
                         const seen = new Set<string>();
-                        return nfcChips.filter((chip) => {
+                        const unique = nfcChips.filter((chip) => {
                           const color = chip.stamp_color?.toLowerCase() || '';
                           if (seen.has(color)) return false;
                           seen.add(color);
                           return true;
-                        }).map((chip) => (
+                        }).sort((a, b) => {
+                          const ai = order.indexOf((a.stamp_color || '').toLowerCase());
+                          const bi = order.indexOf((b.stamp_color || '').toLowerCase());
+                          return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi);
+                        });
+                        return unique.map((chip, idx) => (
                           <div key={chip.id} className="flex items-center gap-4 p-4 bg-background rounded-xl border-2 border-border shadow-sm">
-                            <div className={`h-10 w-10 rounded-full ${getColorBadge(chip.stamp_color)} shadow-sm flex-shrink-0`} />
+                            <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-slate-700 to-slate-900 shadow-sm flex-shrink-0 flex items-center justify-center">
+                              <span className="text-white font-bold text-sm">{idx + 1}</span>
+                            </div>
                             <div className="flex-1 grid grid-cols-2 gap-4">
                               <div>
-                                <Label className="text-xs text-muted-foreground">Farbe</Label>
-                                <p className="text-sm font-medium text-foreground capitalize mt-1">{chip.stamp_color || '–'}</p>
+                                <Label className="text-xs text-muted-foreground">Karte</Label>
+                                <p className="text-sm font-medium text-foreground mt-1">Karte {idx + 1}</p>
                               </div>
                               <div>
                                 <Label className="text-xs text-muted-foreground">Punkte</Label>
