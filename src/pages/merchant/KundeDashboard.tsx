@@ -22,7 +22,7 @@ import {
 
 interface Customer { id: string; name: string; email: string; company_name: string | null; status: string; customer_number: number | null; created_at?: string; postal_code?: string | null; birthday_enabled?: boolean; referral_inviter_points?: number | null; }
 interface SubscriptionInfo { hasSubscription: boolean; status?: string; currentPeriodEnd?: string; cancelAtPeriodEnd?: boolean; cancelAt?: string | null; }
-interface NfcCardInfo { color: string; points: number; }
+interface NfcCardInfo { color: string; points: number; scans: number; }
 interface DashboardStats {
   totalContacts: number;
   totalPointsAwarded: number;
@@ -41,7 +41,7 @@ const DEMO_MERCHANT_ID = "e828d21a-f7c5-4c8e-bc8d-6301e3e3ab45";
 const DEMO_STATS: DashboardStats = {
   totalContacts: 832, totalPointsAwarded: 12480, totalRedemptions: 312, invitedCustomers: 87, newContactsThisWeek: 117,
   birthdayMessagesSent: 24, winbackMessagesSent: 41, topRewardTitle: "Gratis Kaffee", topRewardCount: 142,
-  nfcCards: [{ color: "grün", points: 5 }, { color: "blau", points: 10 }, { color: "rot", points: 15 }],
+  nfcCards: [{ color: "grün", points: 5, scans: 38 }, { color: "blau", points: 10, scans: 11 }, { color: "rot", points: 15, scans: 2 }],
   referralBonusPoints: 20,
 };
 
@@ -342,12 +342,20 @@ export default function KundeDashboard() {
         if (pts > prev) cardMap.set(c.stamp_color, pts);
       });
       const colorOrder = ["grün", "gruen", "green", "blau", "blue", "gelb", "yellow", "orange", "rot", "red", "lila", "purple"];
+
+      // Scans pro Punktwert (= pro Karte) zählen aus point_transactions
+      const scansByPoints = new Map<number, number>();
+      (pointsRes.data || []).forEach((r: any) => {
+        const pts = r.points_change || 0;
+        scansByPoints.set(pts, (scansByPoints.get(pts) || 0) + 1);
+      });
+
       const nfcCards: NfcCardInfo[] = Array.from(cardMap.entries())
         .sort(([a], [b]) => {
           const ai = colorOrder.indexOf(a.toLowerCase()); const bi = colorOrder.indexOf(b.toLowerCase());
           return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi);
         })
-        .map(([color, points]) => ({ color, points }));
+        .map(([color, points]) => ({ color, points, scans: scansByPoints.get(points) || 0 }));
 
       // Top reward
       const rewardCounts = new Map<string, number>();
@@ -497,11 +505,11 @@ export default function KundeDashboard() {
                   </div>
                   <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
                 </div>
-                <div className="flex items-end justify-center h-44 pt-4">
+                <div className="flex items-end justify-center h-44 pt-4 nfc-fan-group">
                   {stats.nfcCards.length === 0 ? (
                     <p className="text-xs text-muted-foreground self-center">Noch keine Karten registriert.</p>
                   ) : (
-                    <div className="relative" style={{ width: `${Math.max(stats.nfcCards.length * 60 + 80, 220)}px`, height: '160px' }}>
+                    <div className="relative nfc-fan-stage" style={{ width: `${Math.max(stats.nfcCards.length * 110 + 40, 360)}px`, height: '160px' }}>
                       {stats.nfcCards.map((card, i) => {
                         const total = stats.nfcCards.length;
                         const middle = (total - 1) / 2;
@@ -509,6 +517,7 @@ export default function KundeDashboard() {
                         const rotation = offset * 12;
                         const xShift = offset * 50;
                         const yShift = Math.abs(offset) * 8;
+                        const hoverX = offset * 108; // breiter Abstand wenn aufgefächert
                         return (
                           <div
                             key={`${card.color}-${i}`}
@@ -518,6 +527,7 @@ export default function KundeDashboard() {
                               ['--fan-x' as any]: `${xShift}px`,
                               ['--fan-y' as any]: `${yShift}px`,
                               ['--fan-rot' as any]: `${rotation}deg`,
+                              ['--hover-x' as any]: `${hoverX}px`,
                               animationDelay: `${0.6 + i * 0.12}s`,
                               zIndex: 10 + i,
                             }}
@@ -527,8 +537,10 @@ export default function KundeDashboard() {
                                 {card.points} {card.points === 1 ? 'Punkt' : 'Punkte'}
                               </span>
                             </div>
-                            <div />
-
+                            <div className="nfc-card-scans text-center">
+                              <p className="text-lg font-bold leading-none">{card.scans}</p>
+                              <p className="text-[9px] opacity-80 mt-0.5">{card.scans === 1 ? 'Scan' : 'Scans'}</p>
+                            </div>
                           </div>
                         );
                       })}
