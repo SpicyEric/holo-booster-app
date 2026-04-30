@@ -17,6 +17,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { LocationPermissionDialog } from '@/app/components/LocationPermissionDialog';
 import { Capacitor } from '@capacitor/core';
+import { useOfflineCache } from '@/app/hooks/useOfflineCache';
 
 interface Store {
   id: string;
