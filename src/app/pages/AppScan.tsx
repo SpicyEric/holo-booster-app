@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Nfc, XCircle, Settings, WifiOff } from 'lucide-react';
+import { Nfc, XCircle, Settings, CheckCircle2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
@@ -9,7 +9,7 @@ import { toast } from 'sonner';
 import { BottomNav } from '@/app/components/layout/BottomNav';
 import { nfcService, type NfcReadResult } from '@/app/services/nfcService';
 import { useNetworkStatus } from '@/app/hooks/useNetworkStatus';
-import { offlineQueueService } from '@/app/services/offlineQueueService';
+import { offlineScanQueue } from '@/app/lib/offlineScanQueue';
 import { NfcPermissionDialog } from '@/app/components/NfcPermissionDialog';
 import { OfflineBanner } from '@/app/components/OfflineBanner';
 import Particles from '@/components/Particles';
@@ -376,18 +376,15 @@ export const AppScan = () => {
     setMerchantImage(null);
     setMerchantDisplayName('');
 
-    if (!navigator.onLine) {
-      if (offlineQueueService.hasPendingStampForUid(hardwareUid)) {
-        setResult({ success: false, error: 'Du hast bereits einen Offline-Karte für diesen Chip in der Warteschlange.' });
-        setScanning(false);
-        return;
-      }
-      const pendingStamp = offlineQueueService.addStamp(hardwareUid, currentUserId);
-      if (pendingStamp) {
+    if (!isOnline || !navigator.onLine) {
+      const queued = await offlineScanQueue.addToQueue({
+        nfcId: hardwareUid,
+        userId: currentUserId,
+      });
+      if (queued) {
         setResult({ success: true, isOffline: true, merchantName: 'Händler' });
-        toast.success('Karte erkannt! Wird gutgeschrieben sobald Internet da ist.');
       } else {
-        setResult({ success: false, error: 'Offline-Karte konnte nicht gespeichert werden.' });
+        setResult({ success: false, error: 'Für diese Karte gibt es bereits einen Scan in der Warteschlange.' });
       }
       setScanning(false);
       return;
@@ -430,16 +427,14 @@ export const AppScan = () => {
       }
     } catch (error: any) {
       if (error.message?.includes('fetch') || error.message?.includes('network') || error.message?.includes('Failed')) {
-        if (offlineQueueService.hasPendingStampForUid(hardwareUid)) {
-          setResult({ success: false, error: 'Du hast bereits einen Offline-Karte für diesen Chip in der Warteschlange.' });
+        const queued = await offlineScanQueue.addToQueue({
+          nfcId: hardwareUid,
+          userId: currentUserId,
+        });
+        if (queued) {
+          setResult({ success: true, isOffline: true, merchantName: 'Händler' });
         } else {
-          const pendingStamp = offlineQueueService.addStamp(hardwareUid, currentUserId);
-          if (pendingStamp) {
-            setResult({ success: true, isOffline: true, merchantName: 'Händler' });
-            toast.success('Verbindung fehlgeschlagen – Karte wird offline gespeichert.');
-          } else {
-            setResult({ success: false, error: 'Fehler beim Speichern' });
-          }
+          setResult({ success: false, error: 'Für diese Karte gibt es bereits einen Scan in der Warteschlange.' });
         }
       } else {
         setResult({ success: false, error: error.message || 'Verbindungsfehler' });
@@ -736,12 +731,16 @@ export const AppScan = () => {
 
             {result?.isOffline && flipPhase === 'idle' && (
               <motion.div key="offline-result" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="text-center space-y-3">
-                <h2 className="text-xl font-bold">Karte erkannt!</h2>
-                <p className="text-muted-foreground text-sm">Du bist gerade offline. Dein Karte wird automatisch gutgeschrieben, sobald du wieder Internet hast.</p>
-                <div className="flex items-center justify-center gap-2 text-amber-600 font-medium">
-                  <WifiOff className="h-4 w-4" />
-                  Wird synchronisiert...
+                <div className="mx-auto w-16 h-16 rounded-full bg-green-500/15 flex items-center justify-center">
+                  <CheckCircle2 className="h-10 w-10 text-green-500" />
                 </div>
+                <h2 className="text-xl font-bold">Scan gespeichert ✓</h2>
+                <p className="text-muted-foreground text-sm max-w-xs mx-auto">
+                  Punkte werden gutgeschrieben sobald du wieder online bist.
+                </p>
+                <Button onClick={() => { setResult(null); }} variant="outline" className="w-full max-w-xs">
+                  Fertig
+                </Button>
               </motion.div>
             )}
           </AnimatePresence>

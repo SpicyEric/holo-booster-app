@@ -1,11 +1,11 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Gift, MapPin, Heart, Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { MainLayout } from '@/app/components/layout/MainLayout';
 import { OpenInvitationsBanner } from '@/app/components/OpenInvitationsBanner';
-import { offlineCacheService } from '@/app/services/offlineQueueService';
+import { useOfflineCache } from '@/app/hooks/useOfflineCache';
 
 interface FeedItem {
   type: 'post' | 'offer' | 'merchant_card';
@@ -68,25 +68,9 @@ export const AppHome = () => {
     tryGetLocation();
   }, []);
 
-  useEffect(() => {
-    if (user) loadFeed();
-  }, [user, userLocation]);
-
-  const loadFeed = async () => {
-    setLoading(true);
-    
-    if (!navigator.onLine) {
-      const cached = offlineCacheService.get<FeedItem[]>('home_feed');
-      if (cached) {
-        setFeedItems(cached);
-        setLoading(false);
-        return;
-      }
-    }
-    
-    try {
-      const items: FeedItem[] = [];
-
+  const loadFeed = useCallback(async (): Promise<FeedItem[]> => {
+    const items: FeedItem[] = [];
+    {
       // Get active boosts
       const { data: activeBoosts, error: boostError } = await supabase
         .from('merchant_boosts')
@@ -288,17 +272,20 @@ export const AppHome = () => {
 
         return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
       });
-
-      setFeedItems(items);
-      offlineCacheService.set('home_feed', items);
-    } catch (err) {
-      console.error('[Feed] Error:', err);
-      const cached = offlineCacheService.get<FeedItem[]>('home_feed');
-      if (cached) setFeedItems(cached);
-    } finally {
-      setLoading(false);
     }
-  };
+    return items;
+  }, [user, userLocation]);
+
+  const cacheKey = `home_feed_${user?.id ?? 'anon'}`;
+  const { data: cachedFeed, isLoading: cacheLoading } = useOfflineCache<FeedItem[]>(
+    cacheKey,
+    loadFeed,
+  );
+
+  useEffect(() => {
+    if (cachedFeed) setFeedItems(cachedFeed);
+    if (!cacheLoading) setLoading(false);
+  }, [cachedFeed, cacheLoading]);
 
   const toggleLike = async (item: FeedItem) => {
     if (item.type !== 'post') return;

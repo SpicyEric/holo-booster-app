@@ -17,6 +17,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { LocationPermissionDialog } from '@/app/components/LocationPermissionDialog';
 import { Capacitor } from '@capacitor/core';
+import { useOfflineCache } from '@/app/hooks/useOfflineCache';
 
 interface Store {
   id: string;
@@ -121,83 +122,6 @@ export default function AppStores() {
     fetchUserLocation();
   }, [fetchUserLocation]);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        console.log('Fetching stores...');
-        const { data: customersData, error: customersError } = await supabase
-          .from('customers')
-          .select('id, name, company_name, logo_url, cover_image_url, industry, city, street, house_number, postal_code, latitude, longitude')
-          .eq('active', true);
-
-        if (customersError) {
-          console.error('Error fetching customers:', customersError);
-          throw customersError;
-        }
-
-        console.log('Fetched customers:', customersData?.length, customersData);
-
-        // Only fetch stamp cards if user is logged in
-        let stampCardsData: any[] = [];
-        if (user) {
-          const { data, error: stampCardsError } = await supabase
-            .from('user_stamp_cards')
-            .select('merchant_customer_id, current_points')
-            .eq('user_id', user.id);
-
-          if (stampCardsError) {
-            console.error('Error fetching stamp cards:', stampCardsError);
-          } else {
-            stampCardsData = data || [];
-          }
-        }
-
-        const storesWithPoints = (customersData || []).map(customer => {
-          const stampCard = stampCardsData?.find(sc => sc.merchant_customer_id === customer.id);
-          const distance = userLocation && customer.latitude && customer.longitude
-            ? calculateDistance(
-                userLocation[0],
-                userLocation[1],
-                customer.latitude,
-                customer.longitude
-              )
-            : undefined;
-
-          const storeName = customer.company_name || customer.name || 'Unbekannt';
-          const streetWithNumber = [customer.street, customer.house_number].filter(Boolean).join(' ');
-
-          return {
-            id: customer.id,
-            name: storeName,
-            category: customer.industry || null,
-            logo_url: customer.logo_url,
-            cover_image_url: customer.cover_image_url,
-            lat: customer.latitude || 0,
-            lng: customer.longitude || 0,
-            address: [streetWithNumber, customer.postal_code, customer.city].filter(Boolean).join(', '),
-            points: stampCard?.current_points ?? 0,
-            distance: distance !== undefined ? Math.round(distance * 10) / 10 : undefined,
-          };
-        });
-
-        console.log('Stores with coordinates:', storesWithPoints.filter(s => s.lat !== 0 && s.lng !== 0));
-
-        // Show all stores in list, sort by distance (stores without coords at the end)
-        const nearbyStores = storesWithPoints
-          .sort((a, b) => (a.distance || 999) - (b.distance || 999));
-        
-        setStores(nearbyStores);
-
-      } catch (error) {
-        console.error('Error fetching data:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
-  }, [user, userLocation]);
-
   const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
     const R = 6371;
     const dLat = (lat2 - lat1) * Math.PI / 180;
@@ -209,6 +133,67 @@ export default function AppStores() {
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
     return R * c;
   };
+
+  // Stale-While-Revalidate cache for the store list.
+  // Cached without distances; distances are recomputed from userLocation after hydration.
+  const cacheKey = `stores_${user?.id ?? 'anon'}`;
+  const fetchStores = useCallback(async (): Promise<Store[]> => {
+    const { data: customersData, error: customersError } = await supabase
+      .from('customers')
+      .select('id, name, company_name, logo_url, cover_image_url, industry, city, street, house_number, postal_code, latitude, longitude')
+      .eq('active', true);
+
+    if (customersError) throw customersError;
+
+    let stampCardsData: any[] = [];
+    if (user) {
+      const { data } = await supabase
+        .from('user_stamp_cards')
+        .select('merchant_customer_id, current_points')
+        .eq('user_id', user.id);
+      stampCardsData = data || [];
+    }
+
+    return (customersData || []).map(customer => {
+      const stampCard = stampCardsData?.find(sc => sc.merchant_customer_id === customer.id);
+      const storeName = customer.company_name || customer.name || 'Unbekannt';
+      const streetWithNumber = [customer.street, customer.house_number].filter(Boolean).join(' ');
+      return {
+        id: customer.id,
+        name: storeName,
+        category: customer.industry || null,
+        logo_url: customer.logo_url,
+        cover_image_url: customer.cover_image_url,
+        lat: customer.latitude || 0,
+        lng: customer.longitude || 0,
+        address: [streetWithNumber, customer.postal_code, customer.city].filter(Boolean).join(', '),
+        points: stampCard?.current_points ?? 0,
+      } as Store;
+    });
+  }, [user]);
+
+  const { data: cachedStores, isLoading: cacheLoading } = useOfflineCache<Store[]>(
+    cacheKey,
+    fetchStores,
+  );
+
+  useEffect(() => {
+    if (!cachedStores) {
+      if (!cacheLoading) setLoading(false);
+      return;
+    }
+    const withDistance = cachedStores.map(s => {
+      const distance = userLocation && s.lat && s.lng
+        ? calculateDistance(userLocation[0], userLocation[1], s.lat, s.lng)
+        : undefined;
+      return {
+        ...s,
+        distance: distance !== undefined ? Math.round(distance * 10) / 10 : undefined,
+      };
+    }).sort((a, b) => (a.distance || 999) - (b.distance || 999));
+    setStores(withDistance);
+    setLoading(false);
+  }, [cachedStores, userLocation, cacheLoading]);
 
 
   if (loading) {
