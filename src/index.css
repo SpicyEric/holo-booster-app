@@ -351,42 +351,38 @@ All colors MUST be HSL.
   animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-/* NFC card fan-out animation on dashboard mount */
-@keyframes nfc-card-fan-out {
-  0% {
-    transform: translateX(-50%) translateY(0) rotate(0deg);
-    opacity: 0;
-  }
-  40% {
-    transform: translateX(-50%) translateY(0) rotate(0deg);
-    opacity: 1;
-  }
+/* NFC card fan-out: smooth opacity-only mount; transform always lives in CSS so hover transitions cleanly */
+@keyframes nfc-card-fan-in {
+  0% { opacity: 0; transform: translateX(-50%) translateY(0) rotate(0deg) scale(0.96); }
+  40% { opacity: 1; transform: translateX(-50%) translateY(0) rotate(0deg) scale(1); }
   100% {
-    transform: translateX(calc(-50% + var(--fan-x, 0px))) translateY(var(--fan-y, 0px)) rotate(var(--fan-rot, 0deg));
     opacity: 1;
+    transform: translateX(calc(-50% + var(--fan-x, 0px))) translateY(var(--fan-y, 0px)) rotate(var(--fan-rot, 0deg));
   }
 }
 
 .nfc-card-fan-item {
+  /* Ruhezustand = aufgefächert. Beim Mount läuft eine einmalige Keyframe-Animation. */
   transform: translateX(calc(-50% + var(--fan-x, 0px))) translateY(var(--fan-y, 0px)) rotate(var(--fan-rot, 0deg));
-  animation: nfc-card-fan-out 1.2s cubic-bezier(0.22, 1, 0.36, 1) both;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .nfc-card-fan-item {
-    animation: none;
-  }
-}
-
-/* NFC card hover: smooth spread out flat side-by-side, reveal scan count */
-.nfc-card-fan-item {
+  animation: nfc-card-fan-in 1.2s cubic-bezier(0.22, 1, 0.36, 1) both;
   transition: transform 0.55s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
+/* Sobald gehovert: Animation aus, Transition übernimmt → smooth in flache Reihe */
 .nfc-fan-group:hover .nfc-card-fan-item,
 .nfc-fan-group:focus-within .nfc-card-fan-item {
   animation: none;
   transform: translateX(calc(-50% + var(--hover-x, 0px))) translateY(0) rotate(0deg);
+}
+
+/* Wenn nicht mehr gehovert: animation bleibt deaktiviert (sonst würde sie neu starten),
+   Transition läuft sauber zurück in die Fächerposition. */
+.nfc-fan-group .nfc-card-fan-item {
+  animation-play-state: running;
+}
+.nfc-fan-group:hover .nfc-card-fan-item,
+.nfc-fan-group:focus-within .nfc-card-fan-item {
+  animation-play-state: paused;
 }
 
 .nfc-card-scans {
@@ -402,8 +398,7 @@ All colors MUST be HSL.
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .nfc-card-fan-item,
-  .nfc-card-scans {
-    transition: none;
-  }
+  .nfc-card-fan-item { animation: none; transition: none; }
+  .nfc-card-scans { transition: none; }
 }
+
