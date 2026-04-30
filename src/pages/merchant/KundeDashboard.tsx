@@ -684,6 +684,9 @@ export default function KundeDashboard() {
               </div>
             ) : null}
 
+            {/* Einrichtungs-Checkliste (verschwindet, sobald Händler alles abhakt + schließt) */}
+            {customer?.id && <OnboardingChecklist customerId={customer.id} />}
+
             {/* Quick Wins / Empfohlene nächste Schritte */}
             <div>
               <h2 className="text-sm font-semibold text-foreground mb-1">Empfohlene nächste Schritte</h2>
