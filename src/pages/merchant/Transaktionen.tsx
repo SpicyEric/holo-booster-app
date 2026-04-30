@@ -4,7 +4,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { getUserCustomer } from "@/lib/auth";
 import { 
   Loader2, TrendingUp, Gift, Search, Filter, CalendarDays, 
-  ChevronDown, ChevronUp, Stamp, Star, Activity, Clock, Users
+  ChevronDown, ChevronUp, Star, Activity, Clock, Users, Nfc, Sparkles, ScanLine
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import {
@@ -34,51 +34,59 @@ interface Transaction {
 }
 
 interface Reward { id: string; title: string; }
+interface NfcCard { id: string; name: string | null; points: number; color: string | null; }
 interface HourlyData { hour: string; count: number; }
 interface GrowthData { date: string; total: number; }
 interface GenderData { gender: string; count: number; percentage: number; }
 interface AgeData { age: string; count: number; male: number; female: number; }
 interface CustomerSegment { name: string; label: string; count: number; percentage: number; color: string; }
 
-type DateRange = 7 | 14 | 30 | 90;
+type ViewMode = "total" | "range";
+type QuickRange = 7 | 14 | 30 | 90 | null;
 
 const DEMO_MERCHANT_ID = "e828d21a-f7c5-4c8e-bc8d-6301e3e3ab45";
-
-const DateRangeSelector = ({ value, onChange }: { value: DateRange; onChange: (v: DateRange) => void }) => (
-  <div className="flex gap-1">
-    {([7, 14, 30, 90] as DateRange[]).map(d => (
-      <button key={d} className={`px-2.5 py-1 text-xs rounded-full transition-all duration-200 font-medium ${value === d ? 'bg-primary text-primary-foreground shadow-sm' : 'bg-white/60 text-muted-foreground hover:bg-white/80'}`} onClick={() => onChange(d)}>{d}T</button>
-    ))}
-  </div>
-);
 
 export default function Transaktionen() {
   const { user } = useAuth();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [rewards, setRewards] = useState<Reward[]>([]);
+  const [nfcCards, setNfcCards] = useState<NfcCard[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
-  const [typeFilter, setTypeFilter] = useState<string>("all");
-  const [rewardFilter, setRewardFilter] = useState<string>("all");
-  const [dateFrom, setDateFrom] = useState<Date | undefined>();
-  const [dateTo, setDateTo] = useState<Date | undefined>();
+  const [typeFilter, setTypeFilter] = useState<string>("all"); // all | stamps | redemptions | bonus
+  const [subFilter, setSubFilter] = useState<string>("all"); // depends on typeFilter
   const [showAll, setShowAll] = useState(false);
   const [customerId, setCustomerId] = useState<string | null>(null);
+  const [allLoyaltyAccounts, setAllLoyaltyAccounts] = useState<{ created_at: string }[]>([]);
 
-  // Analytics state
-  const [hourlyData, setHourlyData] = useState<HourlyData[]>([]);
-  const [growthData, setGrowthData] = useState<GrowthData[]>([]);
+  // Global view mode
+  const [viewMode, setViewMode] = useState<ViewMode>("range");
+  const [quickRange, setQuickRange] = useState<QuickRange>(30);
+  const initialFrom = (() => { const d = new Date(); d.setDate(d.getDate() - 30); d.setHours(0,0,0,0); return d; })();
+  const initialTo = (() => { const d = new Date(); d.setHours(23,59,59,999); return d; })();
+  const [dateFrom, setDateFrom] = useState<Date>(initialFrom);
+  const [dateTo, setDateTo] = useState<Date>(initialTo);
+
+  // Analytics state (computed locally from filtered data)
   const [genderData, setGenderData] = useState<GenderData[]>([]);
   const [ageData, setAgeData] = useState<AgeData[]>([]);
   const [segments, setSegments] = useState<CustomerSegment[]>([]);
-  const [hourlyRange, setHourlyRange] = useState<DateRange>(30);
-  const [growthRange, setGrowthRange] = useState<DateRange>(7);
 
   const INITIAL_COUNT = 20;
 
   useEffect(() => { if (user) loadData(); }, [user]);
-  useEffect(() => { if (customerId) loadHourlyData(customerId); }, [customerId, hourlyRange]);
-  useEffect(() => { if (customerId) loadGrowthData(customerId); }, [customerId, growthRange]);
+
+  // Reset subFilter when typeFilter changes
+  useEffect(() => { setSubFilter("all"); }, [typeFilter]);
+
+  // When switching mode/quickRange, sync dates
+  useEffect(() => {
+    if (viewMode === "range" && quickRange) {
+      const to = new Date(); to.setHours(23,59,59,999);
+      const from = new Date(); from.setDate(from.getDate() - quickRange); from.setHours(0,0,0,0);
+      setDateFrom(from); setDateTo(to);
+    }
+  }, [quickRange, viewMode]);
 
   const loadData = async () => {
     try {
@@ -89,44 +97,65 @@ export default function Transaktionen() {
 
       const isDemo = customer.id === DEMO_MERCHANT_ID;
 
-      const [txResult, rewardResult] = await Promise.all([
-        supabase.from("point_transactions").select("id, created_at, points_change, transaction_type, description").eq("merchant_customer_id", customer.id).order("created_at", { ascending: false }).limit(500),
+      const [txResult, rewardResult, cardResult, accountsResult] = await Promise.all([
+        supabase.from("point_transactions").select("id, created_at, points_change, transaction_type, description").eq("merchant_customer_id", customer.id).order("created_at", { ascending: false }).limit(1000),
         supabase.from("rewards").select("id, title").eq("merchant_customer_id", customer.id).eq("is_active", true),
+        supabase.from("nfc_cards" as any).select("id, name, points, color").eq("merchant_customer_id", customer.id).then((r: any) => r).catch(() => ({ data: [] as any[] })),
+        supabase.from("loyalty_accounts").select("created_at").eq("merchant_customer_id", customer.id).order("created_at", { ascending: true }),
       ]);
 
       setTransactions(txResult.data || []);
       setRewards(rewardResult.data || []);
+      setNfcCards(((cardResult as any)?.data as any[]) || []);
+      setAllLoyaltyAccounts((accountsResult.data as any[]) || []);
 
       if (isDemo) {
-        // Generate fake transactions for demo
         const demoTx: Transaction[] = [];
-        const txTypes = ['nfc_stamp', 'nfc_stamp', 'nfc_stamp', 'nfc_stamp', 'nfc_stamp', 'reward_redeemed', 'offer_redeemed', 'google_review', 'birthday_bonus', 'welcome_bonus'];
+        const txTypes = ['nfc_stamp', 'nfc_stamp', 'nfc_stamp', 'nfc_stamp', 'nfc_stamp', 'reward_redeemed', 'offer_redeemed', 'google_review', 'birthday_bonus', 'welcome_bonus', 'referral_bonus', 'double_points'];
         const stampDescs = ['Punkte gesammelt', 'Punkte erhalten', 'NFC-Karte'];
         const rewardDescs = ['Gratis Kaffee eingelöst', 'Rabatt 10% eingelöst', 'Gratis Brötchen eingelöst', 'Kuchen-Gutschein eingelöst', 'Frühstücks-Deal eingelöst'];
         const now = new Date();
-        for (let i = 0; i < 200; i++) {
-          const ago = Math.floor(Math.random() * 30 * 24 * 60) * 60000;
+        for (let i = 0; i < 400; i++) {
+          const ago = Math.floor(Math.random() * 90 * 24 * 60) * 60000;
           const d = new Date(now.getTime() - ago);
-          // Only 6-22 Uhr
           const h = 6 + Math.floor(Math.random() * 16);
           d.setHours(h, Math.floor(Math.random() * 60), Math.floor(Math.random() * 60));
           const type = txTypes[Math.floor(Math.random() * txTypes.length)];
           const isRedemption = type === 'reward_redeemed' || type === 'offer_redeemed';
-          const pts = isRedemption ? -(Math.floor(Math.random() * 5 + 1) * 50) : Math.floor(Math.random() * 3 + 1) * 10;
-          const desc = isRedemption ? rewardDescs[Math.floor(Math.random() * rewardDescs.length)] : type === 'google_review' ? 'Google Bewertung Bonus' : type === 'birthday_bonus' ? 'Geburtstagsbonus' : type === 'welcome_bonus' ? 'Willkommensbonus' : stampDescs[Math.floor(Math.random() * stampDescs.length)];
+          let pts: number;
+          if (isRedemption) pts = -(Math.floor(Math.random() * 5 + 1) * 50);
+          else if (type === 'nfc_stamp') {
+            const cardPts = [5, 10, 15];
+            pts = cardPts[Math.floor(Math.random() * cardPts.length)];
+          } else pts = Math.floor(Math.random() * 3 + 1) * 10;
+          const desc = isRedemption ? rewardDescs[Math.floor(Math.random() * rewardDescs.length)]
+            : type === 'google_review' ? 'Google Bewertung Bonus'
+            : type === 'birthday_bonus' ? 'Geburtstagsbonus'
+            : type === 'welcome_bonus' ? 'Willkommensbonus'
+            : type === 'referral_bonus' ? 'Einladungsbonus'
+            : type === 'double_points' ? 'Doppelte Punkte'
+            : stampDescs[Math.floor(Math.random() * stampDescs.length)];
           demoTx.push({ id: `demo-${i}`, created_at: d.toISOString(), points_change: pts, transaction_type: type, description: desc });
         }
         demoTx.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
         setTransactions(demoTx);
-        setRewards(rewardResult.data || []);
 
-        const p = [1,2,1,0,0,0,5,28,75,160,210,230,195,175,205,250,270,255,170,90,48,20,9,3];
-        setHourlyData(p.map((c,h) => ({ hour: `${h}:00`, count: c })));
-        const gd: GrowthData[] = [];
-        const dailyAdds = [8, 22, 14, 19, 11, 25, 18];
-        let base = 832 - dailyAdds.reduce((s, v) => s + v, 0);
-        for (let i = 0; i < 7; i++) { const d = new Date(); d.setDate(d.getDate()-(6-i)); base += dailyAdds[i]; gd.push({ date: d.toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"}), total: base }); }
-        setGrowthData(gd);
+        // Demo NFC cards
+        setNfcCards([
+          { id: 'demo-c1', name: 'Grüne Karte', points: 5, color: 'grün' },
+          { id: 'demo-c2', name: 'Blaue Karte', points: 10, color: 'blau' },
+          { id: 'demo-c3', name: 'Rote Karte', points: 15, color: 'rot' },
+        ]);
+
+        // Demo loyalty accounts (spread over last 90 days)
+        const demoAccs: { created_at: string }[] = [];
+        for (let i = 0; i < 832; i++) {
+          const ago = Math.floor(Math.random() * 180) * 24 * 60 * 60 * 1000;
+          demoAccs.push({ created_at: new Date(now.getTime() - ago).toISOString() });
+        }
+        demoAccs.sort((a,b) => a.created_at.localeCompare(b.created_at));
+        setAllLoyaltyAccounts(demoAccs);
+
         setGenderData([{ gender: "Männlich", count: 408, percentage: 49 },{ gender: "Weiblich", count: 424, percentage: 51 }]);
         setAgeData([{age:"14-17",count:42,male:20,female:22},{age:"18-24",count:125,male:60,female:65},{age:"25-34",count:216,male:106,female:110},{age:"35-44",count:192,male:95,female:97},{age:"45-54",count:141,male:70,female:71},{age:"55-64",count:75,male:37,female:38},{age:"65+",count:41,male:20,female:21}]);
         setSegments([
@@ -137,35 +166,12 @@ export default function Transaktionen() {
         ]);
       } else {
         await Promise.all([
-          loadHourlyData(customer.id),
-          loadGrowthData(customer.id),
           loadGenderData(customer.id),
           loadAgeData(customer.id),
           loadCustomerSegments(customer.id),
         ]);
       }
     } catch (err) { console.error("Error loading transactions:", err); } finally { setLoading(false); }
-  };
-
-  const loadHourlyData = async (cid: string) => {
-    if (cid === DEMO_MERCHANT_ID) return;
-    const s = new Date(); s.setDate(s.getDate() - hourlyRange);
-    const { data: txs } = await supabase.from("point_transactions").select("created_at").eq("merchant_customer_id", cid).gt("points_change", 0).gte("created_at", s.toISOString());
-    const hc: Record<number, number> = {}; for (let i = 0; i < 24; i++) hc[i] = 0;
-    (txs || []).forEach((t: any) => { if (t.created_at) hc[new Date(t.created_at).getHours()]++; });
-    setHourlyData(Object.entries(hc).map(([h, c]) => ({ hour: `${h}:00`, count: c })));
-  };
-
-  const loadGrowthData = async (cid: string) => {
-    if (cid === DEMO_MERCHANT_ID) return;
-    const s = new Date(); s.setDate(s.getDate() - growthRange);
-    const { data: all } = await supabase.from("loyalty_accounts").select("created_at").eq("merchant_customer_id", cid).order("created_at", { ascending: true });
-    const dc: Record<string, number> = {};
-    for (let i = 0; i < growthRange; i++) { const d = new Date(); d.setDate(d.getDate() - (growthRange - 1 - i)); dc[d.toISOString().split("T")[0]] = 0; }
-    (all || []).forEach((a: any) => { if (a.created_at) { const ds = a.created_at.split("T")[0]; if (dc.hasOwnProperty(ds)) dc[ds]++; } });
-    let cum = 0; const rs = new Date(); rs.setDate(rs.getDate() - growthRange);
-    (all || []).forEach((a: any) => { if (a.created_at && new Date(a.created_at) < rs) cum++; });
-    setGrowthData(Object.entries(dc).sort(([a], [b]) => a.localeCompare(b)).map(([d, c]) => { cum += c; return { date: new Date(d).toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit" }), total: cum }; }));
   };
 
   const loadGenderData = async (cid: string) => {
@@ -208,35 +214,123 @@ export default function Transaktionen() {
     setSegments([{ name: "Neu", label: "1 Besuch", count: n, percentage: tot > 0 ? Math.round(n / tot * 100) : 0, color: "#22C55E" }, { name: "Kunden", label: "2-5 Besuche", count: s, percentage: tot > 0 ? Math.round(s / tot * 100) : 0, color: "#A855F7" }, { name: "Stammkunden", label: "6-15 Besuche", count: t2, percentage: tot > 0 ? Math.round(t2 / tot * 100) : 0, color: "#3B82F6" }, { name: "VIP-Stammkunden", label: "15+ Besuche", count: v, percentage: tot > 0 ? Math.round(v / tot * 100) : 0, color: "#F97316" }]);
   };
 
-  const filtered = useMemo(() => {
+  // Helper: classify transaction
+  const isStamp = (tx: Transaction) => tx.transaction_type === 'nfc_stamp';
+  const isRedemption = (tx: Transaction) => tx.transaction_type === 'reward_redeemed' || tx.transaction_type === 'offer_redeemed' || (tx.points_change < 0);
+  const isBonus = (tx: Transaction) => !isStamp(tx) && !isRedemption(tx) && tx.points_change > 0;
+
+  // Bonus sub-types
+  const getBonusKind = (tx: Transaction): string => {
+    const t = tx.transaction_type || '';
+    if (t === 'referral_bonus' || (tx.description || '').toLowerCase().includes('einladung') || (tx.description || '').toLowerCase().includes('empfehl')) return 'referral';
+    if (t === 'double_points' || (tx.description || '').toLowerCase().includes('doppelt')) return 'double';
+    if (t === 'welcome_bonus' || (tx.description || '').toLowerCase().includes('willkomm')) return 'welcome';
+    if (t === 'birthday_bonus' || (tx.description || '').toLowerCase().includes('geburts')) return 'birthday';
+    if (t === 'google_review' || (tx.description || '').toLowerCase().includes('bewert')) return 'review';
+    return 'other';
+  };
+  const bonusKindLabel: Record<string, string> = {
+    referral: 'Einladungsbonus',
+    double: 'Doppelte Punkte',
+    welcome: 'Willkommensbonus',
+    birthday: 'Geburtstagsbonus',
+    review: 'Bewertungsbonus',
+    other: 'Sonstige Boni',
+  };
+
+  // Window-filtered transactions (by viewMode)
+  const windowTx = useMemo(() => {
+    if (viewMode === "total") return transactions;
     return transactions.filter(tx => {
+      const d = new Date(tx.created_at);
+      return d >= dateFrom && d <= dateTo;
+    });
+  }, [transactions, viewMode, dateFrom, dateTo]);
+
+  // Final filtered (search + type + sub)
+  const filtered = useMemo(() => {
+    return windowTx.filter(tx => {
       if (search) {
         const text = (tx.description || tx.transaction_type || "").toLowerCase();
         if (!text.includes(search.toLowerCase())) return false;
       }
-      if (typeFilter === "stamps") { if (tx.transaction_type !== "nfc_stamp") return false; }
-      else if (typeFilter === "redemptions") { if (tx.transaction_type !== "reward_redeemed" && tx.points_change >= 0) return false; }
-      else if (typeFilter === "bonus") { if (tx.transaction_type === "nfc_stamp" || tx.transaction_type === "reward_redeemed") return false; if (tx.points_change <= 0) return false; }
-      if (rewardFilter !== "all") { const rt = rewards.find(r => r.id === rewardFilter)?.title; if (rt && !(tx.description || "").includes(rt)) return false; if (!rt) return false; }
-      if (dateFrom) { if (new Date(tx.created_at) < dateFrom) return false; }
-      if (dateTo) { const end = new Date(dateTo); end.setHours(23, 59, 59, 999); if (new Date(tx.created_at) > end) return false; }
+      if (typeFilter === "stamps") {
+        if (!isStamp(tx)) return false;
+        if (subFilter !== "all") {
+          const card = nfcCards.find(c => c.id === subFilter);
+          if (card && tx.points_change !== card.points) return false;
+        }
+      } else if (typeFilter === "redemptions") {
+        if (!isRedemption(tx)) return false;
+        if (subFilter !== "all") {
+          const r = rewards.find(r => r.id === subFilter);
+          if (r && !(tx.description || "").includes(r.title)) return false;
+          if (!r) return false;
+        }
+      } else if (typeFilter === "bonus") {
+        if (!isBonus(tx)) return false;
+        if (subFilter !== "all") {
+          if (getBonusKind(tx) !== subFilter) return false;
+        }
+      }
       return true;
     });
-  }, [transactions, search, typeFilter, rewardFilter, dateFrom, dateTo, rewards]);
+  }, [windowTx, search, typeFilter, subFilter, rewards, nfcCards]);
 
   const displayed = showAll ? filtered : filtered.slice(0, INITIAL_COUNT);
   const hasMore = filtered.length > INITIAL_COUNT;
 
-  const clearFilters = () => { setSearch(""); setTypeFilter("all"); setRewardFilter("all"); setDateFrom(undefined); setDateTo(undefined); };
-  const hasActiveFilters = search || typeFilter !== "all" || rewardFilter !== "all" || dateFrom || dateTo;
+  const clearFilters = () => { setSearch(""); setTypeFilter("all"); setSubFilter("all"); };
+  const hasActiveFilters = search || typeFilter !== "all" || subFilter !== "all";
 
-  // KPIs
-  const isDemo = customerId === DEMO_MERCHANT_ID;
-  const todayStr = new Date().toISOString().slice(0, 10);
-  const todayTx = transactions.filter(tx => tx.created_at.startsWith(todayStr));
-  const todayStamps = isDemo ? 52 : todayTx.filter(tx => tx.transaction_type === "nfc_stamp").reduce((s, tx) => s + tx.points_change, 0);
-  const todayRedemptions = isDemo ? 2 : todayTx.filter(tx => tx.points_change < 0).length;
-  const totalTxCount = isDemo ? 6700 : transactions.length;
+  // KPIs (based on windowTx)
+  const periodLabel = viewMode === "total" ? "gesamt" : "im Zeitraum";
+  const pointsGiven = windowTx.filter(isStamp).reduce((s, tx) => s + tx.points_change, 0)
+    + windowTx.filter(isBonus).reduce((s, tx) => s + tx.points_change, 0);
+  const redemptionsCount = windowTx.filter(isRedemption).length;
+  const cardScans = windowTx.filter(tx => isStamp(tx) || isRedemption(tx)).length;
+  // Customer growth: number of NEW loyalty accounts in window (or total in 'total')
+  const newCustomers = useMemo(() => {
+    if (viewMode === "total") return allLoyaltyAccounts.length;
+    return allLoyaltyAccounts.filter(a => {
+      const d = new Date(a.created_at); return d >= dateFrom && d <= dateTo;
+    }).length;
+  }, [allLoyaltyAccounts, viewMode, dateFrom, dateTo]);
+
+  // Hourly chart data — derived from windowTx (stamps only)
+  const hourlyData: HourlyData[] = useMemo(() => {
+    const hc: Record<number, number> = {}; for (let i = 0; i < 24; i++) hc[i] = 0;
+    windowTx.filter(isStamp).forEach(tx => { hc[new Date(tx.created_at).getHours()]++; });
+    return Object.entries(hc).map(([h, c]) => ({ hour: `${h}:00`, count: c }));
+  }, [windowTx]);
+
+  // Growth chart — cumulative loyalty accounts within window (or total)
+  const growthData: GrowthData[] = useMemo(() => {
+    const start = viewMode === "total"
+      ? (allLoyaltyAccounts[0] ? new Date(allLoyaltyAccounts[0].created_at) : new Date())
+      : dateFrom;
+    const end = viewMode === "total" ? new Date() : dateTo;
+    const days = Math.max(1, Math.ceil((end.getTime() - start.getTime()) / (24*60*60*1000)));
+    const buckets: Record<string, number> = {};
+    for (let i = 0; i < days; i++) {
+      const d = new Date(start); d.setDate(d.getDate() + i);
+      buckets[d.toISOString().split("T")[0]] = 0;
+    }
+    let baseCum = 0;
+    allLoyaltyAccounts.forEach(a => {
+      const d = new Date(a.created_at);
+      if (d < start) baseCum++;
+      else if (d <= end) {
+        const k = d.toISOString().split("T")[0];
+        if (buckets.hasOwnProperty(k)) buckets[k]++;
+      }
+    });
+    let cum = baseCum;
+    return Object.entries(buckets).sort(([a],[b]) => a.localeCompare(b)).map(([d, c]) => {
+      cum += c;
+      return { date: new Date(d).toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit" }), total: cum };
+    });
+  }, [allLoyaltyAccounts, viewMode, dateFrom, dateTo]);
 
   const getTypeLabel = (type: string | null) => {
     switch (type) {
@@ -246,6 +340,8 @@ export default function Transaktionen() {
       case 'google_review': return 'Bewertung';
       case 'birthday_bonus': return 'Geburtstag';
       case 'welcome_bonus': return 'Willkommen';
+      case 'referral_bonus': return 'Einladung';
+      case 'double_points': return 'Doppelte Punkte';
       default: return type || 'Sonstig';
     }
   };
@@ -264,6 +360,27 @@ export default function Transaktionen() {
     return <div className="flex items-center justify-center min-h-[60vh]"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
   }
 
+  // Sub-filter options
+  const subFilterOptions = (() => {
+    if (typeFilter === "stamps") {
+      return [{ value: "all", label: "Alle Karten" }, ...nfcCards.map(c => ({ value: c.id, label: c.name || `${c.points} Punkte (${c.color || 'Karte'})` }))];
+    }
+    if (typeFilter === "redemptions") {
+      return [{ value: "all", label: "Alle Prämien" }, ...rewards.map(r => ({ value: r.id, label: r.title }))];
+    }
+    if (typeFilter === "bonus") {
+      return [
+        { value: "all", label: "Alle Boni" },
+        { value: "referral", label: "Einladungsbonus" },
+        { value: "double", label: "Doppelte Punkte" },
+        { value: "welcome", label: "Willkommensbonus" },
+        { value: "birthday", label: "Geburtstagsbonus" },
+        { value: "review", label: "Bewertungsbonus" },
+      ];
+    }
+    return null;
+  })();
+
   return (
     <TooltipProvider delayDuration={200}>
     <div className="min-h-screen">
@@ -274,13 +391,76 @@ export default function Transaktionen() {
           <p className="text-muted-foreground mt-1 text-sm">Aktivitäten, Analysen und Kundeneinblicke</p>
         </div>
 
+        {/* GLOBAL TIME CONTROL */}
+        <Card className="rounded-2xl border-border/40 shadow-[0_2px_12px_hsl(262,30%,80%/0.25)] bg-gradient-to-br from-white to-primary/5">
+          <CardContent className="p-4 space-y-3">
+            <div className="flex items-center justify-between flex-wrap gap-3">
+              <div className="flex items-center gap-2">
+                <div className="inline-flex rounded-xl bg-white/70 p-1 border border-border/40">
+                  <button
+                    onClick={() => setViewMode("total")}
+                    className={cn("px-4 py-1.5 text-xs font-semibold rounded-lg transition-all", viewMode === "total" ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:text-foreground")}
+                  >Gesamt</button>
+                  <button
+                    onClick={() => setViewMode("range")}
+                    className={cn("px-4 py-1.5 text-xs font-semibold rounded-lg transition-all", viewMode === "range" ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:text-foreground")}
+                  >Zeitraum</button>
+                </div>
+              </div>
+              {viewMode === "range" && (
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  {[7, 14, 30, 90].map(d => (
+                    <button
+                      key={d}
+                      onClick={() => setQuickRange(d as QuickRange)}
+                      className={cn("px-3 py-1.5 text-xs font-medium rounded-lg transition-all", quickRange === d ? "bg-primary/15 text-primary border border-primary/30" : "bg-white/60 text-muted-foreground hover:bg-white/90 border border-transparent")}
+                    >{d} Tage</button>
+                  ))}
+                </div>
+              )}
+            </div>
+            {viewMode === "range" && (
+              <div className="grid grid-cols-2 gap-3">
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <button className="group flex items-center justify-between gap-3 rounded-xl border border-border/50 bg-white px-4 py-3 hover:border-primary/50 hover:shadow-sm transition-all text-left">
+                      <div>
+                        <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Von</p>
+                        <p className="text-base font-bold text-foreground">{format(dateFrom, "d. MMM yyyy", { locale: de })}</p>
+                      </div>
+                      <CalendarDays className="w-5 h-5 text-muted-foreground group-hover:text-primary transition-colors" />
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar mode="single" selected={dateFrom} onSelect={(d) => { if (d) { const nd = new Date(d); nd.setHours(0,0,0,0); setDateFrom(nd); setQuickRange(null); } }} className="p-3 pointer-events-auto" locale={de} />
+                  </PopoverContent>
+                </Popover>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <button className="group flex items-center justify-between gap-3 rounded-xl border border-border/50 bg-white px-4 py-3 hover:border-primary/50 hover:shadow-sm transition-all text-left">
+                      <div>
+                        <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Bis</p>
+                        <p className="text-base font-bold text-foreground">{format(dateTo, "d. MMM yyyy", { locale: de })}</p>
+                      </div>
+                      <CalendarDays className="w-5 h-5 text-muted-foreground group-hover:text-primary transition-colors" />
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar mode="single" selected={dateTo} onSelect={(d) => { if (d) { const nd = new Date(d); nd.setHours(23,59,59,999); setDateTo(nd); setQuickRange(null); } }} className="p-3 pointer-events-auto" locale={de} />
+                  </PopoverContent>
+                </Popover>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
         {/* KPI Row */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
           {[
-            { label: "Karte heute", value: todayStamps, icon: Stamp, color: "text-primary", bg: "bg-primary/10" },
-            { label: "Einlösungen heute", value: todayRedemptions, icon: Gift, color: "text-amber-600", bg: "bg-amber-100" },
-            { label: "Gesamt-Transaktionen", value: totalTxCount, icon: Activity, color: "text-secondary", bg: "bg-secondary/10" },
-            { label: "Kunden-Segmente", value: segments.reduce((s, seg) => s + seg.count, 0), icon: Users, color: "text-blue-600", bg: "bg-blue-50" },
+            { label: `Punkte vergeben ${periodLabel}`, value: pointsGiven, icon: Sparkles, color: "text-primary", bg: "bg-primary/10" },
+            { label: `Einlösungen ${periodLabel}`, value: redemptionsCount, icon: Gift, color: "text-amber-600", bg: "bg-amber-100" },
+            { label: `Kartenscans ${periodLabel}`, value: cardScans, icon: ScanLine, color: "text-secondary", bg: "bg-secondary/10" },
+            { label: `Kundenzuwachs ${periodLabel}`, value: `+${newCustomers}`, icon: Users, color: "text-emerald-600", bg: "bg-emerald-50" },
           ].map(kpi => (
             <Card key={kpi.label} className="rounded-xl border-border/30 shadow-[0_1px_3px_hsl(262,30%,80%/0.3)] bg-white">
               <CardContent className="p-3.5 flex items-center gap-3">
@@ -315,7 +495,7 @@ export default function Transaktionen() {
                 </div>
                 <div className="flex flex-wrap gap-1.5">
                   <Select value={typeFilter} onValueChange={setTypeFilter}>
-                    <SelectTrigger className="w-[140px] h-8 rounded-lg border-border/60 bg-background text-xs">
+                    <SelectTrigger className="w-[150px] h-8 rounded-lg border-border/60 bg-background text-xs">
                       <Filter className="w-3 h-3 mr-1 text-muted-foreground" />
                       <SelectValue placeholder="Alle Typen" />
                     </SelectTrigger>
@@ -326,41 +506,26 @@ export default function Transaktionen() {
                       <SelectItem value="bonus">Bonus</SelectItem>
                     </SelectContent>
                   </Select>
-                  {rewards.length > 0 && (
-                    <Select value={rewardFilter} onValueChange={setRewardFilter}>
-                      <SelectTrigger className="w-[160px] h-8 rounded-lg border-border/60 bg-background text-xs">
-                        <Gift className="w-3 h-3 mr-1 text-muted-foreground" />
-                        <SelectValue placeholder="Alle Prämien" />
+                  {subFilterOptions && subFilterOptions.length > 1 && (
+                    <Select value={subFilter} onValueChange={setSubFilter}>
+                      <SelectTrigger className="w-[180px] h-8 rounded-lg border-border/60 bg-background text-xs">
+                        {typeFilter === "stamps" ? <Nfc className="w-3 h-3 mr-1 text-muted-foreground" />
+                          : typeFilter === "redemptions" ? <Gift className="w-3 h-3 mr-1 text-muted-foreground" />
+                          : <Sparkles className="w-3 h-3 mr-1 text-muted-foreground" />}
+                        <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="all">Alle Prämien</SelectItem>
-                        {rewards.map(r => <SelectItem key={r.id} value={r.id}>{r.title}</SelectItem>)}
+                        {subFilterOptions.map(o => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
                       </SelectContent>
                     </Select>
                   )}
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button variant="outline" size="sm" className={cn("rounded-lg gap-1 border-border/60 h-8 text-xs", dateFrom && "border-primary text-primary")}>
-                        <CalendarDays className="w-3 h-3" />{dateFrom ? format(dateFrom, "dd.MM.yy", { locale: de }) : "Von"}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start"><Calendar mode="single" selected={dateFrom} onSelect={setDateFrom} className="p-3 pointer-events-auto" locale={de} /></PopoverContent>
-                  </Popover>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button variant="outline" size="sm" className={cn("rounded-lg gap-1 border-border/60 h-8 text-xs", dateTo && "border-primary text-primary")}>
-                        <CalendarDays className="w-3 h-3" />{dateTo ? format(dateTo, "dd.MM.yy", { locale: de }) : "Bis"}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start"><Calendar mode="single" selected={dateTo} onSelect={setDateTo} className="p-3 pointer-events-auto" locale={de} /></PopoverContent>
-                  </Popover>
                 </div>
               </CardContent>
             </Card>
 
             {/* Results count */}
             <p className="text-xs text-muted-foreground">
-              {filtered.length} {filtered.length === 1 ? "Transaktion" : "Transaktionen"}{hasActiveFilters ? " gefiltert" : ""}
+              {filtered.length} {filtered.length === 1 ? "Transaktion" : "Transaktionen"}{hasActiveFilters ? " gefiltert" : ""} · {viewMode === "total" ? "Gesamt" : `${format(dateFrom, "dd.MM.")} – ${format(dateTo, "dd.MM.yyyy")}`}
             </p>
 
             {/* Transaction List */}
@@ -416,13 +581,13 @@ export default function Transaktionen() {
             <div className="bg-white rounded-xl p-4 border border-border/30 shadow-[0_1px_3px_hsl(262,30%,80%/0.3)]">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2"><TrendingUp className="w-4 h-4 text-muted-foreground" /><h3 className="text-sm font-semibold text-foreground">Kundenzuwachs</h3></div>
-                <DateRangeSelector value={growthRange} onChange={setGrowthRange} />
+                <span className="text-[10px] text-muted-foreground">{viewMode === "total" ? "Gesamt" : `${quickRange ? quickRange + 'T' : 'Custom'}`}</span>
               </div>
               <div className="h-[140px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
                   <AreaChart data={growthData}>
                     <defs><linearGradient id="colorGrowthT" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#22C55E" stopOpacity={0.3} /><stop offset="95%" stopColor="#22C55E" stopOpacity={0} /></linearGradient></defs>
-                    <XAxis dataKey="date" tick={{ fontSize: 9, fill: 'hsl(0,0%,45%)' }} tickLine={false} axisLine={false} interval={Math.max(1, Math.floor(growthRange / 5))} />
+                    <XAxis dataKey="date" tick={{ fontSize: 9, fill: 'hsl(0,0%,45%)' }} tickLine={false} axisLine={false} interval={Math.max(1, Math.floor(growthData.length / 5))} />
                     <YAxis tick={{ fontSize: 9, fill: 'hsl(0,0%,45%)' }} tickLine={false} axisLine={false} width={30} />
                     <RechartsTooltip contentStyle={{ backgroundColor: "hsl(0,0%,100%)", border: "1px solid hsl(0,0%,90%)", borderRadius: "8px", fontSize: "12px" }} formatter={(v: number) => [`${v}`, "Kunden"]} />
                     <Area type="monotone" dataKey="total" stroke="#22C55E" strokeWidth={2} fill="url(#colorGrowthT)" />
@@ -435,7 +600,7 @@ export default function Transaktionen() {
             <div className="bg-white rounded-xl p-4 border border-border/30 shadow-[0_1px_3px_hsl(262,30%,80%/0.3)]">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2"><Clock className="w-4 h-4 text-muted-foreground" /><h3 className="text-sm font-semibold text-foreground">Sammelzeiten</h3></div>
-                <DateRangeSelector value={hourlyRange} onChange={setHourlyRange} />
+                <span className="text-[10px] text-muted-foreground">{viewMode === "total" ? "Gesamt" : `${quickRange ? quickRange + 'T' : 'Custom'}`}</span>
               </div>
               <div className="h-[140px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
@@ -490,7 +655,6 @@ export default function Transaktionen() {
             {/* Demografie */}
             <div className="bg-white rounded-xl p-4 border border-border/30 shadow-[0_1px_3px_hsl(262,30%,80%/0.3)]">
               <h3 className="text-sm font-semibold text-foreground mb-3">Demografie</h3>
-              {/* Gender */}
               <div className="flex items-center gap-4 mb-4">
                 {genderData.map(g => (
                   <div key={g.gender} className="flex items-center gap-2">
@@ -500,7 +664,6 @@ export default function Transaktionen() {
                   </div>
                 ))}
               </div>
-              {/* Age */}
               <div className="h-[100px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={ageData} barGap={1} barCategoryGap="20%">
