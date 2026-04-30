@@ -342,12 +342,20 @@ export default function KundeDashboard() {
         if (pts > prev) cardMap.set(c.stamp_color, pts);
       });
       const colorOrder = ["grün", "gruen", "green", "blau", "blue", "gelb", "yellow", "orange", "rot", "red", "lila", "purple"];
+
+      // Scans pro Punktwert (= pro Karte) zählen aus point_transactions
+      const scansByPoints = new Map<number, number>();
+      (pointsRes.data || []).forEach((r: any) => {
+        const pts = r.points_change || 0;
+        scansByPoints.set(pts, (scansByPoints.get(pts) || 0) + 1);
+      });
+
       const nfcCards: NfcCardInfo[] = Array.from(cardMap.entries())
         .sort(([a], [b]) => {
           const ai = colorOrder.indexOf(a.toLowerCase()); const bi = colorOrder.indexOf(b.toLowerCase());
           return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi);
         })
-        .map(([color, points]) => ({ color, points }));
+        .map(([color, points]) => ({ color, points, scans: scansByPoints.get(points) || 0 }));
 
       // Top reward
       const rewardCounts = new Map<string, number>();
