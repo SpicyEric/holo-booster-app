@@ -178,15 +178,16 @@ const Marketing = () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
-      const { data: assignment } = await supabase.from('merchant_assignments').select('customer_id').eq('merchant_user_id', user.id).maybeSingle();
-      if (!assignment) { setLoading(false); return; }
-      setCustomerId(assignment.customer_id);
+      const { resolveMerchantCustomerId } = await import("@/lib/resolveMerchantCustomerId");
+      const resolvedCustomerId = await resolveMerchantCustomerId(user.id);
+      if (!resolvedCustomerId) { setLoading(false); return; }
+      setCustomerId(resolvedCustomerId);
 
       // Fetch all stamp points for display (supports DE + EN color values)
       const { data: allChips } = await supabase
         .from('nfc_chips')
         .select('points_value, stamp_color')
-        .eq('merchant_customer_id', assignment.customer_id)
+        .eq('merchant_customer_id', resolvedCustomerId)
         .eq('is_active', true)
         .in('stamp_color', ['grün', 'blau', 'rot', 'green', 'blue', 'red']);
 

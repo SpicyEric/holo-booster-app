@@ -230,25 +230,22 @@ const MeinGeschaeft = () => {
   const loadData = async () => {
     try {
       setLoading(true);
-      
-      const { data: assignment } = await supabase
-        .from("merchant_assignments")
-        .select("customer_id")
-        .eq("merchant_user_id", user?.id)
-        .maybeSingle();
-      
-      if (!assignment?.customer_id) {
+
+      const { resolveMerchantCustomerId } = await import("@/lib/resolveMerchantCustomerId");
+      const resolvedCustomerId = await resolveMerchantCustomerId(user?.id);
+
+      if (!resolvedCustomerId) {
         setLoading(false);
         return;
       }
-      
-      setCustomerId(assignment.customer_id);
-      
+
+      setCustomerId(resolvedCustomerId);
+
       // Load customer data
       const { data: customer } = await supabase
         .from("customers")
         .select("*")
-        .eq("id", assignment.customer_id)
+        .eq("id", resolvedCustomerId)
         .single();
       
       if (customer) {
