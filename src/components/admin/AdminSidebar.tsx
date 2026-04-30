@@ -3,7 +3,7 @@ import { signOut } from "@/lib/auth";
 import { toast } from "sonner";
 import {
   LayoutDashboard, Users, Box, Package, UserCog, BarChart3,
-  ShoppingCart, Settings, LogOut, ChevronLeft, ChevronDown, Menu, X, Map, GitBranch, Search, Lightbulb, CalendarDays, UserPlus, Truck, RotateCcw, Receipt, FileText, FileSignature, Bell, Globe,
+  ShoppingCart, Settings, LogOut, ChevronLeft, ChevronDown, Menu, X, Map, GitBranch, Search, Lightbulb, CalendarDays, UserPlus, Truck, RotateCcw, Receipt, FileText, FileSignature, Bell, Globe, Eye,
 } from "lucide-react";
 import eloyoLogo from "@/assets/eloyo-logo.png";
 import { cn } from "@/lib/utils";
@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
+import { enableDemoMerchant } from "@/lib/demoMerchant";
 
 interface NavItem {
   path: string;
@@ -190,6 +191,23 @@ function SidebarNav({ collapsed, onNavigate }: { collapsed: boolean; onNavigate?
       </nav>
 
       <div className="border-t border-white/10 p-3 space-y-2">
+        <button
+          onClick={() => {
+            enableDemoMerchant(location.pathname || "/admin");
+            navigate("/kunde");
+            onNavigate?.();
+          }}
+          className={cn(
+            "w-full flex items-center gap-3 rounded-xl px-3 py-2.5 text-[13px] font-medium transition-all duration-200 active:scale-[0.97]",
+            "bg-amber-500/10 text-amber-200 hover:bg-amber-500/20 hover:text-amber-100 border border-amber-400/20 font-body",
+            collapsed && "justify-center px-0"
+          )}
+          title={collapsed ? "Demo Merchant" : undefined}
+        >
+          <Eye className="h-4 w-4 shrink-0" />
+          {!collapsed && <span>Demo Merchant</span>}
+        </button>
+
         {!collapsed && (
           <div className="px-3 py-2">
             <p className="text-sm font-medium text-white/90 font-headline">Admin Panel</p>
