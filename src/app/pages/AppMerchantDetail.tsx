@@ -1051,7 +1051,7 @@ export const AppMerchantDetail = () => {
                           {isPositive ? '+' : '−'}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="font-medium text-sm">{tx.description || (isPositive ? 'Punkte erhalten' : 'Punkte eingelöst')}</p>
+                          <p className="font-medium text-sm">{formatTransactionDescription(tx.description, isPositive ? 'Punkte erhalten' : 'Punkte eingelöst')}</p>
                           <p className="text-xs text-muted-foreground">{date}</p>
                         </div>
                         <span className={`font-bold text-sm ${isPositive ? 'text-green-700' : 'text-red-600'}`}>
