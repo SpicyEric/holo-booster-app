@@ -102,7 +102,7 @@ export const InviteFriendDialog = ({
           <DialogDescription className="text-sm leading-relaxed">
             Lade eine Person zu <span className="font-semibold text-foreground">{merchantName}</span> ein,
             indem du ihr deinen persönlichen Link schickst. Sammelt sie innerhalb von{' '}
-            <span className="font-semibold text-foreground">7 Tagen</span> dort ihren ersten Karte,
+            <span className="font-semibold text-foreground">7 Tagen</span> dort ihre ersten Punkte,
             bekommt ihr <span className="font-semibold text-foreground">beide</span> einen Bonus:
           </DialogDescription>
         </DialogHeader>
