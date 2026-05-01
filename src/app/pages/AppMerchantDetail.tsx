@@ -15,6 +15,7 @@ import { BottomNav } from '@/app/components/layout/BottomNav';
 import { RewardRedemptionDialog } from '@/app/components/RewardRedemptionDialog';
 import { NewCustomerOfferDialog } from '@/app/components/NewCustomerOfferDialog';
 import { InviteFriendDialog } from '@/app/components/InviteFriendDialog';
+import { formatTransactionDescription } from '@/app/lib/transactionLabel';
 import { UserPlus } from 'lucide-react';
 
 interface Merchant {
