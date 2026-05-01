@@ -7,6 +7,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { MainLayout } from '@/app/components/layout/MainLayout';
+import { formatTransactionDescription } from '@/app/lib/transactionLabel';
 
 interface Transaction {
   id: string;
