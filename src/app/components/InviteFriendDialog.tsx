@@ -116,7 +116,7 @@ export const InviteFriendDialog = ({
           <div className="rounded-xl bg-muted/50 px-3 py-3 text-center">
             <div className="text-xs text-muted-foreground">Dein Freund</div>
             <div className="text-lg font-bold text-primary leading-tight">Punkte ×2</div>
-            <div className="text-[10px] text-muted-foreground mt-0.5 leading-tight">auf den ersten Karte</div>
+            <div className="text-[10px] text-muted-foreground mt-0.5 leading-tight">auf die ersten Punkte</div>
           </div>
         </div>
 
