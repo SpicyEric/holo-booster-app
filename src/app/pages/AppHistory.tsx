@@ -7,6 +7,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { MainLayout } from '@/app/components/layout/MainLayout';
+import { formatTransactionDescription } from '@/app/lib/transactionLabel';
 
 interface Transaction {
   id: string;
@@ -137,7 +138,7 @@ export const AppHistory = () => {
                           {tx.customer?.company_name || tx.customer?.name || 'Unbekannt'}
                         </p>
                         <p className="text-sm text-muted-foreground">
-                          {tx.description || getTransactionLabel(tx.transaction_type)}
+                          {formatTransactionDescription(tx.description, getTransactionLabel(tx.transaction_type))}
                         </p>
                       </div>
                       <div className={`font-semibold ${tx.points_change >= 0 ? 'text-green-600' : 'text-orange-600'}`}>
