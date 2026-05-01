@@ -67,7 +67,7 @@ export const InviteFriendDialog = ({
 
   const inviteUrl = shareCode ? `${INVITE_BASE_URL}/${shareCode}` : '';
   const shareText = shareCode
-    ? `Hey! 😊 Ich lad dich zu ${merchantName} ein — wenn du dort innerhalb der nächsten 7 Tage vorbeischaust und deinen ersten Karte sammelst, bekommst du direkt doppelte Punkte. Und ich krieg dafür auch einen kleinen Bonus 😄 Hier der Link: ${inviteUrl}`
+    ? `Hey! 😊 Ich lad dich zu ${merchantName} ein — wenn du dort innerhalb der nächsten 7 Tage vorbeischaust und deine ersten Punkte sammelst, bekommst du direkt doppelte Punkte. Und ich krieg dafür auch einen kleinen Bonus 😄 Hier der Link: ${inviteUrl}`
     : '';
 
   const openWhatsApp = () => {
