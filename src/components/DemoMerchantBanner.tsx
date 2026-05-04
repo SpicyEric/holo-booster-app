@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Eye } from "lucide-react";
 import { useDemoMerchant } from "@/hooks/useDemoMerchant";
-import { disableDemoMerchant, DEMO_MERCHANT_NAME } from "@/lib/demoMerchant";
+import { disableDemoMerchant, getDemoMerchantName } from "@/lib/demoMerchant";
 
 /**
  * Sticky banner shown across the merchant area while in Demo-Merchant mode.
@@ -13,6 +13,8 @@ export default function DemoMerchantBanner() {
   const navigate = useNavigate();
 
   if (!active) return null;
+
+  const demoName = getDemoMerchantName();
 
   const handleExit = () => {
     const returnPath = disableDemoMerchant();
@@ -28,7 +30,7 @@ export default function DemoMerchantBanner() {
           </div>
           <div className="min-w-0">
             <p className="text-sm font-semibold leading-tight">
-              Demo-Modus: Du siehst die Merchant-Ansicht von „{DEMO_MERCHANT_NAME}".
+              Demo-Modus: Du siehst die Merchant-Ansicht von „{demoName}".
             </p>
             <p className="text-[11px] opacity-80 leading-tight">
               Du kannst dich frei umsehen — Änderungen werden nicht gespeichert.
