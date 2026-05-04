@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { ConfirmActionDialog } from "@/components/ConfirmActionDialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { enableDemoMerchant } from "@/lib/demoMerchant";
 
 const CATEGORIES = [
   "Café", "Restaurant", "Bäckerei", "Barbershop", "Friseur", "Shishabar",
