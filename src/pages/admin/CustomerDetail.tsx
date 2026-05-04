@@ -218,7 +218,23 @@ const CustomerDetail = () => {
           </fieldset>
           <fieldset className="border rounded p-3">
             <legend className="text-xs font-semibold px-1 text-muted-foreground">Kunden-Dashboard</legend>
-            <Button variant="outline" size="sm" className="w-full gap-2" onClick={() => toast.info("Vorschau wird implementiert...")}><ExternalLink className="w-3 h-3" />Dashboard ansehen</Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full gap-2"
+              onClick={() => {
+                if (!id) return;
+                enableDemoMerchant({
+                  returnPath: `/admin/customers/${id}`,
+                  customerId: id,
+                  name: formData.name,
+                });
+                navigate("/kunde");
+              }}
+            >
+              <ExternalLink className="w-3 h-3" />
+              Dashboard ansehen
+            </Button>
           </fieldset>
 
           {(formData.logo_url || formData.cover_image_url) && (
