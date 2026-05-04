@@ -208,13 +208,13 @@ export const getUserMerchantByEmail = async (userEmail: string) => {
 // Holt den Customer aus Lovable Cloud anhand der User-ID
 export const getUserCustomer = async (userId: string) => {
   try {
-    // Demo-Merchant-Modus: immer den festen Demo-Account zurückgeben
-    const { isDemoMerchantActive, DEMO_MERCHANT_CUSTOMER_ID } = await import('@/lib/demoMerchant');
+    // Demo-Merchant-Modus: den aktuell gewählten Demo-Account zurückgeben
+    const { isDemoMerchantActive, getDemoMerchantCustomerId } = await import('@/lib/demoMerchant');
     if (isDemoMerchantActive()) {
       const { data: demoCustomer } = await supabase
         .from('customers')
         .select('*')
-        .eq('id', DEMO_MERCHANT_CUSTOMER_ID)
+        .eq('id', getDemoMerchantCustomerId())
         .maybeSingle();
       return demoCustomer ?? null;
     }

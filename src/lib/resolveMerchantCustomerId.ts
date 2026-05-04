@@ -1,5 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
-import { isDemoMerchantActive, DEMO_MERCHANT_CUSTOMER_ID } from "@/lib/demoMerchant";
+import { isDemoMerchantActive, getDemoMerchantCustomerId } from "@/lib/demoMerchant";
 
 /**
  * Resolves the active customer (merchant) ID for a logged-in user.
@@ -11,7 +11,7 @@ import { isDemoMerchantActive, DEMO_MERCHANT_CUSTOMER_ID } from "@/lib/demoMerch
  */
 export async function resolveMerchantCustomerId(userId: string | undefined | null): Promise<string | null> {
   if (isDemoMerchantActive()) {
-    return DEMO_MERCHANT_CUSTOMER_ID;
+    return getDemoMerchantCustomerId();
   }
   if (!userId) return null;
 
