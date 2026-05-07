@@ -262,7 +262,7 @@ export default function SalesRepOrders() {
                   <div className="flex items-center justify-between flex-wrap gap-2">
                     <div>
                       <p className="font-semibold">
-                        {order.paket_typ === 'starter' ? 'Starterpaket' : 'Vertriebspaket'}
+                        {order.paket_typ === 'starter' ? 'Starterpaket' : order.paket_typ === 'test' ? 'Testpaket' : 'Vertriebspaket'}
                         <span className="text-muted-foreground font-normal ml-2">({order.anzahl_boxen} Boxen)</span>
                       </p>
                       <p className="text-xs text-muted-foreground">
