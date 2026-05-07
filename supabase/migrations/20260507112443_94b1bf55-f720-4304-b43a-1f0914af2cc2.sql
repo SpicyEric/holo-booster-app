@@ -1,0 +1,2 @@
+ALTER TABLE public.box_pakete DROP CONSTRAINT IF EXISTS box_pakete_paket_typ_check;
+ALTER TABLE public.box_pakete ADD CONSTRAINT box_pakete_paket_typ_check CHECK (paket_typ = ANY (ARRAY['starter'::text, 'vertrieb'::text, 'test'::text]));
