@@ -195,7 +195,7 @@ export default function BoxOrders() {
                       <Badge className={`${sb.color} border text-[10px]`}>{sb.label}</Badge>
                     </div>
                     <p className="text-xs text-muted-foreground">
-                      {order.paket_typ === 'starter' ? 'Starterpaket' : 'Vertriebspaket'} · {order.anzahl_boxen} Boxen ·{' '}
+                      {order.paket_typ === 'starter' ? 'Starterpaket' : order.paket_typ === 'test' ? 'Testpaket' : 'Vertriebspaket'} · {order.anzahl_boxen} Boxen ·{' '}
                       {new Date(order.bestelldatum).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
                     </p>
                   </div>
@@ -218,7 +218,7 @@ export default function BoxOrders() {
           <DialogHeader>
             <DialogTitle>Bestellung versenden</DialogTitle>
             <DialogDescription>
-              {selectedOrder?.vertriebler_name} — {selectedOrder?.paket_typ === 'starter' ? 'Starterpaket' : 'Vertriebspaket'} ({selectedOrder?.anzahl_boxen} Boxen)
+              {selectedOrder?.vertriebler_name} — {selectedOrder?.paket_typ === 'starter' ? 'Starterpaket' : selectedOrder?.paket_typ === 'test' ? 'Testpaket' : 'Vertriebspaket'} ({selectedOrder?.anzahl_boxen} Boxen)
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-3 max-h-[400px] overflow-y-auto">
