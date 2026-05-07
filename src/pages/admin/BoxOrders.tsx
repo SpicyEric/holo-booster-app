@@ -218,7 +218,7 @@ export default function BoxOrders() {
           <DialogHeader>
             <DialogTitle>Bestellung versenden</DialogTitle>
             <DialogDescription>
-              {selectedOrder?.vertriebler_name} — {selectedOrder?.paket_typ === 'starter' ? 'Starterpaket' : 'Vertriebspaket'} ({selectedOrder?.anzahl_boxen} Boxen)
+              {selectedOrder?.vertriebler_name} — {selectedOrder?.paket_typ === 'starter' ? 'Starterpaket' : selectedOrder?.paket_typ === 'test' ? 'Testpaket' : 'Vertriebspaket'} ({selectedOrder?.anzahl_boxen} Boxen)
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-3 max-h-[400px] overflow-y-auto">
