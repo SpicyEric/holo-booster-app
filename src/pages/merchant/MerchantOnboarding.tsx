@@ -352,71 +352,112 @@ export default function MerchantOnboarding() {
     setErrorField(null);
     setSaving(true);
     try {
-      // 1) Update customer profile
-      const customerUpdate: Record<string, any> = {
-        cover_image_url: coverUrl,
-        logo_url: logoUrl || null,
-        description: description || null,
-        opening_hours: openingHours,
-        stamp_mode: "classic",
-        manual_stamp_mode: true,
-        avg_revenue: typeof avgRevenue === "number" ? avgRevenue : null,
-        referral_enabled: true,
-        referral_inviter_points: referralPoints,
-        birthday_enabled: true,
-        birthday_bonus_points: 20,
-        winback_enabled: false,
-        google_review_points_enabled: false,
-        updated_at: new Date().toISOString(),
-      };
-      const { error: cErr } = await supabase.from("customers").update(customerUpdate).eq("id", customerId);
-      if (cErr) console.warn("customer update", cErr);
+      // ── Demo-Modus: Daten nur in Demo-Onboarding-State persistieren,
+      //    damit sie in Profil/Punktesystem/Marketing/Prämien sichtbar sind.
+      if (isDemo) {
+        const ncoDescDemo =
+          ncoForm.kind === "percent"
+            ? `${ncoForm.value}% Rabatt auf den ersten Einkauf`
+            : ncoForm.kind === "fixed"
+            ? `${ncoForm.value} € Rabatt auf den ersten Einkauf`
+            : `Gratis: ${ncoForm.value || ncoForm.title}`;
+        const demoChips = [
+          { id: "demo-chip-green", chip_uid: "demo-emre-green", stamp_name: "Karte 1", stamp_color: "grün", points_value: card1Points, is_active: true },
+          { id: "demo-chip-blue",  chip_uid: "demo-emre-blue",  stamp_name: "Karte 2", stamp_color: "blau", points_value: card2Points, is_active: true },
+          { id: "demo-chip-red",   chip_uid: "demo-emre-red",   stamp_name: "Karte 3", stamp_color: "rot",  points_value: card3Points, is_active: true },
+        ];
+        const demoRewards = rewards.map((r) => ({
+          id: r.id, title: r.title, description: null,
+          points_required: r.points_required, image_url: r.image_url || null, is_active: true,
+        }));
+        updateDemoOnboardingState({
+          profile: {
+            cover_image_url: coverUrl,
+            logo_url: logoUrl || "",
+            description: description || "",
+            opening_hours: openingHours,
+            stamp_mode: "classic",
+            manual_stamp_mode: true,
+            avg_revenue: typeof avgRevenue === "number" ? avgRevenue : 0,
+            referral_enabled: true,
+            referral_inviter_points: referralPoints,
+            referral_invitee_points: 1,
+            birthday_enabled: true,
+            birthday_bonus_points: 20,
+            winback_enabled: false,
+            google_review_points_enabled: false,
+            stamp_id: cardId,
+          },
+          boxes: cardId ? [{ id: "demo-box", box_id: "demo-box", stamp_code: cardId, assigned_at: new Date().toISOString() }] : [],
+          chips: demoChips,
+          rewards: demoRewards,
+          newCustomerOffer: ncoSaved && ncoForm.title.trim()
+            ? { id: "demo-nco", title: ncoForm.title, description: ncoDescDemo, bonus_stamps: 0, is_active: true, image_url: null }
+            : null,
+        });
+      } else {
+        // 1) Update customer profile
+        const customerUpdate: Record<string, any> = {
+          cover_image_url: coverUrl,
+          logo_url: logoUrl || null,
+          description: description || null,
+          opening_hours: openingHours,
+          stamp_mode: "classic",
+          manual_stamp_mode: true,
+          avg_revenue: typeof avgRevenue === "number" ? avgRevenue : null,
+          referral_enabled: true,
+          referral_inviter_points: referralPoints,
+          birthday_enabled: true,
+          birthday_bonus_points: 20,
+          winback_enabled: false,
+          google_review_points_enabled: false,
+          updated_at: new Date().toISOString(),
+        };
+        const { error: cErr } = await supabase.from("customers").update(customerUpdate).eq("id", customerId);
+        if (cErr) console.warn("customer update", cErr);
 
-      // 2) Update existing chip points in fixed order grün/blau/rot
-      const { data: chips } = await supabase
-        .from("nfc_chips")
-        .select("id, stamp_color")
-        .eq("merchant_customer_id", customerId);
-      const order = ["grün", "blau", "rot"];
-      const pts = [card1Points, card2Points, card3Points];
-      const sorted = (chips || [])
-        .filter((c) => order.includes((c.stamp_color || "").toLowerCase()))
-        .sort((a, b) =>
-          order.indexOf((a.stamp_color || "").toLowerCase()) - order.indexOf((b.stamp_color || "").toLowerCase()),
-        );
-      for (let i = 0; i < sorted.length && i < 3; i++) {
-        await supabase.from("nfc_chips").update({ points_value: pts[i] }).eq("id", sorted[i].id);
-      }
+        // 2) Update existing chip points in fixed order grün/blau/rot
+        const { data: chips } = await supabase
+          .from("nfc_chips")
+          .select("id, stamp_color")
+          .eq("merchant_customer_id", customerId);
+        const order = ["grün", "blau", "rot"];
+        const pts = [card1Points, card2Points, card3Points];
+        const sorted = (chips || [])
+          .filter((c) => order.includes((c.stamp_color || "").toLowerCase()))
+          .sort((a, b) =>
+            order.indexOf((a.stamp_color || "").toLowerCase()) - order.indexOf((b.stamp_color || "").toLowerCase()),
+          );
+        for (let i = 0; i < sorted.length && i < 3; i++) {
+          await supabase.from("nfc_chips").update({ points_value: pts[i] }).eq("id", sorted[i].id);
+        }
 
-      // 3) Insert rewards
-      for (const r of rewards) {
-        await supabase.from("rewards").insert({
+        // 3) Insert rewards
+        for (const r of rewards) {
+          await supabase.from("rewards").insert({
+            merchant_customer_id: customerId,
+            title: r.title,
+            points_required: r.points_required,
+            image_url: r.image_url || null,
+            is_active: true,
+          });
+        }
+
+        // 4) Insert NCO
+        const ncoDesc =
+          ncoForm.kind === "percent"
+            ? `${ncoForm.value}% Rabatt auf den ersten Einkauf`
+            : ncoForm.kind === "fixed"
+            ? `${ncoForm.value} € Rabatt auf den ersten Einkauf`
+            : `Gratis: ${ncoForm.value || ncoForm.title}`;
+        await supabase.from("new_customer_offers").insert({
           merchant_customer_id: customerId,
-          title: r.title,
-          points_required: r.points_required,
-          image_url: r.image_url || null,
+          title: ncoForm.title,
+          description: ncoDesc,
+          bonus_stamps: 0,
           is_active: true,
         });
       }
-
-      // 4) Insert NCO
-      const ncoTitle =
-        ncoForm.kind === "percent"
-          ? `${ncoForm.value || ncoForm.title}% Rabatt: ${ncoForm.title}`.replace(/^%/, "")
-          : ncoForm.title;
-      const ncoDesc =
-        ncoForm.kind === "percent"
-          ? `${ncoForm.value}% Rabatt auf den ersten Einkauf`
-          : ncoForm.kind === "fixed"
-          ? `${ncoForm.value} € Rabatt auf den ersten Einkauf`
-          : `Gratis: ${ncoForm.value || ncoForm.title}`;
-      await supabase.from("new_customer_offers").insert({
-        merchant_customer_id: customerId,
-        title: ncoForm.title,
-        description: ncoDesc,
-        bonus_stamps: 0,
-        is_active: true,
-      });
 
       // Erfolgsanzeige + Konfetti
       setShowSuccess(true);
