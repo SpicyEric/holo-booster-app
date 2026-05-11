@@ -171,6 +171,10 @@ export default function CheckoutForm({ backPath, backLabel, partnerUserId, prefi
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (demoMode) {
+      onDemoSubmit?.();
+      return;
+    }
     if (!companyName || !contactEmail || !firstName || !lastName) {
       toast.error("Bitte fülle alle Pflichtfelder aus");
       return;
@@ -319,28 +323,6 @@ export default function CheckoutForm({ backPath, backLabel, partnerUserId, prefi
             )}
           </div>
 
-          <div className="flex items-center justify-center gap-4 pt-2 border-t">
-            <div className="flex items-center gap-2">
-              <MapPin className="w-4 h-4 text-muted-foreground" />
-              <Label className="text-sm">Standorte</Label>
-            </div>
-            <div className="flex items-center gap-2">
-              <Button type="button" variant="outline" size="icon" className="h-8 w-8" disabled={locationCount <= 1}
-                onClick={() => setLocationCount(c => Math.max(1, c - 1))}>
-                <Minus className="h-3 w-3" />
-              </Button>
-              <span className="w-8 text-center font-medium">{locationCount}</span>
-              <Button type="button" variant="outline" size="icon" className="h-8 w-8"
-                onClick={() => setLocationCount(c => c + 1)}>
-                <Plus className="h-3 w-3" />
-              </Button>
-            </div>
-            {additionalLocations > 0 && (
-              <span className="text-xs text-muted-foreground">
-                +{additionalLocations}× {PRICING.abo.additionalMonthly.toFixed(2)}€/Monat & {PRICING.startbox.additional.toFixed(2)}€ Startbox
-              </span>
-            )}
-          </div>
         </CardContent>
       </Card>
 
