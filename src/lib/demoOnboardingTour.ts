@@ -15,20 +15,20 @@ export interface TourStep {
 export const TOUR_STEPS: TourStep[] = [
   {
     title: "Schritt 1 – Mein Geschäft öffnen",
-    body: "Klicke links in der Sidebar auf „Mein Geschäft" und öffne dort den Tab „System".",
+    body: "Klicke links in der Sidebar auf 'Mein Geschäft" und öffne dort den Tab 'System".",
   },
   {
     title: "Schritt 2 – Karten-ID eintragen",
-    body: "Suche im Bereich „Karten-System" das Feld für die Karten-ID und trage die folgende Demo-Karten-ID ein:",
+    body: "Suche im Bereich 'Karten-System" das Feld für die Karten-ID und trage die folgende Demo-Karten-ID ein:",
     highlight: "DEMO-0421-AB",
   },
   {
     title: "Schritt 3 – Punktwerte einstellen",
-    body: "Wechsle in den Tab „Punkte" und stelle die drei Werte ein: Klein 10, Mittel 30, Groß 60.",
+    body: "Wechsle in den Tab 'Punkte" und stelle die drei Werte ein: Klein 10, Mittel 30, Groß 60.",
   },
   {
     title: "Schritt 4 – Prämien festlegen",
-    body: "Wechsle in den Tab „Prämien" und lege drei Stück fest: eine erste, eine mittlere und eine Top-Prämie.",
+    body: "Wechsle in den Tab 'Prämien" und lege drei Stück fest: eine erste, eine mittlere und eine Top-Prämie.",
   },
   {
     title: "Schritt 5 – Neukundenprämie & Empfehlungs-Bonus",
