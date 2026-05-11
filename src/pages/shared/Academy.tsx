@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
+import { useSearchParams } from "react-router-dom";
 import { GraduationCap } from "lucide-react";
 import { cn } from "@/lib/utils";
 
