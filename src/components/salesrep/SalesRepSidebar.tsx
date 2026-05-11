@@ -37,6 +37,7 @@ const NAV_GROUPS: NavGroup[] = [
   },
   {
     label: "SALES",
+    alwaysOpen: true,
     items: [
       { path: "/vertriebler/store-finder", label: "Store Finder", icon: Search },
       { path: "/vertriebler/leads", label: "Kontakte", icon: Users },
@@ -48,6 +49,7 @@ const NAV_GROUPS: NavGroup[] = [
   },
   {
     label: "KOMMUNIKATION",
+    alwaysOpen: true,
     items: [
       { path: "/vertriebler/messages", label: "Nachrichten", icon: Mail },
       { path: "/vertriebler/orders", label: "Bestellung", icon: Package },
@@ -55,11 +57,22 @@ const NAV_GROUPS: NavGroup[] = [
   },
   {
     label: "SYSTEM",
+    alwaysOpen: true,
     items: [
       { path: "/vertriebler/mein-vertrag", label: "Mein Vertrag", icon: FileText },
       { path: "/vertriebler/abrechnungen", label: "Meine Abrechnungen", icon: Receipt },
-      { path: "/vertriebler/academy", label: "Academy", icon: GraduationCap },
       { path: "/vertriebler/settings", label: "Einstellungen", icon: Settings },
+    ],
+  },
+  {
+    label: "ACADEMY",
+    alwaysOpen: true,
+    items: [
+      { path: "/vertriebler/academy?tab=funktion", label: "Wie funktioniert eloyo?", icon: GraduationCap },
+      { path: "/vertriebler/academy?tab=box", label: "Die eloyo Box", icon: GraduationCap },
+      { path: "/vertriebler/academy?tab=kunden", label: "Wie komme ich an Kunden?", icon: GraduationCap },
+      { path: "/vertriebler/academy?tab=abschluss", label: "Technischer Abschluss", icon: GraduationCap },
+      { path: "/vertriebler/academy?tab=verkauf", label: "Wie verkaufe ich eloyo?", icon: GraduationCap },
     ],
   },
 ];
@@ -69,8 +82,18 @@ function SidebarNav({ collapsed, onNavigate }: { collapsed: boolean; onNavigate?
   const location = useLocation();
 
   const isActive = (path: string) => {
-    if (path === "/vertriebler") return location.pathname === "/vertriebler" || location.pathname === "/vertriebler/";
-    return location.pathname.startsWith(path);
+    const [pathOnly, query] = path.split("?");
+    if (pathOnly === "/vertriebler") {
+      return location.pathname === "/vertriebler" || location.pathname === "/vertriebler/";
+    }
+    if (query) {
+      // Match exact pathname + query param
+      const params = new URLSearchParams(query);
+      const tab = params.get("tab");
+      const currentTab = new URLSearchParams(location.search).get("tab") || "funktion";
+      return location.pathname === pathOnly && (tab === currentTab || (tab === "funktion" && !currentTab));
+    }
+    return location.pathname.startsWith(pathOnly);
   };
 
   const groupHasActive = (group: NavGroup) => group.items.some((i) => isActive(i.path));
