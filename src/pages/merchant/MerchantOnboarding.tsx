@@ -426,6 +426,11 @@ export default function MerchantOnboarding() {
 
         {/* Step 1 */}
         <Section ref={coverRef} number={1} title="Titelbild & Logo" done={isStep1Done} error={errorField === "cover"}>
+          <Hint>
+            <strong>Tipp:</strong> Lass dir vom Inhaber das gewünschte Bild per WhatsApp aufs eigene Handy schicken und lade es hier hoch.
+            Wenn gerade kein Bild verfügbar ist, mach einfach kurz ein Foto von der Ladentheke oder dem Schaufenster –
+            wichtig ist ein einladendes Motiv, das die Kunden sofort wiedererkennen.
+          </Hint>
           <div className="grid grid-cols-1 md:grid-cols-[1fr_120px] gap-4">
             <div>
               <Label className="text-xs text-muted-foreground mb-1.5 block">Titelbild *</Label>
