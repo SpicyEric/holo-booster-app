@@ -16,7 +16,7 @@ import {
   Store, UserPlus, MessageSquare, Cake, Rocket, Bell, X
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import OnboardingChecklist from "@/components/merchant/OnboardingChecklist";
+
 import CountUp from "@/components/CountUp";
 import {
   Tooltip, TooltipContent, TooltipProvider, TooltipTrigger
