@@ -80,9 +80,14 @@ function SidebarNav({ collapsed, onNavigate, companyName, subStatus }: { collaps
   const [searchParams] = useSearchParams();
   const currentTab = searchParams.get('tab');
 
-  const isActive = (path: string) => {
-    if (path === "/kunde") return location.pathname === "/kunde" || location.pathname === "/kunde/";
-    return location.pathname.startsWith(path);
+  const isActive = (item: NavItem) => {
+    if (item.path === "/kunde") return location.pathname === "/kunde" || location.pathname === "/kunde/";
+    if (!location.pathname.startsWith(item.path)) return false;
+    if (item.tab) {
+      // Sibling items on same path are distinguished by ?tab= (default = "info")
+      return (currentTab || "info") === item.tab;
+    }
+    return true;
   };
 
   const demoActive = useDemoMerchant();
