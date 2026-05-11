@@ -18,7 +18,7 @@ const DEMO_PREFILL: CheckoutPrefill = {
   city: "München",
   country: "Deutschland",
   vatId: "DE123456789",
-  industry: "bakery",
+  industry: "baeckerei",
   firstName: "Markus",
   lastName: "König",
   contactEmail: "demo+backstube@eloyo.de",
