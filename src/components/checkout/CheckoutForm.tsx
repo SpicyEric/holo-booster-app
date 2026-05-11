@@ -176,7 +176,10 @@ export default function CheckoutForm({ backPath, backLabel, partnerUserId, prefi
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (demoMode) {
-      onDemoSubmit?.();
+      onDemoSubmit?.({
+        companyName, street, houseNumber, city, postalCode, country, vatId, industry,
+        firstName, lastName, contactEmail, contactPhone,
+      });
       return;
     }
     if (!companyName || !contactEmail || !firstName || !lastName) {
