@@ -228,6 +228,14 @@ export default function MerchantOnboarding() {
 
   const handleAddCardId = async () => {
     if (!customerId) return;
+    // Demo-Modus: jede beliebige Eingabe akzeptieren, ohne DB-Prüfung.
+    if (isDemo) {
+      const padded = (cardId || "DEMO1-DEMO2-DEMO3").padEnd(17, "0").slice(0, 17);
+      setCardId(formatBoxIdInput(padded.replace(/-/g, "")));
+      setCardIdLocked(true);
+      toast.success("Karten-ID übernommen (Demo)");
+      return;
+    }
     if (!isStep2Done) {
       toast.error("Karten-ID muss im Format XXXXX-XXXXX-XXXXX sein");
       return;
