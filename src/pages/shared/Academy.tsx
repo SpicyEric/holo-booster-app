@@ -168,12 +168,13 @@ function TabFunktion() {
           Ein Barbershop-Kunde kommt rein. Der Barbier fragt: <em>"Hast du unsere Kundenkarte?"</em> Der Kunde sagt nein. Der Barbier antwortet:{" "}
           <em>"Kein Problem – ich nehme dich kurz auf. Du bekommst direkt 20 % Rabatt auf heute."</em>
         </p>
-        <p className="mt-3 text-[15px] leading-relaxed text-muted-foreground">
-          → Kunde hält Handy ans Terminal → App öffnet sich → Account ist erstellt → Punkte sind drauf<br />
-          → Direkt Rabatt bekommen → fühlt sich belohnt → gibt eine Google-Bewertung ab
-        </p>
+        <div className="mt-3 space-y-2 text-[15px] leading-relaxed text-muted-foreground">
+          <p><strong className="text-foreground">Schritt 1:</strong> Kunde scannt QR-Code am Aufsteller → lädt die App runter → registriert sich in 30 Sekunden</p>
+          <p><strong className="text-foreground">Schritt 2:</strong> Kassierer hält die NFC-Karte ans Handy des Kunden → Punkte werden sofort gutgeschrieben</p>
+          <p><strong className="text-foreground">Schritt 3:</strong> Kunde bekommt direkt seine Neukundenprämie (z. B. 20 % Rabatt) → fühlt sich sofort belohnt → gibt eher eine gute Google-Bewertung ab</p>
+        </div>
         <p className="mt-3 text-[15px] font-medium text-foreground">
-          Das Geschäft hat in 30 Sekunden einen neuen Stammkunden gewonnen.
+          Das Geschäft hat in 30 Sekunden einen neuen Stammkunden in seinem System.
         </p>
       </Card>
 
