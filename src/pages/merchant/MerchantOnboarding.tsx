@@ -56,6 +56,8 @@ export default function MerchantOnboarding() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [customerId, setCustomerId] = useState<string | null>(null);
+  const [showSuccess, setShowSuccess] = useState(false);
+  const isDemo = isDemoMerchantActive();
 
   // Step 1
   const [coverUrl, setCoverUrl] = useState("");
