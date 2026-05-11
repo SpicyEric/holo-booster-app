@@ -329,8 +329,8 @@ function TabAbschluss() {
     <>
       <Card>
         <p className="text-[15px] leading-relaxed text-muted-foreground">
-          Ein Abschluss passiert selten in einem einzigen Gespräch. Meist braucht es zwei Termine – einen kurzen Demo-Termin und einen
-          Einrichtungstermin. Das ist kein Problem, sondern ein System.
+          Ein Abschluss kann beim ersten Termin passieren – oder beim zweiten. Beides ist normal, beides ist okay. Das Ziel ist immer:
+          nie ohne klaren nächsten Schritt aus einem Gespräch rausgehen.
         </p>
       </Card>
 
@@ -345,42 +345,116 @@ function TabAbschluss() {
           <li>Wie die Box aussieht</li>
           <li>Was der Einrichtungsaufwand für ihn ist (minimal)</li>
         </ul>
-        <p className="text-[15px] text-muted-foreground mt-3">
-          Ziel dieses Termins: Interesse wecken, nicht abschließen. Am Ende fragst du:{" "}
-          <em>"Wann hättest du mal 20–30 Minuten, dass ich dir das einrichte?"</em>
-        </p>
+        <div className="mt-4 space-y-3 text-[15px] text-muted-foreground">
+          <p>
+            <strong className="text-foreground">Ziel dieses Termins:</strong> Interesse wecken und – wenn die Energie stimmt – sofort abschließen.
+          </p>
+          <p>
+            Wenn du merkst, dass der Kunde Bock hat und sagt <em>„Das klingt gut, ja"</em> – frag direkt:{" "}
+            <em>„Hast du grad noch eine halbe Stunde? Dann richten wir das jetzt gleich ein."</em> Wenn er Ja sagt: direkt starten,
+            kein zweiter Termin nötig.
+          </p>
+          <p>
+            Wenn der Kunde gestresst wirkt, wenig Zeit hat oder du das Gefühl hast, er braucht noch einen Moment – mach selbstbestimmt einen
+            zweiten Termin aus. Nicht fragen <em>„Hast du Bock?"</em> oder <em>„Bist du dabei?"</em> – sondern bestimmt sagen:{" "}
+            <em>„Wann kann ich nächste Woche kurz vorbeikommen? Dann richten wir das in 30 Minuten ein."</em>
+          </p>
+          <p>
+            <strong className="text-foreground">Die Regel:</strong> Nie aus einem Gespräch rausgehen, ohne dass der nächste Schritt klar ist
+            – entweder Abschluss vor Ort oder konkreter Folgetermin.
+          </p>
+        </div>
       </Card>
 
       <Card>
-        <h3 className="text-lg font-semibold mb-2">✅ Schritt 2: Einrichtungstermin (30–45 Min)</h3>
-        <p className="text-[15px] text-muted-foreground mb-3">Beim zweiten Termin wird alles eingerichtet:</p>
-        <ul className="list-disc pl-6 space-y-1 text-[15px] text-muted-foreground">
-          <li>Geschäft im Eloyo-Dashboard anlegen</li>
-          <li>Belohnungen festlegen (was bekommt ein Kunde für X Punkte?)</li>
-          <li>Neukundenangebot aktivieren</li>
-          <li>NFC-Karten mit dem Konto verknüpfen (Karten-ID aus der Box)</li>
-          <li>Terminal und Aufsteller an der Kasse platzieren</li>
-          <li>Kurze Erklärung für das Kassenpersonal: „Handy dranhalten = Punkte"</li>
-        </ul>
-        <p className="text-[15px] text-muted-foreground mt-3">
-          Nach dem Einrichtungstermin ist der Kunde sofort live. Er kann ab dem gleichen Tag Kunden onboarden.
-        </p>
+        <h3 className="text-lg font-semibold mb-2">✅ Schritt 2: Einrichtung (30–45 Min)</h3>
+        <div className="space-y-4 text-[15px] text-muted-foreground">
+          <div>
+            <p className="font-semibold text-foreground">1. Zuerst: Zahlung abschließen</p>
+            <p className="mt-1">
+              Sobald die Zahlung durchgelaufen ist, wird der Kunde automatisch angelegt und bekommt eine E-Mail, über die er sein Passwort
+              setzen kann. Ab da ist er eingeloggt.
+            </p>
+          </div>
+          <div>
+            <p className="font-semibold text-foreground">2. Karten-ID eintragen</p>
+            <p className="mt-1">
+              Die Karten-ID befindet sich auf der Innenseite des Box-Deckels. Diese trägst du im System ein, damit die NFC-Karten mit dem
+              Geschäft verknüpft sind.
+            </p>
+          </div>
+          <div>
+            <p className="font-semibold text-foreground">3. Punkte pro Karte einstellen</p>
+            <p className="mt-1">
+              Frag den Kunden: <em>„Was gibt ein Durchschnittskunde bei euch ungefähr aus?"</em> Anhand seiner Antwort stellst du die
+              Punktwerte ein – zum Beispiel:
+            </p>
+            <ul className="list-disc pl-6 mt-2 space-y-1">
+              <li>Kleine Karte (z. B. ab 5–10 €): 10 Punkte</li>
+              <li>Mittlere Karte (z. B. ab 20–30 €): 30 Punkte</li>
+              <li>Große Karte (z. B. ab 50–60 €): 60 Punkte</li>
+            </ul>
+            <p className="mt-2">Nutze runde, einfach merkbare Zahlen. Du passt das manuell an, bis es logisch klingt.</p>
+          </div>
+          <div>
+            <p className="font-semibold text-foreground">4. Prämien gemeinsam festlegen</p>
+            <p className="mt-1">
+              Berate den Kunden aktiv. Frag:{" "}
+              <em>„Was könntest du deinen Stammkunden schenken, das dich wenig kostet, aber sich für sie gut anfühlt?"</em> Achte darauf:
+            </p>
+            <ul className="list-disc pl-6 mt-2 space-y-1">
+              <li><strong className="text-foreground">Erste Prämie:</strong> klein und früh erreichbar (z. B. nach dem 3.–4. Besuch) – gibt einen Anreiz zum Wiederkommen</li>
+              <li><strong className="text-foreground">Mittlere Prämie:</strong> etwas Attraktiveres (z. B. nach 8–10 Besuchen)</li>
+              <li><strong className="text-foreground">Top-Prämie:</strong> echte Belohnung für treue Stammkunden</li>
+            </ul>
+            <p className="mt-2">
+              Lass den Kunden nicht zu früh zu viel verschenken – aber auch nicht so geizig sein, dass kein Interesse entsteht.
+              Du spielst hier die beratende Rolle.
+            </p>
+          </div>
+          <div>
+            <p className="font-semibold text-foreground">5. Neukundenprämie aktivieren und besprechen</p>
+            <p className="mt-1">
+              Erkläre dem Kunden, warum das wichtig ist:{" "}
+              <em>„Wenn du einfach nur sagst 'Willst du Punkte sammeln?' – kriegst du kaum jemanden ins System.
+              Aber wenn du sagst: 'Ich kann dir direkt 20 % auf heute geben, wenn du kurz mitmachst' – dann sagen fast alle Ja."</em>
+            </p>
+            <p className="mt-2">
+              Legt gemeinsam fest, was das Neukundenangebot ist (Rabatt, Gratis-Produkt, Extra-Punkte). Es muss sofort attraktiv wirken.
+            </p>
+          </div>
+          <div>
+            <p className="font-semibold text-foreground">6. Weiterempfehlungs-Punkte festlegen</p>
+            <p className="mt-1">
+              Stell ein, wie viele Punkte ein Kunde bekommt, wenn er einen Freund mitbringt. Kurz erklären, wie das Referral-System funktioniert.
+            </p>
+          </div>
+          <div>
+            <p className="font-semibold text-foreground">7. Terminal, Aufsteller und Karten platzieren</p>
+            <p className="mt-1">
+              Terminal an die Kasse stellen. Aufsteller daneben. Kurze Erklärung für das Kassenpersonal:{" "}
+              <em>„Kunde kommt → ihr fragt nach Kundenkarte → Karte ans Handy halten → Punkte vergeben.
+              Neue Kunden: QR-Code am Aufsteller zeigen, direkt Neukundenprämie anbieten."</em>
+            </p>
+          </div>
+          <div className="pt-2 border-t">
+            <p>
+              <strong className="text-foreground">Nach der Einrichtung:</strong> Der Kunde ist sofort live. Spiel den Ablauf einmal mit ihm
+              durch – du bist der „Endkunde", er ist der Kassierer: <em>„Frag mich jetzt, ob ich eine Kundenkarte hab."</em>{" "}
+              Dann durchspielen, bis er es natürlich kann.
+            </p>
+          </div>
+        </div>
       </Card>
 
       <Card accent>
-        <h3 className="text-lg font-semibold mb-2">📒 Wichtig – Kein Geschäft vergessen</h3>
-        <p className="text-[15px] text-muted-foreground mb-2">
-          Führe eine Liste (Notizen, Excel, was auch immer) über alle Geschäfte in deinem Gebiet:
+        <h3 className="text-lg font-semibold mb-2">📞 Nach dem Termin dran bleiben</h3>
+        <p className="text-[15px] text-muted-foreground">
+          Ruf den Kunden etwa eine Woche nach der Einrichtung nochmal an. Frag, wie es läuft, ob es Fragen gibt, was die ersten Ergebnisse sind.
         </p>
-        <div className="flex flex-wrap gap-2">
-          <Chip>Angesprochen ✅</Chip>
-          <Chip>Termin ausgemacht 📅</Chip>
-          <Chip>Demo gemacht 🎯</Chip>
-          <Chip>Abgeschlossen 💜</Chip>
-          <Chip>Abgelehnt ❌</Chip>
-        </div>
         <p className="text-[15px] text-muted-foreground mt-3">
-          Viele Abschlüsse entstehen beim dritten oder vierten Kontakt. Wer seine Pipeline pflegt, gewinnt.
+          Wenn es noch nicht richtig läuft – fahr nochmal hin. Nicht um zu schauen, sondern um ihn wirklich on track zu bringen.
+          Ein Kunde, der eloyo richtig nutzt, bleibt. Ein Kunde, der nicht weiß wie – kündigt.
         </p>
       </Card>
     </>
