@@ -790,6 +790,26 @@ const MeinGeschaeft = () => {
 
   const handleSaveChips = async () => {
     if (!customerId) return;
+
+    if (isDemoOnboardingTourActive() && customerId === DEMO_ONBOARDING_CUSTOMER_ID) {
+      let chipsToSave = nfcChips;
+      if (!manualMode && stampMode === 'revenue') {
+        const suggestion = calculateSuggestion(avgRevenue, ['visits'], selectedVariant);
+        if (suggestion.type === 'tiered' && suggestion.tiers) {
+          const colorMap: Record<string, number> = {};
+          const dbColorMap: Record<string, string> = { green: 'grün', blue: 'blau', red: 'rot' };
+          suggestion.tiers.forEach((tier) => { colorMap[dbColorMap[tier.color] || tier.color] = tier.points; });
+          chipsToSave = nfcChips.map((chip) => ({ ...chip, points_value: colorMap[chip.stamp_color?.toLowerCase() || ''] ?? chip.points_value }));
+        }
+      }
+      setNfcChips(chipsToSave);
+      updateDemoOnboardingState({ profile: { stamp_mode: stampMode, avg_revenue: avgRevenue, manual_stamp_mode: manualMode }, chips: chipsToSave });
+      setInitialStampState({ stampMode, avgRevenue, manualMode, selectedVariant });
+      setStampSettingsDirty(false);
+      if (getDemoOnboardingStep() === 1) setDemoOnboardingStep(2);
+      toast.success('Demo-Karte gespeichert');
+      return;
+    }
     
     setSavingChips(true);
     try {
@@ -908,6 +928,27 @@ const MeinGeschaeft = () => {
 
     setAddingBox(true);
     try {
+      if (isDemoOnboardingTourActive() && customerId === DEMO_ONBOARDING_CUSTOMER_ID) {
+        if (newBoxId.trim().toUpperCase() !== DEMO_ONBOARDING_CARD_ID) {
+          toast.error(`Nutze für die Demo bitte ${DEMO_ONBOARDING_CARD_ID}`);
+          return;
+        }
+        const assignedAt = new Date().toISOString();
+        const demoBoxes = [{ id: 'demo-box-link-1', box_id: 'demo-box-1', stamp_code: DEMO_ONBOARDING_CARD_ID, assigned_at: assignedAt }];
+        const demoChips = [
+          { id: 'demo-chip-green', chip_uid: 'demo-emre-green', stamp_name: 'Karte 1', stamp_color: 'grün', points_value: 1, is_active: true },
+          { id: 'demo-chip-blue', chip_uid: 'demo-emre-blue', stamp_name: 'Karte 2', stamp_color: 'blau', points_value: 1, is_active: true },
+          { id: 'demo-chip-red', chip_uid: 'demo-emre-red', stamp_name: 'Karte 3', stamp_color: 'rot', points_value: 1, is_active: true },
+        ];
+        setCustomerBoxes(demoBoxes);
+        setNfcChips(demoChips);
+        setNewBoxId('');
+        updateDemoOnboardingState({ boxes: demoBoxes, chips: demoChips, profile: { stamp_id: DEMO_ONBOARDING_CARD_ID } });
+        if (getDemoOnboardingStep() === 0) setDemoOnboardingStep(1);
+        toast.success('Demo-Karten-ID hinzugefügt');
+        return;
+      }
+
       const { data: boxData } = await supabase
         .from('boxes')
         .select('id, stamp_id, stamp_preset')
