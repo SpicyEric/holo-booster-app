@@ -488,10 +488,10 @@ function TabVerkauf() {
         <h3 className="text-lg font-semibold mb-3">Was du verkaufst (nicht das Produkt, sondern das Ergebnis)</h3>
         <p className="text-[15px] text-muted-foreground mb-3">Du verkaufst nicht „ein Kundenbindungssystem". Du verkaufst:</p>
         <ul className="list-disc pl-6 space-y-1 text-[15px] text-muted-foreground">
-          <li>„Dass deine Kunden öfter wiederkommen"</li>
-          <li>„Dass du ihnen direkt aufs Handy schreiben kannst"</li>
           <li>„Dass neue Kunden sofort einen Grund haben, bei dir anzufangen"</li>
-          <li>„Dass du mehr Google-Bewertungen bekommst, ohne darum zu betteln"</li>
+          <li>„Dass du direkten Kontakt zu deinen bestehenden Kunden hast – direkt aufs Handy"</li>
+          <li>„Dass deine Kunden lieber zu dir als zur Konkurrenz gehen"</li>
+          <li>„Dass du mehr Google-Bewertungen bekommst, ohne darum betteln zu müssen"</li>
         </ul>
         <p className="text-[15px] text-muted-foreground mt-3">
           Sprich immer vom Ergebnis für den Inhaber, nicht von Technologie.
