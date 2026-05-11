@@ -554,6 +554,10 @@ export default function MerchantOnboarding() {
 
         {/* Step 4 */}
         <Section ref={rewardsRef} number={4} title="Erste Prämien erstellen" done={isStep4Done} error={errorField === "rewards"}>
+          <Hint>
+            <strong>Tipp:</strong> Die erste kleine Prämie sollte schon nach <strong>4–5 Besuchen</strong> erreichbar sein.
+            Orientiere die Punktzahl an den Karten-Werten oben – z.B. eine kleine Prämie für ca. eine volle Karte 1.
+          </Hint>
           <div className="space-y-3">
             {rewards.map((r) => (
               <div key={r.id} className="flex items-center gap-3 p-3 rounded-xl bg-emerald-50 border border-emerald-200">
