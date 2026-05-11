@@ -144,7 +144,15 @@ export default function KundeDashboard() {
       }
       try { const { data: subInfo } = await supabase.functions.invoke("get-subscription-info"); if (subInfo) setSubscriptionInfo(subInfo); } catch {}
       if (customerData?.id) {
-        if (customerData.id === DEMO_MERCHANT_ID) {
+        const tourActive = (() => {
+          try { return localStorage.getItem("eloyo:demo-onboarding-tour") !== null; } catch { return false; }
+        })();
+        if (tourActive && customerData.id === DEMO_MERCHANT_ID) {
+          // Während der Demo-Onboarding-Tour soll alles wie "frisch eingerichtet" aussehen.
+          setStats({ totalContacts: 0, totalPointsAwarded: 0, totalRedemptions: 0, invitedCustomers: 0, newContactsThisWeek: 0, birthdayMessagesSent: 0, winbackMessagesSent: 0, topRewardTitle: null, topRewardCount: 0, nfcCards: [], referralBonusPoints: 0 });
+          setNotifications([]);
+          setAllMissionsDoneOver24h(false);
+        } else if (customerData.id === DEMO_MERCHANT_ID) {
           setStats(DEMO_STATS);
           setNotifications([
             { id: "demo-stamps-24h", icon: Trophy, text: "50 neue Karte in den letzten 24 Stunden", time: "Heute", color: "text-emerald-600" },
