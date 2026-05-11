@@ -616,6 +616,10 @@ export default function MerchantOnboarding() {
 
         {/* Step 5 */}
         <Section ref={referralRef} number={5} title="Weiterempfehlungs-Punkte" done={isStep5Done} error={errorField === "referral"}>
+          <Hint>
+            <strong>Tipp:</strong> Zwei erfolgreiche Empfehlungen sollten in etwa einer wirklich attraktiven Prämie entsprechen –
+            so lohnt sich das Weiterempfehlen für deine Kunden spürbar.
+          </Hint>
           <div>
             <Label className="text-sm">Wie viele Punkte bekommt ein Kunde, wenn er erfolgreich einen Freund einlädt?</Label>
             <div className="flex items-center gap-2 mt-2">
