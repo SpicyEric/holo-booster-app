@@ -47,6 +47,7 @@ import SalesRepProvisionen from "./pages/salesrep/SalesRepProvisionen";
 import SalesRepOrders from "./pages/salesrep/SalesRepOrders";
 import Academy from "./pages/shared/Academy";
 import SalesRepCheckout from "./pages/salesrep/SalesRepCheckout";
+import SalesRepDemoAbschluss from "./pages/salesrep/SalesRepDemoAbschluss";
 import MerchantSetup from "./pages/merchant/MerchantSetup";
 import Scan from "./pages/Scan";
 import NotFound from "./pages/NotFound";
@@ -183,6 +184,7 @@ const App = () => {
                 <Route path="orders" element={<SalesRepOrders />} />
                 <Route path="settings" element={<SalesRepSettings />} />
                 <Route path="academy" element={<Academy />} />
+                <Route path="demo-abschluss" element={<SalesRepDemoAbschluss />} />
                 <Route path="abrechnungen" element={<SalesRepAbrechnungen />} />
                 <Route path="vertrag" element={<SalesRepVertrag />} />
                 <Route path="mein-vertrag" element={<SalesRepMeinVertrag />} />
