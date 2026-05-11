@@ -56,7 +56,10 @@ function Quote({ children }: { children: React.ReactNode }) {
 }
 
 export default function Academy() {
-  const [active, setActive] = useState<TabId>("funktion");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tabParam = searchParams.get("tab") as TabId | null;
+  const active: TabId = TABS.some((t) => t.id === tabParam) ? (tabParam as TabId) : "funktion";
+  const setActive = (id: TabId) => setSearchParams({ tab: id }, { replace: true });
   const contentRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
