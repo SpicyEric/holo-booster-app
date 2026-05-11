@@ -6,7 +6,7 @@ import CheckoutForm, { type CheckoutPrefill } from "@/components/checkout/Checko
 import {
   enableDemoMerchant,
 } from "@/lib/demoMerchant";
-import { DEMO_ONBOARDING_CUSTOMER_ID, DEMO_ONBOARDING_MERCHANT_NAME, startDemoOnboardingTour } from "@/lib/demoOnboardingTour";
+import { DEMO_ONBOARDING_CUSTOMER_ID, DEMO_ONBOARDING_MERCHANT_NAME } from "@/lib/demoOnboardingTour";
 
 const DEMO_PREFILL: CheckoutPrefill = {
   companyName: DEMO_ONBOARDING_MERCHANT_NAME,
