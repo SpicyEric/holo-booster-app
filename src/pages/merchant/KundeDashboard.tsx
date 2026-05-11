@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { getUserCustomer } from "@/lib/auth";
+import { DEMO_ONBOARDING_CUSTOMER_ID, isDemoOnboardingTourActive } from "@/lib/demoOnboardingTour";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
@@ -144,10 +145,8 @@ export default function KundeDashboard() {
       }
       try { const { data: subInfo } = await supabase.functions.invoke("get-subscription-info"); if (subInfo) setSubscriptionInfo(subInfo); } catch {}
       if (customerData?.id) {
-        const tourActive = (() => {
-          try { return localStorage.getItem("eloyo:demo-onboarding-tour") !== null; } catch { return false; }
-        })();
-        if (tourActive && customerData.id === DEMO_MERCHANT_ID) {
+        const tourActive = isDemoOnboardingTourActive() && customerData.id === DEMO_ONBOARDING_CUSTOMER_ID;
+        if (tourActive) {
           // Während der Demo-Onboarding-Tour soll alles wie "frisch eingerichtet" aussehen.
           setStats({ totalContacts: 0, totalPointsAwarded: 0, totalRedemptions: 0, invitedCustomers: 0, newContactsThisWeek: 0, birthdayMessagesSent: 0, winbackMessagesSent: 0, topRewardTitle: null, topRewardCount: 0, nfcCards: [], referralBonusPoints: 0 });
           setNotifications([]);
