@@ -12,6 +12,7 @@ import { useState, useEffect } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { enableDemoMerchant } from "@/lib/demoMerchant";
+import { endDemoOnboardingTour } from "@/lib/demoOnboardingTour";
 
 interface NavItem {
   path: string;
@@ -127,6 +128,7 @@ function SidebarNav({ collapsed, onNavigate }: { collapsed: boolean; onNavigate?
 
   const handleNav = (path: string) => {
     if (path === "__demo_merchant__") {
+      endDemoOnboardingTour();
       enableDemoMerchant(location.pathname || "/vertriebler");
       navigate("/kunde");
       onNavigate?.();
