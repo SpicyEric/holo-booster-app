@@ -253,6 +253,53 @@ const MeinGeschaeft = () => {
       const assignment = { customer_id: resolvedCustomerId };
       setCustomerId(resolvedCustomerId);
 
+      if (isDemoOnboardingTourActive() && resolvedCustomerId === DEMO_ONBOARDING_CUSTOMER_ID) {
+        const demo = getDemoOnboardingState();
+        const p = demo.profile;
+        const demoFormData = {
+          name: p.company_name || p.name || "",
+          description: p.description || "",
+          industry: p.industry || "",
+          street: p.street || "",
+          house_number: p.house_number || "",
+          postal_code: p.postal_code || "",
+          city: p.city || "",
+          logo_url: p.logo_url || "",
+          cover_image_url: p.cover_image_url || "",
+          phone: p.phone || "",
+          website: p.website || "",
+          instagram: p.instagram || "",
+          facebook: p.facebook || "",
+          twitter: p.twitter || "",
+          opening_hours: (p.opening_hours as OpeningHours) || defaultOpeningHours,
+          gallery_images: (p.gallery_images as string[]) || [],
+        };
+        setFormData(demoFormData);
+        initialFormDataRef.current = demoFormData;
+        setRewards(demo.rewards);
+        setNewCustomerOffer(demo.newCustomerOffer);
+        if (demo.newCustomerOffer) {
+          setNcoForm({
+            title: demo.newCustomerOffer.title,
+            description: demo.newCustomerOffer.description || "",
+            bonus_stamps: demo.newCustomerOffer.bonus_stamps || 0,
+            is_active: demo.newCustomerOffer.is_active ?? true,
+            image_url: demo.newCustomerOffer.image_url || "",
+          });
+        }
+        setNfcChips(demo.chips);
+        setCustomerBoxes(demo.boxes);
+        const loadedStampMode = p.stamp_mode || 'revenue';
+        const loadedAvgRevenue = p.avg_revenue ?? 25;
+        const loadedManualMode = p.manual_stamp_mode ?? false;
+        setStampMode(loadedStampMode);
+        setAvgRevenue(loadedAvgRevenue);
+        setManualMode(loadedManualMode);
+        setInitialStampState({ stampMode: loadedStampMode, avgRevenue: loadedAvgRevenue, manualMode: loadedManualMode, selectedVariant: 'balanced' });
+        setStampSettingsDirty(false);
+        return;
+      }
+
       // Load customer data
       const { data: customer } = await supabase
         .from("customers")
