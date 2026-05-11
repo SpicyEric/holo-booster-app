@@ -94,7 +94,7 @@ const SalesRepDashboard = () => {
 
   return (
     <WebProtectedRoute allowedRoles={['sales_partner', 'admin']}>
-      <div className="flex min-h-screen w-full bg-[hsl(262,40%,93%)]">
+      <div className="flex min-h-screen w-full bg-[hsl(262,40%,93%)] font-body">
         <SalesRepSidebar />
         <main className="flex-1 min-w-0 overflow-x-hidden p-6">
           <div className="max-w-7xl mx-auto">
