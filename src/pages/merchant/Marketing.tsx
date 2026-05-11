@@ -451,6 +451,13 @@ const Marketing = () => {
     if (!customerId) return;
     setSavingAutomations(true);
     try {
+      if (isDemoOnboardingTourActive() && customerId === DEMO_ONBOARDING_CUSTOMER_ID) {
+        updateDemoOnboardingState({ profile: {
+          birthday_enabled: birthdayEnabled, birthday_bonus_points: birthdayBonusPoints,
+          winback_enabled: winbackEnabled,
+        } });
+        toast.success('Gespeichert (Demo)'); setAutomationsChanged(false); setSavingAutomations(false); return;
+      }
       const { error } = await supabase.from('customers').update({
         birthday_enabled: birthdayEnabled,
         birthday_message: birthdayMessage,
