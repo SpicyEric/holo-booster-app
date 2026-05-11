@@ -20,6 +20,8 @@ import { disableDemoMerchant } from "@/lib/demoMerchant";
 
 interface NavItem {
   path: string;
+  /** Optional ?tab= value — items sharing the same path are distinguished by this. */
+  tab?: string;
   label: string;
   icon: React.ElementType;
   /** Optional sub-items shown when parent is active/expanded. Each maps to `?tab=` on the parent path. */
@@ -36,15 +38,8 @@ const NAV_GROUPS: NavGroup[] = [
     label: "BUSINESS",
     items: [
       { path: "/kunde", label: "Dashboard", icon: LayoutDashboard },
-      {
-        path: "/kunde/mein-geschaeft",
-        label: "Mein Geschäft",
-        icon: Store,
-        subItems: [
-          { tab: "info", label: "Profil", icon: Info },
-          { tab: "karte", label: "System", icon: Package },
-        ],
-      },
+      { path: "/kunde/mein-geschaeft", tab: "info", label: "Profil", icon: Store },
+      { path: "/kunde/mein-geschaeft", tab: "karte", label: "Punktesystem", icon: Package },
     ],
   },
   {
