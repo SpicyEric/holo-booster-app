@@ -755,6 +755,35 @@ export default function MerchantOnboarding() {
           <p className="text-xs text-muted-foreground mt-1">
             {description.length}/300 – Wird Kunden in der eloyo-App angezeigt.
           </p>
+          <div className="mt-3">
+            <p className="text-[11px] text-muted-foreground mb-1.5 flex items-center gap-1">
+              <Sparkles className="w-3 h-3" /> Vorlagen einfügen:
+            </p>
+            <div className="flex flex-wrap gap-1.5">
+              {[
+                { label: "👋 Willkommen", text: "Herzlich willkommen bei uns! Wir freuen uns auf deinen Besuch und darauf, dich mit unseren Lieblingsprodukten zu verwöhnen. ✨" },
+                { label: "🎁 Treue belohnt", text: "Bei uns lohnt sich jeder Besuch: Sammle Punkte, sichere dir tolle Prämien und genieße exklusive Vorteile als Stammgast. 💜" },
+                { label: "🤝 Freunde einladen", text: "Lade 2 Freunde ein, die noch nie bei uns waren — und du hast direkt genug Punkte für eine tolle Prämie! 🎁" },
+                { label: "⭐ Qualität", text: "Mit Liebe zum Detail und höchsten Qualitätsansprüchen sorgen wir dafür, dass jeder Besuch zu einem kleinen Highlight wird." },
+                { label: "📍 Zentral", text: "Du findest uns zentral gelegen — perfekt für einen kurzen Stopp. Wir freuen uns auf dich!" },
+              ].map((tpl) => (
+                <Button
+                  key={tpl.label}
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    const current = description?.trim() || "";
+                    const next = current ? `${current}\n\n${tpl.text}` : tpl.text;
+                    setDescription(next.slice(0, 300));
+                  }}
+                  className="h-7 px-2.5 text-xs rounded-lg bg-slate-100 border-slate-300 hover:bg-primary/10 hover:border-primary/50 hover:text-primary transition-colors"
+                >
+                  {tpl.label}
+                </Button>
+              ))}
+            </div>
+          </div>
         </Section>
       </div>
 
