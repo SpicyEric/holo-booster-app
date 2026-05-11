@@ -3,8 +3,9 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import {
   Loader2, Upload, Check, ImageIcon, Package, Sparkles, Gift, UserPlus,
-  Star, Clock, Edit2, Plus, Trash2, Rocket, X, AlertCircle,
+  Star, Clock, Edit2, Plus, Trash2, Rocket, X, AlertCircle, Lightbulb,
 } from "lucide-react";
+import { isDemoMerchantActive } from "@/lib/demoMerchant";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
