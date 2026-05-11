@@ -38,6 +38,14 @@ import {
 } from '@/components/merchant/explainerCarouselsData';
 import EmojiPicker from '@/components/EmojiPicker';
 import { cn } from '@/lib/utils';
+import {
+  DEMO_ONBOARDING_CUSTOMER_ID,
+  getDemoOnboardingState,
+  getDemoOnboardingStep,
+  isDemoOnboardingTourActive,
+  setDemoOnboardingStep,
+  updateDemoOnboardingState,
+} from '@/lib/demoOnboardingTour';
 import { usePushLimit } from '@/hooks/usePushLimit';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { Bell, AlertTriangle } from 'lucide-react';
@@ -184,6 +192,25 @@ const Marketing = () => {
       const assignment = { customer_id: resolvedCustomerId };
       setCustomerId(resolvedCustomerId);
 
+      if (isDemoOnboardingTourActive() && resolvedCustomerId === DEMO_ONBOARDING_CUSTOMER_ID) {
+        const demo = getDemoOnboardingState();
+        const p = demo.profile;
+        setMerchantDisplayName(p.company_name || p.name || '');
+        setMerchantIndustry(p.industry || null);
+        setAvgOrderValue(p.avg_revenue || 25);
+        setReferralEnabled(p.referral_enabled ?? true);
+        setReferralInviterPoints(p.referral_inviter_points ?? 0);
+        setReferralInviteePoints(p.referral_invitee_points ?? 0);
+        setRewards(demo.rewards);
+        setNewCustomerOffer(demo.newCustomerOffer);
+        if (demo.newCustomerOffer) setNcoForm({ title: demo.newCustomerOffer.title, description: demo.newCustomerOffer.description || '', is_active: demo.newCustomerOffer.is_active ?? true, image_url: demo.newCustomerOffer.image_url || '' });
+        setMessages([]); setOffers([]); setActiveBoost(null); setReferralStats({ total_invites: 0, accepted: 0, converted: 0 }); setReferralList([]);
+        setStampPoints({ green: demo.chips.find(c => c.stamp_color === 'grün')?.points_value ?? null, blue: demo.chips.find(c => c.stamp_color === 'blau')?.points_value ?? null, red: demo.chips.find(c => c.stamp_color === 'rot')?.points_value ?? null });
+        setMiddleStampPoints(demo.chips.find(c => c.stamp_color === 'blau')?.points_value ?? null);
+        setTimeout(() => { automationsLoadedRef.current = true; }, 100);
+        return;
+      }
+
       // Fetch all stamp points for display (supports DE + EN color values)
       const { data: allChips } = await supabase
         .from('nfc_chips')
@@ -312,6 +339,12 @@ const Marketing = () => {
 
   const handleSaveReferral = async () => {
     if (!customerId) return;
+    if (isDemoOnboardingTourActive() && customerId === DEMO_ONBOARDING_CUSTOMER_ID) {
+      updateDemoOnboardingState({ profile: { referral_enabled: true, referral_inviter_points: referralInviterPoints, referral_invitee_points: referralInviteePoints } });
+      if (getDemoOnboardingStep() === 3) setDemoOnboardingStep(4);
+      toast.success("Demo-Empfehlungsbonus gespeichert!");
+      return;
+    }
     setSavingReferral(true);
     try {
       const { error } = await supabase.from("customers").update({
@@ -449,6 +482,15 @@ const Marketing = () => {
 
   const handleSaveReward = async () => {
     if (!customerId || !rewardForm.title) { toast.error("Bitte Titel eingeben"); return; }
+    if (isDemoOnboardingTourActive() && customerId === DEMO_ONBOARDING_CUSTOMER_ID) {
+      const reward = { id: editingReward?.id || `demo-reward-${Date.now()}`, title: rewardForm.title, description: rewardForm.description || null, points_required: rewardForm.points_required, image_url: rewardForm.image_url || null, is_active: true };
+      const nextRewards = editingReward ? rewards.map((r) => r.id === editingReward.id ? reward : r) : [...rewards, reward];
+      setRewards(nextRewards); updateDemoOnboardingState({ rewards: nextRewards });
+      setShowRewardDialog(false); setEditingReward(null); setRewardForm({ title: '', description: '', points_required: 10, image_url: '' });
+      if (getDemoOnboardingStep() === 2) setDemoOnboardingStep(3);
+      toast.success(editingReward ? "Demo-Prämie aktualisiert" : "Demo-Prämie erstellt");
+      return;
+    }
     setSaving(true);
     try {
       if (editingReward) {
@@ -498,6 +540,14 @@ const Marketing = () => {
   const handleSaveNco = async () => {
     if (!customerId) return;
     if (!ncoForm.title) { toast.error("Bitte Titel eingeben"); return; }
+    if (isDemoOnboardingTourActive() && customerId === DEMO_ONBOARDING_CUSTOMER_ID) {
+      const offer = { id: newCustomerOffer?.id || `demo-nco-${Date.now()}`, title: ncoForm.title, description: ncoForm.description || null, bonus_stamps: 0, is_active: true, image_url: ncoForm.image_url || null };
+      setNewCustomerOffer(offer); updateDemoOnboardingState({ newCustomerOffer: offer });
+      setShowNcoDialog(false);
+      if (getDemoOnboardingStep() === 3) setDemoOnboardingStep(4);
+      toast.success("Demo-Neukundenprämie erstellt");
+      return;
+    }
     setSaving(true);
     try {
       const dataToSave = { title: ncoForm.title, description: ncoForm.description || null, bonus_stamps: 0, image_url: ncoForm.image_url || null };

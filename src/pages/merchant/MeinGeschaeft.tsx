@@ -35,6 +35,15 @@ import RichTextEditor from "@/components/merchant/RichTextEditor";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useDemoMerchant } from "@/hooks/useDemoMerchant";
+import {
+  DEMO_ONBOARDING_CARD_ID,
+  DEMO_ONBOARDING_CUSTOMER_ID,
+  getDemoOnboardingState,
+  getDemoOnboardingStep,
+  isDemoOnboardingTourActive,
+  setDemoOnboardingStep,
+  updateDemoOnboardingState,
+} from "@/lib/demoOnboardingTour";
 import { calculateSuggestion, SPEND_PRESETS } from "../wizard/wizardLogic";
 import { cn } from "@/lib/utils";
 import { linkOrphanNfcChipsToMerchant } from "@/lib/nfcChipLinking";
@@ -243,6 +252,53 @@ const MeinGeschaeft = () => {
 
       const assignment = { customer_id: resolvedCustomerId };
       setCustomerId(resolvedCustomerId);
+
+      if (isDemoOnboardingTourActive() && resolvedCustomerId === DEMO_ONBOARDING_CUSTOMER_ID) {
+        const demo = getDemoOnboardingState();
+        const p = demo.profile;
+        const demoFormData = {
+          name: p.company_name || p.name || "",
+          description: p.description || "",
+          industry: p.industry || "",
+          street: p.street || "",
+          house_number: p.house_number || "",
+          postal_code: p.postal_code || "",
+          city: p.city || "",
+          logo_url: p.logo_url || "",
+          cover_image_url: p.cover_image_url || "",
+          phone: p.phone || "",
+          website: p.website || "",
+          instagram: p.instagram || "",
+          facebook: p.facebook || "",
+          twitter: p.twitter || "",
+          opening_hours: (p.opening_hours as OpeningHours) || defaultOpeningHours,
+          gallery_images: (p.gallery_images as string[]) || [],
+        };
+        setFormData(demoFormData);
+        initialFormDataRef.current = demoFormData;
+        setRewards(demo.rewards);
+        setNewCustomerOffer(demo.newCustomerOffer);
+        if (demo.newCustomerOffer) {
+          setNcoForm({
+            title: demo.newCustomerOffer.title,
+            description: demo.newCustomerOffer.description || "",
+            bonus_stamps: demo.newCustomerOffer.bonus_stamps || 0,
+            is_active: demo.newCustomerOffer.is_active ?? true,
+            image_url: demo.newCustomerOffer.image_url || "",
+          });
+        }
+        setNfcChips(demo.chips);
+        setCustomerBoxes(demo.boxes);
+        const loadedStampMode = p.stamp_mode || 'revenue';
+        const loadedAvgRevenue = p.avg_revenue ?? 25;
+        const loadedManualMode = p.manual_stamp_mode ?? false;
+        setStampMode(loadedStampMode);
+        setAvgRevenue(loadedAvgRevenue);
+        setManualMode(loadedManualMode);
+        setInitialStampState({ stampMode: loadedStampMode, avgRevenue: loadedAvgRevenue, manualMode: loadedManualMode, selectedVariant: 'balanced' });
+        setStampSettingsDirty(false);
+        return;
+      }
 
       // Load customer data
       const { data: customer } = await supabase
@@ -458,6 +514,35 @@ const MeinGeschaeft = () => {
 
   const handleSaveInfo = async () => {
     if (!customerId) return;
+
+    if (isDemoOnboardingTourActive() && customerId === DEMO_ONBOARDING_CUSTOMER_ID) {
+      updateDemoOnboardingState({
+        profile: {
+          name: formData.name,
+          company_name: formData.name,
+          description: formData.description,
+          industry: formData.industry,
+          street: formData.street,
+          house_number: formData.house_number,
+          postal_code: formData.postal_code,
+          city: formData.city,
+          logo_url: formData.logo_url,
+          cover_image_url: formData.cover_image_url,
+          phone: formData.phone,
+          website: formData.website,
+          instagram: formData.instagram,
+          facebook: formData.facebook,
+          twitter: formData.twitter,
+          opening_hours: formData.opening_hours,
+          gallery_images: formData.gallery_images,
+        },
+      });
+      initialFormDataRef.current = { ...formData };
+      setProfileDirty(false);
+      if (getDemoOnboardingStep() === 4) setDemoOnboardingStep(5);
+      toast.success("Demo-Profil gespeichert");
+      return;
+    }
     
     setSaving(true);
     try {
@@ -551,6 +636,28 @@ const MeinGeschaeft = () => {
       return;
     }
 
+    if (isDemoOnboardingTourActive() && customerId === DEMO_ONBOARDING_CUSTOMER_ID) {
+      const reward = {
+        id: editingReward?.id || `demo-reward-${Date.now()}`,
+        title: rewardForm.title,
+        description: rewardForm.description || null,
+        points_required: rewardForm.points_required,
+        image_url: rewardForm.image_url || null,
+        is_active: true,
+      };
+      const nextRewards = editingReward
+        ? rewards.map((r) => (r.id === editingReward.id ? reward : r))
+        : [...rewards, reward];
+      setRewards(nextRewards);
+      updateDemoOnboardingState({ rewards: nextRewards });
+      setShowRewardDialog(false);
+      setEditingReward(null);
+      setRewardForm({ title: "", description: "", points_required: 10, image_url: "" });
+      if (getDemoOnboardingStep() === 2) setDemoOnboardingStep(3);
+      toast.success(editingReward ? "Demo-Prämie aktualisiert" : "Demo-Prämie erstellt");
+      return;
+    }
+
     setSaving(true);
     try {
       if (editingReward) {
@@ -605,6 +712,23 @@ const MeinGeschaeft = () => {
   const handleSaveNco = async () => {
     if (!customerId || !ncoForm.title) {
       toast.error("Bitte Titel eingeben");
+      return;
+    }
+
+    if (isDemoOnboardingTourActive() && customerId === DEMO_ONBOARDING_CUSTOMER_ID) {
+      const offer = {
+        id: newCustomerOffer?.id || `demo-nco-${Date.now()}`,
+        title: ncoForm.title,
+        description: ncoForm.description || null,
+        bonus_stamps: ncoForm.bonus_stamps,
+        is_active: ncoForm.is_active,
+        image_url: ncoForm.image_url || null,
+      };
+      setNewCustomerOffer(offer);
+      updateDemoOnboardingState({ newCustomerOffer: offer });
+      setShowNcoDialog(false);
+      if (getDemoOnboardingStep() === 3) setDemoOnboardingStep(4);
+      toast.success("Demo-Neukundenprämie erstellt");
       return;
     }
 
@@ -666,6 +790,26 @@ const MeinGeschaeft = () => {
 
   const handleSaveChips = async () => {
     if (!customerId) return;
+
+    if (isDemoOnboardingTourActive() && customerId === DEMO_ONBOARDING_CUSTOMER_ID) {
+      let chipsToSave = nfcChips;
+      if (!manualMode && stampMode === 'revenue') {
+        const suggestion = calculateSuggestion(avgRevenue, ['visits'], selectedVariant);
+        if (suggestion.type === 'tiered' && suggestion.tiers) {
+          const colorMap: Record<string, number> = {};
+          const dbColorMap: Record<string, string> = { green: 'grün', blue: 'blau', red: 'rot' };
+          suggestion.tiers.forEach((tier) => { colorMap[dbColorMap[tier.color] || tier.color] = tier.points; });
+          chipsToSave = nfcChips.map((chip) => ({ ...chip, points_value: colorMap[chip.stamp_color?.toLowerCase() || ''] ?? chip.points_value }));
+        }
+      }
+      setNfcChips(chipsToSave);
+      updateDemoOnboardingState({ profile: { stamp_mode: stampMode, avg_revenue: avgRevenue, manual_stamp_mode: manualMode }, chips: chipsToSave });
+      setInitialStampState({ stampMode, avgRevenue, manualMode, selectedVariant });
+      setStampSettingsDirty(false);
+      if (getDemoOnboardingStep() === 1) setDemoOnboardingStep(2);
+      toast.success('Demo-Karte gespeichert');
+      return;
+    }
     
     setSavingChips(true);
     try {
@@ -784,6 +928,27 @@ const MeinGeschaeft = () => {
 
     setAddingBox(true);
     try {
+      if (isDemoOnboardingTourActive() && customerId === DEMO_ONBOARDING_CUSTOMER_ID) {
+        if (newBoxId.trim().toUpperCase() !== DEMO_ONBOARDING_CARD_ID) {
+          toast.error(`Nutze für die Demo bitte ${DEMO_ONBOARDING_CARD_ID}`);
+          return;
+        }
+        const assignedAt = new Date().toISOString();
+        const demoBoxes = [{ id: 'demo-box-link-1', box_id: 'demo-box-1', stamp_code: DEMO_ONBOARDING_CARD_ID, assigned_at: assignedAt }];
+        const demoChips = [
+          { id: 'demo-chip-green', chip_uid: 'demo-emre-green', stamp_name: 'Karte 1', stamp_color: 'grün', points_value: 1, is_active: true },
+          { id: 'demo-chip-blue', chip_uid: 'demo-emre-blue', stamp_name: 'Karte 2', stamp_color: 'blau', points_value: 1, is_active: true },
+          { id: 'demo-chip-red', chip_uid: 'demo-emre-red', stamp_name: 'Karte 3', stamp_color: 'rot', points_value: 1, is_active: true },
+        ];
+        setCustomerBoxes(demoBoxes);
+        setNfcChips(demoChips);
+        setNewBoxId('');
+        updateDemoOnboardingState({ boxes: demoBoxes, chips: demoChips, profile: { stamp_id: DEMO_ONBOARDING_CARD_ID } });
+        if (getDemoOnboardingStep() === 0) setDemoOnboardingStep(1);
+        toast.success('Demo-Karten-ID hinzugefügt');
+        return;
+      }
+
       const { data: boxData } = await supabase
         .from('boxes')
         .select('id, stamp_id, stamp_preset')
