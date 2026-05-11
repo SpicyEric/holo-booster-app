@@ -33,6 +33,7 @@ type Phase = "form" | "checkout" | "success";
 export default function SalesRepDemoAbschluss() {
   const navigate = useNavigate();
   const [phase, setPhase] = useState<Phase>("form");
+  const submittedValuesRef = useRef<Record<string, string> | null>(null);
 
   // Highlight + pulse the "Zur Kasse" submit button at the bottom of CheckoutForm.
   useEffect(() => {
@@ -61,16 +62,33 @@ export default function SalesRepDemoAbschluss() {
     };
   }, []);
 
-  const handleDemoSubmit = () => {
+  const handleDemoSubmit = (values: Parameters<NonNullable<React.ComponentProps<typeof CheckoutForm>["onDemoSubmit"]>>[0]) => {
+    submittedValuesRef.current = values;
     setPhase("checkout");
     setTimeout(() => setPhase("success"), 1700);
   };
 
   const handleStartSetup = () => {
+    const v = submittedValuesRef.current || {};
+    const displayName = (v as any).companyName?.trim() || DEMO_ONBOARDING_MERCHANT_NAME;
     enableDemoMerchant({
       returnPath: "/vertriebler/demo-abschluss",
       customerId: DEMO_ONBOARDING_CUSTOMER_ID,
-      name: DEMO_ONBOARDING_MERCHANT_NAME,
+      name: displayName,
+    });
+    // Initial-Profil aus dem Checkout-Formular in den Demo-Onboarding-State übernehmen,
+    // damit Profil/Punktesystem/Marketing direkt die eingetragenen Werte zeigen.
+    startDemoOnboardingTour({
+      name: displayName,
+      company_name: displayName,
+      industry: (v as any).industry || "barbershop",
+      street: (v as any).street || "",
+      house_number: (v as any).houseNumber || "",
+      postal_code: (v as any).postalCode || "",
+      city: (v as any).city || "",
+      phone: (v as any).contactPhone || "",
+      email: (v as any).contactEmail || "demo+barbershop-emre@eloyo.de",
+      contact_person: [(v as any).firstName, (v as any).lastName].filter(Boolean).join(" "),
     });
     navigate("/kunde/willkommen", { replace: true });
   };
