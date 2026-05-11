@@ -145,6 +145,33 @@ export default function MerchantOnboarding() {
           }
         }
 
+        // Demo: aus Demo-State hydratisieren, falls Tour bereits läuft (z.B. zurück zur Seite)
+        if (isDemo && isDemoOnboardingTourActive()) {
+          const demo = getDemoOnboardingState();
+          const p = demo.profile || {};
+          setCoverUrl(p.cover_image_url || "");
+          setLogoUrl(p.logo_url || "");
+          setDescription(p.description || "");
+          if (p.opening_hours) setOpeningHours(p.opening_hours as OpeningHours);
+          if (typeof p.avg_revenue === "number") setAvgRevenue(p.avg_revenue);
+          if (typeof p.referral_inviter_points === "number" && p.referral_inviter_points > 0)
+            setReferralPoints(p.referral_inviter_points);
+          if (demo.rewards?.length) {
+            setRewards(demo.rewards.map((r) => ({
+              id: r.id, title: r.title, points_required: r.points_required,
+              image_url: r.image_url || "", saved: true,
+            })));
+          }
+          if (demo.newCustomerOffer) {
+            setNcoSaved(true);
+            setNcoForm({
+              title: demo.newCustomerOffer.title || "",
+              kind: "percent",
+              value: "",
+            });
+          }
+        }
+
         // If a reward already exists → leave onboarding (außer im Demo-Modus)
         if (!isDemo) {
           const { count } = await supabase
