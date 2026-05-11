@@ -746,7 +746,7 @@ interface SectionProps {
   children: React.ReactNode;
 }
 
-const Section = (await import("react")).forwardRef<HTMLDivElement, SectionProps>(function Section(
+const Section = forwardRef<HTMLDivElement, SectionProps>(function Section(
   { number, title, done, optional, error, children },
   ref,
 ) {
