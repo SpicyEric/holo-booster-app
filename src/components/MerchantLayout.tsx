@@ -3,7 +3,6 @@ import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { Outlet } from "react-router-dom";
 import MerchantSidebar from "@/components/merchant/MerchantSidebar";
 import DemoMerchantBanner from "@/components/DemoMerchantBanner";
-import DemoOnboardingTourBanner from "@/components/DemoOnboardingTourBanner";
 import { isDemoMerchantActive } from "@/lib/demoMerchant";
 import { useDemoMerchant } from "@/hooks/useDemoMerchant";
 
@@ -24,7 +23,6 @@ const MerchantLayout = () => {
       <div className="flex min-h-screen w-full bg-[hsl(262,40%,93%)] font-body">
         <MerchantSidebar />
         <main className="flex-1 min-w-0 overflow-x-hidden font-body flex flex-col">
-          <DemoOnboardingTourBanner />
           <DemoMerchantBanner />
           <div className="flex-1 min-w-0">
             <Outlet />
