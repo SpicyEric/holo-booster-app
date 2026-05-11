@@ -107,8 +107,9 @@ function SidebarNav({ collapsed, onNavigate, companyName, subStatus }: { collaps
     }
   };
 
-  const handleNav = (path: string) => {
-    navigate(path);
+  const handleNav = (item: NavItem) => {
+    const target = item.tab ? `${item.path}?tab=${item.tab}` : item.path;
+    navigate(target);
     onNavigate?.();
   };
 
@@ -129,12 +130,12 @@ function SidebarNav({ collapsed, onNavigate, companyName, subStatus }: { collaps
             )}
             <div className="space-y-1">
               {group.items.map((item) => {
-                const active = isActive(item.path);
+                const active = isActive(item);
                 const showSubItems = active && !collapsed && item.subItems && item.subItems.length > 0;
                 return (
-                  <div key={item.path}>
+                  <div key={`${item.path}:${item.tab ?? ''}`}>
                     <button
-                      onClick={() => handleNav(item.path)}
+                      onClick={() => handleNav(item)}
                       className={cn(
                         "w-full flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200 relative",
                         "hover:bg-white/10 active:scale-[0.97]",
