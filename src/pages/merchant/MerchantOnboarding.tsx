@@ -125,7 +125,7 @@ export default function MerchantOnboarding() {
           .eq("id", cid)
           .maybeSingle();
 
-        if (customer) {
+        if (customer && !isDemo) {
           setCoverUrl(customer.cover_image_url || "");
           setLogoUrl(customer.logo_url || "");
           setDescription(customer.description || "");
