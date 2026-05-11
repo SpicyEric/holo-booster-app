@@ -110,10 +110,14 @@ export const TOUR_STEPS: TourStep[] = [
   },
 ];
 
-export function startDemoOnboardingTour() {
+export function startDemoOnboardingTour(profileOverride?: Record<string, any>) {
   try {
+    const initial = createInitialDemoOnboardingState();
+    if (profileOverride) {
+      initial.profile = { ...initial.profile, ...profileOverride };
+    }
     localStorage.setItem(STEP_KEY, "0");
-    localStorage.setItem(STATE_KEY, JSON.stringify(createInitialDemoOnboardingState()));
+    localStorage.setItem(STATE_KEY, JSON.stringify(initial));
     window.dispatchEvent(new Event(EVENT_NAME));
   } catch {}
 }
