@@ -139,14 +139,16 @@ export default function MerchantOnboarding() {
           }
         }
 
-        // If a reward already exists → leave onboarding
-        const { count } = await supabase
-          .from("rewards")
-          .select("id", { count: "exact", head: true })
-          .eq("merchant_customer_id", cid);
-        if ((count || 0) > 0) {
-          navigate("/kunde", { replace: true });
-          return;
+        // If a reward already exists → leave onboarding (außer im Demo-Modus)
+        if (!isDemo) {
+          const { count } = await supabase
+            .from("rewards")
+            .select("id", { count: "exact", head: true })
+            .eq("merchant_customer_id", cid);
+          if ((count || 0) > 0) {
+            navigate("/kunde", { replace: true });
+            return;
+          }
         }
       } finally {
         setLoading(false);
