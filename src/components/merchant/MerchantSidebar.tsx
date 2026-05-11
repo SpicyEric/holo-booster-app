@@ -20,6 +20,8 @@ import { disableDemoMerchant } from "@/lib/demoMerchant";
 
 interface NavItem {
   path: string;
+  /** Optional ?tab= value — items sharing the same path are distinguished by this. */
+  tab?: string;
   label: string;
   icon: React.ElementType;
   /** Optional sub-items shown when parent is active/expanded. Each maps to `?tab=` on the parent path. */
@@ -36,15 +38,8 @@ const NAV_GROUPS: NavGroup[] = [
     label: "BUSINESS",
     items: [
       { path: "/kunde", label: "Dashboard", icon: LayoutDashboard },
-      {
-        path: "/kunde/mein-geschaeft",
-        label: "Mein Geschäft",
-        icon: Store,
-        subItems: [
-          { tab: "info", label: "Profil", icon: Info },
-          { tab: "karte", label: "System", icon: Package },
-        ],
-      },
+      { path: "/kunde/mein-geschaeft", tab: "info", label: "Profil", icon: Store },
+      { path: "/kunde/mein-geschaeft", tab: "karte", label: "Punktesystem", icon: Package },
     ],
   },
   {
@@ -85,9 +80,14 @@ function SidebarNav({ collapsed, onNavigate, companyName, subStatus }: { collaps
   const [searchParams] = useSearchParams();
   const currentTab = searchParams.get('tab');
 
-  const isActive = (path: string) => {
-    if (path === "/kunde") return location.pathname === "/kunde" || location.pathname === "/kunde/";
-    return location.pathname.startsWith(path);
+  const isActive = (item: NavItem) => {
+    if (item.path === "/kunde") return location.pathname === "/kunde" || location.pathname === "/kunde/";
+    if (!location.pathname.startsWith(item.path)) return false;
+    if (item.tab) {
+      // Sibling items on same path are distinguished by ?tab= (default = "info")
+      return (currentTab || "info") === item.tab;
+    }
+    return true;
   };
 
   const demoActive = useDemoMerchant();
@@ -107,8 +107,9 @@ function SidebarNav({ collapsed, onNavigate, companyName, subStatus }: { collaps
     }
   };
 
-  const handleNav = (path: string) => {
-    navigate(path);
+  const handleNav = (item: NavItem) => {
+    const target = item.tab ? `${item.path}?tab=${item.tab}` : item.path;
+    navigate(target);
     onNavigate?.();
   };
 
@@ -129,12 +130,12 @@ function SidebarNav({ collapsed, onNavigate, companyName, subStatus }: { collaps
             )}
             <div className="space-y-1">
               {group.items.map((item) => {
-                const active = isActive(item.path);
+                const active = isActive(item);
                 const showSubItems = active && !collapsed && item.subItems && item.subItems.length > 0;
                 return (
-                  <div key={item.path}>
+                  <div key={`${item.path}:${item.tab ?? ''}`}>
                     <button
-                      onClick={() => handleNav(item.path)}
+                      onClick={() => handleNav(item)}
                       className={cn(
                         "w-full flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200 relative",
                         "hover:bg-white/10 active:scale-[0.97]",

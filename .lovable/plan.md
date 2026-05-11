@@ -1,60 +1,53 @@
-## Ziel
+## Drei Bereiche
 
-Im Vertriebler-Bereich einen vollwertigen "Demo-Abschluss"-Übungsmodus bauen und die Academy-Sidebar aufräumen.
+### 1. Sidebar (`src/components/merchant/MerchantSidebar.tsx`)
+- "Mein Geschäft" als Ausklapper komplett entfernen.
+- Neu unter **BUSINESS** (flach, beide direkt sichtbar):
+  - **Profil** → `/kunde/mein-geschaeft?tab=info`, Icon `Store`
+  - **Punktesystem** → `/kunde/mein-geschaeft?tab=karte`, Icon `Package`
+- `isActive`-Logik erweitern, damit zwei Items auf demselben Pfad anhand `?tab=` separat aktiv markiert werden.
+- Marketing bleibt mit Sub-Items unverändert. Demo-Sidebar zeigt dieselbe Struktur.
 
-## 1. Sidebar Academy umbauen
+### 2. Punktesystem-Seite (`src/pages/merchant/MeinGeschaeft.tsx`, Tab `karte`)
+- **Entfernen:** Auto-/Manuell-Toggles, Slider, Variant-Tabs (Ausgewogen/Umsatzboost), farbige Tier-Badges, Beispiel-Einkäufe.
+- **Behalten:** Karten-ID-Sektion (unverändert).
+- **Neu:** Schlichte Liste mit 3 Kacheln „Karte 1/2/3" (dunkel, kein Farbakzent), Punkte-Wert je Karte als Input, ein einzelner „Speichern"-Button.
+- Speichern: setzt `manual_stamp_mode=true`, `stamp_mode='classic'`, schreibt `points_value` der vorhandenen `nfc_chips` (in fester Reihenfolge grün/blau/rot bzw. nach `created_at`).
+- Überschrift „Punktesystem" oben im Tab.
 
-Aktuell hat Academy 5 Unterpunkte (Wie funktioniert eloyo, Box, Kunden, Abschluss, Verkauf). Diese werden ersetzt durch nur 3 Einträge:
+### 3. Automatische Onboarding-Seite (`/kunde/willkommen`)
+Neue Datei `src/pages/merchant/MerchantOnboarding.tsx`, neue Route in `App.tsx`.
 
-- **Quick Onboarding** → führt zur bestehenden Academy-Seite (`/vertriebler/academy`); die Tabs oben bleiben erhalten und werden dort durchgeklickt.
-- **Demo Abschluss** → `/vertriebler/demo-abschluss` (neu)
-- **Demo Merchant** → triggert den vorhandenen `enableDemoMerchant`-Flow
+**Auto-Redirect:** `KundeDashboard` prüft beim Laden, ob bereits eine Prämie existiert. Falls 0 → `navigate('/kunde/willkommen', { replace: true })`. Sobald ≥1 Prämie existiert, erscheint die Seite nie wieder. Demo-Onboarding-Tour bleibt davon unberührt.
 
-Der goldene "Demo Merchant"-Button am unteren Rand der Sidebar wird entfernt.
+**Aufbau** (alles auf einer scrollbaren Seite, jede Sektion mit Checkmark wenn erfüllt):
+1. **Titelbild & Logo** – inline Uploads (Storage-Bucket `customer-assets`). Titelbild Pflicht, Logo optional.
+2. **Karten-ID** – ein Input `XXXXX-XXXXX-XXXXX` (gleiche Format-Logik wie bestehend).
+3. **Punktesystem** – Eingabe „Durchschnittsausgabe €" → mit `calculateSuggestion(avg, ['visits'], 'balanced')` werden Punkte für Karte 1/2/3 vorbefüllt (live), beide Werte editierbar.
+4. **Bis zu 5 Prämien** – inline Mini-Form (Titel + Punkte + optional Bild), grüner Haken pro angelegter Prämie. Mindestens 1 erforderlich.
+5. **Empfehlungspunkte** – ein Number-Input, Default 20.
+6. **Neukundenprämie** – Button öffnet inline kleines Formular (Name + Art: Rabatt%/Festbetrag/Gratis-Produkt + Wert).
+7. **Öffnungszeiten (optional)** – gleiche UI wie im Profil.
+8. **Beschreibung (optional)** – Textarea max 300 Zeichen.
 
-## 2. Neue Seite: Demo Abschluss (`/vertriebler/demo-abschluss`)
+**Speichern-Button** (sticky unten): „🚀 Einrichtung abschließen & loslegen"
+- Validiert Pflichtfelder, scrollt bei Fehler zum ersten fehlenden Feld und markiert es rot.
+- Persistiert: `customers` (cover_image_url, logo_url, opening_hours, description, stamp_mode='classic', manual_stamp_mode=true, avg_revenue, referral_bonus_points, birthday_enabled=true, birthday_bonus_points=20, recall_enabled=false, google_review_enabled=false).
+- Box-ID via `customer_boxes` + lookup in `boxes` (gleiche Logik wie `handleAddBox`).
+- Punkte → Update der vorhandenen `nfc_chips` in fester Reihenfolge.
+- Prämien → Insert in `rewards`.
+- Neukundenprämie → Insert in `new_customer_offers`.
+- Anschließend → `navigate('/kunde')`.
 
-### Schritt A — Vorausgefüllter Checkout
-- Eigene Demo-Variante des Checkout-Bildschirms (kein echter `CheckoutForm`-Submit).
-- Felder vorausgefüllt mit "Backstube König"-Beispieldaten (Firma, Inhaber Vorname/Nachname, Demo-Email, Adresse, Telefon, 1 Standort, Starterbox).
-- Hinweis-Banner oben: „Demo-Modus – es werden keine echten Daten gespeichert."
-- Der CTA „Kunde abschließen" pulsiert/blinkt mit Pfeil-Animation und Tooltip „Hier geht's weiter →".
+### Technisches
 
-### Schritt B — Stripe-Simulation
-- Klick öffnet eine Modal/Übergangsanzeige: „Jetzt würde der Stripe-Checkout starten…" mit Lade-Animation, ca. 1,5 s, dann „Zahlung erfolgreich (Demo)".
-- Kein realer Stripe-Aufruf, kein DB-Insert.
+- Keine DB-Migration nötig: alle benötigten Spalten (`stamp_mode`, `manual_stamp_mode`, `avg_revenue`, `referral_bonus_points`, `birthday_enabled`, `birthday_bonus_points`, `recall_enabled`, `google_review_enabled`) werden bereits an anderer Stelle im Code beschrieben (Marketing/MeinKonto). Falls eine Spalte beim Speichern fehlt, fange ich den Fehler ab und überspringe sie.
+- Falls für die 3 Karten weniger als 3 NFC-Chip-Records existieren (frisches Konto), werden auf der einfachen Punktesystem-Seite Platzhalter angezeigt mit Hinweis „Erst Karten-ID hinterlegen".
+- Auf der Onboarding-Seite werden vorhandene Chips nach Erfassung der Karten-ID neu geladen, bevor Punkte zugewiesen werden.
 
-### Schritt C — Geführte Einrichtung im Merchant-Bereich
-- Aktiviert den bestehenden Demo-Merchant-Modus (`enableDemoMerchant` mit Backstube König) → Schreibvorgänge sind ohnehin durch den DemoWriteGuard blockiert.
-- Navigiert zu `/kunde` (Merchant Dashboard).
-- Setzt ein zusätzliches localStorage-Flag `eloyo:demo-onboarding-tour` mit aktuellem Step.
-- Ein **goldener Top-Banner** (über dem bestehenden Demo-Banner) zeigt Step-für-Step-Anweisungen mit Fortschrittsanzeige (z. B. „Schritt 2 von 6") und einem „Erledigt – weiter →"-Button.
-
-### Tour-Schritte
-1. „Klicke links auf **Mein Geschäft** und öffne den Tab **System**."
-2. „Trage im Bereich Karten-ID die folgende Demo-Karten-ID ein: **DEMO-0421-AB**."
-3. „Wechsle in den Tab **Punkte** und stelle die Werte ein: Klein 10, Mittel 30, Groß 60."
-4. „Lege im Tab **Prämien** drei Prämien fest (Erste, Mittlere, Top)."
-5. „Aktiviere die **Neukundenprämie** und setze den Weiterempfehlungs-Bonus."
-6. Abschluss-Karte: „**Perfekt!** Dein Demo-Kunde ist optimal eingerichtet. Mache jetzt 1–2 Trainingsdurchläufe direkt mit deinem Kunden vor Ort." Buttons: „Tour beenden" (deaktiviert Demo-Modus) / „Tour neu starten".
-
-Steps werden über einfaches Pattern-Matching der aktuellen Route + DOM-Heuristik weitergeschaltet, alternativ manuell per „Erledigt"-Button (immer verfügbar als Fallback). Erstimplementierung: manuelles Weiterschalten — robust und framework-agnostisch.
-
-## 3. Demo-Abschluss verlassen
-
-- Tour-Banner enthält ein „X – Tour abbrechen" das `eloyo:demo-onboarding-tour` löscht und Demo-Merchant-Modus deaktiviert (zurück zu `/vertriebler`).
-- Bestehender amber `DemoMerchantBanner` bleibt unverändert — der Tour-Banner liegt **darüber** (höherer z-index) wenn Tour aktiv.
-
-## Technische Änderungen
-
-| Datei | Änderung |
-|---|---|
-| `src/components/salesrep/SalesRepSidebar.tsx` | Academy-Gruppe auf 3 Einträge reduzieren; Demo-Merchant-Button unten entfernen; Demo-Merchant-Item triggert `enableDemoMerchant` direkt |
-| `src/pages/salesrep/SalesRepDemoAbschluss.tsx` | **Neu** — Checkout-Demo + Stripe-Simulation + Start der Tour |
-| `src/lib/demoOnboardingTour.ts` | **Neu** — localStorage-Helper (start/step/end) + Event |
-| `src/hooks/useDemoOnboardingTour.ts` | **Neu** — Hook für aktuellen Step |
-| `src/components/DemoOnboardingTourBanner.tsx` | **Neu** — Goldener Top-Banner mit Step-Inhalt, Fortschritt, „Weiter"/„Abbrechen" |
-| `src/components/MerchantLayout.tsx` | Tour-Banner einbinden (oberhalb DemoMerchantBanner) |
-| `src/App.tsx` | Route `/vertriebler/demo-abschluss` registrieren |
-
-Kein DB-Migrations-, kein Edge-Function-, kein Stripe-Aufruf. Reines Frontend.
+### Geänderte/neue Dateien
+- `src/components/merchant/MerchantSidebar.tsx` (Sidebar-Items + isActive)
+- `src/pages/merchant/MeinGeschaeft.tsx` (karte-Tab vereinfachen)
+- `src/pages/merchant/KundeDashboard.tsx` (Auto-Redirect)
+- `src/pages/merchant/MerchantOnboarding.tsx` (neu)
+- `src/App.tsx` (neue Route)
