@@ -82,8 +82,18 @@ function SidebarNav({ collapsed, onNavigate }: { collapsed: boolean; onNavigate?
   const location = useLocation();
 
   const isActive = (path: string) => {
-    if (path === "/vertriebler") return location.pathname === "/vertriebler" || location.pathname === "/vertriebler/";
-    return location.pathname.startsWith(path);
+    const [pathOnly, query] = path.split("?");
+    if (pathOnly === "/vertriebler") {
+      return location.pathname === "/vertriebler" || location.pathname === "/vertriebler/";
+    }
+    if (query) {
+      // Match exact pathname + query param
+      const params = new URLSearchParams(query);
+      const tab = params.get("tab");
+      const currentTab = new URLSearchParams(location.search).get("tab") || "funktion";
+      return location.pathname === pathOnly && (tab === currentTab || (tab === "funktion" && !currentTab));
+    }
+    return location.pathname.startsWith(pathOnly);
   };
 
   const groupHasActive = (group: NavGroup) => group.items.some((i) => isActive(i.path));
