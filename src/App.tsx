@@ -35,6 +35,7 @@ import Settings from "./pages/admin/Settings";
 import MerchantLayout from "./components/MerchantLayout";
 import KundeDashboard from "./pages/merchant/KundeDashboard";
 import MeinGeschaeft from "./pages/merchant/MeinGeschaeft";
+import MerchantOnboarding from "./pages/merchant/MerchantOnboarding";
 import GoogleBewertungen from "./pages/merchant/GoogleBewertungen";
 import MeinKonto from "./pages/merchant/MeinKonto";
 import Nachrichten from "./pages/merchant/Nachrichten";
