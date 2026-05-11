@@ -1,26 +1,29 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, ArrowRight, Sparkles, ShoppingCart, Loader2, CheckCircle2, Info } from "lucide-react";
-import { Card } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+import { ArrowRight, Sparkles, Loader2, CheckCircle2, Info } from "lucide-react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { enableDemoMerchant, DEFAULT_DEMO_MERCHANT_CUSTOMER_ID, DEFAULT_DEMO_MERCHANT_NAME } from "@/lib/demoMerchant";
+import CheckoutForm, { type CheckoutPrefill } from "@/components/checkout/CheckoutForm";
+import {
+  enableDemoMerchant,
+  DEFAULT_DEMO_MERCHANT_CUSTOMER_ID,
+  DEFAULT_DEMO_MERCHANT_NAME,
+} from "@/lib/demoMerchant";
 import { startDemoOnboardingTour } from "@/lib/demoOnboardingTour";
 
-const DEMO_DATA = {
-  company_name: "Backstube König",
-  contact_first_name: "Markus",
-  contact_last_name: "König",
-  email: "demo+backstube@eloyo.de",
-  phone: "+49 89 123456789",
-  street: "Marienplatz 8",
-  zip: "80331",
+const DEMO_PREFILL: CheckoutPrefill = {
+  companyName: "Backstube König",
+  street: "Marienplatz",
+  houseNumber: "8",
+  postalCode: "80331",
   city: "München",
   country: "Deutschland",
-  vat_id: "DE123456789",
-  notes: "Backstube mit 1 Standort, traditionelle Bäckerei seit 1972. Will Stammkunden binden und Neukunden über die App gewinnen.",
+  vatId: "DE123456789",
+  industry: "baeckerei",
+  firstName: "Markus",
+  lastName: "König",
+  contactEmail: "demo+backstube@eloyo.de",
+  contactPhone: "+49 89 123456789",
+  additionalContacts: "",
 };
 
 type Phase = "form" | "checkout" | "success";
@@ -29,14 +32,41 @@ export default function SalesRepDemoAbschluss() {
   const navigate = useNavigate();
   const [phase, setPhase] = useState<Phase>("form");
 
-  const handleAbschluss = () => {
+  // Highlight + pulse the "Zur Kasse" submit button at the bottom of CheckoutForm.
+  useEffect(() => {
+    const root = document.getElementById("demo-abschluss-root");
+    if (!root) return;
+    const btn = root.querySelector('button[type="submit"]') as HTMLButtonElement | null;
+    if (!btn) return;
+    btn.textContent = "Kunde abschließen (Demo)";
+    btn.classList.add(
+      "ring-4",
+      "ring-amber-300",
+      "ring-offset-2",
+      "animate-pulse",
+      "shadow-lg",
+      "shadow-amber-500/40"
+    );
+    return () => {
+      btn.classList.remove(
+        "ring-4",
+        "ring-amber-300",
+        "ring-offset-2",
+        "animate-pulse",
+        "shadow-lg",
+        "shadow-amber-500/40"
+      );
+    };
+  }, []);
+
+  const handleDemoSubmit = () => {
     setPhase("checkout");
     setTimeout(() => setPhase("success"), 1700);
   };
 
   const handleStartSetup = () => {
     enableDemoMerchant({
-      returnPath: "/vertriebler",
+      returnPath: "/vertriebler/demo-abschluss",
       customerId: DEFAULT_DEMO_MERCHANT_CUSTOMER_ID,
       name: DEFAULT_DEMO_MERCHANT_NAME,
     });
@@ -45,23 +75,16 @@ export default function SalesRepDemoAbschluss() {
   };
 
   return (
-    <div className="space-y-6 max-w-4xl mx-auto pb-12">
+    <div id="demo-abschluss-root" className="space-y-6 pb-12">
       {/* Header */}
-      <div className="flex items-center justify-between gap-4 flex-wrap">
-        <div>
-          <button
-            onClick={() => navigate("/vertriebler")}
-            className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground mb-2 transition-colors"
-          >
-            <ArrowLeft className="w-3.5 h-3.5" /> Zurück
-          </button>
-          <h1 className="text-3xl font-bold flex items-center gap-2">
-            <Sparkles className="w-7 h-7 text-amber-500" /> Demo Abschluss
-          </h1>
-          <p className="text-muted-foreground mt-1">
-            Übe einen kompletten Kundenabschluss inkl. Einrichtung – ohne dass etwas gespeichert oder bezahlt wird.
-          </p>
-        </div>
+      <div>
+        <h1 className="text-3xl font-bold flex items-center gap-2">
+          <Sparkles className="w-7 h-7 text-amber-500" /> Demo Abschluss
+        </h1>
+        <p className="text-muted-foreground mt-1">
+          Übe einen kompletten Kundenabschluss inkl. Einrichtung – ohne dass
+          etwas gespeichert oder bezahlt wird.
+        </p>
       </div>
 
       {/* Demo banner */}
@@ -70,70 +93,24 @@ export default function SalesRepDemoAbschluss() {
           <Info className="w-4 h-4 text-amber-700" />
         </div>
         <div className="text-sm text-amber-900">
-          <p className="font-bold mb-0.5">Trainings-Modus – nichts wird gespeichert</p>
+          <p className="font-bold mb-0.5">
+            Trainings-Modus – nichts wird gespeichert
+          </p>
           <p>
-            Alle Felder sind mit dem Beispielkunden „{DEMO_DATA.company_name}" vorausgefüllt. Du kannst sie verändern, aber es wird kein Kunde angelegt und keine Zahlung ausgelöst.
+            Alle Felder sind mit dem Beispielkunden „
+            {DEMO_PREFILL.companyName}" vorausgefüllt. Du kannst sie verändern,
+            aber es wird kein Kunde angelegt und keine Zahlung ausgelöst.
           </p>
         </div>
       </div>
 
-      {/* Form (always shown, locked while in checkout/success) */}
-      <Card className="p-6 space-y-5">
-        <div>
-          <h2 className="text-xl font-bold mb-1">Kundendaten</h2>
-          <p className="text-sm text-muted-foreground">Im echten Abschluss füllst du diese Felder mit deinem Kunden gemeinsam aus.</p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Field label="Firma" defaultValue={DEMO_DATA.company_name} />
-          <Field label="USt-IdNr." defaultValue={DEMO_DATA.vat_id} />
-          <Field label="Vorname Inhaber" defaultValue={DEMO_DATA.contact_first_name} />
-          <Field label="Nachname Inhaber" defaultValue={DEMO_DATA.contact_last_name} />
-          <Field label="E-Mail" defaultValue={DEMO_DATA.email} type="email" />
-          <Field label="Telefon" defaultValue={DEMO_DATA.phone} type="tel" />
-          <Field label="Straße & Hausnummer" defaultValue={DEMO_DATA.street} />
-          <div className="grid grid-cols-3 gap-3">
-            <Field label="PLZ" defaultValue={DEMO_DATA.zip} />
-            <div className="col-span-2">
-              <Field label="Stadt" defaultValue={DEMO_DATA.city} />
-            </div>
-          </div>
-        </div>
-
-        <div className="space-y-2">
-          <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Notizen für den Termin</Label>
-          <Textarea defaultValue={DEMO_DATA.notes} rows={3} />
-        </div>
-
-        <div className="rounded-lg border border-border/60 bg-muted/30 p-4 flex items-center justify-between">
-          <div>
-            <p className="font-semibold text-sm">Starterbox + 1 Standort</p>
-            <p className="text-xs text-muted-foreground">Einmalig 49 € · 39 €/Monat (Demo-Werte)</p>
-          </div>
-          <div className="text-right">
-            <p className="text-xs text-muted-foreground">Heute fällig</p>
-            <p className="text-lg font-bold">49,00 €</p>
-          </div>
-        </div>
-      </Card>
-
-      {/* Animated CTA */}
-      <div className="relative">
-        <div className="absolute -top-7 right-4 hidden md:flex items-center gap-1 text-amber-700 text-xs font-semibold animate-bounce">
-          <span>Hier geht's weiter</span>
-          <ArrowRight className="w-3.5 h-3.5 rotate-90" />
-        </div>
-        <button
-          onClick={handleAbschluss}
-          disabled={phase !== "form"}
-          className="relative w-full overflow-hidden rounded-xl bg-gradient-to-r from-amber-500 via-yellow-500 to-amber-500 text-amber-950 font-bold text-base px-6 py-4 shadow-lg shadow-amber-500/30 hover:shadow-amber-500/50 transition-all active:scale-[0.99] disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-        >
-          <span className="absolute inset-0 bg-white/20 animate-pulse" />
-          <ShoppingCart className="w-5 h-5 relative z-10" />
-          <span className="relative z-10">Kunde abschließen (Demo)</span>
-          <ArrowRight className="w-5 h-5 relative z-10" />
-        </button>
-      </div>
+      <CheckoutForm
+        backPath="/vertriebler"
+        backLabel="Zurück"
+        prefill={DEMO_PREFILL}
+        demoMode
+        onDemoSubmit={handleDemoSubmit}
+      />
 
       {/* Stripe simulation */}
       <Dialog open={phase === "checkout"} onOpenChange={() => {}}>
@@ -143,7 +120,8 @@ export default function SalesRepDemoAbschluss() {
             <div>
               <p className="font-bold text-lg">Stripe-Checkout startet…</p>
               <p className="text-sm text-muted-foreground mt-1">
-                Im echten Abschluss wird hier die Zahlung ausgelöst. (Demo – keine Zahlung)
+                Im echten Abschluss wird hier die Zahlung ausgelöst. (Demo –
+                keine Zahlung)
               </p>
             </div>
           </div>
@@ -160,7 +138,9 @@ export default function SalesRepDemoAbschluss() {
             <div>
               <p className="font-bold text-xl">Zahlung erfolgreich (Demo)</p>
               <p className="text-sm text-muted-foreground mt-1.5">
-                Top! Jetzt geht's an die Einrichtung. Du wirst gleich Schritt für Schritt durch das Dashboard von „{DEMO_DATA.company_name}" geführt.
+                Top! Jetzt geht's an die Einrichtung. Du wirst gleich Schritt
+                für Schritt durch das Dashboard von „{DEMO_PREFILL.companyName}"
+                geführt.
               </p>
             </div>
             <button
@@ -178,25 +158,6 @@ export default function SalesRepDemoAbschluss() {
           </div>
         </DialogContent>
       </Dialog>
-    </div>
-  );
-}
-
-function Field({
-  label,
-  defaultValue,
-  type = "text",
-}: {
-  label: string;
-  defaultValue: string;
-  type?: string;
-}) {
-  return (
-    <div className="space-y-1.5">
-      <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-        {label}
-      </Label>
-      <Input defaultValue={defaultValue} type={type} />
     </div>
   );
 }

@@ -30,35 +30,54 @@ interface ValidatedDiscount {
   appliesTo: 'one_time' | 'recurring' | 'both';
 }
 
+export interface CheckoutPrefill {
+  companyName?: string;
+  street?: string;
+  houseNumber?: string;
+  city?: string;
+  postalCode?: string;
+  country?: string;
+  vatId?: string;
+  industry?: string;
+  firstName?: string;
+  lastName?: string;
+  contactEmail?: string;
+  contactPhone?: string;
+  additionalContacts?: string;
+}
+
 interface CheckoutFormProps {
   backPath: string;
   backLabel: string;
   partnerUserId?: string;
+  prefill?: CheckoutPrefill;
+  demoMode?: boolean;
+  onDemoSubmit?: () => void;
 }
 
 const DISCOUNT_OPTIONS = [0, 10, 20, 30, 40, 50];
 
-export default function CheckoutForm({ backPath, backLabel, partnerUserId }: CheckoutFormProps) {
+export default function CheckoutForm({ backPath, backLabel, partnerUserId, prefill, demoMode, onDemoSubmit }: CheckoutFormProps) {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [validatingPromo, setValidatingPromo] = useState(false);
   const [isYearlyBilling, setIsYearlyBilling] = useState(false);
 
   // Company profile
-  const [companyName, setCompanyName] = useState("");
-  const [street, setStreet] = useState("");
-  const [houseNumber, setHouseNumber] = useState("");
-  const [city, setCity] = useState("");
-  const [postalCode, setPostalCode] = useState("");
-  const [country, setCountry] = useState("Deutschland");
-  const [vatId, setVatId] = useState("");
-  const [industry, setIndustry] = useState("");
+  const [companyName, setCompanyName] = useState(prefill?.companyName ?? "");
+  const [street, setStreet] = useState(prefill?.street ?? "");
+  const [houseNumber, setHouseNumber] = useState(prefill?.houseNumber ?? "");
+  const [city, setCity] = useState(prefill?.city ?? "");
+  const [postalCode, setPostalCode] = useState(prefill?.postalCode ?? "");
+  const [country, setCountry] = useState(prefill?.country ?? "Deutschland");
+  const [vatId, setVatId] = useState(prefill?.vatId ?? "");
+  const [industry, setIndustry] = useState(prefill?.industry ?? "");
 
   // Contact person
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
-  const [contactEmail, setContactEmail] = useState("");
-  const [contactPhone, setContactPhone] = useState("");
+  const [firstName, setFirstName] = useState(prefill?.firstName ?? "");
+  const [lastName, setLastName] = useState(prefill?.lastName ?? "");
+  const [contactEmail, setContactEmail] = useState(prefill?.contactEmail ?? "");
+  const [contactPhone, setContactPhone] = useState(prefill?.contactPhone ?? "");
 
   // Billing
   const [billingMatchesCompany, setBillingMatchesCompany] = useState(true);
@@ -70,11 +89,11 @@ export default function CheckoutForm({ backPath, backLabel, partnerUserId }: Che
   const [billingCountry, setBillingCountry] = useState("Deutschland");
   const [billingEmail, setBillingEmail] = useState("");
 
-  // Locations
-  const [locationCount, setLocationCount] = useState(1);
+  // Locations — UI removed, fixed to 1 (multi-location handled via separate flow)
+  const locationCount = 1;
 
   // Additional contacts
-  const [additionalContacts, setAdditionalContacts] = useState("");
+  const [additionalContacts, setAdditionalContacts] = useState(prefill?.additionalContacts ?? "");
 
   // Promo
   const [promoCodeInput, setPromoCodeInput] = useState("");
@@ -152,6 +171,10 @@ export default function CheckoutForm({ backPath, backLabel, partnerUserId }: Che
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (demoMode) {
+      onDemoSubmit?.();
+      return;
+    }
     if (!companyName || !contactEmail || !firstName || !lastName) {
       toast.error("Bitte fülle alle Pflichtfelder aus");
       return;
@@ -300,28 +323,6 @@ export default function CheckoutForm({ backPath, backLabel, partnerUserId }: Che
             )}
           </div>
 
-          <div className="flex items-center justify-center gap-4 pt-2 border-t">
-            <div className="flex items-center gap-2">
-              <MapPin className="w-4 h-4 text-muted-foreground" />
-              <Label className="text-sm">Standorte</Label>
-            </div>
-            <div className="flex items-center gap-2">
-              <Button type="button" variant="outline" size="icon" className="h-8 w-8" disabled={locationCount <= 1}
-                onClick={() => setLocationCount(c => Math.max(1, c - 1))}>
-                <Minus className="h-3 w-3" />
-              </Button>
-              <span className="w-8 text-center font-medium">{locationCount}</span>
-              <Button type="button" variant="outline" size="icon" className="h-8 w-8"
-                onClick={() => setLocationCount(c => c + 1)}>
-                <Plus className="h-3 w-3" />
-              </Button>
-            </div>
-            {additionalLocations > 0 && (
-              <span className="text-xs text-muted-foreground">
-                +{additionalLocations}× {PRICING.abo.additionalMonthly.toFixed(2)}€/Monat & {PRICING.startbox.additional.toFixed(2)}€ Startbox
-              </span>
-            )}
-          </div>
         </CardContent>
       </Card>
 
