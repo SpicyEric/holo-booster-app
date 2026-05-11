@@ -514,6 +514,35 @@ const MeinGeschaeft = () => {
 
   const handleSaveInfo = async () => {
     if (!customerId) return;
+
+    if (isDemoOnboardingTourActive() && customerId === DEMO_ONBOARDING_CUSTOMER_ID) {
+      updateDemoOnboardingState({
+        profile: {
+          name: formData.name,
+          company_name: formData.name,
+          description: formData.description,
+          industry: formData.industry,
+          street: formData.street,
+          house_number: formData.house_number,
+          postal_code: formData.postal_code,
+          city: formData.city,
+          logo_url: formData.logo_url,
+          cover_image_url: formData.cover_image_url,
+          phone: formData.phone,
+          website: formData.website,
+          instagram: formData.instagram,
+          facebook: formData.facebook,
+          twitter: formData.twitter,
+          opening_hours: formData.opening_hours,
+          gallery_images: formData.gallery_images,
+        },
+      });
+      initialFormDataRef.current = { ...formData };
+      setProfileDirty(false);
+      if (getDemoOnboardingStep() === 4) setDemoOnboardingStep(5);
+      toast.success("Demo-Profil gespeichert");
+      return;
+    }
     
     setSaving(true);
     try {
