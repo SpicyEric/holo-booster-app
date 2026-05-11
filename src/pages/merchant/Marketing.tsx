@@ -201,6 +201,11 @@ const Marketing = () => {
         setReferralEnabled(p.referral_enabled ?? true);
         setReferralInviterPoints(p.referral_inviter_points ?? 0);
         setReferralInviteePoints(p.referral_invitee_points ?? 0);
+        setBirthdayEnabled(p.birthday_enabled ?? false);
+        setBirthdayBonusPoints(p.birthday_bonus_points ?? 20);
+        setReviewPointsEnabled(p.google_review_points_enabled ?? false);
+        setReviewPointsValue(p.google_review_points_value ?? 5);
+        setWinbackEnabled(p.winback_enabled ?? false);
         setRewards(demo.rewards);
         setNewCustomerOffer(demo.newCustomerOffer);
         if (demo.newCustomerOffer) setNcoForm({ title: demo.newCustomerOffer.title, description: demo.newCustomerOffer.description || '', is_active: demo.newCustomerOffer.is_active ?? true, image_url: demo.newCustomerOffer.image_url || '' });
