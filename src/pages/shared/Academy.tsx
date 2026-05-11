@@ -471,7 +471,7 @@ function TabVerkauf() {
 
   const objections = [
     { q: "Ich hab das nicht nötig, meine Kunden kommen eh.", a: "Super – dann wäre eloyo perfekt, um die zu halten und zu belohnen. Und wenn mal ein langjähriger Stammkunde woanders hingeht, habt ihr direkt eine Möglichkeit, ihn zurückzuholen." },
-    { q: "Das ist zu kompliziert für meine Mitarbeiter.", a: "Der Mitarbeiter macht nichts. Der Kunde hält sein Handy dran – fertig. Kein Knopf drücken, kein Tippen." },
+    { q: "Das ist zu kompliziert für meine Mitarbeiter.", a: "Der Mitarbeiter macht nichts Neues. Wenn ein Mitarbeiter in der Lage ist, einen Kunden abzukassieren – Kartenzahlung entgegenzunehmen, Wechselgeld rausgeben – dann kann er auch eine Karte ans Handy halten. Das ist buchstäblich einfacher als alles andere, was er täglich macht. Kein Knopf drücken, kein Tippen, keine Schulung nötig." },
     { q: "Zu teuer.", a: "Bei X Stammkunden pro Monat – wenn nur 10 davon öfter kommen – hat sich das bereits gerechnet. Und du hast jetzt einen direkten Kanal zu deinen Kunden, den du sonst nie hättest." },
     { q: "Ich überleg's mir noch.", a: "Kein Problem. Wann passt es dir, dass ich kurz nochmal vorbeischaue? (Konkreten Folgetermin ausmachen, nicht offen lassen.)" },
   ];
