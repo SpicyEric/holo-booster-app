@@ -52,7 +52,11 @@ interface CheckoutFormProps {
   partnerUserId?: string;
   prefill?: CheckoutPrefill;
   demoMode?: boolean;
-  onDemoSubmit?: () => void;
+  onDemoSubmit?: (values: {
+    companyName: string; street: string; houseNumber: string; city: string;
+    postalCode: string; country: string; vatId: string; industry: string;
+    firstName: string; lastName: string; contactEmail: string; contactPhone: string;
+  }) => void;
 }
 
 const DISCOUNT_OPTIONS = [0, 10, 20, 30, 40, 50];
