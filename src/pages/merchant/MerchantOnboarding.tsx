@@ -801,6 +801,40 @@ export default function MerchantOnboarding() {
           </Button>
         </div>
       </div>
+
+      {/* Success overlay */}
+      {showSuccess && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm animate-fade-in">
+          <div className="max-w-md w-[90%] rounded-3xl bg-white p-8 text-center shadow-2xl animate-scale-in">
+            <div className="text-6xl mb-3">🎉</div>
+            <h2 className="text-2xl font-bold text-foreground mb-2">Geschafft!</h2>
+            <p className="text-base text-foreground mb-1">eloyo ist jetzt einsatzbereit.</p>
+            <p className="text-sm text-muted-foreground mb-6">
+              Trainiere jetzt die Nutzung mit deinem Kunden – mache ein paar Übungs-Scans
+              und löse einmal eine Prämie ein, damit er das System sicher beherrscht.
+            </p>
+            <Button
+              onClick={() => navigate("/kunde", { replace: true })}
+              size="lg"
+              className="w-full rounded-xl bg-gradient-to-r from-primary to-[hsl(262,80%,70%)]"
+            >
+              Zum Dashboard
+            </Button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function Hint({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="mb-4 flex gap-3 rounded-xl border border-amber-200 bg-amber-50 p-3 text-[13px] text-amber-900">
+      <Lightbulb className="w-4 h-4 text-amber-600 mt-0.5 shrink-0" />
+      <div className="space-y-1">
+        <p className="font-semibold text-amber-900 text-xs uppercase tracking-wide">Hinweis</p>
+        <p className="leading-snug">{children}</p>
+      </div>
     </div>
   );
 }
