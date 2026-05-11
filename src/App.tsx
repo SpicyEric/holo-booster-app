@@ -45,6 +45,7 @@ import SalesRepSettings from "./pages/salesrep/SalesRepSettings";
 import SalesRepMessages from "./pages/salesrep/SalesRepMessages";
 import SalesRepProvisionen from "./pages/salesrep/SalesRepProvisionen";
 import SalesRepOrders from "./pages/salesrep/SalesRepOrders";
+import Academy from "./pages/shared/Academy";
 import SalesRepCheckout from "./pages/salesrep/SalesRepCheckout";
 import MerchantSetup from "./pages/merchant/MerchantSetup";
 import Scan from "./pages/Scan";
