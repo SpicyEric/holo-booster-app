@@ -193,7 +193,7 @@ function TabFunktion() {
 function TabBox() {
   const items = [
     { icon: "📦", title: "Das eloyo Terminal", text: "Ein kompakter Kunststoffwürfel mit eloyo-Branding. Er hält die 3 NFC-Karten ordentlich zusammen – kein Suchen, kein Verlieren. Steht einfach an der Kasse und sieht gut aus. Braucht keinen Strom." },
-    { icon: "🃏", title: "3 NFC-Karten (Stempelkarten)", text: "Diese Karten sind das Herzstück. Kunden halten ihr Handy dran – fertig. Jede Karte ist mit dem Geschäft verknüpft." },
+    { icon: "🃏", title: "3 NFC-Karten (Stempelkarten)", text: "Diese Karten sind das Herzstück. Der Kassierer hält die Karte ans Handy des Kunden – fertig. Jede Karte ist mit dem Geschäft verknüpft." },
     { icon: "🪧", title: "Aufsteller mit QR-Code", text: "Ein Tisch-Aufsteller für die Kasse. Kunden, die noch keine App haben, können sie darüber herunterladen. Wird einmal hingestellt und macht danach seinen Job." },
     { icon: "🎴", title: "Werbekärtchen (Visitenkartenformat)", text: "Kleine Karten mit QR-Code, die man Kunden mitgeben oder auslegen kann. Optional – der Aufsteller reicht in den meisten Fällen." },
     { icon: "🔑", title: "Karten-ID (auf der Innenseite des Deckels)", text: "Diese ID wird bei der Einrichtung im System eingetragen. Wichtig – nicht wegwerfen." },
