@@ -151,6 +151,7 @@ const App = () => {
                 <Route path="push" element={<AdminPushLogs />} />
                 <Route path="settings" element={<Settings />} />
                 <Route path="academy" element={<Academy />} />
+                <Route path="demo-abschluss" element={<SalesRepDemoAbschluss />} />
                 <Route path="map" element={<CustomerMap />} />
               </Route>
 
