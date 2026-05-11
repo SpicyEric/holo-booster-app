@@ -192,6 +192,25 @@ const Marketing = () => {
       const assignment = { customer_id: resolvedCustomerId };
       setCustomerId(resolvedCustomerId);
 
+      if (isDemoOnboardingTourActive() && resolvedCustomerId === DEMO_ONBOARDING_CUSTOMER_ID) {
+        const demo = getDemoOnboardingState();
+        const p = demo.profile;
+        setMerchantDisplayName(p.company_name || p.name || '');
+        setMerchantIndustry(p.industry || null);
+        setAvgOrderValue(p.avg_revenue || 25);
+        setReferralEnabled(p.referral_enabled ?? true);
+        setReferralInviterPoints(p.referral_inviter_points ?? 0);
+        setReferralInviteePoints(p.referral_invitee_points ?? 0);
+        setRewards(demo.rewards);
+        setNewCustomerOffer(demo.newCustomerOffer);
+        if (demo.newCustomerOffer) setNcoForm({ title: demo.newCustomerOffer.title, description: demo.newCustomerOffer.description || '', is_active: demo.newCustomerOffer.is_active ?? true, image_url: demo.newCustomerOffer.image_url || '' });
+        setMessages([]); setOffers([]); setActiveBoost(null); setReferralStats({ total_invites: 0, accepted: 0, converted: 0 }); setReferralList([]);
+        setStampPoints({ green: demo.chips.find(c => c.stamp_color === 'grün')?.points_value ?? null, blue: demo.chips.find(c => c.stamp_color === 'blau')?.points_value ?? null, red: demo.chips.find(c => c.stamp_color === 'rot')?.points_value ?? null });
+        setMiddleStampPoints(demo.chips.find(c => c.stamp_color === 'blau')?.points_value ?? null);
+        setTimeout(() => { automationsLoadedRef.current = true; }, 100);
+        return;
+      }
+
       // Fetch all stamp points for display (supports DE + EN color values)
       const { data: allChips } = await supabase
         .from('nfc_chips')
