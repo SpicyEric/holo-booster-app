@@ -245,31 +245,60 @@ function TabKunden() {
       <Card>
         <h3 className="text-lg font-semibold mb-2">📞 Geschäfte anrufen & Termin holen</h3>
         <p className="text-[15px] text-muted-foreground mb-3">
-          Ruf das Geschäft an – nicht um eloyo zu erklären, sondern um einen kurzen Termin zu bekommen.
+          Ruf das Geschäft an – nicht um eloyo zu erklären, sondern um einen kurzen Termin zu bekommen. Starte mit einer Frage, nicht mit einer Vorstellung.
         </p>
         <Quote>
-          "Hallo, mein Name ist [Name]. Ich arbeite mit eloyo zusammen – das ist ein digitales Kundenbindungsprogramm für lokale Geschäfte.
-          Ich würde euch kurz gerne zeigen, wie das funktioniert – dauert vielleicht 10–15 Minuten. Wann passt euch das diese Woche mal?"
+          „Hallo, mein Name ist [Name] – kurze Frage: Habt ihr aktuell Stempelkarten bei euch im Geschäft?"
         </Quote>
-        <p className="text-[15px] text-muted-foreground mt-3">
-          Kein langer Erklärungspart. Kein <em>"Ich möchte euch etwas verkaufen."</em> Einfach: kurz vorbeikommen, kurz zeigen.
-        </p>
-        <p className="text-[15px] text-muted-foreground mt-2">
-          Falls direkte Ablehnung: Nicht hängenbleiben. <em>"Kein Problem – ich melde mich in ein paar Wochen nochmal."</em> Und dann auch wirklich tun.
+        <div className="mt-3 space-y-3 text-[15px] text-muted-foreground">
+          <div>
+            <p className="font-medium text-foreground">→ Wenn JA:</p>
+            <p className="italic mt-1">
+              „Cool, dann kennt ihr das Konzept ja schon. Ich arbeite mit eloyo zusammen – das ist ein junges Start-up, das das Ganze digital macht.
+              Wir bauen gerade in eurer Region lokale Geschäfte auf. Ich würde euch kurz zeigen, wie das funktioniert – dauert 10–15 Minuten.
+              Wann passt's euch diese Woche mal?"
+            </p>
+          </div>
+          <div>
+            <p className="font-medium text-foreground">→ Wenn NEIN:</p>
+            <p className="italic mt-1">
+              „Verstehe. Ich arbeite mit eloyo zusammen – wir haben ein digitales Kundenbindungsprogramm speziell für Geschäfte wie eures.
+              Ich würde euch kurz zeigen, wie das funktioniert – dauert 10–15 Minuten. Wann passt's euch diese Woche mal?"
+            </p>
+          </div>
+        </div>
+        <p className="text-[15px] text-muted-foreground mt-4">
+          Kein langer Erklärungspart. Erst die Frage, dann kurz Kontext, dann direkt Termin. Falls direkte Ablehnung: Nicht hängenbleiben.{" "}
+          <em>„Kein Problem – ich melde mich in ein paar Wochen nochmal."</em> Und dann auch wirklich tun.
         </p>
       </Card>
 
       <Card>
         <h3 className="text-lg font-semibold mb-2">🚶 Einfach reingehen</h3>
         <p className="text-[15px] text-muted-foreground mb-3">
-          Geh direkt ins Geschäft, wenn du in der Nähe bist. Sprich den Inhaber oder die Ansprechperson kurz an.
+          Geh direkt ins Geschäft, wenn du in der Nähe bist. Du musst nicht sofort mit dem Chef sprechen – manchmal ist der Weg über einen
+          Mitarbeiter sogar besser.
         </p>
-        <Quote>
-          "Hey, kurze Frage – nutzt ihr aktuell irgendwas zur Kundenbindung? Stempelkarte oder so? [...] Cool – ich hätte da was Modernes,
-          das in 5 Minuten erklärt ist. Hätte kurz Zeit?"
-        </Quote>
+        <div className="space-y-4 text-[15px] text-muted-foreground">
+          <div>
+            <p className="font-medium text-foreground">Strategie 1 – Direkt zum Chef:</p>
+            <Quote>„Entschuldigung, bist du zufällig der Inhaber?" → Wenn ja: direkt pitchen.</Quote>
+          </div>
+          <div>
+            <p className="font-medium text-foreground">Strategie 2 – Über den Mitarbeiter:</p>
+            <Quote>
+              {`„Hey, kurze Frage – nutzt ihr hier aktuell irgendwas zur Kundenbindung? Stempelkarten oder so?"
+→ Wenn der Mitarbeiter nein sagt: „Okay, cool. Könnte ich kurz mit dem Chef sprechen?"
+→ Zum Chef: „Ich hab eben kurz mit einem eurer Mitarbeiter gesprochen – ihr nutzt aktuell noch keine Stempelkarten, richtig? Ich hätte da was Modernes, das in 10 Minuten erklärt ist. Hätte kurz Zeit?"`}
+            </Quote>
+          </div>
+        </div>
+        <p className="text-[15px] text-muted-foreground mt-4">
+          Das Wichtigste: Geh auf den Laden ein, auf die Person, auf die Branche. Wer einen Leitfaden roboterhaft runterscheppert, verliert.
+          Wer wirklich zuhört und auf das eingeht, was er sieht und hört – der gewinnt. Probiere viel aus, bleib sympathisch, bleib locker.
+        </p>
         <p className="text-[15px] text-muted-foreground mt-3">
-          Direktbesuch hat eine höhere Abschlussquote als Telefon. Die Leute sehen dich, fühlen sich nicht überrumpelt und können direkt Fragen stellen.
+          Direktbesuch hat eine höhere Abschlussquote als Telefon. Die Leute sehen dich, können direkt Fragen stellen und fühlen sich nicht überrumpelt.
         </p>
       </Card>
 
