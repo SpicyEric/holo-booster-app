@@ -71,6 +71,7 @@ const NAV_GROUPS: NavGroup[] = [
       { path: "/admin/accounts", label: "User-Accounts", icon: UserCog },
       { path: "/admin/push", label: "Push", icon: Bell },
       { path: "/admin/website-checkout", label: "Website", icon: Globe },
+      { path: "/admin/academy", label: "Academy", icon: GraduationCap },
       { path: "/admin/settings", label: "Einstellungen", icon: Settings },
     ],
   },
