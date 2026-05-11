@@ -3,8 +3,9 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import {
   Loader2, Upload, Check, ImageIcon, Package, Sparkles, Gift, UserPlus,
-  Star, Clock, Edit2, Plus, Trash2, Rocket, X, AlertCircle,
+  Star, Clock, Edit2, Plus, Trash2, Rocket, X, AlertCircle, Lightbulb,
 } from "lucide-react";
+import { isDemoMerchantActive } from "@/lib/demoMerchant";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -55,6 +56,8 @@ export default function MerchantOnboarding() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [customerId, setCustomerId] = useState<string | null>(null);
+  const [showSuccess, setShowSuccess] = useState(false);
+  const isDemo = isDemoMerchantActive();
 
   // Step 1
   const [coverUrl, setCoverUrl] = useState("");
@@ -122,7 +125,7 @@ export default function MerchantOnboarding() {
           .eq("id", cid)
           .maybeSingle();
 
-        if (customer) {
+        if (customer && !isDemo) {
           setCoverUrl(customer.cover_image_url || "");
           setLogoUrl(customer.logo_url || "");
           setDescription(customer.description || "");
@@ -136,14 +139,16 @@ export default function MerchantOnboarding() {
           }
         }
 
-        // If a reward already exists → leave onboarding
-        const { count } = await supabase
-          .from("rewards")
-          .select("id", { count: "exact", head: true })
-          .eq("merchant_customer_id", cid);
-        if ((count || 0) > 0) {
-          navigate("/kunde", { replace: true });
-          return;
+        // If a reward already exists → leave onboarding (außer im Demo-Modus)
+        if (!isDemo) {
+          const { count } = await supabase
+            .from("rewards")
+            .select("id", { count: "exact", head: true })
+            .eq("merchant_customer_id", cid);
+          if ((count || 0) > 0) {
+            navigate("/kunde", { replace: true });
+            return;
+          }
         }
       } finally {
         setLoading(false);
@@ -164,6 +169,14 @@ export default function MerchantOnboarding() {
 
   const uploadFile = async (file: File, prefix: string): Promise<string | null> => {
     if (!customerId) return null;
+    // Demo-Modus: Datei nur lokal als Vorschau anzeigen, nicht persistieren.
+    if (isDemo) {
+      try {
+        return URL.createObjectURL(file);
+      } catch {
+        return null;
+      }
+    }
     const ext = file.name.split(".").pop();
     const fileName = `${customerId}/${prefix}_${Date.now()}.${ext}`;
     const { error } = await supabase.storage.from("customer-assets").upload(fileName, file, { upsert: true });
@@ -204,7 +217,7 @@ export default function MerchantOnboarding() {
   };
 
   const isStep1Done = !!coverUrl;
-  const isStep2Done = !!cardId && /^[A-Za-z0-9]{5}-[A-Za-z0-9]{5}-[A-Za-z0-9]{5}$/.test(cardId);
+  const isStep2Done = isDemo ? !!cardId : (!!cardId && /^[A-Za-z0-9]{5}-[A-Za-z0-9]{5}-[A-Za-z0-9]{5}$/.test(cardId));
   const isStep3Done = typeof avgRevenue === "number" && avgRevenue > 0 && card1Points > 0 && card2Points > 0 && card3Points > 0;
   const isStep4Done = rewards.length >= 1;
   const isStep5Done = referralPoints > 0;
@@ -217,6 +230,14 @@ export default function MerchantOnboarding() {
 
   const handleAddCardId = async () => {
     if (!customerId) return;
+    // Demo-Modus: jede beliebige Eingabe akzeptieren, ohne DB-Prüfung.
+    if (isDemo) {
+      const padded = (cardId || "DEMO1-DEMO2-DEMO3").padEnd(17, "0").slice(0, 17);
+      setCardId(formatBoxIdInput(padded.replace(/-/g, "")));
+      setCardIdLocked(true);
+      toast.success("Karten-ID übernommen (Demo)");
+      return;
+    }
     if (!isStep2Done) {
       toast.error("Karten-ID muss im Format XXXXX-XXXXX-XXXXX sein");
       return;
@@ -364,8 +385,15 @@ export default function MerchantOnboarding() {
         is_active: true,
       });
 
-      toast.success("Einrichtung abgeschlossen 🚀");
-      navigate("/kunde", { replace: true });
+      // Erfolgsanzeige + Konfetti
+      setShowSuccess(true);
+      try {
+        const confetti = (await import("canvas-confetti")).default;
+        const fire = (opts: any) => confetti({ origin: { y: 0 }, spread: 90, startVelocity: 45, ticks: 220, ...opts });
+        fire({ particleCount: 120, angle: 270 });
+        setTimeout(() => fire({ particleCount: 80, angle: 250, origin: { x: 0.2, y: 0 } }), 200);
+        setTimeout(() => fire({ particleCount: 80, angle: 290, origin: { x: 0.8, y: 0 } }), 400);
+      } catch {}
     } catch (e) {
       console.error(e);
       toast.error("Fehler beim Speichern");
@@ -400,6 +428,11 @@ export default function MerchantOnboarding() {
 
         {/* Step 1 */}
         <Section ref={coverRef} number={1} title="Titelbild & Logo" done={isStep1Done} error={errorField === "cover"}>
+          <Hint>
+            <strong>Tipp:</strong> Lass dir vom Inhaber das gewünschte Bild per WhatsApp aufs eigene Handy schicken und lade es hier hoch.
+            Wenn gerade kein Bild verfügbar ist, mach einfach kurz ein Foto von der Ladentheke oder dem Schaufenster –
+            wichtig ist ein einladendes Motiv, das die Kunden sofort wiedererkennen.
+          </Hint>
           <div className="grid grid-cols-1 md:grid-cols-[1fr_120px] gap-4">
             <div>
               <Label className="text-xs text-muted-foreground mb-1.5 block">Titelbild *</Label>
@@ -523,6 +556,10 @@ export default function MerchantOnboarding() {
 
         {/* Step 4 */}
         <Section ref={rewardsRef} number={4} title="Erste Prämien erstellen" done={isStep4Done} error={errorField === "rewards"}>
+          <Hint>
+            <strong>Tipp:</strong> Die erste kleine Prämie sollte schon nach <strong>4–5 Besuchen</strong> erreichbar sein.
+            Orientiere die Punktzahl an den Karten-Werten oben – z.B. eine kleine Prämie für ca. eine volle Karte 1.
+          </Hint>
           <div className="space-y-3">
             {rewards.map((r) => (
               <div key={r.id} className="flex items-center gap-3 p-3 rounded-xl bg-emerald-50 border border-emerald-200">
@@ -581,6 +618,10 @@ export default function MerchantOnboarding() {
 
         {/* Step 5 */}
         <Section ref={referralRef} number={5} title="Weiterempfehlungs-Punkte" done={isStep5Done} error={errorField === "referral"}>
+          <Hint>
+            <strong>Tipp:</strong> Zwei erfolgreiche Empfehlungen sollten in etwa einer wirklich attraktiven Prämie entsprechen –
+            so lohnt sich das Weiterempfehlen für deine Kunden spürbar.
+          </Hint>
           <div>
             <Label className="text-sm">Wie viele Punkte bekommt ein Kunde, wenn er erfolgreich einen Freund einlädt?</Label>
             <div className="flex items-center gap-2 mt-2">
@@ -716,6 +757,35 @@ export default function MerchantOnboarding() {
           <p className="text-xs text-muted-foreground mt-1">
             {description.length}/300 – Wird Kunden in der eloyo-App angezeigt.
           </p>
+          <div className="mt-3">
+            <p className="text-[11px] text-muted-foreground mb-1.5 flex items-center gap-1">
+              <Sparkles className="w-3 h-3" /> Vorlagen einfügen:
+            </p>
+            <div className="flex flex-wrap gap-1.5">
+              {[
+                { label: "👋 Willkommen", text: "Herzlich willkommen bei uns! Wir freuen uns auf deinen Besuch und darauf, dich mit unseren Lieblingsprodukten zu verwöhnen. ✨" },
+                { label: "🎁 Treue belohnt", text: "Bei uns lohnt sich jeder Besuch: Sammle Punkte, sichere dir tolle Prämien und genieße exklusive Vorteile als Stammgast. 💜" },
+                { label: "🤝 Freunde einladen", text: "Lade 2 Freunde ein, die noch nie bei uns waren — und du hast direkt genug Punkte für eine tolle Prämie! 🎁" },
+                { label: "⭐ Qualität", text: "Mit Liebe zum Detail und höchsten Qualitätsansprüchen sorgen wir dafür, dass jeder Besuch zu einem kleinen Highlight wird." },
+                { label: "📍 Zentral", text: "Du findest uns zentral gelegen — perfekt für einen kurzen Stopp. Wir freuen uns auf dich!" },
+              ].map((tpl) => (
+                <Button
+                  key={tpl.label}
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    const current = description?.trim() || "";
+                    const next = current ? `${current}\n\n${tpl.text}` : tpl.text;
+                    setDescription(next.slice(0, 300));
+                  }}
+                  className="h-7 px-2.5 text-xs rounded-lg bg-slate-100 border-slate-300 hover:bg-primary/10 hover:border-primary/50 hover:text-primary transition-colors"
+                >
+                  {tpl.label}
+                </Button>
+              ))}
+            </div>
+          </div>
         </Section>
       </div>
 
@@ -732,6 +802,40 @@ export default function MerchantOnboarding() {
             Einrichtung abschließen & loslegen
           </Button>
         </div>
+      </div>
+
+      {/* Success overlay */}
+      {showSuccess && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm animate-fade-in">
+          <div className="max-w-md w-[90%] rounded-3xl bg-white p-8 text-center shadow-2xl animate-scale-in">
+            <div className="text-6xl mb-3">🎉</div>
+            <h2 className="text-2xl font-bold text-foreground mb-2">Geschafft!</h2>
+            <p className="text-base text-foreground mb-1">eloyo ist jetzt einsatzbereit.</p>
+            <p className="text-sm text-muted-foreground mb-6">
+              Trainiere jetzt die Nutzung mit deinem Kunden – mache ein paar Übungs-Scans
+              und löse einmal eine Prämie ein, damit er das System sicher beherrscht.
+            </p>
+            <Button
+              onClick={() => navigate("/kunde", { replace: true })}
+              size="lg"
+              className="w-full rounded-xl bg-gradient-to-r from-primary to-[hsl(262,80%,70%)]"
+            >
+              Zum Dashboard
+            </Button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function Hint({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="mb-4 flex gap-3 rounded-xl border border-amber-200 bg-amber-50 p-3 text-[13px] text-amber-900">
+      <Lightbulb className="w-4 h-4 text-amber-600 mt-0.5 shrink-0" />
+      <div className="space-y-1">
+        <p className="font-semibold text-amber-900 text-xs uppercase tracking-wide">Hinweis</p>
+        <p className="leading-snug">{children}</p>
       </div>
     </div>
   );
