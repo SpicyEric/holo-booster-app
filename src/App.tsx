@@ -45,6 +45,7 @@ import SalesRepSettings from "./pages/salesrep/SalesRepSettings";
 import SalesRepMessages from "./pages/salesrep/SalesRepMessages";
 import SalesRepProvisionen from "./pages/salesrep/SalesRepProvisionen";
 import SalesRepOrders from "./pages/salesrep/SalesRepOrders";
+import Academy from "./pages/shared/Academy";
 import SalesRepCheckout from "./pages/salesrep/SalesRepCheckout";
 import MerchantSetup from "./pages/merchant/MerchantSetup";
 import Scan from "./pages/Scan";
@@ -147,6 +148,7 @@ const App = () => {
                 <Route path="zusatzvereinbarungen" element={<AdminZusatzvereinbarungen />} />
                 <Route path="push" element={<AdminPushLogs />} />
                 <Route path="settings" element={<Settings />} />
+                <Route path="academy" element={<Academy />} />
                 <Route path="map" element={<CustomerMap />} />
               </Route>
 
@@ -180,6 +182,7 @@ const App = () => {
                 <Route path="messages" element={<SalesRepMessages />} />
                 <Route path="orders" element={<SalesRepOrders />} />
                 <Route path="settings" element={<SalesRepSettings />} />
+                <Route path="academy" element={<Academy />} />
                 <Route path="abrechnungen" element={<SalesRepAbrechnungen />} />
                 <Route path="vertrag" element={<SalesRepVertrag />} />
                 <Route path="mein-vertrag" element={<SalesRepMeinVertrag />} />
