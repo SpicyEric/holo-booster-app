@@ -215,7 +215,7 @@ export default function MerchantOnboarding() {
   };
 
   const isStep1Done = !!coverUrl;
-  const isStep2Done = !!cardId && /^[A-Za-z0-9]{5}-[A-Za-z0-9]{5}-[A-Za-z0-9]{5}$/.test(cardId);
+  const isStep2Done = isDemo ? !!cardId : (!!cardId && /^[A-Za-z0-9]{5}-[A-Za-z0-9]{5}-[A-Za-z0-9]{5}$/.test(cardId));
   const isStep3Done = typeof avgRevenue === "number" && avgRevenue > 0 && card1Points > 0 && card2Points > 0 && card3Points > 0;
   const isStep4Done = rewards.length >= 1;
   const isStep5Done = referralPoints > 0;
