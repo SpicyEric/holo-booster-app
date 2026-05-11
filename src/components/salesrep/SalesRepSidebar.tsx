@@ -3,7 +3,7 @@ import { signOut } from "@/lib/auth";
 import { toast } from "sonner";
 import {
   LayoutDashboard, Users, Package, BarChart3, Euro, Mail, Receipt, FileText,
-  ShoppingCart, Settings, LogOut, ChevronLeft, ChevronDown, Menu, X, Map, GitBranch, Search, CalendarDays, Eye, GraduationCap,
+  ShoppingCart, Settings, LogOut, ChevronLeft, ChevronDown, Menu, X, Map, GitBranch, Search, CalendarDays, Eye, GraduationCap, Sparkles,
 } from "lucide-react";
 import eloyoLogo from "@/assets/eloyo-logo.png";
 import { cn } from "@/lib/utils";
@@ -68,11 +68,9 @@ const NAV_GROUPS: NavGroup[] = [
     label: "ACADEMY",
     alwaysOpen: true,
     items: [
-      { path: "/vertriebler/academy?tab=funktion", label: "Wie funktioniert eloyo?", icon: GraduationCap },
-      { path: "/vertriebler/academy?tab=box", label: "Die eloyo Box", icon: GraduationCap },
-      { path: "/vertriebler/academy?tab=kunden", label: "Wie komme ich an Kunden?", icon: GraduationCap },
-      { path: "/vertriebler/academy?tab=abschluss", label: "Technischer Abschluss", icon: GraduationCap },
-      { path: "/vertriebler/academy?tab=verkauf", label: "Wie verkaufe ich eloyo?", icon: GraduationCap },
+      { path: "/vertriebler/academy", label: "Quick Onboarding", icon: GraduationCap },
+      { path: "/vertriebler/demo-abschluss", label: "Demo Abschluss", icon: Sparkles },
+      { path: "__demo_merchant__", label: "Demo Merchant", icon: Eye },
     ],
   },
 ];
@@ -128,6 +126,12 @@ function SidebarNav({ collapsed, onNavigate }: { collapsed: boolean; onNavigate?
   };
 
   const handleNav = (path: string) => {
+    if (path === "__demo_merchant__") {
+      enableDemoMerchant(location.pathname || "/vertriebler");
+      navigate("/kunde");
+      onNavigate?.();
+      return;
+    }
     navigate(path);
     onNavigate?.();
   };
@@ -198,23 +202,6 @@ function SidebarNav({ collapsed, onNavigate }: { collapsed: boolean; onNavigate?
       </nav>
 
       <div className="border-t border-white/10 p-3 space-y-2">
-        <button
-          onClick={() => {
-            enableDemoMerchant(location.pathname || "/vertriebler");
-            navigate("/kunde");
-            onNavigate?.();
-          }}
-          className={cn(
-            "w-full flex items-center gap-3 rounded-xl px-3 py-2.5 text-[13px] font-medium transition-all duration-200 active:scale-[0.97]",
-            "bg-amber-500/10 text-amber-200 hover:bg-amber-500/20 hover:text-amber-100 border border-amber-400/20",
-            collapsed && "justify-center px-0"
-          )}
-          title={collapsed ? "Demo Merchant" : undefined}
-        >
-          <Eye className="h-4 w-4 shrink-0" />
-          {!collapsed && <span>Demo Merchant</span>}
-        </button>
-
         {!collapsed && (
           <div className="px-3 py-2">
             <p className="text-sm font-medium text-white/90">Vertrieb</p>
