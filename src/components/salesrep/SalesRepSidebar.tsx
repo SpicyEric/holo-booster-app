@@ -126,6 +126,12 @@ function SidebarNav({ collapsed, onNavigate }: { collapsed: boolean; onNavigate?
   };
 
   const handleNav = (path: string) => {
+    if (path === "__demo_merchant__") {
+      enableDemoMerchant(location.pathname || "/vertriebler");
+      navigate("/kunde");
+      onNavigate?.();
+      return;
+    }
     navigate(path);
     onNavigate?.();
   };
@@ -196,23 +202,6 @@ function SidebarNav({ collapsed, onNavigate }: { collapsed: boolean; onNavigate?
       </nav>
 
       <div className="border-t border-white/10 p-3 space-y-2">
-        <button
-          onClick={() => {
-            enableDemoMerchant(location.pathname || "/vertriebler");
-            navigate("/kunde");
-            onNavigate?.();
-          }}
-          className={cn(
-            "w-full flex items-center gap-3 rounded-xl px-3 py-2.5 text-[13px] font-medium transition-all duration-200 active:scale-[0.97]",
-            "bg-amber-500/10 text-amber-200 hover:bg-amber-500/20 hover:text-amber-100 border border-amber-400/20",
-            collapsed && "justify-center px-0"
-          )}
-          title={collapsed ? "Demo Merchant" : undefined}
-        >
-          <Eye className="h-4 w-4 shrink-0" />
-          {!collapsed && <span>Demo Merchant</span>}
-        </button>
-
         {!collapsed && (
           <div className="px-3 py-2">
             <p className="text-sm font-medium text-white/90">Vertrieb</p>
