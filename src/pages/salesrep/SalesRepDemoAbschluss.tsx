@@ -5,24 +5,22 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import CheckoutForm, { type CheckoutPrefill } from "@/components/checkout/CheckoutForm";
 import {
   enableDemoMerchant,
-  DEFAULT_DEMO_MERCHANT_CUSTOMER_ID,
-  DEFAULT_DEMO_MERCHANT_NAME,
 } from "@/lib/demoMerchant";
-import { startDemoOnboardingTour } from "@/lib/demoOnboardingTour";
+import { DEMO_ONBOARDING_CUSTOMER_ID, DEMO_ONBOARDING_MERCHANT_NAME, startDemoOnboardingTour } from "@/lib/demoOnboardingTour";
 
 const DEMO_PREFILL: CheckoutPrefill = {
-  companyName: "Backstube König",
-  street: "Marienplatz",
-  houseNumber: "8",
-  postalCode: "80331",
-  city: "München",
+  companyName: DEMO_ONBOARDING_MERCHANT_NAME,
+  street: "Keupstraße",
+  houseNumber: "18",
+  postalCode: "51063",
+  city: "Köln",
   country: "Deutschland",
-  vatId: "DE123456789",
-  industry: "baeckerei",
-  firstName: "Markus",
-  lastName: "König",
-  contactEmail: "demo+backstube@eloyo.de",
-  contactPhone: "+49 89 123456789",
+  vatId: "DE987654321",
+  industry: "barbershop",
+  firstName: "Emre",
+  lastName: "Yılmaz",
+  contactEmail: "demo+barbershop-emre@eloyo.de",
+  contactPhone: "+49 221 45678912",
   additionalContacts: "",
 };
 
@@ -67,8 +65,8 @@ export default function SalesRepDemoAbschluss() {
   const handleStartSetup = () => {
     enableDemoMerchant({
       returnPath: "/vertriebler/demo-abschluss",
-      customerId: DEFAULT_DEMO_MERCHANT_CUSTOMER_ID,
-      name: DEFAULT_DEMO_MERCHANT_NAME,
+      customerId: DEMO_ONBOARDING_CUSTOMER_ID,
+      name: DEMO_ONBOARDING_MERCHANT_NAME,
     });
     startDemoOnboardingTour();
     navigate("/kunde", { replace: true });
