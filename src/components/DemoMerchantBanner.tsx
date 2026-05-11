@@ -1,6 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Eye } from "lucide-react";
 import { useDemoMerchant } from "@/hooks/useDemoMerchant";
+import { useDemoOnboardingTour } from "@/hooks/useDemoOnboardingTour";
 import { disableDemoMerchant, getDemoMerchantName } from "@/lib/demoMerchant";
 
 /**
@@ -10,9 +11,10 @@ import { disableDemoMerchant, getDemoMerchantName } from "@/lib/demoMerchant";
  */
 export default function DemoMerchantBanner() {
   const active = useDemoMerchant();
+  const tourStep = useDemoOnboardingTour();
   const navigate = useNavigate();
 
-  if (!active) return null;
+  if (!active || tourStep !== null) return null;
 
   const demoName = getDemoMerchantName();
 
