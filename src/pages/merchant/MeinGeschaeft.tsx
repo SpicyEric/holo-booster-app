@@ -35,6 +35,15 @@ import RichTextEditor from "@/components/merchant/RichTextEditor";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useDemoMerchant } from "@/hooks/useDemoMerchant";
+import {
+  DEMO_ONBOARDING_CARD_ID,
+  DEMO_ONBOARDING_CUSTOMER_ID,
+  getDemoOnboardingState,
+  getDemoOnboardingStep,
+  isDemoOnboardingTourActive,
+  setDemoOnboardingStep,
+  updateDemoOnboardingState,
+} from "@/lib/demoOnboardingTour";
 import { calculateSuggestion, SPEND_PRESETS } from "../wizard/wizardLogic";
 import { cn } from "@/lib/utils";
 import { linkOrphanNfcChipsToMerchant } from "@/lib/nfcChipLinking";
