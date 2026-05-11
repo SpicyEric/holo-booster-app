@@ -64,7 +64,7 @@ export default function DemoOnboardingTourBanner() {
             </p>
           </div>
           <p className="text-sm font-bold leading-tight">{step.title}</p>
-          <p className="text-[13px] leading-snug mt-0.5">{step.body}</p>
+          <p className="text-[13px] leading-snug mt-0.5 whitespace-pre-line">{step.body}</p>
           {step.highlight && (
             <button
               onClick={() => copy(step.highlight!)}
