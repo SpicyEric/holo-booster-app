@@ -167,6 +167,14 @@ export default function MerchantOnboarding() {
 
   const uploadFile = async (file: File, prefix: string): Promise<string | null> => {
     if (!customerId) return null;
+    // Demo-Modus: Datei nur lokal als Vorschau anzeigen, nicht persistieren.
+    if (isDemo) {
+      try {
+        return URL.createObjectURL(file);
+      } catch {
+        return null;
+      }
+    }
     const ext = file.name.split(".").pop();
     const fileName = `${customerId}/${prefix}_${Date.now()}.${ext}`;
     const { error } = await supabase.storage.from("customer-assets").upload(fileName, file, { upsert: true });
