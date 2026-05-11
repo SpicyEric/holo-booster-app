@@ -68,8 +68,7 @@ export default function SalesRepDemoAbschluss() {
       customerId: DEMO_ONBOARDING_CUSTOMER_ID,
       name: DEMO_ONBOARDING_MERCHANT_NAME,
     });
-    startDemoOnboardingTour();
-    navigate("/kunde", { replace: true });
+    navigate("/kunde/willkommen", { replace: true });
   };
 
   return (
