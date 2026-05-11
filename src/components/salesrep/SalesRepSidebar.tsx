@@ -68,11 +68,9 @@ const NAV_GROUPS: NavGroup[] = [
     label: "ACADEMY",
     alwaysOpen: true,
     items: [
-      { path: "/vertriebler/academy?tab=funktion", label: "Wie funktioniert eloyo?", icon: GraduationCap },
-      { path: "/vertriebler/academy?tab=box", label: "Die eloyo Box", icon: GraduationCap },
-      { path: "/vertriebler/academy?tab=kunden", label: "Wie komme ich an Kunden?", icon: GraduationCap },
-      { path: "/vertriebler/academy?tab=abschluss", label: "Technischer Abschluss", icon: GraduationCap },
-      { path: "/vertriebler/academy?tab=verkauf", label: "Wie verkaufe ich eloyo?", icon: GraduationCap },
+      { path: "/vertriebler/academy", label: "Quick Onboarding", icon: GraduationCap },
+      { path: "/vertriebler/demo-abschluss", label: "Demo Abschluss", icon: Sparkles },
+      { path: "__demo_merchant__", label: "Demo Merchant", icon: Eye },
     ],
   },
 ];
