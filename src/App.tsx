@@ -182,6 +182,7 @@ const App = () => {
                 <Route path="messages" element={<SalesRepMessages />} />
                 <Route path="orders" element={<SalesRepOrders />} />
                 <Route path="settings" element={<SalesRepSettings />} />
+                <Route path="academy" element={<Academy />} />
                 <Route path="abrechnungen" element={<SalesRepAbrechnungen />} />
                 <Route path="vertrag" element={<SalesRepVertrag />} />
                 <Route path="mein-vertrag" element={<SalesRepMeinVertrag />} />
