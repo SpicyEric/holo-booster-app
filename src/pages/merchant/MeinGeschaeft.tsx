@@ -1387,188 +1387,29 @@ const MeinGeschaeft = () => {
                 {/* Ende 2-spaltiges Profil-Grid */}
               </TabsContent>
 
-                {/* Karte Tab - 2-spaltiges Layout wie Profil */}
+                {/* Punktesystem Tab — vereinfacht */}
               <TabsContent value="karte" className="space-y-4">
+                <div className="mb-2">
+                  <h1 className="text-2xl font-semibold text-foreground">Punktesystem</h1>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Lege fest, wie viele Punkte ein Kunde pro Karte bekommt.
+                  </p>
+                </div>
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
-                {/* LINKS: Automatisches Karten-System */}
-                <Card className="rounded-2xl shadow-sm border-0 bg-muted/40">
-                  <CardHeader className="pb-4">
-                    <div className="flex items-center justify-between">
+                  {/* Karte 1/2/3 — schlicht, dunkel */}
+                  <Card className="rounded-2xl shadow-sm border-0 bg-muted/40">
+                    <CardHeader className="pb-4">
                       <CardTitle className="flex items-center gap-3 text-lg font-semibold">
-                        <span className="text-lg">⚙️</span>
-                        Automatisches Karten-System
-                        <Badge variant="outline" className={cn("text-xs", !manualMode ? "bg-emerald-50 text-emerald-700 border-emerald-300" : "bg-muted text-muted-foreground")}>
-                          {!manualMode ? "aktiviert" : "deaktiviert"}
-                        </Badge>
+                        <span className="text-lg">🎴</span>
+                        Punktewerte
                       </CardTitle>
-                      <Switch
-                        checked={!manualMode}
-                        onCheckedChange={(checked) => setManualMode(!checked)}
-                      />
-                    </div>
-                  </CardHeader>
-                  {!manualMode && (
-                    <CardContent className="space-y-6">
-                      <div>
-                        <p className="text-sm text-muted-foreground mb-4">
-                          Wie viel gibt ein Kunde bei dir im Durchschnitt pro Besuch aus?
-                        </p>
-
-
-
-                        {/* Slider */}
-                        <div className="space-y-3">
-                          <div className="text-center">
-                            <div className="bg-primary/10 border border-primary/30 rounded-full px-4 py-1.5 inline-block">
-                              <span className="text-lg font-bold text-primary">
-                                ca. {avgRevenue} €
-                              </span>
-                            </div>
-                          </div>
-                          <Slider
-                            min={3}
-                            max={200}
-                            step={1}
-                            value={[avgRevenue]}
-                            onValueChange={(val) => {
-                              setAvgRevenue(val[0]);
-                              setStampMode('revenue');
-                            }}
-                            className="w-full"
-                          />
-                          <div className="flex justify-between text-xs text-muted-foreground">
-                            <span>3 €</span>
-                            <span>200 €</span>
-                          </div>
-
-                          {stampSettingsDirty && (
-                            <Button onClick={handleSaveChips} disabled={savingChips} className="rounded-xl w-full animate-pulse">
-                              {savingChips ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
-                              Karte speichern
-                            </Button>
-                          )}
-                        </div>
-
-                        {/* Variant selector */}
-                        {stampMode === 'revenue' && (
-                          <div className="flex gap-2 mt-4">
-                            <button
-                              type="button"
-                              onClick={() => setSelectedVariant('balanced')}
-                              className={cn(
-                                "flex-1 py-2.5 px-3 rounded-lg border-2 text-sm font-medium transition-all",
-                                selectedVariant === 'balanced'
-                                  ? "border-primary bg-primary/10 text-primary"
-                                  : "border-border text-muted-foreground hover:border-primary/40"
-                              )}
-                            >
-                              ⚖️ Ausgewogen
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => setSelectedVariant('umsatzboost')}
-                              className={cn(
-                                "flex-1 py-2.5 px-3 rounded-lg border-2 text-sm font-medium transition-all",
-                                selectedVariant === 'umsatzboost'
-                                  ? "border-primary bg-primary/10 text-primary"
-                                  : "border-border text-muted-foreground hover:border-primary/40"
-                              )}
-                            >
-                              🚀 Umsatzboost
-                            </button>
-                          </div>
-                        )}
-
-                        {/* Threshold display using calculateSuggestion */}
-                        {stampMode === 'revenue' && (() => {
-                          const suggestion = calculateSuggestion(avgRevenue, ['visits'], selectedVariant);
-                          return suggestion.type === 'tiered' && suggestion.tiers ? (
-                            <>
-                              {/* Tier cards */}
-                              <div className="grid grid-cols-3 gap-3 mt-4">
-                                {suggestion.tiers.map((tier) => {
-                                  const colorStyles: Record<string, string> = {
-                                    green: "bg-emerald-50 border-emerald-300 text-emerald-700",
-                                    blue: "bg-blue-50 border-blue-300 text-blue-700",
-                                    red: "bg-red-50 border-red-300 text-red-700",
-                                  };
-                                  const stampColor: Record<string, string> = {
-                                    green: "text-emerald-500",
-                                    blue: "text-blue-500",
-                                    red: "text-red-500",
-                                  };
-                                  return (
-                                    <div
-                                      key={tier.label}
-                                      className={cn("rounded-xl border-2 p-4 text-center", colorStyles[tier.color])}
-                                    >
-                                      <Nfc className={cn("h-8 w-8 mx-auto mb-2", stampColor[tier.color])} />
-                                      <p className="font-bold text-base">{tier.label}</p>
-                                      <p className="text-sm mt-1">ab {tier.threshold} €</p>
-                                      <p className="text-xl font-bold mt-1">{tier.points} Pkt.</p>
-                                    </div>
-                                  );
-                                })}
-                              </div>
-
-                              {/* Example purchases */}
-                              <div className="bg-muted/50 rounded-lg p-4 border border-border mt-4">
-                                <div className="flex items-center gap-2 mb-2">
-                                  <Info className="h-4 w-4 text-muted-foreground" />
-                                  <span className="text-sm font-medium text-foreground">Beispiel-Einkäufe</span>
-                                </div>
-                                <div className="space-y-2">
-                                  {[avgRevenue * 0.5, avgRevenue * 0.8, avgRevenue * 1.3, avgRevenue * 2.8].map((amt) => {
-                                    const formatted = amt.toFixed(2).replace(".", ",");
-                                    let label = "Kein Karte";
-                                    const tiers = suggestion.tiers!;
-                                    for (let i = tiers.length - 1; i >= 0; i--) {
-                                      if (amt >= tiers[i].threshold) {
-                                        label = `${tiers[i].label} (${tiers[i].points} Pkt.)`;
-                                        break;
-                                      }
-                                    }
-                                    return (
-                                      <div key={amt} className="flex justify-between text-sm">
-                                        <span className="text-muted-foreground">Einkauf: {formatted} €</span>
-                                        <span className={cn("font-medium", label === "Kein Karte" ? "text-muted-foreground" : "text-foreground")}>
-                                          → {label}
-                                        </span>
-                                      </div>
-                                    );
-                                  })}
-                                </div>
-                              </div>
-                            </>
-                          ) : null;
-                        })()}
-                      </div>
-                    </CardContent>
-                  )}
-                </Card>
-
-                {/* Manuelles Karten-System */}
-                <Card className="rounded-2xl shadow-sm border-0 bg-muted/40">
-                  <CardHeader className="pb-4">
-                    <div className="flex items-center justify-between">
-                      <CardTitle className="flex items-center gap-3 text-lg font-semibold">
-                        <span className="text-lg">🔖</span>
-                        Manuelles Karten-System
-                        <Badge variant="outline" className={cn("text-xs", manualMode ? "bg-emerald-50 text-emerald-700 border-emerald-300" : "bg-muted text-muted-foreground")}>
-                          {manualMode ? "aktiviert" : "deaktiviert"}
-                        </Badge>
-                      </CardTitle>
-                      <Switch
-                        checked={manualMode}
-                        onCheckedChange={setManualMode}
-                      />
-                    </div>
-                  </CardHeader>
-                  {manualMode && nfcChips.length > 0 && (
-                    <CardContent className="space-y-4">
-                      <p className="text-sm text-muted-foreground">Punktzahl pro Karte selbst festlegen</p>
+                      <CardDescription>
+                        Trage hier ein, wie viele Punkte jede deiner 3 Karten vergibt.
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
                       {(() => {
-                        // Eindeutige Karten nach stamp_color, sortiert in fixer Reihenfolge: grün → blau → rot → andere
                         const order = ['grün', 'gruen', 'green', 'blau', 'blue', 'rot', 'red', 'gelb', 'yellow', 'lila', 'purple', 'orange'];
                         const seen = new Set<string>();
                         const unique = nfcChips.filter((chip) => {
@@ -1581,111 +1422,128 @@ const MeinGeschaeft = () => {
                           const bi = order.indexOf((b.stamp_color || '').toLowerCase());
                           return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi);
                         });
+
+                        if (unique.length === 0) {
+                          return (
+                            <div className="rounded-xl border border-dashed border-border bg-background/60 p-6 text-center">
+                              <p className="text-sm text-muted-foreground">
+                                Noch keine Karten verknüpft.<br />
+                                Hinterlege rechts deine Karten-ID, dann erscheinen hier deine 3 Karten.
+                              </p>
+                            </div>
+                          );
+                        }
+
                         return unique.map((chip, idx) => (
-                          <div key={chip.id} className="flex items-center gap-4 p-4 bg-background rounded-xl border-2 border-border shadow-sm">
-                            <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-slate-700 to-slate-900 shadow-sm flex-shrink-0 flex items-center justify-center">
-                              <span className="text-white font-bold text-sm">{idx + 1}</span>
+                          <div
+                            key={chip.id}
+                            className="flex items-center gap-4 p-4 rounded-xl bg-slate-900 text-white shadow-sm"
+                          >
+                            <div className="h-11 w-11 rounded-xl bg-white/10 flex items-center justify-center flex-shrink-0">
+                              <span className="font-bold text-base">{idx + 1}</span>
                             </div>
-                            <div className="flex-1 grid grid-cols-2 gap-4">
-                              <div>
-                                <Label className="text-xs text-muted-foreground">Karte</Label>
-                                <p className="text-sm font-medium text-foreground mt-1">Karte {idx + 1}</p>
-                              </div>
-                              <div>
-                                <Label className="text-xs text-muted-foreground">Punkte</Label>
-                                <Input
-                                  type="number"
-                                  min={1}
-                                  value={chip.points_value || 1}
-                                  onChange={(e) => {
-                                    const val = parseInt(e.target.value) || 1;
-                                    const color = chip.stamp_color?.toLowerCase() || '';
-                                    setNfcChips(chips => chips.map(c =>
-                                      c.stamp_color?.toLowerCase() === color ? { ...c, points_value: val } : c
-                                    ));
-                                  }}
-                                  className="h-8 w-20 mt-1 bg-background border-2 border-primary/30 font-bold text-foreground"
-                                />
-                              </div>
+                            <div className="flex-1">
+                              <p className="text-sm font-medium text-white">Karte {idx + 1}</p>
+                              <p className="text-xs text-white/50 mt-0.5">Punkte pro Scan</p>
                             </div>
+                            <Input
+                              type="number"
+                              min={1}
+                              value={chip.points_value || 1}
+                              onChange={(e) => {
+                                const val = parseInt(e.target.value) || 1;
+                                const color = chip.stamp_color?.toLowerCase() || '';
+                                setNfcChips((chips) => chips.map((c) =>
+                                  c.stamp_color?.toLowerCase() === color ? { ...c, points_value: val } : c,
+                                ));
+                                setStampSettingsDirty(true);
+                              }}
+                              className="h-10 w-24 bg-white text-slate-900 border-0 font-bold text-center"
+                            />
                           </div>
                         ));
                       })()}
 
-                      <Button onClick={handleSaveChips} disabled={savingChips} className="rounded-xl w-full animate-pulse">
-                        {savingChips ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
-                        Karte speichern
-                      </Button>
+                      {nfcChips.length > 0 && (
+                        <Button
+                          onClick={async () => {
+                            // Force klassisches/manuelles System beim Speichern
+                            setManualMode(true);
+                            setStampMode('classic');
+                            await handleSaveChips();
+                          }}
+                          disabled={savingChips}
+                          className="rounded-xl w-full mt-2"
+                        >
+                          {savingChips ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
+                          Speichern
+                        </Button>
+                      )}
                     </CardContent>
-                  )}
-                </Card>
+                  </Card>
 
-                {/* RECHTE SPALTE: Karten-IDs + Prämien */}
-                <div className="flex flex-col gap-4">
-                {/* Karten-IDs */}
-                <Card className="rounded-2xl shadow-sm border-0 bg-gray-50/80">
-                  <CardHeader className="pb-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-                        <Package className="h-5 w-5 text-primary" />
-                      </div>
-                      <div>
-                        <CardTitle className="text-lg font-semibold text-gray-900">Karten-ID</CardTitle>
-                        <CardDescription className="text-gray-500">Verknüpfen Sie Ihre Karten-ID</CardDescription>
-                      </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    {customerBoxes.length > 0 && (
-                      <div className="space-y-3">
-                        {customerBoxes.map((box) => (
-                          <div key={box.id} className="flex items-center justify-between p-4 bg-white rounded-xl border border-gray-100">
-                            <code className="font-mono text-sm font-semibold text-gray-900">{box.stamp_code}</code>
-                            <span className="text-xs text-gray-500">Hinzugefügt: {new Date(box.assigned_at).toLocaleDateString('de-DE')}</span>
+                  {/* RECHTE SPALTE: Karten-IDs + Prämien — unverändert */}
+                  <div className="flex flex-col gap-4">
+                    <Card className="rounded-2xl shadow-sm border-0 bg-gray-50/80">
+                      <CardHeader className="pb-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                            <Package className="h-5 w-5 text-primary" />
                           </div>
-                        ))}
-                      </div>
-                    )}
-                    <div className="flex gap-3">
-                      <Input
-                        value={newBoxId}
-                        onChange={(e) => setNewBoxId(formatBoxIdInput(e.target.value))}
-                        placeholder="XXXXX-XXXXX-XXXXX"
-                        className="font-mono rounded-xl"
-                        maxLength={17}
-                      />
-                      <Button onClick={handleAddBox} disabled={addingBox || !newBoxId.trim()} className="rounded-xl">
-                        {addingBox ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
+                          <div>
+                            <CardTitle className="text-lg font-semibold text-gray-900">Karten-ID</CardTitle>
+                            <CardDescription className="text-gray-500">Verknüpfen Sie Ihre Karten-ID</CardDescription>
+                          </div>
+                        </div>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        {customerBoxes.length > 0 && (
+                          <div className="space-y-3">
+                            {customerBoxes.map((box) => (
+                              <div key={box.id} className="flex items-center justify-between p-4 bg-white rounded-xl border border-gray-100">
+                                <code className="font-mono text-sm font-semibold text-gray-900">{box.stamp_code}</code>
+                                <span className="text-xs text-gray-500">Hinzugefügt: {new Date(box.assigned_at).toLocaleDateString('de-DE')}</span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                        <div className="flex gap-3">
+                          <Input
+                            value={newBoxId}
+                            onChange={(e) => setNewBoxId(formatBoxIdInput(e.target.value))}
+                            placeholder="XXXXX-XXXXX-XXXXX"
+                            className="font-mono rounded-xl"
+                            maxLength={17}
+                          />
+                          <Button onClick={handleAddBox} disabled={addingBox || !newBoxId.trim()} className="rounded-xl">
+                            {addingBox ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
 
-                {/* Prämien-Schnellzugriff */}
-                <Card className="rounded-2xl shadow-sm border-0 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent">
-                  <CardContent className="p-6 flex flex-col items-center text-center gap-3">
-                    <div className="w-12 h-12 rounded-2xl bg-primary/15 flex items-center justify-center">
-                      <Gift className="h-6 w-6 text-primary" />
-                    </div>
-                    <div>
-                      <p className="font-semibold text-foreground">Verwalte deine Prämien</p>
-                      <p className="text-sm text-muted-foreground">Lege fest, wofür Kunden ihre Punkte einlösen können</p>
-                    </div>
-                    <Button
-                      onClick={() => navigate('/kunde/marketing?tab=praemien')}
-                      className="rounded-xl gap-2"
-                      size="lg"
-                    >
-                      <Gift className="h-4 w-4" />
-                      Zu deinen Prämien
-                      <ArrowRight className="h-4 w-4" />
-                    </Button>
-                  </CardContent>
-                </Card>
+                    <Card className="rounded-2xl shadow-sm border-0 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent">
+                      <CardContent className="p-6 flex flex-col items-center text-center gap-3">
+                        <div className="w-12 h-12 rounded-2xl bg-primary/15 flex items-center justify-center">
+                          <Gift className="h-6 w-6 text-primary" />
+                        </div>
+                        <div>
+                          <p className="font-semibold text-foreground">Verwalte deine Prämien</p>
+                          <p className="text-sm text-muted-foreground">Lege fest, wofür Kunden ihre Punkte einlösen können</p>
+                        </div>
+                        <Button
+                          onClick={() => navigate('/kunde/marketing?tab=praemien')}
+                          className="rounded-xl gap-2"
+                          size="lg"
+                        >
+                          <Gift className="h-4 w-4" />
+                          Zu deinen Prämien
+                          <ArrowRight className="h-4 w-4" />
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  </div>
                 </div>
-                {/* Ende rechte Spalte */}
-                </div>
-                {/* Ende 2-spaltiges Karte-Grid */}
               </TabsContent>
             </Tabs>
           </div>
