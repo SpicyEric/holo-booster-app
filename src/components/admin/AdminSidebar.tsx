@@ -38,6 +38,7 @@ const NAV_GROUPS: NavGroup[] = [
   },
   {
     label: "SALES",
+    alwaysOpen: true,
     items: [
       { path: "/admin/store-finder", label: "Store Finder", icon: Search },
       { path: "/admin/leads", label: "Kontakte", icon: Users },
@@ -49,6 +50,7 @@ const NAV_GROUPS: NavGroup[] = [
   },
   {
     label: "OPERATIONS",
+    alwaysOpen: true,
     items: [
       { path: "/admin/boxes", label: "Box-IDs", icon: Box },
       { path: "/admin/orders", label: "Nachrichten", icon: Package },
@@ -56,6 +58,7 @@ const NAV_GROUPS: NavGroup[] = [
   },
   {
     label: "VERTRIEB",
+    alwaysOpen: true,
     items: [
       { path: "/admin/sales-reps", label: "Vertriebler", icon: Users },
       { path: "/admin/sales-rep-register", label: "Vertriebler registrieren", icon: UserPlus },
@@ -68,12 +71,21 @@ const NAV_GROUPS: NavGroup[] = [
   },
   {
     label: "SYSTEM",
+    alwaysOpen: true,
     items: [
       { path: "/admin/accounts", label: "User-Accounts", icon: UserCog },
       { path: "/admin/push", label: "Push", icon: Bell },
       { path: "/admin/website-checkout", label: "Website", icon: Globe },
-      { path: "/admin/academy", label: "Academy", icon: GraduationCap },
       { path: "/admin/settings", label: "Einstellungen", icon: Settings },
+    ],
+  },
+  {
+    label: "ACADEMY",
+    alwaysOpen: true,
+    items: [
+      { path: "/admin/academy", label: "Quick Onboarding", icon: GraduationCap },
+      { path: "/admin/demo-abschluss", label: "Demo Abschluss", icon: Sparkles },
+      { path: "__demo_merchant__", label: "Demo Merchant", icon: Eye },
     ],
   },
 ];
