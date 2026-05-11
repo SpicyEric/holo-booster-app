@@ -737,25 +737,20 @@ export default function MerchantOnboarding() {
   );
 }
 
-const Section = (() => {
-  const Inner = (
-    {
-      number,
-      title,
-      done,
-      optional,
-      error,
-      children,
-    }: {
-      number: number;
-      title: string;
-      done?: boolean;
-      optional?: boolean;
-      error?: boolean;
-      children: React.ReactNode;
-    },
-    ref: React.Ref<HTMLDivElement>,
-  ) => (
+interface SectionProps {
+  number: number;
+  title: string;
+  done?: boolean;
+  optional?: boolean;
+  error?: boolean;
+  children: React.ReactNode;
+}
+
+const Section = (await import("react")).forwardRef<HTMLDivElement, SectionProps>(function Section(
+  { number, title, done, optional, error, children },
+  ref,
+) {
+  return (
     <div ref={ref} className="scroll-mt-20">
       <Card className={cn(
         "rounded-2xl border-2 transition-colors",
@@ -782,9 +777,4 @@ const Section = (() => {
       </Card>
     </div>
   );
-  return Object.assign(
-    // eslint-disable-next-line react/display-name
-    (require("react") as typeof import("react")).forwardRef<HTMLDivElement, any>(Inner),
-    { displayName: "OnboardingSection" },
-  );
-})();
+});
