@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowRight, Sparkles, Loader2, CheckCircle2, Info } from "lucide-react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
@@ -6,7 +6,11 @@ import CheckoutForm, { type CheckoutPrefill } from "@/components/checkout/Checko
 import {
   enableDemoMerchant,
 } from "@/lib/demoMerchant";
-import { DEMO_ONBOARDING_CUSTOMER_ID, DEMO_ONBOARDING_MERCHANT_NAME } from "@/lib/demoOnboardingTour";
+import {
+  DEMO_ONBOARDING_CUSTOMER_ID,
+  DEMO_ONBOARDING_MERCHANT_NAME,
+  startDemoOnboardingTour,
+} from "@/lib/demoOnboardingTour";
 
 const DEMO_PREFILL: CheckoutPrefill = {
   companyName: DEMO_ONBOARDING_MERCHANT_NAME,
