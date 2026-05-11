@@ -383,8 +383,15 @@ export default function MerchantOnboarding() {
         is_active: true,
       });
 
-      toast.success("Einrichtung abgeschlossen 🚀");
-      navigate("/kunde", { replace: true });
+      // Erfolgsanzeige + Konfetti
+      setShowSuccess(true);
+      try {
+        const confetti = (await import("canvas-confetti")).default;
+        const fire = (opts: any) => confetti({ origin: { y: 0 }, spread: 90, startVelocity: 45, ticks: 220, ...opts });
+        fire({ particleCount: 120, angle: 270 });
+        setTimeout(() => fire({ particleCount: 80, angle: 250, origin: { x: 0.2, y: 0 } }), 200);
+        setTimeout(() => fire({ particleCount: 80, angle: 290, origin: { x: 0.8, y: 0 } }), 400);
+      } catch {}
     } catch (e) {
       console.error(e);
       toast.error("Fehler beim Speichern");
