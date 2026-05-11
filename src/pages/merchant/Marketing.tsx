@@ -38,6 +38,14 @@ import {
 } from '@/components/merchant/explainerCarouselsData';
 import EmojiPicker from '@/components/EmojiPicker';
 import { cn } from '@/lib/utils';
+import {
+  DEMO_ONBOARDING_CUSTOMER_ID,
+  getDemoOnboardingState,
+  getDemoOnboardingStep,
+  isDemoOnboardingTourActive,
+  setDemoOnboardingStep,
+  updateDemoOnboardingState,
+} from '@/lib/demoOnboardingTour';
 import { usePushLimit } from '@/hooks/usePushLimit';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { Bell, AlertTriangle } from 'lucide-react';
