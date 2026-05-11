@@ -159,6 +159,7 @@ const App = () => {
               <Route path="/kunde" element={<MerchantLayout />}>
                 <Route index element={<KundeDashboard />} />
                 <Route path="mein-geschaeft" element={<MeinGeschaeft />} />
+                <Route path="willkommen" element={<MerchantOnboarding />} />
                 <Route path="kunden" element={<Transaktionen />} />
                 <Route path="marketing" element={<Marketing />} />
                 <Route path="konto" element={<MeinKonto />} />
