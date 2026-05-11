@@ -151,9 +151,9 @@ function TabFunktion() {
       <Card>
         <Section title="Wie funktioniert das technisch?">
           <p>
-            Das Geschäft bekommt 3 NFC-Karten (ca. Kreditkartengröße), die in einem kleinen, stylischen eloyo-Terminal stehen. Der Endkunde hält
-            sein Handy mit der eloyo-App an eine dieser Karten – und bekommt sofort Punkte gutgeschrieben. Das war's. Kein Tablet, keine Kasse,
-            kein Extra-Gerät nötig.
+            Das Geschäft bekommt 3 NFC-Karten (Kreditkartengröße), die in einem kleinen, stylischen eloyo-Terminal stehen. Der Kassierer hält
+            eine dieser Karten an das Handy des Kunden – und der Kunde bekommt sofort Punkte gutgeschrieben. Das war's. Kein Tablet, keine
+            Kasse, kein Extra-Gerät nötig.
           </p>
           <p>
             Ab einer bestimmten Punktzahl kann sich der Kunde eine Prämie aussuchen, die das Geschäft selbst festgelegt hat. Das Geschäft kann
