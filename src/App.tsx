@@ -148,6 +148,7 @@ const App = () => {
                 <Route path="zusatzvereinbarungen" element={<AdminZusatzvereinbarungen />} />
                 <Route path="push" element={<AdminPushLogs />} />
                 <Route path="settings" element={<Settings />} />
+                <Route path="academy" element={<Academy />} />
                 <Route path="map" element={<CustomerMap />} />
               </Route>
 
