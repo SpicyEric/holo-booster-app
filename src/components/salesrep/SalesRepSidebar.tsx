@@ -58,6 +58,7 @@ const NAV_GROUPS: NavGroup[] = [
     items: [
       { path: "/vertriebler/mein-vertrag", label: "Mein Vertrag", icon: FileText },
       { path: "/vertriebler/abrechnungen", label: "Meine Abrechnungen", icon: Receipt },
+      { path: "/vertriebler/academy", label: "Academy", icon: GraduationCap },
       { path: "/vertriebler/settings", label: "Einstellungen", icon: Settings },
     ],
   },
