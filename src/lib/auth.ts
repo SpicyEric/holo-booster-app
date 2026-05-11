@@ -211,6 +211,10 @@ export const getUserCustomer = async (userId: string) => {
     // Demo-Merchant-Modus: den aktuell gewählten Demo-Account zurückgeben
     const { isDemoMerchantActive, getDemoMerchantCustomerId } = await import('@/lib/demoMerchant');
     if (isDemoMerchantActive()) {
+      const { DEMO_ONBOARDING_CUSTOMER_ID, getDemoOnboardingState, isDemoOnboardingTourActive } = await import('@/lib/demoOnboardingTour');
+      if (isDemoOnboardingTourActive() && getDemoMerchantCustomerId() === DEMO_ONBOARDING_CUSTOMER_ID) {
+        return getDemoOnboardingState().profile as any;
+      }
       const { data: demoCustomer } = await supabase
         .from('customers')
         .select('*')
