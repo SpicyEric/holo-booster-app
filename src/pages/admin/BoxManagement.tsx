@@ -439,9 +439,23 @@ const BoxManagement = () => {
         const hardwareUid = serialNumber ? serialNumber.toLowerCase() : null;
         try { await ndef.write({ records: [{ recordType: "text", data: ndefText, lang: "de" }] }); toast.success(`NFC-Chip beschrieben: ${ndefText}`); } catch { toast.error("Chip konnte nicht beschrieben werden"); }
         try {
-          // Punkte-Wert ermitteln: für fertige, noch nicht zugewiesene Boxen bleibt das der Default.
-          // Sobald die Box im Händler-Setup übernommen wird, werden diese Karten per Karte-ID zugeordnet.
-          const defaultPoints = color === 'grün' ? 1 : color === 'blau' ? 2 : 3;
+          // Punkte-Wert ermitteln: Wenn bereits Karten dieser Farbe für diese Box existieren,
+          // übernehmen wir deren Punktwert (z.B. bei Demo-Boxen mit zugewiesenem Händler).
+          // Sonst Default für unzugewiesene Boxen: grün=1, blau=2, rot=3.
+          const fallbackPoints = color === 'grün' ? 1 : color === 'blau' ? 2 : 3;
+          let defaultPoints = fallbackPoints;
+          try {
+            const { data: existingChips } = await supabase
+              .from('nfc_chips')
+              .select('points_value')
+              .eq('chip_uid', chipUid)
+              .eq('stamp_color', color)
+              .order('points_value', { ascending: false })
+              .limit(1);
+            if (existingChips && existingChips.length > 0 && existingChips[0].points_value) {
+              defaultPoints = existingChips[0].points_value;
+            }
+          } catch {}
           const { data: savedChip, error: rpcErr } = await (supabase as any).rpc("register_box_nfc_chip", {
             p_chip_uid: chipUid,
             p_stamp_color: color,
