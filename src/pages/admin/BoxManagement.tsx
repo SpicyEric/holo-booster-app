@@ -448,6 +448,7 @@ const BoxManagement = () => {
             p_stamp_name: color.charAt(0).toUpperCase() + color.slice(1),
             p_hardware_uid: hardwareUid,
             p_points_value: defaultPoints,
+            p_allow_duplicate: allowDuplicate,
           });
           if (rpcErr) throw rpcErr;
 
@@ -458,8 +459,14 @@ const BoxManagement = () => {
           }
           toast.success(`Karte "${color}" registriert`);
           setRegisteredStamps(prev => {
-            const filtered = prev.filter(s => s.stamp_color !== color);
-            return [...filtered, { id: saved.id, stamp_color: saved.stamp_color || color, hardware_uid: saved.hardware_uid || hardwareUid, chip_uid: saved.chip_uid || chipUid, points_value: saved.points_value || defaultPoints }];
+            // Replace by id (re-scan of same physical card) or by color when not duplicate mode
+            const withoutSame = prev.filter(s => s.id !== saved.id);
+            if (!allowDuplicate) {
+              // Replace single existing chip of this color (legacy single-card behavior)
+              const filtered = withoutSame.filter(s => s.stamp_color !== color);
+              return [...filtered, { id: saved.id, stamp_color: saved.stamp_color || color, hardware_uid: saved.hardware_uid || hardwareUid, chip_uid: saved.chip_uid || chipUid, points_value: saved.points_value || defaultPoints }];
+            }
+            return [...withoutSame, { id: saved.id, stamp_color: saved.stamp_color || color, hardware_uid: saved.hardware_uid || hardwareUid, chip_uid: saved.chip_uid || chipUid, points_value: saved.points_value || defaultPoints }];
           });
         } catch (dbErr: any) {
           console.error("[BoxManagement] NFC register DB error:", dbErr);
