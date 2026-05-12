@@ -477,17 +477,30 @@ const BoxManagement = () => {
               pointsValue = existingChipForColor.points_value;
             }
           }
+          let savedId = existing?.id as string | undefined;
           if (existing) {
-            await supabase.from("nfc_chips").update({ hardware_uid: hardwareUid, chip_uid: chipUid, merchant_customer_id: merchantCustomerId }).eq("id", existing.id);
+            const { error: updErr } = await supabase.from("nfc_chips").update({ hardware_uid: hardwareUid, chip_uid: chipUid, merchant_customer_id: merchantCustomerId }).eq("id", existing.id);
+            if (updErr) throw updErr;
           } else {
-            await supabase.from("nfc_chips").insert({ chip_uid: chipUid, stamp_color: color, stamp_name: color.charAt(0).toUpperCase() + color.slice(1), hardware_uid: hardwareUid, points_value: pointsValue, is_active: true, merchant_customer_id: merchantCustomerId });
+            const { data: inserted, error: insErr } = await supabase.from("nfc_chips").insert({ chip_uid: chipUid, stamp_color: color, stamp_name: color.charAt(0).toUpperCase() + color.slice(1), hardware_uid: hardwareUid, points_value: pointsValue, is_active: true, merchant_customer_id: merchantCustomerId }).select("id").maybeSingle();
+            if (insErr) throw insErr;
+            savedId = inserted?.id;
+          }
+          // Verify the row is actually persisted (catches silent RLS drops)
+          const { data: verify } = await supabase.from("nfc_chips").select("id, hardware_uid").eq("chip_uid", chipUid).eq("stamp_color", color).maybeSingle();
+          if (!verify) {
+            toast.error(`Karte "${color}" konnte nicht gespeichert werden (Berechtigung?). Bitte erneut einloggen oder Box einem Händler zuweisen.`);
+            return;
           }
           toast.success(`Karte "${color}" registriert`);
           setRegisteredStamps(prev => {
             const filtered = prev.filter(s => s.stamp_color !== color);
-            return [...filtered, { id: existing?.id || 'temp-' + Date.now(), stamp_color: color, hardware_uid: hardwareUid, chip_uid: chipUid, points_value: pointsValue }];
+            return [...filtered, { id: savedId || verify.id, stamp_color: color, hardware_uid: hardwareUid, chip_uid: chipUid, points_value: pointsValue }];
           });
-        } catch { toast.error("DB Fehler"); }
+        } catch (dbErr: any) {
+          console.error("[BoxManagement] NFC register DB error:", dbErr);
+          toast.error(dbErr?.message ? `DB-Fehler: ${dbErr.message}` : "DB Fehler");
+        }
         setScanningStampColor(null);
         try { abortController.abort(); } catch {}
       };
