@@ -421,9 +421,9 @@ const BoxManagement = () => {
     }
   };
 
-  const startStampRegistration = async (color: string) => {
+  const startStampRegistration = async (color: string, allowDuplicate: boolean = false) => {
     if (!stampDialogRow?.stempel_id || !webNfcSupported) { toast.error("Web NFC nicht verfügbar"); return; }
-    setScanningStampColor(color);
+    setScanningStampColor(allowDuplicate ? `extra:${color}` : color);
     const chipUid = stampDialogRow.stempel_id;
     // Nur eine einfache Zahl pro Farbe auf den Chip schreiben: grün=1, blau=2, rot=3
     const colorNumberMap: Record<string, string> = { grün: "1", gruen: "1", green: "1", blau: "2", blue: "2", rot: "3", red: "3" };
@@ -448,6 +448,7 @@ const BoxManagement = () => {
             p_stamp_name: color.charAt(0).toUpperCase() + color.slice(1),
             p_hardware_uid: hardwareUid,
             p_points_value: defaultPoints,
+            p_allow_duplicate: allowDuplicate,
           });
           if (rpcErr) throw rpcErr;
 
@@ -458,8 +459,14 @@ const BoxManagement = () => {
           }
           toast.success(`Karte "${color}" registriert`);
           setRegisteredStamps(prev => {
-            const filtered = prev.filter(s => s.stamp_color !== color);
-            return [...filtered, { id: saved.id, stamp_color: saved.stamp_color || color, hardware_uid: saved.hardware_uid || hardwareUid, chip_uid: saved.chip_uid || chipUid, points_value: saved.points_value || defaultPoints }];
+            // Replace by id (re-scan of same physical card) or by color when not duplicate mode
+            const withoutSame = prev.filter(s => s.id !== saved.id);
+            if (!allowDuplicate) {
+              // Replace single existing chip of this color (legacy single-card behavior)
+              const filtered = withoutSame.filter(s => s.stamp_color !== color);
+              return [...filtered, { id: saved.id, stamp_color: saved.stamp_color || color, hardware_uid: saved.hardware_uid || hardwareUid, chip_uid: saved.chip_uid || chipUid, points_value: saved.points_value || defaultPoints }];
+            }
+            return [...withoutSame, { id: saved.id, stamp_color: saved.stamp_color || color, hardware_uid: saved.hardware_uid || hardwareUid, chip_uid: saved.chip_uid || chipUid, points_value: saved.points_value || defaultPoints }];
           });
         } catch (dbErr: any) {
           console.error("[BoxManagement] NFC register DB error:", dbErr);
@@ -719,40 +726,90 @@ const BoxManagement = () => {
             {loadingStamps ? (
               <div className="flex items-center justify-center py-8"><Loader2 className="h-6 w-6 animate-spin" /></div>
             ) : (
-              <div className="space-y-3">
-                {STAMP_COLORS.map(({ value, label, colorClass }) => {
-                  const registered = registeredStamps.find(s => s.stamp_color === value);
-                  const isScanning = scanningStampColor === value;
-                  return (
-                    <div key={value} className="flex items-center justify-between p-3 rounded-lg border">
-                      <div className="flex items-center gap-3">
-                        <div className={`w-6 h-6 rounded-full ${colorClass}`} />
-                        <div>
-                          <p className="text-sm font-medium">{label}</p>
-                          {registered && <p className="text-[10px] text-muted-foreground">UID: {registered.hardware_uid || "Nicht gesetzt"}</p>}
+              <div className="space-y-4">
+                <div className="space-y-3">
+                  {STAMP_COLORS.map(({ value, label, colorClass }) => {
+                    const chipsOfColor = registeredStamps.filter(s => s.stamp_color === value);
+                    const primary = chipsOfColor[0];
+                    const isScanning = scanningStampColor === value;
+                    return (
+                      <div key={value} className="flex items-center justify-between p-3 rounded-lg border">
+                        <div className="flex items-center gap-3">
+                          <div className={`w-6 h-6 rounded-full ${colorClass}`} />
+                          <div>
+                            <p className="text-sm font-medium">{label}</p>
+                            {primary && <p className="text-[10px] text-muted-foreground">UID: {primary.hardware_uid || "Nicht gesetzt"}</p>}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {primary && <Check className="w-4 h-4 text-green-500" />}
+                          <Button size="sm" variant={primary ? "outline" : "default"} disabled={isScanning} onClick={() => startStampRegistration(value, false)}>
+                            {isScanning ? <><Loader2 className="w-3 h-3 mr-1 animate-spin" />Scanne...</> : primary ? "Neu scannen" : "Registrieren"}
+                          </Button>
+                          {primary && (
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                              disabled={isScanning}
+                              onClick={() => handleDeleteChip(primary.id, value, "stamp")}
+                              title="Karte entfernen"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          )}
                         </div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        {registered && <Check className="w-4 h-4 text-green-500" />}
-                        <Button size="sm" variant={registered ? "outline" : "default"} disabled={isScanning} onClick={() => startStampRegistration(value)}>
-                          {isScanning ? <><Loader2 className="w-3 h-3 mr-1 animate-spin" />Scanne...</> : registered ? "Neu scannen" : "Registrieren"}
-                        </Button>
-                        {registered && (
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
-                            disabled={isScanning}
-                            onClick={() => handleDeleteChip(registered.id, value, "stamp")}
-                            title="Karte entfernen"
-                          >
-                            <Trash2 className="h-4 w-4" />
+                    );
+                  })}
+                </div>
+
+                {/* Extra cards section: register additional cards per color (e.g. demo cards) */}
+                <div className="border-t pt-3 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-semibold">Zusätzliche Demo-Karten</p>
+                      <p className="text-[11px] text-muted-foreground">Mehrere Karten pro Farbe (gleicher Punktwert) — z.B. für Vertriebler-Demos.</p>
+                    </div>
+                  </div>
+
+                  {STAMP_COLORS.map(({ value, label, colorClass }) => {
+                    const extras = registeredStamps.filter(s => s.stamp_color === value).slice(1);
+                    const scanKey = `extra:${value}`;
+                    const isScanning = scanningStampColor === scanKey;
+                    return (
+                      <div key={`extra-${value}`} className="rounded-lg border p-2 space-y-2">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <div className={`w-4 h-4 rounded-full ${colorClass}`} />
+                            <span className="text-xs font-medium">{label} · {extras.length} extra</span>
+                          </div>
+                          <Button size="sm" variant="outline" disabled={isScanning} onClick={() => startStampRegistration(value, true)}>
+                            {isScanning ? <><Loader2 className="w-3 h-3 mr-1 animate-spin" />Scanne...</> : <><Plus className="w-3 h-3 mr-1" />Karte hinzufügen</>}
                           </Button>
+                        </div>
+                        {extras.length > 0 && (
+                          <div className="space-y-1">
+                            {extras.map(ex => (
+                              <div key={ex.id} className="flex items-center justify-between text-[11px] pl-6">
+                                <span className="font-mono text-muted-foreground">UID: {ex.hardware_uid || "—"}</span>
+                                <Button
+                                  size="icon"
+                                  variant="ghost"
+                                  className="h-6 w-6 text-destructive hover:text-destructive hover:bg-destructive/10"
+                                  onClick={() => handleDeleteChip(ex.id, value, "stamp")}
+                                  title="Karte entfernen"
+                                >
+                                  <Trash2 className="h-3 w-3" />
+                                </Button>
+                              </div>
+                            ))}
+                          </div>
                         )}
                       </div>
-                    </div>
-                  );
-                })}
+                    );
+                  })}
+                </div>
               </div>
             )}
           </DialogContent>

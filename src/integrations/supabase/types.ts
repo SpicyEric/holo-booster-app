@@ -3486,23 +3486,42 @@ export type Database = {
         }
         Returns: Json
       }
-      register_box_nfc_chip: {
-        Args: {
-          p_chip_uid: string
-          p_hardware_uid: string
-          p_points_value?: number
-          p_stamp_color: string
-          p_stamp_name: string
-        }
-        Returns: {
-          chip_uid: string
-          hardware_uid: string
-          id: string
-          merchant_customer_id: string
-          points_value: number
-          stamp_color: string
-        }[]
-      }
+      register_box_nfc_chip:
+        | {
+            Args: {
+              p_chip_uid: string
+              p_hardware_uid: string
+              p_points_value?: number
+              p_stamp_color: string
+              p_stamp_name: string
+            }
+            Returns: {
+              chip_uid: string
+              hardware_uid: string
+              id: string
+              merchant_customer_id: string
+              points_value: number
+              stamp_color: string
+            }[]
+          }
+        | {
+            Args: {
+              p_allow_duplicate?: boolean
+              p_chip_uid: string
+              p_hardware_uid: string
+              p_points_value?: number
+              p_stamp_color: string
+              p_stamp_name: string
+            }
+            Returns: {
+              chip_uid: string
+              hardware_uid: string
+              id: string
+              merchant_customer_id: string
+              points_value: number
+              stamp_color: string
+            }[]
+          }
       verify_email_token: { Args: { p_token: string }; Returns: Json }
     }
     Enums: {
