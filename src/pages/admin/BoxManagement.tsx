@@ -439,63 +439,27 @@ const BoxManagement = () => {
         const hardwareUid = serialNumber ? serialNumber.toLowerCase() : null;
         try { await ndef.write({ records: [{ recordType: "text", data: ndefText, lang: "de" }] }); toast.success(`NFC-Chip beschrieben: ${ndefText}`); } catch { toast.error("Chip konnte nicht beschrieben werden"); }
         try {
-          // Resolve merchantCustomerId: prefer eloyo_boxes.haendler_id, fallback to customer that already
-          // owns this stempel_id (customers.stamp_id), so chips registered AFTER assignment are claimed too.
-          let merchantCustomerId: string | null = stampDialogRow?.haendler_id || null;
-          if (!merchantCustomerId && chipUid) {
-            const { data: ownerCustomer } = await supabase
-              .from("customers")
-              .select("id")
-              .eq("stamp_id", chipUid)
-              .maybeSingle();
-            if (ownerCustomer?.id) merchantCustomerId = ownerCustomer.id;
-          }
-          // First try to find by chip_uid + color (exact match for re-scan)
-          let existing: { id: string } | null = null;
-          const { data: byChipUid } = await supabase.from("nfc_chips").select("id").eq("chip_uid", chipUid).eq("stamp_color", color).maybeSingle();
-          existing = byChipUid;
-          // If not found, try by merchant + color (wizard may have created with different chip_uid)
-          if (!existing && merchantCustomerId) {
-            const { data: byMerchant } = await supabase.from("nfc_chips").select("id").eq("merchant_customer_id", merchantCustomerId).eq("stamp_color", color).maybeSingle();
-            existing = byMerchant;
-          }
-          // Punkte-Wert ermitteln: zuerst bestehenden Wert vom Händler für diese Farbe übernehmen,
-          // sonst Default 1/2/3 (grün/blau/rot). So überschreiben wir keine Händler-Konfiguration.
+          // Punkte-Wert ermitteln: für fertige, noch nicht zugewiesene Boxen bleibt das der Default.
+          // Sobald die Box im Händler-Setup übernommen wird, werden diese Karten per Karte-ID zugeordnet.
           const defaultPoints = color === 'grün' ? 1 : color === 'blau' ? 2 : 3;
-          let pointsValue = defaultPoints;
-          if (merchantCustomerId) {
-            const { data: existingChipForColor } = await supabase
-              .from("nfc_chips")
-              .select("points_value")
-              .eq("merchant_customer_id", merchantCustomerId)
-              .eq("stamp_color", color)
-              .not("points_value", "is", null)
-              .order("points_value", { ascending: false })
-              .limit(1)
-              .maybeSingle();
-            if (existingChipForColor?.points_value != null) {
-              pointsValue = existingChipForColor.points_value;
-            }
-          }
-          let savedId = existing?.id as string | undefined;
-          if (existing) {
-            const { error: updErr } = await supabase.from("nfc_chips").update({ hardware_uid: hardwareUid, chip_uid: chipUid, merchant_customer_id: merchantCustomerId }).eq("id", existing.id);
-            if (updErr) throw updErr;
-          } else {
-            const { data: inserted, error: insErr } = await supabase.from("nfc_chips").insert({ chip_uid: chipUid, stamp_color: color, stamp_name: color.charAt(0).toUpperCase() + color.slice(1), hardware_uid: hardwareUid, points_value: pointsValue, is_active: true, merchant_customer_id: merchantCustomerId }).select("id").maybeSingle();
-            if (insErr) throw insErr;
-            savedId = inserted?.id;
-          }
-          // Verify the row is actually persisted (catches silent RLS drops)
-          const { data: verify } = await supabase.from("nfc_chips").select("id, hardware_uid").eq("chip_uid", chipUid).eq("stamp_color", color).maybeSingle();
-          if (!verify) {
-            toast.error(`Karte "${color}" konnte nicht gespeichert werden (Berechtigung?). Bitte erneut einloggen oder Box einem Händler zuweisen.`);
+          const { data: savedChip, error: rpcErr } = await (supabase as any).rpc("register_box_nfc_chip", {
+            p_chip_uid: chipUid,
+            p_stamp_color: color,
+            p_stamp_name: color.charAt(0).toUpperCase() + color.slice(1),
+            p_hardware_uid: hardwareUid,
+            p_points_value: defaultPoints,
+          });
+          if (rpcErr) throw rpcErr;
+
+          const saved = Array.isArray(savedChip) ? savedChip[0] : savedChip;
+          if (!saved?.id) {
+            toast.error(`Karte "${color}" konnte nicht gespeichert werden.`);
             return;
           }
           toast.success(`Karte "${color}" registriert`);
           setRegisteredStamps(prev => {
             const filtered = prev.filter(s => s.stamp_color !== color);
-            return [...filtered, { id: savedId || verify.id, stamp_color: color, hardware_uid: hardwareUid, chip_uid: chipUid, points_value: pointsValue }];
+            return [...filtered, { id: saved.id, stamp_color: saved.stamp_color || color, hardware_uid: saved.hardware_uid || hardwareUid, chip_uid: saved.chip_uid || chipUid, points_value: saved.points_value || defaultPoints }];
           });
         } catch (dbErr: any) {
           console.error("[BoxManagement] NFC register DB error:", dbErr);
