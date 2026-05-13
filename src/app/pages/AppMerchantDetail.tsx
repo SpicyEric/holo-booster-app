@@ -82,8 +82,15 @@ interface MerchantRouteState {
 
 type MerchantTab = 'rewards' | 'info' | 'transactions';
 
+import { AppMerchantDetailV2 } from './AppMerchantDetailV2';
+import { DEFAULT_DEMO_MERCHANT_CUSTOMER_ID } from '@/lib/demoMerchant';
+
 export const AppMerchantDetail = () => {
   const { id } = useParams<{ id: string }>();
+  // V2-Prototype: Nur Backstube König bekommt die neue Treue-Reise-UI.
+  if (id === DEFAULT_DEMO_MERCHANT_CUSTOMER_ID) {
+    return <AppMerchantDetailV2 />;
+  }
   const { user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
