@@ -253,7 +253,7 @@ export const AppMerchantDetailV2 = () => {
           transition={{ duration: 0.6 }}
           ref={scrollerRef}
           className="overflow-x-auto overflow-y-hidden no-scrollbar"
-          style={{ WebkitOverflowScrolling: 'touch' }}
+          style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-x', overscrollBehaviorX: 'contain' }}
         >
           <div
             className="relative"
