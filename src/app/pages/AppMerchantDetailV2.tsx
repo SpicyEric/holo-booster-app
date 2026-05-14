@@ -79,16 +79,32 @@ export const AppMerchantDetailV2 = () => {
   const merchantId = id || DEFAULT_DEMO_MERCHANT_CUSTOMER_ID;
   const brand = useMerchantBrand(merchantId);
   const [coverImageUrl, setCoverImageUrl] = useState<string | null>(null);
+  const [passLength, setPassLength] = useState<number>(35);
+  const [dbRewards, setDbRewards] = useState<{ visitNumber: number; label: string; imageUrl: string | null }[]>([]);
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const { data } = await import('@/integrations/supabase/client').then(m => m.supabase
-        .from('customers')
-        .select('cover_image_url')
-        .eq('id', merchantId)
-        .maybeSingle());
-      if (!cancelled) setCoverImageUrl((data?.cover_image_url as string | null) || null);
+      const { supabase } = await import('@/integrations/supabase/client');
+      const [{ data: cust }, { data: placements }] = await Promise.all([
+        supabase.from('customers').select('cover_image_url, pass_length').eq('id', merchantId).maybeSingle(),
+        supabase
+          .from('reward_placements')
+          .select('visit, rewards:reward_id(title, image_url)')
+          .eq('customer_id', merchantId)
+          .order('visit', { ascending: true }),
+      ]);
+      if (cancelled) return;
+      setCoverImageUrl((cust?.cover_image_url as string | null) || null);
+      if (cust?.pass_length) setPassLength(cust.pass_length as number);
+      const mapped = (placements || [])
+        .filter((p: any) => p.rewards)
+        .map((p: any) => ({
+          visitNumber: p.visit as number,
+          label: p.rewards.title as string,
+          imageUrl: (p.rewards.image_url as string | null) || null,
+        }));
+      setDbRewards(mapped);
     })();
     return () => { cancelled = true; };
   }, [merchantId]);
@@ -137,12 +153,19 @@ export const AppMerchantDetailV2 = () => {
   ]);
   const currentVisit = checkIns[checkIns.length - 1]?.visit ?? 0;
 
-  const [rewards, setRewards] = useState<MockReward[]>([
-    { visitNumber: 1, label: 'Willkommens-Brötchen 🎁', redeemed: true },
-    { visitNumber: 3, label: 'Kaffee gratis ☕', redeemed: false },
-    { visitNumber: 6, label: '3 Brötchen gratis 🥐', redeemed: false },
-    { visitNumber: 10, label: '5€ Gutschein 🎟️', redeemed: false },
-  ]);
+  const [rewards, setRewards] = useState<MockReward[]>([]);
+
+  // Sync DB-Prämien in den Mock-State (vergangene gelten als eingelöst)
+  useEffect(() => {
+    setRewards((prev) => {
+      const redeemedSet = new Set(prev.filter((r) => r.redeemed).map((r) => r.visitNumber));
+      return dbRewards.map((r) => ({
+        visitNumber: r.visitNumber,
+        label: r.label,
+        redeemed: redeemedSet.has(r.visitNumber) || r.visitNumber < currentVisit,
+      }));
+    });
+  }, [dbRewards, currentVisit]);
 
   const [activatedReward, setActivatedReward] = useState<MockReward | null>(null);
   const [tappedReward, setTappedReward] = useState<MockReward | null>(null);
@@ -186,7 +209,7 @@ export const AppMerchantDetailV2 = () => {
   // ================= Sichtbares Fenster =================
   // Vom ersten Check-in bis 50 Check-ins in die Zukunft (gesamter Pass-Zyklus)
   const windowStart = 1;
-  const windowEnd = currentVisit + 50;
+  const windowEnd = Math.max(currentVisit + 5, passLength);
 
   const visibleNodes = useMemo(() => {
     const arr: number[] = [];
@@ -199,12 +222,7 @@ export const AppMerchantDetailV2 = () => {
   };
 
   const rewardForVisit = (v: number): MockReward | undefined => {
-    const direct = rewards.find((r) => r.visitNumber === v);
-    if (direct) return direct;
-    if (isRepeatingRewardVisit(v)) {
-      return { visitNumber: v, label: 'Kaffee gratis ☕', redeemed: false };
-    }
-    return undefined;
+    return rewards.find((r) => r.visitNumber === v);
   };
 
   // ================= Effekte =================
