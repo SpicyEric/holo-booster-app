@@ -642,7 +642,9 @@ const Marketing = () => {
                           <div>
                             <p className="font-semibold text-foreground">{reward.title}</p>
                             {reward.description && <p className="text-sm text-muted-foreground">{reward.description}</p>}
-                            <Badge variant="secondary" className="rounded-full mt-1">{isV2 ? `Check-in #${reward.points_required}` : `${reward.points_required} Punkte`}</Badge>
+                            {!isV2 && (
+                              <Badge variant="secondary" className="rounded-full mt-1">{`${reward.points_required} Punkte`}</Badge>
+                            )}
                           </div>
                         </div>
                         <div className="flex items-center gap-2">
