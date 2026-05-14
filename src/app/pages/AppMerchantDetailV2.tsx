@@ -342,28 +342,17 @@ export const AppMerchantDetailV2 = () => {
             <p className="text-xs font-medium" style={{ color: BRAND }}>Dein Treuepass</p>
           </div>
           <div
-            className="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl shadow-sm"
-            style={{ background: `linear-gradient(135deg, ${BRAND}, ${BRAND}cc)` }}
+            className="px-3 h-12 rounded-2xl flex flex-col items-center justify-center text-white shadow-sm leading-none"
+            style={{ background: `linear-gradient(135deg, ${BRAND}, ${BRAND}cc)`, minWidth: 64 }}
           >
-            🥐
-          </div>
-        </div>
-      </div>
-
-      {/* Snake */}
-      <div className="mt-6">
-        <div className="px-4 mb-3 flex items-end justify-between">
-          <div>
-            <p className="text-xs uppercase tracking-wider font-semibold" style={{ color: `${BRAND}cc` }}>
-              Check-ins
-            </p>
-            <div className="text-4xl font-extrabold text-neutral-900 leading-none mt-1 h-10 overflow-hidden">
+            <span className="text-[9px] font-semibold uppercase tracking-wider opacity-90">Check-ins</span>
+            <div className="text-xl font-extrabold mt-1 h-5 overflow-hidden">
               <AnimatePresence mode="popLayout" initial={false}>
                 <motion.span
                   key={currentVisit}
-                  initial={{ y: 24, opacity: 0, scale: 0.7 }}
+                  initial={{ y: 14, opacity: 0, scale: 0.7 }}
                   animate={{ y: 0, opacity: 1, scale: 1 }}
-                  exit={{ y: -24, opacity: 0, scale: 0.7 }}
+                  exit={{ y: -14, opacity: 0, scale: 0.7 }}
                   transition={{ type: 'spring', stiffness: 260, damping: 22 }}
                   className="inline-block"
                 >
@@ -372,17 +361,11 @@ export const AppMerchantDetailV2 = () => {
               </AnimatePresence>
             </div>
           </div>
-          {activatedReward ? (
-            <button
-              onClick={removeActivation}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold text-white shadow-sm"
-              style={{ background: BRAND }}
-            >
-              <Sparkles className="w-3.5 h-3.5" />
-              Aktiv: {activatedReward.label.split(' ')[0]}
-            </button>
-          ) : null}
         </div>
+      </div>
+
+      {/* Snake */}
+      <div className="mt-4">
 
         <motion.div
           animate={boostFlash ? { scale: [1, 1.02, 1] } : {}}
@@ -514,19 +497,63 @@ export const AppMerchantDetailV2 = () => {
         </motion.div>
       </div>
 
-      {/* Hinweis Pre-Activation */}
+      {/* Hinweis Pre-Activation / Aktivierte Prämie */}
       <div className="px-4 mt-6">
-        <Card className="p-4 border" style={{ borderColor: `${BRAND}33`, background: `${BRAND}0a` }}>
-          <div className="flex gap-3">
-            <Sparkles className="w-5 h-5 mt-0.5 shrink-0" style={{ color: BRAND }} />
-            <div>
-              <p className="text-sm font-semibold text-neutral-900">So funktioniert das Einlösen</p>
-              <p className="text-xs text-neutral-600 mt-1 leading-relaxed">
-                Tippe vor deinem nächsten Check-in auf eine Prämie, um sie zu aktivieren.
-                Beim Check-in wird sie automatisch eingelöst. Pro Tag nur ein Check-in pro Geschäft.
-              </p>
-            </div>
-          </div>
+        <Card
+          className="p-4 border transition-colors"
+          style={{
+            borderColor: activatedReward ? '#F5A62355' : `${BRAND}33`,
+            background: activatedReward ? '#FFF6E5' : `${BRAND}0a`,
+          }}
+        >
+          <AnimatePresence mode="wait" initial={false}>
+            {activatedReward ? (
+              <motion.div
+                key="activated"
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -6 }}
+                transition={{ duration: 0.2 }}
+                className="flex gap-3 items-start"
+              >
+                <div className="w-9 h-9 rounded-full bg-amber-500 flex items-center justify-center shrink-0 shadow-sm">
+                  <Sparkles className="w-5 h-5 text-white" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-[10px] uppercase tracking-wider font-bold text-amber-700">
+                    Für den nächsten Check-in aktiviert
+                  </p>
+                  <p className="text-base font-extrabold text-neutral-900 mt-0.5 leading-tight">
+                    {activatedReward.label}
+                  </p>
+                  <button
+                    onClick={removeActivation}
+                    className="mt-2 text-xs font-semibold text-amber-700 underline-offset-2 hover:underline"
+                  >
+                    Aktivierung entfernen
+                  </button>
+                </div>
+              </motion.div>
+            ) : (
+              <motion.div
+                key="info"
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -6 }}
+                transition={{ duration: 0.2 }}
+                className="flex gap-3"
+              >
+                <Sparkles className="w-5 h-5 mt-0.5 shrink-0" style={{ color: BRAND }} />
+                <div>
+                  <p className="text-sm font-semibold text-neutral-900">So funktioniert das Einlösen</p>
+                  <p className="text-xs text-neutral-600 mt-1 leading-relaxed">
+                    Tippe vor deinem nächsten Check-in auf eine freigeschaltete Prämie, um sie zu aktivieren.
+                    Beim Check-in wird sie automatisch eingelöst. Pro Tag nur ein Check-in pro Geschäft.
+                  </p>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </Card>
       </div>
 
