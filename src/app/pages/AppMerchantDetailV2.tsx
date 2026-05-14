@@ -46,6 +46,9 @@ interface MockReward {
   redeemed: boolean;
 }
 
+type RewardPlacementRow = { visit: number; reward_id: string };
+type RewardRow = { id: string; title: string; image_url: string | null };
+
 const NODE_SPACING = 110;
 const SNAKE_HEIGHT = 220;
 const AMPLITUDE = 55;
@@ -102,14 +105,16 @@ export const AppMerchantDetailV2 = () => {
       if (cancelled) return;
       setCoverImageUrl((cust?.cover_image_url as string | null) || null);
       if (cust?.pass_length) setPassLength(cust.pass_length as number);
-      const rewardsById = new Map((rewardRows || []).map((r: any) => [r.id, r]));
-      const mapped = (placements || [])
-        .filter((p: any) => rewardsById.has(p.reward_id))
-        .map((p: any) => ({
-          visitNumber: p.visit as number,
-          label: rewardsById.get(p.reward_id).title as string,
-          imageUrl: (rewardsById.get(p.reward_id).image_url as string | null) || null,
-        }));
+      const rewardsById = new Map(((rewardRows || []) as RewardRow[]).map((r) => [r.id, r]));
+      const mapped = ((placements || []) as RewardPlacementRow[]).flatMap((p) => {
+        const reward = rewardsById.get(p.reward_id);
+        if (!reward) return [];
+        return [{
+          visitNumber: p.visit,
+          label: reward.title,
+          imageUrl: reward.image_url || null,
+        }];
+      });
       setDbRewards(mapped);
     })();
     return () => { cancelled = true; };
