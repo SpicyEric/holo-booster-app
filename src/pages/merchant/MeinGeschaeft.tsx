@@ -185,6 +185,8 @@ const MeinGeschaeft = () => {
 
   // Rewards
   const [rewards, setRewards] = useState<Reward[]>([]);
+  const [placements, setPlacements] = useState<{ reward_id: string; visit: number }[]>([]);
+  const [passLength, setPassLength] = useState<number>(15);
   const [showRewardDialog, setShowRewardDialog] = useState(false);
   const [editingReward, setEditingReward] = useState<Reward | null>(null);
   const [rewardForm, setRewardForm] = useState({
