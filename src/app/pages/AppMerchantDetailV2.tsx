@@ -1150,14 +1150,14 @@ export const AppMerchantDetailV2 = () => {
             >
               <Star className="w-7 h-7" style={{ color: BRAND }} fill={BRAND} />
             </div>
-            <h2 className="text-xl font-bold text-neutral-900">Bewertung abgeben</h2>
-            <p className="text-xs font-semibold uppercase tracking-wide text-neutral-500">So funktioniert's</p>
+            <h2 className="text-xl font-bold text-neutral-900 dark:text-neutral-100">Bewertung abgeben</h2>
+            <p className="text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">So funktioniert's</p>
           </div>
-          <p className="text-sm text-neutral-700 leading-relaxed text-center">
-            Bewerte <span className="font-semibold text-neutral-900">{merchantInfo.name}</span> bei Google.
-            Du bekommst <span className="font-semibold text-neutral-900">+1 Check-in</span> geschenkt.
+          <p className="text-sm text-neutral-700 dark:text-neutral-300 leading-relaxed text-center">
+            Bewerte <span className="font-semibold text-neutral-900 dark:text-neutral-100">{merchantInfo.name}</span> bei Google.
+            Du bekommst <span className="font-semibold text-neutral-900 dark:text-neutral-100">+1 Check-in</span> geschenkt.
             <br />
-            <span className="text-xs text-neutral-500">Nur einmal pro Geschäft möglich.</span>
+            <span className="text-xs text-neutral-500 dark:text-neutral-400">Nur einmal pro Geschäft möglich.</span>
           </p>
           <Button
             onClick={handleGoogleReviewClick}
@@ -1182,21 +1182,21 @@ export const AppMerchantDetailV2 = () => {
                   {sourceNodeIcon(nodeDetail.source)}
                 </div>
                 <div>
-                  <h2 className="text-lg font-bold text-neutral-900">
+                  <h2 className="text-lg font-bold text-neutral-900 dark:text-neutral-100">
                     {nodeDetail.source === 'boost' ? 'Boost'
                       : nodeDetail.source === 'birthday' ? 'Geburtstag'
                       : nodeDetail.source === 'google_review' ? 'Bewertung'
                       : 'Check-in'}
                   </h2>
-                  <p className="text-xs text-neutral-500">Check-in #{nodeDetail.visit}</p>
+                  <p className="text-xs text-neutral-500 dark:text-neutral-400">Check-in #{nodeDetail.visit}</p>
                 </div>
               </div>
-              <div className="space-y-2 text-sm text-neutral-700 mt-2">
+              <div className="space-y-2 text-sm text-neutral-700 dark:text-neutral-300 mt-2">
                 <div className="flex items-center gap-2">
                   <CalendarIcon className="w-4 h-4 text-neutral-400" />
                   <span>
                     {nodeDetail.source === 'boost' ? 'Boost erhalten am ' : 'Eingecheckt am '}
-                    <span className="font-semibold text-neutral-900">{formatDateTime(nodeDetail.at)}</span>
+                    <span className="font-semibold text-neutral-900 dark:text-neutral-100">{formatDateTime(nodeDetail.at)}</span>
                   </span>
                 </div>
                 {nodeDetail.source === 'boost' && nodeDetail.invitedAt && (
@@ -1204,7 +1204,7 @@ export const AppMerchantDetailV2 = () => {
                     <UserPlus className="w-4 h-4 text-neutral-400" />
                     <span>
                       Einladung angenommen am{' '}
-                      <span className="font-semibold text-neutral-900">{formatDateTime(nodeDetail.invitedAt)}</span>
+                      <span className="font-semibold text-neutral-900 dark:text-neutral-100">{formatDateTime(nodeDetail.invitedAt)}</span>
                     </span>
                   </div>
                 )}
@@ -1213,7 +1213,7 @@ export const AppMerchantDetailV2 = () => {
                     <Gift className="w-4 h-4 text-neutral-400" />
                     <span>
                       Prämie eingelöst:{' '}
-                      <span className="font-semibold text-neutral-900">
+                      <span className="font-semibold text-neutral-900 dark:text-neutral-100">
                         {nodeDetail.redeemed ? `Ja – ${nodeDetail.redeemed.label}` : 'Nein'}
                       </span>
                     </span>
@@ -1232,13 +1232,13 @@ export const AppMerchantDetailV2 = () => {
                   <Gift className="w-6 h-6" style={{ color: BRAND }} />
                 </div>
                 <div>
-                  <h2 className="text-lg font-bold text-neutral-900">Prämie eingelöst</h2>
-                  <p className="text-xs text-neutral-500">{nodeDetail.label}</p>
+                  <h2 className="text-lg font-bold text-neutral-900 dark:text-neutral-100">Prämie eingelöst</h2>
+                  <p className="text-xs text-neutral-500 dark:text-neutral-400">{nodeDetail.label}</p>
                 </div>
               </div>
-              <div className="flex items-center gap-2 text-sm text-neutral-700 mt-2">
+              <div className="flex items-center gap-2 text-sm text-neutral-700 dark:text-neutral-300 mt-2">
                 <CalendarIcon className="w-4 h-4 text-neutral-400" />
-                <span>Eingelöst am <span className="font-semibold text-neutral-900">{formatDateTime(nodeDetail.at)}</span></span>
+                <span>Eingelöst am <span className="font-semibold text-neutral-900 dark:text-neutral-100">{formatDateTime(nodeDetail.at)}</span></span>
               </div>
             </>
           )}
@@ -1254,13 +1254,13 @@ export const AppMerchantDetailV2 = () => {
             >
               <UserPlus className="w-7 h-7" style={{ color: BRAND }} />
             </div>
-            <h2 className="text-xl font-bold text-neutral-900">Jetzt boosten</h2>
-            <p className="text-xs font-semibold uppercase tracking-wide text-neutral-500">
+            <h2 className="text-xl font-bold text-neutral-900 dark:text-neutral-100">Jetzt boosten</h2>
+            <p className="text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
               So funktioniert's
             </p>
           </div>
 
-          <ol className="space-y-2.5 text-sm text-neutral-700">
+          <ol className="space-y-2.5 text-sm text-neutral-700 dark:text-neutral-300">
             <li className="flex gap-2.5">
               <span
                 className="shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold text-white"
@@ -1273,14 +1273,14 @@ export const AppMerchantDetailV2 = () => {
                 className="shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold text-white"
                 style={{ background: BRAND }}
               >2</span>
-              <span>Dein Freund checkt bei <span className="font-semibold text-neutral-900">{merchantInfo.name}</span> ein.</span>
+              <span>Dein Freund checkt bei <span className="font-semibold text-neutral-900 dark:text-neutral-100">{merchantInfo.name}</span> ein.</span>
             </li>
             <li className="flex gap-2.5">
               <span
                 className="shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold text-white"
                 style={{ background: BRAND }}
               >3</span>
-              <span><span className="font-semibold text-neutral-900">Ihr beide</span> bekommt jeweils <span className="font-semibold text-neutral-900">+1 Boost</span> auf eurem Treuepass.</span>
+              <span><span className="font-semibold text-neutral-900 dark:text-neutral-100">Ihr beide</span> bekommt jeweils <span className="font-semibold text-neutral-900 dark:text-neutral-100">+1 Boost</span> auf eurem Treuepass.</span>
             </li>
           </ol>
 
@@ -1332,10 +1332,10 @@ export const AppMerchantDetailV2 = () => {
           >
             <Gift className="w-10 h-10" style={{ color: BRAND }} />
           </div>
-          <h3 className="text-lg font-bold text-neutral-900 mb-1">
+          <h3 className="text-lg font-bold text-neutral-900 dark:text-neutral-100 mb-1">
             {tappedReward?.label}
           </h3>
-          <p className="text-sm text-neutral-600 mb-5">
+          <p className="text-sm text-neutral-600 dark:text-neutral-400 mb-5">
             Beim nächsten Check-in einlösen?
           </p>
           <Button
