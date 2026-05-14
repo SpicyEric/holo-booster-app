@@ -771,13 +771,13 @@ export const AppMerchantDetailV2 = () => {
 
   return (
     <div
-      className="min-h-screen pb-40 bg-[#faf8f5] dark:bg-neutral-950"
+      className="min-h-screen pb-40 bg-[#faf8f5] dark:bg-gradient-to-b dark:from-background dark:to-muted/30"
       style={{
         ['--brand' as string]: BRAND,
       }}
     >
       {/* Header */}
-      <div className="sticky top-0 z-30 bg-white/90 dark:bg-neutral-900/90 backdrop-blur border-b" style={{ borderColor: `${BRAND}22` }}>
+      <div className="sticky top-0 z-30 bg-white/90 dark:bg-background/80 backdrop-blur border-b" style={{ borderColor: `${BRAND}22` }}>
         <div className="flex items-center gap-3 px-4 py-3">
           <button
             onClick={() => navigate('/app')}
