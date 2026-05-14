@@ -244,15 +244,7 @@ function haversineDistance(lat1: number, lon1: number, lat2: number, lon2: numbe
 const AppHomeContent = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [cards, setCards] = useState<Array<{
-    id: string;
-    merchantId: string;
-    name: string;
-    category: string | null;
-    logoUrl: string | null;
-    coverImage: string | null;
-    distance: number | null;
-  }>>([]);
+  const [cards, setCards] = useState<HomeMerchantCard[]>([]);
   const [loading, setLoading] = useState(true);
   const [emblaRef] = useEmblaCarousel({ loop: true, align: 'center', containScroll: false });
 
@@ -273,7 +265,7 @@ const AppHomeContent = () => {
 
       const { data: merchants } = await supabase
         .from('customers')
-        .select('id, name, company_name, logo_url, cover_image_url, industry, latitude, longitude')
+        .select('id, name, company_name, logo_url, cover_image_url, industry, latitude, longitude, description, opening_hours, street, house_number, postal_code, city, website, instagram, facebook, twitter')
         .eq('active', true)
         .in('id', merchantIds);
 
@@ -297,6 +289,8 @@ const AppHomeContent = () => {
           if (!m) return null;
           const lat = m.latitude as number | null;
           const lng = m.longitude as number | null;
+          const streetWithNumber = [m.street, m.house_number].filter(Boolean).join(' ');
+          const address = [streetWithNumber, [m.postal_code, m.city].filter(Boolean).join(' ')].filter(Boolean).join(', ');
           const distance =
             userLat != null && userLng != null && lat != null && lng != null
               ? haversineDistance(userLat, userLng, lat, lng)
@@ -309,6 +303,13 @@ const AppHomeContent = () => {
             logoUrl: m.logo_url || null,
             coverImage: m.cover_image_url || null,
             distance,
+            description: m.description || null,
+            openingHours: m.opening_hours && typeof m.opening_hours === 'object' ? m.opening_hours as Record<string, OpeningHourEntry> : null,
+            address: address || null,
+            website: m.website || null,
+            instagram: m.instagram || null,
+            facebook: m.facebook || null,
+            twitter: m.twitter || null,
           };
         })
         .filter((x): x is NonNullable<typeof x> => !!x)
