@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, Gift, Check, UserPlus, Sparkles, Rocket, Cake } from 'lucide-react';
+import { ArrowLeft, Gift, Check, UserPlus, Sparkles, Rocket, Cake, X, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
@@ -15,6 +15,7 @@ import {
   setActivatedReward as persistActivatedReward,
   clearActivatedReward,
 } from '@/lib/activeMerchantReward';
+import { generateVerificationCode } from '@/lib/verificationCode';
 
 /**
  * Backstube König – Treuepass (V2 Prototype)
@@ -67,6 +68,7 @@ function buildSmoothPath(points: { x: number; y: number }[]): string {
 
 export const AppMerchantDetailV2 = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { id } = useParams<{ id: string }>();
   const merchantId = id || DEFAULT_DEMO_MERCHANT_CUSTOMER_ID;
   const brand = useMerchantBrand(merchantId);
@@ -89,6 +91,19 @@ export const AppMerchantDetailV2 = () => {
       setActivatedReward({ ...stored, redeemed: false });
     }
   }, [merchantId]);
+
+  // Trigger Eincheck-Overlay, wenn von der Scan-Seite mit triggerCheckIn=true navigiert wurde
+  useEffect(() => {
+    const state = location.state as { triggerCheckIn?: boolean } | null;
+    if (!state?.triggerCheckIn) return;
+    const stored = getActivatedReward(merchantId);
+    const reward = stored ? { visitNumber: stored.visitNumber, label: stored.label, redeemed: false } : null;
+    setCheckInOverlay({ code: generateVerificationCode(5), reward });
+    setConfirmStage(false);
+    // State konsumieren, damit der Overlay nicht bei jedem Re-Mount neu öffnet
+    navigate(location.pathname, { replace: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.state, merchantId]);
 
   const BRAND = brand.color;
   const BRAND_SOFT = `${BRAND}22`; // Alpha-Wash via HEX 8-stellig
@@ -114,6 +129,13 @@ export const AppMerchantDetailV2 = () => {
   const [redemptionScreen, setRedemptionScreen] = useState<MockReward | null>(null);
   const [boostFlash, setBoostFlash] = useState(false);
   const [lastCheckInDate, setLastCheckInDate] = useState<string | null>(null);
+
+  // Orange Eincheck-Overlay (Vollbild, mit Code-Marquee)
+  const [checkInOverlay, setCheckInOverlay] = useState<{
+    code: string;
+    reward: MockReward | null;
+  } | null>(null);
+  const [confirmStage, setConfirmStage] = useState(false);
 
   const scrollerRef = useRef<HTMLDivElement>(null);
 
@@ -152,7 +174,7 @@ export const AppMerchantDetailV2 = () => {
   // ================= Aktionen =================
   const todayKey = () => new Date().toISOString().slice(0, 10);
 
-  const performCheckIn = (source: CheckInSource, suppressLimit = false) => {
+  const performCheckIn = (source: CheckInSource, suppressLimit = false, opts?: { autoRedeem?: boolean; silent?: boolean }) => {
     if (!suppressLimit && lastCheckInDate === todayKey()) {
       toast.info('Heute schon eingecheckt. Bis morgen! 👋');
       return;
@@ -161,8 +183,8 @@ export const AppMerchantDetailV2 = () => {
     setCheckIns((prev) => [...prev, { visit: next, source }]);
     if (!suppressLimit) setLastCheckInDate(todayKey());
 
-    // Prüfe aktivierte Prämie → automatisch einlösen
-    if (activatedReward) {
+    // Aktivierte Prämie automatisch einlösen (z.B. wenn intern aufgerufen)
+    if (opts?.autoRedeem && activatedReward) {
       const reward = activatedReward;
       setActivatedReward(null);
       clearActivatedReward(merchantId);
@@ -175,9 +197,10 @@ export const AppMerchantDetailV2 = () => {
         }
         return [...prev, { ...reward, redeemed: true }];
       });
-      setTimeout(() => setRedemptionScreen(reward), 400);
       return;
     }
+
+    if (opts?.silent) return;
 
     // Hinweis auf nächste Prämie
     const upcoming = [next + 1, next + 2, next + 3].map(rewardForVisit).find((r) => r && !r.redeemed);
@@ -305,9 +328,20 @@ export const AppMerchantDetailV2 = () => {
             <p className="text-xs uppercase tracking-wider font-semibold" style={{ color: `${BRAND}cc` }}>
               Check-ins
             </p>
-            <p className="text-4xl font-extrabold text-neutral-900 leading-none mt-1">
-              {currentVisit}
-            </p>
+            <div className="text-4xl font-extrabold text-neutral-900 leading-none mt-1 h-10 overflow-hidden">
+              <AnimatePresence mode="popLayout" initial={false}>
+                <motion.span
+                  key={currentVisit}
+                  initial={{ y: 24, opacity: 0, scale: 0.7 }}
+                  animate={{ y: 0, opacity: 1, scale: 1 }}
+                  exit={{ y: -24, opacity: 0, scale: 0.7 }}
+                  transition={{ type: 'spring', stiffness: 260, damping: 22 }}
+                  className="inline-block"
+                >
+                  {currentVisit}
+                </motion.span>
+              </AnimatePresence>
+            </div>
           </div>
           {activatedReward ? (
             <button
@@ -338,12 +372,16 @@ export const AppMerchantDetailV2 = () => {
                 strokeWidth={14}
                 strokeLinecap="round"
               />
-              <path
+              <motion.path
+                key={`completed-${currentVisit}`}
                 d={buildSmoothPath(completedPoints)}
                 fill="none"
                 stroke={BRAND}
                 strokeWidth={14}
                 strokeLinecap="round"
+                initial={{ pathLength: 0.85 }}
+                animate={{ pathLength: 1 }}
+                transition={{ duration: 1.1, ease: [0.16, 1, 0.3, 1] }}
               />
             </svg>
 
@@ -535,7 +573,7 @@ export const AppMerchantDetailV2 = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Vollbild-Einlöseansicht (nur nach Auto-Einlösung beim Check-in) */}
+      {/* Vollbild-Einlöseansicht (Legacy / nach Auto-Einlösung) */}
       <AnimatePresence>
         {redemptionScreen && (
           <motion.div
@@ -573,6 +611,164 @@ export const AppMerchantDetailV2 = () => {
             >
               Schließen
             </Button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Eincheck-Overlay (Vollbild, nach Simulation von der Scan-Seite) */}
+      <AnimatePresence>
+        {checkInOverlay && (
+          <motion.div
+            key="checkin-overlay"
+            initial={{ opacity: 0, scale: 1.05 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+            className="fixed inset-0 z-[100] flex flex-col items-center justify-center px-6 text-center text-white overflow-hidden"
+            style={{ background: `linear-gradient(160deg, ${BRAND}, ${BRAND}cc)` }}
+          >
+            <button
+              onClick={() => {
+                if (checkInOverlay.reward) {
+                  // Mit Prämie: X togglet zum Confirm-Screen
+                  setConfirmStage((v) => !v);
+                } else {
+                  // Ohne Prämie: X schließt direkt + löst Check-in aus
+                  setCheckInOverlay(null);
+                  setConfirmStage(false);
+                  performCheckIn('normal', false, { silent: true });
+                }
+              }}
+              className="absolute top-5 right-5 w-10 h-10 rounded-full bg-white/20 flex items-center justify-center backdrop-blur"
+              aria-label="Schließen"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <AnimatePresence mode="wait">
+              {checkInOverlay.reward && confirmStage ? (
+                <motion.div
+                  key="confirm"
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -8 }}
+                  transition={{ duration: 0.25 }}
+                  className="flex flex-col items-center text-center max-w-xs"
+                >
+                  <p className="text-sm font-medium uppercase tracking-widest text-white/80 mb-3">
+                    Bist du sicher?
+                  </p>
+                  <h2 className="text-3xl font-extrabold mb-4 leading-tight">
+                    Hast du deine Prämie eingelöst?
+                  </h2>
+                  <p className="text-base text-white/90 mb-8">
+                    Bestätige nur, wenn ein Mitarbeiter die Einlösung gesehen hat. Diese Aktion kann nicht rückgängig gemacht werden.
+                  </p>
+                  <div className="flex flex-col gap-3 w-full">
+                    <button
+                      onClick={() => {
+                        // Bestätigung: Check-in + automatische Einlösung der Prämie
+                        performCheckIn('normal', false, { autoRedeem: true, silent: true });
+                        setCheckInOverlay(null);
+                        setConfirmStage(false);
+                        toast.success('Prämie eingelöst!');
+                      }}
+                      className="w-full rounded-full bg-white text-black font-bold py-3.5 text-base shadow-lg active:scale-95 transition"
+                    >
+                      Ja, eingelöst
+                    </button>
+                    <button
+                      onClick={() => setConfirmStage(false)}
+                      className="w-full rounded-full bg-white/15 backdrop-blur text-white font-semibold py-3.5 text-base active:scale-95 transition"
+                    >
+                      Noch nicht
+                    </button>
+                  </div>
+                </motion.div>
+              ) : checkInOverlay.reward ? (
+                <motion.div
+                  key="reward-success"
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -8 }}
+                  transition={{ duration: 0.25 }}
+                  className="flex flex-col items-center text-center"
+                >
+                  <motion.div
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    transition={{ delay: 0.15, type: 'spring', stiffness: 200, damping: 15 }}
+                    className="w-24 h-24 rounded-full bg-white/20 flex items-center justify-center mb-6"
+                  >
+                    <CheckCircle2 className="w-14 h-14 text-white" strokeWidth={2.5} />
+                  </motion.div>
+                  <p className="text-sm font-medium uppercase tracking-widest text-white/80 mb-2">
+                    Deine Prämie wurde eingelöst
+                  </p>
+                  <h2 className="text-3xl font-extrabold mb-6 leading-tight">
+                    {checkInOverlay.reward.label}
+                  </h2>
+                  <div className="rounded-2xl bg-white/15 backdrop-blur px-5 py-4 max-w-xs">
+                    <p className="text-base font-semibold text-white">
+                      Zeige diesen Bildschirm einem Mitarbeiter zur Bestätigung.
+                    </p>
+                  </div>
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="plain-checkin"
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -8 }}
+                  transition={{ duration: 0.25 }}
+                  className="flex flex-col items-center text-center"
+                >
+                  <motion.div
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    transition={{ delay: 0.15, type: 'spring', stiffness: 200, damping: 15 }}
+                    className="w-24 h-24 rounded-full bg-white/20 flex items-center justify-center mb-6"
+                  >
+                    <CheckCircle2 className="w-14 h-14 text-white" strokeWidth={2.5} />
+                  </motion.div>
+                  <p className="text-sm font-medium uppercase tracking-widest text-white/80 mb-2">
+                    Check-in erfolgreich
+                  </p>
+                  <h2 className="text-3xl font-extrabold mb-6 leading-tight">
+                    Du hast eingecheckt!
+                  </h2>
+                  <div className="rounded-2xl bg-white/15 backdrop-blur px-5 py-4 max-w-xs">
+                    <p className="text-base font-semibold text-white">
+                      Zeige diesen Bildschirm einem Mitarbeiter zur Bestätigung.
+                    </p>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* Code-Marquee am unteren Rand */}
+            {!confirmStage && (
+              <div className="absolute left-0 right-0 bottom-10 overflow-hidden bg-white/10 backdrop-blur py-3 border-y border-white/20">
+                <motion.div
+                  className="flex whitespace-nowrap"
+                  animate={{ x: ['0%', '-50%'] }}
+                  transition={{ duration: 12, ease: 'linear', repeat: Infinity }}
+                >
+                  {Array.from({ length: 2 }).map((_, dup) => (
+                    <div key={dup} className="flex shrink-0">
+                      {Array.from({ length: 8 }).map((_, i) => (
+                        <span
+                          key={`${dup}-${i}`}
+                          className="px-6 text-2xl font-black tracking-[0.4em] tabular-nums text-white"
+                        >
+                          {checkInOverlay.code}
+                        </span>
+                      ))}
+                    </div>
+                  ))}
+                </motion.div>
+              </div>
+            )}
           </motion.div>
         )}
       </AnimatePresence>
