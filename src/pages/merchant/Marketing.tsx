@@ -13,6 +13,7 @@ import {
   ChevronDown, Rocket, CheckCircle2, Timer, Star, ExternalLink, Copy, Bot, Megaphone,
   Edit2, Trash2, Upload, Coins, Sparkles, Smartphone, ArrowRight
 } from 'lucide-react';
+import { useMerchantBrand } from '@/hooks/useMerchantBrand';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import {
