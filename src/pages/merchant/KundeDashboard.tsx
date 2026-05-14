@@ -345,13 +345,13 @@ export default function KundeDashboard() {
         supabase.from("nfc_chips").select("stamp_color, points_value").eq("merchant_customer_id", cid),
         supabase.from("invitation_redemptions").select("invitation_id, invitations!inner(merchant_customer_id)").eq("invitations.merchant_customer_id", cid).not("invitee_stamped_at", "is", null),
         supabase.from("app_messages").select("*", { count: "exact", head: true }).eq("merchant_customer_id", cid).ilike("title", "%geburtstag%"),
-        supabase.from("app_messages").select("*", { count: "exact", head: true }).eq("merchant_customer_id", cid).or("title.ilike.%rückhol%,title.ilike.%vermiss%,title.ilike.%winback%"),
+        supabase.from("app_messages").select("*", { count: "exact", head: true }).eq("merchant_customer_id", cid).not("sent_at", "is", null),
         supabase.from("rewards").select("id, title").eq("merchant_customer_id", cid),
         supabase.from("reward_redemptions").select("reward_id").eq("merchant_customer_id", cid),
       ]);
 
-      // Sum vergebene Punkte
-      const totalPointsAwarded = (pointsRes.data || []).reduce((sum: number, r: any) => sum + (r.points_change || 0), 0);
+      // Anzahl Check-ins (nicht Punktesumme)
+      const totalPointsAwarded = (pointsRes.data || []).length;
 
       // NFC cards aggregated by color → höchster konfigurierter Punktwert pro Farbe
       const cardMap = new Map<string, number>();
@@ -509,230 +509,90 @@ export default function KundeDashboard() {
             />
           </div>
 
-          {/* ====== NFC-Karten & Empfehlungsbonus ====== */}
-          {stats && (stats.nfcCards.length > 0 || stats.referralBonusPoints > 0) && (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* NFC-Karten Fächer */}
+          {/* ====== Geburtstag + Nachrichten ====== */}
+          {stats && (
+            <div className="grid grid-cols-2 gap-3 max-w-md">
               <button
-                type="button"
-                onClick={() => navigate('/kunde/mein-geschaeft?tab=karte')}
-                className="w-full text-left bg-white rounded-2xl p-5 border border-border/30 shadow-[0_1px_3px_hsl(262,30%,80%/0.3)] hover:shadow-[0_4px_12px_hsl(262,30%,80%/0.4)] hover:border-primary/30 transition-all group"
+                onClick={() => navigate('/kunde/marketing?tab=automations')}
+                className="bg-white rounded-2xl p-4 border border-border/30 shadow-[0_1px_3px_hsl(262,30%,80%/0.3)] hover:shadow-[0_4px_12px_hsl(262,30%,80%/0.4)] hover:border-primary/30 transition-all text-left group"
               >
-                <div className="flex items-center gap-2.5 mb-4">
-                  <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
-                    <Sparkles className="w-4 h-4 text-primary" />
+                <div className="flex items-center justify-between mb-2">
+                  <div className="w-8 h-8 rounded-lg bg-pink-50 flex items-center justify-center">
+                    <Cake className="w-4 h-4 text-pink-600" />
                   </div>
-                  <div className="flex-1">
-                    <h2 className="text-sm font-semibold text-foreground">Deine NFC-Karten</h2>
-                    <p className="text-xs text-muted-foreground">Aktuelle Punktevergabe pro Karte</p>
-                  </div>
-                  <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                  <ChevronRight className="w-4 h-4 text-muted-foreground/50 group-hover:text-primary transition-colors" />
                 </div>
-                <div className="flex items-end justify-center h-44 pt-4 nfc-fan-group">
-                  {stats.nfcCards.length === 0 ? (
-                    <p className="text-xs text-muted-foreground self-center">Noch keine Karten registriert.</p>
-                  ) : (
-                    <div className="relative nfc-fan-stage" style={{ width: `${Math.max(stats.nfcCards.length * 110 + 40, 360)}px`, height: '160px' }}>
-                      {stats.nfcCards.map((card, i) => {
-                        const total = stats.nfcCards.length;
-                        const middle = (total - 1) / 2;
-                        const offset = i - middle;
-                        const rotation = offset * 12;
-                        const xShift = offset * 50;
-                        const yShift = Math.abs(offset) * 8;
-                        const hoverX = offset * 108; // breiter Abstand wenn aufgefächert
-                        return (
-                          <div
-                            key={`${card.color}-${i}`}
-                            className="absolute left-1/2 top-2 w-24 h-36 rounded-xl shadow-[0_6px_20px_rgba(0,0,0,0.25)] flex flex-col justify-between p-2.5 text-white nfc-card-fan-item"
-                            style={{
-                              background: 'linear-gradient(135deg, hsl(0,0%,28%) 0%, hsl(0,0%,12%) 60%, hsl(0,0%,6%) 100%)',
-                              ['--fan-x' as any]: `${xShift}px`,
-                              ['--fan-y' as any]: `${yShift}px`,
-                              ['--fan-rot' as any]: `${rotation}deg`,
-                              ['--hover-x' as any]: `${hoverX}px`,
-                              animationDelay: `${0.6 + i * 0.12}s`,
-                              zIndex: 10 + i,
-                            }}
-                          >
-                            <div className="flex items-start justify-between">
-                              <span className="text-[11px] font-bold tracking-tight opacity-95">
-                                {card.points} {card.points === 1 ? 'Punkt' : 'Punkte'}
-                              </span>
-                            </div>
-                            <div className="nfc-card-scans text-center">
-                              <p className="text-lg font-bold leading-none">{card.scans}</p>
-                              <p className="text-[9px] opacity-80 mt-0.5">{card.scans === 1 ? 'Scan' : 'Scans'}</p>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
-                <p className="text-[11px] text-muted-foreground/70 text-center mt-2">
-                  Konfigurierbar in „Mein Geschäft"
+                <p className="text-2xl font-bold text-foreground">
+                  <CountUp to={stats.birthdayMessagesSent} duration={1.5} />
                 </p>
+                <p className="text-xs text-muted-foreground mt-0.5">Geburtstagsgrüße</p>
               </button>
-
-              {/* Empfehlungsbonus + Automationen */}
-              <div className="space-y-4">
-                <button
-                  onClick={() => navigate('/kunde/marketing?tab=referral')}
-                  className="w-full bg-white rounded-2xl p-5 border border-border/30 shadow-[0_1px_3px_hsl(262,30%,80%/0.3)] hover:shadow-[0_4px_12px_hsl(262,30%,80%/0.4)] hover:border-primary/30 transition-all text-left group"
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-purple-50 flex items-center justify-center">
-                        <UserPlus className="w-5 h-5 text-purple-600" />
-                      </div>
-                      <div>
-                        <p className="text-sm font-semibold text-foreground">Weiterempfehlungs-Bonus</p>
-                        <p className="text-xs text-muted-foreground">Pro erfolgreicher Empfehlung deines Geschäfts</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-2xl font-bold text-foreground">{stats.referralBonusPoints}</span>
-                      <span className="text-xs text-muted-foreground">{stats.referralBonusPoints === 1 ? 'Punkt' : 'Punkte'}</span>
-                      <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
-                    </div>
+              <button
+                onClick={() => navigate('/kunde/marketing?tab=messages')}
+                className="bg-white rounded-2xl p-4 border border-border/30 shadow-[0_1px_3px_hsl(262,30%,80%/0.3)] hover:shadow-[0_4px_12px_hsl(262,30%,80%/0.4)] hover:border-primary/30 transition-all text-left group"
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <div className="w-8 h-8 rounded-lg bg-amber-50 flex items-center justify-center">
+                    <MessageSquare className="w-4 h-4 text-amber-600" />
                   </div>
-                </button>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <button
-                    onClick={() => navigate('/kunde/marketing?tab=automations')}
-                    className="bg-white rounded-2xl p-4 border border-border/30 shadow-[0_1px_3px_hsl(262,30%,80%/0.3)] hover:shadow-[0_4px_12px_hsl(262,30%,80%/0.4)] hover:border-primary/30 transition-all text-left group"
-                  >
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="w-8 h-8 rounded-lg bg-pink-50 flex items-center justify-center">
-                        <Cake className="w-4 h-4 text-pink-600" />
-                      </div>
-                      <ChevronRight className="w-4 h-4 text-muted-foreground/50 group-hover:text-primary transition-colors" />
-                    </div>
-                    <p className="text-2xl font-bold text-foreground">
-                      <CountUp to={stats.birthdayMessagesSent} duration={1.5} />
-                    </p>
-                    <p className="text-xs text-muted-foreground mt-0.5">Geburtstagsgrüße</p>
-                  </button>
-                  <button
-                    onClick={() => navigate('/kunde/marketing?tab=automations')}
-                    className="bg-white rounded-2xl p-4 border border-border/30 shadow-[0_1px_3px_hsl(262,30%,80%/0.3)] hover:shadow-[0_4px_12px_hsl(262,30%,80%/0.4)] hover:border-primary/30 transition-all text-left group"
-                  >
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="w-8 h-8 rounded-lg bg-amber-50 flex items-center justify-center">
-                        <MessageSquare className="w-4 h-4 text-amber-600" />
-                      </div>
-                      <ChevronRight className="w-4 h-4 text-muted-foreground/50 group-hover:text-primary transition-colors" />
-                    </div>
-                    <p className="text-2xl font-bold text-foreground">
-                      <CountUp to={stats.winbackMessagesSent} duration={1.5} />
-                    </p>
-                    <p className="text-xs text-muted-foreground mt-0.5">Rückholnachrichten</p>
-                  </button>
+                  <ChevronRight className="w-4 h-4 text-muted-foreground/50 group-hover:text-primary transition-colors" />
                 </div>
-
-                {/* Top-Prämie */}
-                <div className="bg-white rounded-2xl p-4 border border-border/30 shadow-[0_1px_3px_hsl(262,30%,80%/0.3)]">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center">
-                      <Trophy className="w-5 h-5 text-amber-600" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs text-muted-foreground">Deine Top-Prämie</p>
-                      {stats.topRewardTitle ? (
-                        <>
-                          <p className="text-sm font-semibold text-foreground truncate">{stats.topRewardTitle}</p>
-                          <p className="text-xs text-muted-foreground">{stats.topRewardCount}× eingelöst</p>
-                        </>
-                      ) : (
-                        <p className="text-sm font-medium text-muted-foreground">Noch keine Prämie eingelöst</p>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </div>
+                <p className="text-2xl font-bold text-foreground">
+                  <CountUp to={stats.winbackMessagesSent} duration={1.5} />
+                </p>
+                <p className="text-xs text-muted-foreground mt-0.5">Nachrichten</p>
+              </button>
             </div>
           )}
 
-          {/* ====== Compact Gamification + Quick Wins side by side ====== */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Fortschritt OR Benachrichtigungen */}
-            {allMissionsDoneOver24h ? (
-              <div className="bg-white rounded-2xl p-5 border border-border/30 shadow-[0_1px_3px_hsl(262,30%,80%/0.3)]">
-                <div className="flex items-center gap-2.5 mb-4">
-                  <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
-                    <Bell className="w-4 h-4 text-primary" />
-                  </div>
-                  <div>
-                    <h2 className="text-sm font-semibold text-foreground">Benachrichtigungen</h2>
-                    <p className="text-xs text-muted-foreground">Aktuelle Aktivitäten deines Geschäfts</p>
-                  </div>
+          {/* ====== Benachrichtigungen ====== */}
+          {allMissionsDoneOver24h && (
+            <div className="bg-white rounded-2xl p-5 border border-border/30 shadow-[0_1px_3px_hsl(262,30%,80%/0.3)]">
+              <div className="flex items-center gap-2.5 mb-4">
+                <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                  <Bell className="w-4 h-4 text-primary" />
                 </div>
-                <div className="space-y-2">
-                  {visibleNotifications.length === 0 ? (
-                    <div className="flex items-center gap-3 px-3 py-4 rounded-lg bg-muted/30 border border-border/20">
-                      <Sparkles className="w-4 h-4 text-muted-foreground" />
-                      <p className="text-xs text-muted-foreground">Alles ruhig hier.</p>
-                    </div>
-                  ) : (
-                    visibleNotifications.map((notif) => (
-                      <div
-                        key={notif.id}
-                        className="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-muted/30 border border-border/20"
-                      >
-                        {notif.imageUrl ? (
-                          <img src={notif.imageUrl} alt="" className="w-8 h-8 rounded-lg shrink-0" />
-                        ) : (
-                          <div className="w-8 h-8 rounded-lg bg-primary/[0.06] flex items-center justify-center shrink-0">
-                            <notif.icon className={cn("w-4 h-4", notif.color)} />
-                          </div>
-                        )}
-                        <div className="flex-1 min-w-0">
-                          <p className="text-xs font-medium text-foreground">{notif.text}</p>
-                        </div>
-                        <span className="text-[10px] text-muted-foreground shrink-0 mr-1">{notif.time}</span>
-                        <button
-                          onClick={() => dismissNotification(notif.id)}
-                          className="shrink-0 p-0.5 rounded hover:bg-muted/60 transition-colors"
-                          aria-label="Entfernen"
-                        >
-                          <X className="w-3.5 h-3.5 text-muted-foreground" />
-                        </button>
-                      </div>
-                    ))
-                  )}
+                <div>
+                  <h2 className="text-sm font-semibold text-foreground">Benachrichtigungen</h2>
+                  <p className="text-xs text-muted-foreground">Aktuelle Aktivitäten deines Geschäfts</p>
                 </div>
               </div>
-            ) : null}
-
-
-            {/* Quick Wins / Empfohlene nächste Schritte */}
-            <div>
-              <h2 className="text-sm font-semibold text-foreground mb-1">Empfohlene nächste Schritte</h2>
-              <p className="text-xs text-muted-foreground mb-3">
-                {missions.every(m => m.completed) ? "Entdecke weitere Features deines Systems" : "Optimiere dein System für bessere Ergebnisse"}
-              </p>
-              <div className="space-y-2.5">
-                {quickWins.map((win, i) => (
-                  <button
-                    key={i}
-                    onClick={() => navigate(win.path)}
-                    className="w-full flex items-center gap-3 p-3.5 bg-white rounded-xl border border-border/30 hover:border-primary/30 hover:shadow-[0_4px_12px_hsl(262,30%,80%/0.3)] transition-all duration-300 text-left group active:scale-[0.98]"
-                  >
-                    <div className="w-9 h-9 rounded-lg bg-primary/[0.06] flex items-center justify-center shrink-0 group-hover:bg-primary/10 transition-colors">
-                      <win.icon className={cn("w-4 h-4", win.color)} />
+              <div className="space-y-2">
+                {visibleNotifications.length === 0 ? (
+                  <div className="flex items-center gap-3 px-3 py-4 rounded-lg bg-muted/30 border border-border/20">
+                    <Sparkles className="w-4 h-4 text-muted-foreground" />
+                    <p className="text-xs text-muted-foreground">Alles ruhig hier.</p>
+                  </div>
+                ) : (
+                  visibleNotifications.map((notif) => (
+                    <div
+                      key={notif.id}
+                      className="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-muted/30 border border-border/20"
+                    >
+                      {notif.imageUrl ? (
+                        <img src={notif.imageUrl} alt="" className="w-8 h-8 rounded-lg shrink-0" />
+                      ) : (
+                        <div className="w-8 h-8 rounded-lg bg-primary/[0.06] flex items-center justify-center shrink-0">
+                          <notif.icon className={cn("w-4 h-4", notif.color)} />
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-medium text-foreground">{notif.text}</p>
+                      </div>
+                      <span className="text-[10px] text-muted-foreground shrink-0 mr-1">{notif.time}</span>
+                      <button
+                        onClick={() => dismissNotification(notif.id)}
+                        className="shrink-0 p-0.5 rounded hover:bg-muted/60 transition-colors"
+                        aria-label="Entfernen"
+                      >
+                        <X className="w-3.5 h-3.5 text-muted-foreground" />
+                      </button>
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium text-foreground text-sm">{win.label}</p>
-                      <p className="text-xs text-muted-foreground mt-0.5">{win.description}</p>
-                    </div>
-                    <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors shrink-0" />
-                  </button>
-                ))}
+                  ))
+                )}
               </div>
             </div>
-          </div>
+          )}
 
         </div>
       </div>
