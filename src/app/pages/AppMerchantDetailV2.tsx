@@ -155,28 +155,72 @@ export const AppMerchantDetailV2 = () => {
   const BRAND = brand.color;
   const BRAND_SOFT = `${BRAND}22`; // Alpha-Wash via HEX 8-stellig
 
-  // ================= Mock-State =================
-  const [checkIns, setCheckIns] = useState<CheckInEntry[]>([
+  // ================= Persistierter State (per Merchant in localStorage) =================
+  const checkInsKey = `eloyo:v2:checkins:${merchantId}`;
+  const redeemedKey = `eloyo:v2:redeemed:${merchantId}`;
+  const lastDateKey = `eloyo:v2:lastcheckin:${merchantId}`;
+
+  const defaultCheckIns: CheckInEntry[] = [
     { visit: 1, source: 'normal' },
     { visit: 2, source: 'normal' },
     { visit: 3, source: 'birthday' },
     { visit: 4, source: 'normal' },
-  ]);
+    { visit: 5, source: 'normal' },
+    { visit: 6, source: 'normal' },
+    { visit: 7, source: 'normal' },
+  ];
+  // Standard: Softgetränk bei Check-in 1 wurde bereits eingelöst,
+  // Gratisbreze bei Check-in 4 ist noch offen.
+  const defaultRedeemed: number[] = [1];
+
+  const [checkIns, setCheckIns] = useState<CheckInEntry[]>(() => {
+    if (typeof window === 'undefined') return defaultCheckIns;
+    try {
+      const raw = localStorage.getItem(checkInsKey);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed as CheckInEntry[];
+      }
+    } catch { /* noop */ }
+    return defaultCheckIns;
+  });
   const currentVisit = checkIns[checkIns.length - 1]?.visit ?? 0;
+
+  const [redeemedVisits, setRedeemedVisits] = useState<number[]>(() => {
+    if (typeof window === 'undefined') return defaultRedeemed;
+    try {
+      const raw = localStorage.getItem(redeemedKey);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) return parsed as number[];
+      }
+    } catch { /* noop */ }
+    return defaultRedeemed;
+  });
 
   const [rewards, setRewards] = useState<MockReward[]>([]);
 
-  // Sync DB-Prämien in den Mock-State (vergangene gelten als eingelöst)
+  // Persist
   useEffect(() => {
-    setRewards((prev) => {
-      const redeemedSet = new Set(prev.filter((r) => r.redeemed).map((r) => r.visitNumber));
-      return dbRewards.map((r) => ({
+    try { localStorage.setItem(checkInsKey, JSON.stringify(checkIns)); } catch { /* noop */ }
+  }, [checkIns, checkInsKey]);
+  useEffect(() => {
+    try { localStorage.setItem(redeemedKey, JSON.stringify(redeemedVisits)); } catch { /* noop */ }
+  }, [redeemedVisits, redeemedKey]);
+
+  // Sync DB-Prämien in den Mock-State. Eine Prämie gilt nur als eingelöst,
+  // wenn sie EXPLIZIT in `redeemedVisits` steht – nicht automatisch durch
+  // einen späteren Check-in. So bleibt z.B. die Gratisbreze bei Check-in 4
+  // auch nach Check-in 7 noch sichtbar einlösbar.
+  useEffect(() => {
+    setRewards(() =>
+      dbRewards.map((r) => ({
         visitNumber: r.visitNumber,
         label: r.label,
-        redeemed: redeemedSet.has(r.visitNumber) || r.visitNumber < currentVisit,
-      }));
-    });
-  }, [dbRewards, currentVisit]);
+        redeemed: redeemedVisits.includes(r.visitNumber),
+      })),
+    );
+  }, [dbRewards, redeemedVisits]);
 
   const [activatedReward, setActivatedReward] = useState<MockReward | null>(null);
   const [tappedReward, setTappedReward] = useState<MockReward | null>(null);
