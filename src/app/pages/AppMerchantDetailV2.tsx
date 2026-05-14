@@ -1069,10 +1069,6 @@ export const AppMerchantDetailV2 = () => {
           </div>
         </motion.div>
       )}
-            </AnimatePresence>
-          </Card>
-        </motion.div>
-      )}
 
       {/* Boost holen */}
       <motion.div
