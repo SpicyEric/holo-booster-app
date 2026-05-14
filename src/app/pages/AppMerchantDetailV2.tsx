@@ -142,6 +142,29 @@ export const AppMerchantDetailV2 = () => {
     reward: MockReward | null;
   } | null>(null);
   const [confirmStage, setConfirmStage] = useState(false);
+  const [screenCaptured, setScreenCaptured] = useState(false);
+
+  // Privacy-Screen NUR aktivieren, wenn die sensible Einlöse-Ansicht
+  // (oranges Vollbild mit Code-Marquee + Prämie) sichtbar ist.
+  const isRedemptionScreenVisible = Boolean(checkInOverlay?.reward);
+
+  useEffect(() => {
+    if (!isRedemptionScreenVisible) return;
+    enablePrivacyScreen();
+    let cancelled = false;
+    const poll = setInterval(async () => {
+      const captured = await isScreenBeingCaptured();
+      if (!cancelled) setScreenCaptured(captured);
+    }, 1500);
+    // initialer Check
+    isScreenBeingCaptured().then((v) => !cancelled && setScreenCaptured(v));
+    return () => {
+      cancelled = true;
+      clearInterval(poll);
+      setScreenCaptured(false);
+      disablePrivacyScreen();
+    };
+  }, [isRedemptionScreenVisible]);
 
   const scrollerRef = useRef<HTMLDivElement>(null);
 
