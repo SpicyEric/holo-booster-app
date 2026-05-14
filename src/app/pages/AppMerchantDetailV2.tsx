@@ -372,12 +372,16 @@ export const AppMerchantDetailV2 = () => {
                 strokeWidth={14}
                 strokeLinecap="round"
               />
-              <path
+              <motion.path
+                key={`completed-${currentVisit}`}
                 d={buildSmoothPath(completedPoints)}
                 fill="none"
                 stroke={BRAND}
                 strokeWidth={14}
                 strokeLinecap="round"
+                initial={{ pathLength: 0.85 }}
+                animate={{ pathLength: 1 }}
+                transition={{ duration: 1.1, ease: [0.16, 1, 0.3, 1] }}
               />
             </svg>
 
