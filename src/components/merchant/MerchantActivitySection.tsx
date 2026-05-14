@@ -2,7 +2,8 @@ import { useEffect, useState, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Loader2, TrendingUp, Gift, Search, Filter, CalendarDays,
-  ChevronDown, ChevronUp, Activity, Clock, Nfc, Sparkles, SlidersHorizontal
+  ChevronDown, ChevronUp, Activity, Clock, Nfc, Sparkles, SlidersHorizontal,
+  Check, Star
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -18,7 +19,7 @@ import { de } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, Tooltip as RechartsTooltip, ResponsiveContainer } from "recharts";
 
-interface Transaction { id: string; created_at: string; points_change: number; transaction_type: string | null; description: string | null; }
+interface Transaction { id: string; created_at: string; points_change: number; transaction_type: string | null; description: string | null; loyalty_account_id?: string | null; }
 interface Reward { id: string; title: string; }
 interface NfcCard { id: string; name: string | null; points: number; color: string | null; }
 interface HourlyData { hour: string; count: number; }
@@ -75,7 +76,7 @@ export default function MerchantActivitySection({ customerId }: Props) {
       const isDemo = customerId === DEMO_MERCHANT_ID;
 
       const [txResult, rewardResult, cardResult, accountsResult] = await Promise.all([
-        supabase.from("point_transactions").select("id, created_at, points_change, transaction_type, description").eq("merchant_customer_id", customerId).order("created_at", { ascending: false }).limit(1000),
+        supabase.from("point_transactions").select("id, created_at, points_change, transaction_type, description, loyalty_account_id").eq("merchant_customer_id", customerId).order("created_at", { ascending: false }).limit(1000),
         supabase.from("rewards").select("id, title").eq("merchant_customer_id", customerId).eq("is_active", true),
         (supabase.from("nfc_cards" as any).select("id, name, points, color").eq("merchant_customer_id", customerId) as unknown as Promise<{ data: any[] | null }>).then(r => r, () => ({ data: [] as any[] })),
         supabase.from("loyalty_accounts").select("created_at").eq("merchant_customer_id", customerId).order("created_at", { ascending: true }),
@@ -109,7 +110,8 @@ export default function MerchantActivitySection({ customerId }: Props) {
             : type === 'referral_bonus' ? 'Einladungsbonus'
             : type === 'double_points' ? 'Doppelte Punkte'
             : stampDescs[Math.floor(Math.random()*stampDescs.length)];
-          demoTx.push({ id: `demo-${i}`, created_at: d.toISOString(), points_change: pts, transaction_type: type, description: desc });
+          const accountId = `demo-acc-${Math.floor(Math.random()*120)}`;
+          demoTx.push({ id: `demo-${i}`, created_at: d.toISOString(), points_change: pts, transaction_type: type, description: desc, loyalty_account_id: accountId });
         }
         demoTx.sort((a,b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
         setTransactions(demoTx);
@@ -196,6 +198,38 @@ export default function MerchantActivitySection({ customerId }: Props) {
     if (t === 'google_review' || d.includes('bewert')) return 'review';
     return 'other';
   };
+
+  // V2-Kategorisierung: alles wird auf 4 Typen reduziert
+  type ActivityKind = 'redemption' | 'review' | 'referral' | 'checkin';
+  const getKind = (tx: Transaction): ActivityKind => {
+    const t = tx.transaction_type || '';
+    const d = (tx.description || '').toLowerCase();
+    if (isRedemption(tx)) return 'redemption';
+    if (t === 'google_review' || d.includes('bewert')) return 'review';
+    if (t === 'referral_bonus' || d.includes('einladung') || d.includes('empfehl')) return 'referral';
+    return 'checkin';
+  };
+
+  // Ordinalzählung pro Kunde + Kind, chronologisch aufsteigend
+  const ordinalMap = useMemo(() => {
+    const map = new Map<string, number>();
+    const counters = new Map<string, number>();
+    const sorted = [...transactions].sort((a, b) =>
+      new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+    );
+    for (const tx of sorted) {
+      const acc = tx.loyalty_account_id || 'unknown';
+      const kind = getKind(tx);
+      const key = `${acc}:${kind}`;
+      const next = (counters.get(key) || 0) + 1;
+      counters.set(key, next);
+      map.set(tx.id, next);
+    }
+    return map;
+  }, [transactions]);
+
+  const ordinalSuffix = (n: number) => `${n}.`;
+
 
   const windowTx = useMemo(() => {
     if (viewMode === "total") return transactions;
@@ -383,31 +417,50 @@ export default function MerchantActivitySection({ customerId }: Props) {
                 </Card>
               ) : (
                 <>
-                  {displayed.map((tx) => (
-                    <div key={tx.id} className="group bg-white rounded-lg px-3.5 py-3 border border-border/30 flex items-center justify-between hover:shadow-[0_2px_8px_hsl(262,30%,80%/0.3)] hover:border-primary/20 transition-all duration-200">
-                      <div className="flex items-center gap-3 min-w-0">
-                        <div className={cn("w-9 h-9 rounded-lg flex items-center justify-center shrink-0", tx.points_change > 0 ? 'bg-emerald-100' : 'bg-amber-100')}>
-                          {tx.points_change > 0 ? <TrendingUp className="w-4 h-4 text-emerald-600" /> : <Gift className="w-4 h-4 text-amber-600" />}
+                  {displayed.map((tx) => {
+                    const kind = getKind(tx);
+                    const ord = ordinalMap.get(tx.id) || 0;
+                    const iconWrap =
+                      kind === 'redemption' ? 'bg-orange-100' :
+                      kind === 'review' ? 'bg-yellow-100' :
+                      kind === 'referral' ? 'bg-emerald-100' :
+                      'bg-blue-100';
+                    const iconNode =
+                      kind === 'redemption' ? <Gift className="w-4 h-4 text-orange-600" /> :
+                      kind === 'review' ? <Star className="w-4 h-4 text-yellow-500 fill-yellow-400" /> :
+                      kind === 'referral' ? <TrendingUp className="w-4 h-4 text-emerald-600" /> :
+                      <Check className="w-4 h-4 text-blue-600" strokeWidth={3} />;
+                    const title =
+                      kind === 'redemption' ? (tx.description || 'Prämie eingelöst') :
+                      kind === 'review' ? 'Google-Bewertungsbonus' :
+                      kind === 'referral' ? 'Einladungsboost' :
+                      'Check-in';
+                    const ordinalText =
+                      kind === 'review' ? null :
+                      kind === 'redemption' ? `${ordinalSuffix(ord)} Prämie` :
+                      kind === 'referral' ? `${ordinalSuffix(ord)} Einladungsboost` :
+                      `${ordinalSuffix(ord)} Check-in`;
+                    return (
+                      <div key={tx.id} className="group bg-white rounded-lg px-3.5 py-3 border border-border/30 flex items-center justify-between hover:shadow-[0_2px_8px_hsl(262,30%,80%/0.3)] hover:border-primary/20 transition-all duration-200">
+                        <div className="flex items-center gap-3 min-w-0">
+                          <div className={cn("w-9 h-9 rounded-lg flex items-center justify-center shrink-0", iconWrap)}>
+                            {iconNode}
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-sm font-medium text-foreground truncate">{title}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {new Date(tx.created_at).toLocaleDateString("de-DE", { day:"2-digit", month:"2-digit", year:"numeric", hour:"2-digit", minute:"2-digit" })}
+                            </p>
+                          </div>
                         </div>
-                        <div className="min-w-0">
-                          <p className="text-sm font-medium text-foreground truncate">{tx.description || getTypeLabel(tx.transaction_type)}</p>
-                          <p className="text-xs text-muted-foreground">
-                            {new Date(tx.created_at).toLocaleDateString("de-DE", { day:"2-digit", month:"2-digit", year:"numeric", hour:"2-digit", minute:"2-digit" })}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2.5 shrink-0">
-                        {tx.transaction_type && (
-                          <Badge variant="outline" className={cn("rounded-full text-[10px] px-2 py-0.5 hidden sm:inline-flex font-medium", getTypeBadgeStyle(tx.transaction_type))}>
-                            {getTypeLabel(tx.transaction_type)}
-                          </Badge>
+                        {ordinalText && (
+                          <div className="flex items-center shrink-0 pl-3">
+                            <span className="text-xs font-semibold text-muted-foreground tabular-nums">{ordinalText}</span>
+                          </div>
                         )}
-                        <span className={cn("font-bold text-sm tabular-nums", tx.points_change > 0 ? 'text-emerald-600' : 'text-amber-600')}>
-                          {tx.points_change > 0 ? '+' : ''}{tx.points_change}
-                        </span>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                   {hasMore && (
                     <Button variant="ghost" className="w-full mt-1 text-muted-foreground hover:text-foreground text-sm" onClick={() => setShowAll(!showAll)}>
                       {showAll ? <>Weniger anzeigen <ChevronUp className="w-4 h-4 ml-1" /></> : <>Alle {filtered.length} anzeigen <ChevronDown className="w-4 h-4 ml-1" /></>}
