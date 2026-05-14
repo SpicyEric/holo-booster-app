@@ -183,25 +183,26 @@ export const AppMerchantDetailV2 = () => {
 
   // ===== Entry-Transition vom Home-Pass =====
   type EntryPhase = 'idle' | 'flying' | 'fading' | 'revealing' | 'done';
-  const [entryPhase, setEntryPhase] = useState<EntryPhase>('done');
-  const [entryOrigin, setEntryOrigin] = useState<{ top: number; left: number; width: number; height: number } | null>(null);
+  const readEntryPayload = () => {
+    if (typeof window === 'undefined') return null;
+    try {
+      const raw = sessionStorage.getItem('treuepass-transition');
+      if (!raw) return null;
+      const data = JSON.parse(raw);
+      if (data.merchantId !== merchantId) return null;
+      if (Date.now() - data.timestamp > 1500) return null;
+      return data as { rect: { top: number; left: number; width: number; height: number }; coverUrl: string | null };
+    } catch { return null; }
+  };
+  const [entryPhase, setEntryPhase] = useState<EntryPhase>(() => (readEntryPayload() ? 'flying' : 'done'));
+  const [entryOrigin, setEntryOrigin] = useState<{ top: number; left: number; width: number; height: number } | null>(() => readEntryPayload()?.rect ?? null);
   const [entryTarget, setEntryTarget] = useState<{ top: number; left: number; width: number; height: number } | null>(null);
-  const [entryCover, setEntryCover] = useState<string | null>(null);
+  const [entryCover, setEntryCover] = useState<string | null>(() => readEntryPayload()?.coverUrl ?? null);
   const snakeBandRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    let raw: string | null = null;
-    try { raw = sessionStorage.getItem('treuepass-transition'); } catch {}
-    if (!raw) return;
-    try {
-      const data = JSON.parse(raw);
-      if (data.merchantId !== merchantId) return;
-      if (Date.now() - data.timestamp > 1500) return;
-      sessionStorage.removeItem('treuepass-transition');
-      setEntryOrigin(data.rect);
-      setEntryCover(data.coverUrl || null);
-      setEntryPhase('flying');
-    } catch {}
+    // Payload nach erstem Render aus dem Storage entfernen
+    try { sessionStorage.removeItem('treuepass-transition'); } catch {}
   }, [merchantId]);
 
   // Ziel-Rect ermitteln, sobald Snake-Band gemountet ist
