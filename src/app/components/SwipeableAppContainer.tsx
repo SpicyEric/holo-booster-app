@@ -201,7 +201,7 @@ export const SwipeableAppContainer = () => {
         <div className="flex h-full">
           <div className="flex-[0_0_100%] min-w-0 h-full overflow-y-auto" style={{ overscrollBehavior: 'contain', touchAction: 'pan-y' }}>
             <div className="container mx-auto px-4 py-6 pb-16 max-w-2xl relative z-10">
-              <AppHomeContent />
+              <AppHomeContent active={currentIndex === 0} />
             </div>
           </div>
           
@@ -246,7 +246,7 @@ function haversineDistance(lat1: number, lon1: number, lat2: number, lon2: numbe
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
-const AppHomeContent = () => {
+const AppHomeContent = ({ active }: { active: boolean }) => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [cards, setCards] = useState<HomeMerchantCard[]>([]);
@@ -339,6 +339,40 @@ const AppHomeContent = () => {
   useEffect(() => {
     if (user) loadCards();
   }, [user, loadCards]);
+
+  useEffect(() => {
+    if (!homeEmblaApi) return;
+    const syncSelected = () => setActiveCardIndex(homeEmblaApi.selectedScrollSnap());
+    const hideDetails = () => setIsCardSwiping(true);
+    const showDetails = () => {
+      syncSelected();
+      setIsCardSwiping(false);
+    };
+
+    syncSelected();
+    homeEmblaApi.on('select', syncSelected);
+    homeEmblaApi.on('pointerDown', hideDetails);
+    homeEmblaApi.on('scroll', hideDetails);
+    homeEmblaApi.on('settle', showDetails);
+    homeEmblaApi.on('reInit', showDetails);
+
+    return () => {
+      homeEmblaApi.off('select', syncSelected);
+      homeEmblaApi.off('pointerDown', hideDetails);
+      homeEmblaApi.off('scroll', hideDetails);
+      homeEmblaApi.off('settle', showDetails);
+      homeEmblaApi.off('reInit', showDetails);
+    };
+  }, [homeEmblaApi]);
+
+  useEffect(() => {
+    if (!active || cards.length === 0) {
+      setActiveBrandColor(null);
+      return;
+    }
+    setActiveBrandColor(cards[activeCardIndex]?.brandColor || null);
+    return () => setActiveBrandColor(null);
+  }, [active, activeCardIndex, cards]);
 
   const handleRefresh = useCallback(async () => {
     await loadCards();
@@ -456,17 +490,17 @@ const AppHomeContent = () => {
                     )}
                   </div>
                 </button>
-                <HomeMerchantInfoBlock store={store} />
               </div>
             ))}
           </div>
         </div>
+        <HomeMerchantInfoBlock store={cards[activeCardIndex] || cards[0]} visible={!isCardSwiping} />
       </div>
     </PullToRefresh>
   );
 };
 
-function HomeMerchantInfoBlock({ store }: { store: HomeMerchantCard }) {
+function HomeMerchantInfoBlock({ store, visible }: { store: HomeMerchantCard; visible: boolean }) {
   const links: { href: string; label: string; Icon: typeof Globe }[] = [];
   const web = normalizeHomeUrl(store.website);
   const ig = normalizeInstagramUrl(store.instagram);
