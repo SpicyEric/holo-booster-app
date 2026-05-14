@@ -151,10 +151,6 @@ export const AppScan = () => {
   const BRAND = merchantBrand.color;
   const hasMerchantContext = Boolean(contextMerchantId && contextMerchant);
 
-  // Wenn ein Merchant-Kontext aktiv ist, autostart-NFC nicht ausführen
-  // (Nutzer entscheidet selbst zwischen echtem Scan und Simulation).
-  const skipAutostart = hasMerchantContext;
-
   const updatePreparingFlip = useCallback((value: boolean) => {
     preparingFlipRef.current = value;
     setPreparingFlip(value);
