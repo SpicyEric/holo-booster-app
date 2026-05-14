@@ -35,6 +35,20 @@ export const BottomNav = ({ onNavigate, currentIndex }: BottomNavProps) => {
     });
   }, []);
 
+  // Brand-Farbe nur auf Merchant-Detail-/Scan-Routen aktiv. Bei jedem
+  // Wechsel auf andere Tabs (Home, Suche, Nachrichten, Einstellungen)
+  // wird die Markenfarbe sofort zurückgesetzt → Scan-Button geht zurück
+  // auf das Standard-Lila-Gradient.
+  useEffect(() => {
+    const onMerchantDetail = /^\/app\/merchant\//.test(location.pathname);
+    const onScan = location.pathname.startsWith('/app/scan');
+    if (!onMerchantDetail && !onScan) {
+      import('@/lib/activeBrandColor').then(({ setActiveBrandColor }) =>
+        setActiveBrandColor(null)
+      );
+    }
+  }, [location.pathname]);
+
   // Check for unread messages or unseen redeemable rewards
   useEffect(() => {
     if (!user) return;
