@@ -119,8 +119,42 @@ export const AppHome = () => {
     return () => { cancelled = true; };
   }, [user]);
 
+  const cardRefs = useRef<Array<HTMLDivElement | null>>([]);
+  const [activeIndex, setActiveIndex] = useState(0);
+
+  // Track which card is currently most visible and publish its brand color
+  useEffect(() => {
+    if (cards.length === 0) return;
+    cardRefs.current = cardRefs.current.slice(0, cards.length);
+    const observer = new IntersectionObserver(
+      (entries) => {
+        let bestIdx = activeIndex;
+        let bestRatio = 0;
+        entries.forEach((entry) => {
+          const idx = Number((entry.target as HTMLElement).dataset.cardIndex);
+          if (Number.isNaN(idx)) return;
+          if (entry.intersectionRatio > bestRatio) {
+            bestRatio = entry.intersectionRatio;
+            bestIdx = idx;
+          }
+        });
+        if (bestRatio > 0) setActiveIndex(bestIdx);
+      },
+      { threshold: [0.25, 0.5, 0.75] },
+    );
+    cardRefs.current.forEach((el) => el && observer.observe(el));
+    return () => observer.disconnect();
+  }, [cards.length]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Publish active brand color on Home so BottomNav scan-button + TopBar pick it up
+  useEffect(() => {
+    const active = cards[activeIndex];
+    setActiveBrandColor(active?.brandColor || null);
+    return () => setActiveBrandColor(null);
+  }, [activeIndex, cards]);
+
   return (
-    <MainLayout title="Home">
+    <MainLayout title="Home" disableParticles>
       <OpenInvitationsBanner />
 
       {loading ? (
@@ -131,8 +165,13 @@ export const AppHome = () => {
         <EmptyTutorial onExplore={() => navigate('/app/stores')} />
       ) : (
         <div style={{ paddingBottom: '2rem' }}>
-          {cards.map((store) => (
-            <div key={store.id} style={{ marginBottom: '28px' }}>
+          {cards.map((store, idx) => (
+            <div
+              key={store.id}
+              ref={(el) => { cardRefs.current[idx] = el; }}
+              data-card-index={idx}
+              style={{ marginBottom: '28px' }}
+            >
               <button
                 onClick={(e) => {
                   const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
@@ -179,7 +218,7 @@ export const AppHome = () => {
                 </div>
               </button>
 
-              <MerchantInfoBlock store={store} />
+              <MerchantInfoBlock store={store} active={idx === activeIndex} />
             </div>
           ))}
         </div>
