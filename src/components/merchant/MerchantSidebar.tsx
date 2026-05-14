@@ -33,7 +33,7 @@ const NAV_ITEMS: NavItem[] = [
   { path: "/kunde/marketing", tab: "praemien", defaultForPath: true, label: "Treuepass", icon: Gift },
   { path: "/kunde/mein-geschaeft", tab: "info", defaultForPath: true, label: "Profil", icon: Store },
   { path: "/kunde/marketing", tab: "messages", label: "Nachrichten", icon: MessageSquare },
-  { path: "/kunde/kunden", label: "Kunden & Transaktionen", icon: Users },
+  
   { path: "/kunde/anleitung", label: "So funktioniert's", icon: BookOpen },
   { path: "/kunde/konto", label: "Einstellungen", icon: Settings },
 ];

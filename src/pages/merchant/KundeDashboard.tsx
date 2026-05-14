@@ -559,6 +559,13 @@ export default function KundeDashboard() {
             </div>
           )}
 
+          {/* ====== Check-in-Verlauf & Analytics ====== */}
+          {customer?.id && (
+            <div className="pt-2">
+              <MerchantActivitySection customerId={customer.id} />
+            </div>
+          )}
+
         </div>
       </div>
     </TooltipProvider>
