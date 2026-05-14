@@ -353,41 +353,49 @@ const AppHomeContent = () => {
     <PullToRefresh onRefresh={handleRefresh}>
       <OpenInvitationsBanner />
       <div style={{ paddingBottom: '2rem' }}>
-        {cards.map((store) => (
-          <div key={store.id} style={{ marginBottom: '12px' }}>
-            <button
-              onClick={() => navigate(`/app/merchant/${store.merchantId}`)}
-              className="w-full rounded-xl overflow-hidden shadow-md text-left relative block"
-              style={{ aspectRatio: '1.55 / 1', display: 'block' }}
-            >
-              <div className="absolute inset-0">
-                {store.coverImage ? (
-                  <img src={store.coverImage} alt={store.name} className="w-full h-full object-cover" />
-                ) : (
-                  <div className="w-full h-full bg-gradient-to-br from-purple-500 to-blue-500" />
-                )}
-              </div>
-              <div className="absolute top-3 left-3 z-20 w-12 h-12 rounded-full overflow-hidden">
-                {store.logoUrl ? (
-                  <img src={store.logoUrl} alt={`${store.name} Logo`} className="w-full h-full object-cover" />
-                ) : (
-                  <div className="w-full h-full bg-primary flex items-center justify-center">
-                    <span className="text-lg font-bold text-white">
-                      {store.name?.charAt(0)?.toUpperCase() || '?'}
-                    </span>
+        <h2 className="text-lg font-semibold text-foreground px-1 mb-3">Deine Treuepässe</h2>
+        <div className="overflow-hidden -mx-4" ref={emblaRef}>
+          <div className="flex touch-pan-y">
+            {cards.map((store) => (
+              <div
+                key={store.id}
+                className="shrink-0 grow-0 basis-[85%] pl-3 first:pl-4 last:pr-4"
+              >
+                <button
+                  onClick={() => navigate(`/app/merchant/${store.merchantId}`)}
+                  className="w-full rounded-xl overflow-hidden shadow-md text-left relative block"
+                  style={{ aspectRatio: '1.55 / 1', display: 'block' }}
+                >
+                  <div className="absolute inset-0">
+                    {store.coverImage ? (
+                      <img src={store.coverImage} alt={store.name} className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full bg-gradient-to-br from-purple-500 to-blue-500" />
+                    )}
                   </div>
-                )}
+                  <div className="absolute top-3 left-3 z-20 w-12 h-12 rounded-full overflow-hidden">
+                    {store.logoUrl ? (
+                      <img src={store.logoUrl} alt={`${store.name} Logo`} className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full bg-primary flex items-center justify-center">
+                        <span className="text-lg font-bold text-white">
+                          {store.name?.charAt(0)?.toUpperCase() || '?'}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                  <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/70 via-black/40 to-transparent" />
+                  <div className="absolute bottom-3 left-3 right-3 z-10">
+                    <h3 className="text-white font-semibold text-xl truncate drop-shadow-md">{store.name}</h3>
+                    {store.category && (
+                      <p className="text-white/80 text-sm truncate drop-shadow-md">{store.category}</p>
+                    )}
+                  </div>
+                </button>
               </div>
-              <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/70 via-black/40 to-transparent" />
-              <div className="absolute bottom-3 left-3 right-3 z-10">
-                <h3 className="text-white font-semibold text-xl truncate drop-shadow-md">{store.name}</h3>
-                {store.category && (
-                  <p className="text-white/80 text-sm truncate drop-shadow-md">{store.category}</p>
-                )}
-              </div>
-            </button>
+            ))}
           </div>
-        ))}
+        </div>
       </div>
     </PullToRefresh>
   );
