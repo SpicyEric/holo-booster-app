@@ -270,7 +270,7 @@ function EmptyTutorial({ onExplore }: { onExplore: () => void }) {
   );
 }
 
-function MerchantInfoBlock({ store }: { store: MerchantCard }) {
+function MerchantInfoBlock({ store, active }: { store: MerchantCard; active: boolean }) {
   const hours = store.openingHours;
   const links: { href: string; label: string; Icon: typeof Globe }[] = [];
   const web = normalizeUrl(store.website);
@@ -285,8 +285,19 @@ function MerchantInfoBlock({ store }: { store: MerchantCard }) {
   const hasAnything = !!(store.description || hours || store.address || links.length);
   if (!hasAnything) return null;
 
+  const accent = store.brandColor || undefined;
+  // Quick fade: invisible while card is not active, fade-in when it becomes active
+  const fadeStyle: React.CSSProperties = {
+    opacity: active ? 1 : 0,
+    transition: active ? 'opacity 220ms ease-out' : 'opacity 120ms ease-out',
+  };
+  const iconStyle = accent ? { color: accent } : undefined;
+  const linkStyle = accent
+    ? { color: accent, backgroundColor: `color-mix(in srgb, ${accent} 12%, transparent)` }
+    : undefined;
+
   return (
-    <div className="mt-3 px-1 space-y-3">
+    <div className="mt-3 px-1 space-y-3" style={fadeStyle}>
       {store.description && (
         <p className="text-sm text-foreground/80 leading-relaxed whitespace-pre-line">
           {store.description}
@@ -296,7 +307,7 @@ function MerchantInfoBlock({ store }: { store: MerchantCard }) {
       {hours && (
         <div className="rounded-xl bg-card border border-border/50 p-3">
           <div className="flex items-center gap-2 mb-2">
-            <Clock className="h-4 w-4 text-primary" />
+            <Clock className="h-4 w-4 text-primary" style={iconStyle} />
             <span className="text-xs font-semibold text-foreground">Öffnungszeiten</span>
           </div>
           <div className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-xs">
@@ -317,7 +328,7 @@ function MerchantInfoBlock({ store }: { store: MerchantCard }) {
 
       {store.address && (
         <div className="flex items-start gap-2 text-sm text-foreground/80">
-          <MapPin className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+          <MapPin className="h-4 w-4 text-primary shrink-0 mt-0.5" style={iconStyle} />
           <span>{store.address}</span>
         </div>
       )}
@@ -332,6 +343,7 @@ function MerchantInfoBlock({ store }: { store: MerchantCard }) {
               rel="noopener noreferrer"
               onClick={(e) => e.stopPropagation()}
               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary/10 text-primary text-xs font-medium hover:bg-primary/15 transition-colors"
+              style={linkStyle}
             >
               <Icon className="h-3.5 w-3.5" />
               {label}
