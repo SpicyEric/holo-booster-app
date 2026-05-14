@@ -485,10 +485,13 @@ export const AppMerchantDetailV2 = () => {
               const isPast = visit < currentVisit;
               const isCurrent = visit === currentVisit;
               const cx = points[i].x;
-              const cy = points[i].y + 28; // offset für Labels über den Knoten
+              const cy = points[i].y + 12; // kleiner Offset (Labels nutzen jetzt oben/unten je nach Position)
               const source = sourceForVisit(visit);
               const label = sourceLabel(source);
               const isActivatedHere = activatedReward?.visitNumber === visit;
+              // Top-Knoten der Welle (visit 3, 7, 11, …) → Label unter dem Knoten,
+              // sonst über dem Knoten (mehr Platz nach oben sparen)
+              const labelBelow = visit % 4 === 3;
 
               if (reward) {
                 const unlocked = visit <= currentVisit && !reward.redeemed;
