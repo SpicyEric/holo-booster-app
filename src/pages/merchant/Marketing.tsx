@@ -89,6 +89,7 @@ const Marketing = () => {
   
   const [merchantIndustry, setMerchantIndustry] = useState<string | null>(null);
   const [avgOrderValue, setAvgOrderValue] = useState(10);
+  const [passLength, setPassLength] = useState<number>(15);
 
   // --- Boost state ---
   const [boostLoading, setBoostLoading] = useState(false);
