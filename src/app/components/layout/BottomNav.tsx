@@ -25,6 +25,15 @@ export const BottomNav = ({ onNavigate, currentIndex }: BottomNavProps) => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [messageBadge, setMessageBadge] = useState(false);
+  const [brandColor, setBrandColor] = useState<string | null>(() => getActiveBrandColor());
+  const [brandSweepKey, setBrandSweepKey] = useState(0);
+
+  useEffect(() => {
+    return subscribeActiveBrandColor((c) => {
+      setBrandColor(c);
+      if (c) setBrandSweepKey((k) => k + 1);
+    });
+  }, []);
 
   // Check for unread messages or unseen redeemable rewards
   useEffect(() => {
