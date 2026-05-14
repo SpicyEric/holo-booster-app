@@ -95,3 +95,6 @@ verify_jwt = false
 
 [functions.winback-cron]
 verify_jwt = false
+
+[functions.request-phone-otp]
+verify_jwt = false

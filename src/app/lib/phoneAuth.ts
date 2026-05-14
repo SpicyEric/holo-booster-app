@@ -24,11 +24,11 @@ export async function sendPhoneOtp(phone: string) {
   if (!isValidE164(normalized)) {
     throw new Error('Bitte gib eine gültige Handynummer ein');
   }
-  const { error } = await supabase.auth.signInWithOtp({
-    phone: normalized,
-    options: { channel: 'sms' },
+  const { data, error } = await supabase.functions.invoke('request-phone-otp', {
+    body: { phone: normalized },
   });
-  if (error) throw error;
+  if (error) throw new Error(error.message || 'OTP-Versand fehlgeschlagen');
+  if (data && (data as any).error) throw new Error((data as any).error);
   return normalized;
 }
 
