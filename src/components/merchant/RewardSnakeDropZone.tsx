@@ -233,8 +233,14 @@ export const RewardSnakeDropZone = ({
       </CardHeader>
       <CardContent className="space-y-5">
         {/* Snake — horizontal scroll (forced visible scrollbar) */}
+        <style>{`
+          .reward-snake-scroll::-webkit-scrollbar { height: 12px; }
+          .reward-snake-scroll::-webkit-scrollbar-track { background: ${brandColor}1a; border-radius: 8px; }
+          .reward-snake-scroll::-webkit-scrollbar-thumb { background: ${brandColor}; border-radius: 8px; border: 2px solid transparent; background-clip: padding-box; }
+          .reward-snake-scroll::-webkit-scrollbar-thumb:hover { background: ${brandColor}dd; background-clip: padding-box; border: 2px solid transparent; }
+        `}</style>
         <div
-          className="overflow-x-scroll overflow-y-hidden rounded-2xl bg-card/60 border border-border/30"
+          className="reward-snake-scroll overflow-x-scroll overflow-y-hidden rounded-2xl bg-card/60 border border-border/30"
           style={{
             WebkitOverflowScrolling: 'touch',
             scrollbarWidth: 'auto',
