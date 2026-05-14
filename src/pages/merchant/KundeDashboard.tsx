@@ -21,6 +21,7 @@ import CountUp from "@/components/CountUp";
 import {
   Tooltip, TooltipContent, TooltipProvider, TooltipTrigger
 } from "@/components/ui/tooltip";
+import MerchantActivitySection from "@/components/merchant/MerchantActivitySection";
 
 interface Customer { id: string; name: string; email: string; company_name: string | null; status: string; customer_number: number | null; created_at?: string; postal_code?: string | null; birthday_enabled?: boolean; referral_inviter_points?: number | null; }
 interface SubscriptionInfo { hasSubscription: boolean; status?: string; currentPeriodEnd?: string; cancelAtPeriodEnd?: boolean; cancelAt?: string | null; }
@@ -509,42 +510,6 @@ export default function KundeDashboard() {
             />
           </div>
 
-          {/* ====== Geburtstag + Nachrichten ====== */}
-          {stats && (
-            <div className="grid grid-cols-2 gap-3 max-w-md">
-              <button
-                onClick={() => navigate('/kunde/marketing?tab=automations')}
-                className="bg-white rounded-2xl p-4 border border-border/30 shadow-[0_1px_3px_hsl(262,30%,80%/0.3)] hover:shadow-[0_4px_12px_hsl(262,30%,80%/0.4)] hover:border-primary/30 transition-all text-left group"
-              >
-                <div className="flex items-center justify-between mb-2">
-                  <div className="w-8 h-8 rounded-lg bg-pink-50 flex items-center justify-center">
-                    <Cake className="w-4 h-4 text-pink-600" />
-                  </div>
-                  <ChevronRight className="w-4 h-4 text-muted-foreground/50 group-hover:text-primary transition-colors" />
-                </div>
-                <p className="text-2xl font-bold text-foreground">
-                  <CountUp to={stats.birthdayMessagesSent} duration={1.5} />
-                </p>
-                <p className="text-xs text-muted-foreground mt-0.5">Geburtstagsgrüße</p>
-              </button>
-              <button
-                onClick={() => navigate('/kunde/marketing?tab=messages')}
-                className="bg-white rounded-2xl p-4 border border-border/30 shadow-[0_1px_3px_hsl(262,30%,80%/0.3)] hover:shadow-[0_4px_12px_hsl(262,30%,80%/0.4)] hover:border-primary/30 transition-all text-left group"
-              >
-                <div className="flex items-center justify-between mb-2">
-                  <div className="w-8 h-8 rounded-lg bg-amber-50 flex items-center justify-center">
-                    <MessageSquare className="w-4 h-4 text-amber-600" />
-                  </div>
-                  <ChevronRight className="w-4 h-4 text-muted-foreground/50 group-hover:text-primary transition-colors" />
-                </div>
-                <p className="text-2xl font-bold text-foreground">
-                  <CountUp to={stats.winbackMessagesSent} duration={1.5} />
-                </p>
-                <p className="text-xs text-muted-foreground mt-0.5">Nachrichten</p>
-              </button>
-            </div>
-          )}
-
           {/* ====== Benachrichtigungen ====== */}
           {allMissionsDoneOver24h && (
             <div className="bg-white rounded-2xl p-5 border border-border/30 shadow-[0_1px_3px_hsl(262,30%,80%/0.3)]">
@@ -591,6 +556,13 @@ export default function KundeDashboard() {
                   ))
                 )}
               </div>
+            </div>
+          )}
+
+          {/* ====== Check-in-Verlauf & Analytics ====== */}
+          {customer?.id && (
+            <div className="pt-2">
+              <MerchantActivitySection customerId={customer.id} />
             </div>
           )}
 
