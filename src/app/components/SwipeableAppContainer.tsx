@@ -342,7 +342,12 @@ const AppHomeContent = ({ active }: { active: boolean }) => {
 
   useEffect(() => {
     if (!homeEmblaApi) return;
-    const syncSelected = () => setActiveCardIndex(homeEmblaApi.selectedScrollSnap());
+    const syncSelected = () => {
+      setActiveCardIndex(homeEmblaApi.selectedScrollSnap());
+      // Sobald das Embla-Target auf die nächste Karte umspringt (lange vor settle),
+      // den Text der neuen Karte direkt einblenden.
+      setIsCardSwiping(false);
+    };
     const hideDetails = () => setIsCardSwiping(true);
     const showDetails = () => {
       syncSelected();
@@ -352,14 +357,12 @@ const AppHomeContent = ({ active }: { active: boolean }) => {
     syncSelected();
     homeEmblaApi.on('select', syncSelected);
     homeEmblaApi.on('pointerDown', hideDetails);
-    homeEmblaApi.on('scroll', hideDetails);
     homeEmblaApi.on('settle', showDetails);
     homeEmblaApi.on('reInit', showDetails);
 
     return () => {
       homeEmblaApi.off('select', syncSelected);
       homeEmblaApi.off('pointerDown', hideDetails);
-      homeEmblaApi.off('scroll', hideDetails);
       homeEmblaApi.off('settle', showDetails);
       homeEmblaApi.off('reInit', showDetails);
     };
