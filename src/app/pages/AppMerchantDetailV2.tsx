@@ -53,6 +53,20 @@ const NODE_SPACING = 110;
 const SNAKE_HEIGHT = 220;
 const AMPLITUDE = 55;
 const WAVELENGTH = 4;
+const DEMO_PASS_RESET_VERSION = 'checkin7-open-rewards-v1';
+
+const DEMO_DEFAULT_CHECK_INS: CheckInEntry[] = [
+  { visit: 1, source: 'normal' },
+  { visit: 2, source: 'google_review' },
+  { visit: 3, source: 'birthday' },
+  { visit: 4, source: 'normal' },
+  { visit: 5, source: 'boost' },
+  { visit: 6, source: 'normal' },
+  { visit: 7, source: 'normal' },
+];
+
+// Standard: Gratisbreze (Visit 4) und Gratiskaffee (Visit 8) sind beide noch offen.
+const DEMO_DEFAULT_REDEEMED: number[] = [];
 
 function isRepeatingRewardVisit(visit: number): boolean {
   return visit >= 15 && (visit - 10) % 5 === 0;
@@ -156,21 +170,13 @@ export const AppMerchantDetailV2 = () => {
   const BRAND_SOFT = `${BRAND}22`; // Alpha-Wash via HEX 8-stellig
 
   // ================= Persistierter State (per Merchant in localStorage) =================
-  const checkInsKey = `eloyo:v2:checkins:v4:${merchantId}`;
-  const redeemedKey = `eloyo:v2:redeemed:v2:${merchantId}`;
+  const checkInsKey = `eloyo:v2:checkins:${merchantId}`;
+  const redeemedKey = `eloyo:v2:redeemed:${merchantId}`;
+  const resetKey = `eloyo:v2:demo-reset:${merchantId}`;
   const lastDateKey = `eloyo:v2:lastcheckin:${merchantId}`;
 
-  const defaultCheckIns: CheckInEntry[] = [
-    { visit: 1, source: 'normal' },
-    { visit: 2, source: 'google_review' },
-    { visit: 3, source: 'birthday' },
-    { visit: 4, source: 'normal' },
-    { visit: 5, source: 'boost' },
-    { visit: 6, source: 'normal' },
-    { visit: 7, source: 'normal' },
-  ];
-  // Standard: Gratisbreze (Visit 4) und Gratiskaffee (Visit 8) sind beide noch offen.
-  const defaultRedeemed: number[] = [];
+  const defaultCheckIns = DEMO_DEFAULT_CHECK_INS;
+  const defaultRedeemed = DEMO_DEFAULT_REDEEMED;
 
   const [checkIns, setCheckIns] = useState<CheckInEntry[]>(() => {
     if (typeof window === 'undefined') return defaultCheckIns;
@@ -203,6 +209,24 @@ export const AppMerchantDetailV2 = () => {
     } catch { /* noop */ }
     return defaultRedeemed;
   });
+
+  useEffect(() => {
+    if (merchantId !== DEFAULT_DEMO_MERCHANT_CUSTOMER_ID || typeof window === 'undefined') return;
+    try {
+      if (localStorage.getItem(resetKey) === DEMO_PASS_RESET_VERSION) return;
+
+      const resetCheckIns = [...DEMO_DEFAULT_CHECK_INS];
+      const resetRedeemed = [...DEMO_DEFAULT_REDEEMED];
+      localStorage.setItem(checkInsKey, JSON.stringify(resetCheckIns));
+      localStorage.setItem(redeemedKey, JSON.stringify(resetRedeemed));
+      localStorage.setItem(resetKey, DEMO_PASS_RESET_VERSION);
+      localStorage.removeItem(lastDateKey);
+      clearActivatedReward(merchantId);
+      setCheckIns(resetCheckIns);
+      setRedeemedVisits(resetRedeemed);
+      setActivatedReward(null);
+    } catch { /* noop */ }
+  }, [checkInsKey, lastDateKey, merchantId, redeemedKey, resetKey]);
 
   const [rewards, setRewards] = useState<MockReward[]>([]);
 
