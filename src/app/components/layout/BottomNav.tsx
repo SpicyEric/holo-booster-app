@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import nfcIcon from '@/assets/nfc-icon.png';
-import { getActiveBrandColor, subscribeActiveBrandColor } from '@/lib/activeBrandColor';
+import { getActiveBrandColor, setActiveBrandColor, subscribeActiveBrandColor } from '@/lib/activeBrandColor';
 
 interface NavItem {
   icon: LucideIcon;
@@ -36,16 +36,13 @@ export const BottomNav = ({ onNavigate, currentIndex }: BottomNavProps) => {
   }, []);
 
   // Brand-Farbe nur auf Merchant-Detail-/Scan-Routen aktiv. Bei jedem
-  // Wechsel auf andere Tabs (Home, Suche, Nachrichten, Einstellungen)
-  // wird die Markenfarbe sofort zurückgesetzt → Scan-Button geht zurück
-  // auf das Standard-Lila-Gradient.
+  // Wechsel auf andere Tabs wird die Markenfarbe synchron zurückgesetzt.
   useEffect(() => {
     const onMerchantDetail = /^\/app\/merchant\//.test(location.pathname);
     const onScan = location.pathname.startsWith('/app/scan');
     if (!onMerchantDetail && !onScan) {
-      import('@/lib/activeBrandColor').then(({ setActiveBrandColor }) =>
-        setActiveBrandColor(null)
-      );
+      setActiveBrandColor(null);
+      setBrandColor(null);
     }
   }, [location.pathname]);
 
@@ -118,15 +115,27 @@ export const BottomNav = ({ onNavigate, currentIndex }: BottomNavProps) => {
   ];
 
   const handleCenterButtonClick = () => {
-    // If user is currently viewing a merchant detail page, pass that merchant id
-    // through to the scan page so it can render that merchant's branded card
-    // and the "Aktivierte Prämien für diesen Check-in" panel.
     const match = location.pathname.match(/^\/app\/merchant\/([^/?#]+)/);
     const merchantId = match?.[1];
     const params = new URLSearchParams();
     params.set('autostart', String(Date.now()));
     if (merchantId) params.set('merchant', merchantId);
-    navigate(`/app/scan?${params.toString()}`);
+    const url = `/app/scan?${params.toString()}`;
+
+    // Wenn wir gerade auf einer Merchant-Detail-Seite (Treuepass) sind,
+    // erst die Exit-Animation abspielen lassen und dann navigieren.
+    if (merchantId) {
+      const handled = window.dispatchEvent(
+        new CustomEvent('app:treuepass-exit-to-scan', {
+          detail: { merchantId, scanUrl: url },
+          cancelable: true,
+        })
+      );
+      // Wenn die Detailseite das Event bestätigt (preventDefault), kümmert
+      // sie sich selbst um die Navigation nach Abschluss der Animation.
+      if (!handled) return;
+    }
+    navigate(url);
   };
 
   const handleNavClick = (item: NavItem) => {

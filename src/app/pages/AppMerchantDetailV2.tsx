@@ -187,7 +187,7 @@ export const AppMerchantDetailV2 = () => {
   //  sectionsIn – Sektionen unterhalb (Hinweis, Freunde) faden Step-by-Step ein
   //  snakeIn   – Schlange wischt von links nach rechts ein
   //  done      – fertig
-  type EntryPhase = 'idle' | 'flying' | 'sectionsIn' | 'snakeIn' | 'done';
+  type EntryPhase = 'idle' | 'flying' | 'sectionsIn' | 'snakeIn' | 'done' | 'exiting';
   const readEntryPayload = () => {
     if (typeof window === 'undefined') return null;
     try {
@@ -204,6 +204,13 @@ export const AppMerchantDetailV2 = () => {
   const [entryTarget, setEntryTarget] = useState<{ top: number; left: number; width: number; height: number } | null>(null);
   const [entryCover, setEntryCover] = useState<string | null>(() => readEntryPayload()?.coverUrl ?? null);
   const snakeBandRef = useRef<HTMLDivElement>(null);
+
+  // ===== Exit-Transition zum Scan-Screen =====
+  // exitStage: 0 = snake collapse, 1 = info card weg, 2 = freunde weg, 3 = navigate
+  const [exitStage, setExitStage] = useState(0);
+  const [exitOrigin, setExitOrigin] = useState<{ top: number; left: number; width: number; height: number } | null>(null);
+  const [exitTarget, setExitTarget] = useState<{ top: number; left: number; width: number; height: number } | null>(null);
+  const [exitScanUrl, setExitScanUrl] = useState<string | null>(null);
 
   useEffect(() => {
     try { sessionStorage.removeItem('treuepass-transition'); } catch {}
@@ -223,8 +230,52 @@ export const AppMerchantDetailV2 = () => {
     requestAnimationFrame(measure);
   }, [entryPhase, entryTarget]);
 
-  const isEntering = entryPhase !== 'done';
+  // Exit-Trigger: BottomNav Scan-Button auf Merchant-Detail-Seite
+  useEffect(() => {
+    const handler = (ev: Event) => {
+      const e = ev as CustomEvent<{ merchantId: string; scanUrl: string }>;
+      if (!e.detail || e.detail.merchantId !== merchantId) return;
+      // Wir übernehmen die Navigation – BottomNav soll nicht selbst springen
+      e.preventDefault();
+
+      const r = snakeBandRef.current?.getBoundingClientRect();
+      if (r) {
+        setExitOrigin({ top: r.top, left: r.left, width: r.width, height: r.height });
+      }
+      // Ziel: Scan-Card-Position (px-4 pt-4, aspect 1.55:1)
+      const vw = window.innerWidth;
+      const cardWidth = vw - 32; // px-4 links/rechts
+      const cardHeight = cardWidth / 1.55;
+      setExitTarget({ top: 16, left: 16, width: cardWidth, height: cardHeight });
+      setExitScanUrl(e.detail.scanUrl);
+      setEntryPhase('exiting');
+      setExitStage(0);
+      // Stagger: snake (0–250ms) → info weg (250ms) → freunde weg (450ms) → navigate (~900ms)
+      setTimeout(() => setExitStage(1), 220);
+      setTimeout(() => setExitStage(2), 420);
+      setTimeout(() => setExitStage(3), 900);
+    };
+    window.addEventListener('app:treuepass-exit-to-scan', handler as EventListener);
+    return () => window.removeEventListener('app:treuepass-exit-to-scan', handler as EventListener);
+  }, [merchantId]);
+
+  // Eigentliche Navigation, sobald Exit-Animation fertig ist
+  useEffect(() => {
+    if (entryPhase === 'exiting' && exitStage >= 3 && exitScanUrl) {
+      navigate(exitScanUrl);
+    }
+  }, [entryPhase, exitStage, exitScanUrl, navigate]);
+
+  const isEntering = entryPhase !== 'done' && entryPhase !== 'exiting';
+  const isExiting = entryPhase === 'exiting';
+  // Sektionen sichtbar wenn Entry abgeschlossen UND noch nicht im Exit-Stage > Sektion
+  const infoVisible = entryPhase === 'done' || (entryPhase === 'exiting' && exitStage < 1)
+    || entryPhase === 'sectionsIn' || entryPhase === 'snakeIn';
+  const friendsVisible = entryPhase === 'done' || (entryPhase === 'exiting' && exitStage < 2)
+    || entryPhase === 'sectionsIn' || entryPhase === 'snakeIn';
   const sectionsRevealed = entryPhase === 'sectionsIn' || entryPhase === 'snakeIn' || entryPhase === 'done';
+  const snakeRevealed = entryPhase === 'snakeIn' || entryPhase === 'done';
+  // Snake wird beim Exit sofort komplett weg-clipped
 
   // Privacy-Screen NUR aktivieren, wenn die sensible Einlöse-Ansicht
   // (oranges Vollbild mit Code-Marquee + Prämie) sichtbar ist.
@@ -551,7 +602,7 @@ export const AppMerchantDetailV2 = () => {
             WebkitOverflowScrolling: 'touch',
             touchAction: 'pan-x',
             overscrollBehaviorX: 'contain',
-            clipPath: entryPhase === 'snakeIn' || entryPhase === 'done' ? 'inset(0 0 0 0)' : 'inset(0 100% 0 0)',
+            clipPath: snakeRevealed && !isExiting ? 'inset(0 0 0 0)' : 'inset(0 100% 0 0)',
             transition: 'clip-path 800ms cubic-bezier(0.22,1,0.36,1)',
           }}
         >
@@ -689,8 +740,8 @@ export const AppMerchantDetailV2 = () => {
       <motion.div
         className="px-4 mt-6"
         initial={isEntering ? { opacity: 0, y: 10 } : false}
-        animate={sectionsRevealed ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 }}
-        transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1], delay: 0 }}
+        animate={infoVisible ? { opacity: 1, y: 0 } : { opacity: 0, y: -8 }}
+        transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
       >
         <Card
           className="p-4 border transition-colors"
@@ -754,8 +805,8 @@ export const AppMerchantDetailV2 = () => {
       <motion.div
         className="px-4 mt-4"
         initial={isEntering ? { opacity: 0, y: 10 } : false}
-        animate={sectionsRevealed ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 }}
-        transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1], delay: sectionsRevealed ? 0.25 : 0 }}
+        animate={friendsVisible ? { opacity: 1, y: 0 } : { opacity: 0, y: -8 }}
+        transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1], delay: sectionsRevealed && !isExiting ? 0.25 : 0 }}
       >
         <Card
           className="p-5 border-0 text-white shadow-lg"
@@ -1089,6 +1140,44 @@ export const AppMerchantDetailV2 = () => {
               backgroundSize: 'cover',
               backgroundPosition: 'center',
               filter: 'saturate(0.9)',
+            }}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Exit-Transition zum Scan-Screen: Cover morpht von Snake-Band zur Scan-Card */}
+      <AnimatePresence>
+        {isExiting && exitOrigin && exitTarget && coverImageUrl && (
+          <motion.div
+            key="cover-fly-exit"
+            className="fixed z-[60] pointer-events-none overflow-hidden shadow-2xl"
+            initial={{
+              top: exitOrigin.top,
+              left: exitOrigin.left,
+              width: exitOrigin.width,
+              height: exitOrigin.height,
+              borderRadius: 0,
+              opacity: 0.35,
+            }}
+            animate={{
+              top: exitTarget.top,
+              left: exitTarget.left,
+              width: exitTarget.width,
+              height: exitTarget.height,
+              borderRadius: 16,
+              opacity: 1,
+            }}
+            transition={{
+              duration: 0.75,
+              ease: [0.22, 1, 0.36, 1],
+              opacity: { duration: 0.75, ease: [0.4, 0, 0.6, 1] },
+              borderRadius: { duration: 0.6, ease: [0.22, 1, 0.36, 1] },
+            }}
+            style={{
+              backgroundImage: `url(${coverImageUrl})`,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+              backgroundColor: BRAND,
             }}
           />
         )}
