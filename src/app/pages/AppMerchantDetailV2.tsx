@@ -38,6 +38,10 @@ type CheckInSource = 'normal' | 'boost' | 'birthday' | 'google_review';
 interface CheckInEntry {
   visit: number;
   source: CheckInSource;
+  /** ISO timestamp when this check-in happened (optional for legacy entries) */
+  at?: string;
+  /** Boost only: when the inviter's invitation was accepted */
+  invitedAt?: string;
 }
 
 interface MockReward {
@@ -53,16 +57,25 @@ const NODE_SPACING = 110;
 const SNAKE_HEIGHT = 220;
 const AMPLITUDE = 55;
 const WAVELENGTH = 4;
-const DEMO_PASS_RESET_VERSION = 'checkin7-open-rewards-v1';
+const DEMO_PASS_RESET_VERSION = 'checkin7-open-rewards-v3-timestamps';
+
+// Demo-Daten: Backdated Timestamps, damit Klick-Pop-ups plausible Zeiten zeigen.
+const NOW = Date.now();
+const DAY = 24 * 60 * 60 * 1000;
+const ts = (daysAgo: number, hour = 10, minute = 30) => {
+  const d = new Date(NOW - daysAgo * DAY);
+  d.setHours(hour, minute, 0, 0);
+  return d.toISOString();
+};
 
 const DEMO_DEFAULT_CHECK_INS: CheckInEntry[] = [
-  { visit: 1, source: 'normal' },
-  { visit: 2, source: 'google_review' },
-  { visit: 3, source: 'birthday' },
-  { visit: 4, source: 'normal' },
-  { visit: 5, source: 'boost' },
-  { visit: 6, source: 'normal' },
-  { visit: 7, source: 'normal' },
+  { visit: 1, source: 'normal', at: ts(28, 9, 15) },
+  { visit: 2, source: 'google_review', at: ts(25, 14, 5) },
+  { visit: 3, source: 'birthday', at: ts(20, 12, 0) },
+  { visit: 4, source: 'normal', at: ts(16, 8, 45) },
+  { visit: 5, source: 'boost', at: ts(12, 17, 20), invitedAt: ts(14, 19, 10) },
+  { visit: 6, source: 'normal', at: ts(7, 11, 5) },
+  { visit: 7, source: 'normal', at: ts(2, 16, 40) },
 ];
 
 // Standard: Gratisbreze (Visit 4) und Gratiskaffee (Visit 8) sind beide noch offen.
