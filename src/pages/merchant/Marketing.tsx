@@ -13,6 +13,7 @@ import {
   ChevronDown, Rocket, CheckCircle2, Timer, Star, ExternalLink, Copy, Bot, Megaphone,
   Edit2, Trash2, Upload, Coins, Sparkles, Smartphone, ArrowRight
 } from 'lucide-react';
+import { useMerchantBrand } from '@/hooks/useMerchantBrand';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import {
@@ -70,6 +71,8 @@ const Marketing = () => {
   const [customerId, setCustomerId] = useState<string | null>(null);
   const [merchantDisplayName, setMerchantDisplayName] = useState('');
   const [activeTab, setActiveTab] = useState('praemien');
+  const merchantBrand = useMerchantBrand(customerId);
+  const isV2 = merchantBrand.version === 'v2';
   const pushLimit = usePushLimit(customerId);
   // --- Rewards state ---
   const [rewards, setRewards] = useState<Reward[]>([]);
@@ -1010,6 +1013,26 @@ const Marketing = () => {
           {/* ========== AUTOMATIONEN TAB ========== */}
           <TabsContent value="automations" className="space-y-6 mt-6">
             <ExplainerCarousel slides={automationenCards} />
+            {isV2 ? (
+              <Card className="rounded-2xl shadow-sm border border-border/50 bg-card">
+                <CardHeader>
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                      <Cake className="h-5 w-5 text-primary" />
+                    </div>
+                    <div>
+                      <CardTitle className="text-lg font-semibold">Geburtstags-Check-in läuft automatisch</CardTitle>
+                      <CardDescription className="mt-1">
+                        Jeder Kunde bekommt an seinem Geburtstag automatisch einen Check-in auf jedem seiner Treuepässe – ohne Konfiguration. Auf dem Knoten erscheint das Label „Geburtstag".
+                      </CardDescription>
+                    </div>
+                  </div>
+                </CardHeader>
+              </Card>
+            ) : (
+            <></>
+            )}
+            {!isV2 && (<>
             <Card className="rounded-2xl shadow-sm border border-border/50 bg-card">
               <CardHeader className="pb-4">
                 <div className="flex items-center gap-3">
@@ -1212,6 +1235,7 @@ const Marketing = () => {
                 </div>
               </CardHeader>
             </Card>
+            </>)}
           </TabsContent>
         </Tabs>
 

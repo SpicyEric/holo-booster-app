@@ -47,6 +47,7 @@ import {
 import { calculateSuggestion, SPEND_PRESETS } from "../wizard/wizardLogic";
 import { cn } from "@/lib/utils";
 import { linkOrphanNfcChipsToMerchant } from "@/lib/nfcChipLinking";
+import { MerchantBrandColorCard } from "@/components/merchant/MerchantBrandColorCard";
 
 const INDUSTRIES = [
   { value: "cafe", label: "Café" },
@@ -1087,6 +1088,7 @@ const MeinGeschaeft = () => {
 
               {/* Info Tab */}
               <TabsContent value="info" className="space-y-4">
+                {customerId && <MerchantBrandColorCard customerId={customerId} />}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-stretch">
                 {/* Section 1: Bilder — kompakt */}
                 <Card className="rounded-xl border border-border/60 bg-white p-5 shadow-sm h-full flex flex-col">
