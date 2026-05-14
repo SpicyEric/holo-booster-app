@@ -71,6 +71,8 @@ const Marketing = () => {
   const [customerId, setCustomerId] = useState<string | null>(null);
   const [merchantDisplayName, setMerchantDisplayName] = useState('');
   const [activeTab, setActiveTab] = useState('praemien');
+  const merchantBrand = useMerchantBrand(customerId);
+  const isV2 = merchantBrand.version === 'v2';
   const pushLimit = usePushLimit(customerId);
   // --- Rewards state ---
   const [rewards, setRewards] = useState<Reward[]>([]);
