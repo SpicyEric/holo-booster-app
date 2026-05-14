@@ -232,10 +232,14 @@ export const RewardSnakeDropZone = ({
         </div>
       </CardHeader>
       <CardContent className="space-y-5">
-        {/* Snake — horizontal scroll */}
+        {/* Snake — horizontal scroll (forced visible scrollbar) */}
         <div
-          className="overflow-x-auto overflow-y-hidden rounded-2xl bg-card/60 border border-border/30"
-          style={{ WebkitOverflowScrolling: 'touch' }}
+          className="overflow-x-scroll overflow-y-hidden rounded-2xl bg-card/60 border border-border/30"
+          style={{
+            WebkitOverflowScrolling: 'touch',
+            scrollbarWidth: 'auto',
+            scrollbarColor: `${brandColor} ${brandColor}22`,
+          }}
         >
           <div className="relative" style={{ width: totalWidth, height: SNAKE_HEIGHT + 40, padding: '20px 0' }}>
             <svg width={totalWidth} height={SNAKE_HEIGHT} className="absolute inset-x-0 top-5">
