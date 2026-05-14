@@ -40,7 +40,7 @@ const INDEX_TO_ROUTE: Record<number, string> = {
 };
 
 const INDEX_TO_TITLE: Record<number, string> = {
-  0: 'Home',
+  0: 'Deine Treuepässe',
   1: 'Stores',
   2: 'Nachrichten',
   3: 'Einstellungen',
@@ -200,7 +200,7 @@ export const SwipeableAppContainer = () => {
       >
         <div className="flex h-full">
           <div className="flex-[0_0_100%] min-w-0 h-full overflow-y-auto" style={{ overscrollBehavior: 'contain', touchAction: 'pan-y' }}>
-            <div className="container mx-auto px-4 py-6 pb-16 max-w-2xl relative z-10">
+            <div className="container mx-auto px-4 pt-1 pb-16 max-w-2xl relative z-10">
               <AppHomeContent active={currentIndex === 0} />
             </div>
           </div>
@@ -451,7 +451,6 @@ const AppHomeContent = ({ active }: { active: boolean }) => {
     <PullToRefresh onRefresh={handleRefresh}>
       <OpenInvitationsBanner />
       <div style={{ paddingBottom: '2rem' }}>
-        <h2 className="text-lg font-semibold text-foreground px-1 mb-3">Deine Treuepässe</h2>
         <div className="overflow-hidden -mx-4" ref={emblaRef}>
           <div className="flex touch-pan-y">
             {cards.map((store) => (
