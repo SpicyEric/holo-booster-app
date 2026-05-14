@@ -615,7 +615,7 @@ export const AppScan = () => {
       style={{ height: '100dvh', paddingBottom: bottomInsetOffset }}
     >
       <Particles
-        particleColors={['#6366F1', '#8B5CF6', '#A855F7']}
+        particleColors={hasMerchantContext && BRAND ? [BRAND, BRAND, BRAND] : ['#6366F1', '#8B5CF6', '#A855F7']}
         particleCount={400}
         particleSpread={10}
         speed={0.03}
