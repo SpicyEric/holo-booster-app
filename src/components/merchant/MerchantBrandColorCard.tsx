@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { HexColorPicker, HexColorInput } from 'react-colorful';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Loader2, Palette, Save } from 'lucide-react';
+import { Loader2, Palette, Pipette, Save } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { isDemoMerchantActive } from '@/lib/demoMerchant';
