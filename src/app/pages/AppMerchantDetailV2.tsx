@@ -457,8 +457,8 @@ export const AppMerchantDetailV2 = () => {
           className="overflow-x-auto overflow-y-hidden no-scrollbar"
           style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-x', overscrollBehaviorX: 'contain' }}
         >
-          <div className="relative" style={{ width: totalWidth, height: SNAKE_HEIGHT + 28 }}>
-            <svg width={totalWidth} height={SNAKE_HEIGHT} className="absolute inset-x-0 top-7">
+          <div className="relative" style={{ width: totalWidth, height: SNAKE_HEIGHT + 14 }}>
+            <svg width={totalWidth} height={SNAKE_HEIGHT} className="absolute inset-x-0 top-3">
               <path
                 d={buildSmoothPath(futurePoints)}
                 fill="none"
