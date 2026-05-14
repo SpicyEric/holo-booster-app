@@ -186,20 +186,33 @@ function SidebarNav({ collapsed, onNavigate, companyName, subStatus, coverImageU
         ))}
       </nav>
 
-      {/* Profile module at bottom */}
+      {/* Profile module at bottom — Treuepass-Karten-Vorschau */}
       <div className="border-t border-white/10 p-3 space-y-2">
-        {!collapsed && companyName && (
-          <div className="px-3 py-2">
-            <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-lg bg-white/15 flex items-center justify-center shrink-0">
-                <Building2 className="h-4 w-4 text-white/80" />
-              </div>
-              <div className="min-w-0">
-                <p className="text-sm font-medium text-white/90 truncate">{companyName}</p>
-                <p className="text-[11px] text-white/40">
-                  {subStatus === 'active' ? '● Abo aktiv' : subStatus === 'paused' ? '● Pausiert' : '● Status unbekannt'}
-                </p>
-              </div>
+        {!collapsed && (
+          <div
+            className="relative w-full rounded-xl overflow-hidden shadow-md"
+            style={{ aspectRatio: '1.55 / 1' }}
+            title={companyName}
+          >
+            <div className="absolute inset-0">
+              {coverImageUrl ? (
+                <img src={coverImageUrl} alt={companyName || 'Treuepass'} className="w-full h-full object-cover" />
+              ) : (
+                <div className="w-full h-full bg-gradient-to-br from-purple-500 to-blue-500" />
+              )}
+            </div>
+            <div className="absolute top-2 left-2 z-20 w-9 h-9 rounded-full overflow-hidden ring-2 ring-white/80">
+              {logoUrl ? (
+                <img src={logoUrl} alt="Logo" className="w-full h-full object-cover" />
+              ) : (
+                <div className="w-full h-full bg-primary flex items-center justify-center">
+                  <span className="text-sm font-bold text-white">{companyName?.charAt(0)?.toUpperCase() || '?'}</span>
+                </div>
+              )}
+            </div>
+            <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
+            <div className="absolute bottom-2 left-2 right-2 z-10">
+              <h3 className="text-white font-semibold text-sm truncate drop-shadow-md">{companyName}</h3>
             </div>
           </div>
         )}
