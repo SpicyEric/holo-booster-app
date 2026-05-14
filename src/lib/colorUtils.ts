@@ -35,6 +35,16 @@ export function hexToHslString(hex: string): string {
   return `${Math.round(hue)} ${Math.round(s * 100)}% ${Math.round(l * 100)}%`;
 }
 
+export function brandTintHsl(hex: string, lightness = 96): string {
+  const [hue] = hexToHslString(hex).split(' ');
+  return `${hue} 42% ${lightness}%`;
+}
+
+export function brandDarkHsl(hex: string): string {
+  const [hue] = hexToHslString(hex).split(' ');
+  return `${hue} 50% 20%`;
+}
+
 /** Liefert eine kontrastierende Vordergrundfarbe (weiß oder dunkel) im HSL-Format. */
 export function contrastForegroundHsl(hex: string): string {
   let h = hex.replace('#', '').trim();
