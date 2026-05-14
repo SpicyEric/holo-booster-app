@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Loader2, Nfc, Gift, Sparkles, MapPin } from 'lucide-react';
+import { Loader2, Nfc, Gift, Sparkles, MapPin, Clock, Globe, Instagram, Facebook, Twitter } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { MainLayout } from '@/app/components/layout/MainLayout';
 import { OpenInvitationsBanner } from '@/app/components/OpenInvitationsBanner';
 
+interface OpeningHourEntry { open?: string; close?: string; closed?: boolean }
 interface MerchantCard {
   id: string;
   merchantId: string;
@@ -13,6 +14,39 @@ interface MerchantCard {
   category: string | null;
   logoUrl: string | null;
   coverImage: string | null;
+  description: string | null;
+  openingHours: Record<string, OpeningHourEntry> | null;
+  address: string | null;
+  website: string | null;
+  instagram: string | null;
+  facebook: string | null;
+  twitter: string | null;
+}
+
+const DAY_LABELS: { key: string; label: string }[] = [
+  { key: 'monday', label: 'Mo' },
+  { key: 'tuesday', label: 'Di' },
+  { key: 'wednesday', label: 'Mi' },
+  { key: 'thursday', label: 'Do' },
+  { key: 'friday', label: 'Fr' },
+  { key: 'saturday', label: 'Sa' },
+  { key: 'sunday', label: 'So' },
+];
+
+function normalizeUrl(u: string | null): string | null {
+  if (!u) return null;
+  const v = u.trim();
+  if (!v) return null;
+  if (/^https?:\/\//i.test(v)) return v;
+  return `https://${v}`;
+}
+
+function instagramUrl(v: string | null): string | null {
+  if (!v) return null;
+  const t = v.trim().replace(/^@/, '');
+  if (!t) return null;
+  if (/^https?:\/\//i.test(t)) return t;
+  return `https://instagram.com/${t}`;
 }
 
 export const AppHome = () => {
@@ -39,7 +73,7 @@ export const AppHome = () => {
 
         const { data: merchants } = await supabase
           .from('customers')
-          .select('id, name, company_name, logo_url, cover_image_url, industry')
+          .select('id, name, company_name, logo_url, cover_image_url, industry, description, opening_hours, street, house_number, postal_code, city, website, instagram, facebook, twitter')
           .eq('active', true)
           .in('id', merchantIds);
 
@@ -47,6 +81,8 @@ export const AppHome = () => {
           .map((a) => {
             const m = merchants?.find((x) => x.id === a.merchant_customer_id);
             if (!m) return null;
+            const streetWithNumber = [m.street, m.house_number].filter(Boolean).join(' ');
+            const address = [streetWithNumber, [m.postal_code, m.city].filter(Boolean).join(' ')].filter(Boolean).join(', ');
             return {
               id: a.id,
               merchantId: a.merchant_customer_id,
@@ -54,6 +90,13 @@ export const AppHome = () => {
               category: m.industry || null,
               logoUrl: m.logo_url || null,
               coverImage: m.cover_image_url || null,
+              description: m.description || null,
+              openingHours: (m.opening_hours && typeof m.opening_hours === 'object') ? m.opening_hours as Record<string, OpeningHourEntry> : null,
+              address: address || null,
+              website: m.website || null,
+              instagram: m.instagram || null,
+              facebook: m.facebook || null,
+              twitter: m.twitter || null,
             } as MerchantCard;
           })
           .filter((x): x is MerchantCard => !!x);
@@ -84,7 +127,7 @@ export const AppHome = () => {
       ) : (
         <div style={{ paddingBottom: '2rem' }}>
           {cards.map((store) => (
-            <div key={store.id} style={{ marginBottom: '12px' }}>
+            <div key={store.id} style={{ marginBottom: '28px' }}>
               <button
                 onClick={(e) => {
                   const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
@@ -98,7 +141,7 @@ export const AppHome = () => {
                         timestamp: Date.now(),
                       }),
                     );
-                  } catch {}
+                  } catch { void 0; }
                   navigate(`/app/merchant/${store.merchantId}`);
                 }}
                 className="w-full rounded-xl overflow-hidden shadow-md text-left relative block"
@@ -130,6 +173,8 @@ export const AppHome = () => {
                   )}
                 </div>
               </button>
+
+              <MerchantInfoBlock store={store} />
             </div>
           ))}
         </div>
@@ -177,6 +222,79 @@ function EmptyTutorial({ onExplore }: { onExplore: () => void }) {
       >
         Shops in der Nähe entdecken
       </button>
+    </div>
+  );
+}
+
+function MerchantInfoBlock({ store }: { store: MerchantCard }) {
+  const hours = store.openingHours;
+  const links: { href: string; label: string; Icon: typeof Globe }[] = [];
+  const web = normalizeUrl(store.website);
+  const ig = instagramUrl(store.instagram);
+  const fb = normalizeUrl(store.facebook);
+  const tw = normalizeUrl(store.twitter);
+  if (web) links.push({ href: web, label: 'Website', Icon: Globe });
+  if (ig) links.push({ href: ig, label: 'Instagram', Icon: Instagram });
+  if (fb) links.push({ href: fb, label: 'Facebook', Icon: Facebook });
+  if (tw) links.push({ href: tw, label: 'Twitter', Icon: Twitter });
+
+  const hasAnything = !!(store.description || hours || store.address || links.length);
+  if (!hasAnything) return null;
+
+  return (
+    <div className="mt-3 px-1 space-y-3">
+      {store.description && (
+        <p className="text-sm text-foreground/80 leading-relaxed whitespace-pre-line">
+          {store.description}
+        </p>
+      )}
+
+      {hours && (
+        <div className="rounded-xl bg-card border border-border/50 p-3">
+          <div className="flex items-center gap-2 mb-2">
+            <Clock className="h-4 w-4 text-primary" />
+            <span className="text-xs font-semibold text-foreground">Öffnungszeiten</span>
+          </div>
+          <div className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-xs">
+            {DAY_LABELS.map(({ key, label }) => {
+              const d = hours[key];
+              if (!d) return null;
+              const time = d.closed ? 'Geschlossen' : `${d.open ?? ''} – ${d.close ?? ''}`;
+              return (
+                <div key={key} className="contents">
+                  <span className="text-muted-foreground">{label}</span>
+                  <span className="text-foreground">{time}</span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {store.address && (
+        <div className="flex items-start gap-2 text-sm text-foreground/80">
+          <MapPin className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+          <span>{store.address}</span>
+        </div>
+      )}
+
+      {links.length > 0 && (
+        <div className="flex flex-wrap gap-2">
+          {links.map(({ href, label, Icon }) => (
+            <a
+              key={label}
+              href={href}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(e) => e.stopPropagation()}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary/10 text-primary text-xs font-medium hover:bg-primary/15 transition-colors"
+            >
+              <Icon className="h-3.5 w-3.5" />
+              {label}
+            </a>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
