@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MessageSquare, ChevronRight, ShieldAlert, Send, Loader2, Trophy, Gift } from 'lucide-react';
+import { MessageSquare, ChevronRight, ShieldAlert, Send, Loader2, Gift } from 'lucide-react';
+import { OpenInvitationsPanel } from '@/app/components/OpenInvitationsPanel';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { Card } from '@/components/ui/card';
