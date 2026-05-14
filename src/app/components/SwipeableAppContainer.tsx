@@ -22,6 +22,7 @@ import { ExitAppDialog } from '@/app/components/ExitAppDialog';
 import { useStatusBar } from '@/app/hooks/useStatusBar';
 import { OpenInvitationsBanner } from '@/app/components/OpenInvitationsBanner';
 import { OpenInvitationsPanel } from '@/app/components/OpenInvitationsPanel';
+import { setActiveBrandColor } from '@/lib/activeBrandColor';
 
 // Map route paths to carousel indices
 const ROUTE_TO_INDEX: Record<string, number> = {
@@ -62,6 +63,7 @@ type HomeMerchantCard = {
   instagram: string | null;
   facebook: string | null;
   twitter: string | null;
+  brandColor: string | null;
 };
 
 const HOME_DAY_LABELS: { key: string; label: string }[] = [
@@ -174,18 +176,20 @@ export const SwipeableAppContainer = () => {
         paddingBottom: bottomInsetOffset,
       }}
     >
-      <Particles
-        particleColors={['#6366F1', '#8B5CF6', '#A855F7']}
-        particleCount={400}
-        particleSpread={10}
-        speed={0.03}
-        particleBaseSize={120}
-        sizeRandomness={1.8}
-        moveParticlesOnHover={true}
-        alphaParticles={true}
-        disableRotation={false}
-        cameraDistance={20}
-      />
+      {currentIndex !== 0 && (
+        <Particles
+          particleColors={['#6366F1', '#8B5CF6', '#A855F7']}
+          particleCount={400}
+          particleSpread={10}
+          speed={0.03}
+          particleBaseSize={120}
+          sizeRandomness={1.8}
+          moveParticlesOnHover={true}
+          alphaParticles={true}
+          disableRotation={false}
+          cameraDistance={20}
+        />
+      )}
       
       <TopBar title={INDEX_TO_TITLE[currentIndex]} />
       
