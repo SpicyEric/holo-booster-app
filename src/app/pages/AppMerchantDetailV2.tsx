@@ -156,7 +156,7 @@ export const AppMerchantDetailV2 = () => {
   const BRAND_SOFT = `${BRAND}22`; // Alpha-Wash via HEX 8-stellig
 
   // ================= Persistierter State (per Merchant in localStorage) =================
-  const checkInsKey = `eloyo:v2:checkins:${merchantId}`;
+  const checkInsKey = `eloyo:v2:checkins:v2:${merchantId}`;
   const redeemedKey = `eloyo:v2:redeemed:${merchantId}`;
   const lastDateKey = `eloyo:v2:lastcheckin:${merchantId}`;
 
@@ -165,7 +165,7 @@ export const AppMerchantDetailV2 = () => {
     { visit: 2, source: 'normal' },
     { visit: 3, source: 'birthday' },
     { visit: 4, source: 'normal' },
-    { visit: 5, source: 'normal' },
+    { visit: 5, source: 'boost' },
     { visit: 6, source: 'normal' },
     { visit: 7, source: 'normal' },
   ];
