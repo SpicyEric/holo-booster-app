@@ -243,6 +243,8 @@ export default function MerchantSidebar() {
   const { user } = useAuth();
   const [companyName, setCompanyName] = useState<string>("");
   const [subStatus, setSubStatus] = useState<string>("");
+  const [coverImageUrl, setCoverImageUrl] = useState<string | null>(null);
+  const [logoUrl, setLogoUrl] = useState<string | null>(null);
 
   useEffect(() => {
     if (user?.id) {
@@ -250,6 +252,8 @@ export default function MerchantSidebar() {
         if (c) {
           setCompanyName(c.company_name || c.name || "");
           setSubStatus(c.status || "active");
+          setCoverImageUrl((c as any).cover_image_url ?? null);
+          setLogoUrl((c as any).logo_url ?? null);
         }
       });
     }
