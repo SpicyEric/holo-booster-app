@@ -2199,6 +2199,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          auth_method: string
           avatar_url: string | null
           birth_date: string | null
           created_at: string
@@ -2209,11 +2210,14 @@ export type Database = {
           gender: string | null
           id: string
           last_name: string | null
+          login_count: number
+          migration_prompt_dismissed: boolean
           stripe_customer_id: string | null
           updated_at: string
           user_id: string
         }
         Insert: {
+          auth_method?: string
           avatar_url?: string | null
           birth_date?: string | null
           created_at?: string
@@ -2224,11 +2228,14 @@ export type Database = {
           gender?: string | null
           id?: string
           last_name?: string | null
+          login_count?: number
+          migration_prompt_dismissed?: boolean
           stripe_customer_id?: string | null
           updated_at?: string
           user_id: string
         }
         Update: {
+          auth_method?: string
           avatar_url?: string | null
           birth_date?: string | null
           created_at?: string
@@ -2239,6 +2246,8 @@ export type Database = {
           gender?: string | null
           id?: string
           last_name?: string | null
+          login_count?: number
+          migration_prompt_dismissed?: boolean
           stripe_customer_id?: string | null
           updated_at?: string
           user_id?: string
@@ -3501,6 +3510,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      increment_login_count: { Args: never; Returns: number }
       list_merchant_referrals: {
         Args: { p_merchant_customer_id: string }
         Returns: {
@@ -3527,6 +3537,7 @@ export type Database = {
         }
         Returns: Json
       }
+      refresh_auth_method: { Args: never; Returns: string }
       register_box_nfc_chip:
         | {
             Args: {
