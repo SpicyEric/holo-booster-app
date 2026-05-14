@@ -592,6 +592,9 @@ export const AppScan = () => {
   const isNfcDisabled = !checkingNfc && nfcSupported && !nfcEnabled;
   const isIdle = !checkingNfc && nfcSupported && nfcEnabled && !scanning && !result;
   const showFrontCard = flipPhase === 'idle' || flipPhase === 'armed';
+  const frontCardBackground = hasMerchantContext
+    ? `linear-gradient(135deg, ${BRAND}, ${BRAND}cc)`
+    : undefined;
 
   const bottomInsetOffset = 'calc(7rem + env(safe-area-inset-bottom, 0px))';
 
@@ -643,50 +646,82 @@ export const AppScan = () => {
               transform: showFrontCard ? 'rotateY(0deg)' : 'rotateY(180deg)',
             }}
           >
-            {/* ── FRONT: Purple NFC card ── */}
+            {/* ── FRONT: Brand-colored card (merchant context) or default purple ── */}
             <div
-              className="absolute inset-0 rounded-2xl bg-gradient-to-br from-primary to-secondary"
+              className={hasMerchantContext ? 'absolute inset-0 rounded-2xl' : 'absolute inset-0 rounded-2xl bg-gradient-to-br from-primary to-secondary'}
               style={{
                 backfaceVisibility: 'hidden',
                 WebkitBackfaceVisibility: 'hidden',
+                background: frontCardBackground,
               }}
             >
-              <div className="absolute inset-0 flex items-center justify-center">
-                {(checkingNfc || scanning || preparingFlip) && (
-                  <motion.div
-                    animate={{ scale: [1, 1.15, 1], opacity: [0.5, 1, 0.5] }}
-                    transition={{ repeat: Infinity, duration: 2, ease: 'easeInOut' }}
-                    className="w-28 h-28 rounded-full bg-white/15 flex items-center justify-center"
-                  >
-                    <motion.div
-                      animate={{ scale: [1, 1.1, 1] }}
-                      transition={{ repeat: Infinity, duration: 1.5 }}
-                      className="w-20 h-20 rounded-full bg-white/15 flex items-center justify-center"
-                    >
-                      <Nfc className="h-10 w-10 text-white/90" />
-                    </motion.div>
-                  </motion.div>
-                )}
+              {hasMerchantContext && contextMerchant?.cover_image_url && (
+                <div
+                  className="absolute inset-0 rounded-2xl opacity-25"
+                  style={{
+                    backgroundImage: `url("${contextMerchant.cover_image_url}")`,
+                    backgroundSize: 'cover',
+                    backgroundPosition: 'center',
+                  }}
+                />
+              )}
 
-                {(isIdle || isNfcUnavailable || isNfcDisabled) && !scanning && !preparingFlip && (
-                  <motion.div
-                    animate={{ scale: [1, 1.05, 1], opacity: [0.6, 0.9, 0.6] }}
-                    transition={{ repeat: Infinity, duration: 3, ease: 'easeInOut' }}
-                    className="flex flex-col items-center gap-2"
-                  >
-                    <div className="w-20 h-20 rounded-full bg-white/15 flex items-center justify-center">
-                      {isNfcUnavailable ? (
-                        <XCircle className="h-10 w-10 text-white/70" />
-                      ) : isNfcDisabled ? (
-                        <Settings className="h-10 w-10 text-white/70" />
-                      ) : (
-                        <Nfc className="h-10 w-10 text-white/80" />
-                      )}
-                    </div>
-                    <p className="text-white/70 text-sm font-medium">
-                      {isNfcUnavailable ? 'NFC nicht verfügbar' : isNfcDisabled ? 'NFC deaktiviert' : 'Bereit zum Scannen'}
-                    </p>
-                  </motion.div>
+              <div className="absolute inset-0 flex items-center justify-center">
+                {hasMerchantContext ? (
+                  <div className="relative z-10 flex flex-col items-center gap-3 px-4 text-center">
+                    {contextMerchant?.logo_url ? (
+                      <img
+                        src={contextMerchant.logo_url}
+                        alt=""
+                        className="w-16 h-16 rounded-2xl object-cover bg-white/90 p-1 shadow"
+                      />
+                    ) : (
+                      <div className="w-16 h-16 rounded-2xl bg-white/20 flex items-center justify-center">
+                        <Nfc className="h-8 w-8 text-white" />
+                      </div>
+                    )}
+                    <h1 className="text-xl font-bold text-white drop-shadow">{contextMerchant?.name}</h1>
+                    <p className="text-xs text-white/85 font-medium uppercase tracking-wider">Dein Treuepass</p>
+                  </div>
+                ) : (
+                  <>
+                    {(checkingNfc || scanning || preparingFlip) && (
+                      <motion.div
+                        animate={{ scale: [1, 1.15, 1], opacity: [0.5, 1, 0.5] }}
+                        transition={{ repeat: Infinity, duration: 2, ease: 'easeInOut' }}
+                        className="w-28 h-28 rounded-full bg-white/15 flex items-center justify-center"
+                      >
+                        <motion.div
+                          animate={{ scale: [1, 1.1, 1] }}
+                          transition={{ repeat: Infinity, duration: 1.5 }}
+                          className="w-20 h-20 rounded-full bg-white/15 flex items-center justify-center"
+                        >
+                          <Nfc className="h-10 w-10 text-white/90" />
+                        </motion.div>
+                      </motion.div>
+                    )}
+
+                    {(isIdle || isNfcUnavailable || isNfcDisabled) && !scanning && !preparingFlip && (
+                      <motion.div
+                        animate={{ scale: [1, 1.05, 1], opacity: [0.6, 0.9, 0.6] }}
+                        transition={{ repeat: Infinity, duration: 3, ease: 'easeInOut' }}
+                        className="flex flex-col items-center gap-2"
+                      >
+                        <div className="w-20 h-20 rounded-full bg-white/15 flex items-center justify-center">
+                          {isNfcUnavailable ? (
+                            <XCircle className="h-10 w-10 text-white/70" />
+                          ) : isNfcDisabled ? (
+                            <Settings className="h-10 w-10 text-white/70" />
+                          ) : (
+                            <Nfc className="h-10 w-10 text-white/80" />
+                          )}
+                        </div>
+                        <p className="text-white/70 text-sm font-medium">
+                          {isNfcUnavailable ? 'NFC nicht verfügbar' : isNfcDisabled ? 'NFC deaktiviert' : 'Bereit zum Scannen'}
+                        </p>
+                      </motion.div>
+                    )}
+                  </>
                 )}
               </div>
 
