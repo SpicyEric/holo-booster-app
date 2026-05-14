@@ -87,9 +87,29 @@ import { DEFAULT_DEMO_MERCHANT_CUSTOMER_ID } from '@/lib/demoMerchant';
 
 export const AppMerchantDetail = () => {
   const { id } = useParams<{ id: string }>();
-  // V2-Prototype: Nur Backstube König bekommt die neue Treue-Reise-UI.
-  if (id === DEFAULT_DEMO_MERCHANT_CUSTOMER_ID) {
+  // V2-Prototype: Demo-Merchant + alle Händler mit customers.version='v2'.
+  const [versionResolved, setVersionResolved] = useState<'v1' | 'v2' | null>(
+    id === DEFAULT_DEMO_MERCHANT_CUSTOMER_ID ? 'v2' : null,
+  );
+  useEffect(() => {
+    if (!id || id === DEFAULT_DEMO_MERCHANT_CUSTOMER_ID) return;
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase
+        .from('customers')
+        .select('version')
+        .eq('id', id)
+        .maybeSingle();
+      if (cancelled) return;
+      setVersionResolved((data?.version as string) === 'v2' ? 'v2' : 'v1');
+    })();
+    return () => { cancelled = true; };
+  }, [id]);
+  if (versionResolved === 'v2') {
     return <AppMerchantDetailV2 />;
+  }
+  if (versionResolved === null) {
+    return <div className="min-h-screen bg-background" />;
   }
   const { user } = useAuth();
   const navigate = useNavigate();
