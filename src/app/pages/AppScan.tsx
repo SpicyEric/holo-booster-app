@@ -101,6 +101,60 @@ export const AppScan = () => {
   const [transitionState, setTransitionState] = useState<MerchantTransitionState | null>(null);
   const mainScrollRef = useRef<HTMLElement | null>(null);
 
+  // ===== Merchant-Context (wenn Scan von einer Treuepass-Detailseite kommt) =====
+  const contextMerchantId = searchParams.get('merchant');
+  const merchantBrand = useMerchantBrand(contextMerchantId);
+  const [contextMerchant, setContextMerchant] = useState<{
+    id: string;
+    name: string;
+    cover_image_url: string | null;
+    logo_url: string | null;
+  } | null>(null);
+  const [activatedReward, setActivatedRewardState] = useState<ActivatedReward | null>(null);
+  const [redemptionOverlay, setRedemptionOverlay] = useState<ActivatedReward | null>(null);
+  const [showRedeemConfirm, setShowRedeemConfirm] = useState(false);
+  const [simulatedFlip, setSimulatedFlip] = useState<'idle' | 'flipping'>('idle');
+
+  useEffect(() => {
+    if (!contextMerchantId) {
+      setContextMerchant(null);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase
+        .from('customers')
+        .select('id, name, company_name, cover_image_url, logo_url')
+        .eq('id', contextMerchantId)
+        .maybeSingle();
+      if (cancelled || !data) return;
+      setContextMerchant({
+        id: data.id,
+        name: (data as any).company_name || data.name,
+        cover_image_url: (data as any).cover_image_url ?? null,
+        logo_url: (data as any).logo_url ?? null,
+      });
+      setActivatedRewardState(getActivatedReward(contextMerchantId));
+    })();
+    return () => { cancelled = true; };
+  }, [contextMerchantId]);
+
+  // Markenfarbe global publizieren, damit der BottomNav-Scan-Button die
+  // Händlerfarbe behält.
+  useEffect(() => {
+    if (contextMerchantId && merchantBrand.color) {
+      setActiveBrandColor(merchantBrand.color);
+      return () => setActiveBrandColor(null);
+    }
+  }, [contextMerchantId, merchantBrand.color]);
+
+  const BRAND = merchantBrand.color;
+  const hasMerchantContext = Boolean(contextMerchantId && contextMerchant);
+
+  // Wenn ein Merchant-Kontext aktiv ist, autostart-NFC nicht ausführen
+  // (Nutzer entscheidet selbst zwischen echtem Scan und Simulation).
+  const skipAutostart = hasMerchantContext;
+
   const updatePreparingFlip = useCallback((value: boolean) => {
     preparingFlipRef.current = value;
     setPreparingFlip(value);
