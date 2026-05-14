@@ -167,10 +167,12 @@ export const AppMerchantDetailV2 = () => {
   }, [isRedemptionScreenVisible]);
 
   const scrollerRef = useRef<HTMLDivElement>(null);
+  const [showJumpToNow, setShowJumpToNow] = useState(false);
 
   // ================= Sichtbares Fenster =================
-  const windowStart = Math.max(1, currentVisit - 5);
-  const windowEnd = currentVisit + 10;
+  // Vom ersten Check-in bis 50 Check-ins in die Zukunft (gesamter Pass-Zyklus)
+  const windowStart = 1;
+  const windowEnd = currentVisit + 50;
 
   const visibleNodes = useMemo(() => {
     const arr: number[] = [];
@@ -192,13 +194,33 @@ export const AppMerchantDetailV2 = () => {
   };
 
   // ================= Effekte =================
-  useEffect(() => {
+  const scrollToCurrent = (smooth = true) => {
     const el = scrollerRef.current;
     if (!el) return;
     const indexInWindow = currentVisit - windowStart;
     const targetX = indexInWindow * NODE_SPACING + NODE_SPACING / 2 - el.clientWidth / 2;
-    el.scrollTo({ left: Math.max(0, targetX), behavior: 'smooth' });
+    el.scrollTo({ left: Math.max(0, targetX), behavior: smooth ? 'smooth' : 'auto' });
+  };
+
+  // Initial / on currentVisit change: zentriere "Jetzt"
+  useEffect(() => {
+    scrollToCurrent(true);
+  }, [currentVisit]);
+
+  // Track scroll-Distanz zum "Jetzt"-Knoten → Button einblenden
+  useEffect(() => {
+    const el = scrollerRef.current;
+    if (!el) return;
+    const onScroll = () => {
+      const indexInWindow = currentVisit - windowStart;
+      const currentX = indexInWindow * NODE_SPACING + NODE_SPACING / 2;
+      const viewCenter = el.scrollLeft + el.clientWidth / 2;
+      setShowJumpToNow(Math.abs(viewCenter - currentX) > el.clientWidth * 0.6);
+    };
+    el.addEventListener('scroll', onScroll, { passive: true });
+    return () => el.removeEventListener('scroll', onScroll);
   }, [currentVisit, windowStart]);
+
 
   // ================= Aktionen =================
   const todayKey = () => new Date().toISOString().slice(0, 10);
@@ -365,7 +387,21 @@ export const AppMerchantDetailV2 = () => {
       </div>
 
       {/* Snake */}
-      <div className="mt-4">
+      <div className="mt-4 relative">
+        <AnimatePresence>
+          {showJumpToNow && (
+            <motion.button
+              initial={{ opacity: 0, y: -8, scale: 0.9 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -8, scale: 0.9 }}
+              onClick={() => scrollToCurrent(true)}
+              className="absolute top-2 left-1/2 -translate-x-1/2 z-20 px-4 py-2 rounded-full text-white text-xs font-bold shadow-lg flex items-center gap-1.5"
+              style={{ background: BRAND }}
+            >
+              <span>↺</span> Zu „Jetzt" springen
+            </motion.button>
+          )}
+        </AnimatePresence>
 
         <motion.div
           animate={boostFlash ? { scale: [1, 1.02, 1] } : {}}
@@ -430,7 +466,7 @@ export const AppMerchantDetailV2 = () => {
                             : {}
                         }
                         transition={{ duration: 1.6, repeat: unlocked || isActivatedHere ? Infinity : 0 }}
-                        className="w-16 h-16 rounded-full flex flex-col items-center justify-center border-4 bg-white shadow-md relative"
+                        className="w-16 h-16 rounded-full flex items-center justify-center border-4 bg-white shadow-md relative"
                         style={{
                           borderColor: isActivatedHere ? '#F5A623' : BRAND,
                           opacity: isRedeemed ? 0.55 : 1,
@@ -438,12 +474,9 @@ export const AppMerchantDetailV2 = () => {
                         }}
                       >
                         <Gift
-                          className="w-6 h-6"
+                          className="w-7 h-7"
                           style={{ color: isRedeemed ? '#999' : BRAND }}
                         />
-                        <span className="text-[10px] font-bold text-neutral-600 mt-0.5">
-                          #{visit}
-                        </span>
                       </motion.div>
                       {isRedeemed && (
                         <div className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-emerald-500 flex items-center justify-center border-2 border-white">
