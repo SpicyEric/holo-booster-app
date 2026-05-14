@@ -15,10 +15,10 @@ export const BRAND_UPDATED_EVENT = 'merchant-brand-updated';
  * Broadcast a brand-update so all mounted hook instances re-fetch.
  * Call this after persisting `version` or `brand_color` for a merchant.
  */
-export function notifyMerchantBrandUpdated(merchantCustomerId: string) {
+export function notifyMerchantBrandUpdated(merchantCustomerId: string, brandColor?: string) {
   if (typeof window === 'undefined') return;
   window.dispatchEvent(
-    new CustomEvent(BRAND_UPDATED_EVENT, { detail: { merchantCustomerId } }),
+    new CustomEvent(BRAND_UPDATED_EVENT, { detail: { merchantCustomerId, brandColor } }),
   );
 }
 
@@ -56,8 +56,11 @@ export function useMerchantBrand(merchantCustomerId?: string | null): MerchantBr
     fetchBrand();
 
     const onUpdated = (e: Event) => {
-      const detail = (e as CustomEvent).detail as { merchantCustomerId?: string } | undefined;
+      const detail = (e as CustomEvent).detail as { merchantCustomerId?: string; brandColor?: string } | undefined;
       if (!detail?.merchantCustomerId || detail.merchantCustomerId === merchantCustomerId) {
+        if (detail?.brandColor) {
+          setState((prev) => ({ ...prev, color: detail.brandColor!, soft: detail.brandColor!, loading: false }));
+        }
         fetchBrand();
       }
     };
