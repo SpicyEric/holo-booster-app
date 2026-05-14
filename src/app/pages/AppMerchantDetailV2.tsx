@@ -434,7 +434,7 @@ export const AppMerchantDetailV2 = () => {
       </div>
 
       {/* Snake */}
-      <div className="mt-4 relative">
+      <div className="mt-1 relative">
         <AnimatePresence>
           {showJumpToNow && (
             <motion.button
