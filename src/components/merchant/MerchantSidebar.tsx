@@ -2,9 +2,9 @@ import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { signOut } from "@/lib/auth";
 import { toast } from "sonner";
 import {
-  LayoutDashboard, Store, Users, Megaphone, Settings,
-  LogOut, ChevronLeft, ChevronDown, Menu, X, Building2,
-  Gift, Rocket, UserPlus, Star, MessageSquare, Zap, Info, Package, ArrowLeft,
+  LayoutDashboard, Store, Users, Settings,
+  LogOut, ChevronLeft, Menu, X,
+  Gift, MessageSquare, Package, ArrowLeft,
 } from "lucide-react";
 import eloyoLogo from "@/assets/eloyo-logo.png";
 import { cn } from "@/lib/utils";
@@ -22,56 +22,20 @@ interface NavItem {
   path: string;
   /** Optional ?tab= value — items sharing the same path are distinguished by this. */
   tab?: string;
+  /** When path is shared with other items and there's no tab in URL, this item is the default match. */
+  defaultForPath?: boolean;
   label: string;
   icon: React.ElementType;
-  /** Optional sub-items shown when parent is active/expanded. Each maps to `?tab=` on the parent path. */
-  subItems?: { tab: string; label: string; icon: React.ElementType }[];
 }
 
-interface NavGroup {
-  label: string;
-  items: NavItem[];
-}
-
-const NAV_GROUPS: NavGroup[] = [
-  {
-    label: "BUSINESS",
-    items: [
-      { path: "/kunde", label: "Dashboard", icon: LayoutDashboard },
-      { path: "/kunde/mein-geschaeft", tab: "info", label: "Profil", icon: Store },
-      { path: "/kunde/mein-geschaeft", tab: "karte", label: "Punktesystem", icon: Package },
-    ],
-  },
-  {
-    label: "AKTIVITÄT",
-    items: [
-      { path: "/kunde/kunden", label: "Kunden & Transaktionen", icon: Users },
-    ],
-  },
-  {
-    label: "WACHSTUM",
-    items: [
-      {
-        path: "/kunde/marketing",
-        label: "Marketing",
-        icon: Megaphone,
-        subItems: [
-          { tab: "praemien", label: "Prämien", icon: Gift },
-          { tab: "referral", label: "Empfehlungen", icon: UserPlus },
-          { tab: "boost", label: "Neukunden", icon: Rocket },
-          { tab: "messages", label: "Nachrichten", icon: MessageSquare },
-          { tab: "automations", label: "Automationen", icon: Zap },
-          { tab: "reviews", label: "Bewertungen", icon: Star },
-        ],
-      },
-    ],
-  },
-  {
-    label: "EINSTELLUNGEN",
-    items: [
-      { path: "/kunde/konto", label: "Konto", icon: Settings },
-    ],
-  },
+const NAV_ITEMS: NavItem[] = [
+  { path: "/kunde", label: "Dashboard", icon: LayoutDashboard },
+  { path: "/kunde/marketing", tab: "praemien", defaultForPath: true, label: "Treuepass", icon: Gift },
+  { path: "/kunde/mein-geschaeft", tab: "info", defaultForPath: true, label: "Profil", icon: Store },
+  { path: "/kunde/marketing", tab: "messages", label: "Nachrichten", icon: MessageSquare },
+  { path: "/kunde/mein-geschaeft", tab: "karte", label: "Punktesystem", icon: Package },
+  { path: "/kunde/kunden", label: "Kunden & Transaktionen", icon: Users },
+  { path: "/kunde/konto", label: "Einstellungen", icon: Settings },
 ];
 
 function SidebarNav({ collapsed, onNavigate, companyName, subStatus, coverImageUrl, logoUrl }: { collapsed: boolean; onNavigate?: () => void; companyName?: string; subStatus?: string; coverImageUrl?: string | null; logoUrl?: string | null; }) {
