@@ -1235,6 +1235,7 @@ const Marketing = () => {
                 </div>
               </CardHeader>
             </Card>
+            )}
           </TabsContent>
         </Tabs>
 
