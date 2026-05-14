@@ -322,7 +322,7 @@ export default function MerchantSidebar() {
         </Button>
       </div>
 
-      <SidebarNav collapsed={collapsed} companyName={companyName} subStatus={subStatus} />
+      <SidebarNav collapsed={collapsed} companyName={companyName} subStatus={subStatus} coverImageUrl={coverImageUrl} logoUrl={logoUrl} />
     </aside>
   );
 }
