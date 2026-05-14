@@ -659,7 +659,7 @@ export const AppScan = () => {
           >
             {/* ── FRONT: Brand-colored card (merchant context) or default purple ── */}
             <div
-              className={hasMerchantContext ? 'absolute inset-0 rounded-2xl overflow-hidden' : 'absolute inset-0 rounded-2xl bg-gradient-to-br from-primary to-secondary overflow-hidden'}
+              className={contextMerchantId ? 'absolute inset-0 rounded-2xl overflow-hidden bg-neutral-200' : 'absolute inset-0 rounded-2xl bg-gradient-to-br from-primary to-secondary overflow-hidden'}
               style={{
                 backfaceVisibility: 'hidden',
                 WebkitBackfaceVisibility: 'hidden',
@@ -676,12 +676,9 @@ export const AppScan = () => {
                 />
               )}
               {hasMerchantContext && BRAND && (
-                <motion.div
+                <div
                   className="absolute inset-0"
-                  style={{ background: `linear-gradient(135deg, ${BRAND}, ${BRAND}cc)` }}
-                  initial={{ opacity: skipCardIntro ? 0 : 0.85 }}
-                  animate={{ opacity: 0.85 }}
-                  transition={{ duration: skipCardIntro ? 0.7 : 0, ease: [0.16, 1, 0.3, 1] }}
+                  style={{ background: `linear-gradient(135deg, ${BRAND}, ${BRAND}cc)`, opacity: 0.85 }}
                 />
               )}
 

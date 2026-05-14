@@ -1044,11 +1044,6 @@ export const AppMerchantDetailV2 = () => {
                   <h2 className="text-3xl font-extrabold mb-6 leading-tight">
                     Du hast eingecheckt!
                   </h2>
-                  <div className="rounded-2xl bg-white/15 backdrop-blur px-5 py-4 max-w-xs">
-                    <p className="text-base font-semibold text-white">
-                      Zeige diesen Bildschirm einem Mitarbeiter zur Bestätigung.
-                    </p>
-                  </div>
                 </motion.div>
               )}
             </AnimatePresence>
@@ -1158,7 +1153,7 @@ export const AppMerchantDetailV2 = () => {
               width: exitOrigin.width,
               height: exitOrigin.height,
               borderRadius: 0,
-              opacity: 0.35,
+              opacity: 0.5,
             }}
             animate={{
               top: exitTarget.top,
@@ -1169,10 +1164,8 @@ export const AppMerchantDetailV2 = () => {
               opacity: 1,
             }}
             transition={{
-              duration: 0.75,
+              duration: 0.55,
               ease: [0.22, 1, 0.36, 1],
-              opacity: { duration: 0.75, ease: [0.4, 0, 0.6, 1] },
-              borderRadius: { duration: 0.6, ease: [0.22, 1, 0.36, 1] },
             }}
             style={{
               backgroundImage: `url(${coverImageUrl})`,
@@ -1180,7 +1173,16 @@ export const AppMerchantDetailV2 = () => {
               backgroundPosition: 'center',
               backgroundColor: BRAND,
             }}
-          />
+          >
+            {/* Brand tint fades in during flight so the landing matches the scan card */}
+            <motion.div
+              className="absolute inset-0"
+              style={{ background: `linear-gradient(135deg, ${BRAND}, ${BRAND}cc)` }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 0.85 }}
+              transition={{ duration: 0.55, ease: [0.4, 0, 0.6, 1] }}
+            />
+          </motion.div>
         )}
       </AnimatePresence>
 
