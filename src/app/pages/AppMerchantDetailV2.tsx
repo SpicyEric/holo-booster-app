@@ -156,8 +156,8 @@ export const AppMerchantDetailV2 = () => {
   const BRAND_SOFT = `${BRAND}22`; // Alpha-Wash via HEX 8-stellig
 
   // ================= Persistierter State (per Merchant in localStorage) =================
-  const checkInsKey = `eloyo:v2:checkins:v3:${merchantId}`;
-  const redeemedKey = `eloyo:v2:redeemed:${merchantId}`;
+  const checkInsKey = `eloyo:v2:checkins:v4:${merchantId}`;
+  const redeemedKey = `eloyo:v2:redeemed:v2:${merchantId}`;
   const lastDateKey = `eloyo:v2:lastcheckin:${merchantId}`;
 
   const defaultCheckIns: CheckInEntry[] = [
@@ -169,9 +169,8 @@ export const AppMerchantDetailV2 = () => {
     { visit: 6, source: 'normal' },
     { visit: 7, source: 'normal' },
   ];
-  // Standard: Softgetränk bei Check-in 1 wurde bereits eingelöst,
-  // Gratisbreze bei Check-in 4 ist noch offen.
-  const defaultRedeemed: number[] = [1];
+  // Standard: Gratisbreze (Visit 4) und Gratiskaffee (Visit 8) sind beide noch offen.
+  const defaultRedeemed: number[] = [];
 
   const [checkIns, setCheckIns] = useState<CheckInEntry[]>(() => {
     if (typeof window === 'undefined') return defaultCheckIns;
@@ -530,8 +529,8 @@ export const AppMerchantDetailV2 = () => {
       visitNumber: tappedReward.visitNumber,
       label: tappedReward.label,
     });
-    toast.success(`„${tappedReward.label}" wird beim nächsten Check-in eingelöst.`);
     setTappedReward(null);
+    return;
   };
 
   const removeActivation = () => {
