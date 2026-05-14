@@ -771,15 +771,13 @@ export const AppMerchantDetailV2 = () => {
 
   return (
     <div
-      className="min-h-screen pb-40"
+      className="min-h-screen pb-40 bg-[#faf8f5] dark:bg-neutral-950"
       style={{
-        background: '#faf8f5',
-        colorScheme: 'light',
         ['--brand' as string]: BRAND,
       }}
     >
       {/* Header */}
-      <div className="sticky top-0 z-30 bg-white/90 backdrop-blur border-b" style={{ borderColor: `${BRAND}22` }}>
+      <div className="sticky top-0 z-30 bg-white/90 dark:bg-neutral-900/90 backdrop-blur border-b" style={{ borderColor: `${BRAND}22` }}>
         <div className="flex items-center gap-3 px-4 py-3">
           <button
             onClick={() => navigate('/app')}
@@ -790,7 +788,7 @@ export const AppMerchantDetailV2 = () => {
             <ArrowLeft className="w-5 h-5" style={{ color: BRAND }} />
           </button>
           <div className="flex-1 min-w-0">
-            <h1 className="text-lg font-bold text-neutral-900 truncate">{merchantInfo.name}</h1>
+            <h1 className="text-lg font-bold text-neutral-900 dark:text-neutral-100 truncate">{merchantInfo.name}</h1>
             <p className="text-xs font-medium" style={{ color: BRAND }}>Dein Treuepass</p>
           </div>
           <div
@@ -915,7 +913,7 @@ export const AppMerchantDetailV2 = () => {
                             : {}
                         }
                         transition={{ duration: 1.6, repeat: unlocked || isActivatedHere ? Infinity : 0 }}
-                        className="w-16 h-16 rounded-full flex items-center justify-center border-4 bg-white shadow-md relative"
+                        className="w-16 h-16 rounded-full flex items-center justify-center border-4 bg-white dark:bg-neutral-800 shadow-md relative"
                         style={{
                           borderColor: isActivatedHere ? '#F5A623' : BRAND,
                           boxShadow: isActivatedHere ? '0 0 0 4px #F5A62333' : undefined,
@@ -947,7 +945,7 @@ export const AppMerchantDetailV2 = () => {
                       )}
                     </button>
                     <div
-                      className={`absolute left-1/2 -translate-x-1/2 ${labelBelow ? '-top-7' : 'top-full mt-2'} px-2 py-0.5 rounded-full bg-white shadow-sm border text-[10px] font-semibold text-neutral-800 max-w-[110px] truncate text-center pointer-events-none`}
+                      className={`absolute left-1/2 -translate-x-1/2 ${labelBelow ? '-top-7' : 'top-full mt-2'} px-2 py-0.5 rounded-full bg-white dark:bg-neutral-800 shadow-sm border text-[10px] font-semibold text-neutral-800 dark:text-neutral-100 max-w-[110px] truncate text-center pointer-events-none`}
                       style={{ borderColor: `${BRAND}55` }}
                       title={reward.label}
                     >
@@ -961,7 +959,7 @@ export const AppMerchantDetailV2 = () => {
                 <div key={visit} className="absolute -translate-x-1/2 -translate-y-1/2" style={{ left: cx, top: cy }}>
                   {label && (
                     <div
-                      className={`absolute left-1/2 -translate-x-1/2 px-2 py-0.5 rounded-full bg-neutral-900/85 text-white text-[10px] font-semibold flex items-center gap-1 whitespace-nowrap ${
+                      className={`absolute left-1/2 -translate-x-1/2 px-2 py-0.5 rounded-full bg-neutral-900/85 dark:bg-neutral-100/90 text-white dark:text-neutral-900 text-[10px] font-semibold flex items-center gap-1 whitespace-nowrap ${
                         labelBelow ? 'top-full mt-2' : '-top-8'
                       }`}
                     >
@@ -979,11 +977,11 @@ export const AppMerchantDetailV2 = () => {
                     <motion.div
                       animate={isCurrent ? { scale: [1, 1.06, 1] } : {}}
                       transition={{ duration: 1.4, repeat: isCurrent ? Infinity : 0 }}
-                      className="rounded-full flex items-center justify-center border-4 shadow"
+                      className="rounded-full flex items-center justify-center border-4 shadow dark:[--node-bg:theme(colors.neutral.800)]"
                       style={{
                         width: isCurrent ? 56 : 44,
                         height: isCurrent ? 56 : 44,
-                        background: isPast ? BRAND : '#fff',
+                        background: isPast ? BRAND : 'var(--node-bg, #fff)',
                         borderColor: isPast || isCurrent ? BRAND : `${BRAND}55`,
                       }}
                     >
@@ -1038,7 +1036,7 @@ export const AppMerchantDetailV2 = () => {
                     <p className="text-[10px] uppercase tracking-wider font-bold text-amber-700">
                       Für den nächsten Check-in aktiviert
                     </p>
-                    <p className="text-base font-extrabold text-neutral-900 mt-0.5 leading-tight">
+                    <p className="text-base font-extrabold text-neutral-900 dark:text-neutral-100 mt-0.5 leading-tight">
                       {activatedReward.label}
                     </p>
                     <button
@@ -1060,8 +1058,8 @@ export const AppMerchantDetailV2 = () => {
                 >
                   <Sparkles className="w-5 h-5 mt-0.5 shrink-0" style={{ color: BRAND }} />
                   <div>
-                    <p className="text-sm font-semibold text-neutral-900">So funktioniert das Einlösen</p>
-                    <p className="text-xs text-neutral-600 mt-1 leading-relaxed">
+                    <p className="text-sm font-semibold text-neutral-900 dark:text-neutral-100">So funktioniert das Einlösen</p>
+                    <p className="text-xs text-neutral-600 dark:text-neutral-400 mt-1 leading-relaxed">
                       Tippe vor deinem nächsten Check-in auf eine freigeschaltete Prämie, um sie zu aktivieren.
                       Beim Check-in wird sie automatisch eingelöst. Pro Tag nur ein Check-in pro Geschäft.
                     </p>
@@ -1152,14 +1150,14 @@ export const AppMerchantDetailV2 = () => {
             >
               <Star className="w-7 h-7" style={{ color: BRAND }} fill={BRAND} />
             </div>
-            <h2 className="text-xl font-bold text-neutral-900">Bewertung abgeben</h2>
-            <p className="text-xs font-semibold uppercase tracking-wide text-neutral-500">So funktioniert's</p>
+            <h2 className="text-xl font-bold text-neutral-900 dark:text-neutral-100">Bewertung abgeben</h2>
+            <p className="text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">So funktioniert's</p>
           </div>
-          <p className="text-sm text-neutral-700 leading-relaxed text-center">
-            Bewerte <span className="font-semibold text-neutral-900">{merchantInfo.name}</span> bei Google.
-            Du bekommst <span className="font-semibold text-neutral-900">+1 Check-in</span> geschenkt.
+          <p className="text-sm text-neutral-700 dark:text-neutral-300 leading-relaxed text-center">
+            Bewerte <span className="font-semibold text-neutral-900 dark:text-neutral-100">{merchantInfo.name}</span> bei Google.
+            Du bekommst <span className="font-semibold text-neutral-900 dark:text-neutral-100">+1 Check-in</span> geschenkt.
             <br />
-            <span className="text-xs text-neutral-500">Nur einmal pro Geschäft möglich.</span>
+            <span className="text-xs text-neutral-500 dark:text-neutral-400">Nur einmal pro Geschäft möglich.</span>
           </p>
           <Button
             onClick={handleGoogleReviewClick}
@@ -1184,21 +1182,21 @@ export const AppMerchantDetailV2 = () => {
                   {sourceNodeIcon(nodeDetail.source)}
                 </div>
                 <div>
-                  <h2 className="text-lg font-bold text-neutral-900">
+                  <h2 className="text-lg font-bold text-neutral-900 dark:text-neutral-100">
                     {nodeDetail.source === 'boost' ? 'Boost'
                       : nodeDetail.source === 'birthday' ? 'Geburtstag'
                       : nodeDetail.source === 'google_review' ? 'Bewertung'
                       : 'Check-in'}
                   </h2>
-                  <p className="text-xs text-neutral-500">Check-in #{nodeDetail.visit}</p>
+                  <p className="text-xs text-neutral-500 dark:text-neutral-400">Check-in #{nodeDetail.visit}</p>
                 </div>
               </div>
-              <div className="space-y-2 text-sm text-neutral-700 mt-2">
+              <div className="space-y-2 text-sm text-neutral-700 dark:text-neutral-300 mt-2">
                 <div className="flex items-center gap-2">
                   <CalendarIcon className="w-4 h-4 text-neutral-400" />
                   <span>
                     {nodeDetail.source === 'boost' ? 'Boost erhalten am ' : 'Eingecheckt am '}
-                    <span className="font-semibold text-neutral-900">{formatDateTime(nodeDetail.at)}</span>
+                    <span className="font-semibold text-neutral-900 dark:text-neutral-100">{formatDateTime(nodeDetail.at)}</span>
                   </span>
                 </div>
                 {nodeDetail.source === 'boost' && nodeDetail.invitedAt && (
@@ -1206,7 +1204,7 @@ export const AppMerchantDetailV2 = () => {
                     <UserPlus className="w-4 h-4 text-neutral-400" />
                     <span>
                       Einladung angenommen am{' '}
-                      <span className="font-semibold text-neutral-900">{formatDateTime(nodeDetail.invitedAt)}</span>
+                      <span className="font-semibold text-neutral-900 dark:text-neutral-100">{formatDateTime(nodeDetail.invitedAt)}</span>
                     </span>
                   </div>
                 )}
@@ -1215,7 +1213,7 @@ export const AppMerchantDetailV2 = () => {
                     <Gift className="w-4 h-4 text-neutral-400" />
                     <span>
                       Prämie eingelöst:{' '}
-                      <span className="font-semibold text-neutral-900">
+                      <span className="font-semibold text-neutral-900 dark:text-neutral-100">
                         {nodeDetail.redeemed ? `Ja – ${nodeDetail.redeemed.label}` : 'Nein'}
                       </span>
                     </span>
@@ -1234,13 +1232,13 @@ export const AppMerchantDetailV2 = () => {
                   <Gift className="w-6 h-6" style={{ color: BRAND }} />
                 </div>
                 <div>
-                  <h2 className="text-lg font-bold text-neutral-900">Prämie eingelöst</h2>
-                  <p className="text-xs text-neutral-500">{nodeDetail.label}</p>
+                  <h2 className="text-lg font-bold text-neutral-900 dark:text-neutral-100">Prämie eingelöst</h2>
+                  <p className="text-xs text-neutral-500 dark:text-neutral-400">{nodeDetail.label}</p>
                 </div>
               </div>
-              <div className="flex items-center gap-2 text-sm text-neutral-700 mt-2">
+              <div className="flex items-center gap-2 text-sm text-neutral-700 dark:text-neutral-300 mt-2">
                 <CalendarIcon className="w-4 h-4 text-neutral-400" />
-                <span>Eingelöst am <span className="font-semibold text-neutral-900">{formatDateTime(nodeDetail.at)}</span></span>
+                <span>Eingelöst am <span className="font-semibold text-neutral-900 dark:text-neutral-100">{formatDateTime(nodeDetail.at)}</span></span>
               </div>
             </>
           )}
@@ -1256,13 +1254,13 @@ export const AppMerchantDetailV2 = () => {
             >
               <UserPlus className="w-7 h-7" style={{ color: BRAND }} />
             </div>
-            <h2 className="text-xl font-bold text-neutral-900">Jetzt boosten</h2>
-            <p className="text-xs font-semibold uppercase tracking-wide text-neutral-500">
+            <h2 className="text-xl font-bold text-neutral-900 dark:text-neutral-100">Jetzt boosten</h2>
+            <p className="text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
               So funktioniert's
             </p>
           </div>
 
-          <ol className="space-y-2.5 text-sm text-neutral-700">
+          <ol className="space-y-2.5 text-sm text-neutral-700 dark:text-neutral-300">
             <li className="flex gap-2.5">
               <span
                 className="shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold text-white"
@@ -1275,14 +1273,14 @@ export const AppMerchantDetailV2 = () => {
                 className="shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold text-white"
                 style={{ background: BRAND }}
               >2</span>
-              <span>Dein Freund checkt bei <span className="font-semibold text-neutral-900">{merchantInfo.name}</span> ein.</span>
+              <span>Dein Freund checkt bei <span className="font-semibold text-neutral-900 dark:text-neutral-100">{merchantInfo.name}</span> ein.</span>
             </li>
             <li className="flex gap-2.5">
               <span
                 className="shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold text-white"
                 style={{ background: BRAND }}
               >3</span>
-              <span><span className="font-semibold text-neutral-900">Ihr beide</span> bekommt jeweils <span className="font-semibold text-neutral-900">+1 Boost</span> auf eurem Treuepass.</span>
+              <span><span className="font-semibold text-neutral-900 dark:text-neutral-100">Ihr beide</span> bekommt jeweils <span className="font-semibold text-neutral-900 dark:text-neutral-100">+1 Boost</span> auf eurem Treuepass.</span>
             </li>
           </ol>
 
@@ -1334,10 +1332,10 @@ export const AppMerchantDetailV2 = () => {
           >
             <Gift className="w-10 h-10" style={{ color: BRAND }} />
           </div>
-          <h3 className="text-lg font-bold text-neutral-900 mb-1">
+          <h3 className="text-lg font-bold text-neutral-900 dark:text-neutral-100 mb-1">
             {tappedReward?.label}
           </h3>
-          <p className="text-sm text-neutral-600 mb-5">
+          <p className="text-sm text-neutral-600 dark:text-neutral-400 mb-5">
             Beim nächsten Check-in einlösen?
           </p>
           <Button
@@ -1718,22 +1716,22 @@ function MerchantInfoSection({ info, brand }: { info: MerchantInfo; brand: strin
   return (
     <div className="px-4 mt-4 space-y-3">
       {info.description && (
-        <p className="text-sm leading-relaxed text-neutral-700 whitespace-pre-line">
+        <p className="text-sm leading-relaxed text-neutral-700 dark:text-neutral-300 whitespace-pre-line">
           {info.description}
         </p>
       )}
 
       {visibleHours.length > 0 && (
-        <div className="rounded-xl border bg-white/70 p-3" style={{ borderColor: `${brand}33` }}>
-          <div className="mb-2 flex items-center gap-2 text-xs font-semibold text-neutral-900">
+        <div className="rounded-xl border bg-white/70 dark:bg-neutral-900/60 p-3" style={{ borderColor: `${brand}33` }}>
+          <div className="mb-2 flex items-center gap-2 text-xs font-semibold text-neutral-900 dark:text-neutral-100">
             <Clock className="h-4 w-4" style={{ color: brand }} />
             Öffnungszeiten
           </div>
           <div className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-xs">
             {visibleHours.map((entry) => (
               <div key={entry.label} className="contents">
-                <span className="text-neutral-500">{entry.label}</span>
-                <span className="text-neutral-800">{entry.time}</span>
+                <span className="text-neutral-500 dark:text-neutral-400">{entry.label}</span>
+                <span className="text-neutral-800 dark:text-neutral-200">{entry.time}</span>
               </div>
             ))}
           </div>
@@ -1745,7 +1743,7 @@ function MerchantInfoSection({ info, brand }: { info: MerchantInfo; brand: strin
           href={`https://maps.google.com/?q=${encodeURIComponent(info.address)}`}
           target="_blank"
           rel="noopener noreferrer"
-          className="flex items-start gap-2 text-sm text-neutral-700"
+          className="flex items-start gap-2 text-sm text-neutral-700 dark:text-neutral-300"
         >
           <MapPin className="mt-0.5 h-4 w-4 shrink-0" style={{ color: brand }} />
           <span>{info.address}</span>
