@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState, useRef } from 'react';
 import { Capacitor } from '@capacitor/core';
 import useEmblaCarousel from 'embla-carousel-react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Store, Gift, MessageSquare, Mail, Bell, MapPin, Search, User, History, LogOut, Shield, FileText, HelpCircle, ChevronRight, Sparkles, AlertCircle, TrendingUp, Trophy, Loader2, Heart, Nfc, Clock, Globe, Instagram, Facebook, Twitter } from 'lucide-react';
+import { Store, Gift, MessageSquare, Mail, Bell, MapPin, Search, User, History, LogOut, Shield, FileText, HelpCircle, ChevronRight, Sparkles, AlertCircle, TrendingUp, Trophy, Loader2, Heart, Nfc, Clock, Globe, Instagram, Facebook, Twitter, ArrowDown, MessageCircle, Hand, Smartphone } from 'lucide-react';
 import { PullToRefresh } from '@/app/components/PullToRefresh';
 import { StoresGoogleMap } from '@/app/components/StoresGoogleMap';
 import { supabase } from '@/integrations/supabase/client';
@@ -374,6 +374,12 @@ const AppHomeContent = ({ active }: { active: boolean }) => {
     return () => setActiveBrandColor(null);
   }, [active, activeCardIndex, cards]);
 
+  useEffect(() => {
+    if (!active || loading || cards.length > 0) return;
+    document.body.classList.add('scan-highlight');
+    return () => document.body.classList.remove('scan-highlight');
+  }, [active, loading, cards.length]);
+
   const handleRefresh = useCallback(async () => {
     await loadCards();
   }, [loadCards]);
@@ -390,44 +396,51 @@ const AppHomeContent = ({ active }: { active: boolean }) => {
   }
 
   if (cards.length === 0) {
+    const steps = [
+      { n: '1', Icon: MessageCircle, title: 'Geh zum Mitarbeiter', text: 'Sag ihm, dass du einchecken möchtest.' },
+      { n: '2', Icon: Hand, title: 'Tippe unten auf den Scanner', text: 'Der lila Button in der Mitte.' },
+      { n: '3', Icon: Smartphone, title: 'Halte dein Handy an die NFC-Karte', text: 'Dein Check-in wird gespeichert und deine Prämie freigeschaltet.' },
+    ];
+
     return (
       <PullToRefresh onRefresh={handleRefresh}>
         <OpenInvitationsBanner />
-        <div className="space-y-6 py-4">
-          <div className="text-center px-4">
-            <div className="mx-auto w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
-              <Sparkles className="h-8 w-8 text-primary" />
+        <div className="flex flex-col h-full py-4">
+          <div className="text-center px-4 mb-6">
+            <div
+              className="mx-auto w-20 h-20 rounded-3xl flex items-center justify-center mb-4 shadow-lg"
+              style={{ background: 'linear-gradient(135deg, hsl(var(--primary)), hsl(var(--secondary)))' }}
+            >
+              <Gift className="h-10 w-10 text-primary-foreground" />
             </div>
-            <h2 className="text-xl font-bold text-foreground mb-2">Willkommen bei Eloyo</h2>
-            <p className="text-sm text-muted-foreground">
-              So einfach sammelst du Punkte bei deinen Lieblingsshops:
-            </p>
+            <h1 className="text-2xl font-bold text-foreground mb-1.5">Bereit zum Einchecken</h1>
+            <p className="text-sm text-muted-foreground">Sichere dir jetzt deine Willkommens-Prämie</p>
           </div>
 
           <div className="space-y-3">
-            {[
-              { Icon: MapPin, title: 'Shop entdecken', text: 'Finde teilnehmende Geschäfte in deiner Nähe.' },
-              { Icon: Nfc, title: 'Karte scannen', text: 'Halte dein Handy an die NFC-Karte im Shop und sammle Punkte.' },
-              { Icon: Gift, title: 'Prämien einlösen', text: 'Tausche gesammelte Punkte gegen Belohnungen ein.' },
-            ].map((s, i) => (
-              <div key={s.title} className="flex items-start gap-3 p-4 rounded-2xl bg-card shadow-sm">
-                <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
-                  <s.Icon className="h-5 w-5 text-primary" />
+            {steps.map((s) => (
+              <div key={s.n} className="flex items-start gap-3 p-4 rounded-2xl bg-card border border-border/50 shadow-sm">
+                <div
+                  className="w-10 h-10 rounded-full flex items-center justify-center shrink-0 text-primary-foreground font-bold"
+                  style={{ background: 'linear-gradient(135deg, hsl(var(--primary)), hsl(var(--secondary)))' }}
+                >
+                  {s.n}
                 </div>
-                <div className="flex-1">
-                  <p className="font-semibold text-foreground text-sm">{i + 1}. {s.title}</p>
-                  <p className="text-sm text-muted-foreground mt-0.5">{s.text}</p>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <s.Icon className="h-4 w-4 text-primary shrink-0" />
+                    <p className="font-semibold text-foreground text-sm">{s.title}</p>
+                  </div>
+                  <p className="text-sm text-muted-foreground mt-1 leading-relaxed">{s.text}</p>
                 </div>
               </div>
             ))}
           </div>
 
-          <button
-            onClick={() => navigate('/app/stores')}
-            className="w-full py-3 rounded-2xl bg-primary text-primary-foreground font-semibold shadow-sm hover:opacity-95 transition-opacity"
-          >
-            Shops in der Nähe entdecken
-          </button>
+          <div className="flex flex-col items-center mt-8 mb-2">
+            <p className="text-xs text-muted-foreground mb-2 font-medium">Tippe hier unten</p>
+            <ArrowDown className="h-8 w-8 text-primary onboarding-arrow-bounce" strokeWidth={2.5} />
+          </div>
         </div>
       </PullToRefresh>
     );
