@@ -758,7 +758,7 @@ export const AppMerchantDetailV2 = () => {
             <ArrowLeft className="w-5 h-5" style={{ color: BRAND }} />
           </button>
           <div className="flex-1 min-w-0">
-            <h1 className="text-lg font-bold text-neutral-900 truncate">Backstube König</h1>
+            <h1 className="text-lg font-bold text-neutral-900 truncate">{merchantInfo.name}</h1>
             <p className="text-xs font-medium" style={{ color: BRAND }}>Dein Treuepass</p>
           </div>
           <div
@@ -1117,7 +1117,7 @@ export const AppMerchantDetailV2 = () => {
             <p className="text-xs font-semibold uppercase tracking-wide text-neutral-500">So funktioniert's</p>
           </div>
           <p className="text-sm text-neutral-700 leading-relaxed text-center">
-            Bewerte <span className="font-semibold text-neutral-900">Backstube König</span> bei Google.
+            Bewerte <span className="font-semibold text-neutral-900">{merchantInfo.name}</span> bei Google.
             Du bekommst <span className="font-semibold text-neutral-900">+1 Check-in</span> geschenkt.
             <br />
             <span className="text-xs text-neutral-500">Nur einmal pro Geschäft möglich.</span>
@@ -1236,7 +1236,7 @@ export const AppMerchantDetailV2 = () => {
                 className="shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold text-white"
                 style={{ background: BRAND }}
               >2</span>
-              <span>Dein Freund checkt bei <span className="font-semibold text-neutral-900">Backstube König</span> ein.</span>
+              <span>Dein Freund checkt bei <span className="font-semibold text-neutral-900">{merchantInfo.name}</span> ein.</span>
             </li>
             <li className="flex gap-2.5">
               <span
