@@ -1096,7 +1096,7 @@ export const AppMerchantDetailV2 = () => {
                 className="shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold text-white"
                 style={{ background: BRAND }}
               >3</span>
-              <span>Du bekommst <span className="font-semibold text-neutral-900">+1 Boost</span> auf deinem Treuepass.</span>
+              <span><span className="font-semibold text-neutral-900">Ihr beide</span> bekommt jeweils <span className="font-semibold text-neutral-900">+1 Boost</span> auf eurem Treuepass.</span>
             </li>
           </ol>
 
