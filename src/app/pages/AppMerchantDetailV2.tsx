@@ -16,6 +16,12 @@ import {
   clearActivatedReward,
 } from '@/lib/activeMerchantReward';
 import { generateVerificationCode } from '@/lib/verificationCode';
+import {
+  enablePrivacyScreen,
+  disablePrivacyScreen,
+  isScreenBeingCaptured,
+} from '@/lib/privacyScreen';
+import { Lock, EyeOff } from 'lucide-react';
 
 /**
  * Backstube König – Treuepass (V2 Prototype)
