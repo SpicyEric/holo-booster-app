@@ -102,22 +102,48 @@ function buildSmoothPath(points: { x: number; y: number }[]): string {
   return d;
 }
 
+interface MerchantInfo {
+  name: string;
+  description: string | null;
+  openingHours: Record<string, { open?: string; close?: string; closed?: boolean }> | null;
+  address: string | null;
+  website: string | null;
+  instagram: string | null;
+  facebook: string | null;
+  twitter: string | null;
+}
+
 export const AppMerchantDetailV2 = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { id } = useParams<{ id: string }>();
   const merchantId = id || DEFAULT_DEMO_MERCHANT_CUSTOMER_ID;
+  const isDemoMerchant = merchantId === DEFAULT_DEMO_MERCHANT_CUSTOMER_ID;
   const brand = useMerchantBrand(merchantId);
   const [coverImageUrl, setCoverImageUrl] = useState<string | null>(null);
   const [passLength, setPassLength] = useState<number>(35);
   const [dbRewards, setDbRewards] = useState<{ visitNumber: number; label: string; imageUrl: string | null }[]>([]);
+  const [merchantInfo, setMerchantInfo] = useState<MerchantInfo>({
+    name: 'Backstube König',
+    description: null,
+    openingHours: null,
+    address: null,
+    website: null,
+    instagram: null,
+    facebook: null,
+    twitter: null,
+  });
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
       const { supabase } = await import('@/integrations/supabase/client');
       const [{ data: cust }, { data: placements }, { data: rewardRows }] = await Promise.all([
-        supabase.from('customers').select('cover_image_url, pass_length').eq('id', merchantId).maybeSingle(),
+        supabase
+          .from('customers')
+          .select('cover_image_url, pass_length, name, company_name, description, opening_hours, street, house_number, postal_code, city, website, instagram, facebook, twitter')
+          .eq('id', merchantId)
+          .maybeSingle(),
         supabase
           .from('reward_placements')
           .select('visit, reward_id')
@@ -132,6 +158,23 @@ export const AppMerchantDetailV2 = () => {
       if (cancelled) return;
       setCoverImageUrl((cust?.cover_image_url as string | null) || null);
       if (cust?.pass_length) setPassLength(cust.pass_length as number);
+      if (cust) {
+        const street = [cust.street, cust.house_number].filter(Boolean).join(' ');
+        const address = [street, cust.postal_code, cust.city].filter(Boolean).join(', ');
+        const oh = cust.opening_hours && typeof cust.opening_hours === 'object'
+          ? (cust.opening_hours as Record<string, { open?: string; close?: string; closed?: boolean }>)
+          : null;
+        setMerchantInfo({
+          name: (cust.company_name as string) || (cust.name as string) || 'Geschäft',
+          description: (cust.description as string) || null,
+          openingHours: oh,
+          address: address || null,
+          website: (cust.website as string) || null,
+          instagram: (cust.instagram as string) || null,
+          facebook: (cust.facebook as string) || null,
+          twitter: (cust.twitter as string) || null,
+        });
+      }
       const rewardsById = new Map(((rewardRows || []) as RewardRow[]).map((r) => [r.id, r]));
       const mapped = ((placements || []) as RewardPlacementRow[]).flatMap((p) => {
         const reward = rewardsById.get(p.reward_id);
