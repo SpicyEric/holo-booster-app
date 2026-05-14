@@ -31,6 +31,8 @@ import {
 } from "@/components/ui/dialog";
 import PhoneFrame from "@/components/PhoneFrame";
 import MerchantPreviewLive from "@/components/merchant/MerchantPreviewLive";
+import MerchantTreuepassPreviewV2 from "@/components/merchant/MerchantTreuepassPreviewV2";
+import { useMerchantBrand } from "@/hooks/useMerchantBrand";
 import RichTextEditor from "@/components/merchant/RichTextEditor";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -141,6 +143,7 @@ const MeinGeschaeft = () => {
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const [uploadingCover, setUploadingCover] = useState(false);
   const [customerId, setCustomerId] = useState<string | null>(null);
+  const merchantBrand = useMerchantBrand(customerId);
   const [activeTab, setActiveTab] = useState("info");
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -1556,29 +1559,42 @@ const MeinGeschaeft = () => {
               <div className="flex justify-center">
                 <div className="scale-[1.3] origin-top">
                   <PhoneFrame>
-                    <MerchantPreviewLive 
-                      data={{
-                        name: formData.name || "Geschäftsname",
-                        description: formData.description,
-                        logo_url: formData.logo_url,
-                        cover_image_url: formData.cover_image_url,
-                        street: formData.street,
-                        house_number: formData.house_number,
-                        postal_code: formData.postal_code,
-                        city: formData.city,
-                        phone: formData.phone,
-                        website: formData.website,
-                        instagram: formData.instagram,
-                        facebook: formData.facebook,
-                        twitter: formData.twitter,
-                        opening_hours: formData.opening_hours,
-                      }}
-                      rewards={rewards}
-                      activeTab={activeTab === 'info' ? 'info' : 'rewards'}
-                      onTabChange={(tab) => setActiveTab(tab === 'info' ? 'info' : 'karte')}
-                      userPoints={25}
-                      scrollTarget={scrollTarget}
-                    />
+                    {merchantBrand.version === 'v2' ? (
+                      <MerchantTreuepassPreviewV2
+                        brandColor={merchantBrand.color}
+                        merchantName={formData.name || 'Dein Geschäft'}
+                        rewards={rewards.map((r) => ({
+                          id: r.id,
+                          title: r.title,
+                          points_required: r.points_required,
+                          image_url: r.image_url,
+                        }))}
+                      />
+                    ) : (
+                      <MerchantPreviewLive
+                        data={{
+                          name: formData.name || "Geschäftsname",
+                          description: formData.description,
+                          logo_url: formData.logo_url,
+                          cover_image_url: formData.cover_image_url,
+                          street: formData.street,
+                          house_number: formData.house_number,
+                          postal_code: formData.postal_code,
+                          city: formData.city,
+                          phone: formData.phone,
+                          website: formData.website,
+                          instagram: formData.instagram,
+                          facebook: formData.facebook,
+                          twitter: formData.twitter,
+                          opening_hours: formData.opening_hours,
+                        }}
+                        rewards={rewards}
+                        activeTab={activeTab === 'info' ? 'info' : 'rewards'}
+                        onTabChange={(tab) => setActiveTab(tab === 'info' ? 'info' : 'karte')}
+                        userPoints={25}
+                        scrollTarget={scrollTarget}
+                      />
+                    )}
                   </PhoneFrame>
                 </div>
               </div>
