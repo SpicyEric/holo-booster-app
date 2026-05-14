@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Loader2, Nfc, Gift, Sparkles, MapPin } from 'lucide-react';
+import { Loader2, Nfc, Gift, Sparkles, MapPin, Clock, Globe, Instagram, Facebook, Twitter } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { MainLayout } from '@/app/components/layout/MainLayout';
 import { OpenInvitationsBanner } from '@/app/components/OpenInvitationsBanner';
 
+interface OpeningHourEntry { open?: string; close?: string; closed?: boolean }
 interface MerchantCard {
   id: string;
   merchantId: string;
@@ -13,6 +14,39 @@ interface MerchantCard {
   category: string | null;
   logoUrl: string | null;
   coverImage: string | null;
+  description: string | null;
+  openingHours: Record<string, OpeningHourEntry> | null;
+  address: string | null;
+  website: string | null;
+  instagram: string | null;
+  facebook: string | null;
+  twitter: string | null;
+}
+
+const DAY_LABELS: { key: string; label: string }[] = [
+  { key: 'monday', label: 'Mo' },
+  { key: 'tuesday', label: 'Di' },
+  { key: 'wednesday', label: 'Mi' },
+  { key: 'thursday', label: 'Do' },
+  { key: 'friday', label: 'Fr' },
+  { key: 'saturday', label: 'Sa' },
+  { key: 'sunday', label: 'So' },
+];
+
+function normalizeUrl(u: string | null): string | null {
+  if (!u) return null;
+  const v = u.trim();
+  if (!v) return null;
+  if (/^https?:\/\//i.test(v)) return v;
+  return `https://${v}`;
+}
+
+function instagramUrl(v: string | null): string | null {
+  if (!v) return null;
+  const t = v.trim().replace(/^@/, '');
+  if (!t) return null;
+  if (/^https?:\/\//i.test(t)) return t;
+  return `https://instagram.com/${t}`;
 }
 
 export const AppHome = () => {
