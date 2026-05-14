@@ -1029,7 +1029,7 @@ export const AppMerchantDetailV2 = () => {
             exit={{ opacity: 0 }}
             transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
             className="fixed inset-0 z-[100] flex flex-col items-center justify-center px-6 text-center text-white overflow-hidden"
-            style={{ background: `linear-gradient(160deg, ${BRAND}, ${BRAND}cc)` }}
+            style={{ background: `linear-gradient(180deg, ${BRAND} 0%, ${BRAND} 60%, ${BRAND}e6 100%)` }}
           >
             <button
               onClick={() => {
@@ -1147,7 +1147,7 @@ export const AppMerchantDetailV2 = () => {
 
             {/* Code-Marquee — direkt über dem Häkchen, dünner */}
             {!confirmStage && checkInOverlay.reward && (
-              <div className="absolute left-0 right-0 top-[calc(50%-130px)] py-1.5 overflow-hidden bg-white/10 backdrop-blur border-y border-white/20">
+              <div className="absolute left-0 right-0 top-[calc(50%-180px)] py-1.5 overflow-hidden bg-white/10 backdrop-blur border-y border-white/20">
                 <div
                   className="flex whitespace-nowrap will-change-transform"
                   style={{ animation: 'eloyo-marquee 14s linear infinite' }}
