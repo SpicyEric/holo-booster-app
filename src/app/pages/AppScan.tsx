@@ -659,7 +659,7 @@ export const AppScan = () => {
           >
             {/* ── FRONT: Brand-colored card (merchant context) or default purple ── */}
             <div
-              className={hasMerchantContext ? 'absolute inset-0 rounded-2xl overflow-hidden' : 'absolute inset-0 rounded-2xl bg-gradient-to-br from-primary to-secondary overflow-hidden'}
+              className={contextMerchantId ? 'absolute inset-0 rounded-2xl overflow-hidden bg-neutral-200' : 'absolute inset-0 rounded-2xl bg-gradient-to-br from-primary to-secondary overflow-hidden'}
               style={{
                 backfaceVisibility: 'hidden',
                 WebkitBackfaceVisibility: 'hidden',
