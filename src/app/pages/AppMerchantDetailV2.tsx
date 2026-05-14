@@ -48,6 +48,7 @@ interface MockReward {
   visitNumber: number;
   label: string;
   redeemed: boolean;
+  imageUrl?: string | null;
 }
 
 type RewardPlacementRow = { visit: number; reward_id: string };
