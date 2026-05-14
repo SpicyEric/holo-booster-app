@@ -75,7 +75,7 @@ export const AppHome = () => {
 
         const { data: merchants } = await supabase
           .from('customers')
-          .select('id, name, company_name, logo_url, cover_image_url, industry, description, opening_hours, street, house_number, postal_code, city, website, instagram, facebook, twitter')
+          .select('id, name, company_name, logo_url, cover_image_url, industry, description, opening_hours, street, house_number, postal_code, city, website, instagram, facebook, twitter, brand_color, version')
           .eq('active', true)
           .in('id', merchantIds);
 
@@ -85,6 +85,8 @@ export const AppHome = () => {
             if (!m) return null;
             const streetWithNumber = [m.street, m.house_number].filter(Boolean).join(' ');
             const address = [streetWithNumber, [m.postal_code, m.city].filter(Boolean).join(' ')].filter(Boolean).join(', ');
+            const isV2 = (m as { version?: string }).version === 'v2';
+            const brandColor = isV2 ? ((m as { brand_color?: string | null }).brand_color || null) : null;
             return {
               id: a.id,
               merchantId: a.merchant_customer_id,
@@ -99,6 +101,7 @@ export const AppHome = () => {
               instagram: m.instagram || null,
               facebook: m.facebook || null,
               twitter: m.twitter || null,
+              brandColor,
             } as MerchantCard;
           })
           .filter((x): x is MerchantCard => !!x);
