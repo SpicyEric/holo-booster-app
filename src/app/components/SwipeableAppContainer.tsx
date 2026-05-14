@@ -454,7 +454,7 @@ const AppHomeContent = ({ active }: { active: boolean }) => {
             {cards.map((store) => (
               <div
                 key={store.id}
-                className="shrink-0 grow-0 basis-[85%] px-1.5"
+                className="shrink-0 grow-0 basis-[92%] px-1.5"
               >
                 <button
                   onClick={(e) => {
