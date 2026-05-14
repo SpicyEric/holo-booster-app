@@ -437,7 +437,10 @@ export default function KundeDashboard() {
         <div className="max-w-6xl mx-auto px-6 lg:px-8 py-8 space-y-8">
 
           {/* ====== Hero ====== */}
-          <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[hsl(262,60%,45%)] via-[hsl(262,70%,50%)] to-[hsl(230,70%,55%)] p-8 text-white shadow-[0_8px_30px_hsl(262,50%,40%/0.35)]">
+          <div
+            className="relative overflow-hidden rounded-3xl p-8 text-white shadow-[0_8px_30px_hsl(var(--merchant-shadow,262_50%_40%)/0.35)]"
+            style={{ background: 'var(--gradient-primary, linear-gradient(135deg, hsl(262,60%,45%), hsl(230,70%,55%)))' }}
+          >
             <div className="absolute -top-24 -right-24 w-72 h-72 bg-white/[0.06] rounded-full blur-3xl animate-[pulse_8s_ease-in-out_infinite]" />
             <div className="absolute -bottom-16 -left-16 w-48 h-48 bg-white/[0.04] rounded-full blur-3xl animate-[pulse_10s_ease-in-out_infinite_2s]" />
             <div className="relative z-10 flex items-end justify-between gap-6">
@@ -493,7 +496,7 @@ export default function KundeDashboard() {
           {/* ====== KPI Cards ====== */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             <KpiCard icon={Users} label="Kunden gesamt" countTo={stats?.totalContacts ?? 0} trend={stats && stats.newContactsThisWeek > 0 ? `+${stats.newContactsThisWeek} diese Woche` : undefined} iconBg="bg-primary/10" iconColor="text-primary" bigNumber />
-            <KpiCard icon={Trophy} label="Vergebene Punkte" countTo={stats?.totalPointsAwarded ?? 0} sub="Gesamt seit Start" iconBg="bg-emerald-50" iconColor="text-emerald-600" bigNumber />
+            <KpiCard icon={Trophy} label="Check-ins" countTo={stats?.totalPointsAwarded ?? 0} sub="Seit Start" iconBg="bg-emerald-50" iconColor="text-emerald-600" bigNumber />
             <KpiCard icon={Gift} label="Prämien eingelöst" countTo={stats?.totalRedemptions ?? 0} iconBg="bg-amber-50" iconColor="text-amber-600" />
             <KpiCard
               icon={Zap}

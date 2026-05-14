@@ -281,6 +281,9 @@ export default function MeinKonto() {
           </div>
         </SectionCard>
 
+        {/* Karten-ID */}
+        <MerchantCardIdTile />
+
         {/* Subscription */}
         <SectionCard icon={CreditCard} iconBg="bg-primary/10" iconColor="text-primary" title="Abonnement" description="Ihr aktueller Tarif und Zahlungsstatus">
           <div className="space-y-4">
