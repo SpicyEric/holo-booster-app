@@ -974,70 +974,72 @@ export const AppMerchantDetailV2 = () => {
         </motion.div>
       </div>
 
-      {/* Hinweis Pre-Activation / Aktivierte Prämie */}
-      <motion.div
-        className="px-4 mt-6"
-        initial={isEntering ? { opacity: 0, y: 10 } : false}
-        animate={infoVisible ? { opacity: 1, y: 0 } : { opacity: 0, y: -8 }}
-        transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
-      >
-        <Card
-          className="p-4 border transition-colors"
-          style={{
-            borderColor: activatedReward ? '#F5A62355' : `${BRAND}33`,
-            background: activatedReward ? '#FFF6E5' : `${BRAND}0a`,
-          }}
+      {/* Hinweis Pre-Activation / Aktivierte Prämie — nur wenn schon eingecheckt oder Prämie aktiviert */}
+      {(currentVisit > 0 || activatedReward) && (
+        <motion.div
+          className="px-4 mt-6"
+          initial={isEntering ? { opacity: 0, y: 10 } : false}
+          animate={infoVisible ? { opacity: 1, y: 0 } : { opacity: 0, y: -8 }}
+          transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
         >
-          <AnimatePresence mode="wait" initial={false}>
-            {activatedReward ? (
-              <motion.div
-                key="activated"
-                initial={{ opacity: 0, y: 6 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -6 }}
-                transition={{ duration: 0.2 }}
-                className="flex gap-3 items-start"
-              >
-                <div className="w-9 h-9 rounded-full bg-amber-500 flex items-center justify-center shrink-0 shadow-sm">
-                  <Sparkles className="w-5 h-5 text-white" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-[10px] uppercase tracking-wider font-bold text-amber-700">
-                    Für den nächsten Check-in aktiviert
-                  </p>
-                  <p className="text-base font-extrabold text-neutral-900 mt-0.5 leading-tight">
-                    {activatedReward.label}
-                  </p>
-                  <button
-                    onClick={removeActivation}
-                    className="mt-2 text-xs font-semibold text-amber-700 underline-offset-2 hover:underline"
-                  >
-                    Aktivierung entfernen
-                  </button>
-                </div>
-              </motion.div>
-            ) : (
-              <motion.div
-                key="info"
-                initial={{ opacity: 0, y: 6 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -6 }}
-                transition={{ duration: 0.2 }}
-                className="flex gap-3"
-              >
-                <Sparkles className="w-5 h-5 mt-0.5 shrink-0" style={{ color: BRAND }} />
-                <div>
-                  <p className="text-sm font-semibold text-neutral-900">So funktioniert das Einlösen</p>
-                  <p className="text-xs text-neutral-600 mt-1 leading-relaxed">
-                    Tippe vor deinem nächsten Check-in auf eine freigeschaltete Prämie, um sie zu aktivieren.
-                    Beim Check-in wird sie automatisch eingelöst. Pro Tag nur ein Check-in pro Geschäft.
-                  </p>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </Card>
-      </motion.div>
+          <Card
+            className="p-4 border transition-colors"
+            style={{
+              borderColor: activatedReward ? '#F5A62355' : `${BRAND}33`,
+              background: activatedReward ? '#FFF6E5' : `${BRAND}0a`,
+            }}
+          >
+            <AnimatePresence mode="wait" initial={false}>
+              {activatedReward ? (
+                <motion.div
+                  key="activated"
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -6 }}
+                  transition={{ duration: 0.2 }}
+                  className="flex gap-3 items-start"
+                >
+                  <div className="w-9 h-9 rounded-full bg-amber-500 flex items-center justify-center shrink-0 shadow-sm">
+                    <Sparkles className="w-5 h-5 text-white" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[10px] uppercase tracking-wider font-bold text-amber-700">
+                      Für den nächsten Check-in aktiviert
+                    </p>
+                    <p className="text-base font-extrabold text-neutral-900 mt-0.5 leading-tight">
+                      {activatedReward.label}
+                    </p>
+                    <button
+                      onClick={removeActivation}
+                      className="mt-2 text-xs font-semibold text-amber-700 underline-offset-2 hover:underline"
+                    >
+                      Aktivierung entfernen
+                    </button>
+                  </div>
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="info"
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -6 }}
+                  transition={{ duration: 0.2 }}
+                  className="flex gap-3"
+                >
+                  <Sparkles className="w-5 h-5 mt-0.5 shrink-0" style={{ color: BRAND }} />
+                  <div>
+                    <p className="text-sm font-semibold text-neutral-900">So funktioniert das Einlösen</p>
+                    <p className="text-xs text-neutral-600 mt-1 leading-relaxed">
+                      Tippe vor deinem nächsten Check-in auf eine freigeschaltete Prämie, um sie zu aktivieren.
+                      Beim Check-in wird sie automatisch eingelöst. Pro Tag nur ein Check-in pro Geschäft.
+                    </p>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </Card>
+        </motion.div>
+      )}
 
       {/* Boost holen */}
       <motion.div
