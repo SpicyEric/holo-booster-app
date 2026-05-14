@@ -541,7 +541,13 @@ export const AppMerchantDetailV2 = () => {
           transition={{ duration: 0.6 }}
           ref={scrollerRef}
           className="overflow-x-auto overflow-y-hidden no-scrollbar"
-          style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-x', overscrollBehaviorX: 'contain' }}
+          style={{
+            WebkitOverflowScrolling: 'touch',
+            touchAction: 'pan-x',
+            overscrollBehaviorX: 'contain',
+            clipPath: entryPhase === 'flying' || entryPhase === 'fading' ? 'inset(0 100% 0 0)' : 'inset(0 0 0 0)',
+            transition: 'clip-path 700ms cubic-bezier(0.22,1,0.36,1)',
+          }}
         >
           <div className="relative" style={{ width: totalWidth, height: SNAKE_HEIGHT + 14 }}>
             <svg width={totalWidth} height={SNAKE_HEIGHT} className="absolute inset-x-0 top-3">
