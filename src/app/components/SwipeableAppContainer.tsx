@@ -210,8 +210,10 @@ const AppHomeContent = () => {
     category: string | null;
     logoUrl: string | null;
     coverImage: string | null;
+    distance: number | null;
   }>>([]);
   const [loading, setLoading] = useState(true);
+  const [emblaRef] = useEmblaCarousel({ loop: true, align: 'center', containScroll: false });
 
   const loadCards = useCallback(async () => {
     if (!user) return;
@@ -230,14 +232,34 @@ const AppHomeContent = () => {
 
       const { data: merchants } = await supabase
         .from('customers')
-        .select('id, name, company_name, logo_url, cover_image_url, industry')
+        .select('id, name, company_name, logo_url, cover_image_url, industry, latitude, longitude')
         .eq('active', true)
         .in('id', merchantIds);
 
+      // Try to get user location to sort by distance (best-effort)
+      let userLat: number | null = null;
+      let userLng: number | null = null;
+      try {
+        const perm = await checkLocationPermission();
+        if (perm.location === 'granted') {
+          const loc = await getCurrentLocation();
+          userLat = loc.latitude;
+          userLng = loc.longitude;
+        }
+      } catch {
+        // ignore, fallback unsorted
+      }
+
       const list = (accounts || [])
         .map((a) => {
-          const m = merchants?.find((x) => x.id === a.merchant_customer_id);
+          const m: any = merchants?.find((x) => x.id === a.merchant_customer_id);
           if (!m) return null;
+          const lat = m.latitude as number | null;
+          const lng = m.longitude as number | null;
+          const distance =
+            userLat != null && userLng != null && lat != null && lng != null
+              ? haversineDistance(userLat, userLng, lat, lng)
+              : null;
           return {
             id: a.id,
             merchantId: a.merchant_customer_id,
@@ -245,9 +267,16 @@ const AppHomeContent = () => {
             category: m.industry || null,
             logoUrl: m.logo_url || null,
             coverImage: m.cover_image_url || null,
+            distance,
           };
         })
-        .filter((x): x is NonNullable<typeof x> => !!x);
+        .filter((x): x is NonNullable<typeof x> => !!x)
+        .sort((a, b) => {
+          if (a.distance == null && b.distance == null) return 0;
+          if (a.distance == null) return 1;
+          if (b.distance == null) return -1;
+          return a.distance - b.distance;
+        });
 
       setCards(list);
     } catch (err) {
@@ -324,41 +353,49 @@ const AppHomeContent = () => {
     <PullToRefresh onRefresh={handleRefresh}>
       <OpenInvitationsBanner />
       <div style={{ paddingBottom: '2rem' }}>
-        {cards.map((store) => (
-          <div key={store.id} style={{ marginBottom: '12px' }}>
-            <button
-              onClick={() => navigate(`/app/merchant/${store.merchantId}`)}
-              className="w-full rounded-xl overflow-hidden shadow-md text-left relative block"
-              style={{ aspectRatio: '1.55 / 1', display: 'block' }}
-            >
-              <div className="absolute inset-0">
-                {store.coverImage ? (
-                  <img src={store.coverImage} alt={store.name} className="w-full h-full object-cover" />
-                ) : (
-                  <div className="w-full h-full bg-gradient-to-br from-purple-500 to-blue-500" />
-                )}
-              </div>
-              <div className="absolute top-3 left-3 z-20 w-12 h-12 rounded-full overflow-hidden">
-                {store.logoUrl ? (
-                  <img src={store.logoUrl} alt={`${store.name} Logo`} className="w-full h-full object-cover" />
-                ) : (
-                  <div className="w-full h-full bg-primary flex items-center justify-center">
-                    <span className="text-lg font-bold text-white">
-                      {store.name?.charAt(0)?.toUpperCase() || '?'}
-                    </span>
+        <h2 className="text-lg font-semibold text-foreground px-1 mb-3">Deine Treuepässe</h2>
+        <div className="overflow-hidden -mx-4" ref={emblaRef}>
+          <div className="flex touch-pan-y">
+            {cards.map((store) => (
+              <div
+                key={store.id}
+                className="shrink-0 grow-0 basis-[85%] pl-3 first:pl-4 last:pr-4"
+              >
+                <button
+                  onClick={() => navigate(`/app/merchant/${store.merchantId}`)}
+                  className="w-full rounded-xl overflow-hidden shadow-md text-left relative block"
+                  style={{ aspectRatio: '1.55 / 1', display: 'block' }}
+                >
+                  <div className="absolute inset-0">
+                    {store.coverImage ? (
+                      <img src={store.coverImage} alt={store.name} className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full bg-gradient-to-br from-purple-500 to-blue-500" />
+                    )}
                   </div>
-                )}
+                  <div className="absolute top-3 left-3 z-20 w-12 h-12 rounded-full overflow-hidden">
+                    {store.logoUrl ? (
+                      <img src={store.logoUrl} alt={`${store.name} Logo`} className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full bg-primary flex items-center justify-center">
+                        <span className="text-lg font-bold text-white">
+                          {store.name?.charAt(0)?.toUpperCase() || '?'}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                  <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/70 via-black/40 to-transparent" />
+                  <div className="absolute bottom-3 left-3 right-3 z-10">
+                    <h3 className="text-white font-semibold text-xl truncate drop-shadow-md">{store.name}</h3>
+                    {store.category && (
+                      <p className="text-white/80 text-sm truncate drop-shadow-md">{store.category}</p>
+                    )}
+                  </div>
+                </button>
               </div>
-              <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/70 via-black/40 to-transparent" />
-              <div className="absolute bottom-3 left-3 right-3 z-10">
-                <h3 className="text-white font-semibold text-xl truncate drop-shadow-md">{store.name}</h3>
-                {store.category && (
-                  <p className="text-white/80 text-sm truncate drop-shadow-md">{store.category}</p>
-                )}
-              </div>
-            </button>
+            ))}
           </div>
-        ))}
+        </div>
       </div>
     </PullToRefresh>
   );
