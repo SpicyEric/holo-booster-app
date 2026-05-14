@@ -188,14 +188,19 @@ export const BottomNav = ({ onNavigate, currentIndex }: BottomNavProps) => {
     const Icon = item.icon;
     const active = isActive(item);
     const showBadge = item.path === '/app/messages' && messageBadge;
-    
+    const useBrand = active && !!brandColor;
+    const colorStyle: React.CSSProperties | undefined = useBrand
+      ? { color: brandColor!, transition: 'color 220ms ease-out' }
+      : undefined;
+
     return (
       <button
         onClick={() => handleNavClick(item)}
         className={cn(
           "flex flex-col items-center justify-center flex-1 h-full transition-colors relative",
-          active ? "text-primary" : "text-muted-foreground hover:text-foreground"
+          active ? (useBrand ? '' : 'text-primary') : "text-muted-foreground hover:text-foreground"
         )}
+        style={colorStyle}
       >
         <div className="relative">
           <Icon className="h-6 w-6" />
