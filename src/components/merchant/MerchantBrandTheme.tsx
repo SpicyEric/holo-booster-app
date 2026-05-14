@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState, ReactNode, CSSProperties } from 'react';
+import { useCallback, useEffect, useState, ReactNode } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { hexToHslString, contrastForegroundHsl, brandTintHsl, brandDarkHsl } from '@/lib/colorUtils';
