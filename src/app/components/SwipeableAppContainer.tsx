@@ -547,14 +547,11 @@ const AppMessagesContent = () => {
   const [messages, setMessages] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [emailVerified, setEmailVerified] = useState(true);
-  const [redeemableCount, setRedeemableCount] = useState(0);
 
   useEffect(() => {
     if (user) {
       loadMessages();
       checkVerification();
-      loadRedeemableRewards();
-      localStorage.setItem(`rewards_seen_${user.id}`, Date.now().toString());
     }
   }, [user]);
 
