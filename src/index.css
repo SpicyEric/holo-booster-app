@@ -227,7 +227,20 @@ All colors MUST be HSL.
   view-transition-name: app-bottom-nav;
 }
 
-/* Animated glow effect for redeemable rewards */
+/* Diagonal brand-color sweep on the Scan button (bottom-left → top-right) */
+@property --sweep {
+  syntax: '<percentage>';
+  initial-value: 0%;
+  inherits: false;
+}
+.brand-sweep-in {
+  --sweep: 0%;
+  animation: brand-sweep-in 700ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+@keyframes brand-sweep-in {
+  from { --sweep: 0%; }
+  to   { --sweep: 110%; }
+}
 @property --reward-glow-angle {
   syntax: '<angle>';
   initial-value: 0deg;
