@@ -1,53 +1,93 @@
-## Drei Bereiche
+ns# Eloyo V2 – Umsetzung für Backstube König
 
-### 1. Sidebar (`src/components/merchant/MerchantSidebar.tsx`)
-- "Mein Geschäft" als Ausklapper komplett entfernen.
-- Neu unter **BUSINESS** (flach, beide direkt sichtbar):
-  - **Profil** → `/kunde/mein-geschaeft?tab=info`, Icon `Store`
-  - **Punktesystem** → `/kunde/mein-geschaeft?tab=karte`, Icon `Package`
-- `isActive`-Logik erweitern, damit zwei Items auf demselben Pfad anhand `?tab=` separat aktiv markiert werden.
-- Marketing bleibt mit Sub-Items unverändert. Demo-Sidebar zeigt dieselbe Struktur.
+V2 betrifft ausschließlich den Demo-Merchant **Backstube König**. Alle anderen Händler bleiben auf V1 (App-Anzeige UND Merchant-Backoffice). Gating läuft über `merchant.version === 'v2'` bzw. die bestehende `DEFAULT_DEMO_MERCHANT_CUSTOMER_ID`.
 
-### 2. Punktesystem-Seite (`src/pages/merchant/MeinGeschaeft.tsx`, Tab `karte`)
-- **Entfernen:** Auto-/Manuell-Toggles, Slider, Variant-Tabs (Ausgewogen/Umsatzboost), farbige Tier-Badges, Beispiel-Einkäufe.
-- **Behalten:** Karten-ID-Sektion (unverändert).
-- **Neu:** Schlichte Liste mit 3 Kacheln „Karte 1/2/3" (dunkel, kein Farbakzent), Punkte-Wert je Karte als Input, ein einzelner „Speichern"-Button.
-- Speichern: setzt `manual_stamp_mode=true`, `stamp_mode='classic'`, schreibt `points_value` der vorhandenen `nfc_chips` (in fester Reihenfolge grün/blau/rot bzw. nach `created_at`).
-- Überschrift „Punktesystem" oben im Tab.
+## 1. Terminologie (global gültig für V2)
+- "Stempel/Besuch" → **Check-in**
+- Schlangen-Seite in der App → **Treuepass**
+- Fortschritt durch Empfehlung → **Boost**
+- Fortschritt durch Geburtstag → **Geburtstag**
 
-### 3. Automatische Onboarding-Seite (`/kunde/willkommen`)
-Neue Datei `src/pages/merchant/MerchantOnboarding.tsx`, neue Route in `App.tsx`.
+Memory-Eintrag wird angelegt, damit künftige Antworten dieses Wording konsequent verwenden.
 
-**Auto-Redirect:** `KundeDashboard` prüft beim Laden, ob bereits eine Prämie existiert. Falls 0 → `navigate('/kunde/willkommen', { replace: true })`. Sobald ≥1 Prämie existiert, erscheint die Seite nie wieder. Demo-Onboarding-Tour bleibt davon unberührt.
+## 2. App – Treuepass (`AppMerchantDetailV2.tsx`)
 
-**Aufbau** (alles auf einer scrollbaren Seite, jede Sektion mit Checkmark wenn erfüllt):
-1. **Titelbild & Logo** – inline Uploads (Storage-Bucket `customer-assets`). Titelbild Pflicht, Logo optional.
-2. **Karten-ID** – ein Input `XXXXX-XXXXX-XXXXX` (gleiche Format-Logik wie bestehend).
-3. **Punktesystem** – Eingabe „Durchschnittsausgabe €" → mit `calculateSuggestion(avg, ['visits'], 'balanced')` werden Punkte für Karte 1/2/3 vorbefüllt (live), beide Werte editierbar.
-4. **Bis zu 5 Prämien** – inline Mini-Form (Titel + Punkte + optional Bild), grüner Haken pro angelegter Prämie. Mindestens 1 erforderlich.
-5. **Empfehlungspunkte** – ein Number-Input, Default 20.
-6. **Neukundenprämie** – Button öffnet inline kleines Formular (Name + Art: Rabatt%/Festbetrag/Gratis-Produkt + Wert).
-7. **Öffnungszeiten (optional)** – gleiche UI wie im Profil.
-8. **Beschreibung (optional)** – Textarea max 300 Zeichen.
+**Beschriftung Knoten**
+- Aktueller Knoten: bleibt "Jetzt"
+- Vergangene Knoten: Haken (✓) in Markenfarbe in der Mitte, KEINE Zahl mehr im Kreis
+- Über jedem vergangenen Knoten Mini-Label: leer (Standard), `Boost` oder `Geburtstag`
+- Header-Zähler: zweizeilig "Check-ins" / große Zahl
 
-**Speichern-Button** (sticky unten): „🚀 Einrichtung abschließen & loslegen"
-- Validiert Pflichtfelder, scrollt bei Fehler zum ersten fehlenden Feld und markiert es rot.
-- Persistiert: `customers` (cover_image_url, logo_url, opening_hours, description, stamp_mode='classic', manual_stamp_mode=true, avg_revenue, referral_bonus_points, birthday_enabled=true, birthday_bonus_points=20, recall_enabled=false, google_review_enabled=false).
-- Box-ID via `customer_boxes` + lookup in `boxes` (gleiche Logik wie `handleAddBox`).
-- Punkte → Update der vorhandenen `nfc_chips` in fester Reihenfolge.
-- Prämien → Insert in `rewards`.
-- Neukundenprämie → Insert in `new_customer_offers`.
-- Anschließend → `navigate('/kunde')`.
+**Mock-Datenmodell erweitern**
+```ts
+interface CheckInEntry {
+  visitNumber: number;
+  source: 'normal' | 'boost' | 'birthday';
+}
+```
+`simulateReferralBoost` markiert den neuen Eintrag als `boost`. Zusätzlicher Sandbox-Button "Geburtstag simulieren" erzeugt einen `birthday`-Eintrag.
 
-### Technisches
+**Pre-Activation Flow**
+- Tap auf freigeschalteten/zukünftigen Reward-Knoten → Dialog "Beim nächsten Check-in einlösen?"
+- Bei Bestätigung: Reward bekommt `activatedForNextCheckIn = true` (visuell goldener Ring/Badge "Aktiviert")
+- Nur **eine** Prämie gleichzeitig aktivierbar
+- "Check-in simulieren" prüft: gibt es eine aktivierte Prämie? Wenn ja → automatisch einlösen + Erfolgs-Vollbild
+- Pro Tag nur ein Check-in (Toast bei Wiederholung)
+- "Meine Belohnungen"-Liste und Vollbild-Einlöseansicht für nachträgliches Einlösen werden entfernt – Einlösung passiert ausschließlich über Aktivierung + Check-in
 
-- Keine DB-Migration nötig: alle benötigten Spalten (`stamp_mode`, `manual_stamp_mode`, `avg_revenue`, `referral_bonus_points`, `birthday_enabled`, `birthday_bonus_points`, `recall_enabled`, `google_review_enabled`) werden bereits an anderer Stelle im Code beschrieben (Marketing/MeinKonto). Falls eine Spalte beim Speichern fehlt, fange ich den Fehler ab und überspringe sie.
-- Falls für die 3 Karten weniger als 3 NFC-Chip-Records existieren (frisches Konto), werden auf der einfachen Punktesystem-Seite Platzhalter angezeigt mit Hinweis „Erst Karten-ID hinterlegen".
-- Auf der Onboarding-Seite werden vorhandene Chips nach Erfassung der Karten-ID neu geladen, bevor Punkte zugewiesen werden.
+## 3. Markenfarbe pro Händler
 
-### Geänderte/neue Dateien
-- `src/components/merchant/MerchantSidebar.tsx` (Sidebar-Items + isActive)
-- `src/pages/merchant/MeinGeschaeft.tsx` (karte-Tab vereinfachen)
-- `src/pages/merchant/KundeDashboard.tsx` (Auto-Redirect)
-- `src/pages/merchant/MerchantOnboarding.tsx` (neu)
-- `src/App.tsx` (neue Route)
+**DB-Migration**: Spalten an `merchant_customers` hinzufügen
+- `version text default 'v1'` (für V2-Gating, Backstube König wird auf `'v2'` gesetzt)
+- `brand_color text` (HEX, z.B. `#FF6B35`)
+
+**Frontend**
+- Neuer Hook `useMerchantBrand(merchantId)` liefert `{ color, version }` und stellt CSS-Variablen `--brand`, `--brand-soft`, `--brand-foreground` auf dem Merchant-Scope bereit.
+- `AppMerchantDetailV2` ersetzt alle `ORANGE`/`GOLD`-Hardcodes durch `var(--brand)` / abgeleitete Töne.
+- BottomNav Scan-Button: liest aktive Brand-Farbe aus Context (gesetzt nur auf Treuepass-Routen), fällt sonst auf Standard-Lila zurück.
+- Default-Farbe für alle Händler bleibt Eloyo-Lila.
+
+## 4. Merchant-Backoffice V2 (nur wenn `merchant.version === 'v2'`)
+
+Zentraler Wrapper `useMerchantVersion()` entscheidet pro Seite, welche Variante gerendert wird. Bestehende V1-Komponenten bleiben unverändert.
+
+### 4.1 Profil / `MeinGeschaeft` (Tab "Karte")
+- Neuer Block "Markenfarbe" mit **Color Picker** (HEX-Input + visuelles Rad, `react-colorful`)
+- Live-Vorschau des Treuepasses rechts daneben (eingebettete `AppMerchantDetailV2`-Vorschau im Phone-Frame, read-only)
+- Speichern schreibt `brand_color` und aktualisiert Vorschau sofort
+
+### 4.2 Marketing → Automationen (V2)
+- Alles entfernen außer der oberen Info-Karte
+- Texte werden in einem späteren Schritt finalisiert (Platzhalter setzen)
+
+### 4.3 Marketing → Neukunden (V2)
+- Nur die obere Info-Textkarte rendern, Rest entfernen
+
+### 4.4 Marketing → Empfehlungen (V2)
+- Nur die obere Info-Textkarte rendern, Rest entfernen
+
+### 4.5 Marketing → Prämien (V2)
+- Bestehende Prämienliste oben behalten
+- Darunter Schlangen-Linie (gleiche Optik wie App-Treuepass) als Drop-Zone
+- Drag-and-Drop: Prämie aus Liste auf einen Check-in-Knoten ziehen → ordnet `visit_number` zu
+- Implementierung: `@dnd-kit/core` (bereits im Projekt verfügbar prüfen, sonst hinzufügen)
+
+## 5. Technische Details
+
+- **DB**: Migration für `version` + `brand_color` auf `merchant_customers`; Backstube König direkt auf `version='v2'`, `brand_color='#FF6B35'` setzen.
+- **V1 unangetastet**: alle V2-spezifischen Komponenten leben in `*/v2/`-Unterordnern oder mit `V2`-Suffix. Routing prüft Version und entscheidet.
+- **Brand-Color-Verteilung**: über React-Context `MerchantBrandProvider` rund um Treuepass-Route + Merchant-Backoffice-Layout (wenn V2).
+- **Sandbox**: alle bestehenden Mock-Buttons im Treuepass bleiben; "Geburtstag simulieren" kommt dazu.
+
+## 6. Reihenfolge der Umsetzung
+
+1. Memory + DB-Migration (`version`, `brand_color`)
+2. App-Treuepass: Wording, Haken-Knoten, Boost/Geburtstag-Labels, Mock erweitern
+3. Pre-Activation Flow + Entfernung der Belohnungs-Liste/Vollbild
+4. Brand-Color-Hook, CSS-Variablen, BottomNav Scan-Button reagiert
+5. Merchant-Backoffice Version-Gating
+6. Profil-Seite: Color Picker + Live-Vorschau
+7. Marketing-Seiten Automationen/Neukunden/Empfehlungen reduzieren
+8. Prämien-Seite: Schlange + Drag-and-Drop
+
+Soll ich so loslegen, oder zuerst nur einen Teilbereich (z.B. Punkte 1–4) abschließen, damit du zwischendurch reviewen kannst?
