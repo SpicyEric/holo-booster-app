@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -27,9 +28,10 @@ import { useAuth } from '@/hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
-import { Loader2, Eye, EyeOff, AlertTriangle, Pencil } from 'lucide-react';
+import { Loader2, Eye, EyeOff, AlertTriangle, Pencil, Smartphone, Cake } from 'lucide-react';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
+import { addPhoneToAccount, verifyPhoneChange, normalizePhone } from '@/app/lib/phoneAuth';
 
 export default function AppSettings() {
   const { user } = useAuth();
@@ -41,9 +43,10 @@ export default function AppSettings() {
   const [deleteTimer, setDeleteTimer] = useState(5);
   const [canDelete, setCanDelete] = useState(false);
 
+  const [authMethod, setAuthMethod] = useState<'email' | 'phone' | 'both'>('email');
+
   // Password change state
   const [passwordDialogOpen, setPasswordDialogOpen] = useState(false);
-  const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmNewPassword, setConfirmNewPassword] = useState('');
   const [changingPassword, setChangingPassword] = useState(false);
@@ -54,23 +57,33 @@ export default function AppSettings() {
   const [newEmail, setNewEmail] = useState('');
   const [savingEmail, setSavingEmail] = useState(false);
 
+  // Phone change state
+  const [phoneDialogOpen, setPhoneDialogOpen] = useState(false);
+  const [phoneStep, setPhoneStep] = useState<'enter' | 'verify'>('enter');
+  const [phoneInput, setPhoneInput] = useState('');
+  const [phoneOtp, setPhoneOtp] = useState('');
+  const [phoneWorking, setPhoneWorking] = useState(false);
+
   const [birthDate, setBirthDate] = useState('');
   const [gender, setGender] = useState('');
+
+  const userPhone = (user as any)?.phone as string | undefined;
+  const userEmail = user?.email;
 
   useEffect(() => {
     const fetchData = async () => {
       if (!user) return;
-
       try {
         const { data: profileData } = await supabase
           .from('profiles')
-          .select('birth_date, gender')
+          .select('birth_date, gender, auth_method')
           .eq('user_id', user.id)
           .maybeSingle();
 
         if (profileData) {
           setBirthDate(profileData.birth_date || '');
           setGender(profileData.gender || '');
+          if (profileData.auth_method) setAuthMethod(profileData.auth_method as any);
         }
       } catch (error) {
         console.error('Error fetching data:', error);
@@ -78,48 +91,34 @@ export default function AppSettings() {
         setLoading(false);
       }
     };
-
     fetchData();
   }, [user]);
 
-  // Delete timer countdown
+  // Delete timer
   useEffect(() => {
     if (deleteDialogOpen && deleteTimer > 0) {
-      const timer = setTimeout(() => {
-        setDeleteTimer(prev => prev - 1);
-      }, 1000);
+      const timer = setTimeout(() => setDeleteTimer((p) => p - 1), 1000);
       return () => clearTimeout(timer);
     } else if (deleteTimer === 0) {
       setCanDelete(true);
     }
   }, [deleteDialogOpen, deleteTimer]);
 
-  // Reset timer when dialog closes
   useEffect(() => {
-    if (!deleteDialogOpen) {
-      setDeleteTimer(5);
-      setCanDelete(false);
-    }
+    if (!deleteDialogOpen) { setDeleteTimer(5); setCanDelete(false); }
   }, [deleteDialogOpen]);
 
   const handleSave = async () => {
     if (!user) return;
-
     setSaving(true);
     try {
       const { error } = await supabase
         .from('profiles')
-        .update({
-          birth_date: birthDate || null,
-          gender: gender || null,
-        })
+        .update({ birth_date: birthDate || null, gender: gender || null })
         .eq('user_id', user.id);
-
       if (error) throw error;
-
       toast.success('Änderungen gespeichert');
     } catch (error: any) {
-      console.error('Error saving:', error);
       toast.error(`Fehler: ${error.message}`);
     } finally {
       setSaving(false);
@@ -127,59 +126,82 @@ export default function AppSettings() {
   };
 
   const handleChangePassword = async () => {
-    if (newPassword.length < 6) {
-      toast.error('Neues Passwort muss mindestens 6 Zeichen haben');
-      return;
-    }
-    if (newPassword !== confirmNewPassword) {
-      toast.error('Passwörter stimmen nicht überein');
-      return;
-    }
-
+    if (newPassword.length < 6) { toast.error('Mindestens 6 Zeichen'); return; }
+    if (newPassword !== confirmNewPassword) { toast.error('Passwörter stimmen nicht überein'); return; }
     setChangingPassword(true);
     try {
-      const { error } = await supabase.auth.updateUser({
-        password: newPassword
-      });
-
+      const { error } = await supabase.auth.updateUser({ password: newPassword });
       if (error) throw error;
-
       toast.success('Passwort erfolgreich geändert');
       setPasswordDialogOpen(false);
-      setCurrentPassword('');
-      setNewPassword('');
-      setConfirmNewPassword('');
+      setNewPassword(''); setConfirmNewPassword('');
     } catch (error: any) {
-      console.error('Error changing password:', error);
-      toast.error(error.message || 'Fehler beim Ändern des Passworts');
+      toast.error(error.message || 'Fehler beim Ändern');
     } finally {
       setChangingPassword(false);
     }
   };
 
+  // ===== Phone add/change =====
+  const openPhoneDialog = () => {
+    setPhoneInput(userPhone || '');
+    setPhoneOtp('');
+    setPhoneStep('enter');
+    setPhoneDialogOpen(true);
+  };
+
+  const handleSendPhoneOtp = async () => {
+    setPhoneWorking(true);
+    try {
+      await addPhoneToAccount(phoneInput);
+      setPhoneInput(normalizePhone(phoneInput));
+      setPhoneStep('verify');
+      toast.success('SMS-Code gesendet');
+    } catch (err: any) {
+      const msg = err?.message || '';
+      if (msg.toLowerCase().includes('already') || msg.toLowerCase().includes('registered')) {
+        toast.error('Diese Nummer ist bereits vergeben');
+      } else if (msg.toLowerCase().includes('phone') && msg.toLowerCase().includes('disabled')) {
+        toast.error('SMS-Login ist noch nicht aktiviert.');
+      } else {
+        toast.error(msg || 'Fehler beim Senden');
+      }
+    } finally {
+      setPhoneWorking(false);
+    }
+  };
+
+  const handleVerifyPhoneOtp = async () => {
+    if (phoneOtp.length !== 6) return;
+    setPhoneWorking(true);
+    try {
+      await verifyPhoneChange(phoneInput, phoneOtp);
+      toast.success('Handynummer hinzugefügt');
+      setPhoneDialogOpen(false);
+      // Refresh user
+      await supabase.auth.refreshSession();
+      setAuthMethod(userEmail ? 'both' : 'phone');
+    } catch (err: any) {
+      toast.error(err?.message || 'Ungültiger Code');
+      setPhoneOtp('');
+    } finally {
+      setPhoneWorking(false);
+    }
+  };
+
   const handleDeleteAccount = async () => {
     if (!user) return;
-
     setDeleting(true);
     try {
-      // Actually delete the account via edge function
       const { data, error } = await supabase.functions.invoke('deleteUserAccount', {
-        body: { userId: user.id }
+        body: { userId: user.id },
       });
-
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
-
-      // Sign out locally after successful deletion
       await supabase.auth.signOut();
-
-      toast.success('Konto gelöscht', {
-        description: 'Dein Konto wurde erfolgreich und unwiderruflich gelöscht.',
-      });
-
+      toast.success('Konto gelöscht');
       navigate('/app/auth');
     } catch (error: any) {
-      console.error('Error deleting account:', error);
       toast.error(`Fehler beim Löschen: ${error.message}`);
     } finally {
       setDeleting(false);
@@ -189,21 +211,10 @@ export default function AppSettings() {
 
   const formatBirthDate = (dateStr: string) => {
     if (!dateStr) return 'Nicht angegeben';
-    try {
-      return format(new Date(dateStr), 'dd. MMMM yyyy', { locale: de });
-    } catch {
-      return dateStr;
-    }
+    try { return format(new Date(dateStr), 'dd. MMMM yyyy', { locale: de }); } catch { return dateStr; }
   };
 
-  const getGenderLabel = (g: string) => {
-    switch (g) {
-      case 'male': return 'Männlich';
-      case 'female': return 'Weiblich';
-      case 'unspecified': return 'Nicht angegeben';
-      default: return 'Nicht angegeben';
-    }
-  };
+  const showPasswordOption = authMethod === 'email' || authMethod === 'both' || !!userEmail;
 
   if (loading) {
     return (
@@ -218,24 +229,34 @@ export default function AppSettings() {
   return (
     <MainLayout title="Mein Konto" showBack>
       <div className="space-y-6">
+        {/* Persönliche Daten */}
         <Card>
           <CardHeader>
             <CardTitle>Persönliche Daten</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label>Geburtsdatum</Label>
-              <div className="p-3 rounded-md bg-muted text-muted-foreground">
-                {formatBirthDate(birthDate)}
-              </div>
+              <Label className="flex items-center gap-1.5">
+                <Cake className="h-4 w-4 text-primary" /> Geburtsdatum
+              </Label>
+              <Input
+                type="date"
+                value={birthDate}
+                onChange={(e) => setBirthDate(e.target.value)}
+                max={new Date().toISOString().split('T')[0]}
+              />
+              <p className="text-xs text-muted-foreground">
+                Bekomme einen Bonus-Check-in an deinem Geburtstag 🎂
+              </p>
+              {birthDate && (
+                <p className="text-xs text-muted-foreground">Aktuell: {formatBirthDate(birthDate)}</p>
+              )}
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="gender">Geschlecht</Label>
               <Select value={gender} onValueChange={setGender}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Geschlecht auswählen" />
-                </SelectTrigger>
+                <SelectTrigger><SelectValue placeholder="Geschlecht auswählen" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="male">Männlich</SelectItem>
                   <SelectItem value="female">Weiblich</SelectItem>
@@ -246,40 +267,56 @@ export default function AppSettings() {
           </CardContent>
         </Card>
 
+        {/* Account */}
         <Card>
           <CardHeader>
             <CardTitle>Account</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
+            {/* Phone */}
+            <div className="space-y-2">
+              <Label className="flex items-center gap-1.5">
+                <Smartphone className="h-4 w-4 text-primary" /> Handynummer
+              </Label>
+              {userPhone ? (
+                <div className="flex items-center gap-2">
+                  <div className="p-3 rounded-md bg-muted text-muted-foreground flex-1">{userPhone}</div>
+                  <Button variant="ghost" size="icon" onClick={openPhoneDialog}>
+                    <Pencil className="h-4 w-4" />
+                  </Button>
+                </div>
+              ) : (
+                <Button variant="outline" className="w-full" onClick={openPhoneDialog}>
+                  <Smartphone className="h-4 w-4 mr-2" />
+                  Handynummer hinzufügen
+                </Button>
+              )}
+            </div>
+
+            {/* Email */}
             <div className="space-y-2">
               <Label>E-Mail</Label>
               {editingEmail ? (
                 <div className="space-y-2">
-                  <Input
-                    type="email"
-                    value={newEmail}
-                    onChange={(e) => setNewEmail(e.target.value)}
-                    placeholder="Neue E-Mail-Adresse"
-                  />
+                  <Input type="email" value={newEmail} onChange={(e) => setNewEmail(e.target.value)} placeholder="Neue E-Mail-Adresse" />
                   <p className="text-xs text-muted-foreground">
                     Du erhältst eine Bestätigungsmail an die neue Adresse.
                   </p>
                   <div className="flex gap-2">
                     <Button
                       size="sm"
-                      disabled={savingEmail || !newEmail || newEmail === user?.email}
+                      disabled={savingEmail || !newEmail || newEmail === userEmail}
                       onClick={async () => {
                         setSavingEmail(true);
                         try {
                           const { error } = await supabase.auth.updateUser({ email: newEmail });
                           if (error) throw error;
-                          toast.success('Bestätigungsmail gesendet', {
-                            description: 'Bitte bestätige deine neue E-Mail-Adresse über den Link in der E-Mail.',
-                          });
+                          toast.success('Bestätigungsmail gesendet');
                           setEditingEmail(false);
                           setNewEmail('');
+                          await supabase.rpc('refresh_auth_method');
                         } catch (error: any) {
-                          toast.error(error.message || 'Fehler beim Ändern der E-Mail');
+                          toast.error(error.message || 'Fehler');
                         } finally {
                           setSavingEmail(false);
                         }
@@ -288,111 +325,131 @@ export default function AppSettings() {
                       {savingEmail && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                       Speichern
                     </Button>
-                    <Button size="sm" variant="outline" onClick={() => { setEditingEmail(false); setNewEmail(''); }}>
-                      Abbrechen
-                    </Button>
+                    <Button size="sm" variant="outline" onClick={() => { setEditingEmail(false); setNewEmail(''); }}>Abbrechen</Button>
                   </div>
                 </div>
-              ) : (
+              ) : userEmail ? (
                 <div className="flex items-center gap-2">
-                  <div className="p-3 rounded-md bg-muted text-muted-foreground flex-1">
-                    {user?.email || ''}
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => { setEditingEmail(true); setNewEmail(user?.email || ''); }}
-                  >
+                  <div className="p-3 rounded-md bg-muted text-muted-foreground flex-1">{userEmail}</div>
+                  <Button variant="ghost" size="icon" onClick={() => { setEditingEmail(true); setNewEmail(userEmail); }}>
                     <Pencil className="h-4 w-4" />
                   </Button>
                 </div>
+              ) : (
+                <Button variant="outline" className="w-full" onClick={() => { setEditingEmail(true); setNewEmail(''); }}>
+                  E-Mail hinzufügen
+                </Button>
               )}
             </div>
 
-            <Button
-              variant="outline"
-              className="w-full"
-              onClick={() => setPasswordDialogOpen(true)}
-            >
-              Passwort ändern
-            </Button>
+            {showPasswordOption && (
+              <Button variant="outline" className="w-full" onClick={() => setPasswordDialogOpen(true)}>
+                Passwort ändern
+              </Button>
+            )}
 
             <div className="pt-4 border-t">
-              <Button
-                variant="destructive"
-                className="w-full"
-                onClick={() => setDeleteDialogOpen(true)}
-              >
+              <Button variant="destructive" className="w-full" onClick={() => setDeleteDialogOpen(true)}>
                 Konto löschen
               </Button>
             </div>
           </CardContent>
         </Card>
 
-        <Button
-          onClick={handleSave}
-          className="w-full bg-gradient-to-r from-primary to-secondary"
-          disabled={saving}
-        >
+        <Button onClick={handleSave} className="w-full bg-gradient-to-r from-primary to-secondary" disabled={saving}>
           {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
           Änderungen speichern
         </Button>
       </div>
+
+      {/* Phone Add/Change Dialog */}
+      <Dialog open={phoneDialogOpen} onOpenChange={setPhoneDialogOpen}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>{userPhone ? 'Handynummer ändern' : 'Handynummer hinzufügen'}</DialogTitle>
+            <DialogDescription>
+              {phoneStep === 'enter'
+                ? 'Wir senden dir einen 6-stelligen Code per SMS.'
+                : `Code an ${phoneInput} gesendet.`}
+            </DialogDescription>
+          </DialogHeader>
+          {phoneStep === 'enter' ? (
+            <div className="space-y-3">
+              <Input
+                type="tel"
+                inputMode="tel"
+                placeholder="z. B. 0151 23456789"
+                value={phoneInput}
+                onChange={(e) => setPhoneInput(e.target.value)}
+                className="h-12"
+                autoFocus
+              />
+            </div>
+          ) : (
+            <div className="space-y-3 flex flex-col items-center">
+              <InputOTP maxLength={6} value={phoneOtp} onChange={setPhoneOtp}>
+                <InputOTPGroup>
+                  {[0, 1, 2, 3, 4, 5].map((i) => (
+                    <InputOTPSlot key={i} index={i} className="h-12 w-10 text-lg" />
+                  ))}
+                </InputOTPGroup>
+              </InputOTP>
+              <button
+                type="button"
+                onClick={() => { setPhoneStep('enter'); setPhoneOtp(''); }}
+                className="text-xs text-muted-foreground hover:text-foreground"
+              >
+                Andere Nummer verwenden
+              </button>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setPhoneDialogOpen(false)}>Abbrechen</Button>
+            {phoneStep === 'enter' ? (
+              <Button onClick={handleSendPhoneOtp} disabled={phoneWorking || !phoneInput}>
+                {phoneWorking && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Code senden
+              </Button>
+            ) : (
+              <Button onClick={handleVerifyPhoneOtp} disabled={phoneWorking || phoneOtp.length !== 6}>
+                {phoneWorking && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Bestätigen
+              </Button>
+            )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Password Change Dialog */}
       <Dialog open={passwordDialogOpen} onOpenChange={setPasswordDialogOpen}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Passwort ändern</DialogTitle>
-            <DialogDescription>
-              Gib dein neues Passwort ein
-            </DialogDescription>
+            <DialogDescription>Gib dein neues Passwort ein</DialogDescription>
           </DialogHeader>
-
           <div className="space-y-4">
             <div className="space-y-2">
               <Label>Neues Passwort</Label>
               <div className="relative">
-                <Input
-                  type={showPasswords ? 'text' : 'password'}
-                  placeholder="Mindestens 6 Zeichen"
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  className="pr-10"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPasswords(!showPasswords)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
-                >
+                <Input type={showPasswords ? 'text' : 'password'} placeholder="Mindestens 6 Zeichen" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} className="pr-10" />
+                <button type="button" onClick={() => setShowPasswords(!showPasswords)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">
                   {showPasswords ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
               </div>
             </div>
             <div className="space-y-2">
               <Label>Passwort bestätigen</Label>
-              <Input
-                type={showPasswords ? 'text' : 'password'}
-                placeholder="Passwort wiederholen"
-                value={confirmNewPassword}
-                onChange={(e) => setConfirmNewPassword(e.target.value)}
-              />
+              <Input type={showPasswords ? 'text' : 'password'} placeholder="Passwort wiederholen" value={confirmNewPassword} onChange={(e) => setConfirmNewPassword(e.target.value)} />
             </div>
           </div>
-
           <DialogFooter>
-            <Button variant="outline" onClick={() => setPasswordDialogOpen(false)}>
-              Abbrechen
-            </Button>
+            <Button variant="outline" onClick={() => setPasswordDialogOpen(false)}>Abbrechen</Button>
             <Button onClick={handleChangePassword} disabled={changingPassword}>
-              {changingPassword && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Speichern
+              {changingPassword && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Speichern
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* Delete Account Dialog with Timer */}
+      {/* Delete Account Dialog */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -403,17 +460,12 @@ export default function AppSettings() {
               <AlertDialogTitle className="text-xl">Konto wirklich löschen?</AlertDialogTitle>
             </div>
             <AlertDialogDescription className="space-y-3 text-left">
-              <p className="font-medium text-foreground">
-                Achtung: Diese Aktion kann nicht rückgängig gemacht werden!
-              </p>
+              <p className="font-medium text-foreground">Achtung: Diese Aktion kann nicht rückgängig gemacht werden!</p>
               <ul className="list-disc list-inside space-y-1 text-sm">
                 <li>Alle deine gesammelten Punkte gehen unwiderruflich verloren</li>
                 <li>Deine persönlichen Daten werden gelöscht</li>
                 <li>Dein Konto kann nicht wiederhergestellt werden</li>
               </ul>
-              <p className="text-sm text-muted-foreground">
-                Anonymisierte Nutzungsdaten bleiben für statistische Zwecke erhalten.
-              </p>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -423,13 +475,7 @@ export default function AppSettings() {
               disabled={deleting || !canDelete}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              {deleting ? (
-                'Wird gelöscht...'
-              ) : !canDelete ? (
-                `Warten (${deleteTimer}s)`
-              ) : (
-                'Ja, Konto löschen'
-              )}
+              {deleting ? 'Wird gelöscht...' : !canDelete ? `Warten (${deleteTimer}s)` : 'Ja, Konto löschen'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

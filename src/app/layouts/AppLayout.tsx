@@ -2,6 +2,7 @@ import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { Home, Gift, User, Scan, Store } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useOfflineSync } from '@/app/hooks/useOfflineSync';
+import { PhoneMigrationDialog } from '@/app/components/PhoneMigrationDialog';
 
 /**
  * Mobile-optimized layout for end customer app
@@ -41,6 +42,8 @@ export const AppLayout = () => {
       >
         <Outlet />
       </main>
+
+      <PhoneMigrationDialog />
 
       {/* Bottom Navigation */}
       <nav className="fixed bottom-0 left-0 right-0 bg-card border-t border-border safe-area-pb">
