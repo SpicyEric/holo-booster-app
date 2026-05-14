@@ -182,7 +182,12 @@ export const AppMerchantDetailV2 = () => {
   const [screenCaptured, setScreenCaptured] = useState(false);
 
   // ===== Entry-Transition vom Home-Pass =====
-  type EntryPhase = 'idle' | 'flying' | 'fading' | 'revealing' | 'done';
+  // Phasen:
+  //  flying    – Cover-Bild fliegt + skaliert + verblasst gleichzeitig (eine smoothe Bewegung)
+  //  sectionsIn – Sektionen unterhalb (Hinweis, Freunde) faden Step-by-Step ein
+  //  snakeIn   – Schlange wischt von links nach rechts ein
+  //  done      – fertig
+  type EntryPhase = 'idle' | 'flying' | 'sectionsIn' | 'snakeIn' | 'done';
   const readEntryPayload = () => {
     if (typeof window === 'undefined') return null;
     try {
@@ -201,7 +206,6 @@ export const AppMerchantDetailV2 = () => {
   const snakeBandRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    // Payload nach erstem Render aus dem Storage entfernen
     try { sessionStorage.removeItem('treuepass-transition'); } catch {}
   }, [merchantId]);
 
@@ -220,6 +224,7 @@ export const AppMerchantDetailV2 = () => {
   }, [entryPhase, entryTarget]);
 
   const isEntering = entryPhase !== 'done';
+  const sectionsRevealed = entryPhase === 'sectionsIn' || entryPhase === 'snakeIn' || entryPhase === 'done';
 
   // Privacy-Screen NUR aktivieren, wenn die sensible Einlöse-Ansicht
   // (oranges Vollbild mit Code-Marquee + Prämie) sichtbar ist.
@@ -515,7 +520,7 @@ export const AppMerchantDetailV2 = () => {
               backgroundImage: `url(${coverImageUrl})`,
               backgroundSize: 'cover',
               backgroundPosition: 'center',
-              opacity: isEntering ? 0 : 0.18,
+              opacity: entryPhase === 'flying' ? 0 : 0.18,
               filter: 'saturate(0.9)',
               maskImage: 'linear-gradient(to bottom, transparent 0%, #000 20%, #000 80%, transparent 100%)',
               WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, #000 20%, #000 80%, transparent 100%)',
@@ -546,8 +551,8 @@ export const AppMerchantDetailV2 = () => {
             WebkitOverflowScrolling: 'touch',
             touchAction: 'pan-x',
             overscrollBehaviorX: 'contain',
-            clipPath: entryPhase === 'flying' || entryPhase === 'fading' ? 'inset(0 100% 0 0)' : 'inset(0 0 0 0)',
-            transition: 'clip-path 700ms cubic-bezier(0.22,1,0.36,1)',
+            clipPath: entryPhase === 'snakeIn' || entryPhase === 'done' ? 'inset(0 0 0 0)' : 'inset(0 100% 0 0)',
+            transition: 'clip-path 800ms cubic-bezier(0.22,1,0.36,1)',
           }}
         >
           <div className="relative" style={{ width: totalWidth, height: SNAKE_HEIGHT + 14 }}>
@@ -681,7 +686,12 @@ export const AppMerchantDetailV2 = () => {
       </div>
 
       {/* Hinweis Pre-Activation / Aktivierte Prämie */}
-      <div className="px-4 mt-6">
+      <motion.div
+        className="px-4 mt-6"
+        initial={isEntering ? { opacity: 0, y: 10 } : false}
+        animate={sectionsRevealed ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 }}
+        transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1], delay: 0 }}
+      >
         <Card
           className="p-4 border transition-colors"
           style={{
@@ -738,10 +748,15 @@ export const AppMerchantDetailV2 = () => {
             )}
           </AnimatePresence>
         </Card>
-      </div>
+      </motion.div>
 
       {/* Freunde einladen */}
-      <div className="px-4 mt-4">
+      <motion.div
+        className="px-4 mt-4"
+        initial={isEntering ? { opacity: 0, y: 10 } : false}
+        animate={sectionsRevealed ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 }}
+        transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1], delay: sectionsRevealed ? 0.25 : 0 }}
+      >
         <Card
           className="p-5 border-0 text-white shadow-lg"
           style={{ background: `linear-gradient(135deg, ${BRAND}, ${BRAND}cc)` }}
@@ -765,7 +780,7 @@ export const AppMerchantDetailV2 = () => {
             Einladungslink teilen
           </Button>
         </Card>
-      </div>
+      </motion.div>
 
       {/* Sandbox-Test-Buttons */}
       <div className="px-4 mt-6">
@@ -1026,73 +1041,56 @@ export const AppMerchantDetailV2 = () => {
         )}
       </AnimatePresence>
 
-      {/* Entry-Transition vom Home-Pass: Cover fliegt vom Karten-Rect zum Snake-Band */}
+      {/* Entry-Transition vom Home-Pass: Cover fliegt + skaliert + verblasst gleichzeitig */}
       <AnimatePresence>
-        {isEntering && entryOrigin && entryCover && (
-          <>
-            {/* Diagonaler Brand-Color-Sweep (unten-links → oben-rechts) */}
-            <motion.div
-              key="brand-sweep"
-              className="fixed inset-0 z-[55] pointer-events-none"
-              initial={{ opacity: 0, clipPath: 'polygon(0% 100%, 0% 100%, 0% 100%)' }}
-              animate={{ opacity: 0.55, clipPath: 'polygon(0% 100%, 0% 0%, 100% 0%, 100% 100%)' }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
-              style={{ background: `linear-gradient(to top right, ${BRAND}, ${BRAND}00 70%)` }}
-            />
-            {/* Cover fliegt von Origin zu Snake-Band */}
-            <motion.div
-              key="cover-fly"
-              className="fixed z-[60] pointer-events-none overflow-hidden shadow-xl"
-              initial={{
-                top: entryOrigin.top,
-                left: entryOrigin.left,
-                width: entryOrigin.width,
-                height: entryOrigin.height,
-                borderRadius: 12,
-                opacity: 1,
-              }}
-              animate={
-                entryTarget
-                  ? entryPhase === 'fading'
-                    ? {
-                        top: entryTarget.top,
-                        left: entryTarget.left,
-                        width: entryTarget.width,
-                        height: entryTarget.height,
-                        borderRadius: 0,
-                        opacity: 0.18,
-                      }
-                    : {
-                        top: entryTarget.top,
-                        left: entryTarget.left,
-                        width: entryTarget.width,
-                        height: entryTarget.height,
-                        borderRadius: 0,
-                        opacity: 1,
-                      }
-                  : undefined
+        {isEntering && entryOrigin && entryCover && entryPhase === 'flying' && (
+          <motion.div
+            key="cover-fly"
+            className="fixed z-[60] pointer-events-none overflow-hidden shadow-xl"
+            initial={{
+              top: entryOrigin.top,
+              left: entryOrigin.left,
+              width: entryOrigin.width,
+              height: entryOrigin.height,
+              borderRadius: 12,
+              opacity: 1,
+            }}
+            animate={
+              entryTarget
+                ? {
+                    top: entryTarget.top,
+                    left: entryTarget.left,
+                    width: entryTarget.width,
+                    height: entryTarget.height,
+                    borderRadius: 0,
+                    opacity: 0.18,
+                  }
+                : undefined
+            }
+            transition={{
+              duration: 0.75,
+              ease: [0.22, 1, 0.36, 1],
+              // Border-radius leicht früher entschärfen, damit Größenwechsel flüssig wirkt
+              borderRadius: { duration: 0.75, ease: [0.22, 1, 0.36, 1] },
+              opacity: { duration: 0.75, ease: [0.4, 0, 0.6, 1] },
+            }}
+            onAnimationComplete={() => {
+              if (entryPhase === 'flying') {
+                // Sektionen unterhalb Step-by-Step einfaden lassen, dann Schlange
+                setEntryPhase('sectionsIn');
+                // Sektionen brauchen ~0.6s (info 0.3s + freunde 0.3s mit Stagger)
+                setTimeout(() => setEntryPhase('snakeIn'), 700);
+                // Snake-Wipe ~0.8s
+                setTimeout(() => setEntryPhase('done'), 1600);
               }
-              transition={{
-                duration: entryPhase === 'fading' ? 0.45 : 0.6,
-                ease: [0.22, 1, 0.36, 1],
-              }}
-              onAnimationComplete={() => {
-                if (entryPhase === 'flying') {
-                  setEntryPhase('fading');
-                } else if (entryPhase === 'fading') {
-                  setEntryPhase('revealing');
-                  setTimeout(() => setEntryPhase('done'), 750);
-                }
-              }}
-              style={{
-                backgroundImage: `url(${entryCover})`,
-                backgroundSize: 'cover',
-                backgroundPosition: 'center',
-                filter: 'saturate(0.9)',
-              }}
-            />
-          </>
+            }}
+            style={{
+              backgroundImage: `url(${entryCover})`,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+              filter: 'saturate(0.9)',
+            }}
+          />
         )}
       </AnimatePresence>
 
