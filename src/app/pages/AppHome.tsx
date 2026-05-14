@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Loader2, Nfc, Gift, Sparkles, MapPin, Clock, Globe, Instagram, Facebook, Twitter } from 'lucide-react';
+import { Loader2, Gift, MapPin, Clock, Globe, Instagram, Facebook, Twitter, ArrowDown, MessageCircle, Hand, Smartphone } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { MainLayout } from '@/app/components/layout/MainLayout';
