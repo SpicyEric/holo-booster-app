@@ -316,6 +316,8 @@ export const AppMerchantDetailV2 = () => {
   const [boostFlash, setBoostFlash] = useState(false);
   const [boostInfoOpen, setBoostInfoOpen] = useState(false);
   const [lastCheckInDate, setLastCheckInDate] = useState<string | null>(null);
+  const [lastRedeemDate, setLastRedeemDate] = useState<string | null>(null);
+  const [limitModal, setLimitModal] = useState<null | 'checkin' | 'reward'>(null);
 
   // Auto-Aktivierung der ersten Prämie beim allerersten Check-in:
   // Wenn der User noch nie eingecheckt hat und der Händler eine Prämie auf
