@@ -27,6 +27,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import RichTextEditor from '@/components/merchant/RichTextEditor';
+import RewardSnakeDropZone from '@/components/merchant/RewardSnakeDropZone';
 
 import ReferralExplainerCarousel from '@/components/merchant/ReferralExplainerCarousel';
 import { ExplainerCarousel } from '@/components/merchant/ExplainerCarousel';
@@ -639,7 +640,7 @@ const Marketing = () => {
                           <div>
                             <p className="font-semibold text-foreground">{reward.title}</p>
                             {reward.description && <p className="text-sm text-muted-foreground">{reward.description}</p>}
-                            <Badge variant="secondary" className="rounded-full mt-1">{reward.points_required} Punkte</Badge>
+                            <Badge variant="secondary" className="rounded-full mt-1">{isV2 ? `Check-in #${reward.points_required}` : `${reward.points_required} Punkte`}</Badge>
                           </div>
                         </div>
                         <div className="flex items-center gap-2">
@@ -652,6 +653,15 @@ const Marketing = () => {
                 )}
               </CardContent>
             </Card>
+
+            {/* V2: Snake Drop-Zone für Prämien-Belegung */}
+            {isV2 && (
+              <RewardSnakeDropZone
+                rewards={rewards}
+                brandColor={merchantBrand.color}
+                onChanged={loadData}
+              />
+            )}
 
             {/* Sprung zur Live-Vorschau in Mein Geschäft → System */}
             <Card className="rounded-2xl shadow-sm border-0 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent">
@@ -679,6 +689,7 @@ const Marketing = () => {
           {/* ========== NEUKUNDEN TAB ========== */}
           <TabsContent value="boost" className="space-y-6 mt-6">
             <ExplainerCarousel slides={neukundenCards} />
+            {!isV2 && <>
             {/* Neukundenprämie */}
             <Card className="rounded-2xl shadow-sm border border-primary/10 bg-primary/[0.03]">
               <CardHeader className="flex flex-row items-center justify-between pb-4">
@@ -770,11 +781,33 @@ const Marketing = () => {
                 )}
               </CardContent>
             </Card>
+            </>}
           </TabsContent>
 
           {/* ========== BEWERTUNGEN TAB ========== */}
           {/* ========== EMPFEHLUNGEN TAB ========== */}
           <TabsContent value="referral" className="space-y-6 mt-6">
+            {isV2 && (
+              <Card className="rounded-2xl shadow-sm border border-primary/10 bg-primary/[0.03]">
+                <CardHeader className="pb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center"><Rocket className="h-5 w-5 text-primary" /></div>
+                    <div>
+                      <CardTitle className="text-lg font-semibold">Boost — Empfehlungen</CardTitle>
+                      <CardDescription>So funktionieren Empfehlungen im Treuepass</CardDescription>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-foreground/90 leading-relaxed">
+                    Deine Kunden können den Treuepass an Freunde weiterempfehlen. Sobald ein eingeladener Freund seinen ersten Check-in macht,
+                    bekommt der einladende Kunde einen <strong>Boost</strong> — ein zusätzlicher Check-in auf seinem Treuepass mit dem Label „Boost 🚀".
+                    Du musst hier nichts mehr einstellen — alles läuft automatisch.
+                  </p>
+                </CardContent>
+              </Card>
+            )}
+            {!isV2 && <>
             <Card className="rounded-2xl shadow-sm border border-primary/10 bg-primary/[0.03]">
               <CardHeader className="pb-4">
                 <div className="flex items-center gap-3">
@@ -874,6 +907,7 @@ const Marketing = () => {
                 )}
               </CardContent>
             </Card>
+            </>}
           </TabsContent>
 
           {/* ========== BEWERTUNGEN TAB ========== */}
