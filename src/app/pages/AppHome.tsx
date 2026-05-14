@@ -226,4 +226,77 @@ function EmptyTutorial({ onExplore }: { onExplore: () => void }) {
   );
 }
 
+function MerchantInfoBlock({ store }: { store: MerchantCard }) {
+  const hours = store.openingHours;
+  const links: { href: string; label: string; Icon: typeof Globe }[] = [];
+  const web = normalizeUrl(store.website);
+  const ig = instagramUrl(store.instagram);
+  const fb = normalizeUrl(store.facebook);
+  const tw = normalizeUrl(store.twitter);
+  if (web) links.push({ href: web, label: 'Website', Icon: Globe });
+  if (ig) links.push({ href: ig, label: 'Instagram', Icon: Instagram });
+  if (fb) links.push({ href: fb, label: 'Facebook', Icon: Facebook });
+  if (tw) links.push({ href: tw, label: 'Twitter', Icon: Twitter });
+
+  const hasAnything = !!(store.description || hours || store.address || links.length);
+  if (!hasAnything) return null;
+
+  return (
+    <div className="mt-3 px-1 space-y-3">
+      {store.description && (
+        <p className="text-sm text-foreground/80 leading-relaxed whitespace-pre-line">
+          {store.description}
+        </p>
+      )}
+
+      {hours && (
+        <div className="rounded-xl bg-card border border-border/50 p-3">
+          <div className="flex items-center gap-2 mb-2">
+            <Clock className="h-4 w-4 text-primary" />
+            <span className="text-xs font-semibold text-foreground">Öffnungszeiten</span>
+          </div>
+          <div className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-xs">
+            {DAY_LABELS.map(({ key, label }) => {
+              const d = hours[key];
+              if (!d) return null;
+              const time = d.closed ? 'Geschlossen' : `${d.open ?? ''} – ${d.close ?? ''}`;
+              return (
+                <div key={key} className="contents">
+                  <span className="text-muted-foreground">{label}</span>
+                  <span className="text-foreground">{time}</span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {store.address && (
+        <div className="flex items-start gap-2 text-sm text-foreground/80">
+          <MapPin className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+          <span>{store.address}</span>
+        </div>
+      )}
+
+      {links.length > 0 && (
+        <div className="flex flex-wrap gap-2">
+          {links.map(({ href, label, Icon }) => (
+            <a
+              key={label}
+              href={href}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(e) => e.stopPropagation()}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary/10 text-primary text-xs font-medium hover:bg-primary/15 transition-colors"
+            >
+              <Icon className="h-3.5 w-3.5" />
+              {label}
+            </a>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default AppHome;
