@@ -63,6 +63,14 @@ export const AppAuth = () => {
     return () => clearTimeout(t);
   }, [resendCooldown]);
 
+  // Auto-submit OTP once all 6 digits entered
+  useEffect(() => {
+    if (mode === 'phone' && phoneStep === 'verify' && otpCode.length === 6 && !loading) {
+      handleVerifyOtp();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [otpCode, mode, phoneStep]);
+
   const ensureAppRoleAndProceed = async (userId: string) => {
     const { data: rolesData } = await supabase
       .from('user_roles')
