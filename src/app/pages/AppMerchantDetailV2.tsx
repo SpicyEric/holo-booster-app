@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, Gift, Check, UserPlus, Sparkles, Cake, X, CheckCircle2, Star } from 'lucide-react';
+import { ArrowLeft, Gift, Check, UserPlus, Sparkles, Cake, X, CheckCircle2, Star, MessageSquare, Calendar as CalendarIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
@@ -38,6 +38,10 @@ type CheckInSource = 'normal' | 'boost' | 'birthday' | 'google_review';
 interface CheckInEntry {
   visit: number;
   source: CheckInSource;
+  /** ISO timestamp when this check-in happened (optional for legacy entries) */
+  at?: string;
+  /** Boost only: when the inviter's invitation was accepted */
+  invitedAt?: string;
 }
 
 interface MockReward {
@@ -53,16 +57,25 @@ const NODE_SPACING = 110;
 const SNAKE_HEIGHT = 220;
 const AMPLITUDE = 55;
 const WAVELENGTH = 4;
-const DEMO_PASS_RESET_VERSION = 'checkin7-open-rewards-v1';
+const DEMO_PASS_RESET_VERSION = 'checkin7-open-rewards-v3-timestamps';
+
+// Demo-Daten: Backdated Timestamps, damit Klick-Pop-ups plausible Zeiten zeigen.
+const NOW = Date.now();
+const DAY = 24 * 60 * 60 * 1000;
+const ts = (daysAgo: number, hour = 10, minute = 30) => {
+  const d = new Date(NOW - daysAgo * DAY);
+  d.setHours(hour, minute, 0, 0);
+  return d.toISOString();
+};
 
 const DEMO_DEFAULT_CHECK_INS: CheckInEntry[] = [
-  { visit: 1, source: 'normal' },
-  { visit: 2, source: 'google_review' },
-  { visit: 3, source: 'birthday' },
-  { visit: 4, source: 'normal' },
-  { visit: 5, source: 'boost' },
-  { visit: 6, source: 'normal' },
-  { visit: 7, source: 'normal' },
+  { visit: 1, source: 'normal', at: ts(28, 9, 15) },
+  { visit: 2, source: 'google_review', at: ts(25, 14, 5) },
+  { visit: 3, source: 'birthday', at: ts(20, 12, 0) },
+  { visit: 4, source: 'normal', at: ts(16, 8, 45) },
+  { visit: 5, source: 'boost', at: ts(12, 17, 20), invitedAt: ts(14, 19, 10) },
+  { visit: 6, source: 'normal', at: ts(7, 11, 5) },
+  { visit: 7, source: 'normal', at: ts(2, 16, 40) },
 ];
 
 // Standard: Gratisbreze (Visit 4) und Gratiskaffee (Visit 8) sind beide noch offen.
@@ -543,7 +556,12 @@ export const AppMerchantDetailV2 = () => {
   };
 
   const handleRewardTap = (reward: MockReward) => {
-    if (reward.redeemed) return;
+    if (reward.redeemed) {
+      // Bereits eingelöste Prämie → Detail-Pop-up zeigen
+      const entry = checkIns.find((c) => c.visit === reward.visitNumber);
+      setNodeDetail({ kind: 'reward-redeemed', label: reward.label, at: entry?.at });
+      return;
+    }
     setTappedReward(reward);
   };
 
@@ -595,6 +613,7 @@ export const AppMerchantDetailV2 = () => {
     if (s === 'boost') return 'Boost';
     if (s === 'birthday') return 'Geburtstag';
     if (s === 'google_review') return 'Bewertung';
+    if (s === 'normal') return 'Check-in';
     return null;
   };
 
@@ -607,6 +626,73 @@ export const AppMerchantDetailV2 = () => {
     if (s === 'google_review') return <Star className="w-5 h-5 text-white" strokeWidth={2.8} fill="white" />;
     return <Check className="w-5 h-5 text-white" strokeWidth={3} />;
   };
+
+  // ============== Node-Detail-Pop-up & Google-Review-Demo ==============
+  type NodeDetail =
+    | { kind: 'check-in'; visit: number; source: CheckInSource; at?: string; invitedAt?: string; redeemed?: { label: string; at?: string } | null }
+    | { kind: 'reward-redeemed'; label: string; at?: string };
+  const [nodeDetail, setNodeDetail] = useState<NodeDetail | null>(null);
+  const [googleReviewOpen, setGoogleReviewOpen] = useState(false);
+  const googleReviewKey = `eloyo:v2:google-review-done:${merchantId}`;
+  const [googleReviewDone, setGoogleReviewDone] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return false;
+    return localStorage.getItem(googleReviewKey) === '1';
+  });
+  // Reset auch das Google-Review-Flag bei Demo-Reset
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (localStorage.getItem(resetKey) !== DEMO_PASS_RESET_VERSION) {
+      try { localStorage.removeItem(googleReviewKey); } catch { /* noop */ }
+      setGoogleReviewDone(false);
+    }
+  }, [resetKey, googleReviewKey]);
+
+  const formatDateTime = (iso?: string) => {
+    if (!iso) return '–';
+    try {
+      return new Date(iso).toLocaleString('de-DE', {
+        day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit',
+      });
+    } catch { return '–'; }
+  };
+
+  const openNodeDetail = (visit: number) => {
+    const entry = checkIns.find((c) => c.visit === visit);
+    if (!entry) return;
+    const reward = rewards.find((r) => r.visitNumber === visit);
+    setNodeDetail({
+      kind: 'check-in',
+      visit,
+      source: entry.source,
+      at: entry.at,
+      invitedAt: entry.invitedAt,
+      redeemed: reward?.redeemed ? { label: reward.label, at: entry.at } : null,
+    });
+  };
+
+  const openRewardRedeemedDetail = (reward: MockReward) => {
+    const entry = checkIns.find((c) => c.visit === reward.visitNumber);
+    setNodeDetail({ kind: 'reward-redeemed', label: reward.label, at: entry?.at });
+  };
+
+  const handleGoogleReviewClick = () => {
+    if (googleReviewDone) return;
+    // Echte DB-RPC versuchen (no-op falls unauth/Demo) — danach Google öffnen + Demo-Check-in
+    void (async () => {
+      try {
+        const { supabase } = await import('@/integrations/supabase/client');
+        await supabase.rpc('award_google_review_bonus', { p_merchant_customer_id: merchantId });
+      } catch { /* Demo: ignorieren */ }
+    })();
+    try { localStorage.setItem(googleReviewKey, '1'); } catch { /* noop */ }
+    setGoogleReviewDone(true);
+    // Demo-Check-in als Bewertung anhängen
+    const next = currentVisit + 1;
+    setCheckIns((prev) => [...prev, { visit: next, source: 'google_review', at: new Date().toISOString() }]);
+    setGoogleReviewOpen(false);
+    window.open(`https://www.google.com/search?q=${encodeURIComponent('Backstube König Bewertung')}`, '_blank');
+  };
+
 
   return (
     <div
@@ -808,28 +894,36 @@ export const AppMerchantDetailV2 = () => {
                       {label}
                     </div>
                   )}
-                  <motion.div
-                    animate={isCurrent ? { scale: [1, 1.06, 1] } : {}}
-                    transition={{ duration: 1.4, repeat: isCurrent ? Infinity : 0 }}
-                    className="rounded-full flex items-center justify-center border-4 shadow"
-                    style={{
-                      width: isCurrent ? 56 : 44,
-                      height: isCurrent ? 56 : 44,
-                      background: isPast ? BRAND : '#fff',
-                      borderColor: isPast || isCurrent ? BRAND : `${BRAND}55`,
-                    }}
+                  <button
+                    type="button"
+                    onClick={isPast ? () => openNodeDetail(visit) : undefined}
+                    disabled={!isPast}
+                    aria-label={isPast ? `Check-in ${visit} Details` : `Check-in ${visit}`}
+                    className="focus:outline-none"
                   >
-                    {isPast ? (
-                      sourceNodeIcon(source)
-                    ) : (
-                      <span
-                        className="text-sm font-bold"
-                        style={{ color: isCurrent ? BRAND : `${BRAND}99` }}
-                      >
-                        {isCurrent ? 'Jetzt' : visit}
-                      </span>
-                    )}
-                  </motion.div>
+                    <motion.div
+                      animate={isCurrent ? { scale: [1, 1.06, 1] } : {}}
+                      transition={{ duration: 1.4, repeat: isCurrent ? Infinity : 0 }}
+                      className="rounded-full flex items-center justify-center border-4 shadow"
+                      style={{
+                        width: isCurrent ? 56 : 44,
+                        height: isCurrent ? 56 : 44,
+                        background: isPast ? BRAND : '#fff',
+                        borderColor: isPast || isCurrent ? BRAND : `${BRAND}55`,
+                      }}
+                    >
+                      {isPast ? (
+                        sourceNodeIcon(source)
+                      ) : (
+                        <span
+                          className="text-sm font-bold"
+                          style={{ color: isCurrent ? BRAND : `${BRAND}99` }}
+                        >
+                          {isCurrent ? 'Jetzt' : visit}
+                        </span>
+                      )}
+                    </motion.div>
+                  </button>
                 </div>
               );
             })}
@@ -934,38 +1028,142 @@ export const AppMerchantDetailV2 = () => {
         </Card>
       </motion.div>
 
-      {/* Google-Bewertung abgeben */}
-      <motion.div
-        className="px-4 mt-4"
-        initial={isEntering ? { opacity: 0, y: 10 } : false}
-        animate={friendsVisible ? { opacity: 1, y: 0 } : { opacity: 0, y: -8 }}
-        transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1], delay: sectionsRevealed && !isExiting ? 0.3 : 0 }}
-      >
-        <Card
-          className="p-5 border-0 text-white shadow-lg"
-          style={{ background: `linear-gradient(135deg, ${BRAND}, ${BRAND}cc)` }}
+      {/* Google-Bewertung abgeben — nur wenn min. 1 Check-in & noch nicht abgegeben */}
+      {currentVisit >= 1 && !googleReviewDone && (
+        <motion.div
+          className="px-4 mt-4"
+          initial={isEntering ? { opacity: 0, y: 10 } : false}
+          animate={friendsVisible ? { opacity: 1, y: 0 } : { opacity: 0, y: -8 }}
+          transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1], delay: sectionsRevealed && !isExiting ? 0.3 : 0 }}
         >
-          <div className="flex items-center gap-3 mb-3">
-            <div className="w-11 h-11 rounded-2xl bg-white/20 flex items-center justify-center">
-              <Star className="w-5 h-5" fill="white" />
-            </div>
-            <div>
-              <h3 className="font-bold text-base">Google-Bewertung abgeben</h3>
-              <p className="text-xs text-white/85">
-                Bewerte Backstube König bei Google = +1 Check-in auf deinem Treuepass
-              </p>
-            </div>
-          </div>
-          <Button
-            onClick={() => window.open(`https://www.google.com/search?q=${encodeURIComponent('Backstube König')}`, '_blank')}
-            className="w-full bg-white hover:bg-white/90"
-            style={{ color: BRAND }}
+          <Card
+            className="p-5 border-0 text-white shadow-lg"
+            style={{ background: `linear-gradient(135deg, ${BRAND}, ${BRAND}cc)` }}
           >
-            Jetzt bewerten
-          </Button>
-        </Card>
-      </motion.div>
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-11 h-11 rounded-2xl bg-white/20 flex items-center justify-center">
+                <Star className="w-5 h-5" fill="white" />
+              </div>
+              <div>
+                <h3 className="font-bold text-base">Hol dir einen Check-in</h3>
+                <p className="text-xs text-white/85">Bewerte uns bei Google</p>
+              </div>
+            </div>
+            <Button
+              onClick={() => setGoogleReviewOpen(true)}
+              className="w-full bg-white hover:bg-white/90"
+              style={{ color: BRAND }}
+            >
+              Bewerten
+            </Button>
+          </Card>
+        </motion.div>
+      )}
 
+      {/* Google-Bewertungs-Pop-up */}
+      <Dialog open={googleReviewOpen} onOpenChange={setGoogleReviewOpen}>
+        <DialogContent className="max-w-[320px] rounded-3xl p-6 gap-4">
+          <div className="text-center space-y-2">
+            <div
+              className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto"
+              style={{ background: BRAND_SOFT }}
+            >
+              <Star className="w-7 h-7" style={{ color: BRAND }} fill={BRAND} />
+            </div>
+            <h2 className="text-xl font-bold text-neutral-900">Bewertung abgeben</h2>
+            <p className="text-xs font-semibold uppercase tracking-wide text-neutral-500">So funktioniert's</p>
+          </div>
+          <p className="text-sm text-neutral-700 leading-relaxed text-center">
+            Bewerte <span className="font-semibold text-neutral-900">Backstube König</span> bei Google.
+            Du bekommst <span className="font-semibold text-neutral-900">+1 Check-in</span> geschenkt.
+            <br />
+            <span className="text-xs text-neutral-500">Nur einmal pro Geschäft möglich.</span>
+          </p>
+          <Button
+            onClick={handleGoogleReviewClick}
+            className="w-full h-11 rounded-xl text-white"
+            style={{ background: BRAND }}
+          >
+            Bei Google bewerten
+          </Button>
+        </DialogContent>
+      </Dialog>
+
+      {/* Knoten-Detail-Pop-up (Check-in / Boost / Geburtstag / Bewertung / Prämie) */}
+      <Dialog open={!!nodeDetail} onOpenChange={(o) => !o && setNodeDetail(null)}>
+        <DialogContent className="max-w-[320px] rounded-3xl p-6 gap-3">
+          {nodeDetail?.kind === 'check-in' && (
+            <>
+              <div className="flex items-center gap-3">
+                <div
+                  className="w-12 h-12 rounded-full flex items-center justify-center text-white"
+                  style={{ background: BRAND }}
+                >
+                  {sourceNodeIcon(nodeDetail.source)}
+                </div>
+                <div>
+                  <h2 className="text-lg font-bold text-neutral-900">
+                    {nodeDetail.source === 'boost' ? 'Boost'
+                      : nodeDetail.source === 'birthday' ? 'Geburtstag'
+                      : nodeDetail.source === 'google_review' ? 'Bewertung'
+                      : 'Check-in'}
+                  </h2>
+                  <p className="text-xs text-neutral-500">Check-in #{nodeDetail.visit}</p>
+                </div>
+              </div>
+              <div className="space-y-2 text-sm text-neutral-700 mt-2">
+                <div className="flex items-center gap-2">
+                  <CalendarIcon className="w-4 h-4 text-neutral-400" />
+                  <span>
+                    {nodeDetail.source === 'boost' ? 'Boost erhalten am ' : 'Eingecheckt am '}
+                    <span className="font-semibold text-neutral-900">{formatDateTime(nodeDetail.at)}</span>
+                  </span>
+                </div>
+                {nodeDetail.source === 'boost' && nodeDetail.invitedAt && (
+                  <div className="flex items-center gap-2">
+                    <UserPlus className="w-4 h-4 text-neutral-400" />
+                    <span>
+                      Einladung angenommen am{' '}
+                      <span className="font-semibold text-neutral-900">{formatDateTime(nodeDetail.invitedAt)}</span>
+                    </span>
+                  </div>
+                )}
+                {nodeDetail.source === 'normal' && (
+                  <div className="flex items-center gap-2">
+                    <Gift className="w-4 h-4 text-neutral-400" />
+                    <span>
+                      Prämie eingelöst:{' '}
+                      <span className="font-semibold text-neutral-900">
+                        {nodeDetail.redeemed ? `Ja – ${nodeDetail.redeemed.label}` : 'Nein'}
+                      </span>
+                    </span>
+                  </div>
+                )}
+              </div>
+            </>
+          )}
+          {nodeDetail?.kind === 'reward-redeemed' && (
+            <>
+              <div className="flex items-center gap-3">
+                <div
+                  className="w-12 h-12 rounded-full flex items-center justify-center"
+                  style={{ background: BRAND_SOFT }}
+                >
+                  <Gift className="w-6 h-6" style={{ color: BRAND }} />
+                </div>
+                <div>
+                  <h2 className="text-lg font-bold text-neutral-900">Prämie eingelöst</h2>
+                  <p className="text-xs text-neutral-500">{nodeDetail.label}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 text-sm text-neutral-700 mt-2">
+                <CalendarIcon className="w-4 h-4 text-neutral-400" />
+                <span>Eingelöst am <span className="font-semibold text-neutral-900">{formatDateTime(nodeDetail.at)}</span></span>
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
       {/* Boost-Info Popup */}
       <Dialog open={boostInfoOpen} onOpenChange={setBoostInfoOpen}>
         <DialogContent className="max-w-[320px] rounded-3xl p-6 gap-4">
@@ -1002,7 +1200,7 @@ export const AppMerchantDetailV2 = () => {
                 className="shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold text-white"
                 style={{ background: BRAND }}
               >3</span>
-              <span>Du bekommst <span className="font-semibold text-neutral-900">+1 Boost</span> auf deinem Treuepass.</span>
+              <span><span className="font-semibold text-neutral-900">Ihr beide</span> bekommt jeweils <span className="font-semibold text-neutral-900">+1 Boost</span> auf eurem Treuepass.</span>
             </li>
           </ol>
 
