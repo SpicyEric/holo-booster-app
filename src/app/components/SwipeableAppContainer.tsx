@@ -21,6 +21,7 @@ import { useBackButton } from '@/app/hooks/useBackButton';
 import { ExitAppDialog } from '@/app/components/ExitAppDialog';
 import { useStatusBar } from '@/app/hooks/useStatusBar';
 import { OpenInvitationsBanner } from '@/app/components/OpenInvitationsBanner';
+import { OpenInvitationsPanel } from '@/app/components/OpenInvitationsPanel';
 
 // Map route paths to carousel indices
 const ROUTE_TO_INDEX: Record<string, number> = {
