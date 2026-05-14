@@ -749,13 +749,12 @@ export const AppScan = () => {
                 <p className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: BRAND }}>
                   Aktivierte Prämien für diesen Check-in
                 </p>
-                <div className="flex items-start gap-2.5 mt-1">
-                  <Sparkles className="w-6 h-6 mt-0.5 shrink-0" style={{ color: BRAND }} />
-                  <p className="text-2xl font-extrabold text-neutral-900 leading-tight">{activatedReward.label}</p>
+                <div className="mt-1">
+                  <p className="text-2xl font-extrabold leading-tight" style={{ color: BRAND }}>{activatedReward.label}</p>
                 </div>
               </div>
             ) : (
-              <p className="text-2xl font-bold text-neutral-900 text-center leading-snug px-2 py-2">
+              <p className="text-2xl font-bold text-neutral-100 text-center leading-snug px-2 py-2">
                 Keine aktiven Prämien für diesen Check-in.
               </p>
             )}
