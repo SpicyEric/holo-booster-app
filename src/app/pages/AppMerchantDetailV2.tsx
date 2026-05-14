@@ -79,16 +79,32 @@ export const AppMerchantDetailV2 = () => {
   const merchantId = id || DEFAULT_DEMO_MERCHANT_CUSTOMER_ID;
   const brand = useMerchantBrand(merchantId);
   const [coverImageUrl, setCoverImageUrl] = useState<string | null>(null);
+  const [passLength, setPassLength] = useState<number>(35);
+  const [dbRewards, setDbRewards] = useState<{ visitNumber: number; label: string; imageUrl: string | null }[]>([]);
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const { data } = await import('@/integrations/supabase/client').then(m => m.supabase
-        .from('customers')
-        .select('cover_image_url')
-        .eq('id', merchantId)
-        .maybeSingle());
-      if (!cancelled) setCoverImageUrl((data?.cover_image_url as string | null) || null);
+      const { supabase } = await import('@/integrations/supabase/client');
+      const [{ data: cust }, { data: placements }] = await Promise.all([
+        supabase.from('customers').select('cover_image_url, pass_length').eq('id', merchantId).maybeSingle(),
+        supabase
+          .from('reward_placements')
+          .select('visit, rewards:reward_id(title, image_url)')
+          .eq('customer_id', merchantId)
+          .order('visit', { ascending: true }),
+      ]);
+      if (cancelled) return;
+      setCoverImageUrl((cust?.cover_image_url as string | null) || null);
+      if (cust?.pass_length) setPassLength(cust.pass_length as number);
+      const mapped = (placements || [])
+        .filter((p: any) => p.rewards)
+        .map((p: any) => ({
+          visitNumber: p.visit as number,
+          label: p.rewards.title as string,
+          imageUrl: (p.rewards.image_url as string | null) || null,
+        }));
+      setDbRewards(mapped);
     })();
     return () => { cancelled = true; };
   }, [merchantId]);
