@@ -366,38 +366,6 @@ export const AppMerchantDetailV2 = () => {
 
       {/* Snake */}
       <div className="mt-4">
-        <div className="px-4 mb-3 flex items-end justify-between min-h-[8px]">
-          <div />
-          {null}
-            <p className="text-xs uppercase tracking-wider font-semibold" style={{ color: `${BRAND}cc` }}>
-              Check-ins
-            </p>
-            <div className="text-4xl font-extrabold text-neutral-900 leading-none mt-1 h-10 overflow-hidden">
-              <AnimatePresence mode="popLayout" initial={false}>
-                <motion.span
-                  key={currentVisit}
-                  initial={{ y: 24, opacity: 0, scale: 0.7 }}
-                  animate={{ y: 0, opacity: 1, scale: 1 }}
-                  exit={{ y: -24, opacity: 0, scale: 0.7 }}
-                  transition={{ type: 'spring', stiffness: 260, damping: 22 }}
-                  className="inline-block"
-                >
-                  {currentVisit}
-                </motion.span>
-              </AnimatePresence>
-            </div>
-          </div>
-          {activatedReward ? (
-            <button
-              onClick={removeActivation}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold text-white shadow-sm"
-              style={{ background: BRAND }}
-            >
-              <Sparkles className="w-3.5 h-3.5" />
-              Aktiv: {activatedReward.label.split(' ')[0]}
-            </button>
-          ) : null}
-        </div>
 
         <motion.div
           animate={boostFlash ? { scale: [1, 1.02, 1] } : {}}
