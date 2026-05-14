@@ -21,7 +21,7 @@ import {
   disablePrivacyScreen,
   isScreenBeingCaptured,
 } from '@/lib/privacyScreen';
-import { Lock, EyeOff } from 'lucide-react';
+import { EyeOff } from 'lucide-react';
 
 /**
  * Backstube König – Treuepass (V2 Prototype)
