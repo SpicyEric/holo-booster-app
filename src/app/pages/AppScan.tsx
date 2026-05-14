@@ -588,15 +588,6 @@ export const AppScan = () => {
     }, 1000);
   };
 
-  const cancelScan = () => {
-    nfcService.stopScan();
-    setScanning(false);
-    updatePreparingFlip(false);
-    setFlipPhase('idle');
-    setTransitionState(null);
-    setMerchantImage(null);
-    setMerchantDisplayName('');
-  };
 
 
 
