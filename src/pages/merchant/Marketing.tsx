@@ -642,7 +642,9 @@ const Marketing = () => {
                           <div>
                             <p className="font-semibold text-foreground">{reward.title}</p>
                             {reward.description && <p className="text-sm text-muted-foreground">{reward.description}</p>}
-                            <Badge variant="secondary" className="rounded-full mt-1">{isV2 ? `Check-in #${reward.points_required}` : `${reward.points_required} Punkte`}</Badge>
+                            {!isV2 && (
+                              <Badge variant="secondary" className="rounded-full mt-1">{`${reward.points_required} Punkte`}</Badge>
+                            )}
                           </div>
                         </div>
                         <div className="flex items-center gap-2">
@@ -1397,12 +1399,18 @@ const Marketing = () => {
           <DialogContent className="max-w-lg rounded-2xl">
             <DialogHeader>
               <DialogTitle>{editingReward ? 'Prämie bearbeiten' : 'Neue Prämie'}</DialogTitle>
-              <DialogDescription>Erstelle eine Belohnung, die Kunden mit Punkten einlösen können</DialogDescription>
+              <DialogDescription>
+                {isV2
+                  ? 'Erstelle eine Belohnung. Du platzierst sie anschließend per Drag & Drop auf einen Check-in im Treuepass.'
+                  : 'Erstelle eine Belohnung, die Kunden mit Punkten einlösen können'}
+              </DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
               <div><Label>Titel *</Label><Input value={rewardForm.title} onChange={e => setRewardForm({ ...rewardForm, title: e.target.value })} placeholder="z.B. Gratis Kaffee" className="rounded-xl mt-1" /></div>
               <div><Label>Beschreibung</Label><textarea value={rewardForm.description} onChange={e => setRewardForm({ ...rewardForm, description: e.target.value })} placeholder="Details..." rows={2} className="flex min-h-[60px] w-full rounded-xl border border-input bg-background px-3 py-2 text-sm mt-1" /></div>
-              <div><Label>Benötigte Punkte</Label><Input type="number" min={1} value={rewardForm.points_required} onChange={e => setRewardForm({ ...rewardForm, points_required: parseInt(e.target.value) || 10 })} className="rounded-xl mt-1 w-32" /></div>
+              {!isV2 && (
+                <div><Label>Benötigte Punkte</Label><Input type="number" min={1} value={rewardForm.points_required} onChange={e => setRewardForm({ ...rewardForm, points_required: parseInt(e.target.value) || 10 })} className="rounded-xl mt-1 w-32" /></div>
+              )}
               <div>
                 <Label>Bild (optional)</Label>
                 <label className="cursor-pointer block mt-1 border-2 border-dashed border-border rounded-xl p-4 text-center hover:border-primary/50 transition-colors">
