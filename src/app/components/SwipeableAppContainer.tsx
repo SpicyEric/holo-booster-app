@@ -501,6 +501,7 @@ const AppHomeContent = ({ active }: { active: boolean }) => {
 };
 
 function HomeMerchantInfoBlock({ store, visible }: { store: HomeMerchantCard; visible: boolean }) {
+  const accent = store.brandColor || undefined;
   const links: { href: string; label: string; Icon: typeof Globe }[] = [];
   const web = normalizeHomeUrl(store.website);
   const ig = normalizeInstagramUrl(store.instagram);
@@ -524,8 +525,19 @@ function HomeMerchantInfoBlock({ store, visible }: { store: HomeMerchantCard; vi
 
   if (!store.description && visibleHours.length === 0 && !store.address && links.length === 0) return null;
 
+  const panelStyle: React.CSSProperties = {
+    opacity: visible ? 1 : 0,
+    transform: visible ? 'translateY(0)' : 'translateY(4px)',
+    transition: visible ? 'opacity 180ms ease-out, transform 180ms ease-out' : 'opacity 80ms ease-out, transform 80ms ease-out',
+    pointerEvents: visible ? 'auto' : 'none',
+  };
+  const iconStyle: React.CSSProperties | undefined = accent ? { color: accent } : undefined;
+  const linkStyle: React.CSSProperties | undefined = accent
+    ? { color: accent, backgroundColor: `color-mix(in srgb, ${accent} 12%, transparent)` }
+    : undefined;
+
   return (
-    <div className="mt-3 space-y-3 px-1 pb-1 text-left">
+    <div className="mt-3 space-y-3 px-1 pb-1 text-left" style={panelStyle}>
       {store.description && (
         <p className="text-sm leading-relaxed text-foreground/80 whitespace-pre-line">
           {store.description}
@@ -533,9 +545,9 @@ function HomeMerchantInfoBlock({ store, visible }: { store: HomeMerchantCard; vi
       )}
 
       {visibleHours.length > 0 && (
-        <div className="rounded-xl border border-border/50 bg-background/75 p-3 backdrop-blur-sm">
+        <div className="rounded-xl border border-border/50 bg-background/75 p-3">
           <div className="mb-2 flex items-center gap-2 text-xs font-semibold text-foreground">
-            <Clock className="h-4 w-4 text-primary" />
+            <Clock className="h-4 w-4 text-primary" style={iconStyle} />
             Öffnungszeiten
           </div>
           <div className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-xs">
@@ -556,7 +568,7 @@ function HomeMerchantInfoBlock({ store, visible }: { store: HomeMerchantCard; vi
           rel="noopener noreferrer"
           className="flex items-start gap-2 text-sm text-foreground/80"
         >
-          <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+          <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-primary" style={iconStyle} />
           <span>{store.address}</span>
         </a>
       )}
@@ -570,6 +582,7 @@ function HomeMerchantInfoBlock({ store, visible }: { store: HomeMerchantCard; vi
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1.5 text-xs font-medium text-primary transition-colors hover:bg-primary/15"
+              style={linkStyle}
             >
               <Icon className="h-3.5 w-3.5" />
               {label}
