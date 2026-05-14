@@ -593,19 +593,15 @@ export const AppMerchantDetailV2 = () => {
   const sourceLabel = (s: CheckInSource | null): string | null => {
     if (s === 'boost') return 'Boost';
     if (s === 'birthday') return 'Geburtstag';
-    if (s === 'google_review') return 'Google-Bewertung';
+    if (s === 'google_review') return 'Bewertung';
     return null;
   };
 
-  const sourceIcon = (s: CheckInSource | null) => {
-    if (s === 'boost') return <Rocket className="w-3 h-3" />;
-    if (s === 'birthday') return <Cake className="w-3 h-3" />;
-    if (s === 'google_review') return <Star className="w-3 h-3" />;
-    return null;
-  };
+  // Kein Emoji/Icon im Label – das Symbol steckt schon im Kreis selbst
+  const sourceIcon = (_s: CheckInSource | null) => null;
 
   const sourceNodeIcon = (s: CheckInSource | null) => {
-    if (s === 'boost') return <Rocket className="w-5 h-5 text-white" strokeWidth={2.8} />;
+    if (s === 'boost') return <UserPlus className="w-5 h-5 text-white" strokeWidth={2.8} />;
     if (s === 'birthday') return <Cake className="w-5 h-5 text-white" strokeWidth={2.8} />;
     if (s === 'google_review') return <Star className="w-5 h-5 text-white" strokeWidth={2.8} fill="white" />;
     return <Check className="w-5 h-5 text-white" strokeWidth={3} />;
