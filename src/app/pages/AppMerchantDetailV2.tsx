@@ -57,7 +57,7 @@ const NODE_SPACING = 110;
 const SNAKE_HEIGHT = 220;
 const AMPLITUDE = 55;
 const WAVELENGTH = 4;
-const DEMO_PASS_RESET_VERSION = 'checkin7-open-rewards-v3-timestamps';
+const DEMO_PASS_RESET_VERSION = 'checkin7-open-rewards-v4-reset';
 
 // Demo-Daten: Backdated Timestamps, damit Klick-Pop-ups plausible Zeiten zeigen.
 const NOW = Date.now();
@@ -627,6 +627,14 @@ export const AppMerchantDetailV2 = () => {
       setNodeDetail({ kind: 'reward-redeemed', label: reward.label, at: entry?.at });
       return;
     }
+    // Aktivierbar nur, wenn Prämie in der Vergangenheit/jetzt liegt (noch nicht eingelöst)
+    // ODER beim direkt nächsten Check-in (currentVisit + 1).
+    const isPastOrCurrent = reward.visitNumber <= currentVisit;
+    const isNextCheckIn = reward.visitNumber === currentVisit + 1;
+    if (!isPastOrCurrent && !isNextCheckIn) {
+      toast.info('Diese Prämie kannst du erst aktivieren, wenn du dem Check-in näher bist.');
+      return;
+    }
     setTappedReward(reward);
   };
 
@@ -892,16 +900,7 @@ export const AppMerchantDetailV2 = () => {
                 const isRedeemed = reward.redeemed;
                 return (
                   <div key={visit} className="absolute -translate-x-1/2 -translate-y-1/2" style={{ left: cx, top: cy }}>
-                    {label && (
-                      <div
-                        className={`absolute left-1/2 -translate-x-1/2 px-2 py-0.5 rounded-full bg-neutral-900/85 text-white text-[10px] font-semibold flex items-center gap-1 whitespace-nowrap ${
-                          labelBelow ? 'top-full mt-2' : '-top-9'
-                        }`}
-                      >
-                        {sourceIcon(source)}
-                        {label}
-                      </div>
-                    )}
+                    {/* Hinweis: Auf Prämien-Knoten kein "Check-in"-Label – die Prämie steht im Vordergrund. */}
                     <button
                       onClick={() => handleRewardTap(reward)}
                       className="focus:outline-none"
