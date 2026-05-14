@@ -591,7 +591,7 @@ export const AppScan = () => {
   const isNfcUnavailable = !checkingNfc && !nfcSupported;
   const isNfcDisabled = !checkingNfc && nfcSupported && !nfcEnabled;
   const isIdle = !checkingNfc && nfcSupported && nfcEnabled && !scanning && !result;
-  const showFrontCard = flipPhase === 'idle' || flipPhase === 'armed';
+  const showFrontCard = (flipPhase === 'idle' || flipPhase === 'armed') && simulatedFlip === 'idle';
   const frontCardBackground = hasMerchantContext
     ? `linear-gradient(135deg, ${BRAND}, ${BRAND}cc)`
     : undefined;
