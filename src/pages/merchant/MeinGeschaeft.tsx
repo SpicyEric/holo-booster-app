@@ -143,6 +143,7 @@ const MeinGeschaeft = () => {
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const [uploadingCover, setUploadingCover] = useState(false);
   const [customerId, setCustomerId] = useState<string | null>(null);
+  const merchantBrand = useMerchantBrand(customerId);
   const [activeTab, setActiveTab] = useState("info");
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
