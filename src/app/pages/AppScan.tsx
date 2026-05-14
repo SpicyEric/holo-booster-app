@@ -730,19 +730,16 @@ export const AppScan = () => {
             transition={{ delay: 0.2, duration: 0.4 }}
           >
             {activatedReward ? (
-              <div
-                className="rounded-2xl border p-4"
-                style={{ borderColor: `${BRAND}33`, background: `${BRAND}0d` }}
-              >
-                <p className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: BRAND }}>
-                  Aktivierte Prämien für diesen Check-in
+              <div className="px-2 text-center">
+                <p className="text-xs font-semibold uppercase tracking-wider mb-1" style={{ color: BRAND }}>
+                  Aktivierte Prämie für diesen Check-in
                 </p>
-                <div className="mt-1">
-                  <p className="text-2xl font-extrabold leading-tight" style={{ color: BRAND }}>{activatedReward.label}</p>
-                </div>
+                <p className="text-2xl font-extrabold leading-tight text-neutral-900 dark:text-white">
+                  {activatedReward.label}
+                </p>
               </div>
             ) : (
-              <p className="text-2xl font-bold text-neutral-100 text-center leading-snug px-2 py-2">
+              <p className="text-2xl font-bold text-neutral-900 dark:text-white text-center leading-snug px-2 py-2">
                 Keine aktiven Prämien für diesen Check-in.
               </p>
             )}
