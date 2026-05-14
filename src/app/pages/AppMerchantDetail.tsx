@@ -87,7 +87,6 @@ import { DEFAULT_DEMO_MERCHANT_CUSTOMER_ID } from '@/lib/demoMerchant';
 
 export const AppMerchantDetail = () => {
   const { id } = useParams<{ id: string }>();
-  // V2-Prototype: Demo-Merchant + alle Händler mit customers.version='v2'.
   const [versionResolved, setVersionResolved] = useState<'v1' | 'v2' | null>(
     id === DEFAULT_DEMO_MERCHANT_CUSTOMER_ID ? 'v2' : null,
   );
@@ -105,13 +104,20 @@ export const AppMerchantDetail = () => {
     })();
     return () => { cancelled = true; };
   }, [id]);
-  if (versionResolved === 'v2') {
-    return <AppMerchantDetailV2 />;
-  }
-  if (versionResolved === null) {
-    return <div className="min-h-screen bg-background" />;
-  }
+  if (versionResolved === 'v2') return <AppMerchantDetailV2 />;
+  if (versionResolved === null) return <div className="min-h-screen bg-background" />;
+  return <AppMerchantDetailV1 />;
+};
+
+const AppMerchantDetailV1 = () => {
+  const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const routeState = location.state as MerchantRouteState | null;
+  const initialMerchant = routeState?.initialMerchant && routeState.initialMerchant.id === id
+    ? routeState.initialMerchant
+    : null;
   const navigate = useNavigate();
   const location = useLocation();
   const routeState = location.state as MerchantRouteState | null;
