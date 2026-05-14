@@ -674,14 +674,14 @@ export const AppScan = () => {
                 <motion.div
                   animate={{ scale: [1, 1.15, 1], opacity: [0.5, 1, 0.5] }}
                   transition={{ repeat: Infinity, duration: 2, ease: 'easeInOut' }}
-                  className="relative z-10 w-28 h-28 rounded-full bg-white/15 flex items-center justify-center"
+                  className="relative z-10 w-28 h-28 rounded-full bg-black/10 flex items-center justify-center"
                 >
                   <motion.div
                     animate={{ scale: [1, 1.1, 1] }}
                     transition={{ repeat: Infinity, duration: 1.5 }}
-                    className="w-20 h-20 rounded-full bg-white/15 flex items-center justify-center"
+                    className="w-20 h-20 rounded-full bg-black/10 flex items-center justify-center"
                   >
-                    <Nfc className="h-10 w-10 text-white/90" />
+                    <Nfc className="h-10 w-10 text-black/85" />
                   </motion.div>
                 </motion.div>
               </div>
