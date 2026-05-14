@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState, useRef } from 'react';
 import { Capacitor } from '@capacitor/core';
 import useEmblaCarousel from 'embla-carousel-react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Store, Gift, MessageSquare, Mail, Bell, MapPin, Search, User, History, LogOut, Shield, FileText, HelpCircle, ChevronRight, Sparkles, AlertCircle, TrendingUp, Trophy, Loader2, Heart } from 'lucide-react';
+import { Store, Gift, MessageSquare, Mail, Bell, MapPin, Search, User, History, LogOut, Shield, FileText, HelpCircle, ChevronRight, Sparkles, AlertCircle, TrendingUp, Trophy, Loader2, Heart, Nfc } from 'lucide-react';
 import { PullToRefresh } from '@/app/components/PullToRefresh';
 import { StoresGoogleMap } from '@/app/components/StoresGoogleMap';
 import { supabase } from '@/integrations/supabase/client';
