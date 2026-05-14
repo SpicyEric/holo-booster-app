@@ -1635,4 +1635,110 @@ export const AppMerchantDetailV2 = () => {
   );
 };
 
+
+const INFO_DAY_LABELS: { key: string; label: string }[] = [
+  { key: 'monday', label: 'Mo' },
+  { key: 'tuesday', label: 'Di' },
+  { key: 'wednesday', label: 'Mi' },
+  { key: 'thursday', label: 'Do' },
+  { key: 'friday', label: 'Fr' },
+  { key: 'saturday', label: 'Sa' },
+  { key: 'sunday', label: 'So' },
+];
+
+function normalizeWebUrl(value: string | null): string | null {
+  const t = value?.trim();
+  if (!t) return null;
+  return /^https?:\/\//i.test(t) ? t : `https://${t}`;
+}
+function normalizeIgUrl(value: string | null): string | null {
+  const t = value?.trim().replace(/^@/, '');
+  if (!t) return null;
+  return /^https?:\/\//i.test(t) ? t : `https://instagram.com/${t}`;
+}
+
+function MerchantInfoSection({ info, brand }: { info: MerchantInfo; brand: string }) {
+  const web = normalizeWebUrl(info.website);
+  const ig = normalizeIgUrl(info.instagram);
+  const fb = normalizeWebUrl(info.facebook);
+  const tw = normalizeWebUrl(info.twitter);
+  const links: { href: string; label: string; Icon: typeof Globe }[] = [];
+  if (web) links.push({ href: web, label: 'Website', Icon: Globe });
+  if (ig) links.push({ href: ig, label: 'Instagram', Icon: Instagram });
+  if (fb) links.push({ href: fb, label: 'Facebook', Icon: Facebook });
+  if (tw) links.push({ href: tw, label: 'Twitter', Icon: Twitter });
+
+  const visibleHours = info.openingHours
+    ? INFO_DAY_LABELS.map(({ key, label }) => {
+        const day = info.openingHours?.[key];
+        if (!day) return null;
+        return {
+          label,
+          time: day.closed ? 'Geschlossen' : [day.open, day.close].filter(Boolean).join(' – '),
+        };
+      }).filter((e): e is { label: string; time: string } => !!e && !!e.time)
+    : [];
+
+  if (!info.description && visibleHours.length === 0 && !info.address && links.length === 0) {
+    return null;
+  }
+
+  return (
+    <div className="px-4 mt-4 space-y-3">
+      {info.description && (
+        <p className="text-sm leading-relaxed text-neutral-700 whitespace-pre-line">
+          {info.description}
+        </p>
+      )}
+
+      {visibleHours.length > 0 && (
+        <div className="rounded-xl border bg-white/70 p-3" style={{ borderColor: `${brand}33` }}>
+          <div className="mb-2 flex items-center gap-2 text-xs font-semibold text-neutral-900">
+            <Clock className="h-4 w-4" style={{ color: brand }} />
+            Öffnungszeiten
+          </div>
+          <div className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-xs">
+            {visibleHours.map((entry) => (
+              <div key={entry.label} className="contents">
+                <span className="text-neutral-500">{entry.label}</span>
+                <span className="text-neutral-800">{entry.time}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {info.address && (
+        <a
+          href={`https://maps.google.com/?q=${encodeURIComponent(info.address)}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-start gap-2 text-sm text-neutral-700"
+        >
+          <MapPin className="mt-0.5 h-4 w-4 shrink-0" style={{ color: brand }} />
+          <span>{info.address}</span>
+        </a>
+      )}
+
+      {links.length > 0 && (
+        <div className="flex flex-wrap gap-2">
+          {links.map(({ href, label, Icon }) => (
+            <a
+              key={label}
+              href={href}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-colors"
+              style={{ backgroundColor: `${brand}1f`, color: brand }}
+            >
+              <Icon className="h-3.5 w-3.5" />
+              {label}
+            </a>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default AppMerchantDetailV2;
