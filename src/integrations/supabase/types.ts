@@ -719,6 +719,7 @@ export type Database = {
           birthday_message: string | null
           birthday_offer_description: string | null
           birthday_offer_title: string | null
+          brand_color: string | null
           cancelled_at: string | null
           city: string | null
           company_name: string | null
@@ -781,6 +782,7 @@ export type Database = {
           three_day_email_sent_at: string | null
           twitter: string | null
           updated_at: string
+          version: string
           website: string | null
           welcome_enabled: boolean
           welcome_message: string | null
@@ -805,6 +807,7 @@ export type Database = {
           birthday_message?: string | null
           birthday_offer_description?: string | null
           birthday_offer_title?: string | null
+          brand_color?: string | null
           cancelled_at?: string | null
           city?: string | null
           company_name?: string | null
@@ -867,6 +870,7 @@ export type Database = {
           three_day_email_sent_at?: string | null
           twitter?: string | null
           updated_at?: string
+          version?: string
           website?: string | null
           welcome_enabled?: boolean
           welcome_message?: string | null
@@ -891,6 +895,7 @@ export type Database = {
           birthday_message?: string | null
           birthday_offer_description?: string | null
           birthday_offer_title?: string | null
+          brand_color?: string | null
           cancelled_at?: string | null
           city?: string | null
           company_name?: string | null
@@ -953,6 +958,7 @@ export type Database = {
           three_day_email_sent_at?: string | null
           twitter?: string | null
           updated_at?: string
+          version?: string
           website?: string | null
           welcome_enabled?: boolean
           welcome_message?: string | null
