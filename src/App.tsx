@@ -164,6 +164,7 @@ const App = () => {
                 <Route path="kunden" element={<Transaktionen />} />
                 <Route path="marketing" element={<Marketing />} />
                 <Route path="konto" element={<MeinKonto />} />
+                <Route path="anleitung" element={<SoFunktionierts />} />
                 {/* Legacy redirects for old routes */}
                 <Route path="google-bewertungen" element={<Navigate to="/kunde/marketing" replace />} />
                 <Route path="nachrichten" element={<Navigate to="/kunde/marketing" replace />} />
