@@ -21,7 +21,7 @@ import {
   disablePrivacyScreen,
   isScreenBeingCaptured,
 } from '@/lib/privacyScreen';
-import { Lock, EyeOff } from 'lucide-react';
+import { EyeOff } from 'lucide-react';
 
 /**
  * Backstube König – Treuepass (V2 Prototype)
@@ -775,34 +775,27 @@ export const AppMerchantDetailV2 = () => {
               )}
             </AnimatePresence>
 
-            {/* Code-Marquee am unteren Rand + Sicherheits-Hinweis */}
-            {!confirmStage && (
-              <>
-                <div className="absolute left-0 right-0 bottom-10 overflow-hidden bg-white/10 backdrop-blur py-3 border-y border-white/20">
-                  <motion.div
-                    className="flex whitespace-nowrap"
-                    animate={{ x: ['0%', '-50%'] }}
-                    transition={{ duration: 12, ease: 'linear', repeat: Infinity }}
-                  >
-                    {Array.from({ length: 2 }).map((_, dup) => (
-                      <div key={dup} className="flex shrink-0">
-                        {Array.from({ length: 8 }).map((_, i) => (
-                          <span
-                            key={`${dup}-${i}`}
-                            className="px-6 text-2xl font-black tracking-[0.4em] tabular-nums text-white"
-                          >
-                            {checkInOverlay.code}
-                          </span>
-                        ))}
-                      </div>
-                    ))}
-                  </motion.div>
+            {/* Code-Marquee am oberen Rand — nur bei eingelöster Prämie */}
+            {!confirmStage && checkInOverlay.reward && (
+              <div className="absolute left-0 right-0 top-0 pt-16 pb-3 overflow-hidden bg-white/10 backdrop-blur border-b border-white/20">
+                <div
+                  className="flex whitespace-nowrap will-change-transform"
+                  style={{ animation: 'eloyo-marquee 14s linear infinite' }}
+                >
+                  {Array.from({ length: 2 }).map((_, dup) => (
+                    <div key={dup} className="flex shrink-0" aria-hidden={dup === 1}>
+                      {Array.from({ length: 8 }).map((_, i) => (
+                        <span
+                          key={`${dup}-${i}`}
+                          className="px-6 text-2xl font-black tracking-[0.4em] tabular-nums text-white"
+                        >
+                          {checkInOverlay.code}
+                        </span>
+                      ))}
+                    </div>
+                  ))}
                 </div>
-                <div className="absolute left-0 right-0 bottom-1 flex items-center justify-center gap-1.5 text-[11px] font-medium text-white/70 px-4 text-center">
-                  <Lock className="w-3 h-3" strokeWidth={2.5} />
-                  <span>Aus Sicherheitsgründen ist auf diesem Bildschirm kein Screenshot möglich.</span>
-                </div>
-              </>
+              </div>
             )}
 
             {/* iOS: aktive Bildschirmaufnahme erkannt → Inhalt ausblenden */}
