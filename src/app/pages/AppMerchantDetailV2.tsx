@@ -556,7 +556,12 @@ export const AppMerchantDetailV2 = () => {
   };
 
   const handleRewardTap = (reward: MockReward) => {
-    if (reward.redeemed) return;
+    if (reward.redeemed) {
+      // Bereits eingelöste Prämie → Detail-Pop-up zeigen
+      const entry = checkIns.find((c) => c.visit === reward.visitNumber);
+      setNodeDetail({ kind: 'reward-redeemed', label: reward.label, at: entry?.at });
+      return;
+    }
     setTappedReward(reward);
   };
 
