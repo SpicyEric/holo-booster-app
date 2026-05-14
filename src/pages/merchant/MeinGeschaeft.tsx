@@ -372,6 +372,20 @@ const MeinGeschaeft = () => {
         setRewards(rewardsData);
       }
 
+      // V2: load reward placements + pass length
+      const { data: placementsData } = await supabase
+        .from('reward_placements')
+        .select('reward_id, visit')
+        .eq('customer_id', assignment.customer_id);
+      setPlacements(((placementsData as any[]) || []).map((p) => ({ reward_id: p.reward_id, visit: p.visit })));
+
+      const { data: passData } = await supabase
+        .from('customers')
+        .select('pass_length')
+        .eq('id', assignment.customer_id)
+        .maybeSingle();
+      if (passData?.pass_length) setPassLength(passData.pass_length);
+
       // Load new customer offer
       const { data: ncoData } = await supabase
         .from("new_customer_offers")
