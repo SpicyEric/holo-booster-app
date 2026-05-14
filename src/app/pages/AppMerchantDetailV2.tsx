@@ -452,7 +452,7 @@ export const AppMerchantDetailV2 = () => {
                             : {}
                         }
                         transition={{ duration: 1.6, repeat: unlocked || isActivatedHere ? Infinity : 0 }}
-                        className="w-16 h-16 rounded-full flex flex-col items-center justify-center border-4 bg-white shadow-md relative"
+                        className="w-16 h-16 rounded-full flex items-center justify-center border-4 bg-white shadow-md relative"
                         style={{
                           borderColor: isActivatedHere ? '#F5A623' : BRAND,
                           opacity: isRedeemed ? 0.55 : 1,
@@ -460,12 +460,9 @@ export const AppMerchantDetailV2 = () => {
                         }}
                       >
                         <Gift
-                          className="w-6 h-6"
+                          className="w-7 h-7"
                           style={{ color: isRedeemed ? '#999' : BRAND }}
                         />
-                        <span className="text-[10px] font-bold text-neutral-600 mt-0.5">
-                          #{visit}
-                        </span>
                       </motion.div>
                       {isRedeemed && (
                         <div className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-emerald-500 flex items-center justify-center border-2 border-white">
