@@ -609,7 +609,7 @@ export const AppMerchantDetailV2 = () => {
 
   return (
     <div
-      className="min-h-screen pb-24"
+      className="min-h-screen pb-40"
       style={{
         background: '#faf8f5',
         colorScheme: 'light',
