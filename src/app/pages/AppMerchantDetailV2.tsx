@@ -209,11 +209,41 @@ export const AppMerchantDetailV2 = () => {
     }
   }, [merchantId]);
 
+  // Auto-Aktivierung der ersten Prämie beim allerersten Check-in:
+  // Wenn der User noch nie eingecheckt hat und der Händler eine Prämie auf
+  // Visit 1 hinterlegt hat, wird diese automatisch als aktivierte Prämie
+  // gesetzt – ohne Nachfrage. Beim ersten Scan wird sie dann mit eingelöst.
+  useEffect(() => {
+    if (currentVisit !== 0) return;
+    if (getActivatedReward(merchantId)) return;
+    const firstReward = dbRewards.find((r) => r.visitNumber === 1);
+    if (!firstReward) return;
+    const reward: MockReward = {
+      visitNumber: firstReward.visitNumber,
+      label: firstReward.label,
+      redeemed: false,
+    };
+    setActivatedReward(reward);
+    persistActivatedReward(merchantId, {
+      visitNumber: reward.visitNumber,
+      label: reward.label,
+    });
+  }, [merchantId, currentVisit, dbRewards]);
+
   // Trigger Eincheck-Overlay, wenn von der Scan-Seite mit triggerCheckIn=true navigiert wurde
   useEffect(() => {
     const state = location.state as { triggerCheckIn?: boolean } | null;
     if (!state?.triggerCheckIn) return;
-    const stored = getActivatedReward(merchantId);
+    let stored = getActivatedReward(merchantId);
+    // Fallback: erster Check-in & noch keine aktivierte Prämie persistiert →
+    // direkt die Visit-1-Prämie verwenden (keine Nachfrage).
+    if (!stored && currentVisit === 0) {
+      const firstReward = dbRewards.find((r) => r.visitNumber === 1);
+      if (firstReward) {
+        stored = { visitNumber: firstReward.visitNumber, label: firstReward.label };
+        persistActivatedReward(merchantId, stored);
+      }
+    }
     const reward = stored ? { visitNumber: stored.visitNumber, label: stored.label, redeemed: false } : null;
     setCheckInOverlay({ code: generateVerificationCode(5), reward });
     setConfirmStage(false);
