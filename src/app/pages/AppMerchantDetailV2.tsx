@@ -256,6 +256,7 @@ export const AppMerchantDetailV2 = () => {
   const [tappedReward, setTappedReward] = useState<MockReward | null>(null);
   const [redemptionScreen, setRedemptionScreen] = useState<MockReward | null>(null);
   const [boostFlash, setBoostFlash] = useState(false);
+  const [boostInfoOpen, setBoostInfoOpen] = useState(false);
   const [lastCheckInDate, setLastCheckInDate] = useState<string | null>(null);
 
   // Orange Eincheck-Overlay (Vollbild, mit Code-Marquee)
