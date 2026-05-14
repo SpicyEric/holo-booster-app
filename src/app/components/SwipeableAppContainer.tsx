@@ -579,29 +579,7 @@ const AppMessagesContent = () => {
     return () => document.removeEventListener('visibilitychange', handleVisibility);
   }, [user]);
 
-  const loadRedeemableRewards = async () => {
-    if (!user) return;
-    try {
-      const { data: accounts } = await supabase
-        .from('loyalty_accounts')
-        .select('merchant_customer_id, current_points_balance')
-        .eq('user_id', user.id)
-        .gt('current_points_balance', 0);
-      if (!accounts || accounts.length === 0) { setRedeemableCount(0); return; }
-      const merchantIds = accounts.map(a => a.merchant_customer_id);
-      const pointsMap = new Map(accounts.map(a => [a.merchant_customer_id, a.current_points_balance || 0]));
-      const { data: rewards } = await supabase
-        .from('rewards')
-        .select('id, points_required, merchant_customer_id')
-        .eq('is_active', true)
-        .in('merchant_customer_id', merchantIds);
-      if (rewards) {
-        setRedeemableCount(rewards.filter(r => (pointsMap.get(r.merchant_customer_id) || 0) >= r.points_required).length);
-      }
-    } catch (err) {
-      console.error('[Messages] Error loading rewards:', err);
-    }
-  };
+
 
   const loadMessages = async () => {
     setLoading(true);
