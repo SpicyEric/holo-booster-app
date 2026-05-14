@@ -127,7 +127,7 @@ export const AppHome = () => {
       ) : (
         <div style={{ paddingBottom: '2rem' }}>
           {cards.map((store) => (
-            <div key={store.id} style={{ marginBottom: '12px' }}>
+            <div key={store.id} style={{ marginBottom: '28px' }}>
               <button
                 onClick={(e) => {
                   const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
@@ -141,7 +141,7 @@ export const AppHome = () => {
                         timestamp: Date.now(),
                       }),
                     );
-                  } catch {}
+                  } catch { void 0; }
                   navigate(`/app/merchant/${store.merchantId}`);
                 }}
                 className="w-full rounded-xl overflow-hidden shadow-md text-left relative block"
@@ -173,6 +173,8 @@ export const AppHome = () => {
                   )}
                 </div>
               </button>
+
+              <MerchantInfoBlock store={store} />
             </div>
           ))}
         </div>
