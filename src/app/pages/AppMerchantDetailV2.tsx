@@ -57,7 +57,7 @@ const NODE_SPACING = 110;
 const SNAKE_HEIGHT = 220;
 const AMPLITUDE = 55;
 const WAVELENGTH = 4;
-const DEMO_PASS_RESET_VERSION = 'checkin7-open-rewards-v3-timestamps';
+const DEMO_PASS_RESET_VERSION = 'checkin7-open-rewards-v4-reset';
 
 // Demo-Daten: Backdated Timestamps, damit Klick-Pop-ups plausible Zeiten zeigen.
 const NOW = Date.now();
