@@ -471,6 +471,7 @@ export const AppMerchantDetailV2 = () => {
       const reward = activatedReward;
       setActivatedReward(null);
       clearActivatedReward(merchantId);
+      setRedeemedVisits((prev) => prev.includes(reward.visitNumber) ? prev : [...prev, reward.visitNumber]);
       setRewards((prev) => {
         const exists = prev.some((r) => r.visitNumber === reward.visitNumber);
         if (exists) {
