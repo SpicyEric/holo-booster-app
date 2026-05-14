@@ -24,18 +24,20 @@ export const MainLayout = ({ children, title, showBack = false, disableParticles
         paddingBottom: bottomInsetOffset,
       }}
     >
-      <Particles
-        particleColors={['#6366F1', '#8B5CF6', '#A855F7']}
-        particleCount={disableParticles ? 0 : 400}
-        particleSpread={10}
-        speed={0.03}
-        particleBaseSize={120}
-        sizeRandomness={1.8}
-        moveParticlesOnHover={true}
-        alphaParticles={true}
-        disableRotation={false}
-        cameraDistance={20}
-      />
+      {!disableParticles && (
+        <Particles
+          particleColors={['#6366F1', '#8B5CF6', '#A855F7']}
+          particleCount={400}
+          particleSpread={10}
+          speed={0.03}
+          particleBaseSize={120}
+          sizeRandomness={1.8}
+          moveParticlesOnHover={true}
+          alphaParticles={true}
+          disableRotation={false}
+          cameraDistance={20}
+        />
+      )}
       <OfflineBanner />
       <TopBar title={title} showBack={showBack} />
       <main
