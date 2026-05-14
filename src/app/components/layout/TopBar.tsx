@@ -1,7 +1,9 @@
+import { useEffect, useState } from 'react';
 import { ArrowLeft, Sun, Moon } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useTheme } from '@/app/hooks/useTheme';
+import { getActiveBrandColor, subscribeActiveBrandColor } from '@/lib/activeBrandColor';
 
 export interface TopBarProps {
   title: string;
@@ -11,6 +13,13 @@ export interface TopBarProps {
 export const TopBar = ({ title, showBack = false }: TopBarProps) => {
   const navigate = useNavigate();
   const { isDark, toggle } = useTheme();
+  const [brandColor, setBrandColor] = useState<string | null>(() => getActiveBrandColor());
+
+  useEffect(() => subscribeActiveBrandColor(setBrandColor), []);
+
+  const thumbStyle: React.CSSProperties = brandColor
+    ? { backgroundColor: brandColor, transition: 'background-color 220ms ease-out, transform 300ms' }
+    : { transition: 'background-color 220ms ease-out, transform 300ms' };
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-card border-b border-border flex items-center justify-between px-4 shadow-sm" style={{ paddingTop: 'env(safe-area-inset-top, 0px)', height: 'calc(3.5rem + env(safe-area-inset-top, 0px))' }}>
@@ -28,9 +37,10 @@ export const TopBar = ({ title, showBack = false }: TopBarProps) => {
         aria-label="Dark Mode umschalten"
       >
         <span
-          className={`absolute w-5 h-5 rounded-full bg-primary shadow-md transition-transform duration-300 flex items-center justify-center ${
+          className={`absolute w-5 h-5 rounded-full ${brandColor ? '' : 'bg-primary'} shadow-md transition-transform duration-300 flex items-center justify-center ${
             isDark ? 'translate-x-7' : 'translate-x-0'
           }`}
+          style={thumbStyle}
         >
           {isDark ? (
             <Moon className="h-3 w-3 text-primary-foreground" />

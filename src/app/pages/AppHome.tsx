@@ -1,10 +1,11 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Loader2, Nfc, Gift, Sparkles, MapPin, Clock, Globe, Instagram, Facebook, Twitter } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { MainLayout } from '@/app/components/layout/MainLayout';
 import { OpenInvitationsBanner } from '@/app/components/OpenInvitationsBanner';
+import { setActiveBrandColor } from '@/lib/activeBrandColor';
 
 interface OpeningHourEntry { open?: string; close?: string; closed?: boolean }
 interface MerchantCard {
@@ -21,6 +22,7 @@ interface MerchantCard {
   instagram: string | null;
   facebook: string | null;
   twitter: string | null;
+  brandColor: string | null;
 }
 
 const DAY_LABELS: { key: string; label: string }[] = [
@@ -73,7 +75,7 @@ export const AppHome = () => {
 
         const { data: merchants } = await supabase
           .from('customers')
-          .select('id, name, company_name, logo_url, cover_image_url, industry, description, opening_hours, street, house_number, postal_code, city, website, instagram, facebook, twitter')
+          .select('id, name, company_name, logo_url, cover_image_url, industry, description, opening_hours, street, house_number, postal_code, city, website, instagram, facebook, twitter, brand_color, version')
           .eq('active', true)
           .in('id', merchantIds);
 
@@ -83,6 +85,8 @@ export const AppHome = () => {
             if (!m) return null;
             const streetWithNumber = [m.street, m.house_number].filter(Boolean).join(' ');
             const address = [streetWithNumber, [m.postal_code, m.city].filter(Boolean).join(' ')].filter(Boolean).join(', ');
+            const isV2 = (m as { version?: string }).version === 'v2';
+            const brandColor = isV2 ? ((m as { brand_color?: string | null }).brand_color || null) : null;
             return {
               id: a.id,
               merchantId: a.merchant_customer_id,
@@ -97,6 +101,7 @@ export const AppHome = () => {
               instagram: m.instagram || null,
               facebook: m.facebook || null,
               twitter: m.twitter || null,
+              brandColor,
             } as MerchantCard;
           })
           .filter((x): x is MerchantCard => !!x);
@@ -114,8 +119,42 @@ export const AppHome = () => {
     return () => { cancelled = true; };
   }, [user]);
 
+  const cardRefs = useRef<Array<HTMLDivElement | null>>([]);
+  const [activeIndex, setActiveIndex] = useState(0);
+
+  // Track which card is currently most visible and publish its brand color
+  useEffect(() => {
+    if (cards.length === 0) return;
+    cardRefs.current = cardRefs.current.slice(0, cards.length);
+    const observer = new IntersectionObserver(
+      (entries) => {
+        let bestIdx = activeIndex;
+        let bestRatio = 0;
+        entries.forEach((entry) => {
+          const idx = Number((entry.target as HTMLElement).dataset.cardIndex);
+          if (Number.isNaN(idx)) return;
+          if (entry.intersectionRatio > bestRatio) {
+            bestRatio = entry.intersectionRatio;
+            bestIdx = idx;
+          }
+        });
+        if (bestRatio > 0) setActiveIndex(bestIdx);
+      },
+      { threshold: [0.25, 0.5, 0.75] },
+    );
+    cardRefs.current.forEach((el) => el && observer.observe(el));
+    return () => observer.disconnect();
+  }, [cards.length]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Publish active brand color on Home so BottomNav scan-button + TopBar pick it up
+  useEffect(() => {
+    const active = cards[activeIndex];
+    setActiveBrandColor(active?.brandColor || null);
+    return () => setActiveBrandColor(null);
+  }, [activeIndex, cards]);
+
   return (
-    <MainLayout title="Home">
+    <MainLayout title="Home" disableParticles>
       <OpenInvitationsBanner />
 
       {loading ? (
@@ -126,8 +165,13 @@ export const AppHome = () => {
         <EmptyTutorial onExplore={() => navigate('/app/stores')} />
       ) : (
         <div style={{ paddingBottom: '2rem' }}>
-          {cards.map((store) => (
-            <div key={store.id} style={{ marginBottom: '28px' }}>
+          {cards.map((store, idx) => (
+            <div
+              key={store.id}
+              ref={(el) => { cardRefs.current[idx] = el; }}
+              data-card-index={idx}
+              style={{ marginBottom: '28px' }}
+            >
               <button
                 onClick={(e) => {
                   const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
@@ -174,7 +218,7 @@ export const AppHome = () => {
                 </div>
               </button>
 
-              <MerchantInfoBlock store={store} />
+              <MerchantInfoBlock store={store} active={idx === activeIndex} />
             </div>
           ))}
         </div>
@@ -226,7 +270,7 @@ function EmptyTutorial({ onExplore }: { onExplore: () => void }) {
   );
 }
 
-function MerchantInfoBlock({ store }: { store: MerchantCard }) {
+function MerchantInfoBlock({ store, active }: { store: MerchantCard; active: boolean }) {
   const hours = store.openingHours;
   const links: { href: string; label: string; Icon: typeof Globe }[] = [];
   const web = normalizeUrl(store.website);
@@ -241,8 +285,19 @@ function MerchantInfoBlock({ store }: { store: MerchantCard }) {
   const hasAnything = !!(store.description || hours || store.address || links.length);
   if (!hasAnything) return null;
 
+  const accent = store.brandColor || undefined;
+  // Quick fade: invisible while card is not active, fade-in when it becomes active
+  const fadeStyle: React.CSSProperties = {
+    opacity: active ? 1 : 0,
+    transition: active ? 'opacity 220ms ease-out' : 'opacity 120ms ease-out',
+  };
+  const iconStyle = accent ? { color: accent } : undefined;
+  const linkStyle = accent
+    ? { color: accent, backgroundColor: `color-mix(in srgb, ${accent} 12%, transparent)` }
+    : undefined;
+
   return (
-    <div className="mt-3 px-1 space-y-3">
+    <div className="mt-3 px-1 space-y-3" style={fadeStyle}>
       {store.description && (
         <p className="text-sm text-foreground/80 leading-relaxed whitespace-pre-line">
           {store.description}
@@ -252,7 +307,7 @@ function MerchantInfoBlock({ store }: { store: MerchantCard }) {
       {hours && (
         <div className="rounded-xl bg-card border border-border/50 p-3">
           <div className="flex items-center gap-2 mb-2">
-            <Clock className="h-4 w-4 text-primary" />
+            <Clock className="h-4 w-4 text-primary" style={iconStyle} />
             <span className="text-xs font-semibold text-foreground">Öffnungszeiten</span>
           </div>
           <div className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-xs">
@@ -273,7 +328,7 @@ function MerchantInfoBlock({ store }: { store: MerchantCard }) {
 
       {store.address && (
         <div className="flex items-start gap-2 text-sm text-foreground/80">
-          <MapPin className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+          <MapPin className="h-4 w-4 text-primary shrink-0 mt-0.5" style={iconStyle} />
           <span>{store.address}</span>
         </div>
       )}
@@ -288,6 +343,7 @@ function MerchantInfoBlock({ store }: { store: MerchantCard }) {
               rel="noopener noreferrer"
               onClick={(e) => e.stopPropagation()}
               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary/10 text-primary text-xs font-medium hover:bg-primary/15 transition-colors"
+              style={linkStyle}
             >
               <Icon className="h-3.5 w-3.5" />
               {label}

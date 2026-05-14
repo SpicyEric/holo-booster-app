@@ -35,12 +35,14 @@ export const BottomNav = ({ onNavigate, currentIndex }: BottomNavProps) => {
     });
   }, []);
 
-  // Brand-Farbe nur auf Merchant-Detail-/Scan-Routen aktiv. Bei jedem
-  // Wechsel auf andere Tabs wird die Markenfarbe synchron zurückgesetzt.
+  // Brand-Farbe nur auf Routen aktiv, die selbst eine Markenfarbe publizieren
+  // (Merchant-Detail, Scan und Home mit Treuepass-Karten). Auf anderen Tabs
+  // wird die Markenfarbe synchron zurückgesetzt.
   useEffect(() => {
     const onMerchantDetail = /^\/app\/merchant\//.test(location.pathname);
     const onScan = location.pathname.startsWith('/app/scan');
-    if (!onMerchantDetail && !onScan) {
+    const onHome = location.pathname === '/app';
+    if (!onMerchantDetail && !onScan && !onHome) {
       setActiveBrandColor(null);
       setBrandColor(null);
     }
@@ -186,14 +188,19 @@ export const BottomNav = ({ onNavigate, currentIndex }: BottomNavProps) => {
     const Icon = item.icon;
     const active = isActive(item);
     const showBadge = item.path === '/app/messages' && messageBadge;
-    
+    const useBrand = active && !!brandColor;
+    const colorStyle: React.CSSProperties | undefined = useBrand
+      ? { color: brandColor!, transition: 'color 220ms ease-out' }
+      : undefined;
+
     return (
       <button
         onClick={() => handleNavClick(item)}
         className={cn(
           "flex flex-col items-center justify-center flex-1 h-full transition-colors relative",
-          active ? "text-primary" : "text-muted-foreground hover:text-foreground"
+          active ? (useBrand ? '' : 'text-primary') : "text-muted-foreground hover:text-foreground"
         )}
+        style={colorStyle}
       >
         <div className="relative">
           <Icon className="h-6 w-6" />
