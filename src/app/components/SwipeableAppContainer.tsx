@@ -251,7 +251,9 @@ const AppHomeContent = () => {
   const navigate = useNavigate();
   const [cards, setCards] = useState<HomeMerchantCard[]>([]);
   const [loading, setLoading] = useState(true);
-  const [emblaRef] = useEmblaCarousel({ loop: true, align: 'center', containScroll: false });
+  const [emblaRef, homeEmblaApi] = useEmblaCarousel({ loop: true, align: 'center', containScroll: false });
+  const [activeCardIndex, setActiveCardIndex] = useState(0);
+  const [isCardSwiping, setIsCardSwiping] = useState(false);
 
   const loadCards = useCallback(async () => {
     if (!user) return;
@@ -270,7 +272,7 @@ const AppHomeContent = () => {
 
       const { data: merchants } = await supabase
         .from('customers')
-        .select('id, name, company_name, logo_url, cover_image_url, industry, latitude, longitude, description, opening_hours, street, house_number, postal_code, city, website, instagram, facebook, twitter')
+          .select('id, name, company_name, logo_url, cover_image_url, industry, latitude, longitude, description, opening_hours, street, house_number, postal_code, city, website, instagram, facebook, twitter, brand_color')
         .eq('active', true)
         .in('id', merchantIds);
 
@@ -315,6 +317,7 @@ const AppHomeContent = () => {
             instagram: m.instagram || null,
             facebook: m.facebook || null,
             twitter: m.twitter || null,
+            brandColor: m.brand_color || null,
           };
         })
         .filter((x): x is NonNullable<typeof x> => !!x)
