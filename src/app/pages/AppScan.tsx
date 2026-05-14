@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Nfc, XCircle, Settings, CheckCircle2 } from 'lucide-react';
+import { Nfc, XCircle, Settings, CheckCircle2, Sparkles, X, ScanLine } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
@@ -15,6 +15,23 @@ import { OfflineBanner } from '@/app/components/OfflineBanner';
 import Particles from '@/components/Particles';
 import { maybeAwardReferralBonus } from '@/app/lib/referralBonus';
 import { maybeUnlockNewCustomerOffer } from '@/app/lib/newCustomerOffer';
+import { useMerchantBrand } from '@/hooks/useMerchantBrand';
+import { setActiveBrandColor } from '@/lib/activeBrandColor';
+import {
+  getActivatedReward,
+  clearActivatedReward,
+  type ActivatedReward,
+} from '@/lib/activeMerchantReward';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 type ScanResult = {
   success: boolean;
