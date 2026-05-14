@@ -172,29 +172,6 @@ export const AppMessages = () => {
           </Card>
         )}
 
-        {/* Pinned redeemable rewards card */}
-        {redeemableCount > 0 && (
-          <button
-            onClick={() => navigate('/app/rewards')}
-            className="w-full text-left rounded-lg p-4 cursor-pointer hover:shadow-md transition-shadow bg-black/[0.06] dark:bg-white/[0.04]"
-          >
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-full bg-emerald-500/15 flex items-center justify-center">
-                <Trophy className="h-6 w-6 text-emerald-600 dark:text-emerald-400" />
-              </div>
-              <div className="flex-1">
-                <div className="text-xl font-bold text-foreground">
-                  {redeemableCount}
-                </div>
-                <div className="text-sm text-muted-foreground">
-                  {redeemableCount === 1 ? 'Einlösbare Prämie' : 'Einlösbare Prämien'}
-                </div>
-              </div>
-              <ChevronRight className="h-5 w-5 text-muted-foreground" />
-            </div>
-          </button>
-        )}
-
         {loading ? (
           <Card className="p-6">
             <p className="text-muted-foreground text-center">Lädt...</p>
@@ -250,7 +227,7 @@ export const AppMessages = () => {
             </Card>
           ))
         ) : (
-          !emailVerified ? null : redeemableCount > 0 ? null : (
+          !emailVerified ? null : (
             <Card className="p-8 text-center">
               <div className="mx-auto w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4">
                 <MessageSquare className="h-8 w-8 text-muted-foreground" />
@@ -262,6 +239,9 @@ export const AppMessages = () => {
             </Card>
           )
         )}
+
+        {/* Offene Einladungen */}
+        <OpenInvitationsPanel />
       </div>
     </MainLayout>
   );
