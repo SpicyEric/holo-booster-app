@@ -115,15 +115,27 @@ export const BottomNav = ({ onNavigate, currentIndex }: BottomNavProps) => {
   ];
 
   const handleCenterButtonClick = () => {
-    // If user is currently viewing a merchant detail page, pass that merchant id
-    // through to the scan page so it can render that merchant's branded card
-    // and the "Aktivierte Prämien für diesen Check-in" panel.
     const match = location.pathname.match(/^\/app\/merchant\/([^/?#]+)/);
     const merchantId = match?.[1];
     const params = new URLSearchParams();
     params.set('autostart', String(Date.now()));
     if (merchantId) params.set('merchant', merchantId);
-    navigate(`/app/scan?${params.toString()}`);
+    const url = `/app/scan?${params.toString()}`;
+
+    // Wenn wir gerade auf einer Merchant-Detail-Seite (Treuepass) sind,
+    // erst die Exit-Animation abspielen lassen und dann navigieren.
+    if (merchantId) {
+      const handled = window.dispatchEvent(
+        new CustomEvent('app:treuepass-exit-to-scan', {
+          detail: { merchantId, scanUrl: url },
+          cancelable: true,
+        })
+      );
+      // Wenn die Detailseite das Event bestätigt (preventDefault), kümmert
+      // sie sich selbst um die Navigation nach Abschluss der Animation.
+      if (!handled) return;
+    }
+    navigate(url);
   };
 
   const handleNavClick = (item: NavItem) => {
