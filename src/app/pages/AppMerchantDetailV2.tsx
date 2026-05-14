@@ -78,6 +78,20 @@ export const AppMerchantDetailV2 = () => {
   const { id } = useParams<{ id: string }>();
   const merchantId = id || DEFAULT_DEMO_MERCHANT_CUSTOMER_ID;
   const brand = useMerchantBrand(merchantId);
+  const [coverImageUrl, setCoverImageUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const { data } = await import('@/integrations/supabase/client').then(m => m.supabase
+        .from('customers')
+        .select('cover_image_url')
+        .eq('id', merchantId)
+        .maybeSingle());
+      if (!cancelled) setCoverImageUrl((data?.cover_image_url as string | null) || null);
+    })();
+    return () => { cancelled = true; };
+  }, [merchantId]);
 
   // ===== Brand-Color global publizieren (für BottomNav-Scan-Button) =====
   useEffect(() => {
@@ -434,7 +448,22 @@ export const AppMerchantDetailV2 = () => {
       </div>
 
       {/* Snake */}
-      <div className="mt-1 relative">
+      <div className="mt-1 relative overflow-hidden">
+        {coverImageUrl && (
+          <div
+            aria-hidden
+            className="absolute inset-0 pointer-events-none"
+            style={{
+              backgroundImage: `url(${coverImageUrl})`,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+              opacity: 0.18,
+              filter: 'saturate(0.9)',
+              maskImage: 'linear-gradient(to bottom, transparent 0%, #000 20%, #000 80%, transparent 100%)',
+              WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, #000 20%, #000 80%, transparent 100%)',
+            }}
+          />
+        )}
         <AnimatePresence>
           {showJumpToNow && (
             <motion.button
@@ -523,18 +552,17 @@ export const AppMerchantDetailV2 = () => {
                         className="w-16 h-16 rounded-full flex items-center justify-center border-4 bg-white shadow-md relative"
                         style={{
                           borderColor: isActivatedHere ? '#F5A623' : BRAND,
-                          opacity: isRedeemed ? 0.55 : 1,
                           boxShadow: isActivatedHere ? '0 0 0 4px #F5A62333' : undefined,
                         }}
                       >
                         <Gift
                           className="w-7 h-7"
-                          style={{ color: isRedeemed ? '#999' : BRAND }}
+                          style={{ color: BRAND }}
                         />
                       </motion.div>
                       {isRedeemed && (
-                        <div className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-emerald-500 flex items-center justify-center border-2 border-white">
-                          <Check className="w-3 h-3 text-white" strokeWidth={3} />
+                        <div className="absolute -top-2 -right-2 w-9 h-9 rounded-full bg-emerald-500 flex items-center justify-center border-[3px] border-white shadow-lg">
+                          <Check className="w-5 h-5 text-white" strokeWidth={3.5} />
                         </div>
                       )}
                       {isActivatedHere && !isRedeemed && (
