@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState, useRef } from 'react';
 import { Capacitor } from '@capacitor/core';
 import useEmblaCarousel from 'embla-carousel-react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Store, Gift, MessageSquare, Mail, Bell, MapPin, Search, User, History, LogOut, Shield, FileText, HelpCircle, ChevronRight, Sparkles, AlertCircle, TrendingUp, Trophy, Loader2, Heart, Nfc } from 'lucide-react';
+import { Store, Gift, MessageSquare, Mail, Bell, MapPin, Search, User, History, LogOut, Shield, FileText, HelpCircle, ChevronRight, Sparkles, AlertCircle, TrendingUp, Trophy, Loader2, Heart, Nfc, Clock, Globe, Instagram, Facebook, Twitter } from 'lucide-react';
 import { PullToRefresh } from '@/app/components/PullToRefresh';
 import { StoresGoogleMap } from '@/app/components/StoresGoogleMap';
 import { supabase } from '@/integrations/supabase/client';
@@ -43,6 +43,47 @@ const INDEX_TO_TITLE: Record<number, string> = {
   2: 'Nachrichten',
   3: 'Einstellungen',
 };
+
+type OpeningHourEntry = { open?: string; close?: string; closed?: boolean };
+
+type HomeMerchantCard = {
+  id: string;
+  merchantId: string;
+  name: string;
+  category: string | null;
+  logoUrl: string | null;
+  coverImage: string | null;
+  distance: number | null;
+  description: string | null;
+  openingHours: Record<string, OpeningHourEntry> | null;
+  address: string | null;
+  website: string | null;
+  instagram: string | null;
+  facebook: string | null;
+  twitter: string | null;
+};
+
+const HOME_DAY_LABELS: { key: string; label: string }[] = [
+  { key: 'monday', label: 'Mo' },
+  { key: 'tuesday', label: 'Di' },
+  { key: 'wednesday', label: 'Mi' },
+  { key: 'thursday', label: 'Do' },
+  { key: 'friday', label: 'Fr' },
+  { key: 'saturday', label: 'Sa' },
+  { key: 'sunday', label: 'So' },
+];
+
+function normalizeHomeUrl(value: string | null): string | null {
+  const trimmed = value?.trim();
+  if (!trimmed) return null;
+  return /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
+}
+
+function normalizeInstagramUrl(value: string | null): string | null {
+  const trimmed = value?.trim().replace(/^@/, '');
+  if (!trimmed) return null;
+  return /^https?:\/\//i.test(trimmed) ? trimmed : `https://instagram.com/${trimmed}`;
+}
 
 export const SwipeableAppContainer = () => {
   const location = useLocation();
