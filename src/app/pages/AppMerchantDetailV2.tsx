@@ -224,7 +224,7 @@ export const AppMerchantDetailV2 = () => {
   const [exitScanUrl, setExitScanUrl] = useState<string | null>(null);
 
   useEffect(() => {
-    try { sessionStorage.removeItem('treuepass-transition'); } catch {}
+    try { sessionStorage.removeItem('treuepass-transition'); } catch { void 0; }
   }, [merchantId]);
 
   // Ziel-Rect ermitteln, sobald Snake-Band gemountet ist
@@ -262,7 +262,7 @@ export const AppMerchantDetailV2 = () => {
       setEntryPhase('exiting');
       setExitStage(0);
       // Flag für Scan-Screen: Slide-Up-Intro überspringen, weil das Cover bereits an Position morpht
-      try { sessionStorage.setItem('scan-skip-intro', String(Date.now())); } catch {}
+      try { sessionStorage.setItem('scan-skip-intro', String(Date.now())); } catch { void 0; }
       // Stagger: snake (0–250ms) → info weg (250ms) → freunde weg (450ms) → navigate (~900ms)
       setTimeout(() => setExitStage(1), 220);
       setTimeout(() => setExitStage(2), 420);
