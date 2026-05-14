@@ -316,6 +316,8 @@ export const AppMerchantDetailV2 = () => {
   const [boostFlash, setBoostFlash] = useState(false);
   const [boostInfoOpen, setBoostInfoOpen] = useState(false);
   const [lastCheckInDate, setLastCheckInDate] = useState<string | null>(null);
+  const [lastRedeemDate, setLastRedeemDate] = useState<string | null>(null);
+  const [limitModal, setLimitModal] = useState<null | 'checkin' | 'reward'>(null);
 
   // Auto-Aktivierung der ersten Prämie beim allerersten Check-in:
   // Wenn der User noch nie eingecheckt hat und der Händler eine Prämie auf
@@ -576,7 +578,7 @@ export const AppMerchantDetailV2 = () => {
 
   const performCheckIn = (source: CheckInSource, suppressLimit = false, opts?: { autoRedeem?: boolean; silent?: boolean }) => {
     if (!suppressLimit && lastCheckInDate === todayKey()) {
-      toast.info('Heute schon eingecheckt. Bis morgen! 👋');
+      setLimitModal('checkin');
       return;
     }
     const next = currentVisit + 1;
@@ -585,9 +587,14 @@ export const AppMerchantDetailV2 = () => {
 
     // Aktivierte Prämie automatisch einlösen (z.B. wenn intern aufgerufen)
     if (opts?.autoRedeem && activatedReward) {
+      if (lastRedeemDate === todayKey()) {
+        setLimitModal('reward');
+        return;
+      }
       const reward = activatedReward;
       setActivatedReward(null);
       clearActivatedReward(merchantId);
+      setLastRedeemDate(todayKey());
       setRedeemedVisits((prev) => prev.includes(reward.visitNumber) ? prev : [...prev, reward.visitNumber]);
       setRewards((prev) => {
         const exists = prev.some((r) => r.visitNumber === reward.visitNumber);
@@ -1010,8 +1017,8 @@ export const AppMerchantDetailV2 = () => {
         </motion.div>
       </div>
 
-      {/* Hinweis Pre-Activation / Aktivierte Prämie — nur wenn schon eingecheckt oder Prämie aktiviert */}
-      {(currentVisit > 0 || activatedReward) && (
+      {/* Aktivierte Prämie / Tipp-Hinweis unter dem Treuepass-Pfad */}
+      {activatedReward ? (
         <motion.div
           className="px-4 mt-6"
           initial={isEntering ? { opacity: 0, y: 10 } : false}
@@ -1020,60 +1027,46 @@ export const AppMerchantDetailV2 = () => {
         >
           <Card
             className="p-4 border transition-colors"
+            style={{ borderColor: '#F5A62355', background: '#FFF6E5' }}
+          >
+            <div className="flex gap-3 items-start">
+              <div className="w-9 h-9 rounded-full bg-amber-500 flex items-center justify-center shrink-0 shadow-sm">
+                <Sparkles className="w-5 h-5 text-white" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-[10px] uppercase tracking-wider font-bold text-amber-700">
+                  Für den nächsten Check-in aktiviert
+                </p>
+                <p className="text-base font-extrabold text-neutral-900 dark:text-neutral-100 mt-0.5 leading-tight">
+                  {activatedReward.label}
+                </p>
+                <button
+                  onClick={removeActivation}
+                  className="mt-2 text-xs font-semibold text-amber-700 underline-offset-2 hover:underline"
+                >
+                  Aktivierung entfernen
+                </button>
+              </div>
+            </div>
+          </Card>
+        </motion.div>
+      ) : (
+        <motion.div
+          className="px-4 mt-3 mb-2"
+          initial={isEntering ? { opacity: 0, y: 6 } : false}
+          animate={infoVisible ? { opacity: 1, y: 0 } : { opacity: 0, y: -4 }}
+          transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+        >
+          <div
+            className="rounded-lg px-3 py-2 text-[13px] leading-snug font-medium"
             style={{
-              borderColor: activatedReward ? '#F5A62355' : `${BRAND}33`,
-              background: activatedReward ? '#FFF6E5' : `${BRAND}0a`,
+              background: `${BRAND}14`,
+              color: `color-mix(in srgb, ${BRAND} 75%, black)`,
             }}
           >
-            <AnimatePresence mode="wait" initial={false}>
-              {activatedReward ? (
-                <motion.div
-                  key="activated"
-                  initial={{ opacity: 0, y: 6 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -6 }}
-                  transition={{ duration: 0.2 }}
-                  className="flex gap-3 items-start"
-                >
-                  <div className="w-9 h-9 rounded-full bg-amber-500 flex items-center justify-center shrink-0 shadow-sm">
-                    <Sparkles className="w-5 h-5 text-white" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-[10px] uppercase tracking-wider font-bold text-amber-700">
-                      Für den nächsten Check-in aktiviert
-                    </p>
-                    <p className="text-base font-extrabold text-neutral-900 dark:text-neutral-100 mt-0.5 leading-tight">
-                      {activatedReward.label}
-                    </p>
-                    <button
-                      onClick={removeActivation}
-                      className="mt-2 text-xs font-semibold text-amber-700 underline-offset-2 hover:underline"
-                    >
-                      Aktivierung entfernen
-                    </button>
-                  </div>
-                </motion.div>
-              ) : (
-                <motion.div
-                  key="info"
-                  initial={{ opacity: 0, y: 6 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -6 }}
-                  transition={{ duration: 0.2 }}
-                  className="flex gap-3"
-                >
-                  <Sparkles className="w-5 h-5 mt-0.5 shrink-0" style={{ color: BRAND }} />
-                  <div>
-                    <p className="text-sm font-semibold text-neutral-900 dark:text-neutral-100">So funktioniert das Einlösen</p>
-                    <p className="text-xs text-neutral-600 dark:text-neutral-400 mt-1 leading-relaxed">
-                      Tippe vor deinem nächsten Check-in auf eine freigeschaltete Prämie, um sie zu aktivieren.
-                      Beim Check-in wird sie automatisch eingelöst. Pro Tag nur ein Check-in pro Geschäft.
-                    </p>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </Card>
+            <span className="mr-1.5">💡</span>
+            Tippe eine Prämie an, um sie beim nächsten Check-in einzulösen
+          </div>
         </motion.div>
       )}
 
@@ -1665,6 +1658,36 @@ export const AppMerchantDetailV2 = () => {
           </motion.div>
         )}
       </AnimatePresence>
+
+      <Dialog open={!!limitModal} onOpenChange={(open) => !open && setLimitModal(null)}>
+        <DialogContent
+          className="max-w-[320px] rounded-2xl border-0 p-0 overflow-hidden"
+          style={{ background: '#fff' }}
+        >
+          <div className="px-6 pt-6 pb-5 text-center">
+            <div className="text-4xl mb-3">
+              {limitModal === 'reward' ? '🎁' : '⏰'}
+            </div>
+            <h3 className="text-base font-bold text-neutral-900 mb-2">
+              {limitModal === 'reward' ? 'Schon eine Prämie heute' : 'Schon eingecheckt heute'}
+            </h3>
+            <p className="text-sm text-neutral-600 leading-relaxed">
+              {limitModal === 'reward'
+                ? 'Du kannst maximal eine Prämie pro Tag einlösen. Komm morgen wieder!'
+                : 'Du kannst pro Tag einmal bei jedem Geschäft einchecken. Komm morgen wieder!'}
+            </p>
+          </div>
+          <div className="px-4 pb-4">
+            <Button
+              onClick={() => setLimitModal(null)}
+              className="w-full rounded-xl text-white font-semibold"
+              style={{ background: BRAND }}
+            >
+              Verstanden
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <BottomNav />
     </div>
