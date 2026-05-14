@@ -552,18 +552,17 @@ export const AppMerchantDetailV2 = () => {
                         className="w-16 h-16 rounded-full flex items-center justify-center border-4 bg-white shadow-md relative"
                         style={{
                           borderColor: isActivatedHere ? '#F5A623' : BRAND,
-                          opacity: isRedeemed ? 0.55 : 1,
                           boxShadow: isActivatedHere ? '0 0 0 4px #F5A62333' : undefined,
                         }}
                       >
                         <Gift
                           className="w-7 h-7"
-                          style={{ color: isRedeemed ? '#999' : BRAND }}
+                          style={{ color: BRAND }}
                         />
                       </motion.div>
                       {isRedeemed && (
-                        <div className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-emerald-500 flex items-center justify-center border-2 border-white">
-                          <Check className="w-3 h-3 text-white" strokeWidth={3} />
+                        <div className="absolute -top-2 -right-2 w-9 h-9 rounded-full bg-emerald-500 flex items-center justify-center border-[3px] border-white shadow-lg">
+                          <Check className="w-5 h-5 text-white" strokeWidth={3.5} />
                         </div>
                       )}
                       {isActivatedHere && !isRedeemed && (
