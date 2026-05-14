@@ -5,6 +5,7 @@ import MerchantSidebar from "@/components/merchant/MerchantSidebar";
 import DemoMerchantBanner from "@/components/DemoMerchantBanner";
 import { isDemoMerchantActive } from "@/lib/demoMerchant";
 import { useDemoMerchant } from "@/hooks/useDemoMerchant";
+import { MerchantBrandTheme } from "@/components/merchant/MerchantBrandTheme";
 
 const MerchantLayout = () => {
   useEffect(() => {
