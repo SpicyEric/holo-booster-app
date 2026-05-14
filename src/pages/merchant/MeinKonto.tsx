@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { cn } from "@/lib/utils";
+import MerchantCardIdTile from "@/components/merchant/MerchantCardIdTile";
 
 interface Customer {
   id: string;
