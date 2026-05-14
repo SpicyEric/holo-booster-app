@@ -107,7 +107,33 @@ export function MerchantBrandColorCard({ customerId }: Props) {
                 style={{ ['--tw-ring-color' as string]: color } as React.CSSProperties}
               />
             </div>
+            {typeof window !== 'undefined' && 'EyeDropper' in window && (
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                className="shrink-0 mt-5"
+                title="Farbe von der Seite picken"
+                onClick={async () => {
+                  try {
+                    // @ts-ignore – EyeDropper API
+                    const ed = new window.EyeDropper();
+                    const res = await ed.open();
+                    if (res?.sRGBHex) setColor(res.sRGBHex);
+                  } catch {
+                    // user cancelled
+                  }
+                }}
+              >
+                <Pipette className="h-4 w-4" />
+              </Button>
+            )}
           </div>
+          {!(typeof window !== 'undefined' && 'EyeDropper' in window) && (
+            <p className="text-xs text-muted-foreground -mt-2">
+              Tipp: Im Chrome/Edge-Browser kannst du mit der Pipette eine Farbe direkt von Logo oder Titelbild abgreifen.
+            </p>
+          )}
           <div className="flex gap-2">
             <Button onClick={save} disabled={!dirty || saving} className="flex-1" style={{ background: color, color: 'white' }}>
               {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
