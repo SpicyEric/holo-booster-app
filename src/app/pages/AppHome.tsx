@@ -86,7 +86,21 @@ export const AppHome = () => {
           {cards.map((store) => (
             <div key={store.id} style={{ marginBottom: '12px' }}>
               <button
-                onClick={() => navigate(`/app/merchant/${store.merchantId}`)}
+                onClick={(e) => {
+                  const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+                  try {
+                    sessionStorage.setItem(
+                      'treuepass-transition',
+                      JSON.stringify({
+                        merchantId: store.merchantId,
+                        coverUrl: store.coverImage,
+                        rect: { top: rect.top, left: rect.left, width: rect.width, height: rect.height },
+                        timestamp: Date.now(),
+                      }),
+                    );
+                  } catch {}
+                  navigate(`/app/merchant/${store.merchantId}`);
+                }}
                 className="w-full rounded-xl overflow-hidden shadow-md text-left relative block"
                 style={{ aspectRatio: '1.55 / 1', display: 'block' }}
               >

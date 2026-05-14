@@ -181,6 +181,46 @@ export const AppMerchantDetailV2 = () => {
   const [confirmStage, setConfirmStage] = useState(false);
   const [screenCaptured, setScreenCaptured] = useState(false);
 
+  // ===== Entry-Transition vom Home-Pass =====
+  type EntryPhase = 'idle' | 'flying' | 'fading' | 'revealing' | 'done';
+  const readEntryPayload = () => {
+    if (typeof window === 'undefined') return null;
+    try {
+      const raw = sessionStorage.getItem('treuepass-transition');
+      if (!raw) return null;
+      const data = JSON.parse(raw);
+      if (data.merchantId !== merchantId) return null;
+      if (Date.now() - data.timestamp > 1500) return null;
+      return data as { rect: { top: number; left: number; width: number; height: number }; coverUrl: string | null };
+    } catch { return null; }
+  };
+  const [entryPhase, setEntryPhase] = useState<EntryPhase>(() => (readEntryPayload() ? 'flying' : 'done'));
+  const [entryOrigin, setEntryOrigin] = useState<{ top: number; left: number; width: number; height: number } | null>(() => readEntryPayload()?.rect ?? null);
+  const [entryTarget, setEntryTarget] = useState<{ top: number; left: number; width: number; height: number } | null>(null);
+  const [entryCover, setEntryCover] = useState<string | null>(() => readEntryPayload()?.coverUrl ?? null);
+  const snakeBandRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    // Payload nach erstem Render aus dem Storage entfernen
+    try { sessionStorage.removeItem('treuepass-transition'); } catch {}
+  }, [merchantId]);
+
+  // Ziel-Rect ermitteln, sobald Snake-Band gemountet ist
+  useEffect(() => {
+    if (entryPhase !== 'flying' || entryTarget) return;
+    const measure = () => {
+      const r = snakeBandRef.current?.getBoundingClientRect();
+      if (r && r.height > 0) {
+        setEntryTarget({ top: r.top, left: r.left, width: r.width, height: r.height });
+      } else {
+        requestAnimationFrame(measure);
+      }
+    };
+    requestAnimationFrame(measure);
+  }, [entryPhase, entryTarget]);
+
+  const isEntering = entryPhase !== 'done';
+
   // Privacy-Screen NUR aktivieren, wenn die sensible Einlöse-Ansicht
   // (oranges Vollbild mit Code-Marquee + Prämie) sichtbar ist.
   const isRedemptionScreenVisible = Boolean(checkInOverlay?.reward);
@@ -466,16 +506,16 @@ export const AppMerchantDetailV2 = () => {
       </div>
 
       {/* Snake */}
-      <div className="mt-1 relative overflow-hidden">
+      <div ref={snakeBandRef} className="mt-1 relative overflow-hidden">
         {coverImageUrl && (
           <div
             aria-hidden
-            className="absolute inset-0 pointer-events-none"
+            className="absolute inset-0 pointer-events-none transition-opacity duration-300"
             style={{
               backgroundImage: `url(${coverImageUrl})`,
               backgroundSize: 'cover',
               backgroundPosition: 'center',
-              opacity: 0.18,
+              opacity: isEntering ? 0 : 0.18,
               filter: 'saturate(0.9)',
               maskImage: 'linear-gradient(to bottom, transparent 0%, #000 20%, #000 80%, transparent 100%)',
               WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, #000 20%, #000 80%, transparent 100%)',
@@ -502,7 +542,13 @@ export const AppMerchantDetailV2 = () => {
           transition={{ duration: 0.6 }}
           ref={scrollerRef}
           className="overflow-x-auto overflow-y-hidden no-scrollbar"
-          style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-x', overscrollBehaviorX: 'contain' }}
+          style={{
+            WebkitOverflowScrolling: 'touch',
+            touchAction: 'pan-x',
+            overscrollBehaviorX: 'contain',
+            clipPath: entryPhase === 'flying' || entryPhase === 'fading' ? 'inset(0 100% 0 0)' : 'inset(0 0 0 0)',
+            transition: 'clip-path 700ms cubic-bezier(0.22,1,0.36,1)',
+          }}
         >
           <div className="relative" style={{ width: totalWidth, height: SNAKE_HEIGHT + 14 }}>
             <svg width={totalWidth} height={SNAKE_HEIGHT} className="absolute inset-x-0 top-3">
@@ -977,6 +1023,76 @@ export const AppMerchantDetailV2 = () => {
               </div>
             )}
           </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Entry-Transition vom Home-Pass: Cover fliegt vom Karten-Rect zum Snake-Band */}
+      <AnimatePresence>
+        {isEntering && entryOrigin && entryCover && (
+          <>
+            {/* Diagonaler Brand-Color-Sweep (unten-links → oben-rechts) */}
+            <motion.div
+              key="brand-sweep"
+              className="fixed inset-0 z-[55] pointer-events-none"
+              initial={{ opacity: 0, clipPath: 'polygon(0% 100%, 0% 100%, 0% 100%)' }}
+              animate={{ opacity: 0.55, clipPath: 'polygon(0% 100%, 0% 0%, 100% 0%, 100% 100%)' }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
+              style={{ background: `linear-gradient(to top right, ${BRAND}, ${BRAND}00 70%)` }}
+            />
+            {/* Cover fliegt von Origin zu Snake-Band */}
+            <motion.div
+              key="cover-fly"
+              className="fixed z-[60] pointer-events-none overflow-hidden shadow-xl"
+              initial={{
+                top: entryOrigin.top,
+                left: entryOrigin.left,
+                width: entryOrigin.width,
+                height: entryOrigin.height,
+                borderRadius: 12,
+                opacity: 1,
+              }}
+              animate={
+                entryTarget
+                  ? entryPhase === 'fading'
+                    ? {
+                        top: entryTarget.top,
+                        left: entryTarget.left,
+                        width: entryTarget.width,
+                        height: entryTarget.height,
+                        borderRadius: 0,
+                        opacity: 0.18,
+                      }
+                    : {
+                        top: entryTarget.top,
+                        left: entryTarget.left,
+                        width: entryTarget.width,
+                        height: entryTarget.height,
+                        borderRadius: 0,
+                        opacity: 1,
+                      }
+                  : undefined
+              }
+              transition={{
+                duration: entryPhase === 'fading' ? 0.45 : 0.6,
+                ease: [0.22, 1, 0.36, 1],
+              }}
+              onAnimationComplete={() => {
+                if (entryPhase === 'flying') {
+                  setEntryPhase('fading');
+                } else if (entryPhase === 'fading') {
+                  setEntryPhase('revealing');
+                  setTimeout(() => setEntryPhase('done'), 750);
+                }
+              }}
+              style={{
+                backgroundImage: `url(${entryCover})`,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+                filter: 'saturate(0.9)',
+              }}
+            />
+          </>
         )}
       </AnimatePresence>
 
