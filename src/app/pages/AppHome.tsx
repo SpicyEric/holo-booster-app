@@ -7,12 +7,12 @@ import { MainLayout } from '@/app/components/layout/MainLayout';
 import { OpenInvitationsBanner } from '@/app/components/OpenInvitationsBanner';
 
 interface MerchantCard {
-  id: string;            // loyalty_account id
+  id: string;
   merchantId: string;
-  merchantName: string;
-  merchantLogo: string | null;
+  name: string;
+  category: string | null;
+  logoUrl: string | null;
   coverImage: string | null;
-  points: number;
 }
 
 export const AppHome = () => {
@@ -28,7 +28,7 @@ export const AppHome = () => {
       try {
         const { data: accounts } = await supabase
           .from('loyalty_accounts')
-          .select('id, merchant_customer_id, current_points_balance')
+          .select('id, merchant_customer_id')
           .eq('user_id', user.id);
 
         const merchantIds = (accounts || []).map((a) => a.merchant_customer_id);
@@ -39,7 +39,7 @@ export const AppHome = () => {
 
         const { data: merchants } = await supabase
           .from('customers')
-          .select('id, name, company_name, logo_url, cover_image_url')
+          .select('id, name, company_name, logo_url, cover_image_url, industry')
           .eq('active', true)
           .in('id', merchantIds);
 
@@ -50,10 +50,10 @@ export const AppHome = () => {
             return {
               id: a.id,
               merchantId: a.merchant_customer_id,
-              merchantName: m.company_name || m.name || 'Unbekannt',
-              merchantLogo: m.logo_url || null,
+              name: m.company_name || m.name || 'Unbekannt',
+              category: m.industry || null,
+              logoUrl: m.logo_url || null,
               coverImage: m.cover_image_url || null,
-              points: a.current_points_balance ?? 0,
             } as MerchantCard;
           })
           .filter((x): x is MerchantCard => !!x);
@@ -72,7 +72,7 @@ export const AppHome = () => {
   }, [user]);
 
   return (
-    <MainLayout title="">
+    <MainLayout title="Home">
       <OpenInvitationsBanner />
 
       {loading ? (
@@ -82,43 +82,41 @@ export const AppHome = () => {
       ) : cards.length === 0 ? (
         <EmptyTutorial onExplore={() => navigate('/app/stores')} />
       ) : (
-        <div className="space-y-4">
-          {cards.map((card) => (
-            <button
-              key={card.id}
-              onClick={() => navigate(`/app/merchant/${card.merchantId}`)}
-              className="w-full text-left rounded-2xl overflow-hidden bg-card shadow-sm hover:shadow-md transition-shadow"
-            >
-              <div className="relative w-full aspect-[16/7] bg-muted">
-                {card.coverImage ? (
-                  <img src={card.coverImage} alt="" className="w-full h-full object-cover" loading="lazy" />
-                ) : (
-                  <div className="w-full h-full bg-gradient-to-br from-primary/30 to-secondary/30" />
-                )}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/10 to-transparent" />
-                <div className="absolute bottom-3 left-3 right-3 flex items-center gap-3">
-                  {card.merchantLogo ? (
-                    <img
-                      src={card.merchantLogo}
-                      alt=""
-                      className="w-12 h-12 rounded-xl object-cover ring-2 ring-white/80"
-                    />
+        <div style={{ paddingBottom: '2rem' }}>
+          {cards.map((store) => (
+            <div key={store.id} style={{ marginBottom: '12px' }}>
+              <button
+                onClick={() => navigate(`/app/merchant/${store.merchantId}`)}
+                className="w-full rounded-xl overflow-hidden shadow-md text-left relative block"
+                style={{ aspectRatio: '1.55 / 1', display: 'block' }}
+              >
+                <div className="absolute inset-0">
+                  {store.coverImage ? (
+                    <img src={store.coverImage} alt={store.name} className="w-full h-full object-cover" />
                   ) : (
-                    <div className="w-12 h-12 rounded-xl bg-white/90 flex items-center justify-center text-primary font-bold">
-                      {card.merchantName.charAt(0)}
+                    <div className="w-full h-full bg-gradient-to-br from-purple-500 to-blue-500" />
+                  )}
+                </div>
+                <div className="absolute top-3 left-3 z-20 w-12 h-12 rounded-full overflow-hidden">
+                  {store.logoUrl ? (
+                    <img src={store.logoUrl} alt={`${store.name} Logo`} className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full bg-primary flex items-center justify-center">
+                      <span className="text-lg font-bold text-white">
+                        {store.name?.charAt(0)?.toUpperCase() || '?'}
+                      </span>
                     </div>
                   )}
-                  <div className="flex-1 min-w-0">
-                    <p className="text-white font-semibold truncate drop-shadow">
-                      {card.merchantName}
-                    </p>
-                    <p className="text-white/90 text-xs">
-                      {card.points} {card.points === 1 ? 'Punkt' : 'Punkte'}
-                    </p>
-                  </div>
                 </div>
-              </div>
-            </button>
+                <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/70 via-black/40 to-transparent" />
+                <div className="absolute bottom-3 left-3 right-3 z-10">
+                  <h3 className="text-white font-semibold text-xl truncate drop-shadow-md">{store.name}</h3>
+                  {store.category && (
+                    <p className="text-white/80 text-sm truncate drop-shadow-md">{store.category}</p>
+                  )}
+                </div>
+              </button>
+            </div>
           ))}
         </div>
       )}
@@ -128,21 +126,9 @@ export const AppHome = () => {
 
 function EmptyTutorial({ onExplore }: { onExplore: () => void }) {
   const steps = [
-    {
-      icon: MapPin,
-      title: 'Shop entdecken',
-      text: 'Finde teilnehmende Geschäfte in deiner Nähe.',
-    },
-    {
-      icon: Nfc,
-      title: 'Karte scannen',
-      text: 'Halte dein Handy an die NFC-Karte im Shop und sammle Punkte.',
-    },
-    {
-      icon: Gift,
-      title: 'Prämien einlösen',
-      text: 'Tausche gesammelte Punkte gegen Belohnungen ein.',
-    },
+    { icon: MapPin, title: 'Shop entdecken', text: 'Finde teilnehmende Geschäfte in deiner Nähe.' },
+    { icon: Nfc, title: 'Karte scannen', text: 'Halte dein Handy an die NFC-Karte im Shop und sammle Punkte.' },
+    { icon: Gift, title: 'Prämien einlösen', text: 'Tausche gesammelte Punkte gegen Belohnungen ein.' },
   ];
 
   return (
@@ -159,17 +145,12 @@ function EmptyTutorial({ onExplore }: { onExplore: () => void }) {
 
       <div className="space-y-3">
         {steps.map((s, i) => (
-          <div
-            key={s.title}
-            className="flex items-start gap-3 p-4 rounded-2xl bg-card shadow-sm"
-          >
+          <div key={s.title} className="flex items-start gap-3 p-4 rounded-2xl bg-card shadow-sm">
             <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
               <s.icon className="h-5 w-5 text-primary" />
             </div>
             <div className="flex-1">
-              <p className="font-semibold text-foreground text-sm">
-                {i + 1}. {s.title}
-              </p>
+              <p className="font-semibold text-foreground text-sm">{i + 1}. {s.title}</p>
               <p className="text-sm text-muted-foreground mt-0.5">{s.text}</p>
             </div>
           </div>
