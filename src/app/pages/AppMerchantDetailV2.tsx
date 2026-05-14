@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, Gift, Check, UserPlus, Sparkles, Cake, X, CheckCircle2, Star, MessageSquare, Calendar as CalendarIcon } from 'lucide-react';
+import { ArrowLeft, Gift, Check, UserPlus, Sparkles, Cake, X, CheckCircle2, Star, MessageSquare, Calendar as CalendarIcon, Clock, MapPin, Globe, Instagram, Facebook, Twitter } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
@@ -102,22 +102,48 @@ function buildSmoothPath(points: { x: number; y: number }[]): string {
   return d;
 }
 
+interface MerchantInfo {
+  name: string;
+  description: string | null;
+  openingHours: Record<string, { open?: string; close?: string; closed?: boolean }> | null;
+  address: string | null;
+  website: string | null;
+  instagram: string | null;
+  facebook: string | null;
+  twitter: string | null;
+}
+
 export const AppMerchantDetailV2 = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { id } = useParams<{ id: string }>();
   const merchantId = id || DEFAULT_DEMO_MERCHANT_CUSTOMER_ID;
+  const isDemoMerchant = merchantId === DEFAULT_DEMO_MERCHANT_CUSTOMER_ID;
   const brand = useMerchantBrand(merchantId);
   const [coverImageUrl, setCoverImageUrl] = useState<string | null>(null);
   const [passLength, setPassLength] = useState<number>(35);
   const [dbRewards, setDbRewards] = useState<{ visitNumber: number; label: string; imageUrl: string | null }[]>([]);
+  const [merchantInfo, setMerchantInfo] = useState<MerchantInfo>({
+    name: 'Backstube König',
+    description: null,
+    openingHours: null,
+    address: null,
+    website: null,
+    instagram: null,
+    facebook: null,
+    twitter: null,
+  });
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
       const { supabase } = await import('@/integrations/supabase/client');
       const [{ data: cust }, { data: placements }, { data: rewardRows }] = await Promise.all([
-        supabase.from('customers').select('cover_image_url, pass_length').eq('id', merchantId).maybeSingle(),
+        supabase
+          .from('customers')
+          .select('cover_image_url, pass_length, name, company_name, description, opening_hours, street, house_number, postal_code, city, website, instagram, facebook, twitter')
+          .eq('id', merchantId)
+          .maybeSingle(),
         supabase
           .from('reward_placements')
           .select('visit, reward_id')
@@ -132,6 +158,23 @@ export const AppMerchantDetailV2 = () => {
       if (cancelled) return;
       setCoverImageUrl((cust?.cover_image_url as string | null) || null);
       if (cust?.pass_length) setPassLength(cust.pass_length as number);
+      if (cust) {
+        const street = [cust.street, cust.house_number].filter(Boolean).join(' ');
+        const address = [street, cust.postal_code, cust.city].filter(Boolean).join(', ');
+        const oh = cust.opening_hours && typeof cust.opening_hours === 'object'
+          ? (cust.opening_hours as Record<string, { open?: string; close?: string; closed?: boolean }>)
+          : null;
+        setMerchantInfo({
+          name: (cust.company_name as string) || (cust.name as string) || 'Geschäft',
+          description: (cust.description as string) || null,
+          openingHours: oh,
+          address: address || null,
+          website: (cust.website as string) || null,
+          instagram: (cust.instagram as string) || null,
+          facebook: (cust.facebook as string) || null,
+          twitter: (cust.twitter as string) || null,
+        });
+      }
       const rewardsById = new Map(((rewardRows || []) as RewardRow[]).map((r) => [r.id, r]));
       const mapped = ((placements || []) as RewardPlacementRow[]).flatMap((p) => {
         const reward = rewardsById.get(p.reward_id);
@@ -188,8 +231,8 @@ export const AppMerchantDetailV2 = () => {
   const resetKey = `eloyo:v2:demo-reset:${merchantId}`;
   const lastDateKey = `eloyo:v2:lastcheckin:${merchantId}`;
 
-  const defaultCheckIns = DEMO_DEFAULT_CHECK_INS;
-  const defaultRedeemed = DEMO_DEFAULT_REDEEMED;
+  const defaultCheckIns = isDemoMerchant ? DEMO_DEFAULT_CHECK_INS : [];
+  const defaultRedeemed = isDemoMerchant ? DEMO_DEFAULT_REDEEMED : [];
 
   const [checkIns, setCheckIns] = useState<CheckInEntry[]>(() => {
     if (typeof window === 'undefined') return defaultCheckIns;
@@ -715,7 +758,7 @@ export const AppMerchantDetailV2 = () => {
             <ArrowLeft className="w-5 h-5" style={{ color: BRAND }} />
           </button>
           <div className="flex-1 min-w-0">
-            <h1 className="text-lg font-bold text-neutral-900 truncate">Backstube König</h1>
+            <h1 className="text-lg font-bold text-neutral-900 truncate">{merchantInfo.name}</h1>
             <p className="text-xs font-medium" style={{ color: BRAND }}>Dein Treuepass</p>
           </div>
           <div
@@ -931,70 +974,72 @@ export const AppMerchantDetailV2 = () => {
         </motion.div>
       </div>
 
-      {/* Hinweis Pre-Activation / Aktivierte Prämie */}
-      <motion.div
-        className="px-4 mt-6"
-        initial={isEntering ? { opacity: 0, y: 10 } : false}
-        animate={infoVisible ? { opacity: 1, y: 0 } : { opacity: 0, y: -8 }}
-        transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
-      >
-        <Card
-          className="p-4 border transition-colors"
-          style={{
-            borderColor: activatedReward ? '#F5A62355' : `${BRAND}33`,
-            background: activatedReward ? '#FFF6E5' : `${BRAND}0a`,
-          }}
+      {/* Hinweis Pre-Activation / Aktivierte Prämie — nur wenn schon eingecheckt oder Prämie aktiviert */}
+      {(currentVisit > 0 || activatedReward) && (
+        <motion.div
+          className="px-4 mt-6"
+          initial={isEntering ? { opacity: 0, y: 10 } : false}
+          animate={infoVisible ? { opacity: 1, y: 0 } : { opacity: 0, y: -8 }}
+          transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
         >
-          <AnimatePresence mode="wait" initial={false}>
-            {activatedReward ? (
-              <motion.div
-                key="activated"
-                initial={{ opacity: 0, y: 6 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -6 }}
-                transition={{ duration: 0.2 }}
-                className="flex gap-3 items-start"
-              >
-                <div className="w-9 h-9 rounded-full bg-amber-500 flex items-center justify-center shrink-0 shadow-sm">
-                  <Sparkles className="w-5 h-5 text-white" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-[10px] uppercase tracking-wider font-bold text-amber-700">
-                    Für den nächsten Check-in aktiviert
-                  </p>
-                  <p className="text-base font-extrabold text-neutral-900 mt-0.5 leading-tight">
-                    {activatedReward.label}
-                  </p>
-                  <button
-                    onClick={removeActivation}
-                    className="mt-2 text-xs font-semibold text-amber-700 underline-offset-2 hover:underline"
-                  >
-                    Aktivierung entfernen
-                  </button>
-                </div>
-              </motion.div>
-            ) : (
-              <motion.div
-                key="info"
-                initial={{ opacity: 0, y: 6 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -6 }}
-                transition={{ duration: 0.2 }}
-                className="flex gap-3"
-              >
-                <Sparkles className="w-5 h-5 mt-0.5 shrink-0" style={{ color: BRAND }} />
-                <div>
-                  <p className="text-sm font-semibold text-neutral-900">So funktioniert das Einlösen</p>
-                  <p className="text-xs text-neutral-600 mt-1 leading-relaxed">
-                    Tippe vor deinem nächsten Check-in auf eine freigeschaltete Prämie, um sie zu aktivieren.
-                    Beim Check-in wird sie automatisch eingelöst. Pro Tag nur ein Check-in pro Geschäft.
-                  </p>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </Card>
-      </motion.div>
+          <Card
+            className="p-4 border transition-colors"
+            style={{
+              borderColor: activatedReward ? '#F5A62355' : `${BRAND}33`,
+              background: activatedReward ? '#FFF6E5' : `${BRAND}0a`,
+            }}
+          >
+            <AnimatePresence mode="wait" initial={false}>
+              {activatedReward ? (
+                <motion.div
+                  key="activated"
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -6 }}
+                  transition={{ duration: 0.2 }}
+                  className="flex gap-3 items-start"
+                >
+                  <div className="w-9 h-9 rounded-full bg-amber-500 flex items-center justify-center shrink-0 shadow-sm">
+                    <Sparkles className="w-5 h-5 text-white" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[10px] uppercase tracking-wider font-bold text-amber-700">
+                      Für den nächsten Check-in aktiviert
+                    </p>
+                    <p className="text-base font-extrabold text-neutral-900 mt-0.5 leading-tight">
+                      {activatedReward.label}
+                    </p>
+                    <button
+                      onClick={removeActivation}
+                      className="mt-2 text-xs font-semibold text-amber-700 underline-offset-2 hover:underline"
+                    >
+                      Aktivierung entfernen
+                    </button>
+                  </div>
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="info"
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -6 }}
+                  transition={{ duration: 0.2 }}
+                  className="flex gap-3"
+                >
+                  <Sparkles className="w-5 h-5 mt-0.5 shrink-0" style={{ color: BRAND }} />
+                  <div>
+                    <p className="text-sm font-semibold text-neutral-900">So funktioniert das Einlösen</p>
+                    <p className="text-xs text-neutral-600 mt-1 leading-relaxed">
+                      Tippe vor deinem nächsten Check-in auf eine freigeschaltete Prämie, um sie zu aktivieren.
+                      Beim Check-in wird sie automatisch eingelöst. Pro Tag nur ein Check-in pro Geschäft.
+                    </p>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </Card>
+        </motion.div>
+      )}
 
       {/* Boost holen */}
       <motion.div
@@ -1027,6 +1072,11 @@ export const AppMerchantDetailV2 = () => {
           </Button>
         </Card>
       </motion.div>
+
+      {/* Geschäfts-Infos — vor allem für Stores ohne eigenen Treuepass relevant */}
+      {currentVisit === 0 && (
+        <MerchantInfoSection info={merchantInfo} brand={BRAND} />
+      )}
 
       {/* Google-Bewertung abgeben — nur wenn min. 1 Check-in & noch nicht abgegeben */}
       {currentVisit >= 1 && !googleReviewDone && (
@@ -1074,7 +1124,7 @@ export const AppMerchantDetailV2 = () => {
             <p className="text-xs font-semibold uppercase tracking-wide text-neutral-500">So funktioniert's</p>
           </div>
           <p className="text-sm text-neutral-700 leading-relaxed text-center">
-            Bewerte <span className="font-semibold text-neutral-900">Backstube König</span> bei Google.
+            Bewerte <span className="font-semibold text-neutral-900">{merchantInfo.name}</span> bei Google.
             Du bekommst <span className="font-semibold text-neutral-900">+1 Check-in</span> geschenkt.
             <br />
             <span className="text-xs text-neutral-500">Nur einmal pro Geschäft möglich.</span>
@@ -1193,7 +1243,7 @@ export const AppMerchantDetailV2 = () => {
                 className="shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold text-white"
                 style={{ background: BRAND }}
               >2</span>
-              <span>Dein Freund checkt bei <span className="font-semibold text-neutral-900">Backstube König</span> ein.</span>
+              <span>Dein Freund checkt bei <span className="font-semibold text-neutral-900">{merchantInfo.name}</span> ein.</span>
             </li>
             <li className="flex gap-2.5">
               <span
@@ -1584,5 +1634,111 @@ export const AppMerchantDetailV2 = () => {
     </div>
   );
 };
+
+
+const INFO_DAY_LABELS: { key: string; label: string }[] = [
+  { key: 'monday', label: 'Mo' },
+  { key: 'tuesday', label: 'Di' },
+  { key: 'wednesday', label: 'Mi' },
+  { key: 'thursday', label: 'Do' },
+  { key: 'friday', label: 'Fr' },
+  { key: 'saturday', label: 'Sa' },
+  { key: 'sunday', label: 'So' },
+];
+
+function normalizeWebUrl(value: string | null): string | null {
+  const t = value?.trim();
+  if (!t) return null;
+  return /^https?:\/\//i.test(t) ? t : `https://${t}`;
+}
+function normalizeIgUrl(value: string | null): string | null {
+  const t = value?.trim().replace(/^@/, '');
+  if (!t) return null;
+  return /^https?:\/\//i.test(t) ? t : `https://instagram.com/${t}`;
+}
+
+function MerchantInfoSection({ info, brand }: { info: MerchantInfo; brand: string }) {
+  const web = normalizeWebUrl(info.website);
+  const ig = normalizeIgUrl(info.instagram);
+  const fb = normalizeWebUrl(info.facebook);
+  const tw = normalizeWebUrl(info.twitter);
+  const links: { href: string; label: string; Icon: typeof Globe }[] = [];
+  if (web) links.push({ href: web, label: 'Website', Icon: Globe });
+  if (ig) links.push({ href: ig, label: 'Instagram', Icon: Instagram });
+  if (fb) links.push({ href: fb, label: 'Facebook', Icon: Facebook });
+  if (tw) links.push({ href: tw, label: 'Twitter', Icon: Twitter });
+
+  const visibleHours = info.openingHours
+    ? INFO_DAY_LABELS.map(({ key, label }) => {
+        const day = info.openingHours?.[key];
+        if (!day) return null;
+        return {
+          label,
+          time: day.closed ? 'Geschlossen' : [day.open, day.close].filter(Boolean).join(' – '),
+        };
+      }).filter((e): e is { label: string; time: string } => !!e && !!e.time)
+    : [];
+
+  if (!info.description && visibleHours.length === 0 && !info.address && links.length === 0) {
+    return null;
+  }
+
+  return (
+    <div className="px-4 mt-4 space-y-3">
+      {info.description && (
+        <p className="text-sm leading-relaxed text-neutral-700 whitespace-pre-line">
+          {info.description}
+        </p>
+      )}
+
+      {visibleHours.length > 0 && (
+        <div className="rounded-xl border bg-white/70 p-3" style={{ borderColor: `${brand}33` }}>
+          <div className="mb-2 flex items-center gap-2 text-xs font-semibold text-neutral-900">
+            <Clock className="h-4 w-4" style={{ color: brand }} />
+            Öffnungszeiten
+          </div>
+          <div className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-xs">
+            {visibleHours.map((entry) => (
+              <div key={entry.label} className="contents">
+                <span className="text-neutral-500">{entry.label}</span>
+                <span className="text-neutral-800">{entry.time}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {info.address && (
+        <a
+          href={`https://maps.google.com/?q=${encodeURIComponent(info.address)}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-start gap-2 text-sm text-neutral-700"
+        >
+          <MapPin className="mt-0.5 h-4 w-4 shrink-0" style={{ color: brand }} />
+          <span>{info.address}</span>
+        </a>
+      )}
+
+      {links.length > 0 && (
+        <div className="flex flex-wrap gap-2">
+          {links.map(({ href, label, Icon }) => (
+            <a
+              key={label}
+              href={href}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-colors"
+              style={{ backgroundColor: `${brand}1f`, color: brand }}
+            >
+              <Icon className="h-3.5 w-3.5" />
+              {label}
+            </a>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default AppMerchantDetailV2;
