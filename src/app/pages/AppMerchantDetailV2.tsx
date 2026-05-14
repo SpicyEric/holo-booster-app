@@ -250,6 +250,8 @@ export const AppMerchantDetailV2 = () => {
       setExitScanUrl(e.detail.scanUrl);
       setEntryPhase('exiting');
       setExitStage(0);
+      // Flag für Scan-Screen: Slide-Up-Intro überspringen, weil das Cover bereits an Position morpht
+      try { sessionStorage.setItem('scan-skip-intro', String(Date.now())); } catch {}
       // Stagger: snake (0–250ms) → info weg (250ms) → freunde weg (450ms) → navigate (~900ms)
       setTimeout(() => setExitStage(1), 220);
       setTimeout(() => setExitStage(2), 420);
