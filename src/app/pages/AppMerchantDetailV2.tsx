@@ -771,7 +771,7 @@ export const AppMerchantDetailV2 = () => {
 
   return (
     <div
-      className="min-h-screen pb-40 bg-[#faf8f5] dark:bg-gradient-to-b dark:from-background dark:to-muted/30"
+      className="min-h-screen pb-40 bg-[#faf8f5] dark:bg-background dark:bg-gradient-to-b dark:from-background dark:to-muted/30 dark:[background-attachment:fixed]"
       style={{
         ['--brand' as string]: BRAND,
       }}
