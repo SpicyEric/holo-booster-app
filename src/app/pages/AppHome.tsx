@@ -22,6 +22,7 @@ interface MerchantCard {
   instagram: string | null;
   facebook: string | null;
   twitter: string | null;
+  brandColor: string | null;
 }
 
 const DAY_LABELS: { key: string; label: string }[] = [
