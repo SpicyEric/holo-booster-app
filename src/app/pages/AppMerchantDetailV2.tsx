@@ -305,6 +305,7 @@ export const AppMerchantDetailV2 = () => {
         visitNumber: r.visitNumber,
         label: r.label,
         redeemed: redeemedVisits.includes(r.visitNumber),
+        imageUrl: r.imageUrl,
       })),
     );
   }, [dbRewards, redeemedVisits]);
