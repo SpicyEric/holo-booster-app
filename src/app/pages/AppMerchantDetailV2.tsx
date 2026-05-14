@@ -1037,7 +1037,7 @@ export const AppMerchantDetailV2 = () => {
                 <p className="text-[10px] uppercase tracking-wider font-bold text-amber-700">
                   Für den nächsten Check-in aktiviert
                 </p>
-                <p className="text-base font-extrabold text-neutral-900 dark:text-neutral-100 mt-0.5 leading-tight">
+                <p className="text-base font-extrabold text-neutral-900 mt-0.5 leading-tight">
                   {activatedReward.label}
                 </p>
                 <button
