@@ -781,6 +781,7 @@ const Marketing = () => {
                 )}
               </CardContent>
             </Card>
+            </>}
           </TabsContent>
 
           {/* ========== BEWERTUNGEN TAB ========== */}
