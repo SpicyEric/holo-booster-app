@@ -923,7 +923,7 @@ export const AppMerchantDetailV2 = () => {
       >
         <Card
           className="p-5 border-0 text-white shadow-lg"
-          style={{ background: `linear-gradient(135deg, #4285F4, #1a73e8)` }}
+          style={{ background: `linear-gradient(135deg, ${BRAND}, ${BRAND}cc)` }}
         >
           <div className="flex items-center gap-3 mb-3">
             <div className="w-11 h-11 rounded-2xl bg-white/20 flex items-center justify-center">
@@ -938,7 +938,8 @@ export const AppMerchantDetailV2 = () => {
           </div>
           <Button
             onClick={() => window.open(`https://www.google.com/search?q=${encodeURIComponent('Backstube König')}`, '_blank')}
-            className="w-full bg-white hover:bg-white/90 text-[#1a73e8]"
+            className="w-full bg-white hover:bg-white/90"
+            style={{ color: BRAND }}
           >
             Jetzt bewerten
           </Button>
@@ -1144,9 +1145,9 @@ export const AppMerchantDetailV2 = () => {
               )}
             </AnimatePresence>
 
-            {/* Code-Marquee am oberen Rand — nur bei eingelöster Prämie */}
+            {/* Code-Marquee — direkt über dem Häkchen, dünner */}
             {!confirmStage && checkInOverlay.reward && (
-              <div className="absolute left-0 right-0 top-0 pt-16 pb-3 overflow-hidden bg-white/10 backdrop-blur border-b border-white/20">
+              <div className="absolute left-0 right-0 top-[calc(50%-130px)] py-1.5 overflow-hidden bg-white/10 backdrop-blur border-y border-white/20">
                 <div
                   className="flex whitespace-nowrap will-change-transform"
                   style={{ animation: 'eloyo-marquee 14s linear infinite' }}
@@ -1156,7 +1157,7 @@ export const AppMerchantDetailV2 = () => {
                       {Array.from({ length: 8 }).map((_, i) => (
                         <span
                           key={`${dup}-${i}`}
-                          className="px-6 text-2xl font-black tracking-[0.4em] tabular-nums text-white"
+                          className="px-5 text-sm font-bold tracking-[0.35em] tabular-nums text-white"
                         >
                           {checkInOverlay.code}
                         </span>
