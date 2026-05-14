@@ -551,7 +551,7 @@ function HomeMerchantInfoBlock({ store, visible }: { store: HomeMerchantCard; vi
     : undefined;
 
   return (
-    <div className="mt-3 space-y-3 px-1 pb-1 text-left" style={panelStyle}>
+    <div className="mt-3 mx-auto w-[92%] space-y-3 pb-1 text-left" style={panelStyle}>
       {store.description && (
         <p className="text-sm leading-relaxed text-foreground/80 whitespace-pre-line">
           {store.description}
