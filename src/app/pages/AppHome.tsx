@@ -145,12 +145,12 @@ export const AppHome = () => {
     return () => observer.disconnect();
   }, [cards.length]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Publish active brand color on Home so BottomNav scan-button + TopBar pick it up
+  // Scan-Button bleibt auf Home neutral (lila). Brand-Color wird erst auf der
+  // Treuepass-Detailseite (AppMerchantDetailV2) gesetzt.
   useEffect(() => {
-    const active = cards[activeIndex];
-    setActiveBrandColor(active?.brandColor || null);
+    setActiveBrandColor(null);
     return () => setActiveBrandColor(null);
-  }, [activeIndex, cards]);
+  }, []);
 
   return (
     <MainLayout title="Home" disableParticles>

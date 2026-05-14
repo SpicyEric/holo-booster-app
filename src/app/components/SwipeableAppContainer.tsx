@@ -365,14 +365,12 @@ const AppHomeContent = ({ active }: { active: boolean }) => {
     };
   }, [homeEmblaApi]);
 
+  // Scan-Button bleibt im Swipeable-Home neutral. Brand-Color setzt erst die
+  // Treuepass-Detailseite.
   useEffect(() => {
-    if (!active || cards.length === 0) {
-      setActiveBrandColor(null);
-      return;
-    }
-    setActiveBrandColor(cards[activeCardIndex]?.brandColor || null);
+    setActiveBrandColor(null);
     return () => setActiveBrandColor(null);
-  }, [active, activeCardIndex, cards]);
+  }, [active]);
 
   useEffect(() => {
     if (!active || loading || cards.length > 0) return;
