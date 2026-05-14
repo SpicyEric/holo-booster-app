@@ -144,7 +144,7 @@ export function PendingInviteDialog() {
           // 7-Tage-Fenster ab bonus_window_starts_at
           const startsAt = (existingRedemption as { bonus_window_starts_at?: string | null }).bonus_window_starts_at;
           const expiresAt = startsAt
-            ? new Date(new Date(startsAt).getTime() + 7 * 24 * 60 * 60 * 1000).toISOString()
+            ? new Date(new Date(startsAt).getTime() + 90 * 24 * 60 * 60 * 1000).toISOString()
             : null;
           setIneligible({
             kind: 'already_invited',
