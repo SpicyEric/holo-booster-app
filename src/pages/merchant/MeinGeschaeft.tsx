@@ -1585,6 +1585,8 @@ const MeinGeschaeft = () => {
                           points_required: r.points_required,
                           image_url: r.image_url,
                         }))}
+                        placements={placements}
+                        passLength={passLength}
                       />
                     ) : (
                       <MerchantPreviewLive
