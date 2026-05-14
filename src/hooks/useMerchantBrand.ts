@@ -9,7 +9,7 @@ export interface MerchantBrand {
 }
 
 const DEFAULT_COLOR = '#8B5CF6'; // Eloyo Lila
-const BRAND_UPDATED_EVENT = 'merchant-brand-updated';
+export const BRAND_UPDATED_EVENT = 'merchant-brand-updated';
 
 /**
  * Broadcast a brand-update so all mounted hook instances re-fetch.
