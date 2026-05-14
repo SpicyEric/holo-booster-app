@@ -775,13 +775,13 @@ export const AppScan = () => {
                 background: `${BRAND}0d`,
               }}
             >
-              <p className="text-xs font-semibold uppercase tracking-wider mb-1" style={{ color: BRAND }}>
+              <p className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: BRAND }}>
                 Aktivierte Prämien für diesen Check-in
               </p>
               {activatedReward ? (
-                <div className="flex items-center gap-2 mt-2">
-                  <Sparkles className="w-4 h-4" style={{ color: BRAND }} />
-                  <p className="text-sm font-bold text-neutral-900">{activatedReward.label}</p>
+                <div className="flex items-start gap-2.5 mt-1">
+                  <Sparkles className="w-6 h-6 mt-0.5 shrink-0" style={{ color: BRAND }} />
+                  <p className="text-2xl font-extrabold text-neutral-900 leading-tight">{activatedReward.label}</p>
                 </div>
               ) : (
                 <p className="text-sm text-neutral-600 mt-1">
