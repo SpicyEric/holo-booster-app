@@ -1659,6 +1659,36 @@ export const AppMerchantDetailV2 = () => {
         )}
       </AnimatePresence>
 
+      <Dialog open={!!limitModal} onOpenChange={(open) => !open && setLimitModal(null)}>
+        <DialogContent
+          className="max-w-[320px] rounded-2xl border-0 p-0 overflow-hidden"
+          style={{ background: '#fff' }}
+        >
+          <div className="px-6 pt-6 pb-5 text-center">
+            <div className="text-4xl mb-3">
+              {limitModal === 'reward' ? '🎁' : '⏰'}
+            </div>
+            <h3 className="text-base font-bold text-neutral-900 mb-2">
+              {limitModal === 'reward' ? 'Schon eine Prämie heute' : 'Schon eingecheckt heute'}
+            </h3>
+            <p className="text-sm text-neutral-600 leading-relaxed">
+              {limitModal === 'reward'
+                ? 'Du kannst maximal eine Prämie pro Tag einlösen. Komm morgen wieder!'
+                : 'Du kannst pro Tag einmal bei jedem Geschäft einchecken. Komm morgen wieder!'}
+            </p>
+          </div>
+          <div className="px-4 pb-4">
+            <Button
+              onClick={() => setLimitModal(null)}
+              className="w-full rounded-xl text-white font-semibold"
+              style={{ background: BRAND }}
+            >
+              Verstanden
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       <BottomNav />
     </div>
   );
