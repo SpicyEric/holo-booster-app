@@ -187,7 +187,7 @@ export const AppMerchantDetailV2 = () => {
   //  sectionsIn – Sektionen unterhalb (Hinweis, Freunde) faden Step-by-Step ein
   //  snakeIn   – Schlange wischt von links nach rechts ein
   //  done      – fertig
-  type EntryPhase = 'idle' | 'flying' | 'sectionsIn' | 'snakeIn' | 'done';
+  type EntryPhase = 'idle' | 'flying' | 'sectionsIn' | 'snakeIn' | 'done' | 'exiting';
   const readEntryPayload = () => {
     if (typeof window === 'undefined') return null;
     try {
@@ -204,6 +204,13 @@ export const AppMerchantDetailV2 = () => {
   const [entryTarget, setEntryTarget] = useState<{ top: number; left: number; width: number; height: number } | null>(null);
   const [entryCover, setEntryCover] = useState<string | null>(() => readEntryPayload()?.coverUrl ?? null);
   const snakeBandRef = useRef<HTMLDivElement>(null);
+
+  // ===== Exit-Transition zum Scan-Screen =====
+  // exitStage: 0 = snake collapse, 1 = info card weg, 2 = freunde weg, 3 = navigate
+  const [exitStage, setExitStage] = useState(0);
+  const [exitOrigin, setExitOrigin] = useState<{ top: number; left: number; width: number; height: number } | null>(null);
+  const [exitTarget, setExitTarget] = useState<{ top: number; left: number; width: number; height: number } | null>(null);
+  const [exitScanUrl, setExitScanUrl] = useState<string | null>(null);
 
   useEffect(() => {
     try { sessionStorage.removeItem('treuepass-transition'); } catch {}
@@ -223,8 +230,52 @@ export const AppMerchantDetailV2 = () => {
     requestAnimationFrame(measure);
   }, [entryPhase, entryTarget]);
 
-  const isEntering = entryPhase !== 'done';
+  // Exit-Trigger: BottomNav Scan-Button auf Merchant-Detail-Seite
+  useEffect(() => {
+    const handler = (ev: Event) => {
+      const e = ev as CustomEvent<{ merchantId: string; scanUrl: string }>;
+      if (!e.detail || e.detail.merchantId !== merchantId) return;
+      // Wir übernehmen die Navigation – BottomNav soll nicht selbst springen
+      e.preventDefault();
+
+      const r = snakeBandRef.current?.getBoundingClientRect();
+      if (r) {
+        setExitOrigin({ top: r.top, left: r.left, width: r.width, height: r.height });
+      }
+      // Ziel: Scan-Card-Position (px-4 pt-4, aspect 1.55:1)
+      const vw = window.innerWidth;
+      const cardWidth = vw - 32; // px-4 links/rechts
+      const cardHeight = cardWidth / 1.55;
+      setExitTarget({ top: 16, left: 16, width: cardWidth, height: cardHeight });
+      setExitScanUrl(e.detail.scanUrl);
+      setEntryPhase('exiting');
+      setExitStage(0);
+      // Stagger: snake (0–250ms) → info weg (250ms) → freunde weg (450ms) → navigate (~900ms)
+      setTimeout(() => setExitStage(1), 220);
+      setTimeout(() => setExitStage(2), 420);
+      setTimeout(() => setExitStage(3), 900);
+    };
+    window.addEventListener('app:treuepass-exit-to-scan', handler as EventListener);
+    return () => window.removeEventListener('app:treuepass-exit-to-scan', handler as EventListener);
+  }, [merchantId]);
+
+  // Eigentliche Navigation, sobald Exit-Animation fertig ist
+  useEffect(() => {
+    if (entryPhase === 'exiting' && exitStage >= 3 && exitScanUrl) {
+      navigate(exitScanUrl);
+    }
+  }, [entryPhase, exitStage, exitScanUrl, navigate]);
+
+  const isEntering = entryPhase !== 'done' && entryPhase !== 'exiting';
+  const isExiting = entryPhase === 'exiting';
+  // Sektionen sichtbar wenn Entry abgeschlossen UND noch nicht im Exit-Stage > Sektion
+  const infoVisible = entryPhase === 'done' || (entryPhase === 'exiting' && exitStage < 1)
+    || entryPhase === 'sectionsIn' || entryPhase === 'snakeIn';
+  const friendsVisible = entryPhase === 'done' || (entryPhase === 'exiting' && exitStage < 2)
+    || entryPhase === 'sectionsIn' || entryPhase === 'snakeIn';
   const sectionsRevealed = entryPhase === 'sectionsIn' || entryPhase === 'snakeIn' || entryPhase === 'done';
+  const snakeRevealed = (entryPhase === 'snakeIn' || entryPhase === 'done')
+    && !(entryPhase === 'exiting' && exitStage >= 0); // wird beim Exit sofort weg
 
   // Privacy-Screen NUR aktivieren, wenn die sensible Einlöse-Ansicht
   // (oranges Vollbild mit Code-Marquee + Prämie) sichtbar ist.
