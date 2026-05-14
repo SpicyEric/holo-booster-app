@@ -85,8 +85,7 @@ export const AppHome = () => {
             if (!m) return null;
             const streetWithNumber = [m.street, m.house_number].filter(Boolean).join(' ');
             const address = [streetWithNumber, [m.postal_code, m.city].filter(Boolean).join(' ')].filter(Boolean).join(', ');
-            const isV2 = (m as { version?: string }).version === 'v2';
-            const brandColor = isV2 ? ((m as { brand_color?: string | null }).brand_color || null) : null;
+            const brandColor = (m as { brand_color?: string | null }).brand_color || null;
             return {
               id: a.id,
               merchantId: a.merchant_customer_id,
