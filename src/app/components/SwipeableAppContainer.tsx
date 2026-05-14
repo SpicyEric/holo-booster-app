@@ -355,11 +355,11 @@ const AppHomeContent = () => {
       <div style={{ paddingBottom: '2rem' }}>
         <h2 className="text-lg font-semibold text-foreground px-1 mb-3">Deine Treuepässe</h2>
         <div className="overflow-hidden -mx-4" ref={emblaRef}>
-          <div className="flex touch-pan-y pl-4">
+          <div className="flex touch-pan-y">
             {cards.map((store) => (
               <div
                 key={store.id}
-                className="shrink-0 grow-0 basis-[85%] pr-3"
+                className="shrink-0 grow-0 basis-[85%] px-1.5"
               >
                 <button
                   onClick={() => navigate(`/app/merchant/${store.merchantId}`)}
