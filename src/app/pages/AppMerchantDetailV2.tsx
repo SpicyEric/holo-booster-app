@@ -328,9 +328,20 @@ export const AppMerchantDetailV2 = () => {
             <p className="text-xs uppercase tracking-wider font-semibold" style={{ color: `${BRAND}cc` }}>
               Check-ins
             </p>
-            <p className="text-4xl font-extrabold text-neutral-900 leading-none mt-1">
-              {currentVisit}
-            </p>
+            <div className="text-4xl font-extrabold text-neutral-900 leading-none mt-1 h-10 overflow-hidden">
+              <AnimatePresence mode="popLayout" initial={false}>
+                <motion.span
+                  key={currentVisit}
+                  initial={{ y: 24, opacity: 0, scale: 0.7 }}
+                  animate={{ y: 0, opacity: 1, scale: 1 }}
+                  exit={{ y: -24, opacity: 0, scale: 0.7 }}
+                  transition={{ type: 'spring', stiffness: 260, damping: 22 }}
+                  className="inline-block"
+                >
+                  {currentVisit}
+                </motion.span>
+              </AnimatePresence>
+            </div>
           </div>
           {activatedReward ? (
             <button
