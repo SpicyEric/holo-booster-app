@@ -182,7 +182,12 @@ export const AppMerchantDetailV2 = () => {
   const [screenCaptured, setScreenCaptured] = useState(false);
 
   // ===== Entry-Transition vom Home-Pass =====
-  type EntryPhase = 'idle' | 'flying' | 'fading' | 'revealing' | 'done';
+  // Phasen:
+  //  flying    – Cover-Bild fliegt + skaliert + verblasst gleichzeitig (eine smoothe Bewegung)
+  //  sectionsIn – Sektionen unterhalb (Hinweis, Freunde) faden Step-by-Step ein
+  //  snakeIn   – Schlange wischt von links nach rechts ein
+  //  done      – fertig
+  type EntryPhase = 'idle' | 'flying' | 'sectionsIn' | 'snakeIn' | 'done';
   const readEntryPayload = () => {
     if (typeof window === 'undefined') return null;
     try {
@@ -201,7 +206,6 @@ export const AppMerchantDetailV2 = () => {
   const snakeBandRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    // Payload nach erstem Render aus dem Storage entfernen
     try { sessionStorage.removeItem('treuepass-transition'); } catch {}
   }, [merchantId]);
 
@@ -220,6 +224,7 @@ export const AppMerchantDetailV2 = () => {
   }, [entryPhase, entryTarget]);
 
   const isEntering = entryPhase !== 'done';
+  const sectionsRevealed = entryPhase === 'sectionsIn' || entryPhase === 'snakeIn' || entryPhase === 'done';
 
   // Privacy-Screen NUR aktivieren, wenn die sensible Einlöse-Ansicht
   // (oranges Vollbild mit Code-Marquee + Prämie) sichtbar ist.
