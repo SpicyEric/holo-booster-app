@@ -50,6 +50,7 @@ import { calculateSuggestion, SPEND_PRESETS } from "../wizard/wizardLogic";
 import { cn } from "@/lib/utils";
 import { linkOrphanNfcChipsToMerchant } from "@/lib/nfcChipLinking";
 import { MerchantBrandColorCard } from "@/components/merchant/MerchantBrandColorCard";
+import GoogleReviewLinkTile from "@/components/merchant/GoogleReviewLinkTile";
 
 const INDUSTRIES = [
   { value: "cafe", label: "Café" },
@@ -1406,6 +1407,9 @@ const MeinGeschaeft = () => {
                 </Card>
                 </div>
                 {/* Ende 2-spaltiges Profil-Grid */}
+
+                {/* Google-Bewertungen Kachel */}
+                {customerId && <GoogleReviewLinkTile customerId={customerId} />}
               </TabsContent>
 
                 {/* Punktesystem Tab — vereinfacht */}
