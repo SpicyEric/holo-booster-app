@@ -902,7 +902,7 @@ export const AppMerchantDetailV2 = () => {
         </Card>
       </motion.div>
 
-      {/* Freunde einladen */}
+      {/* Boost holen */}
       <motion.div
         className="px-4 mt-4"
         initial={isEntering ? { opacity: 0, y: 10 } : false}
@@ -918,18 +918,18 @@ export const AppMerchantDetailV2 = () => {
               <UserPlus className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="font-bold text-base">Freunde einladen</h3>
+              <h3 className="font-bold text-base">Boost holen</h3>
               <p className="text-xs text-white/85">
-                Erfolgreiche Empfehlung = +1 Boost auf deinem Treuepass
+                Lade Freunde ein
               </p>
             </div>
           </div>
           <Button
-            onClick={shareReferral}
+            onClick={() => setBoostInfoOpen(true)}
             className="w-full bg-white hover:bg-white/90"
             style={{ color: BRAND }}
           >
-            Einladungslink teilen
+            Jetzt boosten
           </Button>
         </Card>
       </motion.div>
