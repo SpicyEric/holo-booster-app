@@ -689,6 +689,7 @@ const Marketing = () => {
           {/* ========== NEUKUNDEN TAB ========== */}
           <TabsContent value="boost" className="space-y-6 mt-6">
             <ExplainerCarousel slides={neukundenCards} />
+            {!isV2 && <>
             {/* Neukundenprämie */}
             <Card className="rounded-2xl shadow-sm border border-primary/10 bg-primary/[0.03]">
               <CardHeader className="flex flex-row items-center justify-between pb-4">
