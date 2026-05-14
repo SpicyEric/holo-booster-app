@@ -181,6 +181,45 @@ export const AppMerchantDetailV2 = () => {
   const [confirmStage, setConfirmStage] = useState(false);
   const [screenCaptured, setScreenCaptured] = useState(false);
 
+  // ===== Entry-Transition vom Home-Pass =====
+  type EntryPhase = 'idle' | 'flying' | 'fading' | 'revealing' | 'done';
+  const [entryPhase, setEntryPhase] = useState<EntryPhase>('done');
+  const [entryOrigin, setEntryOrigin] = useState<{ top: number; left: number; width: number; height: number } | null>(null);
+  const [entryTarget, setEntryTarget] = useState<{ top: number; left: number; width: number; height: number } | null>(null);
+  const [entryCover, setEntryCover] = useState<string | null>(null);
+  const snakeBandRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    let raw: string | null = null;
+    try { raw = sessionStorage.getItem('treuepass-transition'); } catch {}
+    if (!raw) return;
+    try {
+      const data = JSON.parse(raw);
+      if (data.merchantId !== merchantId) return;
+      if (Date.now() - data.timestamp > 1500) return;
+      sessionStorage.removeItem('treuepass-transition');
+      setEntryOrigin(data.rect);
+      setEntryCover(data.coverUrl || null);
+      setEntryPhase('flying');
+    } catch {}
+  }, [merchantId]);
+
+  // Ziel-Rect ermitteln, sobald Snake-Band gemountet ist
+  useEffect(() => {
+    if (entryPhase !== 'flying' || entryTarget) return;
+    const measure = () => {
+      const r = snakeBandRef.current?.getBoundingClientRect();
+      if (r && r.height > 0) {
+        setEntryTarget({ top: r.top, left: r.left, width: r.width, height: r.height });
+      } else {
+        requestAnimationFrame(measure);
+      }
+    };
+    requestAnimationFrame(measure);
+  }, [entryPhase, entryTarget]);
+
+  const isEntering = entryPhase !== 'done';
+
   // Privacy-Screen NUR aktivieren, wenn die sensible Einlöse-Ansicht
   // (oranges Vollbild mit Code-Marquee + Prämie) sichtbar ist.
   const isRedemptionScreenVisible = Boolean(checkInOverlay?.reward);
