@@ -220,6 +220,7 @@ export const BottomNav = ({ onNavigate, currentIndex }: BottomNavProps) => {
         <div className="flex flex-col items-center justify-center -mt-8">
           <button
             onClick={handleCenterButtonClick}
+            data-scan-button
             className="relative flex items-center justify-center rounded-full shadow-lg hover:shadow-xl transition-all text-white overflow-hidden"
             style={{
               height: '72px',
