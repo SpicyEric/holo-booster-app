@@ -739,6 +739,48 @@ const BoxManagement = () => {
             </DialogHeader>
             {loadingStamps ? (
               <div className="flex items-center justify-center py-8"><Loader2 className="h-6 w-6 animate-spin" /></div>
+            ) : stampDialogRow?.box_id === 'PXJJK' ? (
+              <div className="space-y-4">
+                {(() => {
+                  const primary = registeredStamps[0];
+                  const isScanning = scanningStampColor === 'verify';
+                  return (
+                    <div className="flex items-center justify-between p-3 rounded-lg border">
+                      <div className="flex items-center gap-3">
+                        <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center">
+                          <Shield className="w-3.5 h-3.5 text-primary" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium">Verifizierungskarte</p>
+                          {primary ? (
+                            <p className="text-[10px] text-muted-foreground">UID: {primary.hardware_uid || "Nicht gesetzt"}</p>
+                          ) : (
+                            <p className="text-[10px] text-muted-foreground">Noch keine Karte registriert</p>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {primary && <Check className="w-4 h-4 text-green-500" />}
+                        <Button size="sm" variant={primary ? "outline" : "default"} disabled={isScanning} onClick={() => startStampRegistration('verify', false)}>
+                          {isScanning ? <><Loader2 className="w-3 h-3 mr-1 animate-spin" />Scanne...</> : primary ? "Neu scannen" : "Registrieren"}
+                        </Button>
+                        {primary && (
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                            disabled={isScanning}
+                            onClick={() => handleDeleteChip(primary.id, primary.stamp_color, "stamp")}
+                            title="Karte entfernen"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })()}
+              </div>
             ) : (
               <div className="space-y-4">
                 <div className="space-y-3">
