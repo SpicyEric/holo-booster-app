@@ -194,13 +194,33 @@ export const AppMerchantDetailV2 = () => {
   };
 
   // ================= Effekte =================
-  useEffect(() => {
+  const scrollToCurrent = (smooth = true) => {
     const el = scrollerRef.current;
     if (!el) return;
     const indexInWindow = currentVisit - windowStart;
     const targetX = indexInWindow * NODE_SPACING + NODE_SPACING / 2 - el.clientWidth / 2;
-    el.scrollTo({ left: Math.max(0, targetX), behavior: 'smooth' });
+    el.scrollTo({ left: Math.max(0, targetX), behavior: smooth ? 'smooth' : 'auto' });
+  };
+
+  // Initial / on currentVisit change: zentriere "Jetzt"
+  useEffect(() => {
+    scrollToCurrent(true);
+  }, [currentVisit]);
+
+  // Track scroll-Distanz zum "Jetzt"-Knoten → Button einblenden
+  useEffect(() => {
+    const el = scrollerRef.current;
+    if (!el) return;
+    const onScroll = () => {
+      const indexInWindow = currentVisit - windowStart;
+      const currentX = indexInWindow * NODE_SPACING + NODE_SPACING / 2;
+      const viewCenter = el.scrollLeft + el.clientWidth / 2;
+      setShowJumpToNow(Math.abs(viewCenter - currentX) > el.clientWidth * 0.6);
+    };
+    el.addEventListener('scroll', onScroll, { passive: true });
+    return () => el.removeEventListener('scroll', onScroll);
   }, [currentVisit, windowStart]);
+
 
   // ================= Aktionen =================
   const todayKey = () => new Date().toISOString().slice(0, 10);
