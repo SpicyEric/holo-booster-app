@@ -190,18 +190,36 @@ export const BottomNav = ({ onNavigate, currentIndex }: BottomNavProps) => {
         <div className="flex flex-col items-center justify-center -mt-8">
           <button
             onClick={handleCenterButtonClick}
-            className="flex items-center justify-center rounded-full shadow-lg hover:shadow-xl transition-all text-white"
+            className="relative flex items-center justify-center rounded-full shadow-lg hover:shadow-xl transition-all text-white overflow-hidden"
             style={{
               height: '72px',
               width: '72px',
               background:
-                'var(--app-active-brand, linear-gradient(135deg, hsl(var(--primary)), hsl(var(--secondary))))',
+                'linear-gradient(135deg, hsl(var(--primary)), hsl(var(--secondary)))',
             }}
             aria-label="Scannen"
           >
+            {/* Diagonal brand-color wash, animates from bottom-left → top-right
+                whenever the active brand color changes (e.g. opening a Treuepass) */}
+            {brandColor && (
+              <span
+                key={brandSweepKey}
+                aria-hidden
+                className="absolute inset-0 brand-sweep-in"
+                style={{
+                  background: brandColor,
+                  // soft, narrow diagonal edge for a clean wipe with a hint of feather
+                  WebkitMaskImage:
+                    'linear-gradient(45deg, #000 calc(var(--sweep) - 4%), transparent calc(var(--sweep) + 2%))',
+                  maskImage:
+                    'linear-gradient(45deg, #000 calc(var(--sweep) - 4%), transparent calc(var(--sweep) + 2%))',
+                }}
+              />
+            )}
             <img
               src={nfcIcon}
               alt=""
+              className="relative"
               style={{ height: 56, width: 56, filter: 'brightness(0) invert(1)' }}
             />
           </button>
