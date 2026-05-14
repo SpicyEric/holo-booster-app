@@ -199,6 +199,38 @@ export default function MerchantActivitySection({ customerId }: Props) {
     return 'other';
   };
 
+  // V2-Kategorisierung: alles wird auf 4 Typen reduziert
+  type ActivityKind = 'redemption' | 'review' | 'referral' | 'checkin';
+  const getKind = (tx: Transaction): ActivityKind => {
+    const t = tx.transaction_type || '';
+    const d = (tx.description || '').toLowerCase();
+    if (isRedemption(tx)) return 'redemption';
+    if (t === 'google_review' || d.includes('bewert')) return 'review';
+    if (t === 'referral_bonus' || d.includes('einladung') || d.includes('empfehl')) return 'referral';
+    return 'checkin';
+  };
+
+  // Ordinalzählung pro Kunde + Kind, chronologisch aufsteigend
+  const ordinalMap = useMemo(() => {
+    const map = new Map<string, number>();
+    const counters = new Map<string, number>();
+    const sorted = [...transactions].sort((a, b) =>
+      new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+    );
+    for (const tx of sorted) {
+      const acc = tx.loyalty_account_id || 'unknown';
+      const kind = getKind(tx);
+      const key = `${acc}:${kind}`;
+      const next = (counters.get(key) || 0) + 1;
+      counters.set(key, next);
+      map.set(tx.id, next);
+    }
+    return map;
+  }, [transactions]);
+
+  const ordinalSuffix = (n: number) => `${n}.`;
+
+
   const windowTx = useMemo(() => {
     if (viewMode === "total") return transactions;
     return transactions.filter(tx => { const d = new Date(tx.created_at); return d >= dateFrom && d <= dateTo; });
