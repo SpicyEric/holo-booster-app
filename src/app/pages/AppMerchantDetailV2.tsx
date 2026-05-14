@@ -161,7 +161,7 @@ export const AppMerchantDetailV2 = () => {
   // ================= Aktionen =================
   const todayKey = () => new Date().toISOString().slice(0, 10);
 
-  const performCheckIn = (source: CheckInSource, suppressLimit = false) => {
+  const performCheckIn = (source: CheckInSource, suppressLimit = false, opts?: { autoRedeem?: boolean; silent?: boolean }) => {
     if (!suppressLimit && lastCheckInDate === todayKey()) {
       toast.info('Heute schon eingecheckt. Bis morgen! 👋');
       return;
@@ -170,8 +170,8 @@ export const AppMerchantDetailV2 = () => {
     setCheckIns((prev) => [...prev, { visit: next, source }]);
     if (!suppressLimit) setLastCheckInDate(todayKey());
 
-    // Prüfe aktivierte Prämie → automatisch einlösen
-    if (activatedReward) {
+    // Aktivierte Prämie automatisch einlösen (z.B. wenn intern aufgerufen)
+    if (opts?.autoRedeem && activatedReward) {
       const reward = activatedReward;
       setActivatedReward(null);
       clearActivatedReward(merchantId);
@@ -184,9 +184,10 @@ export const AppMerchantDetailV2 = () => {
         }
         return [...prev, { ...reward, redeemed: true }];
       });
-      setTimeout(() => setRedemptionScreen(reward), 400);
       return;
     }
+
+    if (opts?.silent) return;
 
     // Hinweis auf nächste Prämie
     const upcoming = [next + 1, next + 2, next + 3].map(rewardForVisit).find((r) => r && !r.redeemed);
