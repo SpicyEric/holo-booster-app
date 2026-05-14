@@ -92,6 +92,19 @@ export const AppMerchantDetailV2 = () => {
     }
   }, [merchantId]);
 
+  // Trigger Eincheck-Overlay, wenn von der Scan-Seite mit triggerCheckIn=true navigiert wurde
+  useEffect(() => {
+    const state = location.state as { triggerCheckIn?: boolean } | null;
+    if (!state?.triggerCheckIn) return;
+    const stored = getActivatedReward(merchantId);
+    const reward = stored ? { visitNumber: stored.visitNumber, label: stored.label, redeemed: false } : null;
+    setCheckInOverlay({ code: generateVerificationCode(5), reward });
+    setConfirmStage(false);
+    // State konsumieren, damit der Overlay nicht bei jedem Re-Mount neu öffnet
+    navigate(location.pathname, { replace: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.state, merchantId]);
+
   const BRAND = brand.color;
   const BRAND_SOFT = `${BRAND}22`; // Alpha-Wash via HEX 8-stellig
 
