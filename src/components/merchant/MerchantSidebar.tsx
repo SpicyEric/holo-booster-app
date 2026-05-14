@@ -74,7 +74,7 @@ const NAV_GROUPS: NavGroup[] = [
   },
 ];
 
-function SidebarNav({ collapsed, onNavigate, companyName, subStatus }: { collapsed: boolean; onNavigate?: () => void; companyName?: string; subStatus?: string }) {
+function SidebarNav({ collapsed, onNavigate, companyName, subStatus, coverImageUrl, logoUrl }: { collapsed: boolean; onNavigate?: () => void; companyName?: string; subStatus?: string; coverImageUrl?: string | null; logoUrl?: string | null; }) {
   const navigate = useNavigate();
   const location = useLocation();
   const [searchParams] = useSearchParams();
