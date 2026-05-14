@@ -38,6 +38,7 @@ import MeinGeschaeft from "./pages/merchant/MeinGeschaeft";
 import MerchantOnboarding from "./pages/merchant/MerchantOnboarding";
 import GoogleBewertungen from "./pages/merchant/GoogleBewertungen";
 import MeinKonto from "./pages/merchant/MeinKonto";
+import SoFunktionierts from "./pages/merchant/SoFunktionierts";
 import Nachrichten from "./pages/merchant/Nachrichten";
 import Transaktionen from "./pages/merchant/Transaktionen";
 import Marketing from "./pages/merchant/Marketing";
@@ -164,6 +165,7 @@ const App = () => {
                 <Route path="kunden" element={<Transaktionen />} />
                 <Route path="marketing" element={<Marketing />} />
                 <Route path="konto" element={<MeinKonto />} />
+                <Route path="anleitung" element={<SoFunktionierts />} />
                 {/* Legacy redirects for old routes */}
                 <Route path="google-bewertungen" element={<Navigate to="/kunde/marketing" replace />} />
                 <Route path="nachrichten" element={<Navigate to="/kunde/marketing" replace />} />
