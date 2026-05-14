@@ -250,6 +250,8 @@ export const AppMerchantDetailV2 = () => {
       setExitScanUrl(e.detail.scanUrl);
       setEntryPhase('exiting');
       setExitStage(0);
+      // Flag für Scan-Screen: Slide-Up-Intro überspringen, weil das Cover bereits an Position morpht
+      try { sessionStorage.setItem('scan-skip-intro', String(Date.now())); } catch {}
       // Stagger: snake (0–250ms) → info weg (250ms) → freunde weg (450ms) → navigate (~900ms)
       setTimeout(() => setExitStage(1), 220);
       setTimeout(() => setExitStage(2), 420);
@@ -1097,13 +1099,12 @@ export const AppMerchantDetailV2 = () => {
         {isEntering && entryOrigin && entryCover && entryPhase === 'flying' && (
           <motion.div
             key="cover-fly"
-            className="fixed z-[60] pointer-events-none overflow-hidden shadow-xl"
+            className="fixed z-[60] pointer-events-none shadow-xl"
             initial={{
               top: entryOrigin.top,
               left: entryOrigin.left,
               width: entryOrigin.width,
               height: entryOrigin.height,
-              borderRadius: 12,
               opacity: 1,
             }}
             animate={
@@ -1113,7 +1114,6 @@ export const AppMerchantDetailV2 = () => {
                     left: entryTarget.left,
                     width: entryTarget.width,
                     height: entryTarget.height,
-                    borderRadius: 0,
                     opacity: 0.18,
                   }
                 : undefined
@@ -1121,17 +1121,12 @@ export const AppMerchantDetailV2 = () => {
             transition={{
               duration: 0.75,
               ease: [0.22, 1, 0.36, 1],
-              // Border-radius leicht früher entschärfen, damit Größenwechsel flüssig wirkt
-              borderRadius: { duration: 0.75, ease: [0.22, 1, 0.36, 1] },
               opacity: { duration: 0.75, ease: [0.4, 0, 0.6, 1] },
             }}
             onAnimationComplete={() => {
               if (entryPhase === 'flying') {
-                // Sektionen unterhalb Step-by-Step einfaden lassen, dann Schlange
                 setEntryPhase('sectionsIn');
-                // Sektionen brauchen ~0.6s (info 0.3s + freunde 0.3s mit Stagger)
                 setTimeout(() => setEntryPhase('snakeIn'), 700);
-                // Snake-Wipe ~0.8s
                 setTimeout(() => setEntryPhase('done'), 1600);
               }
             }}
@@ -1139,7 +1134,13 @@ export const AppMerchantDetailV2 = () => {
               backgroundImage: `url(${entryCover})`,
               backgroundSize: 'cover',
               backgroundPosition: 'center',
+              borderRadius: 20,
               filter: 'saturate(0.9)',
+              // Weicher, feathered Rand der während des gesamten Flugs erhalten bleibt
+              WebkitMaskImage:
+                'radial-gradient(ellipse 95% 92% at 50% 50%, #000 55%, rgba(0,0,0,0.85) 75%, rgba(0,0,0,0) 100%)',
+              maskImage:
+                'radial-gradient(ellipse 95% 92% at 50% 50%, #000 55%, rgba(0,0,0,0.85) 75%, rgba(0,0,0,0) 100%)',
             }}
           />
         )}

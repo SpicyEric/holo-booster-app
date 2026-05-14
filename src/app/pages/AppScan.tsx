@@ -100,6 +100,17 @@ export const AppScan = () => {
   const [merchantDisplayName, setMerchantDisplayName] = useState<string>('');
   const [transitionState, setTransitionState] = useState<MerchantTransitionState | null>(null);
   const mainScrollRef = useRef<HTMLElement | null>(null);
+  // Wenn der Scan-Screen direkt nach einer Treuepass-Exit-Animation geöffnet wird,
+  // soll die Slide-Up-Intro der Karte übersprungen werden, weil das Cover bereits
+  // exakt an die Card-Position morpht.
+  const [skipCardIntro] = useState<boolean>(() => {
+    try {
+      const ts = sessionStorage.getItem('scan-skip-intro');
+      if (!ts) return false;
+      sessionStorage.removeItem('scan-skip-intro');
+      return Date.now() - Number(ts) < 2000;
+    } catch { return false; }
+  });
 
   // ===== Merchant-Context (wenn Scan von einer Treuepass-Detailseite kommt) =====
   const contextMerchantId = searchParams.get('merchant');
@@ -626,9 +637,9 @@ export const AppScan = () => {
         <motion.div
           className="px-4 pt-4"
           style={{ perspective: '1200px' }}
-          initial={{ y: '28vh', opacity: 0, scale: 0.92 }}
+          initial={skipCardIntro ? false : { y: '28vh', opacity: 0, scale: 0.92 }}
           animate={{ y: 0, opacity: 1, scale: 1 }}
-          transition={{
+          transition={skipCardIntro ? { duration: 0 } : {
             type: 'spring',
             stiffness: 120,
             damping: 18,
