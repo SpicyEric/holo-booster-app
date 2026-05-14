@@ -637,9 +637,9 @@ export const AppScan = () => {
         <motion.div
           className="px-4 pt-4"
           style={{ perspective: '1200px' }}
-          initial={{ y: '28vh', opacity: 0, scale: 0.92 }}
+          initial={skipCardIntro ? false : { y: '28vh', opacity: 0, scale: 0.92 }}
           animate={{ y: 0, opacity: 1, scale: 1 }}
-          transition={{
+          transition={skipCardIntro ? { duration: 0 } : {
             type: 'spring',
             stiffness: 120,
             damping: 18,
