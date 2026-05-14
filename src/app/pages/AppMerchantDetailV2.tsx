@@ -777,7 +777,7 @@ export const AppMerchantDetailV2 = () => {
       }}
     >
       {/* Header */}
-      <div className="sticky top-0 z-30 bg-white/90 dark:bg-background/80 backdrop-blur border-b" style={{ borderColor: `${BRAND}22` }}>
+      <div className="sticky top-0 z-30 bg-white/90 dark:bg-card backdrop-blur">
         <div className="flex items-center gap-3 px-4 py-3">
           <button
             onClick={() => navigate('/app')}
