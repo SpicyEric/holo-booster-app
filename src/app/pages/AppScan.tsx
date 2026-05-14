@@ -914,6 +914,77 @@ export const AppScan = () => {
         onRetry={handlePermissionRetry}
         type={permissionDialogType}
       />
+
+      {/* ── Redemption Overlay (V2 simulate flow) ── */}
+      <AnimatePresence>
+        {redemptionOverlay && (
+          <motion.div
+            key="redeem-overlay"
+            initial={{ opacity: 0, scale: 1.05 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+            className="fixed inset-0 z-[100] flex flex-col items-center justify-center px-6 text-center text-white"
+            style={{ background: `linear-gradient(160deg, ${BRAND}, ${BRAND}cc)` }}
+          >
+            <button
+              onClick={() => setShowRedeemConfirm(true)}
+              className="absolute top-5 right-5 w-10 h-10 rounded-full bg-white/20 flex items-center justify-center backdrop-blur"
+              aria-label="Schließen"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ delay: 0.15, type: 'spring', stiffness: 200, damping: 15 }}
+              className="w-24 h-24 rounded-full bg-white/20 flex items-center justify-center mb-6"
+            >
+              <CheckCircle2 className="w-14 h-14 text-white" strokeWidth={2.5} />
+            </motion.div>
+
+            <p className="text-sm font-medium uppercase tracking-widest text-white/80 mb-2">
+              Deine Prämie wurde eingelöst
+            </p>
+            <h2 className="text-3xl font-extrabold mb-6 leading-tight">
+              {redemptionOverlay.label}
+            </h2>
+            <div className="rounded-2xl bg-white/15 backdrop-blur px-5 py-4 max-w-xs">
+              <p className="text-base font-semibold text-white">
+                Zeige diesen Bildschirm einem Mitarbeiter zur Bestätigung.
+              </p>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <AlertDialog open={showRedeemConfirm} onOpenChange={setShowRedeemConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Hast du die Prämie an der Kasse eingelöst?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Bestätige nur, wenn ein Mitarbeiter die Einlösung gesehen hat. Diese Aktion kann nicht rückgängig gemacht werden.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Noch nicht</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (contextMerchantId) clearActivatedReward(contextMerchantId);
+                setActivatedRewardState(null);
+                setRedemptionOverlay(null);
+                setShowRedeemConfirm(false);
+                setSimulatedFlip('idle');
+                toast.success('Prämie eingelöst!');
+                if (contextMerchantId) navigate(`/app/merchant/${contextMerchantId}`);
+              }}
+            >
+              Ja, eingelöst
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
