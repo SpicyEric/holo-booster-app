@@ -748,7 +748,7 @@ export const AppScan = () => {
               </div>
             ) : (
               <p className="text-2xl font-bold text-neutral-900 dark:text-white text-center leading-snug px-2 py-2">
-                Keine aktiven Prämien für diesen Check-in.
+                Keine aktive Prämie für diesen Check-in ausgewählt.
               </p>
             )}
 
