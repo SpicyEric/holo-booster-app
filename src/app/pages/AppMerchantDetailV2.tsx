@@ -771,15 +771,13 @@ export const AppMerchantDetailV2 = () => {
 
   return (
     <div
-      className="min-h-screen pb-40"
+      className="min-h-screen pb-40 bg-[#faf8f5] dark:bg-neutral-950"
       style={{
-        background: '#faf8f5',
-        colorScheme: 'light',
         ['--brand' as string]: BRAND,
       }}
     >
       {/* Header */}
-      <div className="sticky top-0 z-30 bg-white/90 backdrop-blur border-b" style={{ borderColor: `${BRAND}22` }}>
+      <div className="sticky top-0 z-30 bg-white/90 dark:bg-neutral-900/90 backdrop-blur border-b" style={{ borderColor: `${BRAND}22` }}>
         <div className="flex items-center gap-3 px-4 py-3">
           <button
             onClick={() => navigate('/app')}
@@ -790,7 +788,7 @@ export const AppMerchantDetailV2 = () => {
             <ArrowLeft className="w-5 h-5" style={{ color: BRAND }} />
           </button>
           <div className="flex-1 min-w-0">
-            <h1 className="text-lg font-bold text-neutral-900 truncate">{merchantInfo.name}</h1>
+            <h1 className="text-lg font-bold text-neutral-900 dark:text-neutral-100 truncate">{merchantInfo.name}</h1>
             <p className="text-xs font-medium" style={{ color: BRAND }}>Dein Treuepass</p>
           </div>
           <div
