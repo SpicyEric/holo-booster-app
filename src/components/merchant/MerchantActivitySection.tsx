@@ -110,7 +110,8 @@ export default function MerchantActivitySection({ customerId }: Props) {
             : type === 'referral_bonus' ? 'Einladungsbonus'
             : type === 'double_points' ? 'Doppelte Punkte'
             : stampDescs[Math.floor(Math.random()*stampDescs.length)];
-          demoTx.push({ id: `demo-${i}`, created_at: d.toISOString(), points_change: pts, transaction_type: type, description: desc });
+          const accountId = `demo-acc-${Math.floor(Math.random()*120)}`;
+          demoTx.push({ id: `demo-${i}`, created_at: d.toISOString(), points_change: pts, transaction_type: type, description: desc, loyalty_account_id: accountId });
         }
         demoTx.sort((a,b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
         setTransactions(demoTx);
