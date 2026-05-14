@@ -68,6 +68,7 @@ function buildSmoothPath(points: { x: number; y: number }[]): string {
 
 export const AppMerchantDetailV2 = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { id } = useParams<{ id: string }>();
   const merchantId = id || DEFAULT_DEMO_MERCHANT_CUSTOMER_ID;
   const brand = useMerchantBrand(merchantId);
