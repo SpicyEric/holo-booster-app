@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, Gift, Check, UserPlus, Sparkles, Rocket, Cake } from 'lucide-react';
+import { ArrowLeft, Gift, Check, UserPlus, Sparkles, Rocket, Cake, X, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
@@ -15,6 +15,7 @@ import {
   setActivatedReward as persistActivatedReward,
   clearActivatedReward,
 } from '@/lib/activeMerchantReward';
+import { generateVerificationCode } from '@/lib/verificationCode';
 
 /**
  * Backstube König – Treuepass (V2 Prototype)
