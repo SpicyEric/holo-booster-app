@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import nfcIcon from '@/assets/nfc-icon.png';
+import { getActiveBrandColor, subscribeActiveBrandColor } from '@/lib/activeBrandColor';
 
 interface NavItem {
   icon: LucideIcon;
