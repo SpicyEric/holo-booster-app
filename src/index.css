@@ -402,3 +402,8 @@ All colors MUST be HSL.
   .nfc-card-scans { transition: none; }
 }
 
+
+@keyframes eloyo-marquee {
+  from { transform: translate3d(0, 0, 0); }
+  to { transform: translate3d(-50%, 0, 0); }
+}
