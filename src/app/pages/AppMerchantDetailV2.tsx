@@ -170,21 +170,13 @@ export const AppMerchantDetailV2 = () => {
   const BRAND_SOFT = `${BRAND}22`; // Alpha-Wash via HEX 8-stellig
 
   // ================= Persistierter State (per Merchant in localStorage) =================
-  const checkInsKey = `eloyo:v2:checkins:v4:${merchantId}`;
-  const redeemedKey = `eloyo:v2:redeemed:v2:${merchantId}`;
+  const checkInsKey = `eloyo:v2:checkins:${merchantId}`;
+  const redeemedKey = `eloyo:v2:redeemed:${merchantId}`;
+  const resetKey = `eloyo:v2:demo-reset:${merchantId}`;
   const lastDateKey = `eloyo:v2:lastcheckin:${merchantId}`;
 
-  const defaultCheckIns: CheckInEntry[] = [
-    { visit: 1, source: 'normal' },
-    { visit: 2, source: 'google_review' },
-    { visit: 3, source: 'birthday' },
-    { visit: 4, source: 'normal' },
-    { visit: 5, source: 'boost' },
-    { visit: 6, source: 'normal' },
-    { visit: 7, source: 'normal' },
-  ];
-  // Standard: Gratisbreze (Visit 4) und Gratiskaffee (Visit 8) sind beide noch offen.
-  const defaultRedeemed: number[] = [];
+  const defaultCheckIns = DEMO_DEFAULT_CHECK_INS;
+  const defaultRedeemed = DEMO_DEFAULT_REDEEMED;
 
   const [checkIns, setCheckIns] = useState<CheckInEntry[]>(() => {
     if (typeof window === 'undefined') return defaultCheckIns;
