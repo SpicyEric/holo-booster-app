@@ -38,6 +38,7 @@ import MeinGeschaeft from "./pages/merchant/MeinGeschaeft";
 import MerchantOnboarding from "./pages/merchant/MerchantOnboarding";
 import GoogleBewertungen from "./pages/merchant/GoogleBewertungen";
 import MeinKonto from "./pages/merchant/MeinKonto";
+import SoFunktionierts from "./pages/merchant/SoFunktionierts";
 import Nachrichten from "./pages/merchant/Nachrichten";
 import Transaktionen from "./pages/merchant/Transaktionen";
 import Marketing from "./pages/merchant/Marketing";
