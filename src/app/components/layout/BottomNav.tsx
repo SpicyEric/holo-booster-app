@@ -35,12 +35,14 @@ export const BottomNav = ({ onNavigate, currentIndex }: BottomNavProps) => {
     });
   }, []);
 
-  // Brand-Farbe nur auf Merchant-Detail-/Scan-Routen aktiv. Bei jedem
-  // Wechsel auf andere Tabs wird die Markenfarbe synchron zurückgesetzt.
+  // Brand-Farbe nur auf Routen aktiv, die selbst eine Markenfarbe publizieren
+  // (Merchant-Detail, Scan und Home mit Treuepass-Karten). Auf anderen Tabs
+  // wird die Markenfarbe synchron zurückgesetzt.
   useEffect(() => {
     const onMerchantDetail = /^\/app\/merchant\//.test(location.pathname);
     const onScan = location.pathname.startsWith('/app/scan');
-    if (!onMerchantDetail && !onScan) {
+    const onHome = location.pathname === '/app';
+    if (!onMerchantDetail && !onScan && !onHome) {
       setActiveBrandColor(null);
       setBrandColor(null);
     }
