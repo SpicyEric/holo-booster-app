@@ -22,6 +22,7 @@ import { ExitAppDialog } from '@/app/components/ExitAppDialog';
 import { useStatusBar } from '@/app/hooks/useStatusBar';
 import { OpenInvitationsBanner } from '@/app/components/OpenInvitationsBanner';
 import { OpenInvitationsPanel } from '@/app/components/OpenInvitationsPanel';
+import { setActiveBrandColor } from '@/lib/activeBrandColor';
 
 // Map route paths to carousel indices
 const ROUTE_TO_INDEX: Record<string, number> = {
@@ -62,6 +63,7 @@ type HomeMerchantCard = {
   instagram: string | null;
   facebook: string | null;
   twitter: string | null;
+  brandColor: string | null;
 };
 
 const HOME_DAY_LABELS: { key: string; label: string }[] = [
@@ -174,18 +176,20 @@ export const SwipeableAppContainer = () => {
         paddingBottom: bottomInsetOffset,
       }}
     >
-      <Particles
-        particleColors={['#6366F1', '#8B5CF6', '#A855F7']}
-        particleCount={400}
-        particleSpread={10}
-        speed={0.03}
-        particleBaseSize={120}
-        sizeRandomness={1.8}
-        moveParticlesOnHover={true}
-        alphaParticles={true}
-        disableRotation={false}
-        cameraDistance={20}
-      />
+      {currentIndex !== 0 && (
+        <Particles
+          particleColors={['#6366F1', '#8B5CF6', '#A855F7']}
+          particleCount={400}
+          particleSpread={10}
+          speed={0.03}
+          particleBaseSize={120}
+          sizeRandomness={1.8}
+          moveParticlesOnHover={true}
+          alphaParticles={true}
+          disableRotation={false}
+          cameraDistance={20}
+        />
+      )}
       
       <TopBar title={INDEX_TO_TITLE[currentIndex]} />
       
@@ -197,7 +201,7 @@ export const SwipeableAppContainer = () => {
         <div className="flex h-full">
           <div className="flex-[0_0_100%] min-w-0 h-full overflow-y-auto" style={{ overscrollBehavior: 'contain', touchAction: 'pan-y' }}>
             <div className="container mx-auto px-4 py-6 pb-16 max-w-2xl relative z-10">
-              <AppHomeContent />
+              <AppHomeContent active={currentIndex === 0} />
             </div>
           </div>
           
@@ -242,12 +246,14 @@ function haversineDistance(lat1: number, lon1: number, lat2: number, lon2: numbe
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
-const AppHomeContent = () => {
+const AppHomeContent = ({ active }: { active: boolean }) => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [cards, setCards] = useState<HomeMerchantCard[]>([]);
   const [loading, setLoading] = useState(true);
-  const [emblaRef] = useEmblaCarousel({ loop: true, align: 'center', containScroll: false });
+  const [emblaRef, homeEmblaApi] = useEmblaCarousel({ loop: true, align: 'center', containScroll: false });
+  const [activeCardIndex, setActiveCardIndex] = useState(0);
+  const [isCardSwiping, setIsCardSwiping] = useState(false);
 
   const loadCards = useCallback(async () => {
     if (!user) return;
@@ -266,7 +272,7 @@ const AppHomeContent = () => {
 
       const { data: merchants } = await supabase
         .from('customers')
-        .select('id, name, company_name, logo_url, cover_image_url, industry, latitude, longitude, description, opening_hours, street, house_number, postal_code, city, website, instagram, facebook, twitter')
+          .select('id, name, company_name, logo_url, cover_image_url, industry, latitude, longitude, description, opening_hours, street, house_number, postal_code, city, website, instagram, facebook, twitter, brand_color')
         .eq('active', true)
         .in('id', merchantIds);
 
@@ -311,6 +317,7 @@ const AppHomeContent = () => {
             instagram: m.instagram || null,
             facebook: m.facebook || null,
             twitter: m.twitter || null,
+            brandColor: m.brand_color || null,
           };
         })
         .filter((x): x is NonNullable<typeof x> => !!x)
@@ -332,6 +339,40 @@ const AppHomeContent = () => {
   useEffect(() => {
     if (user) loadCards();
   }, [user, loadCards]);
+
+  useEffect(() => {
+    if (!homeEmblaApi) return;
+    const syncSelected = () => setActiveCardIndex(homeEmblaApi.selectedScrollSnap());
+    const hideDetails = () => setIsCardSwiping(true);
+    const showDetails = () => {
+      syncSelected();
+      setIsCardSwiping(false);
+    };
+
+    syncSelected();
+    homeEmblaApi.on('select', syncSelected);
+    homeEmblaApi.on('pointerDown', hideDetails);
+    homeEmblaApi.on('scroll', hideDetails);
+    homeEmblaApi.on('settle', showDetails);
+    homeEmblaApi.on('reInit', showDetails);
+
+    return () => {
+      homeEmblaApi.off('select', syncSelected);
+      homeEmblaApi.off('pointerDown', hideDetails);
+      homeEmblaApi.off('scroll', hideDetails);
+      homeEmblaApi.off('settle', showDetails);
+      homeEmblaApi.off('reInit', showDetails);
+    };
+  }, [homeEmblaApi]);
+
+  useEffect(() => {
+    if (!active || cards.length === 0) {
+      setActiveBrandColor(null);
+      return;
+    }
+    setActiveBrandColor(cards[activeCardIndex]?.brandColor || null);
+    return () => setActiveBrandColor(null);
+  }, [active, activeCardIndex, cards]);
 
   const handleRefresh = useCallback(async () => {
     await loadCards();
@@ -449,17 +490,18 @@ const AppHomeContent = () => {
                     )}
                   </div>
                 </button>
-                <HomeMerchantInfoBlock store={store} />
               </div>
             ))}
           </div>
         </div>
+        <HomeMerchantInfoBlock store={cards[activeCardIndex] || cards[0]} visible={!isCardSwiping} />
       </div>
     </PullToRefresh>
   );
 };
 
-function HomeMerchantInfoBlock({ store }: { store: HomeMerchantCard }) {
+function HomeMerchantInfoBlock({ store, visible }: { store: HomeMerchantCard; visible: boolean }) {
+  const accent = store.brandColor || undefined;
   const links: { href: string; label: string; Icon: typeof Globe }[] = [];
   const web = normalizeHomeUrl(store.website);
   const ig = normalizeInstagramUrl(store.instagram);
@@ -483,8 +525,19 @@ function HomeMerchantInfoBlock({ store }: { store: HomeMerchantCard }) {
 
   if (!store.description && visibleHours.length === 0 && !store.address && links.length === 0) return null;
 
+  const panelStyle: React.CSSProperties = {
+    opacity: visible ? 1 : 0,
+    transform: visible ? 'translateY(0)' : 'translateY(4px)',
+    transition: visible ? 'opacity 180ms ease-out, transform 180ms ease-out' : 'opacity 80ms ease-out, transform 80ms ease-out',
+    pointerEvents: visible ? 'auto' : 'none',
+  };
+  const iconStyle: React.CSSProperties | undefined = accent ? { color: accent } : undefined;
+  const linkStyle: React.CSSProperties | undefined = accent
+    ? { color: accent, backgroundColor: `color-mix(in srgb, ${accent} 12%, transparent)` }
+    : undefined;
+
   return (
-    <div className="mt-3 space-y-3 px-1 pb-1 text-left">
+    <div className="mt-3 space-y-3 px-1 pb-1 text-left" style={panelStyle}>
       {store.description && (
         <p className="text-sm leading-relaxed text-foreground/80 whitespace-pre-line">
           {store.description}
@@ -492,9 +545,9 @@ function HomeMerchantInfoBlock({ store }: { store: HomeMerchantCard }) {
       )}
 
       {visibleHours.length > 0 && (
-        <div className="rounded-xl border border-border/50 bg-background/75 p-3 backdrop-blur-sm">
+        <div className="rounded-xl border border-border/50 bg-background/75 p-3">
           <div className="mb-2 flex items-center gap-2 text-xs font-semibold text-foreground">
-            <Clock className="h-4 w-4 text-primary" />
+            <Clock className="h-4 w-4 text-primary" style={iconStyle} />
             Öffnungszeiten
           </div>
           <div className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-xs">
@@ -515,7 +568,7 @@ function HomeMerchantInfoBlock({ store }: { store: HomeMerchantCard }) {
           rel="noopener noreferrer"
           className="flex items-start gap-2 text-sm text-foreground/80"
         >
-          <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+          <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-primary" style={iconStyle} />
           <span>{store.address}</span>
         </a>
       )}
@@ -529,6 +582,7 @@ function HomeMerchantInfoBlock({ store }: { store: HomeMerchantCard }) {
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1.5 text-xs font-medium text-primary transition-colors hover:bg-primary/15"
+              style={linkStyle}
             >
               <Icon className="h-3.5 w-3.5" />
               {label}
