@@ -693,6 +693,13 @@ export const AppMerchantDetailV2 = () => {
                         </div>
                       )}
                     </button>
+                    <div
+                      className={`absolute left-1/2 -translate-x-1/2 ${labelBelow ? '-top-7' : 'top-full mt-2'} px-2 py-0.5 rounded-full bg-white shadow-sm border text-[10px] font-semibold text-neutral-800 max-w-[110px] truncate text-center pointer-events-none`}
+                      style={{ borderColor: `${BRAND}55` }}
+                      title={reward.label}
+                    >
+                      {reward.label}
+                    </div>
                   </div>
                 );
               }
