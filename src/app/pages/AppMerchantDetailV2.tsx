@@ -399,35 +399,19 @@ export const AppMerchantDetailV2 = () => {
   }, [entryPhase, entryTarget]);
 
   // Exit-Trigger: BottomNav Scan-Button auf Merchant-Detail-Seite
+  // Hard-Cut auf Scan-Seite (keine Morph-Animation mehr).
   useEffect(() => {
     const handler = (ev: Event) => {
       const e = ev as CustomEvent<{ merchantId: string; scanUrl: string }>;
       if (!e.detail || e.detail.merchantId !== merchantId) return;
-      // Wir übernehmen die Navigation – BottomNav soll nicht selbst springen
       e.preventDefault();
-
-      const r = snakeBandRef.current?.getBoundingClientRect();
-      if (r) {
-        setExitOrigin({ top: r.top, left: r.left, width: r.width, height: r.height });
-      }
-      // Ziel: Scan-Card-Position (px-4 pt-4, aspect 1.55:1)
-      const vw = window.innerWidth;
-      const cardWidth = vw - 32; // px-4 links/rechts
-      const cardHeight = cardWidth / 1.55;
-      setExitTarget({ top: 16, left: 16, width: cardWidth, height: cardHeight });
-      setExitScanUrl(e.detail.scanUrl);
-      setEntryPhase('exiting');
-      setExitStage(0);
-      // Flag für Scan-Screen: Slide-Up-Intro überspringen, weil das Cover bereits an Position morpht
+      // Scan-Screen direkt mit fertiger Karte zeigen, ohne Slide-Up-Intro
       try { sessionStorage.setItem('scan-skip-intro', String(Date.now())); } catch { void 0; }
-      // Stagger: snake (0–250ms) → info weg (250ms) → freunde weg (450ms) → navigate (~900ms)
-      setTimeout(() => setExitStage(1), 220);
-      setTimeout(() => setExitStage(2), 420);
-      setTimeout(() => setExitStage(3), 900);
+      navigate(e.detail.scanUrl);
     };
     window.addEventListener('app:treuepass-exit-to-scan', handler as EventListener);
     return () => window.removeEventListener('app:treuepass-exit-to-scan', handler as EventListener);
-  }, [merchantId]);
+  }, [merchantId, navigate]);
 
   // Eigentliche Navigation, sobald Exit-Animation fertig ist
   useEffect(() => {
