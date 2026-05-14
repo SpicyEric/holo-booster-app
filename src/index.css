@@ -422,3 +422,20 @@ All colors MUST be HSL.
   from { transform: translate3d(0, 0, 0); }
   to { transform: translate3d(-50%, 0, 0); }
 }
+
+/* Onboarding scan-button highlight (shown on empty Home for new users) */
+@keyframes scan-glow-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 hsl(var(--primary) / 0.55), 0 10px 25px hsl(var(--primary) / 0.35); }
+  50%      { box-shadow: 0 0 0 14px hsl(var(--primary) / 0), 0 10px 30px hsl(var(--primary) / 0.5); }
+}
+body.scan-highlight [data-scan-button] {
+  animation: scan-glow-pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes onboarding-arrow-bounce {
+  0%, 100% { transform: translateY(0); opacity: 0.85; }
+  50%      { transform: translateY(10px); opacity: 1; }
+}
+.onboarding-arrow-bounce {
+  animation: onboarding-arrow-bounce 1.4s ease-in-out infinite;
+}
