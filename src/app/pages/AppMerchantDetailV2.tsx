@@ -117,6 +117,13 @@ export const AppMerchantDetailV2 = () => {
   const [boostFlash, setBoostFlash] = useState(false);
   const [lastCheckInDate, setLastCheckInDate] = useState<string | null>(null);
 
+  // Orange Eincheck-Overlay (Vollbild, mit Code-Marquee)
+  const [checkInOverlay, setCheckInOverlay] = useState<{
+    code: string;
+    reward: MockReward | null;
+  } | null>(null);
+  const [confirmStage, setConfirmStage] = useState(false);
+
   const scrollerRef = useRef<HTMLDivElement>(null);
 
   // ================= Sichtbares Fenster =================
