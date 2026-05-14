@@ -221,6 +221,53 @@ export const AppMerchantDetailV2 = () => {
     return () => el.removeEventListener('scroll', onScroll);
   }, [currentVisit, windowStart]);
 
+  // Drag-to-scroll mit Maus (Desktop)
+  useEffect(() => {
+    const el = scrollerRef.current;
+    if (!el) return;
+    let isDown = false;
+    let startX = 0;
+    let startScroll = 0;
+    let moved = false;
+
+    const onDown = (e: MouseEvent) => {
+      if (e.button !== 0) return;
+      isDown = true;
+      moved = false;
+      startX = e.pageX;
+      startScroll = el.scrollLeft;
+      el.style.cursor = 'grabbing';
+    };
+    const onMove = (e: MouseEvent) => {
+      if (!isDown) return;
+      const dx = e.pageX - startX;
+      if (Math.abs(dx) > 4) moved = true;
+      el.scrollLeft = startScroll - dx;
+    };
+    const stop = () => {
+      isDown = false;
+      el.style.cursor = 'grab';
+    };
+    const onClickCapture = (e: MouseEvent) => {
+      if (moved) {
+        e.stopPropagation();
+        e.preventDefault();
+        moved = false;
+      }
+    };
+
+    el.style.cursor = 'grab';
+    el.addEventListener('mousedown', onDown);
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', stop);
+    el.addEventListener('click', onClickCapture, true);
+    return () => {
+      el.removeEventListener('mousedown', onDown);
+      window.removeEventListener('mousemove', onMove);
+      window.removeEventListener('mouseup', stop);
+      el.removeEventListener('click', onClickCapture, true);
+    };
+  }, []);
 
   // ================= Aktionen =================
   const todayKey = () => new Date().toISOString().slice(0, 10);
