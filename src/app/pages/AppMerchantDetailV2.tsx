@@ -1476,8 +1476,8 @@ export const AppMerchantDetailV2 = () => {
                 >
                   <motion.div
                     initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    transition={{ delay: 0.15, type: 'spring', stiffness: 200, damping: 15 }}
+                    animate={{ scale: [1, 1.08, 1] }}
+                    transition={{ scale: { delay: 0.15, repeat: Infinity, duration: 1.6, ease: 'easeInOut' } }}
                     className="w-24 h-24 rounded-full bg-white/20 flex items-center justify-center mb-6"
                   >
                     <CheckCircle2 className="w-14 h-14 text-white" strokeWidth={2.5} />
@@ -1523,7 +1523,7 @@ export const AppMerchantDetailV2 = () => {
 
             {/* Code-Marquee — direkt über dem Häkchen, dünner */}
             {!confirmStage && checkInOverlay.reward && (
-              <div className="absolute left-0 right-0 top-[calc(50%-180px)] py-1.5 overflow-hidden bg-white/10 backdrop-blur border-y border-white/20">
+              <div className="absolute left-0 right-0 top-[calc(50%-240px)] py-1.5 overflow-hidden bg-white/10 backdrop-blur border-y border-white/20">
                 <div
                   className="flex whitespace-nowrap will-change-transform"
                   style={{ animation: 'eloyo-marquee 14s linear infinite' }}
