@@ -1,8 +1,15 @@
-import { useState, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Gift, GripVertical, Sparkles } from 'lucide-react';
+import { Gift, GripVertical, Sparkles, Trash2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 interface Reward {
   id: string;
@@ -13,17 +20,31 @@ interface Reward {
   is_active: boolean | null;
 }
 
+interface Placement {
+  id: string;
+  reward_id: string;
+  visit: number;
+}
+
 interface Props {
   rewards: Reward[];
   brandColor: string;
-  onChanged: () => void;
-  maxVisits?: number;
+  customerId: string | null;
+  passLength: number;
+  onPassLengthChange: (n: number) => void;
+  onChanged?: () => void;
 }
 
 const NODE_SPACING = 90;
 const SNAKE_HEIGHT = 200;
 const AMPLITUDE = 50;
 const WAVELENGTH = 4;
+
+// What kind of payload we drag — either a reward from the palette,
+// or an existing placement (which can also be moved or deleted).
+type DragPayload =
+  | { kind: 'reward'; rewardId: string }
+  | { kind: 'placement'; placementId: string; rewardId: string };
 
 function nodeY(index: number): number {
   return SNAKE_HEIGHT / 2 + Math.sin((index / WAVELENGTH) * Math.PI * 2) * AMPLITUDE;
@@ -42,71 +63,176 @@ function buildSmoothPath(points: { x: number; y: number }[]): string {
   return d;
 }
 
-export const RewardSnakeDropZone = ({ rewards, brandColor, onChanged, maxVisits = 15 }: Props) => {
-  const [draggedReward, setDraggedReward] = useState<Reward | null>(null);
-  const [hoverVisit, setHoverVisit] = useState<number | null>(null);
-  const [updating, setUpdating] = useState(false);
-  const padding = 50;
-  const totalWidth = padding * 2 + NODE_SPACING * (maxVisits - 1);
+const PASS_LENGTH_OPTIONS = [10, 15, 20, 25, 30, 35, 40, 50];
 
-  const points = Array.from({ length: maxVisits }, (_, i) => ({
+export const RewardSnakeDropZone = ({
+  rewards,
+  brandColor,
+  customerId,
+  passLength,
+  onPassLengthChange,
+  onChanged,
+}: Props) => {
+  const [placements, setPlacements] = useState<Placement[]>([]);
+  const [drag, setDrag] = useState<DragPayload | null>(null);
+  const [hoverVisit, setHoverVisit] = useState<number | null>(null);
+  const [trashHover, setTrashHover] = useState(false);
+  const [busy, setBusy] = useState(false);
+
+  const padding = 50;
+  const totalWidth = padding * 2 + NODE_SPACING * (passLength - 1);
+
+  const loadPlacements = async () => {
+    if (!customerId) return;
+    const { data } = await supabase
+      .from('reward_placements')
+      .select('id, reward_id, visit')
+      .eq('customer_id', customerId)
+      .order('visit', { ascending: true });
+    setPlacements((data as Placement[]) || []);
+  };
+
+  useEffect(() => {
+    loadPlacements();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [customerId]);
+
+  const points = Array.from({ length: passLength }, (_, i) => ({
     x: padding + i * NODE_SPACING,
     y: nodeY(i),
   }));
 
-  const rewardForVisit = (visit: number) => rewards.find(r => r.points_required === visit) || null;
+  const placementForVisit = (v: number) => placements.find((p) => p.visit === v) || null;
+  const rewardById = (id: string) => rewards.find((r) => r.id === id) || null;
 
-  const handleDrop = async (visit: number) => {
-    if (!draggedReward) return;
-    if (draggedReward.points_required === visit) {
-      setDraggedReward(null);
+  const handleDropOnVisit = async (visit: number) => {
+    if (!drag || !customerId) return;
+    const existing = placementForVisit(visit);
+    setBusy(true);
+    try {
+      if (drag.kind === 'placement' && drag.placementId === existing?.id) {
+        // dropped on its own slot — no-op
+      } else if (drag.kind === 'placement') {
+        // Moving an existing placement
+        if (existing) {
+          // Swap: existing one takes old slot
+          const oldPlacement = placements.find((p) => p.id === drag.placementId);
+          if (!oldPlacement) return;
+          const { error: e1 } = await supabase
+            .from('reward_placements')
+            .update({ visit: -Math.abs(oldPlacement.visit) }) // temp
+            .eq('id', existing.id);
+          if (e1) throw e1;
+          const { error: e2 } = await supabase
+            .from('reward_placements')
+            .update({ visit })
+            .eq('id', drag.placementId);
+          if (e2) throw e2;
+          const { error: e3 } = await supabase
+            .from('reward_placements')
+            .update({ visit: oldPlacement.visit })
+            .eq('id', existing.id);
+          if (e3) throw e3;
+        } else {
+          const { error } = await supabase
+            .from('reward_placements')
+            .update({ visit })
+            .eq('id', drag.placementId);
+          if (error) throw error;
+        }
+      } else {
+        // New placement from palette
+        if (existing) {
+          // Replace: delete existing first
+          const { error: delErr } = await supabase
+            .from('reward_placements')
+            .delete()
+            .eq('id', existing.id);
+          if (delErr) throw delErr;
+        }
+        const { error } = await supabase
+          .from('reward_placements')
+          .insert({ customer_id: customerId, reward_id: drag.rewardId, visit });
+        if (error) throw error;
+      }
+      toast.success(`Prämie auf Check-in #${visit} platziert`);
+      await loadPlacements();
+      onChanged?.();
+    } catch (e: any) {
+      console.error(e);
+      toast.error('Konnte Prämie nicht platzieren');
+    } finally {
+      setBusy(false);
+      setDrag(null);
       setHoverVisit(null);
+    }
+  };
+
+  const handleDropOnTrash = async () => {
+    if (!drag || drag.kind !== 'placement') {
+      setDrag(null);
+      setTrashHover(false);
       return;
     }
-    // Check if there's already a reward at that visit
-    const existing = rewardForVisit(visit);
-    if (existing && existing.id !== draggedReward.id) {
-      toast.error(`Auf Check-in #${visit} liegt bereits eine Prämie.`);
-      setDraggedReward(null);
-      setHoverVisit(null);
-      return;
-    }
-    setUpdating(true);
+    setBusy(true);
     try {
       const { error } = await supabase
-        .from('rewards')
-        .update({ points_required: visit })
-        .eq('id', draggedReward.id);
+        .from('reward_placements')
+        .delete()
+        .eq('id', drag.placementId);
       if (error) throw error;
-      toast.success(`Prämie auf Check-in #${visit} platziert`);
-      onChanged();
-    } catch (e: any) {
-      toast.error('Konnte Prämie nicht verschieben');
+      toast.success('Prämie entfernt');
+      await loadPlacements();
+      onChanged?.();
+    } catch {
+      toast.error('Konnte Prämie nicht entfernen');
     } finally {
-      setUpdating(false);
-      setDraggedReward(null);
-      setHoverVisit(null);
+      setBusy(false);
+      setDrag(null);
+      setTrashHover(false);
     }
   };
 
   return (
     <Card className="rounded-2xl shadow-sm border border-primary/10 bg-primary/[0.03]">
       <CardHeader className="pb-4">
-        <div className="flex items-center gap-3">
-          <div
-            className="w-10 h-10 rounded-xl flex items-center justify-center"
-            style={{ background: `${brandColor}22` }}
-          >
-            <Sparkles className="h-5 w-5" style={{ color: brandColor }} />
+        <div className="flex items-start justify-between gap-3 flex-wrap">
+          <div className="flex items-center gap-3">
+            <div
+              className="w-10 h-10 rounded-xl flex items-center justify-center"
+              style={{ background: `${brandColor}22` }}
+            >
+              <Sparkles className="h-5 w-5" style={{ color: brandColor }} />
+            </div>
+            <div>
+              <CardTitle className="text-lg font-semibold">Treuepass-Belegung</CardTitle>
+              <CardDescription>
+                Ziehe Prämien per Drag &amp; Drop auf einen Check-in. Nach {passLength} Check-ins beginnt der Pass von vorne.
+              </CardDescription>
+            </div>
           </div>
-          <div>
-            <CardTitle className="text-lg font-semibold">Treuepass-Belegung</CardTitle>
-            <CardDescription>Ziehe deine Prämien per Drag &amp; Drop auf den gewünschten Check-in.</CardDescription>
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-medium text-muted-foreground">Pass-Länge</span>
+            <Select
+              value={String(passLength)}
+              onValueChange={(v) => onPassLengthChange(parseInt(v, 10))}
+            >
+              <SelectTrigger className="h-9 w-[120px] rounded-xl">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {PASS_LENGTH_OPTIONS.map((n) => (
+                  <SelectItem key={n} value={String(n)}>
+                    {n} Check-ins
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         </div>
       </CardHeader>
       <CardContent className="space-y-5">
-        {/* Snake */}
+        {/* Snake — horizontal scroll */}
         <div
           className="overflow-x-auto overflow-y-hidden rounded-2xl bg-card/60 border border-border/30"
           style={{ WebkitOverflowScrolling: 'touch' }}
@@ -125,7 +251,8 @@ export const RewardSnakeDropZone = ({ rewards, brandColor, onChanged, maxVisits 
 
             {points.map((pt, i) => {
               const visit = i + 1;
-              const reward = rewardForVisit(visit);
+              const placement = placementForVisit(visit);
+              const reward = placement ? rewardById(placement.reward_id) : null;
               const isHover = hoverVisit === visit;
               return (
                 <div
@@ -141,15 +268,16 @@ export const RewardSnakeDropZone = ({ rewards, brandColor, onChanged, maxVisits 
                   }}
                   onDrop={(e) => {
                     e.preventDefault();
-                    handleDrop(visit);
+                    handleDropOnVisit(visit);
                   }}
                 >
-                  {reward ? (
+                  {placement && reward ? (
                     <div
                       draggable
-                      onDragStart={() => setDraggedReward(reward)}
-                      onDragEnd={() => setDraggedReward(null)}
+                      onDragStart={() => setDrag({ kind: 'placement', placementId: placement.id, rewardId: reward.id })}
+                      onDragEnd={() => setDrag(null)}
                       className="flex flex-col items-center gap-1.5 cursor-grab active:cursor-grabbing"
+                      title="Ziehen zum Verschieben oder in den Papierkorb"
                     >
                       <div
                         className="w-14 h-14 rounded-full flex items-center justify-center shadow-lg ring-4 ring-white"
@@ -190,48 +318,81 @@ export const RewardSnakeDropZone = ({ rewards, brandColor, onChanged, maxVisits 
           </div>
         </div>
 
-        {/* Reward palette */}
-        <div>
-          <p className="text-sm font-semibold text-foreground mb-2">Deine Prämien</p>
-          {rewards.length === 0 ? (
-            <p className="text-sm text-muted-foreground py-4 text-center">
-              Noch keine Prämien — erstelle oben eine, um sie hier zu platzieren.
-            </p>
-          ) : (
-            <div className="flex flex-wrap gap-2">
-              {rewards.map((reward) => (
-                <div
-                  key={reward.id}
-                  draggable
-                  onDragStart={() => setDraggedReward(reward)}
-                  onDragEnd={() => setDraggedReward(null)}
-                  className={`flex items-center gap-2 px-3 py-2 rounded-xl bg-card border border-border/40 shadow-sm cursor-grab active:cursor-grabbing transition-all ${
-                    draggedReward?.id === reward.id ? 'opacity-50' : 'hover:shadow-md'
-                  }`}
-                >
-                  <GripVertical className="h-4 w-4 text-muted-foreground" />
-                  {reward.image_url ? (
-                    <img src={reward.image_url} alt={reward.title} className="w-8 h-8 rounded-lg object-cover" />
-                  ) : (
+        {/* Reward palette + Trash zone */}
+        <div className="flex flex-col md:flex-row gap-3 items-stretch">
+          <div className="flex-1">
+            <p className="text-sm font-semibold text-foreground mb-2">Deine Prämien</p>
+            {rewards.length === 0 ? (
+              <p className="text-sm text-muted-foreground py-4 text-center">
+                Noch keine Prämien — erstelle oben eine, um sie hier zu platzieren.
+              </p>
+            ) : (
+              <div className="flex flex-wrap gap-2">
+                {rewards.map((reward) => {
+                  const placedCount = placements.filter((p) => p.reward_id === reward.id).length;
+                  return (
                     <div
-                      className="w-8 h-8 rounded-lg flex items-center justify-center"
-                      style={{ background: `${brandColor}22` }}
+                      key={reward.id}
+                      draggable
+                      onDragStart={() => setDrag({ kind: 'reward', rewardId: reward.id })}
+                      onDragEnd={() => setDrag(null)}
+                      className="flex items-center gap-2 px-3 py-2 rounded-xl bg-card border border-border/40 shadow-sm cursor-grab active:cursor-grabbing transition-all hover:shadow-md"
                     >
-                      <Gift className="h-4 w-4" style={{ color: brandColor }} />
+                      <GripVertical className="h-4 w-4 text-muted-foreground" />
+                      {reward.image_url ? (
+                        <img src={reward.image_url} alt={reward.title} className="w-8 h-8 rounded-lg object-cover" />
+                      ) : (
+                        <div
+                          className="w-8 h-8 rounded-lg flex items-center justify-center"
+                          style={{ background: `${brandColor}22` }}
+                        >
+                          <Gift className="h-4 w-4" style={{ color: brandColor }} />
+                        </div>
+                      )}
+                      <div className="flex flex-col">
+                        <span className="text-sm font-medium text-foreground leading-tight">{reward.title}</span>
+                        <span className="text-[10px] text-muted-foreground">
+                          {placedCount > 0 ? `${placedCount}× platziert` : 'Noch nicht platziert'}
+                        </span>
+                      </div>
                     </div>
-                  )}
-                  <div className="flex flex-col">
-                    <span className="text-sm font-medium text-foreground leading-tight">{reward.title}</span>
-                    <span className="text-[10px] text-muted-foreground">Check-in #{reward.points_required}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-          <p className="text-xs text-muted-foreground mt-3">
-            Tipp: Du kannst auch eine bereits platzierte Prämie auf einen anderen Knoten ziehen.
-          </p>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* Trash drop zone */}
+          <div
+            onDragOver={(e) => {
+              if (drag?.kind === 'placement') {
+                e.preventDefault();
+                setTrashHover(true);
+              }
+            }}
+            onDragLeave={() => setTrashHover(false)}
+            onDrop={(e) => {
+              e.preventDefault();
+              handleDropOnTrash();
+            }}
+            className={`shrink-0 md:w-44 rounded-2xl border-2 border-dashed flex flex-col items-center justify-center p-4 transition-all ${
+              trashHover
+                ? 'bg-destructive/10 border-destructive scale-[1.02]'
+                : 'bg-muted/40 border-border/50'
+            }`}
+          >
+            <Trash2 className={`h-7 w-7 ${trashHover ? 'text-destructive' : 'text-muted-foreground'}`} />
+            <p className={`text-xs font-medium mt-2 text-center ${trashHover ? 'text-destructive' : 'text-muted-foreground'}`}>
+              Hier ablegen, um eine platzierte Prämie zu entfernen
+            </p>
+          </div>
         </div>
+
+        <p className="text-xs text-muted-foreground">
+          Tipp: Du kannst eine Prämie mehrfach platzieren — zieh sie einfach aus der Liste auf weitere Check-ins.
+          Zum Entfernen die platzierte Prämie in den Papierkorb ziehen.
+        </p>
+        {busy && <p className="text-xs text-muted-foreground">Aktualisiere…</p>}
       </CardContent>
     </Card>
   );
