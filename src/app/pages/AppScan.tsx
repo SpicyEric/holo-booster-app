@@ -688,30 +688,38 @@ export const AppScan = () => {
 
             </div>
 
-            {/* ── BACK: Merchant image card ── */}
+            {/* ── BACK: Merchant image card (same look as front, ohne Pulse) ── */}
             {(() => {
-              const backImage = merchantImage || (hasMerchantContext ? contextMerchant?.cover_image_url : null);
-              const backName = merchantDisplayName || (hasMerchantContext ? contextMerchant?.name ?? '' : '');
+              const backImage = (hasMerchantContext ? contextMerchant?.cover_image_url : null) || merchantImage;
+              const backName = (hasMerchantContext ? contextMerchant?.name : null) || merchantDisplayName || '';
               return (
                 <div
-                  className="absolute inset-0 rounded-2xl"
+                  className={contextMerchantId ? 'absolute inset-0 rounded-2xl overflow-hidden bg-neutral-200' : 'absolute inset-0 rounded-2xl bg-gradient-to-br from-primary to-secondary overflow-hidden'}
                   role="img"
                   aria-label={backName || 'Geschäftskarte'}
                   style={{
                     backfaceVisibility: 'hidden',
                     WebkitBackfaceVisibility: 'hidden',
                     transform: 'rotateY(180deg)',
-                    backgroundImage: backImage ? `url("${backImage}")` : undefined,
-                    backgroundPosition: 'center',
-                    backgroundRepeat: 'no-repeat',
-                    backgroundSize: 'cover',
-                    background: !backImage && hasMerchantContext ? `linear-gradient(135deg, ${BRAND}, ${BRAND}cc)` : undefined,
                   }}
                 >
-                  {!backImage && !hasMerchantContext && (
-                    <div className="w-full h-full bg-gradient-to-br from-primary to-secondary" />
+                  {backImage && (
+                    <div
+                      className="absolute inset-0"
+                      style={{
+                        backgroundImage: `url("${backImage}")`,
+                        backgroundSize: 'cover',
+                        backgroundPosition: 'center',
+                      }}
+                    />
                   )}
-                  <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/60 via-black/25 to-transparent" />
+                  {hasMerchantContext && BRAND && (
+                    <div
+                      className="absolute inset-0"
+                      style={{ background: `linear-gradient(135deg, ${BRAND}, ${BRAND}cc)`, opacity: 0.85 }}
+                    />
+                  )}
+                  <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/40 via-black/10 to-transparent" />
                   <div className="absolute bottom-3 left-4 right-4">
                     <h1 className="text-lg font-bold text-white drop-shadow-md">{backName}</h1>
                   </div>
