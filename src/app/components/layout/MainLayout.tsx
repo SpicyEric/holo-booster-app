@@ -35,7 +35,7 @@ export const MainLayout = ({ children, title, showBack = false, disableParticles
         alphaParticles={true}
         disableRotation={false}
         cameraDistance={20}
-      />}
+      />
       <OfflineBanner />
       <TopBar title={title} showBack={showBack} />
       <main
