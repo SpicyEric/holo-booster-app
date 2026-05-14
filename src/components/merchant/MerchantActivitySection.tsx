@@ -417,31 +417,50 @@ export default function MerchantActivitySection({ customerId }: Props) {
                 </Card>
               ) : (
                 <>
-                  {displayed.map((tx) => (
-                    <div key={tx.id} className="group bg-white rounded-lg px-3.5 py-3 border border-border/30 flex items-center justify-between hover:shadow-[0_2px_8px_hsl(262,30%,80%/0.3)] hover:border-primary/20 transition-all duration-200">
-                      <div className="flex items-center gap-3 min-w-0">
-                        <div className={cn("w-9 h-9 rounded-lg flex items-center justify-center shrink-0", tx.points_change > 0 ? 'bg-emerald-100' : 'bg-amber-100')}>
-                          {tx.points_change > 0 ? <TrendingUp className="w-4 h-4 text-emerald-600" /> : <Gift className="w-4 h-4 text-amber-600" />}
+                  {displayed.map((tx) => {
+                    const kind = getKind(tx);
+                    const ord = ordinalMap.get(tx.id) || 0;
+                    const iconWrap =
+                      kind === 'redemption' ? 'bg-orange-100' :
+                      kind === 'review' ? 'bg-yellow-100' :
+                      kind === 'referral' ? 'bg-emerald-100' :
+                      'bg-blue-100';
+                    const iconNode =
+                      kind === 'redemption' ? <Gift className="w-4 h-4 text-orange-600" /> :
+                      kind === 'review' ? <Star className="w-4 h-4 text-yellow-500 fill-yellow-400" /> :
+                      kind === 'referral' ? <TrendingUp className="w-4 h-4 text-emerald-600" /> :
+                      <Check className="w-4 h-4 text-blue-600" strokeWidth={3} />;
+                    const title =
+                      kind === 'redemption' ? (tx.description || 'Prämie eingelöst') :
+                      kind === 'review' ? 'Google-Bewertungsbonus' :
+                      kind === 'referral' ? 'Einladungsboost' :
+                      'Check-in';
+                    const ordinalText =
+                      kind === 'review' ? null :
+                      kind === 'redemption' ? `${ordinalSuffix(ord)} Prämie` :
+                      kind === 'referral' ? `${ordinalSuffix(ord)} Einladungsboost` :
+                      `${ordinalSuffix(ord)} Check-in`;
+                    return (
+                      <div key={tx.id} className="group bg-white rounded-lg px-3.5 py-3 border border-border/30 flex items-center justify-between hover:shadow-[0_2px_8px_hsl(262,30%,80%/0.3)] hover:border-primary/20 transition-all duration-200">
+                        <div className="flex items-center gap-3 min-w-0">
+                          <div className={cn("w-9 h-9 rounded-lg flex items-center justify-center shrink-0", iconWrap)}>
+                            {iconNode}
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-sm font-medium text-foreground truncate">{title}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {new Date(tx.created_at).toLocaleDateString("de-DE", { day:"2-digit", month:"2-digit", year:"numeric", hour:"2-digit", minute:"2-digit" })}
+                            </p>
+                          </div>
                         </div>
-                        <div className="min-w-0">
-                          <p className="text-sm font-medium text-foreground truncate">{tx.description || getTypeLabel(tx.transaction_type)}</p>
-                          <p className="text-xs text-muted-foreground">
-                            {new Date(tx.created_at).toLocaleDateString("de-DE", { day:"2-digit", month:"2-digit", year:"numeric", hour:"2-digit", minute:"2-digit" })}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2.5 shrink-0">
-                        {tx.transaction_type && (
-                          <Badge variant="outline" className={cn("rounded-full text-[10px] px-2 py-0.5 hidden sm:inline-flex font-medium", getTypeBadgeStyle(tx.transaction_type))}>
-                            {getTypeLabel(tx.transaction_type)}
-                          </Badge>
+                        {ordinalText && (
+                          <div className="flex items-center shrink-0 pl-3">
+                            <span className="text-xs font-semibold text-muted-foreground tabular-nums">{ordinalText}</span>
+                          </div>
                         )}
-                        <span className={cn("font-bold text-sm tabular-nums", tx.points_change > 0 ? 'text-emerald-600' : 'text-amber-600')}>
-                          {tx.points_change > 0 ? '+' : ''}{tx.points_change}
-                        </span>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                   {hasMore && (
                     <Button variant="ghost" className="w-full mt-1 text-muted-foreground hover:text-foreground text-sm" onClick={() => setShowAll(!showAll)}>
                       {showAll ? <>Weniger anzeigen <ChevronUp className="w-4 h-4 ml-1" /></> : <>Alle {filtered.length} anzeigen <ChevronDown className="w-4 h-4 ml-1" /></>}
