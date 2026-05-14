@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { ArrowLeft, Sun, Moon } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useTheme } from '@/app/hooks/useTheme';
 import { getActiveBrandColor, subscribeActiveBrandColor } from '@/lib/activeBrandColor';
@@ -12,10 +12,17 @@ export interface TopBarProps {
 
 export const TopBar = ({ title, showBack = false }: TopBarProps) => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { isDark, toggle } = useTheme();
-  const [brandColor, setBrandColor] = useState<string | null>(() => getActiveBrandColor());
+  const [rawBrandColor, setRawBrandColor] = useState<string | null>(() => getActiveBrandColor());
 
-  useEffect(() => subscribeActiveBrandColor(setBrandColor), []);
+  useEffect(() => subscribeActiveBrandColor(setRawBrandColor), []);
+
+  // Brand color should only tint the TopBar on merchant detail / scan,
+  // not on Home (/app) while the user swipes through loyalty cards.
+  const onMerchantDetail = /^\/app\/merchant\//.test(location.pathname);
+  const onScan = location.pathname.startsWith('/app/scan');
+  const brandColor = onMerchantDetail || onScan ? rawBrandColor : null;
 
   const thumbStyle: React.CSSProperties = brandColor
     ? { backgroundColor: brandColor, transition: 'background-color 220ms ease-out, transform 300ms' }
