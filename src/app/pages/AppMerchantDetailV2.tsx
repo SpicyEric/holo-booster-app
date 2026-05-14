@@ -894,28 +894,36 @@ export const AppMerchantDetailV2 = () => {
                       {label}
                     </div>
                   )}
-                  <motion.div
-                    animate={isCurrent ? { scale: [1, 1.06, 1] } : {}}
-                    transition={{ duration: 1.4, repeat: isCurrent ? Infinity : 0 }}
-                    className="rounded-full flex items-center justify-center border-4 shadow"
-                    style={{
-                      width: isCurrent ? 56 : 44,
-                      height: isCurrent ? 56 : 44,
-                      background: isPast ? BRAND : '#fff',
-                      borderColor: isPast || isCurrent ? BRAND : `${BRAND}55`,
-                    }}
+                  <button
+                    type="button"
+                    onClick={isPast ? () => openNodeDetail(visit) : undefined}
+                    disabled={!isPast}
+                    aria-label={isPast ? `Check-in ${visit} Details` : `Check-in ${visit}`}
+                    className="focus:outline-none"
                   >
-                    {isPast ? (
-                      sourceNodeIcon(source)
-                    ) : (
-                      <span
-                        className="text-sm font-bold"
-                        style={{ color: isCurrent ? BRAND : `${BRAND}99` }}
-                      >
-                        {isCurrent ? 'Jetzt' : visit}
-                      </span>
-                    )}
-                  </motion.div>
+                    <motion.div
+                      animate={isCurrent ? { scale: [1, 1.06, 1] } : {}}
+                      transition={{ duration: 1.4, repeat: isCurrent ? Infinity : 0 }}
+                      className="rounded-full flex items-center justify-center border-4 shadow"
+                      style={{
+                        width: isCurrent ? 56 : 44,
+                        height: isCurrent ? 56 : 44,
+                        background: isPast ? BRAND : '#fff',
+                        borderColor: isPast || isCurrent ? BRAND : `${BRAND}55`,
+                      }}
+                    >
+                      {isPast ? (
+                        sourceNodeIcon(source)
+                      ) : (
+                        <span
+                          className="text-sm font-bold"
+                          style={{ color: isCurrent ? BRAND : `${BRAND}99` }}
+                        >
+                          {isCurrent ? 'Jetzt' : visit}
+                        </span>
+                      )}
+                    </motion.div>
+                  </button>
                 </div>
               );
             })}
