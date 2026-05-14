@@ -434,7 +434,7 @@ export const AppMerchantDetailV2 = () => {
       </div>
 
       {/* Snake */}
-      <div className="mt-4 relative">
+      <div className="mt-1 relative">
         <AnimatePresence>
           {showJumpToNow && (
             <motion.button
@@ -457,8 +457,8 @@ export const AppMerchantDetailV2 = () => {
           className="overflow-x-auto overflow-y-hidden no-scrollbar"
           style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-x', overscrollBehaviorX: 'contain' }}
         >
-          <div className="relative" style={{ width: totalWidth, height: SNAKE_HEIGHT + 28 }}>
-            <svg width={totalWidth} height={SNAKE_HEIGHT} className="absolute inset-x-0 top-7">
+          <div className="relative" style={{ width: totalWidth, height: SNAKE_HEIGHT + 14 }}>
+            <svg width={totalWidth} height={SNAKE_HEIGHT} className="absolute inset-x-0 top-3">
               <path
                 d={buildSmoothPath(futurePoints)}
                 fill="none"
@@ -485,10 +485,13 @@ export const AppMerchantDetailV2 = () => {
               const isPast = visit < currentVisit;
               const isCurrent = visit === currentVisit;
               const cx = points[i].x;
-              const cy = points[i].y + 28; // offset für Labels über den Knoten
+              const cy = points[i].y + 12; // kleiner Offset (Labels nutzen jetzt oben/unten je nach Position)
               const source = sourceForVisit(visit);
               const label = sourceLabel(source);
               const isActivatedHere = activatedReward?.visitNumber === visit;
+              // Top-Knoten der Welle (visit 3, 7, 11, …) → Label unter dem Knoten,
+              // sonst über dem Knoten (mehr Platz nach oben sparen)
+              const labelBelow = visit % 4 === 3;
 
               if (reward) {
                 const unlocked = visit <= currentVisit && !reward.redeemed;
@@ -496,7 +499,11 @@ export const AppMerchantDetailV2 = () => {
                 return (
                   <div key={visit} className="absolute -translate-x-1/2 -translate-y-1/2" style={{ left: cx, top: cy }}>
                     {label && (
-                      <div className="absolute -top-9 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded-full bg-neutral-900/85 text-white text-[10px] font-semibold flex items-center gap-1 whitespace-nowrap">
+                      <div
+                        className={`absolute left-1/2 -translate-x-1/2 px-2 py-0.5 rounded-full bg-neutral-900/85 text-white text-[10px] font-semibold flex items-center gap-1 whitespace-nowrap ${
+                          labelBelow ? 'top-full mt-2' : '-top-9'
+                        }`}
+                      >
                         {sourceIcon(source)}
                         {label}
                       </div>
@@ -543,7 +550,11 @@ export const AppMerchantDetailV2 = () => {
               return (
                 <div key={visit} className="absolute -translate-x-1/2 -translate-y-1/2" style={{ left: cx, top: cy }}>
                   {label && (
-                    <div className="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded-full bg-neutral-900/85 text-white text-[10px] font-semibold flex items-center gap-1 whitespace-nowrap">
+                    <div
+                      className={`absolute left-1/2 -translate-x-1/2 px-2 py-0.5 rounded-full bg-neutral-900/85 text-white text-[10px] font-semibold flex items-center gap-1 whitespace-nowrap ${
+                        labelBelow ? 'top-full mt-2' : '-top-8'
+                      }`}
+                    >
                       {sourceIcon(source)}
                       {label}
                     </div>
