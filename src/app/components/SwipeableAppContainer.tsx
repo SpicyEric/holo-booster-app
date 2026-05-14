@@ -38,7 +38,7 @@ const INDEX_TO_ROUTE: Record<number, string> = {
 };
 
 const INDEX_TO_TITLE: Record<number, string> = {
-  0: 'Feed',
+  0: 'Home',
   1: 'Stores',
   2: 'Nachrichten',
   3: 'Einstellungen',
