@@ -1032,7 +1032,7 @@ const Marketing = () => {
             ) : (
             <></>
             )}
-            {!isV2 && (
+            {!isV2 && (<>
             <Card className="rounded-2xl shadow-sm border border-border/50 bg-card">
               <CardHeader className="pb-4">
                 <div className="flex items-center gap-3">
