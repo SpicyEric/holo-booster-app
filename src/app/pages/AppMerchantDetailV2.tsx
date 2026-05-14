@@ -602,7 +602,7 @@ export const AppMerchantDetailV2 = () => {
             WebkitOverflowScrolling: 'touch',
             touchAction: 'pan-x',
             overscrollBehaviorX: 'contain',
-            clipPath: entryPhase === 'snakeIn' || entryPhase === 'done' ? 'inset(0 0 0 0)' : 'inset(0 100% 0 0)',
+            clipPath: snakeRevealed && !isExiting ? 'inset(0 0 0 0)' : 'inset(0 100% 0 0)',
             transition: 'clip-path 800ms cubic-bezier(0.22,1,0.36,1)',
           }}
         >
