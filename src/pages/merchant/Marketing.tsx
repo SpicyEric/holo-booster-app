@@ -661,6 +661,17 @@ const Marketing = () => {
               <RewardSnakeDropZone
                 rewards={rewards}
                 brandColor={merchantBrand.color}
+                customerId={customerId}
+                passLength={passLength}
+                onPassLengthChange={async (n) => {
+                  setPassLength(n);
+                  if (!customerId) return;
+                  const { error } = await supabase
+                    .from('customers')
+                    .update({ pass_length: n })
+                    .eq('id', customerId);
+                  if (error) toast.error('Pass-Länge konnte nicht gespeichert werden');
+                }}
                 onChanged={loadData}
               />
             )}
