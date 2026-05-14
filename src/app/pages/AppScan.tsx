@@ -790,12 +790,8 @@ export const AppScan = () => {
             )}
 
             {scanning && !result && flipPhase === 'idle' && (
-              <motion.div key="scanning" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="text-center space-y-3">
-                <h2 className="text-xl font-bold">Handy an Karte halten</h2>
-                <p className="text-muted-foreground text-sm max-w-xs mx-auto">
-                  Halte jetzt die obere Rückseite deines Handys an die Eloyo-Karte
-                </p>
-                <Button variant="outline" onClick={cancelScan}>Abbrechen</Button>
+              <motion.div key="scanning" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="text-center pt-20">
+                <h2 className="text-xl font-bold">Jetzt Handy an Karte halten</h2>
               </motion.div>
             )}
 
