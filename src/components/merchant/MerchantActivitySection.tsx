@@ -19,7 +19,7 @@ import { de } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, Tooltip as RechartsTooltip, ResponsiveContainer } from "recharts";
 
-interface Transaction { id: string; created_at: string; points_change: number; transaction_type: string | null; description: string | null; }
+interface Transaction { id: string; created_at: string; points_change: number; transaction_type: string | null; description: string | null; loyalty_account_id?: string | null; }
 interface Reward { id: string; title: string; }
 interface NfcCard { id: string; name: string | null; points: number; color: string | null; }
 interface HourlyData { hour: string; count: number; }
