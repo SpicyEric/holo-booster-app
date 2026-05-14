@@ -25,6 +25,10 @@ interface Props {
   merchantName: string;
   logoEmoji?: string; // optional decorative
   rewards: PreviewReward[];
+  /** Optional placements; if provided, used instead of rewards.points_required mapping. */
+  placements?: { reward_id: string; visit: number }[];
+  /** Total length of the loyalty pass; visible window is capped at this. */
+  passLength?: number;
   /** Angenommener aktueller Check-in (für die Vorschau-Visualisierung). Default 4. */
   currentVisit?: number;
 }
