@@ -627,6 +627,14 @@ export const AppMerchantDetailV2 = () => {
       setNodeDetail({ kind: 'reward-redeemed', label: reward.label, at: entry?.at });
       return;
     }
+    // Aktivierbar nur, wenn Prämie in der Vergangenheit/jetzt liegt (noch nicht eingelöst)
+    // ODER beim direkt nächsten Check-in (currentVisit + 1).
+    const isPastOrCurrent = reward.visitNumber <= currentVisit;
+    const isNextCheckIn = reward.visitNumber === currentVisit + 1;
+    if (!isPastOrCurrent && !isNextCheckIn) {
+      toast.info('Diese Prämie kannst du erst aktivieren, wenn du dem Check-in näher bist.');
+      return;
+    }
     setTappedReward(reward);
   };
 
