@@ -426,8 +426,9 @@ const BoxManagement = () => {
     setScanningStampColor(allowDuplicate ? `extra:${color}` : color);
     const chipUid = stampDialogRow.stempel_id;
     // Nur eine einfache Zahl pro Farbe auf den Chip schreiben: grün=1, blau=2, rot=3
-    const colorNumberMap: Record<string, string> = { grün: "1", gruen: "1", green: "1", blau: "2", blue: "2", rot: "3", red: "3" };
+    const colorNumberMap: Record<string, string> = { grün: "1", gruen: "1", green: "1", blau: "2", blue: "2", rot: "3", red: "3", verify: "V" };
     const ndefText = colorNumberMap[color.toLowerCase()] ?? "1";
+    const isVerify = color === 'verify';
     try {
       const ndef = new (window as any).NDEFReader();
       const abortController = new AbortController();
@@ -442,7 +443,7 @@ const BoxManagement = () => {
           // Punkte-Wert ermitteln: Wenn bereits Karten dieser Farbe für diese Box existieren,
           // übernehmen wir deren Punktwert (z.B. bei Demo-Boxen mit zugewiesenem Händler).
           // Sonst Default für unzugewiesene Boxen: grün=1, blau=2, rot=3.
-          const fallbackPoints = color === 'grün' ? 1 : color === 'blau' ? 2 : 3;
+          const fallbackPoints = isVerify ? 0 : (color === 'grün' ? 1 : color === 'blau' ? 2 : 3);
           let defaultPoints = fallbackPoints;
           try {
             const { data: existingChips } = await supabase
