@@ -8,9 +8,10 @@ export interface MainLayoutProps {
   children: ReactNode;
   title: string;
   showBack?: boolean;
+  disableParticles?: boolean;
 }
 
-export const MainLayout = ({ children, title, showBack = false }: MainLayoutProps) => {
+export const MainLayout = ({ children, title, showBack = false, disableParticles = false }: MainLayoutProps) => {
   const topInsetOffset = 'calc(3.5rem + env(safe-area-inset-top, 0px))';
   const bottomInsetOffset = 'calc(7rem + env(safe-area-inset-bottom, 0px))';
 
