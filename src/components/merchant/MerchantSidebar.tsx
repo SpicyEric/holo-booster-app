@@ -256,7 +256,7 @@ export default function MerchantSidebar() {
         </Button>
 
         <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
-          <SheetContent side="left" className="w-[280px] p-0 flex flex-col bg-[hsl(262,50%,22%)] border-white/10">
+          <SheetContent side="left" className="w-[280px] p-0 flex flex-col bg-[hsl(var(--merchant-sidebar,262_50%_22%))] border-white/10">
             <div className="flex items-center justify-between h-16 border-b border-white/10 px-4">
               <img
                 src={eloyoLogo}
@@ -279,7 +279,7 @@ export default function MerchantSidebar() {
   return (
     <aside
       className={cn(
-        "sticky top-0 h-screen flex flex-col border-r border-white/5 bg-[hsl(262,50%,22%)] transition-all duration-300 z-20 shrink-0",
+        "sticky top-0 h-screen flex flex-col border-r border-white/5 bg-[hsl(var(--merchant-sidebar,262_50%_22%))] transition-all duration-300 z-20 shrink-0",
         collapsed ? "w-[68px]" : "w-[260px]"
       )}
     >
