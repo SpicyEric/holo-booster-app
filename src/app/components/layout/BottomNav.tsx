@@ -207,7 +207,7 @@ export const BottomNav = ({ onNavigate, currentIndex }: BottomNavProps) => {
   };
 
   return (
-    <nav className="app-bottom-nav-transition fixed bottom-0 left-0 right-0 z-50 bg-card border-t border-border shadow-lg safe-area-pb">
+    <nav className="app-bottom-nav-transition fixed bottom-0 left-0 right-0 z-50 bg-card safe-area-pb">
       <div className="flex items-center justify-around h-16 px-2">
         <NavButton item={navItems[0]} />
         <NavButton item={navItems[1]} />
