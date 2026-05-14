@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, Gift, Check, UserPlus, Sparkles, Rocket, Cake, X, CheckCircle2, Star } from 'lucide-react';
+import { ArrowLeft, Gift, Check, UserPlus, Sparkles, Cake, X, CheckCircle2, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
@@ -256,6 +256,7 @@ export const AppMerchantDetailV2 = () => {
   const [tappedReward, setTappedReward] = useState<MockReward | null>(null);
   const [redemptionScreen, setRedemptionScreen] = useState<MockReward | null>(null);
   const [boostFlash, setBoostFlash] = useState(false);
+  const [boostInfoOpen, setBoostInfoOpen] = useState(false);
   const [lastCheckInDate, setLastCheckInDate] = useState<string | null>(null);
 
   // Orange Eincheck-Overlay (Vollbild, mit Code-Marquee)
@@ -593,19 +594,15 @@ export const AppMerchantDetailV2 = () => {
   const sourceLabel = (s: CheckInSource | null): string | null => {
     if (s === 'boost') return 'Boost';
     if (s === 'birthday') return 'Geburtstag';
-    if (s === 'google_review') return 'Google-Bewertung';
+    if (s === 'google_review') return 'Bewertung';
     return null;
   };
 
-  const sourceIcon = (s: CheckInSource | null) => {
-    if (s === 'boost') return <Rocket className="w-3 h-3" />;
-    if (s === 'birthday') return <Cake className="w-3 h-3" />;
-    if (s === 'google_review') return <Star className="w-3 h-3" />;
-    return null;
-  };
+  // Kein Emoji/Icon im Label – das Symbol steckt schon im Kreis selbst
+  const sourceIcon = (_s: CheckInSource | null) => null;
 
   const sourceNodeIcon = (s: CheckInSource | null) => {
-    if (s === 'boost') return <Rocket className="w-5 h-5 text-white" strokeWidth={2.8} />;
+    if (s === 'boost') return <UserPlus className="w-5 h-5 text-white" strokeWidth={2.8} />;
     if (s === 'birthday') return <Cake className="w-5 h-5 text-white" strokeWidth={2.8} />;
     if (s === 'google_review') return <Star className="w-5 h-5 text-white" strokeWidth={2.8} fill="white" />;
     return <Check className="w-5 h-5 text-white" strokeWidth={3} />;
@@ -613,7 +610,7 @@ export const AppMerchantDetailV2 = () => {
 
   return (
     <div
-      className="min-h-screen pb-24"
+      className="min-h-screen pb-40"
       style={{
         background: '#faf8f5',
         colorScheme: 'light',
@@ -905,7 +902,7 @@ export const AppMerchantDetailV2 = () => {
         </Card>
       </motion.div>
 
-      {/* Freunde einladen */}
+      {/* Boost holen */}
       <motion.div
         className="px-4 mt-4"
         initial={isEntering ? { opacity: 0, y: 10 } : false}
@@ -921,18 +918,18 @@ export const AppMerchantDetailV2 = () => {
               <UserPlus className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="font-bold text-base">Freunde einladen</h3>
+              <h3 className="font-bold text-base">Boost holen</h3>
               <p className="text-xs text-white/85">
-                Erfolgreiche Empfehlung = +1 Boost auf deinem Treuepass
+                Lade Freunde ein
               </p>
             </div>
           </div>
           <Button
-            onClick={shareReferral}
+            onClick={() => setBoostInfoOpen(true)}
             className="w-full bg-white hover:bg-white/90"
             style={{ color: BRAND }}
           >
-            Einladungslink teilen
+            Jetzt boosten
           </Button>
         </Card>
       </motion.div>
@@ -969,7 +966,86 @@ export const AppMerchantDetailV2 = () => {
         </Card>
       </motion.div>
 
-      {/* Pre-Activation Dialog */}
+      {/* Boost-Info Popup */}
+      <Dialog open={boostInfoOpen} onOpenChange={setBoostInfoOpen}>
+        <DialogContent className="max-w-[320px] rounded-3xl p-6 gap-4">
+          <div className="text-center space-y-2">
+            <div
+              className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto"
+              style={{ background: BRAND_SOFT }}
+            >
+              <UserPlus className="w-7 h-7" style={{ color: BRAND }} />
+            </div>
+            <h2 className="text-xl font-bold text-neutral-900">Jetzt boosten</h2>
+            <p className="text-xs font-semibold uppercase tracking-wide text-neutral-500">
+              So funktioniert's
+            </p>
+          </div>
+
+          <ol className="space-y-2.5 text-sm text-neutral-700">
+            <li className="flex gap-2.5">
+              <span
+                className="shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold text-white"
+                style={{ background: BRAND }}
+              >1</span>
+              <span>Teile deinen Einladungslink.</span>
+            </li>
+            <li className="flex gap-2.5">
+              <span
+                className="shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold text-white"
+                style={{ background: BRAND }}
+              >2</span>
+              <span>Dein Freund checkt bei <span className="font-semibold text-neutral-900">Backstube König</span> ein.</span>
+            </li>
+            <li className="flex gap-2.5">
+              <span
+                className="shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold text-white"
+                style={{ background: BRAND }}
+              >3</span>
+              <span>Du bekommst <span className="font-semibold text-neutral-900">+1 Boost</span> auf deinem Treuepass.</span>
+            </li>
+          </ol>
+
+          <div className="space-y-2 pt-1">
+            <Button
+              onClick={() => {
+                const link = `https://eloyo.de/r/backstube-koenig?u=demo`;
+                const text = `Hey! Sammle mit mir Punkte bei Backstube König: ${link}`;
+                window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank', 'noopener,noreferrer');
+              }}
+              className="w-full h-11 rounded-xl text-white"
+              style={{ background: BRAND }}
+            >
+              <svg viewBox="0 0 24 24" className="h-4 w-4" fill="currentColor">
+                <path d="M.057 24l1.687-6.163a11.867 11.867 0 0 1-1.587-5.946C.16 5.335 5.495 0 12.05 0a11.817 11.817 0 0 1 8.413 3.488 11.824 11.824 0 0 1 3.48 8.414c-.003 6.557-5.338 11.892-11.893 11.892a11.9 11.9 0 0 1-5.688-1.448L.057 24zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981z"/>
+              </svg>
+              Per WhatsApp teilen
+            </Button>
+            <Button
+              onClick={async () => {
+                try {
+                  await navigator.clipboard.writeText('https://eloyo.de/r/backstube-koenig?u=demo');
+                  toast.success('Link kopiert!');
+                } catch {
+                  toast.error('Link konnte nicht kopiert werden');
+                }
+              }}
+              variant="outline"
+              className="w-full h-10 rounded-xl"
+            >
+              Link kopieren
+            </Button>
+            <Button
+              onClick={shareReferral}
+              variant="ghost"
+              className="w-full h-10 rounded-xl text-neutral-600"
+            >
+              Mehr Optionen
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       <Dialog open={!!tappedReward} onOpenChange={(o) => !o && setTappedReward(null)}>
         <DialogContent className="max-w-[320px] rounded-3xl p-6 text-center">
           <div
