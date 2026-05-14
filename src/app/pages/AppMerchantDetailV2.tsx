@@ -167,10 +167,12 @@ export const AppMerchantDetailV2 = () => {
   }, [isRedemptionScreenVisible]);
 
   const scrollerRef = useRef<HTMLDivElement>(null);
+  const [showJumpToNow, setShowJumpToNow] = useState(false);
 
   // ================= Sichtbares Fenster =================
-  const windowStart = Math.max(1, currentVisit - 5);
-  const windowEnd = currentVisit + 10;
+  // Vom ersten Check-in bis 50 Check-ins in die Zukunft (gesamter Pass-Zyklus)
+  const windowStart = 1;
+  const windowEnd = currentVisit + 50;
 
   const visibleNodes = useMemo(() => {
     const arr: number[] = [];
