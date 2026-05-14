@@ -472,6 +472,27 @@ const BoxManagement = () => {
             toast.error(`Karte "${color}" konnte nicht gespeichert werden.`);
             return;
           }
+
+          // Wenn die Box bereits einem Händler zugewiesen ist, Chip sofort verknüpfen
+          if (!saved.merchant_customer_id && stampDialogRow?.stempel_id) {
+            try {
+              const { data: boxRow } = await supabase
+                .from("boxes").select("id").eq("stamp_id", stampDialogRow.stempel_id).maybeSingle();
+              if (boxRow?.id) {
+                const { data: cb } = await supabase
+                  .from("customer_boxes").select("customer_id").eq("box_id", boxRow.id).maybeSingle();
+                if (cb?.customer_id) {
+                  await (supabase as any).rpc("claim_orphan_nfc_chips", {
+                    p_stempel_id: stampDialogRow.stempel_id,
+                    p_merchant_customer_id: cb.customer_id,
+                  });
+                }
+              }
+            } catch (linkErr) {
+              console.warn("[BoxManagement] auto-link failed:", linkErr);
+            }
+          }
+
           toast.success(`Karte "${color}" registriert`);
           setRegisteredStamps(prev => {
             // Replace by id (re-scan of same physical card) or by color when not duplicate mode
