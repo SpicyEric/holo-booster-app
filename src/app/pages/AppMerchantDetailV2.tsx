@@ -342,18 +342,33 @@ export const AppMerchantDetailV2 = () => {
             <p className="text-xs font-medium" style={{ color: BRAND }}>Dein Treuepass</p>
           </div>
           <div
-            className="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl shadow-sm"
-            style={{ background: `linear-gradient(135deg, ${BRAND}, ${BRAND}cc)` }}
+            className="px-3 h-12 rounded-2xl flex flex-col items-center justify-center text-white shadow-sm leading-none"
+            style={{ background: `linear-gradient(135deg, ${BRAND}, ${BRAND}cc)`, minWidth: 64 }}
           >
-            🥐
+            <span className="text-[9px] font-semibold uppercase tracking-wider opacity-90">Check-ins</span>
+            <div className="text-xl font-extrabold mt-1 h-5 overflow-hidden">
+              <AnimatePresence mode="popLayout" initial={false}>
+                <motion.span
+                  key={currentVisit}
+                  initial={{ y: 14, opacity: 0, scale: 0.7 }}
+                  animate={{ y: 0, opacity: 1, scale: 1 }}
+                  exit={{ y: -14, opacity: 0, scale: 0.7 }}
+                  transition={{ type: 'spring', stiffness: 260, damping: 22 }}
+                  className="inline-block"
+                >
+                  {currentVisit}
+                </motion.span>
+              </AnimatePresence>
+            </div>
           </div>
         </div>
       </div>
 
       {/* Snake */}
-      <div className="mt-6">
-        <div className="px-4 mb-3 flex items-end justify-between">
-          <div>
+      <div className="mt-4">
+        <div className="px-4 mb-3 flex items-end justify-between min-h-[8px]">
+          <div />
+          {null}
             <p className="text-xs uppercase tracking-wider font-semibold" style={{ color: `${BRAND}cc` }}>
               Check-ins
             </p>
