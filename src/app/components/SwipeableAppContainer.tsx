@@ -342,7 +342,12 @@ const AppHomeContent = ({ active }: { active: boolean }) => {
 
   useEffect(() => {
     if (!homeEmblaApi) return;
-    const syncSelected = () => setActiveCardIndex(homeEmblaApi.selectedScrollSnap());
+    const syncSelected = () => {
+      setActiveCardIndex(homeEmblaApi.selectedScrollSnap());
+      // Sobald das Embla-Target auf die nächste Karte umspringt (lange vor settle),
+      // den Text der neuen Karte direkt einblenden.
+      setIsCardSwiping(false);
+    };
     const hideDetails = () => setIsCardSwiping(true);
     const showDetails = () => {
       syncSelected();
@@ -352,14 +357,12 @@ const AppHomeContent = ({ active }: { active: boolean }) => {
     syncSelected();
     homeEmblaApi.on('select', syncSelected);
     homeEmblaApi.on('pointerDown', hideDetails);
-    homeEmblaApi.on('scroll', hideDetails);
     homeEmblaApi.on('settle', showDetails);
     homeEmblaApi.on('reInit', showDetails);
 
     return () => {
       homeEmblaApi.off('select', syncSelected);
       homeEmblaApi.off('pointerDown', hideDetails);
-      homeEmblaApi.off('scroll', hideDetails);
       homeEmblaApi.off('settle', showDetails);
       homeEmblaApi.off('reInit', showDetails);
     };
@@ -548,7 +551,7 @@ function HomeMerchantInfoBlock({ store, visible }: { store: HomeMerchantCard; vi
     : undefined;
 
   return (
-    <div className="mt-3 space-y-3 px-1 pb-1 text-left" style={panelStyle}>
+    <div className="mt-3 mx-auto w-[92%] space-y-3 pb-1 text-left" style={panelStyle}>
       {store.description && (
         <p className="text-sm leading-relaxed text-foreground/80 whitespace-pre-line">
           {store.description}
