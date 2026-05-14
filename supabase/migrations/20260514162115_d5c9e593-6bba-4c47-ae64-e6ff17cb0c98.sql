@@ -1,0 +1,1 @@
+UPDATE public.customers SET version = 'v2' WHERE id = 'ee648c99-6c0b-4a46-920b-77db9662ad35';
