@@ -744,27 +744,24 @@ export const AppScan = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2, duration: 0.4 }}
           >
-            <div
-              className="rounded-2xl border p-4"
-              style={{
-                borderColor: `${BRAND}33`,
-                background: `${BRAND}0d`,
-              }}
-            >
-              <p className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: BRAND }}>
-                Aktivierte Prämien für diesen Check-in
-              </p>
-              {activatedReward ? (
+            {activatedReward ? (
+              <div
+                className="rounded-2xl border p-4"
+                style={{ borderColor: `${BRAND}33`, background: `${BRAND}0d` }}
+              >
+                <p className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: BRAND }}>
+                  Aktivierte Prämien für diesen Check-in
+                </p>
                 <div className="flex items-start gap-2.5 mt-1">
                   <Sparkles className="w-6 h-6 mt-0.5 shrink-0" style={{ color: BRAND }} />
                   <p className="text-2xl font-extrabold text-neutral-900 leading-tight">{activatedReward.label}</p>
                 </div>
-              ) : (
-                <p className="text-sm text-neutral-600 mt-1">
-                  Keine. Aktiviere eine Prämie auf dem Treuepass, bevor du eincheckst.
-                </p>
-              )}
-            </div>
+              </div>
+            ) : (
+              <p className="text-2xl font-bold text-neutral-900 text-center leading-snug px-2 py-2">
+                Keine aktiven Prämien für diesen Check-in.
+              </p>
+            )}
 
             <Button
               onClick={() => {
