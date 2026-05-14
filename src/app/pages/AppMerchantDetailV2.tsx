@@ -86,23 +86,29 @@ export const AppMerchantDetailV2 = () => {
     let cancelled = false;
     (async () => {
       const { supabase } = await import('@/integrations/supabase/client');
-      const [{ data: cust }, { data: placements }] = await Promise.all([
+      const [{ data: cust }, { data: placements }, { data: rewardRows }] = await Promise.all([
         supabase.from('customers').select('cover_image_url, pass_length').eq('id', merchantId).maybeSingle(),
         supabase
           .from('reward_placements')
-          .select('visit, rewards:reward_id(title, image_url)')
+          .select('visit, reward_id')
           .eq('customer_id', merchantId)
           .order('visit', { ascending: true }),
+        supabase
+          .from('rewards')
+          .select('id, title, image_url')
+          .eq('merchant_customer_id', merchantId)
+          .eq('is_active', true),
       ]);
       if (cancelled) return;
       setCoverImageUrl((cust?.cover_image_url as string | null) || null);
       if (cust?.pass_length) setPassLength(cust.pass_length as number);
+      const rewardsById = new Map((rewardRows || []).map((r: any) => [r.id, r]));
       const mapped = (placements || [])
-        .filter((p: any) => p.rewards)
+        .filter((p: any) => rewardsById.has(p.reward_id))
         .map((p: any) => ({
           visitNumber: p.visit as number,
-          label: p.rewards.title as string,
-          imageUrl: (p.rewards.image_url as string | null) || null,
+          label: rewardsById.get(p.reward_id).title as string,
+          imageUrl: (rewardsById.get(p.reward_id).image_url as string | null) || null,
         }));
       setDbRewards(mapped);
     })();
