@@ -53,6 +53,20 @@ const NODE_SPACING = 110;
 const SNAKE_HEIGHT = 220;
 const AMPLITUDE = 55;
 const WAVELENGTH = 4;
+const DEMO_PASS_RESET_VERSION = 'checkin7-open-rewards-v1';
+
+const DEMO_DEFAULT_CHECK_INS: CheckInEntry[] = [
+  { visit: 1, source: 'normal' },
+  { visit: 2, source: 'google_review' },
+  { visit: 3, source: 'birthday' },
+  { visit: 4, source: 'normal' },
+  { visit: 5, source: 'boost' },
+  { visit: 6, source: 'normal' },
+  { visit: 7, source: 'normal' },
+];
+
+// Standard: Gratisbreze (Visit 4) und Gratiskaffee (Visit 8) sind beide noch offen.
+const DEMO_DEFAULT_REDEEMED: number[] = [];
 
 function isRepeatingRewardVisit(visit: number): boolean {
   return visit >= 15 && (visit - 10) % 5 === 0;
