@@ -94,7 +94,15 @@ export const BottomNav = ({ onNavigate, currentIndex }: BottomNavProps) => {
   ];
 
   const handleCenterButtonClick = () => {
-    navigate(`/app/scan?autostart=${Date.now()}`);
+    // If user is currently viewing a merchant detail page, pass that merchant id
+    // through to the scan page so it can render that merchant's branded card
+    // and the "Aktivierte Prämien für diesen Check-in" panel.
+    const match = location.pathname.match(/^\/app\/merchant\/([^/?#]+)/);
+    const merchantId = match?.[1];
+    const params = new URLSearchParams();
+    params.set('autostart', String(Date.now()));
+    if (merchantId) params.set('merchant', merchantId);
+    navigate(`/app/scan?${params.toString()}`);
   };
 
   const handleNavClick = (item: NavItem) => {

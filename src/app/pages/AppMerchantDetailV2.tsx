@@ -10,6 +10,11 @@ import { BottomNav } from '@/app/components/layout/BottomNav';
 import { useMerchantBrand } from '@/hooks/useMerchantBrand';
 import { setActiveBrandColor } from '@/lib/activeBrandColor';
 import { DEFAULT_DEMO_MERCHANT_CUSTOMER_ID } from '@/lib/demoMerchant';
+import {
+  getActivatedReward,
+  setActivatedReward as persistActivatedReward,
+  clearActivatedReward,
+} from '@/lib/activeMerchantReward';
 
 /**
  * Backstube König – Treuepass (V2 Prototype)
@@ -71,6 +76,19 @@ export const AppMerchantDetailV2 = () => {
     setActiveBrandColor(brand.color);
     return () => setActiveBrandColor(null);
   }, [brand.color]);
+
+  useEffect(() => {
+    setActiveBrandColor(brand.color);
+    return () => setActiveBrandColor(null);
+  }, [brand.color]);
+
+  // Load persisted activated reward on mount
+  useEffect(() => {
+    const stored = getActivatedReward(merchantId);
+    if (stored) {
+      setActivatedReward({ ...stored, redeemed: false });
+    }
+  }, [merchantId]);
 
   const BRAND = brand.color;
   const BRAND_SOFT = `${BRAND}22`; // Alpha-Wash via HEX 8-stellig
@@ -147,6 +165,7 @@ export const AppMerchantDetailV2 = () => {
     if (activatedReward) {
       const reward = activatedReward;
       setActivatedReward(null);
+      clearActivatedReward(merchantId);
       setRewards((prev) => {
         const exists = prev.some((r) => r.visitNumber === reward.visitNumber);
         if (exists) {
@@ -193,12 +212,17 @@ export const AppMerchantDetailV2 = () => {
   const activateRewardForNextCheckIn = () => {
     if (!tappedReward) return;
     setActivatedReward(tappedReward);
+    persistActivatedReward(merchantId, {
+      visitNumber: tappedReward.visitNumber,
+      label: tappedReward.label,
+    });
     toast.success(`„${tappedReward.label}" wird beim nächsten Check-in eingelöst.`);
     setTappedReward(null);
   };
 
   const removeActivation = () => {
     setActivatedReward(null);
+    clearActivatedReward(merchantId);
     toast('Aktivierung entfernt.');
   };
 
@@ -254,7 +278,7 @@ export const AppMerchantDetailV2 = () => {
       <div className="sticky top-0 z-30 bg-white/90 backdrop-blur border-b" style={{ borderColor: `${BRAND}22` }}>
         <div className="flex items-center gap-3 px-4 py-3">
           <button
-            onClick={() => navigate('/app/stores')}
+            onClick={() => navigate('/app')}
             className="w-10 h-10 rounded-full flex items-center justify-center"
             style={{ background: BRAND_SOFT }}
             aria-label="Zurück"
