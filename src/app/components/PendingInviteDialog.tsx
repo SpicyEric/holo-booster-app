@@ -386,8 +386,41 @@ export function PendingInviteDialog() {
 
   if (!preview && !accepted) return null;
 
-  const display = accepted ?? preview!;
-  const isAccepted = !!accepted;
+  // ─── Render: Erfolgs-State NACH Annahme ────────────────────────
+  if (accepted) {
+    return (
+      <Dialog open={open} onOpenChange={(o) => { if (!o) closeDialog(); }}>
+        <DialogContent className="max-w-[340px] rounded-3xl p-0 gap-0 overflow-hidden border-0">
+          <button
+            type="button"
+            onClick={closeDialog}
+            aria-label="Schließen"
+            className="absolute top-3 right-3 z-10 w-8 h-8 rounded-full bg-foreground/10 hover:bg-foreground/20 flex items-center justify-center text-foreground"
+          >
+            <X className="h-4 w-4" />
+          </button>
+          <div className="px-6 pt-10 pb-6 text-center">
+            <div className="mx-auto h-20 w-20 rounded-full bg-primary/15 flex items-center justify-center mb-4">
+              <MessageSquare className="h-10 w-10 text-primary" />
+            </div>
+            <h2 className="text-xl font-bold leading-tight mb-2">
+              Einladung angenommen
+            </h2>
+            <p className="text-sm text-muted-foreground leading-relaxed mb-5">
+              Deine offenen Einladungen findest du jederzeit unter{' '}
+              <span className="font-semibold text-foreground">Nachrichten</span>.
+            </p>
+            <Button onClick={goToMerchant} className="w-full h-11 rounded-xl">
+              Zum Geschäft
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
+  // ─── Render: Preview / Annehmen-Ablehnen ────────────────────────
+  const display = preview!;
 
   return (
     <Dialog open={open} onOpenChange={(o) => { if (!o) closeDialog(); }}>
@@ -420,36 +453,29 @@ export function PendingInviteDialog() {
             Willkommen bei <span className="text-primary">{display.merchant_name}</span> 🎉
           </h2>
           <p className="text-sm text-muted-foreground leading-relaxed mb-4">
-            Sammle innerhalb der nächsten <span className="font-semibold text-foreground">7 Tage</span> dort
-            deinen ersten Karte und bekomme <span className="font-semibold text-foreground">doppelte Punkte</span>{' '}
-            auf deinen ersten Einkauf!
+            Sammle deine ersten Punkte bei diesem Geschäft und erhalte deinen{' '}
+            <span className="font-semibold text-foreground">Willkommensbonus</span>.
           </p>
           <div className="rounded-xl bg-primary/10 px-3 py-2.5 mb-5">
             <div className="text-xs text-muted-foreground">Dein Willkommensbonus</div>
-            <div className="text-base font-bold text-primary">Doppelte Punkte für deinen ersten Karte</div>
+            <div className="text-base font-bold text-primary">Doppelte Punkte für deinen ersten Check-in</div>
           </div>
 
-          {isAccepted ? (
-            <Button onClick={goToMerchant} className="w-full h-11 rounded-xl">
-              Zum Geschäft
+          <div className="space-y-2">
+            <Button
+              onClick={acceptInvite}
+              disabled={accepting}
+              className="w-full h-11 rounded-xl"
+            >
+              {accepting ? 'Wird angenommen…' : user ? 'Annehmen' : 'Einloggen oder registrieren'}
             </Button>
-          ) : (
-            <div className="space-y-2">
-              <Button
-                onClick={acceptInvite}
-                disabled={accepting}
-                className="w-full h-11 rounded-xl"
-              >
-                {accepting ? 'Wird angenommen…' : user ? 'Einladung annehmen' : 'Einloggen oder registrieren'}
-              </Button>
-              <button
-                onClick={declineInvite}
-                className="w-full text-xs text-muted-foreground hover:text-foreground py-2"
-              >
-                Ablehnen
-              </button>
-            </div>
-          )}
+            <button
+              onClick={declineInvite}
+              className="w-full text-xs text-muted-foreground hover:text-foreground py-2"
+            >
+              Ablehnen
+            </button>
+          </div>
         </div>
       </DialogContent>
     </Dialog>
