@@ -387,7 +387,21 @@ export const AppMerchantDetailV2 = () => {
       </div>
 
       {/* Snake */}
-      <div className="mt-4">
+      <div className="mt-4 relative">
+        <AnimatePresence>
+          {showJumpToNow && (
+            <motion.button
+              initial={{ opacity: 0, y: -8, scale: 0.9 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -8, scale: 0.9 }}
+              onClick={() => scrollToCurrent(true)}
+              className="absolute top-2 left-1/2 -translate-x-1/2 z-20 px-4 py-2 rounded-full text-white text-xs font-bold shadow-lg flex items-center gap-1.5"
+              style={{ background: BRAND }}
+            >
+              <span>↺</span> Zu „Jetzt" springen
+            </motion.button>
+          )}
+        </AnimatePresence>
 
         <motion.div
           animate={boostFlash ? { scale: [1, 1.02, 1] } : {}}
