@@ -209,7 +209,7 @@ export const AppMerchantDetailV2 = () => {
   // ================= Sichtbares Fenster =================
   // Vom ersten Check-in bis 50 Check-ins in die Zukunft (gesamter Pass-Zyklus)
   const windowStart = 1;
-  const windowEnd = currentVisit + 50;
+  const windowEnd = Math.max(currentVisit + 5, passLength);
 
   const visibleNodes = useMemo(() => {
     const arr: number[] = [];
