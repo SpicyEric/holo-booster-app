@@ -1,19 +1,32 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, Gift, Check, UserPlus, Sparkles, Rocket } from 'lucide-react';
+import { ArrowLeft, Gift, Check, UserPlus, Sparkles, Rocket, Cake } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { toast } from 'sonner';
 import { BottomNav } from '@/app/components/layout/BottomNav';
+import { useMerchantBrand } from '@/hooks/useMerchantBrand';
+import { setActiveBrandColor } from '@/lib/activeBrandColor';
+import { DEFAULT_DEMO_MERCHANT_CUSTOMER_ID } from '@/lib/demoMerchant';
 
 /**
- * Backstube König – Treue-Reise (V2 Prototype)
+ * Backstube König – Treuepass (V2 Prototype)
  *
- * Eigenständige Sandbox-Ansicht. Wird ausschließlich für die
- * Backstube-König-Demo aktiviert. Nutzt komplett gemockte Daten.
+ * - Wording: "Check-ins" statt Stempel
+ * - Vergangene Knoten zeigen Haken + optionales Label (Boost/Geburtstag)
+ * - Markenfarbe pro Händler (CSS-Variablen, BottomNav reagiert)
+ * - Pre-Activation: max 1 Check-in/Tag, Prämie vorher aktivieren, beim
+ *   nächsten Check-in automatisch einlösen.
  */
+
+type CheckInSource = 'normal' | 'boost' | 'birthday';
+
+interface CheckInEntry {
+  visit: number;
+  source: CheckInSource;
+}
 
 interface MockReward {
   visitNumber: number;
@@ -21,14 +34,11 @@ interface MockReward {
   redeemed: boolean;
 }
 
-const ORANGE = '#FF6B35';
-const GOLD = '#F5A623';
-const NODE_SPACING = 110; // px zwischen Knoten
+const NODE_SPACING = 110;
 const SNAKE_HEIGHT = 220;
 const AMPLITUDE = 55;
-const WAVELENGTH = 4; // Knoten pro Sinus-Periode
+const WAVELENGTH = 4;
 
-// Wiederkehrende Belohnungen ab Besuch 10 (alle 5 Schritte)
 function isRepeatingRewardVisit(visit: number): boolean {
   return visit >= 15 && (visit - 10) % 5 === 0;
 }
@@ -52,22 +62,40 @@ function buildSmoothPath(points: { x: number; y: number }[]): string {
 
 export const AppMerchantDetailV2 = () => {
   const navigate = useNavigate();
+  const { id } = useParams<{ id: string }>();
+  const merchantId = id || DEFAULT_DEMO_MERCHANT_CUSTOMER_ID;
+  const brand = useMerchantBrand(merchantId);
+
+  // ===== Brand-Color global publizieren (für BottomNav-Scan-Button) =====
+  useEffect(() => {
+    setActiveBrandColor(brand.color);
+    return () => setActiveBrandColor(null);
+  }, [brand.color]);
+
+  const BRAND = brand.color;
+  const BRAND_SOFT = `${BRAND}22`; // Alpha-Wash via HEX 8-stellig
 
   // ================= Mock-State =================
-  const [currentVisit, setCurrentVisit] = useState(4);
+  const [checkIns, setCheckIns] = useState<CheckInEntry[]>([
+    { visit: 1, source: 'normal' },
+    { visit: 2, source: 'normal' },
+    { visit: 3, source: 'birthday' },
+    { visit: 4, source: 'normal' },
+  ]);
+  const currentVisit = checkIns[checkIns.length - 1]?.visit ?? 0;
+
   const [rewards, setRewards] = useState<MockReward[]>([
     { visitNumber: 1, label: 'Willkommens-Brötchen 🎁', redeemed: true },
     { visitNumber: 3, label: 'Kaffee gratis ☕', redeemed: false },
     { visitNumber: 6, label: '3 Brötchen gratis 🥐', redeemed: false },
     { visitNumber: 10, label: '5€ Gutschein 🎟️', redeemed: false },
   ]);
-  const [referralBoosts] = useState(1);
-  const [lastRedemptionDate, setLastRedemptionDate] = useState<string | null>(null);
 
+  const [activatedReward, setActivatedReward] = useState<MockReward | null>(null);
   const [tappedReward, setTappedReward] = useState<MockReward | null>(null);
   const [redemptionScreen, setRedemptionScreen] = useState<MockReward | null>(null);
-  const [inviteOpen, setInviteOpen] = useState(false);
   const [boostFlash, setBoostFlash] = useState(false);
+  const [lastCheckInDate, setLastCheckInDate] = useState<string | null>(null);
 
   const scrollerRef = useRef<HTMLDivElement>(null);
 
@@ -81,6 +109,10 @@ export const AppMerchantDetailV2 = () => {
     return arr;
   }, [windowStart, windowEnd]);
 
+  const sourceForVisit = (v: number): CheckInSource | null => {
+    return checkIns.find((c) => c.visit === v)?.source ?? null;
+  };
+
   const rewardForVisit = (v: number): MockReward | undefined => {
     const direct = rewards.find((r) => r.visitNumber === v);
     if (direct) return direct;
@@ -90,17 +122,7 @@ export const AppMerchantDetailV2 = () => {
     return undefined;
   };
 
-  // Aktuell einlösbare Belohnungen: alle Reward-Knoten im sichtbaren Fenster,
-  // die bereits erreicht (visitNumber <= currentVisit) und nicht eingelöst sind.
-  const redeemableRewards = useMemo(() => {
-    return visibleNodes
-      .filter((v) => v <= currentVisit)
-      .map((v) => rewardForVisit(v))
-      .filter((r): r is MockReward => Boolean(r) && !r!.redeemed);
-  }, [visibleNodes, currentVisit, rewards]);
-
   // ================= Effekte =================
-  // Auto-Scroll: aktuelle Position zentrieren
   useEffect(() => {
     const el = scrollerRef.current;
     if (!el) return;
@@ -112,67 +134,72 @@ export const AppMerchantDetailV2 = () => {
   // ================= Aktionen =================
   const todayKey = () => new Date().toISOString().slice(0, 10);
 
-  const simulateCheckIn = () => {
-    if (lastRedemptionDate === todayKey() + ':checkin') {
+  const performCheckIn = (source: CheckInSource, suppressLimit = false) => {
+    if (!suppressLimit && lastCheckInDate === todayKey()) {
       toast.info('Heute schon eingecheckt. Bis morgen! 👋');
       return;
     }
-    setCurrentVisit((v) => v + 1);
-    setLastRedemptionDate(todayKey() + ':checkin');
-    const next = currentVisit + 2;
-    const nextReward = rewardForVisit(next);
-    if (nextReward) {
+    const next = currentVisit + 1;
+    setCheckIns((prev) => [...prev, { visit: next, source }]);
+    if (!suppressLimit) setLastCheckInDate(todayKey());
+
+    // Prüfe aktivierte Prämie → automatisch einlösen
+    if (activatedReward) {
+      const reward = activatedReward;
+      setActivatedReward(null);
+      setRewards((prev) => {
+        const exists = prev.some((r) => r.visitNumber === reward.visitNumber);
+        if (exists) {
+          return prev.map((r) =>
+            r.visitNumber === reward.visitNumber ? { ...r, redeemed: true } : r,
+          );
+        }
+        return [...prev, { ...reward, redeemed: true }];
+      });
+      setTimeout(() => setRedemptionScreen(reward), 400);
+      return;
+    }
+
+    // Hinweis auf nächste Prämie
+    const upcoming = [next + 1, next + 2, next + 3].map(rewardForVisit).find((r) => r && !r.redeemed);
+    if (upcoming) {
       setTimeout(() => {
-        toast(`Nächster Besuch: ${nextReward.label}`, {
-          description: 'Komm bald wieder!',
+        toast(`Demnächst: ${upcoming.label}`, {
+          description: 'Tippe vorher auf die Prämie, um sie zu aktivieren.',
         });
       }, 600);
     }
   };
 
+  const simulateCheckIn = () => performCheckIn('normal');
+
   const simulateReferralBoost = () => {
     setBoostFlash(true);
-    setCurrentVisit((v) => v + 1);
-    toast('Lena hat deinen Link genutzt! +1 Bonus-Schritt 🚀');
+    performCheckIn('boost', true);
+    toast('Lena hat deinen Link genutzt! +1 Boost 🚀');
     setTimeout(() => setBoostFlash(false), 1400);
+  };
+
+  const simulateBirthday = () => {
+    performCheckIn('birthday', true);
+    toast('Alles Gute zum Geburtstag! 🎂');
   };
 
   const handleRewardTap = (reward: MockReward) => {
     if (reward.redeemed) return;
-    if (reward.visitNumber > currentVisit) {
-      toast.info('Diese Belohnung ist noch nicht freigeschaltet.');
-      return;
-    }
     setTappedReward(reward);
   };
 
-  const activateReward = () => {
+  const activateRewardForNextCheckIn = () => {
     if (!tappedReward) return;
-    if (lastRedemptionDate === todayKey()) {
-      toast.error('Heute schon eine Prämie eingelöst. Komm morgen wieder! 😊');
-      setTappedReward(null);
-      return;
-    }
-    const reward = tappedReward;
+    setActivatedReward(tappedReward);
+    toast.success(`„${tappedReward.label}" wird beim nächsten Check-in eingelöst.`);
     setTappedReward(null);
-    setRedemptionScreen(reward);
   };
 
-  const confirmRedemption = () => {
-    if (!redemptionScreen) return;
-    const reward = redemptionScreen;
-    setRewards((prev) => {
-      const exists = prev.some((r) => r.visitNumber === reward.visitNumber);
-      if (exists) {
-        return prev.map((r) =>
-          r.visitNumber === reward.visitNumber ? { ...r, redeemed: true } : r,
-        );
-      }
-      return [...prev, { ...reward, redeemed: true }];
-    });
-    setLastRedemptionDate(todayKey());
-    setRedemptionScreen(null);
-    toast.success('Belohnung eingelöst! 🎉');
+  const removeActivation = () => {
+    setActivatedReward(null);
+    toast('Aktivierung entfernt.');
   };
 
   const shareReferral = async () => {
@@ -188,9 +215,7 @@ export const AppMerchantDetailV2 = () => {
         await navigator.clipboard.writeText(link);
         toast.success('Einladungslink kopiert!');
       }
-    } catch {
-      /* user cancelled */
-    }
+    } catch { /* user cancelled */ }
   };
 
   // ================= Render =================
@@ -204,25 +229,45 @@ export const AppMerchantDetailV2 = () => {
 
   const totalWidth = visibleNodes.length * NODE_SPACING;
 
+  const sourceLabel = (s: CheckInSource | null): string | null => {
+    if (s === 'boost') return 'Boost';
+    if (s === 'birthday') return 'Geburtstag';
+    return null;
+  };
+
+  const sourceIcon = (s: CheckInSource | null) => {
+    if (s === 'boost') return <Rocket className="w-3 h-3" />;
+    if (s === 'birthday') return <Cake className="w-3 h-3" />;
+    return null;
+  };
+
   return (
-    <div className="min-h-screen bg-[hsl(35,40%,98%)] pb-24" style={{ colorScheme: 'light' }}>
+    <div
+      className="min-h-screen pb-24"
+      style={{
+        background: '#faf8f5',
+        colorScheme: 'light',
+        ['--brand' as string]: BRAND,
+      }}
+    >
       {/* Header */}
-      <div className="sticky top-0 z-30 bg-white/90 backdrop-blur border-b border-orange-100">
+      <div className="sticky top-0 z-30 bg-white/90 backdrop-blur border-b" style={{ borderColor: `${BRAND}22` }}>
         <div className="flex items-center gap-3 px-4 py-3">
           <button
             onClick={() => navigate('/app/stores')}
-            className="w-10 h-10 rounded-full bg-orange-50 flex items-center justify-center"
+            className="w-10 h-10 rounded-full flex items-center justify-center"
+            style={{ background: BRAND_SOFT }}
             aria-label="Zurück"
           >
-            <ArrowLeft className="w-5 h-5 text-orange-600" />
+            <ArrowLeft className="w-5 h-5" style={{ color: BRAND }} />
           </button>
           <div className="flex-1 min-w-0">
             <h1 className="text-lg font-bold text-neutral-900 truncate">Backstube König</h1>
-            <p className="text-xs text-orange-600 font-medium">Deine Treue-Reise</p>
+            <p className="text-xs font-medium" style={{ color: BRAND }}>Dein Treuepass</p>
           </div>
           <div
             className="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl shadow-sm"
-            style={{ background: `linear-gradient(135deg, ${ORANGE}, ${GOLD})` }}
+            style={{ background: `linear-gradient(135deg, ${BRAND}, ${BRAND}cc)` }}
           >
             🥐
           </div>
@@ -231,21 +276,25 @@ export const AppMerchantDetailV2 = () => {
 
       {/* Snake */}
       <div className="mt-6">
-        <div className="px-4 mb-3 flex items-baseline justify-between">
+        <div className="px-4 mb-3 flex items-end justify-between">
           <div>
-            <p className="text-xs uppercase tracking-wider text-orange-500/80 font-semibold">
-              Dein Fortschritt
+            <p className="text-xs uppercase tracking-wider font-semibold" style={{ color: `${BRAND}cc` }}>
+              Check-ins
             </p>
-            <p className="text-2xl font-extrabold text-neutral-900">
-              Besuch #{currentVisit}
+            <p className="text-4xl font-extrabold text-neutral-900 leading-none mt-1">
+              {currentVisit}
             </p>
           </div>
-          {referralBoosts > 0 && (
-            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-100 text-amber-800 text-xs font-semibold">
-              <Rocket className="w-3.5 h-3.5" />
-              {referralBoosts} Boost
-            </div>
-          )}
+          {activatedReward ? (
+            <button
+              onClick={removeActivation}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold text-white shadow-sm"
+              style={{ background: BRAND }}
+            >
+              <Sparkles className="w-3.5 h-3.5" />
+              Aktiv: {activatedReward.label.split(' ')[0]}
+            </button>
+          ) : null}
         </div>
 
         <motion.div
@@ -255,29 +304,20 @@ export const AppMerchantDetailV2 = () => {
           className="overflow-x-auto overflow-y-hidden no-scrollbar"
           style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-x', overscrollBehaviorX: 'contain' }}
         >
-          <div
-            className="relative"
-            style={{ width: totalWidth, height: SNAKE_HEIGHT }}
-          >
-            <svg
-              width={totalWidth}
-              height={SNAKE_HEIGHT}
-              className="absolute inset-0"
-            >
-              {/* Future path (faded) */}
+          <div className="relative" style={{ width: totalWidth, height: SNAKE_HEIGHT + 28 }}>
+            <svg width={totalWidth} height={SNAKE_HEIGHT} className="absolute inset-x-0 top-7">
               <path
                 d={buildSmoothPath(futurePoints)}
                 fill="none"
-                stroke={ORANGE}
+                stroke={BRAND}
                 strokeOpacity={0.18}
                 strokeWidth={14}
                 strokeLinecap="round"
               />
-              {/* Completed path */}
               <path
                 d={buildSmoothPath(completedPoints)}
                 fill="none"
-                stroke={ORANGE}
+                stroke={BRAND}
                 strokeWidth={14}
                 strokeLinecap="round"
               />
@@ -287,89 +327,94 @@ export const AppMerchantDetailV2 = () => {
               const reward = rewardForVisit(visit);
               const isPast = visit < currentVisit;
               const isCurrent = visit === currentVisit;
-              const isFuture = visit > currentVisit;
               const cx = points[i].x;
-              const cy = points[i].y;
+              const cy = points[i].y + 28; // offset für Labels über den Knoten
+              const source = sourceForVisit(visit);
+              const label = sourceLabel(source);
+              const isActivatedHere = activatedReward?.visitNumber === visit;
 
               if (reward) {
                 const unlocked = visit <= currentVisit && !reward.redeemed;
                 const isRedeemed = reward.redeemed;
                 return (
-                  <button
-                    key={visit}
-                    onClick={() => handleRewardTap(reward)}
-                    className="absolute -translate-x-1/2 -translate-y-1/2 focus:outline-none"
-                    style={{ left: cx, top: cy }}
-                    aria-label={`Belohnung Besuch ${visit}: ${reward.label}`}
-                  >
-                    <motion.div
-                      animate={
-                        unlocked
-                          ? { scale: [1, 1.08, 1], boxShadow: [
-                              `0 0 0 0 ${GOLD}66`,
-                              `0 0 0 12px ${GOLD}00`,
-                              `0 0 0 0 ${GOLD}00`,
-                            ] }
-                          : {}
-                      }
-                      transition={{ duration: 1.6, repeat: unlocked ? Infinity : 0 }}
-                      className="w-16 h-16 rounded-full flex flex-col items-center justify-center border-4 bg-white shadow-md"
-                      style={{
-                        borderColor: GOLD,
-                        opacity: isRedeemed ? 0.55 : 1,
-                      }}
-                    >
-                      <Gift
-                        className="w-6 h-6"
-                        style={{ color: isRedeemed ? '#999' : GOLD }}
-                      />
-                      <span className="text-[10px] font-bold text-neutral-600 mt-0.5">
-                        #{visit}
-                      </span>
-                    </motion.div>
-                    {isRedeemed && (
-                      <div className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-emerald-500 flex items-center justify-center border-2 border-white">
-                        <Check className="w-3 h-3 text-white" strokeWidth={3} />
+                  <div key={visit} className="absolute -translate-x-1/2 -translate-y-1/2" style={{ left: cx, top: cy }}>
+                    {label && (
+                      <div className="absolute -top-9 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded-full bg-neutral-900/85 text-white text-[10px] font-semibold flex items-center gap-1 whitespace-nowrap">
+                        {sourceIcon(source)}
+                        {label}
                       </div>
                     )}
-                  </button>
+                    <button
+                      onClick={() => handleRewardTap(reward)}
+                      className="focus:outline-none"
+                      aria-label={`Belohnung Check-in ${visit}: ${reward.label}`}
+                    >
+                      <motion.div
+                        animate={
+                          unlocked || isActivatedHere
+                            ? { scale: [1, 1.08, 1] }
+                            : {}
+                        }
+                        transition={{ duration: 1.6, repeat: unlocked || isActivatedHere ? Infinity : 0 }}
+                        className="w-16 h-16 rounded-full flex flex-col items-center justify-center border-4 bg-white shadow-md relative"
+                        style={{
+                          borderColor: isActivatedHere ? '#F5A623' : BRAND,
+                          opacity: isRedeemed ? 0.55 : 1,
+                          boxShadow: isActivatedHere ? '0 0 0 4px #F5A62333' : undefined,
+                        }}
+                      >
+                        <Gift
+                          className="w-6 h-6"
+                          style={{ color: isRedeemed ? '#999' : BRAND }}
+                        />
+                        <span className="text-[10px] font-bold text-neutral-600 mt-0.5">
+                          #{visit}
+                        </span>
+                      </motion.div>
+                      {isRedeemed && (
+                        <div className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-emerald-500 flex items-center justify-center border-2 border-white">
+                          <Check className="w-3 h-3 text-white" strokeWidth={3} />
+                        </div>
+                      )}
+                      {isActivatedHere && !isRedeemed && (
+                        <div className="absolute -top-1 -right-1 px-1.5 py-0.5 rounded-full bg-amber-500 text-white text-[9px] font-bold border-2 border-white">
+                          AKTIV
+                        </div>
+                      )}
+                    </button>
+                  </div>
                 );
               }
 
               return (
-                <div
-                  key={visit}
-                  className="absolute -translate-x-1/2 -translate-y-1/2"
-                  style={{ left: cx, top: cy }}
-                >
+                <div key={visit} className="absolute -translate-x-1/2 -translate-y-1/2" style={{ left: cx, top: cy }}>
+                  {label && (
+                    <div className="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded-full bg-neutral-900/85 text-white text-[10px] font-semibold flex items-center gap-1 whitespace-nowrap">
+                      {sourceIcon(source)}
+                      {label}
+                    </div>
+                  )}
                   <motion.div
-                    animate={
-                      isCurrent
-                        ? {
-                            boxShadow: [
-                              `0 0 0 0 ${ORANGE}80`,
-                              `0 0 0 14px ${ORANGE}00`,
-                            ],
-                          }
-                        : {}
-                    }
+                    animate={isCurrent ? { scale: [1, 1.06, 1] } : {}}
                     transition={{ duration: 1.4, repeat: isCurrent ? Infinity : 0 }}
                     className="rounded-full flex items-center justify-center border-4 shadow"
                     style={{
                       width: isCurrent ? 56 : 44,
                       height: isCurrent ? 56 : 44,
-                      background: isPast ? ORANGE : '#fff',
-                      borderColor: isPast || isCurrent ? ORANGE : '#FFD9C7',
+                      background: isPast ? BRAND : '#fff',
+                      borderColor: isPast || isCurrent ? BRAND : `${BRAND}55`,
                     }}
                   >
-                    <span
-                      className="text-sm font-bold"
-                      style={{
-                        color: isPast ? '#fff' : isCurrent ? ORANGE : '#C9A99A',
-                      }}
-                    >
-                      {isCurrent ? 'Jetzt' : visit}
-                    </span>
+                    {isPast ? (
+                      <Check className="w-5 h-5 text-white" strokeWidth={3} />
+                    ) : (
+                      <span
+                        className="text-sm font-bold"
+                        style={{ color: isCurrent ? BRAND : `${BRAND}99` }}
+                      >
+                        {isCurrent ? 'Jetzt' : visit}
+                      </span>
+                    )}
                   </motion.div>
                 </div>
               );
@@ -378,54 +423,27 @@ export const AppMerchantDetailV2 = () => {
         </motion.div>
       </div>
 
-      {/* Meine Belohnungen */}
-      <div className="px-4 mt-8">
-        <h2 className="text-base font-bold text-neutral-900 mb-3 flex items-center gap-2">
-          <Sparkles className="w-4 h-4 text-orange-500" />
-          Meine Belohnungen
-        </h2>
-        {redeemableRewards.length === 0 ? (
-          <Card className="p-4 bg-orange-50/50 border-dashed border-orange-200">
-            <p className="text-sm text-neutral-600 text-center">
-              Aktuell keine Belohnung verfügbar. Sammle weiter Besuche!
-            </p>
-          </Card>
-        ) : (
-          <div className="space-y-2">
-            {redeemableRewards.map((r) => (
-              <Card
-                key={r.visitNumber}
-                className="p-4 flex items-center gap-3 border-orange-200 bg-white"
-              >
-                <div
-                  className="w-12 h-12 rounded-2xl flex items-center justify-center shrink-0"
-                  style={{ background: `${GOLD}22` }}
-                >
-                  <Gift className="w-6 h-6" style={{ color: GOLD }} />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-neutral-900 truncate">{r.label}</p>
-                  <p className="text-xs text-neutral-500">Freigeschaltet bei Besuch #{r.visitNumber}</p>
-                </div>
-                <Button
-                  size="sm"
-                  onClick={() => setTappedReward(r)}
-                  className="text-white"
-                  style={{ background: ORANGE }}
-                >
-                  Einlösen
-                </Button>
-              </Card>
-            ))}
+      {/* Hinweis Pre-Activation */}
+      <div className="px-4 mt-6">
+        <Card className="p-4 border" style={{ borderColor: `${BRAND}33`, background: `${BRAND}0a` }}>
+          <div className="flex gap-3">
+            <Sparkles className="w-5 h-5 mt-0.5 shrink-0" style={{ color: BRAND }} />
+            <div>
+              <p className="text-sm font-semibold text-neutral-900">So funktioniert das Einlösen</p>
+              <p className="text-xs text-neutral-600 mt-1 leading-relaxed">
+                Tippe vor deinem nächsten Check-in auf eine Prämie, um sie zu aktivieren.
+                Beim Check-in wird sie automatisch eingelöst. Pro Tag nur ein Check-in pro Geschäft.
+              </p>
+            </div>
           </div>
-        )}
+        </Card>
       </div>
 
       {/* Freunde einladen */}
-      <div className="px-4 mt-8">
+      <div className="px-4 mt-4">
         <Card
           className="p-5 border-0 text-white shadow-lg"
-          style={{ background: `linear-gradient(135deg, ${ORANGE}, ${GOLD})` }}
+          style={{ background: `linear-gradient(135deg, ${BRAND}, ${BRAND}cc)` }}
         >
           <div className="flex items-center gap-3 mb-3">
             <div className="w-11 h-11 rounded-2xl bg-white/20 flex items-center justify-center">
@@ -434,14 +452,14 @@ export const AppMerchantDetailV2 = () => {
             <div>
               <h3 className="font-bold text-base">Freunde einladen</h3>
               <p className="text-xs text-white/85">
-                Für jede erfolgreiche Einladung: +1 Schritt auf deiner Reise
+                Erfolgreiche Empfehlung = +1 Boost auf deinem Treuepass
               </p>
             </div>
           </div>
           <Button
             onClick={shareReferral}
             className="w-full bg-white hover:bg-white/90"
-            style={{ color: ORANGE }}
+            style={{ color: BRAND }}
           >
             Einladungslink teilen
           </Button>
@@ -454,46 +472,33 @@ export const AppMerchantDetailV2 = () => {
           <p className="text-[11px] uppercase tracking-wider text-neutral-500 font-semibold mb-2">
             Prototype-Test
           </p>
-          <div className="flex gap-2">
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={simulateCheckIn}
-              className="flex-1"
-            >
-              Check-in simulieren
-            </Button>
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={simulateReferralBoost}
-              className="flex-1"
-            >
-              Boost simulieren
-            </Button>
+          <div className="grid grid-cols-3 gap-2">
+            <Button size="sm" variant="outline" onClick={simulateCheckIn}>Check-in</Button>
+            <Button size="sm" variant="outline" onClick={simulateReferralBoost}>Boost</Button>
+            <Button size="sm" variant="outline" onClick={simulateBirthday}>Geburtstag</Button>
           </div>
         </Card>
       </div>
 
-      {/* Tap-Reward Dialog */}
+      {/* Pre-Activation Dialog */}
       <Dialog open={!!tappedReward} onOpenChange={(o) => !o && setTappedReward(null)}>
         <DialogContent className="max-w-[320px] rounded-3xl p-6 text-center">
           <div
             className="w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4"
-            style={{ background: `${GOLD}22` }}
+            style={{ background: BRAND_SOFT }}
           >
-            <Gift className="w-10 h-10" style={{ color: GOLD }} />
+            <Gift className="w-10 h-10" style={{ color: BRAND }} />
           </div>
           <h3 className="text-lg font-bold text-neutral-900 mb-1">
             {tappedReward?.label}
           </h3>
           <p className="text-sm text-neutral-600 mb-5">
-            Jetzt beim Personal einlösen?
+            Beim nächsten Check-in einlösen?
           </p>
           <Button
-            onClick={activateReward}
+            onClick={activateRewardForNextCheckIn}
             className="w-full text-white"
-            style={{ background: ORANGE }}
+            style={{ background: BRAND }}
           >
             Aktivieren
           </Button>
@@ -506,7 +511,7 @@ export const AppMerchantDetailV2 = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Vollbild-Einlöseansicht */}
+      {/* Vollbild-Einlöseansicht (nur nach Auto-Einlösung beim Check-in) */}
       <AnimatePresence>
         {redemptionScreen && (
           <motion.div
@@ -514,7 +519,7 @@ export const AppMerchantDetailV2 = () => {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             className="fixed inset-0 z-[60] flex flex-col items-center justify-center p-6 text-white"
-            style={{ background: `linear-gradient(160deg, ${ORANGE}, ${GOLD})` }}
+            style={{ background: `linear-gradient(160deg, ${BRAND}, ${BRAND}cc)` }}
           >
             <motion.div
               initial={{ scale: 0, rotate: -45 }}
@@ -528,7 +533,7 @@ export const AppMerchantDetailV2 = () => {
                 transition={{ delay: 0.3, type: 'spring' }}
                 className="w-24 h-24 rounded-full bg-white flex items-center justify-center"
               >
-                <Check className="w-14 h-14" style={{ color: ORANGE }} strokeWidth={3} />
+                <Check className="w-14 h-14" style={{ color: BRAND }} strokeWidth={3} />
               </motion.div>
             </motion.div>
             <h2 className="text-2xl font-extrabold mb-2 text-center">
@@ -538,11 +543,11 @@ export const AppMerchantDetailV2 = () => {
               Zeig diesen Screen dem Personal
             </p>
             <Button
-              onClick={confirmRedemption}
+              onClick={() => setRedemptionScreen(null)}
               className="bg-white hover:bg-white/90 px-8"
-              style={{ color: ORANGE }}
+              style={{ color: BRAND }}
             >
-              Bestätigen & schließen
+              Schließen
             </Button>
           </motion.div>
         )}
