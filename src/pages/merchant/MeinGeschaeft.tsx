@@ -31,6 +31,8 @@ import {
 } from "@/components/ui/dialog";
 import PhoneFrame from "@/components/PhoneFrame";
 import MerchantPreviewLive from "@/components/merchant/MerchantPreviewLive";
+import MerchantTreuepassPreviewV2 from "@/components/merchant/MerchantTreuepassPreviewV2";
+import { useMerchantBrand } from "@/hooks/useMerchantBrand";
 import RichTextEditor from "@/components/merchant/RichTextEditor";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
