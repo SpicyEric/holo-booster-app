@@ -550,7 +550,11 @@ export const AppMerchantDetailV2 = () => {
               return (
                 <div key={visit} className="absolute -translate-x-1/2 -translate-y-1/2" style={{ left: cx, top: cy }}>
                   {label && (
-                    <div className="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded-full bg-neutral-900/85 text-white text-[10px] font-semibold flex items-center gap-1 whitespace-nowrap">
+                    <div
+                      className={`absolute left-1/2 -translate-x-1/2 px-2 py-0.5 rounded-full bg-neutral-900/85 text-white text-[10px] font-semibold flex items-center gap-1 whitespace-nowrap ${
+                        labelBelow ? 'top-full mt-2' : '-top-8'
+                      }`}
+                    >
                       {sourceIcon(source)}
                       {label}
                     </div>
