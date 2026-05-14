@@ -1,93 +1,52 @@
-ns# Eloyo V2 – Umsetzung für Backstube König
+Großes Update mit mehreren Bereichen. Da das aktuell alles auf Backstube König als Demo läuft, halte ich die Änderungen so weit möglich frontend-seitig — echte DB-Logik (7-Tage-Fenster, Boost-Auszahlung) lasse ich unverändert, ändere aber UI/Texte und Demo-Verhalten entsprechend.
 
-V2 betrifft ausschließlich den Demo-Merchant **Backstube König**. Alle anderen Händler bleiben auf V1 (App-Anzeige UND Merchant-Backoffice). Gating läuft über `merchant.version === 'v2'` bzw. die bestehende `DEFAULT_DEMO_MERCHANT_CUSTOMER_ID`.
+## 1. Nachrichten-Seite (`AppMessages.tsx`)
+- "Einlösbare Prämien"-Kachel oben **komplett entfernen** (nicht mehr klickbar, nicht mehr sichtbar).
+- Reihenfolge: zuerst Nachrichten-Liste, **darunter** ein eigenes Panel "Offene Einladungen".
+- Panel zeigt alle offenen Einladungen (per Geschäft), klickbar → führt zum Merchant-Detail.
+- Pro Einladungs-Item ein kleines "Einladung entfernen"-Button (Trash/X). Beim Klick: Bestätigung → RPC/Update auf `invitation_redemptions` setzt z.B. `bonus_awarded_at = now()` mit Marker oder löscht den Datensatz (über eine neue Edge Function / RPC `cancel_invitation_redemption`).
 
-## 1. Terminologie (global gültig für V2)
-- "Stempel/Besuch" → **Check-in**
-- Schlangen-Seite in der App → **Treuepass**
-- Fortschritt durch Empfehlung → **Boost**
-- Fortschritt durch Geburtstag → **Geburtstag**
+## 2. Einladungs-Annahme (`PendingInviteDialog.tsx`)
+- Pop-up mit abgerundeten Ecken, Buttons "Annehmen" / "Ablehnen".
+- Nach Annahme: Inhalt wechselt zu "Einladung angenommen" + Untertitel "Deine offenen Einladungen findest du unter Nachrichten" + großes Nachrichten-Icon. Schließen via X.
+- Kein Auto-Redirect mehr direkt zum Merchant.
 
-Memory-Eintrag wird angelegt, damit künftige Antworten dieses Wording konsequent verwenden.
+## 3. Boost-Erklär-Dialog (`AppMerchantDetailV2.tsx`)
+- Text anpassen: "Ihr beide bekommt jeweils +1 Boost auf eurem Treuepass."
+- Schritte: Link teilen → Freund checkt bei {merchant} ein → **Beide** bekommen +1 Boost.
 
-## 2. App – Treuepass (`AppMerchantDetailV2.tsx`)
+## 4. Google-Bewertungs-Karte (`AppMerchantDetailV2.tsx`)
+- Karte unten: nur "Hol dir einen Check-in" + "Bewerte uns bei Google" + Button "Bewerten".
+- Klick öffnet Pop-up: "Bewertung abgeben — So funktioniert's: Bewerte Backstube König bei Google. Du bekommst +1 Check-in geschenkt. Nur einmal pro Geschäft möglich." + Button "Bei Google bewerten" + X.
+- Sichtbarkeit: nur wenn (a) User mindestens 1 Check-in bei diesem Merchant hat **und** (b) noch keine Google-Bewertung abgegeben (Demo: localStorage-Flag `eloyo:v2:google-review-done:{merchantId}` setzen, sobald auf "Bei Google bewerten" geklickt — Karte verschwindet, automatischer Bonus-Check-in vom Typ `google_review` wird angelegt).
 
-**Beschriftung Knoten**
-- Aktueller Knoten: bleibt "Jetzt"
-- Vergangene Knoten: Haken (✓) in Markenfarbe in der Mitte, KEINE Zahl mehr im Kreis
-- Über jedem vergangenen Knoten Mini-Label: leer (Standard), `Boost` oder `Geburtstag`
-- Header-Zähler: zweizeilig "Check-ins" / große Zahl
+## 5. Treuepass-Knoten klickbar (`AppMerchantDetailV2.tsx`)
+- Bei normalen Check-ins Label "Check-in" anzeigen (statt leer).
+- Jeder gefüllte Knoten (Check-in / Boost / Geburtstag / Bewertung) wird klickbar → Pop-up:
+  - **Check-in**: "Eingecheckt am {datum} um {uhrzeit}" + "Prämie eingelöst: ja/nein".
+  - **Boost**: "Boost erhalten am {datum} um {uhrzeit}" + "Einladung angenommen am {datum}".
+  - **Geburtstag**: Datum + Uhrzeit.
+  - **Bewertung**: Datum + Uhrzeit.
+- Eingelöste Prämien-Knoten ebenfalls klickbar → "Prämie eingelöst am {datum} um {uhrzeit}".
+- Pop-up schließbar via X.
 
-**Mock-Datenmodell erweitern**
-```ts
-interface CheckInEntry {
-  visitNumber: number;
-  source: 'normal' | 'boost' | 'birthday';
-}
-```
-`simulateReferralBoost` markiert den neuen Eintrag als `boost`. Zusätzlicher Sandbox-Button "Geburtstag simulieren" erzeugt einen `birthday`-Eintrag.
+## 6. WhatsApp-Link → App-Store-Fallback
+- Antwort an User: aktuell ist der Invite-Link `https://eloyo.de/i/{code}` (siehe `pendingInvite.ts` + `InviteRedirect`-Page). Auf Mobil ohne installierte App geht der Browser auf eloyo.de — von dort wird **noch nicht** automatisch in App-/Play-Store weitergeleitet. Das müsste in `InviteRedirect.tsx` ergänzt werden (User-Agent-Sniff → store-Link, Code in localStorage cachen für späteren Pickup nach Install via Deep-Link / Clipboard-Fallback).
+- Im selben Schritt einbauen.
 
-**Pre-Activation Flow**
-- Tap auf freigeschalteten/zukünftigen Reward-Knoten → Dialog "Beim nächsten Check-in einlösen?"
-- Bei Bestätigung: Reward bekommt `activatedForNextCheckIn = true` (visuell goldener Ring/Badge "Aktiviert")
-- Nur **eine** Prämie gleichzeitig aktivierbar
-- "Check-in simulieren" prüft: gibt es eine aktivierte Prämie? Wenn ja → automatisch einlösen + Erfolgs-Vollbild
-- Pro Tag nur ein Check-in (Toast bei Wiederholung)
-- "Meine Belohnungen"-Liste und Vollbild-Einlöseansicht für nachträgliches Einlösen werden entfernt – Einlösung passiert ausschließlich über Aktivierung + Check-in
+## 7. 7-Tage-Beschränkung entfernen
+- Frontend-seitig: `OpenInvitationsBanner` und neues "Offene Einladungen"-Panel filtern **nicht mehr** nach `bonus_window_starts_at > now()-7d`.
+- DB-seitige 7-Tage-Bonusfenster-Logik (`process_referral_bonus`) bleibt erstmal — bestätige mit User, ob ich diese auch entfernen soll (Boost auch nach Monaten noch zahlbar).
 
-## 3. Markenfarbe pro Händler
+## Technisch (Dateien)
+- `src/app/pages/AppMessages.tsx` — Prämien-Tile entfernen, neues Einladungs-Panel.
+- Neue Komponente `src/app/components/OpenInvitationsPanel.tsx` (mit Cancel-Button).
+- `src/app/components/PendingInviteDialog.tsx` — neuer Annahme-Confirm-State.
+- `src/app/components/OpenInvitationsBanner.tsx` — 7d-Filter raus oder Komponente nur noch fürs Home-Feed.
+- `src/app/pages/AppMerchantDetailV2.tsx` — Boost-Dialog-Text, Google-Review-Karte/Dialog, klickbare Pass-Knoten + Detail-Dialog, "Check-in"-Label.
+- `src/pages/InviteRedirect.tsx` — Store-Fallback bei mobilen Geräten ohne App.
+- Migration: RPC `cancel_invitation_redemption(p_redemption_id uuid)` (löscht eigene offene Redemption).
 
-**DB-Migration**: Spalten an `merchant_customers` hinzufügen
-- `version text default 'v1'` (für V2-Gating, Backstube König wird auf `'v2'` gesetzt)
-- `brand_color text` (HEX, z.B. `#FF6B35`)
-
-**Frontend**
-- Neuer Hook `useMerchantBrand(merchantId)` liefert `{ color, version }` und stellt CSS-Variablen `--brand`, `--brand-soft`, `--brand-foreground` auf dem Merchant-Scope bereit.
-- `AppMerchantDetailV2` ersetzt alle `ORANGE`/`GOLD`-Hardcodes durch `var(--brand)` / abgeleitete Töne.
-- BottomNav Scan-Button: liest aktive Brand-Farbe aus Context (gesetzt nur auf Treuepass-Routen), fällt sonst auf Standard-Lila zurück.
-- Default-Farbe für alle Händler bleibt Eloyo-Lila.
-
-## 4. Merchant-Backoffice V2 (nur wenn `merchant.version === 'v2'`)
-
-Zentraler Wrapper `useMerchantVersion()` entscheidet pro Seite, welche Variante gerendert wird. Bestehende V1-Komponenten bleiben unverändert.
-
-### 4.1 Profil / `MeinGeschaeft` (Tab "Karte")
-- Neuer Block "Markenfarbe" mit **Color Picker** (HEX-Input + visuelles Rad, `react-colorful`)
-- Live-Vorschau des Treuepasses rechts daneben (eingebettete `AppMerchantDetailV2`-Vorschau im Phone-Frame, read-only)
-- Speichern schreibt `brand_color` und aktualisiert Vorschau sofort
-
-### 4.2 Marketing → Automationen (V2)
-- Alles entfernen außer der oberen Info-Karte
-- Texte werden in einem späteren Schritt finalisiert (Platzhalter setzen)
-
-### 4.3 Marketing → Neukunden (V2)
-- Nur die obere Info-Textkarte rendern, Rest entfernen
-
-### 4.4 Marketing → Empfehlungen (V2)
-- Nur die obere Info-Textkarte rendern, Rest entfernen
-
-### 4.5 Marketing → Prämien (V2)
-- Bestehende Prämienliste oben behalten
-- Darunter Schlangen-Linie (gleiche Optik wie App-Treuepass) als Drop-Zone
-- Drag-and-Drop: Prämie aus Liste auf einen Check-in-Knoten ziehen → ordnet `visit_number` zu
-- Implementierung: `@dnd-kit/core` (bereits im Projekt verfügbar prüfen, sonst hinzufügen)
-
-## 5. Technische Details
-
-- **DB**: Migration für `version` + `brand_color` auf `merchant_customers`; Backstube König direkt auf `version='v2'`, `brand_color='#FF6B35'` setzen.
-- **V1 unangetastet**: alle V2-spezifischen Komponenten leben in `*/v2/`-Unterordnern oder mit `V2`-Suffix. Routing prüft Version und entscheidet.
-- **Brand-Color-Verteilung**: über React-Context `MerchantBrandProvider` rund um Treuepass-Route + Merchant-Backoffice-Layout (wenn V2).
-- **Sandbox**: alle bestehenden Mock-Buttons im Treuepass bleiben; "Geburtstag simulieren" kommt dazu.
-
-## 6. Reihenfolge der Umsetzung
-
-1. Memory + DB-Migration (`version`, `brand_color`)
-2. App-Treuepass: Wording, Haken-Knoten, Boost/Geburtstag-Labels, Mock erweitern
-3. Pre-Activation Flow + Entfernung der Belohnungs-Liste/Vollbild
-4. Brand-Color-Hook, CSS-Variablen, BottomNav Scan-Button reagiert
-5. Merchant-Backoffice Version-Gating
-6. Profil-Seite: Color Picker + Live-Vorschau
-7. Marketing-Seiten Automationen/Neukunden/Empfehlungen reduzieren
-8. Prämien-Seite: Schlange + Drag-and-Drop
-
-Soll ich so loslegen, oder zuerst nur einen Teilbereich (z.B. Punkte 1–4) abschließen, damit du zwischendurch reviewen kannst?
+Soll ich so loslegen? Insbesondere bestätige bitte:
+- (a) DB-seitiges 7-Tage-Bonusfenster ebenfalls aufheben (sonst zahlt der Server den Boost nach 7 Tagen nicht mehr aus, auch wenn UI ihn noch zeigt)?
+- (b) Google-Review-Bonus rein als Demo (Frontend-only, localStorage) oder echte Logik (`google_review`-Transaktion + Single-Use pro Merchant in DB)?
