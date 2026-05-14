@@ -16,6 +16,12 @@ import {
   clearActivatedReward,
 } from '@/lib/activeMerchantReward';
 import { generateVerificationCode } from '@/lib/verificationCode';
+import {
+  enablePrivacyScreen,
+  disablePrivacyScreen,
+  isScreenBeingCaptured,
+} from '@/lib/privacyScreen';
+import { Lock, EyeOff } from 'lucide-react';
 
 /**
  * Backstube König – Treuepass (V2 Prototype)
@@ -136,6 +142,29 @@ export const AppMerchantDetailV2 = () => {
     reward: MockReward | null;
   } | null>(null);
   const [confirmStage, setConfirmStage] = useState(false);
+  const [screenCaptured, setScreenCaptured] = useState(false);
+
+  // Privacy-Screen NUR aktivieren, wenn die sensible Einlöse-Ansicht
+  // (oranges Vollbild mit Code-Marquee + Prämie) sichtbar ist.
+  const isRedemptionScreenVisible = Boolean(checkInOverlay?.reward);
+
+  useEffect(() => {
+    if (!isRedemptionScreenVisible) return;
+    enablePrivacyScreen();
+    let cancelled = false;
+    const poll = setInterval(async () => {
+      const captured = await isScreenBeingCaptured();
+      if (!cancelled) setScreenCaptured(captured);
+    }, 1500);
+    // initialer Check
+    isScreenBeingCaptured().then((v) => !cancelled && setScreenCaptured(v));
+    return () => {
+      cancelled = true;
+      clearInterval(poll);
+      setScreenCaptured(false);
+      disablePrivacyScreen();
+    };
+  }, [isRedemptionScreenVisible]);
 
   const scrollerRef = useRef<HTMLDivElement>(null);
 
@@ -746,27 +775,48 @@ export const AppMerchantDetailV2 = () => {
               )}
             </AnimatePresence>
 
-            {/* Code-Marquee am unteren Rand */}
+            {/* Code-Marquee am unteren Rand + Sicherheits-Hinweis */}
             {!confirmStage && (
-              <div className="absolute left-0 right-0 bottom-10 overflow-hidden bg-white/10 backdrop-blur py-3 border-y border-white/20">
-                <motion.div
-                  className="flex whitespace-nowrap"
-                  animate={{ x: ['0%', '-50%'] }}
-                  transition={{ duration: 12, ease: 'linear', repeat: Infinity }}
-                >
-                  {Array.from({ length: 2 }).map((_, dup) => (
-                    <div key={dup} className="flex shrink-0">
-                      {Array.from({ length: 8 }).map((_, i) => (
-                        <span
-                          key={`${dup}-${i}`}
-                          className="px-6 text-2xl font-black tracking-[0.4em] tabular-nums text-white"
-                        >
-                          {checkInOverlay.code}
-                        </span>
-                      ))}
-                    </div>
-                  ))}
-                </motion.div>
+              <>
+                <div className="absolute left-0 right-0 bottom-10 overflow-hidden bg-white/10 backdrop-blur py-3 border-y border-white/20">
+                  <motion.div
+                    className="flex whitespace-nowrap"
+                    animate={{ x: ['0%', '-50%'] }}
+                    transition={{ duration: 12, ease: 'linear', repeat: Infinity }}
+                  >
+                    {Array.from({ length: 2 }).map((_, dup) => (
+                      <div key={dup} className="flex shrink-0">
+                        {Array.from({ length: 8 }).map((_, i) => (
+                          <span
+                            key={`${dup}-${i}`}
+                            className="px-6 text-2xl font-black tracking-[0.4em] tabular-nums text-white"
+                          >
+                            {checkInOverlay.code}
+                          </span>
+                        ))}
+                      </div>
+                    ))}
+                  </motion.div>
+                </div>
+                <div className="absolute left-0 right-0 bottom-1 flex items-center justify-center gap-1.5 text-[11px] font-medium text-white/70 px-4 text-center">
+                  <Lock className="w-3 h-3" strokeWidth={2.5} />
+                  <span>Aus Sicherheitsgründen ist auf diesem Bildschirm kein Screenshot möglich.</span>
+                </div>
+              </>
+            )}
+
+            {/* iOS: aktive Bildschirmaufnahme erkannt → Inhalt ausblenden */}
+            {screenCaptured && checkInOverlay.reward && (
+              <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-black/95 text-center px-8">
+                <div className="w-20 h-20 rounded-full bg-white/10 flex items-center justify-center mb-5">
+                  <EyeOff className="w-10 h-10 text-white" strokeWidth={2.5} />
+                </div>
+                <h3 className="text-2xl font-extrabold text-white mb-3">
+                  Bildschirmaufnahme erkannt
+                </h3>
+                <p className="text-base text-white/80 max-w-xs">
+                  Code ausgeblendet. Beende die Aufnahme, um deine Prämie an der Kasse einzulösen.
+                </p>
               </div>
             )}
           </motion.div>
