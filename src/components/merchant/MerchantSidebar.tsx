@@ -285,7 +285,7 @@ export default function MerchantSidebar() {
                 <X className="h-4 w-4" />
               </Button>
             </div>
-            <SidebarNav collapsed={false} onNavigate={() => setMobileOpen(false)} companyName={companyName} subStatus={subStatus} />
+            <SidebarNav collapsed={false} onNavigate={() => setMobileOpen(false)} companyName={companyName} subStatus={subStatus} coverImageUrl={coverImageUrl} logoUrl={logoUrl} />
           </SheetContent>
         </Sheet>
       </>
