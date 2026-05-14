@@ -77,10 +77,7 @@ function SidebarNav({ collapsed, onNavigate, companyName, subStatus, coverImageU
     onNavigate?.();
   };
 
-  const handleSubNav = (path: string, tab: string) => {
-    navigate(`${path}?tab=${tab}`);
-    onNavigate?.();
-  };
+
 
   return (
     <>
