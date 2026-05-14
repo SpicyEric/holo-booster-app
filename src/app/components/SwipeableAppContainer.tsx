@@ -448,6 +448,7 @@ const AppHomeContent = () => {
                     )}
                   </div>
                 </button>
+                <HomeMerchantInfoBlock store={store} />
               </div>
             ))}
           </div>
@@ -456,6 +457,87 @@ const AppHomeContent = () => {
     </PullToRefresh>
   );
 };
+
+function HomeMerchantInfoBlock({ store }: { store: HomeMerchantCard }) {
+  const links: { href: string; label: string; Icon: typeof Globe }[] = [];
+  const web = normalizeHomeUrl(store.website);
+  const ig = normalizeInstagramUrl(store.instagram);
+  const fb = normalizeHomeUrl(store.facebook);
+  const tw = normalizeHomeUrl(store.twitter);
+  if (web) links.push({ href: web, label: 'Website', Icon: Globe });
+  if (ig) links.push({ href: ig, label: 'Instagram', Icon: Instagram });
+  if (fb) links.push({ href: fb, label: 'Facebook', Icon: Facebook });
+  if (tw) links.push({ href: tw, label: 'Twitter', Icon: Twitter });
+
+  const visibleHours = store.openingHours
+    ? HOME_DAY_LABELS.map(({ key, label }) => {
+        const day = store.openingHours?.[key];
+        if (!day) return null;
+        return {
+          label,
+          time: day.closed ? 'Geschlossen' : [day.open, day.close].filter(Boolean).join(' – '),
+        };
+      }).filter((entry): entry is { label: string; time: string } => !!entry && !!entry.time)
+    : [];
+
+  if (!store.description && visibleHours.length === 0 && !store.address && links.length === 0) return null;
+
+  return (
+    <div className="mt-3 space-y-3 px-1 pb-1 text-left">
+      {store.description && (
+        <p className="text-sm leading-relaxed text-foreground/80 whitespace-pre-line">
+          {store.description}
+        </p>
+      )}
+
+      {visibleHours.length > 0 && (
+        <div className="rounded-xl border border-border/50 bg-background/75 p-3 backdrop-blur-sm">
+          <div className="mb-2 flex items-center gap-2 text-xs font-semibold text-foreground">
+            <Clock className="h-4 w-4 text-primary" />
+            Öffnungszeiten
+          </div>
+          <div className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-xs">
+            {visibleHours.map((entry) => (
+              <div key={entry.label} className="contents">
+                <span className="text-muted-foreground">{entry.label}</span>
+                <span className="text-foreground">{entry.time}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {store.address && (
+        <a
+          href={`https://maps.google.com/?q=${encodeURIComponent(store.address)}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-start gap-2 text-sm text-foreground/80"
+        >
+          <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+          <span>{store.address}</span>
+        </a>
+      )}
+
+      {links.length > 0 && (
+        <div className="flex flex-wrap gap-2">
+          {links.map(({ href, label, Icon }) => (
+            <a
+              key={label}
+              href={href}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1.5 text-xs font-medium text-primary transition-colors hover:bg-primary/15"
+            >
+              <Icon className="h-3.5 w-3.5" />
+              {label}
+            </a>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 // Messages Content
 const AppMessagesContent = () => {
