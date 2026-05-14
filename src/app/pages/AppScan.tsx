@@ -755,6 +755,58 @@ export const AppScan = () => {
           </div>
         </motion.div>
 
+        {/* ── Merchant-Context Panel: aktivierte Prämien + Simulate-Button ── */}
+        {hasMerchantContext && flipPhase === 'idle' && (
+          <motion.div
+            className="px-4 pt-5"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2, duration: 0.4 }}
+          >
+            <div
+              className="rounded-2xl border p-4"
+              style={{
+                borderColor: `${BRAND}33`,
+                background: `${BRAND}0d`,
+              }}
+            >
+              <p className="text-xs font-semibold uppercase tracking-wider mb-1" style={{ color: BRAND }}>
+                Aktivierte Prämien für diesen Check-in
+              </p>
+              {activatedReward ? (
+                <div className="flex items-center gap-2 mt-2">
+                  <Sparkles className="w-4 h-4" style={{ color: BRAND }} />
+                  <p className="text-sm font-bold text-neutral-900">{activatedReward.label}</p>
+                </div>
+              ) : (
+                <p className="text-sm text-neutral-600 mt-1">
+                  Keine. Aktiviere eine Prämie auf dem Treuepass, bevor du eincheckst.
+                </p>
+              )}
+            </div>
+
+            <Button
+              onClick={() => {
+                setSimulatedFlip('flipping');
+                setTimeout(() => {
+                  if (activatedReward) {
+                    setRedemptionOverlay(activatedReward);
+                  } else {
+                    toast.success('Check-in registriert!');
+                    setSimulatedFlip('idle');
+                  }
+                }, 800);
+              }}
+              className="w-full mt-4 text-white"
+              style={{ background: BRAND }}
+              disabled={simulatedFlip !== 'idle'}
+            >
+              <ScanLine className="h-4 w-4 mr-2" />
+              Eincheck simulieren
+            </Button>
+          </motion.div>
+        )}
+
         {/* ── Content below the card ── */}
         <motion.div
           className="px-4 pt-6 pb-8"
