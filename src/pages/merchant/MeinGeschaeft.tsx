@@ -47,6 +47,7 @@ import {
 import { calculateSuggestion, SPEND_PRESETS } from "../wizard/wizardLogic";
 import { cn } from "@/lib/utils";
 import { linkOrphanNfcChipsToMerchant } from "@/lib/nfcChipLinking";
+import { MerchantBrandColorCard } from "@/components/merchant/MerchantBrandColorCard";
 
 const INDUSTRIES = [
   { value: "cafe", label: "Café" },
