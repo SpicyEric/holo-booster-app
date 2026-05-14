@@ -78,6 +78,20 @@ export const AppMerchantDetailV2 = () => {
   const { id } = useParams<{ id: string }>();
   const merchantId = id || DEFAULT_DEMO_MERCHANT_CUSTOMER_ID;
   const brand = useMerchantBrand(merchantId);
+  const [coverImageUrl, setCoverImageUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const { data } = await import('@/integrations/supabase/client').then(m => m.supabase
+        .from('customers')
+        .select('cover_image_url')
+        .eq('id', merchantId)
+        .maybeSingle());
+      if (!cancelled) setCoverImageUrl((data?.cover_image_url as string | null) || null);
+    })();
+    return () => { cancelled = true; };
+  }, [merchantId]);
 
   // ===== Brand-Color global publizieren (für BottomNav-Scan-Button) =====
   useEffect(() => {
