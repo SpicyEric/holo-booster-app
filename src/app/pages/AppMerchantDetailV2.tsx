@@ -608,6 +608,7 @@ export const AppMerchantDetailV2 = () => {
     if (s === 'boost') return 'Boost';
     if (s === 'birthday') return 'Geburtstag';
     if (s === 'google_review') return 'Bewertung';
+    if (s === 'normal') return 'Check-in';
     return null;
   };
 
@@ -620,6 +621,73 @@ export const AppMerchantDetailV2 = () => {
     if (s === 'google_review') return <Star className="w-5 h-5 text-white" strokeWidth={2.8} fill="white" />;
     return <Check className="w-5 h-5 text-white" strokeWidth={3} />;
   };
+
+  // ============== Node-Detail-Pop-up & Google-Review-Demo ==============
+  type NodeDetail =
+    | { kind: 'check-in'; visit: number; source: CheckInSource; at?: string; invitedAt?: string; redeemed?: { label: string; at?: string } | null }
+    | { kind: 'reward-redeemed'; label: string; at?: string };
+  const [nodeDetail, setNodeDetail] = useState<NodeDetail | null>(null);
+  const [googleReviewOpen, setGoogleReviewOpen] = useState(false);
+  const googleReviewKey = `eloyo:v2:google-review-done:${merchantId}`;
+  const [googleReviewDone, setGoogleReviewDone] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return false;
+    return localStorage.getItem(googleReviewKey) === '1';
+  });
+  // Reset auch das Google-Review-Flag bei Demo-Reset
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (localStorage.getItem(resetKey) !== DEMO_PASS_RESET_VERSION) {
+      try { localStorage.removeItem(googleReviewKey); } catch { /* noop */ }
+      setGoogleReviewDone(false);
+    }
+  }, [resetKey, googleReviewKey]);
+
+  const formatDateTime = (iso?: string) => {
+    if (!iso) return '–';
+    try {
+      return new Date(iso).toLocaleString('de-DE', {
+        day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit',
+      });
+    } catch { return '–'; }
+  };
+
+  const openNodeDetail = (visit: number) => {
+    const entry = checkIns.find((c) => c.visit === visit);
+    if (!entry) return;
+    const reward = rewards.find((r) => r.visitNumber === visit);
+    setNodeDetail({
+      kind: 'check-in',
+      visit,
+      source: entry.source,
+      at: entry.at,
+      invitedAt: entry.invitedAt,
+      redeemed: reward?.redeemed ? { label: reward.label, at: entry.at } : null,
+    });
+  };
+
+  const openRewardRedeemedDetail = (reward: MockReward) => {
+    const entry = checkIns.find((c) => c.visit === reward.visitNumber);
+    setNodeDetail({ kind: 'reward-redeemed', label: reward.label, at: entry?.at });
+  };
+
+  const handleGoogleReviewClick = () => {
+    if (googleReviewDone) return;
+    // Echte DB-RPC versuchen (no-op falls unauth/Demo) — danach Google öffnen + Demo-Check-in
+    void (async () => {
+      try {
+        const { supabase } = await import('@/integrations/supabase/client');
+        await supabase.rpc('award_google_review_bonus', { p_merchant_customer_id: merchantId });
+      } catch { /* Demo: ignorieren */ }
+    })();
+    try { localStorage.setItem(googleReviewKey, '1'); } catch { /* noop */ }
+    setGoogleReviewDone(true);
+    // Demo-Check-in als Bewertung anhängen
+    const next = currentVisit + 1;
+    setCheckIns((prev) => [...prev, { visit: next, source: 'google_review', at: new Date().toISOString() }]);
+    setGoogleReviewOpen(false);
+    window.open(`https://www.google.com/search?q=${encodeURIComponent('Backstube König Bewertung')}`, '_blank');
+  };
+
 
   return (
     <div
