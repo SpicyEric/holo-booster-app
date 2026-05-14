@@ -740,8 +740,8 @@ export const AppMerchantDetailV2 = () => {
       <motion.div
         className="px-4 mt-6"
         initial={isEntering ? { opacity: 0, y: 10 } : false}
-        animate={sectionsRevealed ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 }}
-        transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1], delay: 0 }}
+        animate={infoVisible ? { opacity: 1, y: 0 } : { opacity: 0, y: -8 }}
+        transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
       >
         <Card
           className="p-4 border transition-colors"
