@@ -787,6 +787,27 @@ const Marketing = () => {
           {/* ========== BEWERTUNGEN TAB ========== */}
           {/* ========== EMPFEHLUNGEN TAB ========== */}
           <TabsContent value="referral" className="space-y-6 mt-6">
+            {isV2 && (
+              <Card className="rounded-2xl shadow-sm border border-primary/10 bg-primary/[0.03]">
+                <CardHeader className="pb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center"><Rocket className="h-5 w-5 text-primary" /></div>
+                    <div>
+                      <CardTitle className="text-lg font-semibold">Boost — Empfehlungen</CardTitle>
+                      <CardDescription>So funktionieren Empfehlungen im Treuepass</CardDescription>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-foreground/90 leading-relaxed">
+                    Deine Kunden können den Treuepass an Freunde weiterempfehlen. Sobald ein eingeladener Freund seinen ersten Check-in macht,
+                    bekommt der einladende Kunde einen <strong>Boost</strong> — ein zusätzlicher Check-in auf seinem Treuepass mit dem Label „Boost 🚀".
+                    Du musst hier nichts mehr einstellen — alles läuft automatisch.
+                  </p>
+                </CardContent>
+              </Card>
+            )}
+            {!isV2 && <>
             <Card className="rounded-2xl shadow-sm border border-primary/10 bg-primary/[0.03]">
               <CardHeader className="pb-4">
                 <div className="flex items-center gap-3">
