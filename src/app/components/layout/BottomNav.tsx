@@ -39,11 +39,11 @@ export const BottomNav = ({ onNavigate, currentIndex }: BottomNavProps) => {
   // (Merchant-Detail, Scan und Home mit Treuepass-Karten). Auf anderen Tabs
   // wird die Markenfarbe synchron zurückgesetzt.
   useEffect(() => {
+    // Brand color should only tint the BottomNav on merchant detail / scan.
+    // On Home (/app) we explicitly ignore the brand color while swiping cards.
     const onMerchantDetail = /^\/app\/merchant\//.test(location.pathname);
     const onScan = location.pathname.startsWith('/app/scan');
-    const onHome = location.pathname === '/app';
-    if (!onMerchantDetail && !onScan && !onHome) {
-      setActiveBrandColor(null);
+    if (!onMerchantDetail && !onScan) {
       setBrandColor(null);
     }
   }, [location.pathname]);
