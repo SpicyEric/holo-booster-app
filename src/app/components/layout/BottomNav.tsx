@@ -25,12 +25,12 @@ export const BottomNav = ({ onNavigate, currentIndex }: BottomNavProps) => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [messageBadge, setMessageBadge] = useState(false);
-  const [brandColor, setBrandColor] = useState<string | null>(() => getActiveBrandColor());
+  const [rawBrandColor, setRawBrandColor] = useState<string | null>(() => getActiveBrandColor());
   const [brandSweepKey, setBrandSweepKey] = useState(0);
 
   useEffect(() => {
     return subscribeActiveBrandColor((c) => {
-      setBrandColor(c);
+      setRawBrandColor(c);
       if (c) setBrandSweepKey((k) => k + 1);
     });
   }, []);
@@ -38,15 +38,9 @@ export const BottomNav = ({ onNavigate, currentIndex }: BottomNavProps) => {
   // Brand-Farbe nur auf Routen aktiv, die selbst eine Markenfarbe publizieren
   // (Merchant-Detail, Scan und Home mit Treuepass-Karten). Auf anderen Tabs
   // wird die Markenfarbe synchron zurückgesetzt.
-  useEffect(() => {
-    // Brand color should only tint the BottomNav on merchant detail / scan.
-    // On Home (/app) we explicitly ignore the brand color while swiping cards.
-    const onMerchantDetail = /^\/app\/merchant\//.test(location.pathname);
-    const onScan = location.pathname.startsWith('/app/scan');
-    if (!onMerchantDetail && !onScan) {
-      setBrandColor(null);
-    }
-  }, [location.pathname]);
+  const onMerchantDetail = /^\/app\/merchant\//.test(location.pathname);
+  const onScan = location.pathname.startsWith('/app/scan');
+  const brandColor = onMerchantDetail || onScan ? rawBrandColor : null;
 
   // Check for unread messages or unseen redeemable rewards
   useEffect(() => {
