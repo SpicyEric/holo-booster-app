@@ -1073,6 +1073,11 @@ export const AppMerchantDetailV2 = () => {
         </Card>
       </motion.div>
 
+      {/* Geschäfts-Infos — vor allem für Stores ohne eigenen Treuepass relevant */}
+      {currentVisit === 0 && (
+        <MerchantInfoSection info={merchantInfo} brand={BRAND} />
+      )}
+
       {/* Google-Bewertung abgeben — nur wenn min. 1 Check-in & noch nicht abgegeben */}
       {currentVisit >= 1 && !googleReviewDone && (
         <motion.div
