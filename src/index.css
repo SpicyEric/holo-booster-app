@@ -241,6 +241,8 @@ All colors MUST be HSL.
   from { --sweep: 0%; }
   to   { --sweep: 110%; }
 }
+
+/* Animated glow effect for redeemable rewards */
 @property --reward-glow-angle {
   syntax: '<angle>';
   initial-value: 0deg;
