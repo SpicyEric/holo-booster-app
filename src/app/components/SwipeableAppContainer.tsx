@@ -626,7 +626,7 @@ const AppMessagesContent = () => {
   const formatDate = (dateStr: string) => new Date(dateStr).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: '2-digit' });
 
   const handleRefresh = useCallback(async () => {
-    await Promise.all([loadMessages(), loadRedeemableRewards()]);
+    await loadMessages();
   }, [user]);
 
   return (
@@ -645,27 +645,6 @@ const AppMessagesContent = () => {
                 Bitte bestätige deine E-Mail-Adresse, um Prämien einlösen zu können.
               </p>
             </div>
-          </div>
-        </Card>
-      )}
-
-      {/* Redeemable rewards card */}
-      {redeemableCount > 0 && (
-        <Card
-          className="p-4 cursor-pointer hover:shadow-md transition-shadow border-0 bg-muted/70 dark:bg-muted/50"
-          onClick={() => navigate('/app/rewards')}
-        >
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
-              <Trophy className="h-6 w-6 text-primary" />
-            </div>
-            <div className="flex-1">
-              <div className="text-xl font-bold text-foreground">{redeemableCount}</div>
-              <div className="text-sm text-muted-foreground">
-                {redeemableCount === 1 ? 'Einlösbare Prämie' : 'Einlösbare Prämien'}
-              </div>
-            </div>
-            <ChevronRight className="h-5 w-5 text-muted-foreground" />
           </div>
         </Card>
       )}
@@ -708,7 +687,7 @@ const AppMessagesContent = () => {
           ))}
         </div>
       ) : (
-        !emailVerified || redeemableCount > 0 ? null : (
+        !emailVerified ? null : (
           <Card className="p-8 text-center">
             <Bell className="h-12 w-12 text-muted-foreground/50 mx-auto mb-4" />
             <h3 className="font-semibold text-foreground mb-2">Keine Nachrichten</h3>
@@ -716,6 +695,9 @@ const AppMessagesContent = () => {
           </Card>
         )
       )}
+
+      {/* Offene Einladungen */}
+      <OpenInvitationsPanel />
     </div>
     </PullToRefresh>
   );
