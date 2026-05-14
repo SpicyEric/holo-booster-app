@@ -1025,6 +1025,76 @@ export const AppMerchantDetailV2 = () => {
         )}
       </AnimatePresence>
 
+      {/* Entry-Transition vom Home-Pass: Cover fliegt vom Karten-Rect zum Snake-Band */}
+      <AnimatePresence>
+        {isEntering && entryOrigin && entryCover && (
+          <>
+            {/* Diagonaler Brand-Color-Sweep (unten-links → oben-rechts) */}
+            <motion.div
+              key="brand-sweep"
+              className="fixed inset-0 z-[55] pointer-events-none"
+              initial={{ opacity: 0, clipPath: 'polygon(0% 100%, 0% 100%, 0% 100%)' }}
+              animate={{ opacity: 0.55, clipPath: 'polygon(0% 100%, 0% 0%, 100% 0%, 100% 100%)' }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
+              style={{ background: `linear-gradient(to top right, ${BRAND}, ${BRAND}00 70%)` }}
+            />
+            {/* Cover fliegt von Origin zu Snake-Band */}
+            <motion.div
+              key="cover-fly"
+              className="fixed z-[60] pointer-events-none overflow-hidden shadow-xl"
+              initial={{
+                top: entryOrigin.top,
+                left: entryOrigin.left,
+                width: entryOrigin.width,
+                height: entryOrigin.height,
+                borderRadius: 12,
+                opacity: 1,
+              }}
+              animate={
+                entryTarget
+                  ? entryPhase === 'fading'
+                    ? {
+                        top: entryTarget.top,
+                        left: entryTarget.left,
+                        width: entryTarget.width,
+                        height: entryTarget.height,
+                        borderRadius: 0,
+                        opacity: 0.18,
+                      }
+                    : {
+                        top: entryTarget.top,
+                        left: entryTarget.left,
+                        width: entryTarget.width,
+                        height: entryTarget.height,
+                        borderRadius: 0,
+                        opacity: 1,
+                      }
+                  : undefined
+              }
+              transition={{
+                duration: entryPhase === 'fading' ? 0.45 : 0.6,
+                ease: [0.22, 1, 0.36, 1],
+              }}
+              onAnimationComplete={() => {
+                if (entryPhase === 'flying') {
+                  setEntryPhase('fading');
+                } else if (entryPhase === 'fading') {
+                  setEntryPhase('revealing');
+                  setTimeout(() => setEntryPhase('done'), 750);
+                }
+              }}
+              style={{
+                backgroundImage: `url(${entryCover})`,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+                filter: 'saturate(0.9)',
+              }}
+            />
+          </>
+        )}
+      </AnimatePresence>
+
       <BottomNav />
     </div>
   );
