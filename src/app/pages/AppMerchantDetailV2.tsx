@@ -780,7 +780,7 @@ export const AppMerchantDetailV2 = () => {
             Einladungslink teilen
           </Button>
         </Card>
-      </div>
+      </motion.div>
 
       {/* Sandbox-Test-Buttons */}
       <div className="px-4 mt-6">
