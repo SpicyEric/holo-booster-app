@@ -89,6 +89,7 @@ const Marketing = () => {
   
   const [merchantIndustry, setMerchantIndustry] = useState<string | null>(null);
   const [avgOrderValue, setAvgOrderValue] = useState(10);
+  const [passLength, setPassLength] = useState<number>(15);
 
   // --- Boost state ---
   const [boostLoading, setBoostLoading] = useState(false);
@@ -240,7 +241,7 @@ const Marketing = () => {
       const midPoints = chipMap.blue;
       setMiddleStampPoints(midPoints);
 
-      const { data: cd } = await supabase.from('customers').select('google_review_url, google_review_points_enabled, google_review_points_value, birthday_enabled, birthday_message, birthday_bonus_points, birthday_gift_type, birthday_offer_title, birthday_offer_description, industry, avg_revenue, company_name, name, referral_enabled, referral_inviter_points, referral_invitee_points, winback_enabled, winback_message, winback_inactivity_days, winback_gift_type, winback_bonus_points, winback_offer_title, winback_offer_description').eq('id', assignment.customer_id).maybeSingle();
+      const { data: cd } = await supabase.from('customers').select('google_review_url, google_review_points_enabled, google_review_points_value, birthday_enabled, birthday_message, birthday_bonus_points, birthday_gift_type, birthday_offer_title, birthday_offer_description, industry, avg_revenue, company_name, name, referral_enabled, referral_inviter_points, referral_invitee_points, winback_enabled, winback_message, winback_inactivity_days, winback_gift_type, winback_bonus_points, winback_offer_title, winback_offer_description, pass_length').eq('id', assignment.customer_id).maybeSingle();
       if (cd) {
         setGoogleReviewUrl(cd.google_review_url || "");
         setReviewPointsEnabled(cd.google_review_points_enabled || false);
@@ -256,6 +257,7 @@ const Marketing = () => {
         setBirthdayOfferDescription((cd as any).birthday_offer_description || '');
         if (cd.industry) setMerchantIndustry(cd.industry);
         if (cd.avg_revenue) setAvgOrderValue(cd.avg_revenue);
+        if ((cd as any).pass_length) setPassLength((cd as any).pass_length);
         // Referral settings
         setReferralEnabled((cd as any).referral_enabled ?? true);
         setReferralInviterPoints((cd as any).referral_inviter_points ?? 20);
@@ -659,6 +661,17 @@ const Marketing = () => {
               <RewardSnakeDropZone
                 rewards={rewards}
                 brandColor={merchantBrand.color}
+                customerId={customerId}
+                passLength={passLength}
+                onPassLengthChange={async (n) => {
+                  setPassLength(n);
+                  if (!customerId) return;
+                  const { error } = await supabase
+                    .from('customers')
+                    .update({ pass_length: n })
+                    .eq('id', customerId);
+                  if (error) toast.error('Pass-Länge konnte nicht gespeichert werden');
+                }}
                 onChanged={loadData}
               />
             )}

@@ -185,6 +185,8 @@ const MeinGeschaeft = () => {
 
   // Rewards
   const [rewards, setRewards] = useState<Reward[]>([]);
+  const [placements, setPlacements] = useState<{ reward_id: string; visit: number }[]>([]);
+  const [passLength, setPassLength] = useState<number>(15);
   const [showRewardDialog, setShowRewardDialog] = useState(false);
   const [editingReward, setEditingReward] = useState<Reward | null>(null);
   const [rewardForm, setRewardForm] = useState({
@@ -371,6 +373,20 @@ const MeinGeschaeft = () => {
       if (rewardsData) {
         setRewards(rewardsData);
       }
+
+      // V2: load reward placements + pass length
+      const { data: placementsData } = await supabase
+        .from('reward_placements')
+        .select('reward_id, visit')
+        .eq('customer_id', assignment.customer_id);
+      setPlacements(((placementsData as any[]) || []).map((p) => ({ reward_id: p.reward_id, visit: p.visit })));
+
+      const { data: passData } = await supabase
+        .from('customers')
+        .select('pass_length')
+        .eq('id', assignment.customer_id)
+        .maybeSingle();
+      if (passData?.pass_length) setPassLength(passData.pass_length);
 
       // Load new customer offer
       const { data: ncoData } = await supabase
@@ -1569,6 +1585,8 @@ const MeinGeschaeft = () => {
                           points_required: r.points_required,
                           image_url: r.image_url,
                         }))}
+                        placements={placements}
+                        passLength={passLength}
                       />
                     ) : (
                       <MerchantPreviewLive

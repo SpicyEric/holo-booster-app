@@ -761,6 +761,7 @@ export type Database = {
           offer_title: string | null
           onboarding_email_sent_at: string | null
           opening_hours: Json | null
+          pass_length: number
           phone: string | null
           postal_code: string | null
           priority: string | null
@@ -849,6 +850,7 @@ export type Database = {
           offer_title?: string | null
           onboarding_email_sent_at?: string | null
           opening_hours?: Json | null
+          pass_length?: number
           phone?: string | null
           postal_code?: string | null
           priority?: string | null
@@ -937,6 +939,7 @@ export type Database = {
           offer_title?: string | null
           onboarding_email_sent_at?: string | null
           opening_hours?: Json | null
+          pass_length?: number
           phone?: string | null
           postal_code?: string | null
           priority?: string | null
@@ -2495,6 +2498,30 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      reward_placements: {
+        Row: {
+          created_at: string
+          customer_id: string
+          id: string
+          reward_id: string
+          visit: number
+        }
+        Insert: {
+          created_at?: string
+          customer_id: string
+          id?: string
+          reward_id: string
+          visit: number
+        }
+        Update: {
+          created_at?: string
+          customer_id?: string
+          id?: string
+          reward_id?: string
+          visit?: number
+        }
+        Relationships: []
       }
       reward_redemptions: {
         Row: {
