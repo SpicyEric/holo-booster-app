@@ -784,11 +784,16 @@ export const AppMerchantDetailV2 = () => {
 
   return (
     <div
-      className="min-h-screen pb-40 bg-[#faf8f5] dark:bg-background dark:bg-gradient-to-b dark:from-background dark:to-muted/30 dark:[background-attachment:fixed]"
+      className="bg-[#faf8f5] dark:bg-background dark:bg-gradient-to-b dark:from-background dark:to-muted/30 overflow-hidden"
       style={{
         ['--brand' as string]: BRAND,
+        height: '100dvh',
       }}
     >
+      <div
+        className="h-full overflow-y-auto overflow-x-hidden pb-40"
+        style={{ overscrollBehavior: 'none', WebkitOverflowScrolling: 'touch', touchAction: 'pan-y' }}
+      >
       {/* Header */}
       <div className="sticky top-0 z-30 bg-white/90 dark:bg-card backdrop-blur">
         <div className="flex items-center gap-3 px-4 py-3">
@@ -1688,6 +1693,7 @@ export const AppMerchantDetailV2 = () => {
         </DialogContent>
       </Dialog>
 
+      </div>
       <BottomNav />
     </div>
   );
