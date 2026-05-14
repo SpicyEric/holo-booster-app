@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MessageSquare, ChevronRight, ShieldAlert, Send, Loader2, Trophy, Gift } from 'lucide-react';
+import { MessageSquare, ChevronRight, ShieldAlert, Send, Loader2, Gift } from 'lucide-react';
+import { OpenInvitationsPanel } from '@/app/components/OpenInvitationsPanel';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { Card } from '@/components/ui/card';
@@ -34,13 +35,11 @@ export const AppMessages = () => {
   const [emailVerified, setEmailVerified] = useState(true);
   const [resending, setResending] = useState(false);
   const [resendCooldown, setResendCooldown] = useState(0);
-  const [redeemableCount, setRedeemableCount] = useState(0);
 
   useEffect(() => {
     if (user) {
       loadMessages();
       checkVerification();
-      loadRedeemableRewards();
     }
   }, [user]);
 
@@ -61,47 +60,7 @@ export const AppMessages = () => {
     setEmailVerified(data?.email_verified ?? true);
   };
 
-  const loadRedeemableRewards = async () => {
-    if (!user) return;
-    try {
-      const { data: accounts } = await supabase
-        .from('loyalty_accounts')
-        .select('merchant_customer_id, current_points_balance')
-        .eq('user_id', user.id)
-        .gt('current_points_balance', 0);
 
-      if (!accounts || accounts.length === 0) {
-        setRedeemableCount(0);
-        return;
-      }
-
-      const merchantIds = accounts.map(a => a.merchant_customer_id);
-      const pointsMap = new Map(accounts.map(a => [a.merchant_customer_id, a.current_points_balance || 0]));
-
-      // Only count rewards from active merchants
-      const { data: activeMerchants } = await supabase
-        .from('customers')
-        .select('id')
-        .in('id', merchantIds)
-        .eq('active', true);
-      const activeIds = new Set((activeMerchants || []).map((m: any) => m.id));
-
-      const { data: rewards } = await supabase
-        .from('rewards')
-        .select('id, points_required, merchant_customer_id')
-        .eq('is_active', true)
-        .in('merchant_customer_id', Array.from(activeIds));
-
-      if (rewards) {
-        const count = rewards.filter(r => (pointsMap.get(r.merchant_customer_id) || 0) >= r.points_required).length;
-        setRedeemableCount(count);
-        // Mark current count as "seen" so badge disappears
-        localStorage.setItem(`rewards_seen_count_${user.id}`, count.toString());
-      }
-    } catch (err) {
-      console.error('[Messages] Error loading rewards:', err);
-    }
-  };
 
   const loadMessages = async () => {
     setLoading(true);
@@ -213,29 +172,6 @@ export const AppMessages = () => {
           </Card>
         )}
 
-        {/* Pinned redeemable rewards card */}
-        {redeemableCount > 0 && (
-          <button
-            onClick={() => navigate('/app/rewards')}
-            className="w-full text-left rounded-lg p-4 cursor-pointer hover:shadow-md transition-shadow bg-black/[0.06] dark:bg-white/[0.04]"
-          >
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-full bg-emerald-500/15 flex items-center justify-center">
-                <Trophy className="h-6 w-6 text-emerald-600 dark:text-emerald-400" />
-              </div>
-              <div className="flex-1">
-                <div className="text-xl font-bold text-foreground">
-                  {redeemableCount}
-                </div>
-                <div className="text-sm text-muted-foreground">
-                  {redeemableCount === 1 ? 'Einlösbare Prämie' : 'Einlösbare Prämien'}
-                </div>
-              </div>
-              <ChevronRight className="h-5 w-5 text-muted-foreground" />
-            </div>
-          </button>
-        )}
-
         {loading ? (
           <Card className="p-6">
             <p className="text-muted-foreground text-center">Lädt...</p>
@@ -291,7 +227,7 @@ export const AppMessages = () => {
             </Card>
           ))
         ) : (
-          !emailVerified ? null : redeemableCount > 0 ? null : (
+          !emailVerified ? null : (
             <Card className="p-8 text-center">
               <div className="mx-auto w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4">
                 <MessageSquare className="h-8 w-8 text-muted-foreground" />
@@ -303,6 +239,9 @@ export const AppMessages = () => {
             </Card>
           )
         )}
+
+        {/* Offene Einladungen */}
+        <OpenInvitationsPanel />
       </div>
     </MainLayout>
   );
