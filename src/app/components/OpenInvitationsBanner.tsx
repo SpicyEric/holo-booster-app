@@ -96,7 +96,7 @@ export function OpenInvitationsBanner() {
         if (!m) continue;
 
         const start = r.bonus_window_starts_at ?? r.accepted_at;
-        const windowEnd = new Date(new Date(start).getTime() + 7 * 24 * 60 * 60 * 1000).toISOString();
+        const windowEnd = new Date(new Date(start).getTime() + 90 * 24 * 60 * 60 * 1000).toISOString();
         if (new Date(windowEnd).getTime() < Date.now()) continue;
 
         collected.push({
