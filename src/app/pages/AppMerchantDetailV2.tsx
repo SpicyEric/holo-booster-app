@@ -231,8 +231,8 @@ export const AppMerchantDetailV2 = () => {
   const resetKey = `eloyo:v2:demo-reset:${merchantId}`;
   const lastDateKey = `eloyo:v2:lastcheckin:${merchantId}`;
 
-  const defaultCheckIns = DEMO_DEFAULT_CHECK_INS;
-  const defaultRedeemed = DEMO_DEFAULT_REDEEMED;
+  const defaultCheckIns = isDemoMerchant ? DEMO_DEFAULT_CHECK_INS : [];
+  const defaultRedeemed = isDemoMerchant ? DEMO_DEFAULT_REDEEMED : [];
 
   const [checkIns, setCheckIns] = useState<CheckInEntry[]>(() => {
     if (typeof window === 'undefined') return defaultCheckIns;
