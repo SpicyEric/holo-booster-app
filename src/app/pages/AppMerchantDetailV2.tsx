@@ -520,7 +520,7 @@ export const AppMerchantDetailV2 = () => {
               backgroundImage: `url(${coverImageUrl})`,
               backgroundSize: 'cover',
               backgroundPosition: 'center',
-              opacity: isEntering ? 0 : 0.18,
+              opacity: entryPhase === 'flying' ? 0 : 0.18,
               filter: 'saturate(0.9)',
               maskImage: 'linear-gradient(to bottom, transparent 0%, #000 20%, #000 80%, transparent 100%)',
               WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, #000 20%, #000 80%, transparent 100%)',
