@@ -674,14 +674,14 @@ export const AppScan = () => {
                 <motion.div
                   animate={{ scale: [1, 1.15, 1], opacity: [0.5, 1, 0.5] }}
                   transition={{ repeat: Infinity, duration: 2, ease: 'easeInOut' }}
-                  className="relative z-10 w-28 h-28 rounded-full bg-white/15 flex items-center justify-center"
+                  className="relative z-10 w-28 h-28 rounded-full bg-black/10 flex items-center justify-center"
                 >
                   <motion.div
                     animate={{ scale: [1, 1.1, 1] }}
                     transition={{ repeat: Infinity, duration: 1.5 }}
-                    className="w-20 h-20 rounded-full bg-white/15 flex items-center justify-center"
+                    className="w-20 h-20 rounded-full bg-black/10 flex items-center justify-center"
                   >
-                    <Nfc className="h-10 w-10 text-white/90" />
+                    <Nfc className="h-10 w-10 text-black/85" />
                   </motion.div>
                 </motion.div>
               </div>
@@ -730,19 +730,16 @@ export const AppScan = () => {
             transition={{ delay: 0.2, duration: 0.4 }}
           >
             {activatedReward ? (
-              <div
-                className="rounded-2xl border p-4"
-                style={{ borderColor: `${BRAND}33`, background: `${BRAND}0d` }}
-              >
-                <p className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: BRAND }}>
-                  Aktivierte Prämien für diesen Check-in
+              <div className="px-2 text-center">
+                <p className="text-xs font-semibold uppercase tracking-wider mb-1" style={{ color: BRAND }}>
+                  Aktivierte Prämie für diesen Check-in
                 </p>
-                <div className="mt-1">
-                  <p className="text-2xl font-extrabold leading-tight" style={{ color: BRAND }}>{activatedReward.label}</p>
-                </div>
+                <p className="text-2xl font-extrabold leading-tight text-neutral-900 dark:text-white">
+                  {activatedReward.label}
+                </p>
               </div>
             ) : (
-              <p className="text-2xl font-bold text-neutral-100 text-center leading-snug px-2 py-2">
+              <p className="text-2xl font-bold text-neutral-900 dark:text-white text-center leading-snug px-2 py-2">
                 Keine aktiven Prämien für diesen Check-in.
               </p>
             )}
