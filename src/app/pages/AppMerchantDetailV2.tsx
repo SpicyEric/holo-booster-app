@@ -913,7 +913,7 @@ export const AppMerchantDetailV2 = () => {
                             : {}
                         }
                         transition={{ duration: 1.6, repeat: unlocked || isActivatedHere ? Infinity : 0 }}
-                        className="w-16 h-16 rounded-full flex items-center justify-center border-4 bg-white shadow-md relative"
+                        className="w-16 h-16 rounded-full flex items-center justify-center border-4 bg-white dark:bg-neutral-800 shadow-md relative"
                         style={{
                           borderColor: isActivatedHere ? '#F5A623' : BRAND,
                           boxShadow: isActivatedHere ? '0 0 0 4px #F5A62333' : undefined,
@@ -945,7 +945,7 @@ export const AppMerchantDetailV2 = () => {
                       )}
                     </button>
                     <div
-                      className={`absolute left-1/2 -translate-x-1/2 ${labelBelow ? '-top-7' : 'top-full mt-2'} px-2 py-0.5 rounded-full bg-white shadow-sm border text-[10px] font-semibold text-neutral-800 max-w-[110px] truncate text-center pointer-events-none`}
+                      className={`absolute left-1/2 -translate-x-1/2 ${labelBelow ? '-top-7' : 'top-full mt-2'} px-2 py-0.5 rounded-full bg-white dark:bg-neutral-800 shadow-sm border text-[10px] font-semibold text-neutral-800 dark:text-neutral-100 max-w-[110px] truncate text-center pointer-events-none`}
                       style={{ borderColor: `${BRAND}55` }}
                       title={reward.label}
                     >
@@ -959,7 +959,7 @@ export const AppMerchantDetailV2 = () => {
                 <div key={visit} className="absolute -translate-x-1/2 -translate-y-1/2" style={{ left: cx, top: cy }}>
                   {label && (
                     <div
-                      className={`absolute left-1/2 -translate-x-1/2 px-2 py-0.5 rounded-full bg-neutral-900/85 text-white text-[10px] font-semibold flex items-center gap-1 whitespace-nowrap ${
+                      className={`absolute left-1/2 -translate-x-1/2 px-2 py-0.5 rounded-full bg-neutral-900/85 dark:bg-neutral-100/90 text-white dark:text-neutral-900 text-[10px] font-semibold flex items-center gap-1 whitespace-nowrap ${
                         labelBelow ? 'top-full mt-2' : '-top-8'
                       }`}
                     >
@@ -977,11 +977,11 @@ export const AppMerchantDetailV2 = () => {
                     <motion.div
                       animate={isCurrent ? { scale: [1, 1.06, 1] } : {}}
                       transition={{ duration: 1.4, repeat: isCurrent ? Infinity : 0 }}
-                      className="rounded-full flex items-center justify-center border-4 shadow"
+                      className="rounded-full flex items-center justify-center border-4 shadow dark:[--node-bg:theme(colors.neutral.800)]"
                       style={{
                         width: isCurrent ? 56 : 44,
                         height: isCurrent ? 56 : 44,
-                        background: isPast ? BRAND : '#fff',
+                        background: isPast ? BRAND : 'var(--node-bg, #fff)',
                         borderColor: isPast || isCurrent ? BRAND : `${BRAND}55`,
                       }}
                     >
@@ -1036,7 +1036,7 @@ export const AppMerchantDetailV2 = () => {
                     <p className="text-[10px] uppercase tracking-wider font-bold text-amber-700">
                       Für den nächsten Check-in aktiviert
                     </p>
-                    <p className="text-base font-extrabold text-neutral-900 mt-0.5 leading-tight">
+                    <p className="text-base font-extrabold text-neutral-900 dark:text-neutral-100 mt-0.5 leading-tight">
                       {activatedReward.label}
                     </p>
                     <button
@@ -1058,8 +1058,8 @@ export const AppMerchantDetailV2 = () => {
                 >
                   <Sparkles className="w-5 h-5 mt-0.5 shrink-0" style={{ color: BRAND }} />
                   <div>
-                    <p className="text-sm font-semibold text-neutral-900">So funktioniert das Einlösen</p>
-                    <p className="text-xs text-neutral-600 mt-1 leading-relaxed">
+                    <p className="text-sm font-semibold text-neutral-900 dark:text-neutral-100">So funktioniert das Einlösen</p>
+                    <p className="text-xs text-neutral-600 dark:text-neutral-400 mt-1 leading-relaxed">
                       Tippe vor deinem nächsten Check-in auf eine freigeschaltete Prämie, um sie zu aktivieren.
                       Beim Check-in wird sie automatisch eingelöst. Pro Tag nur ein Check-in pro Geschäft.
                     </p>
@@ -1716,22 +1716,22 @@ function MerchantInfoSection({ info, brand }: { info: MerchantInfo; brand: strin
   return (
     <div className="px-4 mt-4 space-y-3">
       {info.description && (
-        <p className="text-sm leading-relaxed text-neutral-700 whitespace-pre-line">
+        <p className="text-sm leading-relaxed text-neutral-700 dark:text-neutral-300 whitespace-pre-line">
           {info.description}
         </p>
       )}
 
       {visibleHours.length > 0 && (
-        <div className="rounded-xl border bg-white/70 p-3" style={{ borderColor: `${brand}33` }}>
-          <div className="mb-2 flex items-center gap-2 text-xs font-semibold text-neutral-900">
+        <div className="rounded-xl border bg-white/70 dark:bg-neutral-900/60 p-3" style={{ borderColor: `${brand}33` }}>
+          <div className="mb-2 flex items-center gap-2 text-xs font-semibold text-neutral-900 dark:text-neutral-100">
             <Clock className="h-4 w-4" style={{ color: brand }} />
             Öffnungszeiten
           </div>
           <div className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-xs">
             {visibleHours.map((entry) => (
               <div key={entry.label} className="contents">
-                <span className="text-neutral-500">{entry.label}</span>
-                <span className="text-neutral-800">{entry.time}</span>
+                <span className="text-neutral-500 dark:text-neutral-400">{entry.label}</span>
+                <span className="text-neutral-800 dark:text-neutral-200">{entry.time}</span>
               </div>
             ))}
           </div>
@@ -1743,7 +1743,7 @@ function MerchantInfoSection({ info, brand }: { info: MerchantInfo; brand: strin
           href={`https://maps.google.com/?q=${encodeURIComponent(info.address)}`}
           target="_blank"
           rel="noopener noreferrer"
-          className="flex items-start gap-2 text-sm text-neutral-700"
+          className="flex items-start gap-2 text-sm text-neutral-700 dark:text-neutral-300"
         >
           <MapPin className="mt-0.5 h-4 w-4 shrink-0" style={{ color: brand }} />
           <span>{info.address}</span>
