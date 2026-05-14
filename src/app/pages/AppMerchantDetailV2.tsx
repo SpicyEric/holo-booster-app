@@ -507,14 +507,20 @@ export const AppMerchantDetailV2 = () => {
   useEffect(() => {
     const el = scrollerRef.current;
     if (!el) return;
+    let ready = false;
+    const readyTimer = window.setTimeout(() => { ready = true; }, 600);
     const onScroll = () => {
+      if (!ready) return;
       const indexInWindow = currentVisit - windowStart;
       const currentX = indexInWindow * NODE_SPACING + NODE_SPACING / 2;
       const viewCenter = el.scrollLeft + el.clientWidth / 2;
       setShowJumpToNow(Math.abs(viewCenter - currentX) > el.clientWidth * 0.6);
     };
     el.addEventListener('scroll', onScroll, { passive: true });
-    return () => el.removeEventListener('scroll', onScroll);
+    return () => {
+      window.clearTimeout(readyTimer);
+      el.removeEventListener('scroll', onScroll);
+    };
   }, [currentVisit, windowStart]);
 
   // Drag-to-scroll mit Maus (Desktop)
