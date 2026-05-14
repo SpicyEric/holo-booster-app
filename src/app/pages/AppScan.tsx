@@ -792,15 +792,14 @@ export const AppScan = () => {
 
             <Button
               onClick={() => {
+                if (!contextMerchantId) return;
                 setSimulatedFlip('flipping');
                 setTimeout(() => {
-                  if (activatedReward) {
-                    setRedemptionOverlay(activatedReward);
-                  } else {
-                    toast.success('Check-in registriert!');
-                    setSimulatedFlip('idle');
-                  }
-                }, 800);
+                  navigate(`/app/merchant/${contextMerchantId}`, {
+                    state: { triggerCheckIn: true },
+                  });
+                  setSimulatedFlip('idle');
+                }, 700);
               }}
               className="w-full mt-4 text-white"
               style={{ background: BRAND }}
