@@ -1028,38 +1028,142 @@ export const AppMerchantDetailV2 = () => {
         </Card>
       </motion.div>
 
-      {/* Google-Bewertung abgeben */}
-      <motion.div
-        className="px-4 mt-4"
-        initial={isEntering ? { opacity: 0, y: 10 } : false}
-        animate={friendsVisible ? { opacity: 1, y: 0 } : { opacity: 0, y: -8 }}
-        transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1], delay: sectionsRevealed && !isExiting ? 0.3 : 0 }}
-      >
-        <Card
-          className="p-5 border-0 text-white shadow-lg"
-          style={{ background: `linear-gradient(135deg, ${BRAND}, ${BRAND}cc)` }}
+      {/* Google-Bewertung abgeben — nur wenn min. 1 Check-in & noch nicht abgegeben */}
+      {currentVisit >= 1 && !googleReviewDone && (
+        <motion.div
+          className="px-4 mt-4"
+          initial={isEntering ? { opacity: 0, y: 10 } : false}
+          animate={friendsVisible ? { opacity: 1, y: 0 } : { opacity: 0, y: -8 }}
+          transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1], delay: sectionsRevealed && !isExiting ? 0.3 : 0 }}
         >
-          <div className="flex items-center gap-3 mb-3">
-            <div className="w-11 h-11 rounded-2xl bg-white/20 flex items-center justify-center">
-              <Star className="w-5 h-5" fill="white" />
-            </div>
-            <div>
-              <h3 className="font-bold text-base">Google-Bewertung abgeben</h3>
-              <p className="text-xs text-white/85">
-                Bewerte Backstube König bei Google = +1 Check-in auf deinem Treuepass
-              </p>
-            </div>
-          </div>
-          <Button
-            onClick={() => window.open(`https://www.google.com/search?q=${encodeURIComponent('Backstube König')}`, '_blank')}
-            className="w-full bg-white hover:bg-white/90"
-            style={{ color: BRAND }}
+          <Card
+            className="p-5 border-0 text-white shadow-lg"
+            style={{ background: `linear-gradient(135deg, ${BRAND}, ${BRAND}cc)` }}
           >
-            Jetzt bewerten
-          </Button>
-        </Card>
-      </motion.div>
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-11 h-11 rounded-2xl bg-white/20 flex items-center justify-center">
+                <Star className="w-5 h-5" fill="white" />
+              </div>
+              <div>
+                <h3 className="font-bold text-base">Hol dir einen Check-in</h3>
+                <p className="text-xs text-white/85">Bewerte uns bei Google</p>
+              </div>
+            </div>
+            <Button
+              onClick={() => setGoogleReviewOpen(true)}
+              className="w-full bg-white hover:bg-white/90"
+              style={{ color: BRAND }}
+            >
+              Bewerten
+            </Button>
+          </Card>
+        </motion.div>
+      )}
 
+      {/* Google-Bewertungs-Pop-up */}
+      <Dialog open={googleReviewOpen} onOpenChange={setGoogleReviewOpen}>
+        <DialogContent className="max-w-[320px] rounded-3xl p-6 gap-4">
+          <div className="text-center space-y-2">
+            <div
+              className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto"
+              style={{ background: BRAND_SOFT }}
+            >
+              <Star className="w-7 h-7" style={{ color: BRAND }} fill={BRAND} />
+            </div>
+            <h2 className="text-xl font-bold text-neutral-900">Bewertung abgeben</h2>
+            <p className="text-xs font-semibold uppercase tracking-wide text-neutral-500">So funktioniert's</p>
+          </div>
+          <p className="text-sm text-neutral-700 leading-relaxed text-center">
+            Bewerte <span className="font-semibold text-neutral-900">Backstube König</span> bei Google.
+            Du bekommst <span className="font-semibold text-neutral-900">+1 Check-in</span> geschenkt.
+            <br />
+            <span className="text-xs text-neutral-500">Nur einmal pro Geschäft möglich.</span>
+          </p>
+          <Button
+            onClick={handleGoogleReviewClick}
+            className="w-full h-11 rounded-xl text-white"
+            style={{ background: BRAND }}
+          >
+            Bei Google bewerten
+          </Button>
+        </DialogContent>
+      </Dialog>
+
+      {/* Knoten-Detail-Pop-up (Check-in / Boost / Geburtstag / Bewertung / Prämie) */}
+      <Dialog open={!!nodeDetail} onOpenChange={(o) => !o && setNodeDetail(null)}>
+        <DialogContent className="max-w-[320px] rounded-3xl p-6 gap-3">
+          {nodeDetail?.kind === 'check-in' && (
+            <>
+              <div className="flex items-center gap-3">
+                <div
+                  className="w-12 h-12 rounded-full flex items-center justify-center text-white"
+                  style={{ background: BRAND }}
+                >
+                  {sourceNodeIcon(nodeDetail.source)}
+                </div>
+                <div>
+                  <h2 className="text-lg font-bold text-neutral-900">
+                    {nodeDetail.source === 'boost' ? 'Boost'
+                      : nodeDetail.source === 'birthday' ? 'Geburtstag'
+                      : nodeDetail.source === 'google_review' ? 'Bewertung'
+                      : 'Check-in'}
+                  </h2>
+                  <p className="text-xs text-neutral-500">Check-in #{nodeDetail.visit}</p>
+                </div>
+              </div>
+              <div className="space-y-2 text-sm text-neutral-700 mt-2">
+                <div className="flex items-center gap-2">
+                  <CalendarIcon className="w-4 h-4 text-neutral-400" />
+                  <span>
+                    {nodeDetail.source === 'boost' ? 'Boost erhalten am ' : 'Eingecheckt am '}
+                    <span className="font-semibold text-neutral-900">{formatDateTime(nodeDetail.at)}</span>
+                  </span>
+                </div>
+                {nodeDetail.source === 'boost' && nodeDetail.invitedAt && (
+                  <div className="flex items-center gap-2">
+                    <UserPlus className="w-4 h-4 text-neutral-400" />
+                    <span>
+                      Einladung angenommen am{' '}
+                      <span className="font-semibold text-neutral-900">{formatDateTime(nodeDetail.invitedAt)}</span>
+                    </span>
+                  </div>
+                )}
+                {nodeDetail.source === 'normal' && (
+                  <div className="flex items-center gap-2">
+                    <Gift className="w-4 h-4 text-neutral-400" />
+                    <span>
+                      Prämie eingelöst:{' '}
+                      <span className="font-semibold text-neutral-900">
+                        {nodeDetail.redeemed ? `Ja – ${nodeDetail.redeemed.label}` : 'Nein'}
+                      </span>
+                    </span>
+                  </div>
+                )}
+              </div>
+            </>
+          )}
+          {nodeDetail?.kind === 'reward-redeemed' && (
+            <>
+              <div className="flex items-center gap-3">
+                <div
+                  className="w-12 h-12 rounded-full flex items-center justify-center"
+                  style={{ background: BRAND_SOFT }}
+                >
+                  <Gift className="w-6 h-6" style={{ color: BRAND }} />
+                </div>
+                <div>
+                  <h2 className="text-lg font-bold text-neutral-900">Prämie eingelöst</h2>
+                  <p className="text-xs text-neutral-500">{nodeDetail.label}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 text-sm text-neutral-700 mt-2">
+                <CalendarIcon className="w-4 h-4 text-neutral-400" />
+                <span>Eingelöst am <span className="font-semibold text-neutral-900">{formatDateTime(nodeDetail.at)}</span></span>
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
       {/* Boost-Info Popup */}
       <Dialog open={boostInfoOpen} onOpenChange={setBoostInfoOpen}>
         <DialogContent className="max-w-[320px] rounded-3xl p-6 gap-4">
