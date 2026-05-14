@@ -2,7 +2,8 @@ import { useEffect, useState, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Loader2, TrendingUp, Gift, Search, Filter, CalendarDays,
-  ChevronDown, ChevronUp, Activity, Clock, Nfc, Sparkles, SlidersHorizontal
+  ChevronDown, ChevronUp, Activity, Clock, Nfc, Sparkles, SlidersHorizontal,
+  Check, Star
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
