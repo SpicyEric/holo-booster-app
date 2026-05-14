@@ -451,7 +451,6 @@ const AppHomeContent = ({ active }: { active: boolean }) => {
     <PullToRefresh onRefresh={handleRefresh}>
       <OpenInvitationsBanner />
       <div style={{ paddingBottom: '2rem' }}>
-        <h2 className="text-lg font-semibold text-foreground px-1 mb-3">Deine Treuepässe</h2>
         <div className="overflow-hidden -mx-4" ref={emblaRef}>
           <div className="flex touch-pan-y">
             {cards.map((store) => (
