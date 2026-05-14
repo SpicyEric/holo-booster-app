@@ -76,7 +76,7 @@ export default function MerchantActivitySection({ customerId }: Props) {
       const isDemo = customerId === DEMO_MERCHANT_ID;
 
       const [txResult, rewardResult, cardResult, accountsResult] = await Promise.all([
-        supabase.from("point_transactions").select("id, created_at, points_change, transaction_type, description").eq("merchant_customer_id", customerId).order("created_at", { ascending: false }).limit(1000),
+        supabase.from("point_transactions").select("id, created_at, points_change, transaction_type, description, loyalty_account_id").eq("merchant_customer_id", customerId).order("created_at", { ascending: false }).limit(1000),
         supabase.from("rewards").select("id, title").eq("merchant_customer_id", customerId).eq("is_active", true),
         (supabase.from("nfc_cards" as any).select("id, name, points, color").eq("merchant_customer_id", customerId) as unknown as Promise<{ data: any[] | null }>).then(r => r, () => ({ data: [] as any[] })),
         supabase.from("loyalty_accounts").select("created_at").eq("merchant_customer_id", customerId).order("created_at", { ascending: true }),
