@@ -60,32 +60,51 @@ export function MerchantBrandTheme({ children }: { children: ReactNode }) {
     };
   }, [fetchBrand]);
 
-  const style: CSSProperties = {};
-  if (state.version === 'v2' && state.color) {
-    const hsl = hexToHslString(state.color);
-    const fg = contrastForegroundHsl(state.color);
-    Object.assign(style, {
-      ['--primary' as string]: hsl,
-      ['--primary-foreground' as string]: fg,
-      ['--secondary' as string]: hsl,
-      ['--secondary-foreground' as string]: fg,
-      ['--accent' as string]: hsl,
-      ['--ring' as string]: hsl,
-      ['--gradient-primary' as string]: `linear-gradient(135deg, hsl(${hsl}), hsl(${brandDarkHsl(state.color)}))`,
-      ['--gradient-glow' as string]: `linear-gradient(135deg, hsl(${hsl} / 0.12), hsl(${brandTintHsl(state.color, 92)} / 0.5))`,
-      ['--shadow-glow' as string]: `0 4px 20px hsl(${hsl} / 0.18)`,
-      ['--merchant-bg' as string]: brandTintHsl(state.color, 96),
-      ['--merchant-bg-soft' as string]: brandTintHsl(state.color, 98),
-      ['--merchant-sidebar' as string]: brandDarkHsl(state.color),
-      ['--merchant-shadow' as string]: hsl,
-    });
-  }
+  // Apply brand variables to <html> so they also reach Radix portals (Dialog/Toast/Popover)
+  useEffect(() => {
+    const root = document.documentElement;
+    const keys = [
+      '--primary',
+      '--primary-foreground',
+      '--secondary',
+      '--secondary-foreground',
+      '--accent',
+      '--ring',
+      '--gradient-primary',
+      '--gradient-glow',
+      '--shadow-glow',
+      '--merchant-bg',
+      '--merchant-bg-soft',
+      '--merchant-sidebar',
+      '--merchant-shadow',
+    ];
+    if (state.version === 'v2' && state.color) {
+      const hsl = hexToHslString(state.color);
+      const fg = contrastForegroundHsl(state.color);
+      const map: Record<string, string> = {
+        '--primary': hsl,
+        '--primary-foreground': fg,
+        '--secondary': hsl,
+        '--secondary-foreground': fg,
+        '--accent': hsl,
+        '--ring': hsl,
+        '--gradient-primary': `linear-gradient(135deg, hsl(${hsl}), hsl(${brandDarkHsl(state.color)}))`,
+        '--gradient-glow': `linear-gradient(135deg, hsl(${hsl} / 0.12), hsl(${brandTintHsl(state.color, 92)} / 0.5))`,
+        '--shadow-glow': `0 4px 20px hsl(${hsl} / 0.18)`,
+        '--merchant-bg': brandTintHsl(state.color, 96),
+        '--merchant-bg-soft': brandTintHsl(state.color, 98),
+        '--merchant-sidebar': brandDarkHsl(state.color),
+        '--merchant-shadow': hsl,
+      };
+      keys.forEach((k) => root.style.setProperty(k, map[k]));
+    }
+    return () => {
+      // Reset on unmount so non-merchant routes get default tokens back
+      keys.forEach((k) => root.style.removeProperty(k));
+    };
+  }, [state.version, state.color]);
 
-  return (
-    <div style={style} className="contents">
-      {children}
-    </div>
-  );
+  return <>{children}</>;
 }
 
 export default MerchantBrandTheme;
