@@ -200,7 +200,7 @@ export const SwipeableAppContainer = () => {
       >
         <div className="flex h-full">
           <div className="flex-[0_0_100%] min-w-0 h-full overflow-y-auto" style={{ overscrollBehavior: 'contain', touchAction: 'pan-y' }}>
-            <div className="container mx-auto px-4 pt-1 pb-16 max-w-2xl relative z-10">
+            <div className="container mx-auto px-4 pt-3 pb-16 max-w-2xl relative z-10">
               <AppHomeContent active={currentIndex === 0} />
             </div>
           </div>
