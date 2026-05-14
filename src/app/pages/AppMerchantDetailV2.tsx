@@ -1145,6 +1145,44 @@ export const AppMerchantDetailV2 = () => {
         )}
       </AnimatePresence>
 
+      {/* Exit-Transition zum Scan-Screen: Cover morpht von Snake-Band zur Scan-Card */}
+      <AnimatePresence>
+        {isExiting && exitOrigin && exitTarget && coverImageUrl && (
+          <motion.div
+            key="cover-fly-exit"
+            className="fixed z-[60] pointer-events-none overflow-hidden shadow-2xl"
+            initial={{
+              top: exitOrigin.top,
+              left: exitOrigin.left,
+              width: exitOrigin.width,
+              height: exitOrigin.height,
+              borderRadius: 0,
+              opacity: 0.35,
+            }}
+            animate={{
+              top: exitTarget.top,
+              left: exitTarget.left,
+              width: exitTarget.width,
+              height: exitTarget.height,
+              borderRadius: 16,
+              opacity: 1,
+            }}
+            transition={{
+              duration: 0.75,
+              ease: [0.22, 1, 0.36, 1],
+              opacity: { duration: 0.75, ease: [0.4, 0, 0.6, 1] },
+              borderRadius: { duration: 0.6, ease: [0.22, 1, 0.36, 1] },
+            }}
+            style={{
+              backgroundImage: `url(${coverImageUrl})`,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+              backgroundColor: BRAND,
+            }}
+          />
+        )}
+      </AnimatePresence>
+
       <BottomNav />
     </div>
   );
