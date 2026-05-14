@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState, useRef } from 'react';
 import { Capacitor } from '@capacitor/core';
 import useEmblaCarousel from 'embla-carousel-react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Store, Gift, MessageSquare, Mail, Bell, MapPin, Search, User, History, LogOut, Shield, FileText, HelpCircle, ChevronRight, Sparkles, AlertCircle, TrendingUp, Trophy, Loader2, Heart, Nfc } from 'lucide-react';
+import { Store, Gift, MessageSquare, Mail, Bell, MapPin, Search, User, History, LogOut, Shield, FileText, HelpCircle, ChevronRight, Sparkles, AlertCircle, TrendingUp, Trophy, Loader2, Heart, Nfc, Clock, Globe, Instagram, Facebook, Twitter } from 'lucide-react';
 import { PullToRefresh } from '@/app/components/PullToRefresh';
 import { StoresGoogleMap } from '@/app/components/StoresGoogleMap';
 import { supabase } from '@/integrations/supabase/client';
@@ -43,6 +43,47 @@ const INDEX_TO_TITLE: Record<number, string> = {
   2: 'Nachrichten',
   3: 'Einstellungen',
 };
+
+type OpeningHourEntry = { open?: string; close?: string; closed?: boolean };
+
+type HomeMerchantCard = {
+  id: string;
+  merchantId: string;
+  name: string;
+  category: string | null;
+  logoUrl: string | null;
+  coverImage: string | null;
+  distance: number | null;
+  description: string | null;
+  openingHours: Record<string, OpeningHourEntry> | null;
+  address: string | null;
+  website: string | null;
+  instagram: string | null;
+  facebook: string | null;
+  twitter: string | null;
+};
+
+const HOME_DAY_LABELS: { key: string; label: string }[] = [
+  { key: 'monday', label: 'Mo' },
+  { key: 'tuesday', label: 'Di' },
+  { key: 'wednesday', label: 'Mi' },
+  { key: 'thursday', label: 'Do' },
+  { key: 'friday', label: 'Fr' },
+  { key: 'saturday', label: 'Sa' },
+  { key: 'sunday', label: 'So' },
+];
+
+function normalizeHomeUrl(value: string | null): string | null {
+  const trimmed = value?.trim();
+  if (!trimmed) return null;
+  return /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
+}
+
+function normalizeInstagramUrl(value: string | null): string | null {
+  const trimmed = value?.trim().replace(/^@/, '');
+  if (!trimmed) return null;
+  return /^https?:\/\//i.test(trimmed) ? trimmed : `https://instagram.com/${trimmed}`;
+}
 
 export const SwipeableAppContainer = () => {
   const location = useLocation();
@@ -203,15 +244,7 @@ function haversineDistance(lat1: number, lon1: number, lat2: number, lon2: numbe
 const AppHomeContent = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [cards, setCards] = useState<Array<{
-    id: string;
-    merchantId: string;
-    name: string;
-    category: string | null;
-    logoUrl: string | null;
-    coverImage: string | null;
-    distance: number | null;
-  }>>([]);
+  const [cards, setCards] = useState<HomeMerchantCard[]>([]);
   const [loading, setLoading] = useState(true);
   const [emblaRef] = useEmblaCarousel({ loop: true, align: 'center', containScroll: false });
 
@@ -232,7 +265,7 @@ const AppHomeContent = () => {
 
       const { data: merchants } = await supabase
         .from('customers')
-        .select('id, name, company_name, logo_url, cover_image_url, industry, latitude, longitude')
+        .select('id, name, company_name, logo_url, cover_image_url, industry, latitude, longitude, description, opening_hours, street, house_number, postal_code, city, website, instagram, facebook, twitter')
         .eq('active', true)
         .in('id', merchantIds);
 
@@ -256,6 +289,8 @@ const AppHomeContent = () => {
           if (!m) return null;
           const lat = m.latitude as number | null;
           const lng = m.longitude as number | null;
+          const streetWithNumber = [m.street, m.house_number].filter(Boolean).join(' ');
+          const address = [streetWithNumber, [m.postal_code, m.city].filter(Boolean).join(' ')].filter(Boolean).join(', ');
           const distance =
             userLat != null && userLng != null && lat != null && lng != null
               ? haversineDistance(userLat, userLng, lat, lng)
@@ -268,6 +303,13 @@ const AppHomeContent = () => {
             logoUrl: m.logo_url || null,
             coverImage: m.cover_image_url || null,
             distance,
+            description: m.description || null,
+            openingHours: m.opening_hours && typeof m.opening_hours === 'object' ? m.opening_hours as Record<string, OpeningHourEntry> : null,
+            address: address || null,
+            website: m.website || null,
+            instagram: m.instagram || null,
+            facebook: m.facebook || null,
+            twitter: m.twitter || null,
           };
         })
         .filter((x): x is NonNullable<typeof x> => !!x)
@@ -406,6 +448,7 @@ const AppHomeContent = () => {
                     )}
                   </div>
                 </button>
+                <HomeMerchantInfoBlock store={store} />
               </div>
             ))}
           </div>
@@ -414,6 +457,87 @@ const AppHomeContent = () => {
     </PullToRefresh>
   );
 };
+
+function HomeMerchantInfoBlock({ store }: { store: HomeMerchantCard }) {
+  const links: { href: string; label: string; Icon: typeof Globe }[] = [];
+  const web = normalizeHomeUrl(store.website);
+  const ig = normalizeInstagramUrl(store.instagram);
+  const fb = normalizeHomeUrl(store.facebook);
+  const tw = normalizeHomeUrl(store.twitter);
+  if (web) links.push({ href: web, label: 'Website', Icon: Globe });
+  if (ig) links.push({ href: ig, label: 'Instagram', Icon: Instagram });
+  if (fb) links.push({ href: fb, label: 'Facebook', Icon: Facebook });
+  if (tw) links.push({ href: tw, label: 'Twitter', Icon: Twitter });
+
+  const visibleHours = store.openingHours
+    ? HOME_DAY_LABELS.map(({ key, label }) => {
+        const day = store.openingHours?.[key];
+        if (!day) return null;
+        return {
+          label,
+          time: day.closed ? 'Geschlossen' : [day.open, day.close].filter(Boolean).join(' – '),
+        };
+      }).filter((entry): entry is { label: string; time: string } => !!entry && !!entry.time)
+    : [];
+
+  if (!store.description && visibleHours.length === 0 && !store.address && links.length === 0) return null;
+
+  return (
+    <div className="mt-3 space-y-3 px-1 pb-1 text-left">
+      {store.description && (
+        <p className="text-sm leading-relaxed text-foreground/80 whitespace-pre-line">
+          {store.description}
+        </p>
+      )}
+
+      {visibleHours.length > 0 && (
+        <div className="rounded-xl border border-border/50 bg-background/75 p-3 backdrop-blur-sm">
+          <div className="mb-2 flex items-center gap-2 text-xs font-semibold text-foreground">
+            <Clock className="h-4 w-4 text-primary" />
+            Öffnungszeiten
+          </div>
+          <div className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-xs">
+            {visibleHours.map((entry) => (
+              <div key={entry.label} className="contents">
+                <span className="text-muted-foreground">{entry.label}</span>
+                <span className="text-foreground">{entry.time}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {store.address && (
+        <a
+          href={`https://maps.google.com/?q=${encodeURIComponent(store.address)}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-start gap-2 text-sm text-foreground/80"
+        >
+          <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+          <span>{store.address}</span>
+        </a>
+      )}
+
+      {links.length > 0 && (
+        <div className="flex flex-wrap gap-2">
+          {links.map(({ href, label, Icon }) => (
+            <a
+              key={label}
+              href={href}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1.5 text-xs font-medium text-primary transition-colors hover:bg-primary/15"
+            >
+              <Icon className="h-3.5 w-3.5" />
+              {label}
+            </a>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 // Messages Content
 const AppMessagesContent = () => {
