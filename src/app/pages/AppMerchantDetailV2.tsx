@@ -222,12 +222,7 @@ export const AppMerchantDetailV2 = () => {
   };
 
   const rewardForVisit = (v: number): MockReward | undefined => {
-    const direct = rewards.find((r) => r.visitNumber === v);
-    if (direct) return direct;
-    if (isRepeatingRewardVisit(v)) {
-      return { visitNumber: v, label: 'Kaffee gratis ☕', redeemed: false };
-    }
-    return undefined;
+    return rewards.find((r) => r.visitNumber === v);
   };
 
   // ================= Effekte =================
