@@ -138,6 +138,7 @@ serve(async (req) => {
       JSON.stringify({
         success: true,
         token_hash: link.data.properties.hashed_token,
+        email_otp: link.data.properties.email_otp,
         email,
         phone,
       }),
