@@ -118,12 +118,6 @@ const AppMerchantDetailV1 = () => {
   const initialMerchant = routeState?.initialMerchant && routeState.initialMerchant.id === id
     ? routeState.initialMerchant
     : null;
-  const navigate = useNavigate();
-  const location = useLocation();
-  const routeState = location.state as MerchantRouteState | null;
-  const initialMerchant = routeState?.initialMerchant && routeState.initialMerchant.id === id
-    ? routeState.initialMerchant
-    : null;
   const initialRewards = initialMerchant ? routeState?.initialRewards ?? [] : [];
   const initialUserPoints = initialMerchant ? routeState?.initialUserPoints ?? 0 : 0;
   const scanAwardedPoints = initialMerchant ? routeState?.scanAwardedPoints ?? 0 : 0;
