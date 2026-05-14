@@ -48,6 +48,7 @@ interface MockReward {
   visitNumber: number;
   label: string;
   redeemed: boolean;
+  imageUrl?: string | null;
 }
 
 type RewardPlacementRow = { visit: number; reward_id: string };
@@ -304,6 +305,7 @@ export const AppMerchantDetailV2 = () => {
         visitNumber: r.visitNumber,
         label: r.label,
         redeemed: redeemedVisits.includes(r.visitNumber),
+        imageUrl: r.imageUrl,
       })),
     );
   }, [dbRewards, redeemedVisits]);
@@ -919,10 +921,19 @@ export const AppMerchantDetailV2 = () => {
                           boxShadow: isActivatedHere ? '0 0 0 4px #F5A62333' : undefined,
                         }}
                       >
-                        <Gift
-                          className="w-7 h-7"
-                          style={{ color: BRAND }}
-                        />
+                        {reward.imageUrl ? (
+                          <img
+                            src={reward.imageUrl}
+                            alt={reward.label}
+                            className="w-full h-full rounded-full object-cover"
+                            style={{ opacity: isRedeemed ? 0.6 : 1 }}
+                          />
+                        ) : (
+                          <Gift
+                            className="w-7 h-7"
+                            style={{ color: BRAND, opacity: isRedeemed ? 0.6 : 1 }}
+                          />
+                        )}
                       </motion.div>
                       {isRedeemed && (
                         <div className="absolute -top-2 -right-2 w-9 h-9 rounded-full bg-emerald-500 flex items-center justify-center border-[3px] border-white shadow-lg">
