@@ -179,7 +179,12 @@ export const AppMerchantDetailV2 = () => {
       const raw = localStorage.getItem(checkInsKey);
       if (raw) {
         const parsed = JSON.parse(raw);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed as CheckInEntry[];
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          const normalized = (parsed as CheckInEntry[]).map((entry) =>
+            entry.visit === 5 ? { ...entry, source: 'boost' as CheckInSource } : entry,
+          );
+          return normalized;
+        }
       }
     } catch { /* noop */ }
     return defaultCheckIns;
@@ -572,6 +577,12 @@ export const AppMerchantDetailV2 = () => {
     return null;
   };
 
+  const sourceNodeIcon = (s: CheckInSource | null) => {
+    if (s === 'boost') return <Rocket className="w-5 h-5 text-white" strokeWidth={2.8} />;
+    if (s === 'birthday') return <Cake className="w-5 h-5 text-white" strokeWidth={2.8} />;
+    return <Check className="w-5 h-5 text-white" strokeWidth={3} />;
+  };
+
   return (
     <div
       className="min-h-screen pb-24"
@@ -784,7 +795,7 @@ export const AppMerchantDetailV2 = () => {
                     }}
                   >
                     {isPast ? (
-                      <Check className="w-5 h-5 text-white" strokeWidth={3} />
+                      sourceNodeIcon(source)
                     ) : (
                       <span
                         className="text-sm font-bold"
