@@ -35,13 +35,11 @@ export const AppMessages = () => {
   const [emailVerified, setEmailVerified] = useState(true);
   const [resending, setResending] = useState(false);
   const [resendCooldown, setResendCooldown] = useState(0);
-  const [redeemableCount, setRedeemableCount] = useState(0);
 
   useEffect(() => {
     if (user) {
       loadMessages();
       checkVerification();
-      loadRedeemableRewards();
     }
   }, [user]);
 
