@@ -232,13 +232,29 @@ const Auth = () => {
                 <p className="text-muted-foreground">
                   Sie sind angemeldet als <strong>{user.email}</strong>
                 </p>
+                {role === 'end_customer' && (
+                  <p className="text-sm text-amber-600">
+                    Dies ist ein Endkunden-Account. Bitte abmelden und mit einem Geschäftskunden-Account einloggen.
+                  </p>
+                )}
                 <Button
                   onClick={async () => {
                     setIsLoading(true);
-                    await signOut();
-                    setIsLoading(false);
+                    try {
+                      await supabase.auth.signOut({ scope: 'global' });
+                    } catch (e) {
+                      console.warn('[Auth] signOut global failed, trying local', e);
+                      try { await supabase.auth.signOut({ scope: 'local' }); } catch {}
+                    }
+                    // Hard-clear any persisted session
+                    try {
+                      Object.keys(localStorage)
+                        .filter((k) => k.startsWith('sb-') || k.includes('supabase'))
+                        .forEach((k) => localStorage.removeItem(k));
+                      sessionStorage.clear();
+                    } catch {}
                     toast.success("Erfolgreich abgemeldet");
-                    window.location.reload();
+                    window.location.replace('/auth');
                   }}
                   variant="outline"
                   className="w-full"
