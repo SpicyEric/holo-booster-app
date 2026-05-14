@@ -22,7 +22,7 @@ const MerchantLayout = () => {
   return (
     <ProtectedRoute allowedRoles={allowedRoles}>
       <MerchantBrandTheme>
-        <div className="flex min-h-screen w-full bg-[hsl(262,40%,93%)] font-body">
+        <div className="flex min-h-screen w-full bg-[hsl(var(--merchant-bg,262_40%_93%))] font-body transition-colors duration-300">
           <MerchantSidebar />
           <main className="flex-1 min-w-0 overflow-x-hidden font-body flex flex-col">
             <DemoMerchantBanner />

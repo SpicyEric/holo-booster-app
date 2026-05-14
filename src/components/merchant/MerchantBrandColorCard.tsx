@@ -61,7 +61,7 @@ export function MerchantBrandColorCard({ customerId }: Props) {
     setSaving(false);
     if (error) { toast.error('Konnte Farbe nicht speichern'); return; }
     setSavedColor(color);
-    notifyMerchantBrandUpdated(customerId);
+    notifyMerchantBrandUpdated(customerId, color);
     toast.success('Markenfarbe gespeichert');
   };
 
