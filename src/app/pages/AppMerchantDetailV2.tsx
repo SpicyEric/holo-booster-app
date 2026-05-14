@@ -932,12 +932,12 @@ export const AppMerchantDetailV2 = () => {
             <div>
               <h3 className="font-bold text-base">Google-Bewertung abgeben</h3>
               <p className="text-xs text-white/85">
-                Bewerte {brand.name} bei Google = +1 Check-in auf deinem Treuepass
+                Bewerte Backstube König bei Google = +1 Check-in auf deinem Treuepass
               </p>
             </div>
           </div>
           <Button
-            onClick={() => window.open(`https://www.google.com/search?q=${encodeURIComponent(brand.name)}`, '_blank')}
+            onClick={() => window.open(`https://www.google.com/search?q=${encodeURIComponent('Backstube König')}`, '_blank')}
             className="w-full bg-white hover:bg-white/90 text-[#1a73e8]"
           >
             Jetzt bewerten
