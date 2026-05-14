@@ -1523,7 +1523,7 @@ export const AppMerchantDetailV2 = () => {
 
             {/* Code-Marquee — direkt über dem Häkchen, dünner */}
             {!confirmStage && checkInOverlay.reward && (
-              <div className="absolute left-0 right-0 top-[calc(50%-180px)] py-1.5 overflow-hidden bg-white/10 backdrop-blur border-y border-white/20">
+              <div className="absolute left-0 right-0 top-[calc(50%-240px)] py-1.5 overflow-hidden bg-white/10 backdrop-blur border-y border-white/20">
                 <div
                   className="flex whitespace-nowrap will-change-transform"
                   style={{ animation: 'eloyo-marquee 14s linear infinite' }}
