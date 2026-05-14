@@ -21,6 +21,7 @@ import { useBackButton } from '@/app/hooks/useBackButton';
 import { ExitAppDialog } from '@/app/components/ExitAppDialog';
 import { useStatusBar } from '@/app/hooks/useStatusBar';
 import { OpenInvitationsBanner } from '@/app/components/OpenInvitationsBanner';
+import { OpenInvitationsPanel } from '@/app/components/OpenInvitationsPanel';
 
 // Map route paths to carousel indices
 const ROUTE_TO_INDEX: Record<string, number> = {
@@ -547,14 +548,11 @@ const AppMessagesContent = () => {
   const [messages, setMessages] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [emailVerified, setEmailVerified] = useState(true);
-  const [redeemableCount, setRedeemableCount] = useState(0);
 
   useEffect(() => {
     if (user) {
       loadMessages();
       checkVerification();
-      loadRedeemableRewards();
-      localStorage.setItem(`rewards_seen_${user.id}`, Date.now().toString());
     }
   }, [user]);
 
@@ -582,29 +580,7 @@ const AppMessagesContent = () => {
     return () => document.removeEventListener('visibilitychange', handleVisibility);
   }, [user]);
 
-  const loadRedeemableRewards = async () => {
-    if (!user) return;
-    try {
-      const { data: accounts } = await supabase
-        .from('loyalty_accounts')
-        .select('merchant_customer_id, current_points_balance')
-        .eq('user_id', user.id)
-        .gt('current_points_balance', 0);
-      if (!accounts || accounts.length === 0) { setRedeemableCount(0); return; }
-      const merchantIds = accounts.map(a => a.merchant_customer_id);
-      const pointsMap = new Map(accounts.map(a => [a.merchant_customer_id, a.current_points_balance || 0]));
-      const { data: rewards } = await supabase
-        .from('rewards')
-        .select('id, points_required, merchant_customer_id')
-        .eq('is_active', true)
-        .in('merchant_customer_id', merchantIds);
-      if (rewards) {
-        setRedeemableCount(rewards.filter(r => (pointsMap.get(r.merchant_customer_id) || 0) >= r.points_required).length);
-      }
-    } catch (err) {
-      console.error('[Messages] Error loading rewards:', err);
-    }
-  };
+
 
   const loadMessages = async () => {
     setLoading(true);
@@ -651,7 +627,7 @@ const AppMessagesContent = () => {
   const formatDate = (dateStr: string) => new Date(dateStr).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: '2-digit' });
 
   const handleRefresh = useCallback(async () => {
-    await Promise.all([loadMessages(), loadRedeemableRewards()]);
+    await loadMessages();
   }, [user]);
 
   return (
@@ -670,27 +646,6 @@ const AppMessagesContent = () => {
                 Bitte bestätige deine E-Mail-Adresse, um Prämien einlösen zu können.
               </p>
             </div>
-          </div>
-        </Card>
-      )}
-
-      {/* Redeemable rewards card */}
-      {redeemableCount > 0 && (
-        <Card
-          className="p-4 cursor-pointer hover:shadow-md transition-shadow border-0 bg-muted/70 dark:bg-muted/50"
-          onClick={() => navigate('/app/rewards')}
-        >
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
-              <Trophy className="h-6 w-6 text-primary" />
-            </div>
-            <div className="flex-1">
-              <div className="text-xl font-bold text-foreground">{redeemableCount}</div>
-              <div className="text-sm text-muted-foreground">
-                {redeemableCount === 1 ? 'Einlösbare Prämie' : 'Einlösbare Prämien'}
-              </div>
-            </div>
-            <ChevronRight className="h-5 w-5 text-muted-foreground" />
           </div>
         </Card>
       )}
@@ -733,7 +688,7 @@ const AppMessagesContent = () => {
           ))}
         </div>
       ) : (
-        !emailVerified || redeemableCount > 0 ? null : (
+        !emailVerified ? null : (
           <Card className="p-8 text-center">
             <Bell className="h-12 w-12 text-muted-foreground/50 mx-auto mb-4" />
             <h3 className="font-semibold text-foreground mb-2">Keine Nachrichten</h3>
@@ -741,6 +696,9 @@ const AppMessagesContent = () => {
           </Card>
         )
       )}
+
+      {/* Offene Einladungen */}
+      <OpenInvitationsPanel />
     </div>
     </PullToRefresh>
   );
