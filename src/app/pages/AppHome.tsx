@@ -161,7 +161,7 @@ export const AppHome = () => {
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>
       ) : cards.length === 0 ? (
-        <EmptyTutorial onExplore={() => navigate('/app/stores')} />
+        <ReadyToCheckIn />
       ) : (
         <div style={{ paddingBottom: '2rem' }}>
           {cards.map((store, idx) => (
