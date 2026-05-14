@@ -44,14 +44,32 @@ export async function verifyPhoneOtp(phone: string, token: string) {
   if (error) throw new Error(error.message || 'Code-Prüfung fehlgeschlagen');
   if (data && (data as any).error) throw new Error((data as any).error);
 
+  const email = (data as any)?.email as string | undefined;
+  const emailOtp = (data as any)?.email_otp as string | undefined;
   const tokenHash = (data as any)?.token_hash as string | undefined;
-  if (!tokenHash) throw new Error('Login-Token fehlt');
+  if (!email || (!emailOtp && !tokenHash)) throw new Error('Login-Token fehlt');
 
-  const { data: session, error: sErr } = await supabase.auth.verifyOtp({
-    type: 'magiclink',
-    token_hash: tokenHash,
-  });
-  if (sErr) throw sErr;
+  // Primary: 6-digit email_otp (most reliable with admin.generateLink)
+  let session;
+  if (emailOtp) {
+    const r = await supabase.auth.verifyOtp({ email, token: emailOtp, type: 'email' });
+    if (r.error) {
+      // Fallback to token_hash variant
+      if (tokenHash) {
+        const r2 = await supabase.auth.verifyOtp({ token_hash: tokenHash, type: 'email' });
+        if (r2.error) throw r2.error;
+        session = r2.data;
+      } else {
+        throw r.error;
+      }
+    } else {
+      session = r.data;
+    }
+  } else if (tokenHash) {
+    const r = await supabase.auth.verifyOtp({ token_hash: tokenHash, type: 'email' });
+    if (r.error) throw r.error;
+    session = r.data;
+  }
   return session;
 }
 
