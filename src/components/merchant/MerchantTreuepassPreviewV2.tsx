@@ -60,6 +60,8 @@ export const MerchantTreuepassPreviewV2 = ({
   merchantName,
   logoEmoji = '🥐',
   rewards,
+  placements,
+  passLength = 15,
   currentVisit = 4,
 }: Props) => {
   const BRAND = brandColor;
@@ -72,7 +74,7 @@ export const MerchantTreuepassPreviewV2 = ({
   );
 
   const windowStart = Math.max(1, currentVisit - 5);
-  const windowEnd = currentVisit + 10;
+  const windowEnd = Math.min(passLength, currentVisit + 10);
   const visibleNodes = useMemo(() => {
     const arr: number[] = [];
     for (let i = windowStart; i <= windowEnd; i++) arr.push(i);
@@ -87,8 +89,14 @@ export const MerchantTreuepassPreviewV2 = ({
   const futurePoints = points.filter((_, i) => visibleNodes[i] >= currentVisit);
   const totalWidth = visibleNodes.length * NODE_SPACING;
 
-  const rewardForVisit = (v: number): PreviewReward | undefined =>
-    rewards.find((r) => r.points_required === v);
+  const rewardForVisit = (v: number): PreviewReward | undefined => {
+    if (placements && placements.length > 0) {
+      const placement = placements.find((p) => p.visit === v);
+      if (!placement) return undefined;
+      return rewards.find((r) => r.id === placement.reward_id);
+    }
+    return rewards.find((r) => r.points_required === v);
+  };
 
   const sourceLabel = (s: 'normal' | 'boost' | 'birthday' | null) => {
     if (s === 'boost') return 'Boost';
