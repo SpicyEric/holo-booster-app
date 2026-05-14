@@ -578,7 +578,7 @@ export const AppMerchantDetailV2 = () => {
 
   const performCheckIn = (source: CheckInSource, suppressLimit = false, opts?: { autoRedeem?: boolean; silent?: boolean }) => {
     if (!suppressLimit && lastCheckInDate === todayKey()) {
-      toast.info('Heute schon eingecheckt. Bis morgen! 👋');
+      setLimitModal('checkin');
       return;
     }
     const next = currentVisit + 1;
@@ -587,9 +587,14 @@ export const AppMerchantDetailV2 = () => {
 
     // Aktivierte Prämie automatisch einlösen (z.B. wenn intern aufgerufen)
     if (opts?.autoRedeem && activatedReward) {
+      if (lastRedeemDate === todayKey()) {
+        setLimitModal('reward');
+        return;
+      }
       const reward = activatedReward;
       setActivatedReward(null);
       clearActivatedReward(merchantId);
+      setLastRedeemDate(todayKey());
       setRedeemedVisits((prev) => prev.includes(reward.visitNumber) ? prev : [...prev, reward.visitNumber]);
       setRewards((prev) => {
         const exists = prev.some((r) => r.visitNumber === reward.visitNumber);
