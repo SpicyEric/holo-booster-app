@@ -654,6 +654,15 @@ const Marketing = () => {
               </CardContent>
             </Card>
 
+            {/* V2: Snake Drop-Zone für Prämien-Belegung */}
+            {isV2 && (
+              <RewardSnakeDropZone
+                rewards={rewards}
+                brandColor={merchantBrand.color}
+                onChanged={loadData}
+              />
+            )}
+
             {/* Sprung zur Live-Vorschau in Mein Geschäft → System */}
             <Card className="rounded-2xl shadow-sm border-0 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent">
               <CardContent className="p-6 flex flex-col items-center text-center gap-3">
