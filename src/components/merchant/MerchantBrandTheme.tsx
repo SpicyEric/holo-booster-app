@@ -46,7 +46,13 @@ export function MerchantBrandTheme({ children }: { children: ReactNode }) {
   useEffect(() => {
     const cancelledRef = { current: false };
     fetchBrand(cancelledRef);
-    const onUpdated = () => fetchBrand(cancelledRef);
+    const onUpdated = (e: Event) => {
+      const detail = (e as CustomEvent).detail as { brandColor?: string } | undefined;
+      if (detail?.brandColor) {
+        setState((prev) => ({ ...prev, version: 'v2', color: detail.brandColor! }));
+      }
+      fetchBrand(cancelledRef);
+    };
     window.addEventListener(BRAND_UPDATED_EVENT, onUpdated);
     return () => {
       cancelledRef.current = true;
@@ -65,6 +71,9 @@ export function MerchantBrandTheme({ children }: { children: ReactNode }) {
       ['--secondary-foreground' as string]: fg,
       ['--accent' as string]: hsl,
       ['--ring' as string]: hsl,
+      ['--gradient-primary' as string]: `linear-gradient(135deg, hsl(${hsl}), hsl(${brandDarkHsl(state.color)}))`,
+      ['--gradient-glow' as string]: `linear-gradient(135deg, hsl(${hsl} / 0.12), hsl(${brandTintHsl(state.color, 92)} / 0.5))`,
+      ['--shadow-glow' as string]: `0 4px 20px hsl(${hsl} / 0.18)`,
       ['--merchant-bg' as string]: brandTintHsl(state.color, 96),
       ['--merchant-bg-soft' as string]: brandTintHsl(state.color, 98),
       ['--merchant-sidebar' as string]: brandDarkHsl(state.color),
