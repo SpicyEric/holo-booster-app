@@ -257,6 +257,7 @@ const Marketing = () => {
         setBirthdayOfferDescription((cd as any).birthday_offer_description || '');
         if (cd.industry) setMerchantIndustry(cd.industry);
         if (cd.avg_revenue) setAvgOrderValue(cd.avg_revenue);
+        if ((cd as any).pass_length) setPassLength((cd as any).pass_length);
         // Referral settings
         setReferralEnabled((cd as any).referral_enabled ?? true);
         setReferralInviterPoints((cd as any).referral_inviter_points ?? 20);
