@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, Gift, Check, UserPlus, Sparkles, Rocket, Cake, X, CheckCircle2 } from 'lucide-react';
+import { ArrowLeft, Gift, Check, UserPlus, Sparkles, Rocket, Cake, X, CheckCircle2, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
@@ -33,7 +33,7 @@ import { EyeOff } from 'lucide-react';
  *   nächsten Check-in automatisch einlösen.
  */
 
-type CheckInSource = 'normal' | 'boost' | 'birthday';
+type CheckInSource = 'normal' | 'boost' | 'birthday' | 'google_review';
 
 interface CheckInEntry {
   visit: number;
@@ -156,13 +156,13 @@ export const AppMerchantDetailV2 = () => {
   const BRAND_SOFT = `${BRAND}22`; // Alpha-Wash via HEX 8-stellig
 
   // ================= Persistierter State (per Merchant in localStorage) =================
-  const checkInsKey = `eloyo:v2:checkins:v2:${merchantId}`;
+  const checkInsKey = `eloyo:v2:checkins:v3:${merchantId}`;
   const redeemedKey = `eloyo:v2:redeemed:${merchantId}`;
   const lastDateKey = `eloyo:v2:lastcheckin:${merchantId}`;
 
   const defaultCheckIns: CheckInEntry[] = [
     { visit: 1, source: 'normal' },
-    { visit: 2, source: 'normal' },
+    { visit: 2, source: 'google_review' },
     { visit: 3, source: 'birthday' },
     { visit: 4, source: 'normal' },
     { visit: 5, source: 'boost' },
@@ -180,9 +180,11 @@ export const AppMerchantDetailV2 = () => {
       if (raw) {
         const parsed = JSON.parse(raw);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          const normalized = (parsed as CheckInEntry[]).map((entry) =>
-            entry.visit === 5 ? { ...entry, source: 'boost' as CheckInSource } : entry,
-          );
+          const normalized = (parsed as CheckInEntry[]).map((entry) => {
+            if (entry.visit === 5) return { ...entry, source: 'boost' as CheckInSource };
+            if (entry.visit === 2) return { ...entry, source: 'google_review' as CheckInSource };
+            return entry;
+          });
           return normalized;
         }
       }
@@ -568,18 +570,21 @@ export const AppMerchantDetailV2 = () => {
   const sourceLabel = (s: CheckInSource | null): string | null => {
     if (s === 'boost') return 'Boost';
     if (s === 'birthday') return 'Geburtstag';
+    if (s === 'google_review') return 'Google-Bewertung';
     return null;
   };
 
   const sourceIcon = (s: CheckInSource | null) => {
     if (s === 'boost') return <Rocket className="w-3 h-3" />;
     if (s === 'birthday') return <Cake className="w-3 h-3" />;
+    if (s === 'google_review') return <Star className="w-3 h-3" />;
     return null;
   };
 
   const sourceNodeIcon = (s: CheckInSource | null) => {
     if (s === 'boost') return <Rocket className="w-5 h-5 text-white" strokeWidth={2.8} />;
     if (s === 'birthday') return <Cake className="w-5 h-5 text-white" strokeWidth={2.8} />;
+    if (s === 'google_review') return <Star className="w-5 h-5 text-white" strokeWidth={2.8} fill="white" />;
     return <Check className="w-5 h-5 text-white" strokeWidth={3} />;
   };
 
@@ -909,19 +914,36 @@ export const AppMerchantDetailV2 = () => {
         </Card>
       </motion.div>
 
-      {/* Sandbox-Test-Buttons */}
-      <div className="px-4 mt-6">
-        <Card className="p-3 bg-neutral-100 border-dashed">
-          <p className="text-[11px] uppercase tracking-wider text-neutral-500 font-semibold mb-2">
-            Prototype-Test
-          </p>
-          <div className="grid grid-cols-3 gap-2">
-            <Button size="sm" variant="outline" onClick={simulateCheckIn}>Check-in</Button>
-            <Button size="sm" variant="outline" onClick={simulateReferralBoost}>Boost</Button>
-            <Button size="sm" variant="outline" onClick={simulateBirthday}>Geburtstag</Button>
+      {/* Google-Bewertung abgeben */}
+      <motion.div
+        className="px-4 mt-4"
+        initial={isEntering ? { opacity: 0, y: 10 } : false}
+        animate={friendsVisible ? { opacity: 1, y: 0 } : { opacity: 0, y: -8 }}
+        transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1], delay: sectionsRevealed && !isExiting ? 0.3 : 0 }}
+      >
+        <Card
+          className="p-5 border-0 text-white shadow-lg"
+          style={{ background: `linear-gradient(135deg, #4285F4, #1a73e8)` }}
+        >
+          <div className="flex items-center gap-3 mb-3">
+            <div className="w-11 h-11 rounded-2xl bg-white/20 flex items-center justify-center">
+              <Star className="w-5 h-5" fill="white" />
+            </div>
+            <div>
+              <h3 className="font-bold text-base">Google-Bewertung abgeben</h3>
+              <p className="text-xs text-white/85">
+                Bewerte Backstube König bei Google = +1 Check-in auf deinem Treuepass
+              </p>
+            </div>
           </div>
+          <Button
+            onClick={() => window.open(`https://www.google.com/search?q=${encodeURIComponent('Backstube König')}`, '_blank')}
+            className="w-full bg-white hover:bg-white/90 text-[#1a73e8]"
+          >
+            Jetzt bewerten
+          </Button>
         </Card>
-      </div>
+      </motion.div>
 
       {/* Pre-Activation Dialog */}
       <Dialog open={!!tappedReward} onOpenChange={(o) => !o && setTappedReward(null)}>
