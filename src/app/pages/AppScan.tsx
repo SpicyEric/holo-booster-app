@@ -754,24 +754,6 @@ export const AppScan = () => {
               </p>
             )}
 
-            <Button
-              onClick={() => {
-                if (!contextMerchantId) return;
-                setSimulatedFlip('flipping');
-                setTimeout(() => {
-                  navigate(`/app/merchant/${contextMerchantId}`, {
-                    state: { triggerCheckIn: true },
-                  });
-                  setSimulatedFlip('idle');
-                }, 700);
-              }}
-              className="w-full mt-4 text-white"
-              style={{ background: BRAND }}
-              disabled={simulatedFlip !== 'idle'}
-            >
-              <ScanLine className="h-4 w-4 mr-2" />
-              Eincheck simulieren
-            </Button>
           </motion.div>
         )}
 
