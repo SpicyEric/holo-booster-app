@@ -46,6 +46,9 @@ interface MockReward {
   redeemed: boolean;
 }
 
+type RewardPlacementRow = { visit: number; reward_id: string };
+type RewardRow = { id: string; title: string; image_url: string | null };
+
 const NODE_SPACING = 110;
 const SNAKE_HEIGHT = 220;
 const AMPLITUDE = 55;
@@ -86,24 +89,32 @@ export const AppMerchantDetailV2 = () => {
     let cancelled = false;
     (async () => {
       const { supabase } = await import('@/integrations/supabase/client');
-      const [{ data: cust }, { data: placements }] = await Promise.all([
+      const [{ data: cust }, { data: placements }, { data: rewardRows }] = await Promise.all([
         supabase.from('customers').select('cover_image_url, pass_length').eq('id', merchantId).maybeSingle(),
         supabase
           .from('reward_placements')
-          .select('visit, rewards:reward_id(title, image_url)')
+          .select('visit, reward_id')
           .eq('customer_id', merchantId)
           .order('visit', { ascending: true }),
+        supabase
+          .from('rewards')
+          .select('id, title, image_url')
+          .eq('merchant_customer_id', merchantId)
+          .eq('is_active', true),
       ]);
       if (cancelled) return;
       setCoverImageUrl((cust?.cover_image_url as string | null) || null);
       if (cust?.pass_length) setPassLength(cust.pass_length as number);
-      const mapped = (placements || [])
-        .filter((p: any) => p.rewards)
-        .map((p: any) => ({
-          visitNumber: p.visit as number,
-          label: p.rewards.title as string,
-          imageUrl: (p.rewards.image_url as string | null) || null,
-        }));
+      const rewardsById = new Map(((rewardRows || []) as RewardRow[]).map((r) => [r.id, r]));
+      const mapped = ((placements || []) as RewardPlacementRow[]).flatMap((p) => {
+        const reward = rewardsById.get(p.reward_id);
+        if (!reward) return [];
+        return [{
+          visitNumber: p.visit,
+          label: reward.title,
+          imageUrl: reward.image_url || null,
+        }];
+      });
       setDbRewards(mapped);
     })();
     return () => { cancelled = true; };
@@ -213,7 +224,7 @@ export const AppMerchantDetailV2 = () => {
   const [exitScanUrl, setExitScanUrl] = useState<string | null>(null);
 
   useEffect(() => {
-    try { sessionStorage.removeItem('treuepass-transition'); } catch {}
+    try { sessionStorage.removeItem('treuepass-transition'); } catch { void 0; }
   }, [merchantId]);
 
   // Ziel-Rect ermitteln, sobald Snake-Band gemountet ist
@@ -251,7 +262,7 @@ export const AppMerchantDetailV2 = () => {
       setEntryPhase('exiting');
       setExitStage(0);
       // Flag für Scan-Screen: Slide-Up-Intro überspringen, weil das Cover bereits an Position morpht
-      try { sessionStorage.setItem('scan-skip-intro', String(Date.now())); } catch {}
+      try { sessionStorage.setItem('scan-skip-intro', String(Date.now())); } catch { void 0; }
       // Stagger: snake (0–250ms) → info weg (250ms) → freunde weg (450ms) → navigate (~900ms)
       setTimeout(() => setExitStage(1), 220);
       setTimeout(() => setExitStage(2), 420);
