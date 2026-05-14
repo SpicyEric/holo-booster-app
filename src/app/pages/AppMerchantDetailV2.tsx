@@ -505,16 +505,16 @@ export const AppMerchantDetailV2 = () => {
       </div>
 
       {/* Snake */}
-      <div className="mt-1 relative overflow-hidden">
+      <div ref={snakeBandRef} className="mt-1 relative overflow-hidden">
         {coverImageUrl && (
           <div
             aria-hidden
-            className="absolute inset-0 pointer-events-none"
+            className="absolute inset-0 pointer-events-none transition-opacity duration-300"
             style={{
               backgroundImage: `url(${coverImageUrl})`,
               backgroundSize: 'cover',
               backgroundPosition: 'center',
-              opacity: 0.18,
+              opacity: isEntering ? 0 : 0.18,
               filter: 'saturate(0.9)',
               maskImage: 'linear-gradient(to bottom, transparent 0%, #000 20%, #000 80%, transparent 100%)',
               WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, #000 20%, #000 80%, transparent 100%)',
