@@ -728,30 +728,35 @@ export const AppScan = () => {
             </div>
 
             {/* ── BACK: Merchant image card ── */}
-            <div
-              className="absolute inset-0 rounded-2xl"
-              role="img"
-              aria-label={merchantDisplayName || 'Geschäftskarte'}
-              style={{
-                backfaceVisibility: 'hidden',
-                WebkitBackfaceVisibility: 'hidden',
-                transform: 'rotateY(180deg)',
-                backgroundImage: merchantImage ? `url("${merchantImage}")` : undefined,
-                backgroundPosition: 'center',
-                backgroundRepeat: 'no-repeat',
-                backgroundSize: 'cover',
-              }}
-            >
-              {!merchantImage && (
-                <div className="w-full h-full bg-gradient-to-br from-primary to-secondary" />
-              )}
-              <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/60 via-black/25 to-transparent" />
-              <div className="absolute bottom-3 left-4 right-4">
-                <h1 className="text-lg font-bold text-white drop-shadow-md">
-                  {merchantDisplayName}
-                </h1>
-              </div>
-            </div>
+            {(() => {
+              const backImage = merchantImage || (hasMerchantContext ? contextMerchant?.cover_image_url : null);
+              const backName = merchantDisplayName || (hasMerchantContext ? contextMerchant?.name ?? '' : '');
+              return (
+                <div
+                  className="absolute inset-0 rounded-2xl"
+                  role="img"
+                  aria-label={backName || 'Geschäftskarte'}
+                  style={{
+                    backfaceVisibility: 'hidden',
+                    WebkitBackfaceVisibility: 'hidden',
+                    transform: 'rotateY(180deg)',
+                    backgroundImage: backImage ? `url("${backImage}")` : undefined,
+                    backgroundPosition: 'center',
+                    backgroundRepeat: 'no-repeat',
+                    backgroundSize: 'cover',
+                    background: !backImage && hasMerchantContext ? `linear-gradient(135deg, ${BRAND}, ${BRAND}cc)` : undefined,
+                  }}
+                >
+                  {!backImage && !hasMerchantContext && (
+                    <div className="w-full h-full bg-gradient-to-br from-primary to-secondary" />
+                  )}
+                  <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/60 via-black/25 to-transparent" />
+                  <div className="absolute bottom-3 left-4 right-4">
+                    <h1 className="text-lg font-bold text-white drop-shadow-md">{backName}</h1>
+                  </div>
+                </div>
+              );
+            })()}
           </div>
         </motion.div>
 
