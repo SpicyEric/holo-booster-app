@@ -153,12 +153,19 @@ export const AppMerchantDetailV2 = () => {
   ]);
   const currentVisit = checkIns[checkIns.length - 1]?.visit ?? 0;
 
-  const [rewards, setRewards] = useState<MockReward[]>([
-    { visitNumber: 1, label: 'Willkommens-Brötchen 🎁', redeemed: true },
-    { visitNumber: 3, label: 'Kaffee gratis ☕', redeemed: false },
-    { visitNumber: 6, label: '3 Brötchen gratis 🥐', redeemed: false },
-    { visitNumber: 10, label: '5€ Gutschein 🎟️', redeemed: false },
-  ]);
+  const [rewards, setRewards] = useState<MockReward[]>([]);
+
+  // Sync DB-Prämien in den Mock-State (vergangene gelten als eingelöst)
+  useEffect(() => {
+    setRewards((prev) => {
+      const redeemedSet = new Set(prev.filter((r) => r.redeemed).map((r) => r.visitNumber));
+      return dbRewards.map((r) => ({
+        visitNumber: r.visitNumber,
+        label: r.label,
+        redeemed: redeemedSet.has(r.visitNumber) || r.visitNumber < currentVisit,
+      }));
+    });
+  }, [dbRewards, currentVisit]);
 
   const [activatedReward, setActivatedReward] = useState<MockReward | null>(null);
   const [tappedReward, setTappedReward] = useState<MockReward | null>(null);
