@@ -274,8 +274,8 @@ export const AppMerchantDetailV2 = () => {
   const friendsVisible = entryPhase === 'done' || (entryPhase === 'exiting' && exitStage < 2)
     || entryPhase === 'sectionsIn' || entryPhase === 'snakeIn';
   const sectionsRevealed = entryPhase === 'sectionsIn' || entryPhase === 'snakeIn' || entryPhase === 'done';
-  const snakeRevealed = (entryPhase === 'snakeIn' || entryPhase === 'done')
-    && !(entryPhase === 'exiting' && exitStage >= 0); // wird beim Exit sofort weg
+  const snakeRevealed = entryPhase === 'snakeIn' || entryPhase === 'done';
+  // Snake wird beim Exit sofort komplett weg-clipped
 
   // Privacy-Screen NUR aktivieren, wenn die sensible Einlöse-Ansicht
   // (oranges Vollbild mit Code-Marquee + Prämie) sichtbar ist.
