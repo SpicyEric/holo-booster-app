@@ -210,6 +210,24 @@ export const AppMerchantDetailV2 = () => {
     return defaultRedeemed;
   });
 
+  useEffect(() => {
+    if (merchantId !== DEFAULT_DEMO_MERCHANT_CUSTOMER_ID || typeof window === 'undefined') return;
+    try {
+      if (localStorage.getItem(resetKey) === DEMO_PASS_RESET_VERSION) return;
+
+      const resetCheckIns = [...DEMO_DEFAULT_CHECK_INS];
+      const resetRedeemed = [...DEMO_DEFAULT_REDEEMED];
+      localStorage.setItem(checkInsKey, JSON.stringify(resetCheckIns));
+      localStorage.setItem(redeemedKey, JSON.stringify(resetRedeemed));
+      localStorage.setItem(resetKey, DEMO_PASS_RESET_VERSION);
+      localStorage.removeItem(lastDateKey);
+      clearActivatedReward(merchantId);
+      setCheckIns(resetCheckIns);
+      setRedeemedVisits(resetRedeemed);
+      setActivatedReward(null);
+    } catch { /* noop */ }
+  }, [checkInsKey, lastDateKey, merchantId, redeemedKey, resetKey]);
+
   const [rewards, setRewards] = useState<MockReward[]>([]);
 
   // Persist
