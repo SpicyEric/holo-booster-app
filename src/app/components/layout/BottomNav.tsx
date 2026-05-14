@@ -172,8 +172,13 @@ export const BottomNav = ({ onNavigate, currentIndex }: BottomNavProps) => {
         <div className="flex flex-col items-center justify-center -mt-8">
           <button
             onClick={handleCenterButtonClick}
-            className="flex items-center justify-center rounded-full shadow-lg bg-gradient-to-br from-primary to-secondary hover:shadow-xl transition-all text-white"
-            style={{ height: '72px', width: '72px' }}
+            className="flex items-center justify-center rounded-full shadow-lg hover:shadow-xl transition-all text-white"
+            style={{
+              height: '72px',
+              width: '72px',
+              background:
+                'var(--app-active-brand, linear-gradient(135deg, hsl(var(--primary)), hsl(var(--secondary))))',
+            }}
             aria-label="Scannen"
           >
             <img
