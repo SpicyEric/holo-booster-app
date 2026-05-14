@@ -612,7 +612,27 @@ const Marketing = () => {
 
           {/* ========== PRÄMIEN TAB ========== */}
           <TabsContent value="praemien" className="mt-6 space-y-6">
-            <ExplainerCarousel slides={praemienCards} />
+            {!isV2 && <ExplainerCarousel slides={praemienCards} />}
+
+            {/* V2: Snake Drop-Zone für Prämien-Belegung — ZUERST */}
+            {isV2 && (
+              <RewardSnakeDropZone
+                rewards={rewards}
+                brandColor={merchantBrand.color}
+                customerId={customerId}
+                passLength={passLength}
+                onPassLengthChange={async (n) => {
+                  setPassLength(n);
+                  if (!customerId) return;
+                  const { error } = await supabase
+                    .from('customers')
+                    .update({ pass_length: n })
+                    .eq('id', customerId);
+                  if (error) toast.error('Pass-Länge konnte nicht gespeichert werden');
+                }}
+                onChanged={loadData}
+              />
+            )}
             <Card className="rounded-2xl shadow-sm border border-primary/10 bg-primary/[0.03]">
               <CardHeader className="flex flex-row items-center justify-between pb-4">
                 <div className="flex items-center gap-3">
@@ -658,25 +678,6 @@ const Marketing = () => {
               </CardContent>
             </Card>
 
-            {/* V2: Snake Drop-Zone für Prämien-Belegung */}
-            {isV2 && (
-              <RewardSnakeDropZone
-                rewards={rewards}
-                brandColor={merchantBrand.color}
-                customerId={customerId}
-                passLength={passLength}
-                onPassLengthChange={async (n) => {
-                  setPassLength(n);
-                  if (!customerId) return;
-                  const { error } = await supabase
-                    .from('customers')
-                    .update({ pass_length: n })
-                    .eq('id', customerId);
-                  if (error) toast.error('Pass-Länge konnte nicht gespeichert werden');
-                }}
-                onChanged={loadData}
-              />
-            )}
 
             {/* Sprung zur Live-Vorschau in Mein Geschäft → System */}
             <Card className="rounded-2xl shadow-sm border-0 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent">
