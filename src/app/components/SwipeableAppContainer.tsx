@@ -210,8 +210,10 @@ const AppHomeContent = () => {
     category: string | null;
     logoUrl: string | null;
     coverImage: string | null;
+    distance: number | null;
   }>>([]);
   const [loading, setLoading] = useState(true);
+  const [emblaRef] = useEmblaCarousel({ loop: true, align: 'center', containScroll: false });
 
   const loadCards = useCallback(async () => {
     if (!user) return;
@@ -230,14 +232,34 @@ const AppHomeContent = () => {
 
       const { data: merchants } = await supabase
         .from('customers')
-        .select('id, name, company_name, logo_url, cover_image_url, industry')
+        .select('id, name, company_name, logo_url, cover_image_url, industry, latitude, longitude')
         .eq('active', true)
         .in('id', merchantIds);
 
+      // Try to get user location to sort by distance (best-effort)
+      let userLat: number | null = null;
+      let userLng: number | null = null;
+      try {
+        const perm = await checkLocationPermission();
+        if (perm.location === 'granted') {
+          const loc = await getCurrentLocation();
+          userLat = loc.latitude;
+          userLng = loc.longitude;
+        }
+      } catch {
+        // ignore, fallback unsorted
+      }
+
       const list = (accounts || [])
         .map((a) => {
-          const m = merchants?.find((x) => x.id === a.merchant_customer_id);
+          const m: any = merchants?.find((x) => x.id === a.merchant_customer_id);
           if (!m) return null;
+          const lat = m.latitude as number | null;
+          const lng = m.longitude as number | null;
+          const distance =
+            userLat != null && userLng != null && lat != null && lng != null
+              ? haversineDistance(userLat, userLng, lat, lng)
+              : null;
           return {
             id: a.id,
             merchantId: a.merchant_customer_id,
@@ -245,9 +267,16 @@ const AppHomeContent = () => {
             category: m.industry || null,
             logoUrl: m.logo_url || null,
             coverImage: m.cover_image_url || null,
+            distance,
           };
         })
-        .filter((x): x is NonNullable<typeof x> => !!x);
+        .filter((x): x is NonNullable<typeof x> => !!x)
+        .sort((a, b) => {
+          if (a.distance == null && b.distance == null) return 0;
+          if (a.distance == null) return 1;
+          if (b.distance == null) return -1;
+          return a.distance - b.distance;
+        });
 
       setCards(list);
     } catch (err) {
