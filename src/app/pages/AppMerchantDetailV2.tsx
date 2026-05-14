@@ -315,6 +315,28 @@ export const AppMerchantDetailV2 = () => {
   const [boostInfoOpen, setBoostInfoOpen] = useState(false);
   const [lastCheckInDate, setLastCheckInDate] = useState<string | null>(null);
 
+  // Auto-Aktivierung der ersten Prämie beim allerersten Check-in:
+  // Wenn der User noch nie eingecheckt hat und der Händler eine Prämie auf
+  // Visit 1 hinterlegt hat, wird diese automatisch als aktivierte Prämie
+  // gesetzt – ohne Nachfrage. Beim ersten Scan wird sie dann mit eingelöst.
+  useEffect(() => {
+    if (currentVisit !== 0) return;
+    if (activatedReward) return;
+    if (getActivatedReward(merchantId)) return;
+    const firstReward = dbRewards.find((r) => r.visitNumber === 1);
+    if (!firstReward) return;
+    const reward: MockReward = {
+      visitNumber: firstReward.visitNumber,
+      label: firstReward.label,
+      redeemed: false,
+    };
+    setActivatedReward(reward);
+    persistActivatedReward(merchantId, {
+      visitNumber: reward.visitNumber,
+      label: reward.label,
+    });
+  }, [merchantId, currentVisit, dbRewards, activatedReward]);
+
   // Orange Eincheck-Overlay (Vollbild, mit Code-Marquee)
   const [checkInOverlay, setCheckInOverlay] = useState<{
     code: string;
