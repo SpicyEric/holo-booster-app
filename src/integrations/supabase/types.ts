@@ -2989,6 +2989,27 @@ export type Database = {
         }
         Relationships: []
       }
+      sms_otp_attempts: {
+        Row: {
+          created_at: string
+          id: string
+          ip_address: string | null
+          phone: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          phone: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          phone?: string
+        }
+        Relationships: []
+      }
       stamp_cards: {
         Row: {
           background_color: string | null
