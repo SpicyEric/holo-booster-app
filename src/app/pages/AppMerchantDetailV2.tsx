@@ -7,9 +7,10 @@ import { Card } from '@/components/ui/card';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { toast } from 'sonner';
 import { BottomNav } from '@/app/components/layout/BottomNav';
+import { useAuth } from '@/hooks/useAuth';
 import { useMerchantBrand } from '@/hooks/useMerchantBrand';
 import { setActiveBrandColor } from '@/lib/activeBrandColor';
-import { DEFAULT_DEMO_MERCHANT_CUSTOMER_ID } from '@/lib/demoMerchant';
+import { DEFAULT_DEMO_MERCHANT_CUSTOMER_ID, isDemoMerchantActive } from '@/lib/demoMerchant';
 import {
   getActivatedReward,
   setActivatedReward as persistActivatedReward,
@@ -53,6 +54,13 @@ interface MockReward {
 
 type RewardPlacementRow = { visit: number; reward_id: string };
 type RewardRow = { id: string; title: string; image_url: string | null };
+type MerchantV2RouteState = {
+  triggerCheckIn?: boolean;
+  checkInAlreadyRecorded?: boolean;
+  dbCheckIns?: number;
+  welcomeRewardRedeemed?: boolean;
+  welcomeRewardLabel?: string | null;
+};
 
 const NODE_SPACING = 110;
 const SNAKE_HEIGHT = 220;
@@ -117,9 +125,10 @@ interface MerchantInfo {
 export const AppMerchantDetailV2 = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { user } = useAuth();
   const { id } = useParams<{ id: string }>();
   const merchantId = id || DEFAULT_DEMO_MERCHANT_CUSTOMER_ID;
-  const isDemoMerchant = merchantId === DEFAULT_DEMO_MERCHANT_CUSTOMER_ID;
+  const isDemoMerchant = merchantId === DEFAULT_DEMO_MERCHANT_CUSTOMER_ID && isDemoMerchantActive();
   const brand = useMerchantBrand(merchantId);
   const [coverImageUrl, setCoverImageUrl] = useState<string | null>(null);
   const [passLength, setPassLength] = useState<number>(35);
@@ -212,14 +221,14 @@ export const AppMerchantDetailV2 = () => {
 
   // Trigger Eincheck-Overlay, wenn von der Scan-Seite mit triggerCheckIn=true navigiert wurde
   useEffect(() => {
-    const state = location.state as { triggerCheckIn?: boolean } | null;
+    const state = location.state as MerchantV2RouteState | null;
     if (!state?.triggerCheckIn) return;
-    const stored = getActivatedReward(merchantId);
-    const reward = stored ? { visitNumber: stored.visitNumber, label: stored.label, redeemed: false } : null;
+    const reward = state.welcomeRewardRedeemed && state.welcomeRewardLabel
+      ? { visitNumber: 1, label: state.welcomeRewardLabel, redeemed: false }
+      : null;
     setCheckInOverlay({ code: generateVerificationCode(5), reward });
     setConfirmStage(false);
-    // State konsumieren, damit der Overlay nicht bei jedem Re-Mount neu öffnet
-    navigate(location.pathname, { replace: true });
+    navigate(location.pathname, { replace: true, state: null });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.state, merchantId]);
 
@@ -227,10 +236,11 @@ export const AppMerchantDetailV2 = () => {
   const BRAND_SOFT = `${BRAND}22`; // Alpha-Wash via HEX 8-stellig
 
   // ================= Persistierter State (per Merchant in localStorage) =================
-  const checkInsKey = `eloyo:v2:checkins:${merchantId}`;
-  const redeemedKey = `eloyo:v2:redeemed:${merchantId}`;
+  const storageScope = isDemoMerchant ? 'demo' : (user?.id ?? 'anonymous');
+  const checkInsKey = `eloyo:v2:checkins:${storageScope}:${merchantId}`;
+  const redeemedKey = `eloyo:v2:redeemed:${storageScope}:${merchantId}`;
   const resetKey = `eloyo:v2:demo-reset:${merchantId}`;
-  const lastDateKey = `eloyo:v2:lastcheckin:${merchantId}`;
+  const lastDateKey = `eloyo:v2:lastcheckin:${storageScope}:${merchantId}`;
 
   const defaultCheckIns = isDemoMerchant ? DEMO_DEFAULT_CHECK_INS : [];
   const defaultRedeemed = isDemoMerchant ? DEMO_DEFAULT_REDEEMED : [];
@@ -266,6 +276,47 @@ export const AppMerchantDetailV2 = () => {
     } catch { /* noop */ }
     return defaultRedeemed;
   });
+
+  useEffect(() => {
+    if (isDemoMerchant || !user?.id || !merchantId) return;
+    let cancelled = false;
+    (async () => {
+      const { supabase } = await import('@/integrations/supabase/client');
+      const { data: account } = await supabase
+        .from('loyalty_accounts')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('merchant_customer_id', merchantId)
+        .maybeSingle();
+
+      if (cancelled) return;
+      if (!account?.id) {
+        setCheckIns([]);
+        setRedeemedVisits([]);
+        return;
+      }
+
+      const { data: tx } = await supabase
+        .from('point_transactions')
+        .select('transaction_type, description, created_at')
+        .eq('loyalty_account_id', account.id)
+        .in('transaction_type', ['check_in', 'nfc_stamp', 'reward_redeemed'])
+        .order('created_at', { ascending: true });
+
+      if (cancelled) return;
+      const realCheckIns = (tx || [])
+        .filter((row) => row.transaction_type === 'check_in' || row.transaction_type === 'nfc_stamp')
+        .map((row, index) => ({ visit: index + 1, source: 'normal' as CheckInSource, at: row.created_at as string }));
+      const redeemed = (tx || [])
+        .filter((row) => row.transaction_type === 'reward_redeemed')
+        .map((row) => Number(String(row.description || '').match(/Visit (\d+)/)?.[1]))
+        .filter((visit) => Number.isFinite(visit));
+
+      setCheckIns(realCheckIns);
+      setRedeemedVisits(Array.from(new Set(redeemed)));
+    })();
+    return () => { cancelled = true; };
+  }, [isDemoMerchant, merchantId, user?.id]);
 
   useEffect(() => {
     if (merchantId !== DEFAULT_DEMO_MERCHANT_CUSTOMER_ID || typeof window === 'undefined') return;

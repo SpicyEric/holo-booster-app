@@ -37,6 +37,10 @@ type ScanResult = {
   success: boolean;
   points?: number;
   totalPoints?: number;
+  checkIns?: number;
+  isCheckIn?: boolean;
+  welcomeRewardRedeemed?: boolean;
+  welcomeRewardLabel?: string | null;
   merchantName?: string;
   merchantCustomerId?: string;
   error?: string;
@@ -79,6 +83,11 @@ type MerchantTransitionState = {
   initialRewards: TransitionReward[];
   initialUserPoints: number;
   scanAwardedPoints?: number;
+  triggerCheckIn?: boolean;
+  checkInAlreadyRecorded?: boolean;
+  dbCheckIns?: number;
+  welcomeRewardRedeemed?: boolean;
+  welcomeRewardLabel?: string | null;
 };
 
 export const AppScan = () => {
@@ -338,6 +347,11 @@ export const AppScan = () => {
               initialRewards: rewards,
               initialUserPoints: result.totalPoints ?? 0,
               scanAwardedPoints: result.points ?? 0,
+              triggerCheckIn: result.isCheckIn === true,
+              checkInAlreadyRecorded: result.isCheckIn === true,
+              dbCheckIns: result.checkIns,
+              welcomeRewardRedeemed: result.welcomeRewardRedeemed,
+              welcomeRewardLabel: result.welcomeRewardLabel ?? null,
             } satisfies MerchantTransitionState;
 
             if (!coverUrl) {
@@ -477,7 +491,19 @@ export const AppScan = () => {
       });
       console.log('[AppScan] RPC result:', JSON.stringify(data), 'error:', error);
       if (error) throw error;
-      const response = data as { success: boolean; points_awarded?: number; total_points?: number; merchant_customer_id?: string; merchant_name?: string; error?: string; error_code?: string; };
+      const response = data as {
+        success: boolean;
+        points_awarded?: number;
+        total_points?: number;
+        check_ins?: number;
+        is_check_in?: boolean;
+        welcome_reward_redeemed?: boolean;
+        welcome_reward_label?: string | null;
+        merchant_customer_id?: string;
+        merchant_name?: string;
+        error?: string;
+        error_code?: string;
+      };
 
       if (response.success) {
         let merchantName = response.merchant_name || 'Händler';
@@ -485,12 +511,22 @@ export const AppScan = () => {
           const { data: merchant } = await supabase.from('customers').select('company_name, name').eq('id', response.merchant_customer_id).single();
           merchantName = merchant?.company_name || merchant?.name || 'Händler';
         }
-        setResult({ success: true, points: response.points_awarded, totalPoints: response.total_points, merchantName, merchantCustomerId: response.merchant_customer_id });
+        setResult({
+          success: true,
+          points: response.points_awarded,
+          totalPoints: response.total_points,
+          checkIns: response.check_ins,
+          isCheckIn: response.is_check_in,
+          welcomeRewardRedeemed: response.welcome_reward_redeemed,
+          welcomeRewardLabel: response.welcome_reward_label ?? null,
+          merchantName,
+          merchantCustomerId: response.merchant_customer_id,
+        });
         // Toast entfernt — UI zeigt die Punkte bereits visuell an
         console.log('[AppScan] setResult called with merchantCustomerId:', response.merchant_customer_id);
 
         // Referral-Bonus prüfen (Phase 2: Joint Visit, 7 Tage)
-        if (response.merchant_customer_id) {
+        if (response.merchant_customer_id && !response.is_check_in) {
           await maybeAwardReferralBonus({
             userId: currentUserId,
             merchantCustomerId: response.merchant_customer_id,
