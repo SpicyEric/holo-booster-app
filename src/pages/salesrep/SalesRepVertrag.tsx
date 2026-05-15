@@ -69,7 +69,6 @@ export default function SalesRepVertrag() {
     !profile.bank_name && "Bankname",
     !profile.iban && "IBAN",
     !profile.bic && "BIC",
-    !profile.tax_number && "Steuernummer",
   ].filter(Boolean) : [];
 
   const handleSign = async () => {
