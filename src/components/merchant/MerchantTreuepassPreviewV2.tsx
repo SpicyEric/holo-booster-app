@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Gift, Check, UserPlus, Sparkles, Cake, Home, Search, MessageSquare, Settings, Nfc } from 'lucide-react';
+import { ArrowLeft, Gift, Check, UserPlus, Sparkles, Cake, Home, Search, MessageSquare, Settings, Nfc, X, Copy } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 
@@ -174,13 +174,32 @@ export const MerchantTreuepassPreviewV2 = ({
 
           <div
             ref={scrollerRef}
-            className="overflow-x-auto overflow-y-hidden no-scrollbar cursor-grab active:cursor-grabbing"
+            className="overflow-x-auto overflow-y-hidden no-scrollbar cursor-grab active:cursor-grabbing select-none"
             style={{ WebkitOverflowScrolling: 'touch' }}
             onWheel={(e) => {
               const el = e.currentTarget;
               if (e.deltaY !== 0 && Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
                 el.scrollLeft += e.deltaY;
               }
+            }}
+            onPointerDown={(e) => {
+              if (e.pointerType === 'touch') return;
+              const el = e.currentTarget;
+              const startX = e.clientX;
+              const startScroll = el.scrollLeft;
+              el.setPointerCapture(e.pointerId);
+              const onMove = (ev: PointerEvent) => {
+                el.scrollLeft = startScroll - (ev.clientX - startX);
+              };
+              const onUp = (ev: PointerEvent) => {
+                try { el.releasePointerCapture(ev.pointerId); } catch {}
+                el.removeEventListener('pointermove', onMove);
+                el.removeEventListener('pointerup', onUp);
+                el.removeEventListener('pointercancel', onUp);
+              };
+              el.addEventListener('pointermove', onMove);
+              el.addEventListener('pointerup', onUp);
+              el.addEventListener('pointercancel', onUp);
             }}
           >
             <div className="relative" style={{ width: totalWidth, height: SNAKE_HEIGHT + 20 }}>
