@@ -33,7 +33,7 @@ const NAV_GROUPS: NavGroup[] = [
     items: [
       { path: "/vertriebler", label: "Dashboard", icon: LayoutDashboard },
       { path: "/vertriebler/provisionen", label: "Provisionen", icon: Euro },
-      { path: "/vertriebler/inbox", label: "Nachrichten & Bestellungen", icon: Mail },
+      { path: "/vertriebler/inbox", label: "Neues & Bestellungen", icon: Mail },
     ],
   },
   {
