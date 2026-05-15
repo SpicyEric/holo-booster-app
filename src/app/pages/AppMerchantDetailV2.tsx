@@ -7,6 +7,7 @@ import { Card } from '@/components/ui/card';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { toast } from 'sonner';
 import { BottomNav } from '@/app/components/layout/BottomNav';
+import { useAuth } from '@/hooks/useAuth';
 import { useMerchantBrand } from '@/hooks/useMerchantBrand';
 import { setActiveBrandColor } from '@/lib/activeBrandColor';
 import { DEFAULT_DEMO_MERCHANT_CUSTOMER_ID } from '@/lib/demoMerchant';
@@ -53,6 +54,13 @@ interface MockReward {
 
 type RewardPlacementRow = { visit: number; reward_id: string };
 type RewardRow = { id: string; title: string; image_url: string | null };
+type MerchantV2RouteState = {
+  triggerCheckIn?: boolean;
+  checkInAlreadyRecorded?: boolean;
+  dbCheckIns?: number;
+  welcomeRewardRedeemed?: boolean;
+  welcomeRewardLabel?: string | null;
+};
 
 const NODE_SPACING = 110;
 const SNAKE_HEIGHT = 220;
@@ -117,6 +125,7 @@ interface MerchantInfo {
 export const AppMerchantDetailV2 = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { user } = useAuth();
   const { id } = useParams<{ id: string }>();
   const merchantId = id || DEFAULT_DEMO_MERCHANT_CUSTOMER_ID;
   const isDemoMerchant = merchantId === DEFAULT_DEMO_MERCHANT_CUSTOMER_ID;
