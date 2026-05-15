@@ -20,7 +20,7 @@ export const AppLayout = () => {
   // Drain pending boost queue on app open (next-day rollover for capped boosts)
   useEffect(() => {
     if (!user?.id) return;
-    void supabase.rpc('process_pending_boosts').catch(() => {});
+    void Promise.resolve(supabase.rpc('process_pending_boosts')).catch(() => {});
   }, [user?.id]);
 
   const navItems = [
