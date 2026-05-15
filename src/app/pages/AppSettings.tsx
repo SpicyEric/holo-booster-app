@@ -62,9 +62,16 @@ export default function AppSettings() {
 
   const [birthDate, setBirthDate] = useState('');
   const [birthDateLocked, setBirthDateLocked] = useState(false);
+  const [phoneChangedAt, setPhoneChangedAt] = useState<Date | null>(null);
 
   const userPhone = (user as any)?.phone as string | undefined;
   const userEmail = user?.email;
+
+  const PHONE_COOLDOWN_DAYS = 90;
+  const phoneNextChangeDate = phoneChangedAt
+    ? new Date(phoneChangedAt.getTime() + PHONE_COOLDOWN_DAYS * 24 * 60 * 60 * 1000)
+    : null;
+  const phoneLocked = !!(phoneNextChangeDate && phoneNextChangeDate.getTime() > Date.now());
 
   useEffect(() => {
     const fetchData = async () => {
@@ -72,7 +79,7 @@ export default function AppSettings() {
       try {
         const { data: profileData } = await supabase
           .from('profiles')
-          .select('birth_date, auth_method')
+          .select('birth_date, auth_method, phone_changed_at')
           .eq('user_id', user.id)
           .maybeSingle();
 
@@ -81,6 +88,8 @@ export default function AppSettings() {
           setBirthDate(bd);
           setBirthDateLocked(!!bd);
           if (profileData.auth_method) setAuthMethod(profileData.auth_method as any);
+          const pca = (profileData as any).phone_changed_at;
+          setPhoneChangedAt(pca ? new Date(pca) : null);
         }
       } catch (error) {
         console.error('Error fetching data:', error);
