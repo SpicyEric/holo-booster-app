@@ -77,12 +77,24 @@ Deno.serve(async (req) => {
       }
     };
 
+    // Inviter title/body abhängig von Boost-Anzahl
+    const boost = typeof boosts_granted === "number" ? boosts_granted : (inviter_points ?? 1);
+    const pending = typeof boosts_pending === "number" ? boosts_pending : 0;
+
+    let inviterTitle = `🚀 Empfehlung erfolgreich!`;
+    let inviterBody = `+${boost} Check-in${boost === 1 ? "" : "s"} auf deinem ${merchantName}-Treuepass`;
+    if (boost === 2) {
+      inviterTitle = `🚀🚀 Empfehlung erfolgreich!`;
+    } else if (boost === 3) {
+      inviterTitle = `🚀🚀🚀 STREAK!`;
+      inviterBody = `+3 Check-ins auf deinem ${merchantName}-Treuepass — dein größter Boost!`;
+    }
+    if (pending > 0) {
+      inviterBody += ` (+${pending} weitere morgen)`;
+    }
+
     const [inviterRes, inviteeRes] = await Promise.all([
-      sendPush(
-        inviter_user_id,
-        `🎁 Empfehlungs-Bonus erhalten!`,
-        `Dein Freund hat bei ${merchantName} eingelöst – du bekommst +${inviter_points} Punkte!`,
-      ),
+      sendPush(inviter_user_id, inviterTitle, inviterBody),
       sendPush(
         invitee_user_id,
         `🎉 Willkommens-Bonus erhalten!`,
