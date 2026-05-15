@@ -113,10 +113,12 @@ function generateContractPdf(d: ContractData): Uint8Array {
   const cw = pw - 2 * margin;
   let y = 20;
 
+  const isV6 = d.version === "v6";
+  const stand = isV6 ? "Mai 2026" : "April 2026";
   const addFooter = () => {
     doc.setFontSize(8);
     doc.setTextColor(150);
-    doc.text(`Stand: April 2026 - Version ${d.version} - Eloyo, Fuggerstr. 2, 86836 Untermeitingen - support@eloyo.de`, pw / 2, 290, { align: "center" });
+    doc.text(`Stand: ${stand} - Version ${d.version} - Eloyo, Fuggerstr. 2, 86836 Untermeitingen - support@eloyo.de`, pw / 2, 290, { align: "center" });
     doc.setTextColor(0);
   };
 
@@ -267,50 +269,90 @@ function generateContractPdf(d: ContractData): Uint8Array {
   heading("E - Vergütung / Provisionsmodell");
 
   subheading("1. Direktprovision");
-  paragraph("Der Vertriebspartner erhält für jeden erfolgreich abgeschlossenen Neukunden eine Direktprovision in Höhe von 50,00 € netto. Als Abschluss gilt der bestätigte Zahlungseingang der Einmalzahlung des Neukunden. Die Provision erscheint sofort als „vorgemerkt\" im Backoffice und wird nach einer Freigabefrist von 7 Kalendertagen auf „zur Auszahlung bereit\" gesetzt. Bei Stornierung innerhalb der 7 Tage verfällt die Provision ersatzlos.");
+  if (isV6) {
+    paragraph("Der Vertriebspartner erhält für jeden erfolgreich abgeschlossenen Neukunden eine Direktprovision in Höhe von 40,00 € netto. Als Abschluss gilt der bestätigte Eingang der ersten Abo-Zahlung des Neukunden (es gibt keine Einmalzahlung mehr). Die Provision erscheint sofort als „vorgemerkt\" im Backoffice und wird nach einer Freigabefrist von 7 Kalendertagen auf „zur Auszahlung bereit\" gesetzt. Bei Stornierung innerhalb der 7 Tage verfällt die Provision ersatzlos.");
 
-  subheading("2. Rabattsystem");
-  paragraph("Der Vertriebspartner hat die Möglichkeit, beim Abschluss eines Neukunden einen Rabatt auf die Einmalzahlung zu gewähren. Zulässige Rabattstufen sind 10 €, 20 €, 30 €, 40 € oder 50 €. Die Gewährung eines Rabatts ist ausschließlich über die dafür vorgesehenen Gutscheincodes (ELOYO10 bis ELOYO50) zulässig. Der gewährte Rabattbetrag wird direkt von der Direktprovision abgezogen. Nicht autorisierte Rabatte oder selbst erstellte Codes sind unzulässig und können zum sofortigen Vertragsausschluss führen.");
-  paragraph("Beispiel: 30 € Rabatt gewährt -> Direktprovision = 20 € netto.", { bold: true });
+    subheading("2. Monatliche Folgeprovision");
+    paragraph("Für jeden aktiven Kunden in seinem Portfolio erhält der Vertriebspartner eine monatliche Folgeprovision in Höhe von 12,00 € netto. Die Berechnung erfolgt nach dem Snapshot-Prinzip: Am 1. eines jeden Monats wird ermittelt, wie viele aktive Kunden dem Vertriebspartner zu diesem Stichtag zugeordnet sind. Ein Kunde gilt ab dem Tag des bestätigten Eingangs seiner ersten Abo-Zahlung als aktiv.");
+    paragraph("Wichtig: Nicht ausgezahlte Folgeprovisionen aus Inaktivitätsmonaten oder Monaten ohne hinterlegte Steuernummer/Bankverbindung werden nicht angestaut und nicht nachgeholt. Sie verfallen ersatzlos.", { bold: true });
+    paragraph("Beispiel: Abschluss am 20. März -> erste Abo-Zahlung geht ein -> Kunde sofort aktiv. 27. März: 7 Tage abgelaufen -> 40 € Direktprovision zur Auszahlung bereit. 1. April (Snapshot): Kunde ist aktiv -> 12 € Folgeprovision für April. Auszahlung am 1. April: 40 € + 12 € = 52 €.");
 
-  subheading("3. Monatliche Folgeprovision");
-  paragraph("Für jeden aktiven Kunden in seinem Portfolio erhält der Vertriebspartner eine monatliche Folgeprovision in Höhe von 12,00 € netto. Die Berechnung erfolgt nach dem Snapshot-Prinzip: Am 1. eines jeden Monats wird ermittelt, wie viele aktive Kunden dem Vertriebspartner zu diesem Stichtag zugeordnet sind. Ein Kunde gilt ab dem Tag des Zahlungseingangs seiner ersten Zahlung als aktiv.");
-  paragraph("Wichtig: Nicht ausgezahlte Folgeprovisionen aus Inaktivitätsmonaten oder Monaten ohne hinterlegte Steuernummer/Bankverbindung werden nicht angestaut und nicht nachgeholt. Sie verfallen ersatzlos.", { bold: true });
-  paragraph("Beispiel: Abschluss am 20. März -> Zahlung geht ein -> Kunde sofort aktiv. 27. März: 7 Tage abgelaufen -> 50 € Direktprovision zur Auszahlung bereit. 1. April (Snapshot): Kunde ist aktiv -> 12 € Folgeprovision für April. Auszahlung am 1. April: 50 € + 12 € = 62 €.");
+    subheading("3. Sponsor-Bonus");
+    paragraph("Empfiehlt der Vertriebspartner eine Person als neuen Vertriebspartner und wird diese von ELOYO aufgenommen, erhält er als „Sponsor\" einen monatlichen Bonus von 5,00 € netto pro aktivem Kunden des gesponserten Vertriebspartners. Diese Regelung gilt ausschließlich für eine Ebene (kein MLM). Die Entscheidung über die Aufnahme liegt ausschließlich bei ELOYO. Der Sponsor-Bonus unterliegt denselben Inaktivitäts- und Kündigungsregeln wie die Folgeprovision.");
 
-  subheading("4. Sponsor-Bonus");
-  paragraph("Empfiehlt der Vertriebspartner eine Person als neuen Vertriebspartner und wird diese von ELOYO aufgenommen, erhält er als „Sponsor\" einen monatlichen Bonus von 5,00 € netto pro aktivem Kunden des gesponserten Vertriebspartners. Diese Regelung gilt ausschließlich für eine Ebene (kein MLM). Die Entscheidung über die Aufnahme liegt ausschließlich bei ELOYO. Der Sponsor-Bonus unterliegt denselben Inaktivitäts- und Kündigungsregeln wie die Folgeprovision.");
+    subheading("4. Umsatzsteuer & Abrechnung");
+    paragraph("Alle genannten Beträge sind Nettobeträge. Die steuerliche Behandlung richtet sich nach dem Status des Vertriebspartners:");
+    bullet("Kleinunternehmerregelung (§ 19 UStG): Wenn keine gültige USt-IdNr. hinterlegt ist, wird keine Umsatzsteuer ausgewiesen. Die Gutschrift enthält den Hinweis gemäß § 19 UStG.");
+    bullet("USt-pflichtig: Wenn eine gültige und von ELOYO per VIES-Abfrage verifizierte USt-IdNr. hinterlegt ist, wird die Provision brutto (zzgl. 19% MwSt.) ausgezahlt. Die Gutschrift weist die MwSt. separat aus.");
+    bullet("Änderungen der USt-Pflicht sind unverzüglich zu melden. Fehlende Meldungen gehen zu Lasten des Vertriebspartners.");
+    bullet("Auszahlungssperre: Ohne hinterlegte Steuernummer und Bankverbindung ist keine Auszahlung möglich. Anfallende Provisionen in solchen Monaten verfallen ersatzlos.");
+    paragraph("Die Abrechnung erfolgt im Gutschriftverfahren. ELOYO erstellt die Abrechnungsdokumente monatlich und stellt diese im Backoffice zum Download bereit.");
+  } else {
+    paragraph("Der Vertriebspartner erhält für jeden erfolgreich abgeschlossenen Neukunden eine Direktprovision in Höhe von 50,00 € netto. Als Abschluss gilt der bestätigte Zahlungseingang der Einmalzahlung des Neukunden. Die Provision erscheint sofort als „vorgemerkt\" im Backoffice und wird nach einer Freigabefrist von 7 Kalendertagen auf „zur Auszahlung bereit\" gesetzt. Bei Stornierung innerhalb der 7 Tage verfällt die Provision ersatzlos.");
 
-  subheading("5. Umsatzsteuer & Abrechnung");
-  paragraph("Alle genannten Beträge sind Nettobeträge. Die steuerliche Behandlung richtet sich nach dem Status des Vertriebspartners:");
-  bullet("Kleinunternehmerregelung (§ 19 UStG): Wenn keine gültige USt-IdNr. hinterlegt ist, wird keine Umsatzsteuer ausgewiesen. Die Gutschrift enthält den Hinweis gemäß § 19 UStG.");
-  bullet("USt-pflichtig: Wenn eine gültige und von ELOYO per VIES-Abfrage verifizierte USt-IdNr. hinterlegt ist, wird die Provision brutto (zzgl. 19% MwSt.) ausgezahlt. Die Gutschrift weist die MwSt. separat aus.");
-  bullet("Änderungen der USt-Pflicht sind unverzüglich zu melden. Fehlende Meldungen gehen zu Lasten des Vertriebspartners.");
-  bullet("Auszahlungssperre: Ohne hinterlegte Steuernummer und Bankverbindung ist keine Auszahlung möglich. Anfallende Provisionen in solchen Monaten verfallen ersatzlos.");
-  paragraph("Die Abrechnung erfolgt im Gutschriftverfahren. ELOYO erstellt die Abrechnungsdokumente monatlich und stellt diese im Backoffice zum Download bereit.");
+    subheading("2. Rabattsystem");
+    paragraph("Der Vertriebspartner hat die Möglichkeit, beim Abschluss eines Neukunden einen Rabatt auf die Einmalzahlung zu gewähren. Zulässige Rabattstufen sind 10 €, 20 €, 30 €, 40 € oder 50 €. Die Gewährung eines Rabatts ist ausschließlich über die dafür vorgesehenen Gutscheincodes (ELOYO10 bis ELOYO50) zulässig. Der gewährte Rabattbetrag wird direkt von der Direktprovision abgezogen. Nicht autorisierte Rabatte oder selbst erstellte Codes sind unzulässig und können zum sofortigen Vertragsausschluss führen.");
+    paragraph("Beispiel: 30 € Rabatt gewährt -> Direktprovision = 20 € netto.", { bold: true });
+
+    subheading("3. Monatliche Folgeprovision");
+    paragraph("Für jeden aktiven Kunden in seinem Portfolio erhält der Vertriebspartner eine monatliche Folgeprovision in Höhe von 12,00 € netto. Die Berechnung erfolgt nach dem Snapshot-Prinzip: Am 1. eines jeden Monats wird ermittelt, wie viele aktive Kunden dem Vertriebspartner zu diesem Stichtag zugeordnet sind. Ein Kunde gilt ab dem Tag des Zahlungseingangs seiner ersten Zahlung als aktiv.");
+    paragraph("Wichtig: Nicht ausgezahlte Folgeprovisionen aus Inaktivitätsmonaten oder Monaten ohne hinterlegte Steuernummer/Bankverbindung werden nicht angestaut und nicht nachgeholt. Sie verfallen ersatzlos.", { bold: true });
+    paragraph("Beispiel: Abschluss am 20. März -> Zahlung geht ein -> Kunde sofort aktiv. 27. März: 7 Tage abgelaufen -> 50 € Direktprovision zur Auszahlung bereit. 1. April (Snapshot): Kunde ist aktiv -> 12 € Folgeprovision für April. Auszahlung am 1. April: 50 € + 12 € = 62 €.");
+
+    subheading("4. Sponsor-Bonus");
+    paragraph("Empfiehlt der Vertriebspartner eine Person als neuen Vertriebspartner und wird diese von ELOYO aufgenommen, erhält er als „Sponsor\" einen monatlichen Bonus von 5,00 € netto pro aktivem Kunden des gesponserten Vertriebspartners. Diese Regelung gilt ausschließlich für eine Ebene (kein MLM). Die Entscheidung über die Aufnahme liegt ausschließlich bei ELOYO. Der Sponsor-Bonus unterliegt denselben Inaktivitäts- und Kündigungsregeln wie die Folgeprovision.");
+
+    subheading("5. Umsatzsteuer & Abrechnung");
+    paragraph("Alle genannten Beträge sind Nettobeträge. Die steuerliche Behandlung richtet sich nach dem Status des Vertriebspartners:");
+    bullet("Kleinunternehmerregelung (§ 19 UStG): Wenn keine gültige USt-IdNr. hinterlegt ist, wird keine Umsatzsteuer ausgewiesen. Die Gutschrift enthält den Hinweis gemäß § 19 UStG.");
+    bullet("USt-pflichtig: Wenn eine gültige und von ELOYO per VIES-Abfrage verifizierte USt-IdNr. hinterlegt ist, wird die Provision brutto (zzgl. 19% MwSt.) ausgezahlt. Die Gutschrift weist die MwSt. separat aus.");
+    bullet("Änderungen der USt-Pflicht sind unverzüglich zu melden. Fehlende Meldungen gehen zu Lasten des Vertriebspartners.");
+    bullet("Auszahlungssperre: Ohne hinterlegte Steuernummer und Bankverbindung ist keine Auszahlung möglich. Anfallende Provisionen in solchen Monaten verfallen ersatzlos.");
+    paragraph("Die Abrechnung erfolgt im Gutschriftverfahren. ELOYO erstellt die Abrechnungsdokumente monatlich und stellt diese im Backoffice zum Download bereit.");
+  }
 
   heading("F - Auszahlung");
   paragraph("Die Auszahlung erfolgt monatlich. ELOYO initiiert die Überweisung zum 1. eines jeden Monats; der Zahlungseingang beim Vertriebspartner erfolgt spätestens bis zum 5. des Monats. Bei Wochenenden oder Feiertagen kann sich die Auszahlung entsprechend verschieben. Maßgeblich für die Überweisung sind ausschließlich die im Backoffice hinterlegten Bankdaten.");
 
   heading("G - Inaktivität & Konsequenzen");
   paragraph("Aktivitätsdefinition: Als Aktivität gilt ausschließlich der bestätigte Zahlungseingang eines Neukunden. Kundenkontakte, Termine oder die Nutzung des Backoffice begründen keine Aktivität. Ab dem Tag des letzten Zahlungseingangs läuft ein Zähler in Kalendertagen. Bei jedem neuen bestätigten Zahlungseingang wird er automatisch auf 0 zurückgesetzt.");
-  bullet("Tag 1-180: AKTIV — Folgeprovision wird am Stichtag (1. des Monats) normal berechnet und ausgezahlt.");
-  bullet("Ab Tag 181: INAKTIV — Folgeprovision wird nicht ausgezahlt, nicht angestaut und nicht nachgeholt. Account bleibt weitere 180 Tage (ca. 6 Monate) eingefroren. In dieser Zeit kann der Vertriebspartner durch einen neuen bestätigten Zahlungseingang reaktiviert werden — die bestehenden Kundenzuordnungen bleiben in dieser Zeit erhalten.");
-  bullet("Ab Tag 361: ACCOUNT GELÖSCHT — Vollständige Löschung des Accounts, Kundenzuordnung wird aufgehoben.");
-  paragraph("Wird innerhalb der 9-monatigen Einfrierphase ein neuer Kunde abgeschlossen, wechselt der Status sofort wieder auf aktiv. Die Folgeprovision läuft ab dem nächsten Stichtag wieder normal. Das Backoffice zeigt den aktuellen Zählerstand jederzeit an. Bei Erreichen von Tag 75 wird der Vertriebspartner automatisch per E-Mail gewarnt.");
+  if (isV6) {
+    bullet("Tag 1-180: AKTIV — Folgeprovision wird am Stichtag (1. des Monats) normal berechnet und ausgezahlt.");
+    bullet("Ab Tag 181: INAKTIV — Folgeprovision wird nicht mehr ausgezahlt, nicht angestaut und nicht nachgeholt. Die bestehende Kundenzuordnung bleibt jedoch weitere 6 Monate (Monat 7 bis 12 nach letztem Abschluss) bestehen, sodass der Vertriebspartner durch einen neuen bestätigten Zahlungseingang reaktiviert werden kann.");
+    bullet("Ab Monat 13 (12 Monate nach letztem Abschluss): ACCOUNT GELÖSCHT — Vollständige Löschung des Accounts, die Kundenzuordnung wird aufgehoben und der Vertrag endet automatisch. Der Vertriebspartner wird einen Monat vor Ablauf automatisch per E-Mail gewarnt.");
+    paragraph("Wird innerhalb der Inaktivphase (Monat 7 bis 12) ein neuer Kunde abgeschlossen, wird der Zähler sofort auf 0 zurückgesetzt und der Status wechselt wieder auf aktiv. Die Folgeprovision läuft ab dem nächsten Stichtag wieder normal. Das Backoffice zeigt den aktuellen Zählerstand jederzeit an. Bei Erreichen von Tag 165 wird der Vertriebspartner automatisch per E-Mail gewarnt.");
 
-  heading("H - Kündigung & Provisionen nach Vertragsende");
-  paragraph("Dieser Vertrag kann von beiden Parteien mit einer Frist von einem Monat zum Monatsende ordentlich gekündigt werden. Das Recht zur außerordentlichen fristlosen Kündigung aus wichtigem Grund bleibt unberührt — insbesondere bei Verstoß gegen die Wettbewerbsregelung, Rufschädigung oder Verstößen gegen geltendes Recht.");
-  paragraph("Nach Kündigung gelten für Provisionen dieselben Regeln wie bei Inaktivität. Die Folgeprovision läuft weiter, solange der Zähler unter 180 Tagen liegt. Sobald der Zähler 180 Tage überschreitet oder die Kündigung wirksam wird — je nachdem was früher eintritt — wird kein Geldfluss mehr ausgelöst. Account bleibt anschließend 180 Tage eingefroren (Reaktivierung in dieser Zeit möglich, Kundenzuordnung bleibt erhalten); nach insgesamt 360 Tagen wird der Account gelöscht und die Kundenzuordnung aufgehoben.");
+    heading("H - Kündigung & Provisionen nach Vertragsende");
+    paragraph("Dieser Vertrag kann von beiden Parteien mit einer Frist von einem Monat zum Monatsende ordentlich gekündigt werden. Das Recht zur außerordentlichen fristlosen Kündigung aus wichtigem Grund bleibt unberührt — insbesondere bei Verstoß gegen die Wettbewerbsregelung, Rufschädigung oder Verstößen gegen geltendes Recht.");
+    paragraph("Nach Kündigung läuft der Aktivitätszähler aus Abschnitt G normal weiter. Ab dem Kündigungsdatum besteht kein Recht mehr, neue Kundenabschlüsse zu tätigen. Sobald der Zähler 181 Tage überschreitet oder die Kündigung wirksam wird — je nachdem was früher eintritt — wird keine Folgeprovision mehr ausgezahlt. Kundenzuordnung und Account-Löschung folgen denselben Regeln wie in Abschnitt G (Kundenzuordnung weitere 6 Monate, Löschung ab Monat 13 nach letztem Abschluss, automatische E-Mail-Warnung 1 Monat vorher).");
 
-  heading("I - eloyo Boxen & Bestellsystem");
-  paragraph("Der Vertriebspartner kann über das Backoffice zwei Pakete bestellen, die jeweils eloyo Boxen enthalten. Jede eloyo Box hat einen Warenwert von 30,00 € brutto (inkl. MwSt.). Es kann immer nur ein Paket gleichzeitig bestellt werden.");
-  bullet("Starterpaket: 4 eloyo Boxen — 120,00 € — keine Voraussetzung.");
-  bullet("Vertriebspaket: 7 eloyo Boxen — 210,00 € — Voraussetzung: mind. 4 aktive Kunden.");
-  paragraph("Preisfixierung: Der Warenwert von 30,00 € pro eloyo Box wird zum Zeitpunkt der Bestellung protokolliert und ist verbindlich. Spätere Preisänderungen haben keinen Einfluss auf bereits aufgegebene Bestellungen.", { bold: true });
-  paragraph("90-Tage-Frist: Ab dem Versanddatum durch ELOYO läuft für jede einzelne eloyo Box eine Frist von 90 Kalendertagen. Innerhalb dieser Frist muss jede Box einem Kunden zugewiesen (abgeschlossen) oder unversehrt an ELOYO zurückgesendet werden. Der Warenwert wird pro Box einzeln berechnet — nicht pauschal für das gesamte Paket.", { bold: true });
-  paragraph("Ist beides nach 90 Tagen nicht erfolgt, werden 30,00 € pro betroffener Box automatisch in Rechnung gestellt — primär verrechnet mit offenen Provisionen, andernfalls als separate Rechnung. Der Vertriebspartner wird 15 Tage vor Fristablauf automatisch gewarnt.");
-  paragraph("Beispiel: Starterpaket: 4 Boxen à 30 €. Nach 90 Tagen: 3 abgeschlossen, 1 nicht -> Rechnung über 30 € (nur für die 1 nicht abgeschlossene Box). Nachträglicher Abschluss möglich -> volle 50 € Direktprovision + 12 €/Monat Folgeprovision. Boxrechnung bleibt bestehen. Effektiv: 50 € - 30 € = 20 € Einmalgewinn, plus Folgeprovision.");
+    heading("I - eloyo Boxen & Bestellsystem");
+    paragraph("Der Vertriebspartner kann über das Backoffice zwei Pakete bestellen, die jeweils eloyo Boxen enthalten. Jede eloyo Box hat einen Warenwert von 25,00 € brutto (inkl. MwSt.). Es kann immer nur ein Paket gleichzeitig bestellt werden.");
+    bullet("Starterpaket: 4 eloyo Boxen — 100,00 € — keine Voraussetzung.");
+    bullet("Vertriebspaket: 7 eloyo Boxen — 175,00 € — Voraussetzung: mind. 4 aktive Kunden.");
+    paragraph("Preisfixierung: Der Warenwert von 25,00 € pro eloyo Box wird zum Zeitpunkt der Bestellung protokolliert und ist verbindlich. Spätere Preisänderungen haben keinen Einfluss auf bereits aufgegebene Bestellungen.", { bold: true });
+    paragraph("90-Tage-Frist: Ab dem Versanddatum durch ELOYO läuft für jede einzelne eloyo Box eine Frist von 90 Kalendertagen. Innerhalb dieser Frist muss jede Box einem Kunden zugewiesen (abgeschlossen) oder unversehrt an ELOYO zurückgesendet werden. Der Warenwert wird pro Box einzeln berechnet — nicht pauschal für das gesamte Paket.", { bold: true });
+    paragraph("Ist beides nach 90 Tagen nicht erfolgt, werden 25,00 € pro betroffener Box automatisch in Rechnung gestellt — primär verrechnet mit offenen Provisionen, andernfalls als separate Rechnung. Der Vertriebspartner wird 15 Tage vor Fristablauf automatisch gewarnt.");
+    paragraph("Beispiel: Starterpaket: 4 Boxen à 25 €. Nach 90 Tagen: 3 abgeschlossen, 1 nicht -> Rechnung über 25 € (nur für die 1 nicht abgeschlossene Box). Nachträglicher Abschluss möglich -> volle 40 € Direktprovision + 12 €/Monat Folgeprovision. Boxrechnung bleibt bestehen. Effektiv: 40 € - 25 € = 15 € Einmalgewinn, plus Folgeprovision.");
+  } else {
+    bullet("Tag 1-180: AKTIV — Folgeprovision wird am Stichtag (1. des Monats) normal berechnet und ausgezahlt.");
+    bullet("Ab Tag 181: INAKTIV — Folgeprovision wird nicht ausgezahlt, nicht angestaut und nicht nachgeholt. Account bleibt weitere 180 Tage (ca. 6 Monate) eingefroren. In dieser Zeit kann der Vertriebspartner durch einen neuen bestätigten Zahlungseingang reaktiviert werden — die bestehenden Kundenzuordnungen bleiben in dieser Zeit erhalten.");
+    bullet("Ab Tag 361: ACCOUNT GELÖSCHT — Vollständige Löschung des Accounts, Kundenzuordnung wird aufgehoben.");
+    paragraph("Wird innerhalb der 9-monatigen Einfrierphase ein neuer Kunde abgeschlossen, wechselt der Status sofort wieder auf aktiv. Die Folgeprovision läuft ab dem nächsten Stichtag wieder normal. Das Backoffice zeigt den aktuellen Zählerstand jederzeit an. Bei Erreichen von Tag 75 wird der Vertriebspartner automatisch per E-Mail gewarnt.");
+
+    heading("H - Kündigung & Provisionen nach Vertragsende");
+    paragraph("Dieser Vertrag kann von beiden Parteien mit einer Frist von einem Monat zum Monatsende ordentlich gekündigt werden. Das Recht zur außerordentlichen fristlosen Kündigung aus wichtigem Grund bleibt unberührt — insbesondere bei Verstoß gegen die Wettbewerbsregelung, Rufschädigung oder Verstößen gegen geltendes Recht.");
+    paragraph("Nach Kündigung gelten für Provisionen dieselben Regeln wie bei Inaktivität. Die Folgeprovision läuft weiter, solange der Zähler unter 180 Tagen liegt. Sobald der Zähler 180 Tage überschreitet oder die Kündigung wirksam wird — je nachdem was früher eintritt — wird kein Geldfluss mehr ausgelöst. Account bleibt anschließend 180 Tage eingefroren (Reaktivierung in dieser Zeit möglich, Kundenzuordnung bleibt erhalten); nach insgesamt 360 Tagen wird der Account gelöscht und die Kundenzuordnung aufgehoben.");
+
+    heading("I - eloyo Boxen & Bestellsystem");
+    paragraph("Der Vertriebspartner kann über das Backoffice zwei Pakete bestellen, die jeweils eloyo Boxen enthalten. Jede eloyo Box hat einen Warenwert von 30,00 € brutto (inkl. MwSt.). Es kann immer nur ein Paket gleichzeitig bestellt werden.");
+    bullet("Starterpaket: 4 eloyo Boxen — 120,00 € — keine Voraussetzung.");
+    bullet("Vertriebspaket: 7 eloyo Boxen — 210,00 € — Voraussetzung: mind. 4 aktive Kunden.");
+    paragraph("Preisfixierung: Der Warenwert von 30,00 € pro eloyo Box wird zum Zeitpunkt der Bestellung protokolliert und ist verbindlich. Spätere Preisänderungen haben keinen Einfluss auf bereits aufgegebene Bestellungen.", { bold: true });
+    paragraph("90-Tage-Frist: Ab dem Versanddatum durch ELOYO läuft für jede einzelne eloyo Box eine Frist von 90 Kalendertagen. Innerhalb dieser Frist muss jede Box einem Kunden zugewiesen (abgeschlossen) oder unversehrt an ELOYO zurückgesendet werden. Der Warenwert wird pro Box einzeln berechnet — nicht pauschal für das gesamte Paket.", { bold: true });
+    paragraph("Ist beides nach 90 Tagen nicht erfolgt, werden 30,00 € pro betroffener Box automatisch in Rechnung gestellt — primär verrechnet mit offenen Provisionen, andernfalls als separate Rechnung. Der Vertriebspartner wird 15 Tage vor Fristablauf automatisch gewarnt.");
+    paragraph("Beispiel: Starterpaket: 4 Boxen à 30 €. Nach 90 Tagen: 3 abgeschlossen, 1 nicht -> Rechnung über 30 € (nur für die 1 nicht abgeschlossene Box). Nachträglicher Abschluss möglich -> volle 50 € Direktprovision + 12 €/Monat Folgeprovision. Boxrechnung bleibt bestehen. Effektiv: 50 € - 30 € = 20 € Einmalgewinn, plus Folgeprovision.");
+  }
 
   heading("J - Empfehlung neuer Vertriebspartner");
   paragraph("Der Vertriebspartner kann Personen als potenzielle neue Vertriebspartner bei ELOYO vorschlagen. Die Entscheidung über die Aufnahme liegt ausschließlich bei ELOYO. Bei Aufnahme wird der empfehlende Partner als „Sponsor\" geführt und erhält den Sponsor-Bonus gemäß Abschnitt E, Ziffer 4. Es gilt ausschließlich eine Sponsor-Ebene — kein Strukturvertrieb.");
