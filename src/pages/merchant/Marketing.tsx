@@ -1448,8 +1448,15 @@ const Marketing = () => {
                         {rewardForm.marketing_emoji || '🎁'}
                       </Button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-72 p-2" align="start">
-                      <div className="grid grid-cols-8 gap-1 max-h-56 overflow-y-auto">
+                    <PopoverContent className="w-72 p-2" align="start" onWheel={(e) => e.stopPropagation()}>
+                      <div
+                        className="grid grid-cols-8 gap-1 max-h-56 overflow-y-auto overscroll-contain"
+                        style={{ WebkitOverflowScrolling: 'touch' }}
+                        onWheel={(e) => {
+                          e.currentTarget.scrollTop += e.deltaY;
+                          e.stopPropagation();
+                        }}
+                      >
                         {REWARD_MARKETING_EMOJIS.map((emoji, i) => (
                           <button
                             key={`${emoji}-${i}`}
