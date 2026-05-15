@@ -827,6 +827,27 @@ const SalesReps = () => {
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
+    {/* Set Password Dialog */}
+    <AlertDialog open={pwDialogOpen} onOpenChange={setPwDialogOpen}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Passwort für {selected?.full_name} setzen</AlertDialogTitle>
+          <AlertDialogDescription>
+            Setze ein neues Passwort für <strong>{selected?.email}</strong>. Du kannst es dem Vertriebler direkt mitteilen — er kann es später jederzeit selbst ändern.
+            <div className="mt-3">
+              <Label className="text-xs">Neues Passwort (min. 8 Zeichen)</Label>
+              <Input type="text" autoFocus value={pwValue} onChange={e => setPwValue(e.target.value)} className="mt-1 font-mono" placeholder="z.B. eloyo2026!" />
+            </div>
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel disabled={pwSaving}>Abbrechen</AlertDialogCancel>
+          <AlertDialogAction onClick={(e) => { e.preventDefault(); setPasswordForRep(); }} disabled={pwSaving}>
+            {pwSaving ? "Speichere..." : "Passwort setzen"}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
     </>
   );
 };
