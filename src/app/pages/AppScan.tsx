@@ -491,7 +491,19 @@ export const AppScan = () => {
       });
       console.log('[AppScan] RPC result:', JSON.stringify(data), 'error:', error);
       if (error) throw error;
-      const response = data as { success: boolean; points_awarded?: number; total_points?: number; merchant_customer_id?: string; merchant_name?: string; error?: string; error_code?: string; };
+      const response = data as {
+        success: boolean;
+        points_awarded?: number;
+        total_points?: number;
+        check_ins?: number;
+        is_check_in?: boolean;
+        welcome_reward_redeemed?: boolean;
+        welcome_reward_label?: string | null;
+        merchant_customer_id?: string;
+        merchant_name?: string;
+        error?: string;
+        error_code?: string;
+      };
 
       if (response.success) {
         let merchantName = response.merchant_name || 'Händler';
@@ -499,12 +511,22 @@ export const AppScan = () => {
           const { data: merchant } = await supabase.from('customers').select('company_name, name').eq('id', response.merchant_customer_id).single();
           merchantName = merchant?.company_name || merchant?.name || 'Händler';
         }
-        setResult({ success: true, points: response.points_awarded, totalPoints: response.total_points, merchantName, merchantCustomerId: response.merchant_customer_id });
+        setResult({
+          success: true,
+          points: response.points_awarded,
+          totalPoints: response.total_points,
+          checkIns: response.check_ins,
+          isCheckIn: response.is_check_in,
+          welcomeRewardRedeemed: response.welcome_reward_redeemed,
+          welcomeRewardLabel: response.welcome_reward_label ?? null,
+          merchantName,
+          merchantCustomerId: response.merchant_customer_id,
+        });
         // Toast entfernt — UI zeigt die Punkte bereits visuell an
         console.log('[AppScan] setResult called with merchantCustomerId:', response.merchant_customer_id);
 
         // Referral-Bonus prüfen (Phase 2: Joint Visit, 7 Tage)
-        if (response.merchant_customer_id) {
+        if (response.merchant_customer_id && !response.is_check_in) {
           await maybeAwardReferralBonus({
             userId: currentUserId,
             merchantCustomerId: response.merchant_customer_id,
