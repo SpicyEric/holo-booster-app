@@ -16,7 +16,6 @@ import { INDUSTRIES } from "@/pages/wizard/wizardLogic";
 
 // Pricing
 const PRICING = {
-  startbox: { first: 149.45, additional: 99.45 },
   abo: {
     firstMonthly: 49.45,
     additionalMonthly: 39.45,
@@ -107,31 +106,24 @@ export default function CheckoutForm({ backPath, backLabel, partnerUserId, prefi
   const additionalLocations = Math.max(0, locationCount - 1);
 
   const calculateTotal = () => {
-    const baseStartbox = PRICING.startbox.first + additionalLocations * PRICING.startbox.additional;
     const monthlyAbo = PRICING.abo.firstMonthly + additionalLocations * PRICING.abo.additionalMonthly;
     const yearlyAbo = monthlyAbo * 11; // 11 months for each
     const baseAbo = isYearlyBilling ? yearlyAbo : monthlyAbo;
 
-    let startboxDiscount = salesRepDiscount, aboDiscount = 0;
+    let aboDiscount = 0;
     for (const d of validatedDiscounts) {
-      if (d.appliesTo === 'one_time' || d.appliesTo === 'both') {
-        startboxDiscount += d.discountType === 'percentage' ? baseStartbox * (d.discountValue / 100) : d.discountValue;
-      }
-      if (d.appliesTo === 'recurring' || d.appliesTo === 'both') {
-        aboDiscount += d.discountType === 'percentage' ? baseAbo * (d.discountValue / 100) : d.discountValue;
-      }
+      // All discounts apply to the recurring subscription now (no one-time fee).
+      aboDiscount += d.discountType === 'percentage' ? baseAbo * (d.discountValue / 100) : d.discountValue;
     }
 
-    const finalStartbox = Math.max(0, baseStartbox - startboxDiscount);
     const finalAbo = Math.max(0, baseAbo - aboDiscount);
     const savings = isYearlyBilling ? monthlyAbo : 0;
 
     return {
-      startbox: baseStartbox, startboxDiscounted: finalStartbox, startboxDiscount,
       aboBase: baseAbo, aboTotal: finalAbo, aboDiscount,
       monthlyAbo,
-      firstPayment: finalStartbox + finalAbo,
-      savings, totalDiscount: startboxDiscount + aboDiscount,
+      firstPayment: finalAbo,
+      savings, totalDiscount: aboDiscount,
     };
   };
 
@@ -245,36 +237,7 @@ export default function CheckoutForm({ backPath, backLabel, partnerUserId, prefi
   return (
     <form onSubmit={handleSubmit} className="space-y-6 max-w-4xl mx-auto">
       {/* Products overview */}
-      <div className="grid lg:grid-cols-2 gap-4">
-        <Card className="border border-primary/30 bg-primary/5">
-          <CardHeader className="pb-3">
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 bg-primary rounded-lg flex items-center justify-center">
-                <Package className="w-4 h-4 text-primary-foreground" />
-              </div>
-              <div>
-                <CardTitle className="text-lg">Eloyo Startbox</CardTitle>
-                <CardDescription className="text-xs">Einmalige Einrichtung</CardDescription>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent className="pt-0">
-            <div className="flex items-baseline gap-2 mb-3">
-              <span className="text-2xl font-bold">{totals.startbox.toFixed(2)}€</span>
-              <span className="text-xs text-muted-foreground">einmalig</span>
-            </div>
-            {additionalLocations > 0 && (
-              <p className="text-xs text-muted-foreground mb-2">
-                1× {PRICING.startbox.first.toFixed(2)}€ + {additionalLocations}× {PRICING.startbox.additional.toFixed(2)}€
-              </p>
-            )}
-            <ul className="space-y-1">
-              {["NFC-Karten pro Standort", "Einrichtung & Onboarding", "Premium Support"].map((f, i) => (
-                <li key={i} className="flex items-center gap-2 text-xs"><Check className="h-3 w-3 text-primary" />{f}</li>
-              ))}
-            </ul>
-          </CardContent>
-        </Card>
+      <div className="grid lg:grid-cols-1 gap-4">
 
         <Card className="border border-primary/30 bg-primary/5">
           <CardHeader className="pb-3">
@@ -510,14 +473,6 @@ export default function CheckoutForm({ backPath, backLabel, partnerUserId, prefi
           <CardTitle className="text-base">Zusammenfassung</CardTitle>
         </CardHeader>
         <CardContent className="space-y-2">
-          <div className="flex justify-between py-1.5 border-b text-sm">
-            <span>Startbox ({locationCount} Standort{locationCount > 1 ? 'e' : ''})</span>
-            <span className="font-medium">
-              {totals.startboxDiscount > 0 ? (
-                <><span className="line-through text-muted-foreground mr-2">{totals.startbox.toFixed(2)}€</span><span className="text-green-600">{totals.startboxDiscounted.toFixed(2)}€</span></>
-              ) : `${totals.startbox.toFixed(2)}€`}
-            </span>
-          </div>
           <div className="flex justify-between py-1.5 border-b text-sm">
             <span>Abo ({isYearlyBilling ? 'Jährlich' : 'Monatlich'}, {locationCount} Standort{locationCount > 1 ? 'e' : ''})</span>
             <span className="font-medium">
