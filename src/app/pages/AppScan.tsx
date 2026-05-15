@@ -485,10 +485,21 @@ export const AppScan = () => {
     }
 
     try {
-      const { data, error } = await supabase.rpc('award_points_via_nfc', {
-        p_hardware_uid: hardwareUid,
-        p_user_id: currentUserId,
-      });
+      const pendingActivatedReward = contextMerchantId
+        ? getActivatedReward(contextMerchantId)
+        : null;
+      const { data, error } = pendingActivatedReward
+        ? await (supabase.rpc as any)('award_points_via_nfc_with_reward', {
+            p_hardware_uid: hardwareUid,
+            p_user_id: currentUserId,
+            p_expected_merchant_customer_id: contextMerchantId,
+            p_activated_visit_number: pendingActivatedReward.visitNumber,
+            p_activated_reward_label: pendingActivatedReward.label,
+          })
+        : await supabase.rpc('award_points_via_nfc', {
+            p_hardware_uid: hardwareUid,
+            p_user_id: currentUserId,
+          });
       console.log('[AppScan] RPC result:', JSON.stringify(data), 'error:', error);
       if (error) throw error;
       const response = data as {
@@ -501,6 +512,9 @@ export const AppScan = () => {
         welcome_reward_label?: string | null;
         merchant_customer_id?: string;
         merchant_name?: string;
+        activated_reward_redeemed?: boolean;
+        activated_reward_label?: string | null;
+        activated_reward_visit_number?: number;
         error?: string;
         error_code?: string;
       };
@@ -512,25 +526,13 @@ export const AppScan = () => {
           merchantName = merchant?.company_name || merchant?.name || 'Händler';
         }
 
-        // Aktivierte V2-Prämie serverseitig einlösen, falls vorhanden.
-        if (response.merchant_customer_id) {
-          const activated = getActivatedReward(response.merchant_customer_id);
-          if (activated) {
-            try {
-              const { data: redeemData } = await supabase.rpc('redeem_activated_reward', {
-                p_merchant_customer_id: response.merchant_customer_id,
-                p_visit_number: activated.visitNumber,
-                p_reward_label: activated.label,
-              });
-              const redeemResp = redeemData as { success?: boolean } | null;
-              if (redeemResp?.success) {
-                response.welcome_reward_redeemed = true;
-                response.welcome_reward_label = activated.label;
-              }
-            } catch (e) {
-              console.error('[AppScan] redeem_activated_reward failed', e);
-            }
-            clearActivatedReward(response.merchant_customer_id);
+        // Aktivierte V2-Prämie wurde atomar im Check-in-RPC eingelöst.
+        if (response.merchant_customer_id && response.activated_reward_redeemed) {
+          response.welcome_reward_redeemed = true;
+          response.welcome_reward_label = response.activated_reward_label || pendingActivatedReward?.label || null;
+          clearActivatedReward(response.merchant_customer_id);
+          if (contextMerchantId === response.merchant_customer_id) {
+            setActivatedRewardState(null);
           }
         }
 
@@ -584,7 +586,7 @@ export const AppScan = () => {
         setScanning(false);
       }
     }
-  }, [user, navigate, isOnline]);
+  }, [user, isOnline, contextMerchantId, updatePreparingFlip]);
 
   const handleNfcRead = useCallback((nfcResult: NfcReadResult) => {
     if (nfcResult.success && nfcResult.hardwareUid) {
