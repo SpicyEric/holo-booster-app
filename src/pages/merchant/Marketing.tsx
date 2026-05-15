@@ -681,7 +681,7 @@ const Marketing = () => {
                           </div>
                         </div>
                         <div className="flex items-center gap-2">
-                          <Button variant="ghost" size="sm" onClick={() => { setEditingReward(reward); setRewardForm({ title: reward.title, description: reward.description || '', points_required: reward.points_required, image_url: reward.image_url || '' }); setShowRewardDialog(true); }} className="rounded-lg"><Edit2 className="h-4 w-4" /></Button>
+                          <Button variant="ghost" size="sm" onClick={() => { setEditingReward(reward); setRewardForm({ title: reward.title, description: reward.description || '', points_required: reward.points_required, image_url: reward.image_url || '', marketing_text: reward.marketing_text || '', marketing_emoji: reward.marketing_emoji || '' }); setShowRewardDialog(true); }} className="rounded-lg"><Edit2 className="h-4 w-4" /></Button>
                           <Button variant="ghost" size="sm" onClick={() => handleDeleteReward(reward.id)} className="rounded-lg"><Trash2 className="h-4 w-4 text-destructive" /></Button>
                         </div>
                       </div>
