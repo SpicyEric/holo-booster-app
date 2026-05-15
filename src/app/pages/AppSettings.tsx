@@ -52,9 +52,6 @@ export default function AppSettings() {
   const [showPasswords, setShowPasswords] = useState(false);
 
   // Email change state
-  const [editingEmail, setEditingEmail] = useState(false);
-  const [newEmail, setNewEmail] = useState('');
-  const [savingEmail, setSavingEmail] = useState(false);
 
   // Phone change state
   const [phoneDialogOpen, setPhoneDialogOpen] = useState(false);
