@@ -27,12 +27,15 @@ interface MessageDetail {
   offer_id: string | null;
   offer_redeemed_at: string | null;
   image_url: string | null;
-  merchant_customer_id: string;
+  merchant_customer_id: string | null;
+  system_type: string | null;
+  cta_label: string | null;
+  cta_route: string | null;
   customer?: {
     name: string;
     company_name: string | null;
     logo_url: string | null;
-  };
+  } | null;
   offer?: {
     id: string;
     title: string;
@@ -72,6 +75,7 @@ const AppMessageDetail = () => {
         .from('app_messages')
         .select(`
           id, title, body, sent_at, read_at, offer_id, offer_redeemed_at, image_url, merchant_customer_id,
+          system_type, cta_label, cta_route,
           customers!merchant_customer_id (name, company_name, logo_url, active)
         `)
         .eq('id', id!)
@@ -83,18 +87,20 @@ const AppMessageDetail = () => {
         return;
       }
 
-      // Block access to messages from inactive (cancelled) merchants
       const merchantData = Array.isArray((msgData as any).customers)
         ? (msgData as any).customers[0]
         : (msgData as any).customers;
-      if (merchantData?.active !== true) {
+
+      // Block access to messages from inactive (cancelled) merchants
+      // (system messages without merchant are always allowed)
+      if ((msgData as any).merchant_customer_id && merchantData?.active !== true) {
         setLoading(false);
         return;
       }
 
       const msg: any = {
         ...msgData,
-        customer: Array.isArray((msgData as any).customers) ? (msgData as any).customers[0] : (msgData as any).customers,
+        customer: merchantData ?? null,
         offer: null,
       };
 
