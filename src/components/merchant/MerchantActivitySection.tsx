@@ -46,7 +46,7 @@ export default function MerchantActivitySection({ customerId }: Props) {
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [allLoyaltyAccounts, setAllLoyaltyAccounts] = useState<{ created_at: string }[]>([]);
 
-  const [viewMode, setViewMode] = useState<ViewMode>("range");
+  const [viewMode, setViewMode] = useState<ViewMode>("total");
   const [quickRange, setQuickRange] = useState<QuickRange>(30);
   const initialFrom = (() => { const d = new Date(); d.setDate(d.getDate() - 30); d.setHours(0,0,0,0); return d; })();
   const initialTo = (() => { const d = new Date(); d.setHours(23,59,59,999); return d; })();
