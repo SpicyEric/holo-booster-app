@@ -50,7 +50,7 @@ import SalesRepOrders from "./pages/salesrep/SalesRepOrders";
 import Academy from "./pages/shared/Academy";
 import SalesRepCheckout from "./pages/salesrep/SalesRepCheckout";
 import SalesRepDemoAbschluss from "./pages/salesrep/SalesRepDemoAbschluss";
-import MerchantSetup from "./pages/merchant/MerchantSetup";
+
 import Scan from "./pages/Scan";
 import NotFound from "./pages/NotFound";
 import CheckoutSuccess from "./pages/CheckoutSuccess";
@@ -157,7 +157,6 @@ const App = () => {
               </Route>
 
               {/* Händler Dashboard (role: merchant) */}
-              <Route path="/kunde/setup" element={<MerchantSetup />} />
               <Route path="/kunde" element={<MerchantLayout />}>
                 <Route index element={<KundeDashboard />} />
                 <Route path="mein-geschaeft" element={<MeinGeschaeft />} />
