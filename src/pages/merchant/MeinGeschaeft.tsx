@@ -1583,6 +1583,7 @@ const MeinGeschaeft = () => {
                       <MerchantTreuepassPreviewV2
                         brandColor={merchantBrand.color}
                         merchantName={formData.name || 'Dein Geschäft'}
+                        coverImageUrl={formData.cover_image_url}
                         rewards={rewards.map((r) => ({
                           id: r.id,
                           title: r.title,
