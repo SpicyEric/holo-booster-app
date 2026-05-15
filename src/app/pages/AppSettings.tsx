@@ -4,7 +4,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
 import {
   AlertDialog,
@@ -65,7 +64,7 @@ export default function AppSettings() {
   const [phoneWorking, setPhoneWorking] = useState(false);
 
   const [birthDate, setBirthDate] = useState('');
-  const [gender, setGender] = useState('');
+  const [birthDateLocked, setBirthDateLocked] = useState(false);
 
   const userPhone = (user as any)?.phone as string | undefined;
   const userEmail = user?.email;
@@ -76,13 +75,14 @@ export default function AppSettings() {
       try {
         const { data: profileData } = await supabase
           .from('profiles')
-          .select('birth_date, gender, auth_method')
+          .select('birth_date, auth_method')
           .eq('user_id', user.id)
           .maybeSingle();
 
         if (profileData) {
-          setBirthDate(profileData.birth_date || '');
-          setGender(profileData.gender || '');
+          const bd = profileData.birth_date || '';
+          setBirthDate(bd);
+          setBirthDateLocked(!!bd);
           if (profileData.auth_method) setAuthMethod(profileData.auth_method as any);
         }
       } catch (error) {
@@ -112,12 +112,23 @@ export default function AppSettings() {
     if (!user) return;
     setSaving(true);
     try {
+      // Birth date is one-time only
+      const payload: any = {};
+      if (!birthDateLocked && birthDate) payload.birth_date = birthDate;
+
+      if (Object.keys(payload).length === 0) {
+        toast.info('Keine Änderungen');
+        return;
+      }
+
       const { error } = await supabase
         .from('profiles')
-        .update({ birth_date: birthDate || null, gender: gender || null })
+        .update(payload)
         .eq('user_id', user.id);
       if (error) throw error;
-      toast.success('Änderungen gespeichert');
+
+      if (payload.birth_date) setBirthDateLocked(true);
+      toast.success('Geburtsdatum gespeichert. Es kann nicht mehr geändert werden.');
     } catch (error: any) {
       toast.error(`Fehler: ${error.message}`);
     } finally {
