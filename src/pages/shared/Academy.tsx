@@ -128,7 +128,7 @@ function TabWasIst() {
           </ul>
           <p>
             Das Geschäft muss dafür nichts aktiv tun. Kein Mitarbeiter muss Kunden ansprechen, fragen ob sie eine Kundenkarte wollen
-            oder erklären wie es funktioniert. Der Aufsteller übernimmt das — wenn er gut designt ist, vollständig automatisch.
+            oder erklären wie es funktioniert. Der Aufsteller übernimmt das — wenn er gut designt und platziert ist, vollständig automatisch.
           </p>
         </Section>
       </Card>
@@ -200,15 +200,13 @@ function TabSystem() {
         <Section title="So läuft ein Check-in in der Praxis">
           <ol className="list-decimal pl-6 space-y-1">
             <li>Kunde kommt rein, kauft etwas</li>
-            <li>Kunde spricht den Kassierer auf seinen Check-in an — oder der Kassierer fragt kurz nach</li>
+            <li>Kunde spricht den Kassierer auf seinen Check-in an</li>
             <li>Kassierer hält die NFC-Karte ans Handy des Kunden</li>
             <li>Check-in erscheint sofort in der App — fertig</li>
           </ol>
           <p>Kein Tippen, kein Knopf, kein System einloggen. Einfacher als Kartenzahlung.</p>
           <p>
-            <strong className="text-foreground">Wichtig:</strong> Check-ins werden nur vergeben, wenn der Kunde auch etwas bestellt
-            und bezahlt hat. Das Geschäft entscheidet selbst, ob es eine Mindestbestellmenge gibt — das ist seine freie Entscheidung
-            und nicht die des Vertrieblers.
+            <strong className="text-foreground">Wichtig:</strong> Check-ins sollten nur dann vergeben werden, wenn der Kunde auch etwas bestellt und bezahlt hat. Das Geschäft entscheidet hierbei selbst, ob es eine Mindestkaufmenge gibt, also dass der Kunde zum Beispiel mindestens zwei oder drei Euro ausgeben muss, um einen Check-in erhalten zu können. Das ist aber freiwillig und ist dem Laden selbst überlassen, ob er so was einbaut oder nicht. Kann auch nach Umständen empfohlen werden, ist aber situationsabhängig und da muss man als Vertriebler selber einfach bisschen die Erfahrung sammeln, wann was am sinnvollsten ist. Aber was, wie gesagt, die Grundregel ist, die man jedem Geschäft empfehlen muss, ist, dass man keinen Check-in vergeben sollte, ohne dass der Kunde was gekauft oder gezahlt hat.
           </p>
         </Section>
       </Card>
