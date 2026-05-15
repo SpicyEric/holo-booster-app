@@ -333,47 +333,49 @@ const Customers = () => {
   const customersWithCoords = customers.filter(c => c.latitude && c.longitude);
 
   return (
-    <div className="flex h-[calc(100vh-3rem)] -m-6">
-      {/* LEFT: Map */}
-      <div className="flex-1 relative">
-        {apiKeyLoading ? (
-          <div className="flex items-center justify-center h-full text-muted-foreground">Karte wird geladen…</div>
-        ) : !apiKey ? (
-          <div className="flex items-center justify-center h-full text-muted-foreground">
-            <div className="text-center">
-              <MapPin className="h-12 w-12 mx-auto mb-2 text-muted-foreground/50" />
-              <p>Google Maps API-Key nicht konfiguriert</p>
+    <div className={isPartner ? "space-y-4" : "flex h-[calc(100vh-3rem)] -m-6"}>
+      {/* LEFT: Map (hidden for sales rep) */}
+      {!isPartner && (
+        <div className="flex-1 relative">
+          {apiKeyLoading ? (
+            <div className="flex items-center justify-center h-full text-muted-foreground">Karte wird geladen…</div>
+          ) : !apiKey ? (
+            <div className="flex items-center justify-center h-full text-muted-foreground">
+              <div className="text-center">
+                <MapPin className="h-12 w-12 mx-auto mb-2 text-muted-foreground/50" />
+                <p>Google Maps API-Key nicht konfiguriert</p>
+              </div>
             </div>
-          </div>
-        ) : (
-          <CustomersMapView
-            apiKey={apiKey}
-            customers={customers}
-            selectedCustomerId={selectedCustomerId}
-            onSelectCustomer={(id) => setSelectedCustomerId(id)}
-            onMapLoad={onMapLoad}
-            placementMode={!!placementCustomer}
-            onMapClick={handleMapPlacementClick}
-          />
-        )}
+          ) : (
+            <CustomersMapView
+              apiKey={apiKey}
+              customers={customers}
+              selectedCustomerId={selectedCustomerId}
+              onSelectCustomer={(id) => setSelectedCustomerId(id)}
+              onMapLoad={onMapLoad}
+              placementMode={!!placementCustomer}
+              onMapClick={handleMapPlacementClick}
+            />
+          )}
 
-        {placementCustomer && (
-          <div className="absolute top-4 left-1/2 -translate-x-1/2 z-10 bg-background border shadow-lg rounded-full pl-4 pr-1.5 py-1.5 flex items-center gap-3 max-w-[90%]">
-            <MapPinned className="w-4 h-4 text-primary shrink-0" />
-            <div className="text-sm">
-              <span className="font-medium">{placementCustomer.name}</span>{" "}
-              <span className="text-muted-foreground">– klicke auf die Karte zum Platzieren</span>
+          {placementCustomer && (
+            <div className="absolute top-4 left-1/2 -translate-x-1/2 z-10 bg-background border shadow-lg rounded-full pl-4 pr-1.5 py-1.5 flex items-center gap-3 max-w-[90%]">
+              <MapPinned className="w-4 h-4 text-primary shrink-0" />
+              <div className="text-sm">
+                <span className="font-medium">{placementCustomer.name}</span>{" "}
+                <span className="text-muted-foreground">– klicke auf die Karte zum Platzieren</span>
+              </div>
+              <Button size="sm" variant="ghost" className="h-7 rounded-full"
+                onClick={() => setPlacementCustomer(null)} disabled={savingPlacement}>
+                <X className="w-3.5 h-3.5 mr-1" /> Abbrechen
+              </Button>
             </div>
-            <Button size="sm" variant="ghost" className="h-7 rounded-full"
-              onClick={() => setPlacementCustomer(null)} disabled={savingPlacement}>
-              <X className="w-3.5 h-3.5 mr-1" /> Abbrechen
-            </Button>
-          </div>
-        )}
-      </div>
+          )}
+        </div>
+      )}
 
       {/* RIGHT: Customer List */}
-      <div className="w-[520px] border-l bg-background overflow-y-auto flex flex-col">
+      <div className={isPartner ? "bg-background" : "w-[520px] border-l bg-background overflow-y-auto flex flex-col"}>
         <div className="p-4 border-b space-y-3">
           <div className="flex justify-between items-center">
             <div>
