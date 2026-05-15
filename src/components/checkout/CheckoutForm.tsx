@@ -252,45 +252,57 @@ export default function CheckoutForm({ backPath, backLabel, partnerUserId, prefi
               </div>
             </div>
           </CardHeader>
-          <CardContent className="pt-0 space-y-4">
-            <AboShowcase />
-            <div className="flex items-baseline gap-2">
-              {isYearlyBilling ? (
-                <>
-                  <span className="text-2xl font-bold">{(totals.aboBase / 11).toFixed(2)}€</span>
-                  <span className="text-xs text-muted-foreground">/Monat ({totals.aboBase.toFixed(2)}€/Jahr)</span>
-                </>
-              ) : (
-                <>
-                  <span className="text-2xl font-bold">{totals.monthlyAbo.toFixed(2)}€</span>
-                  <span className="text-xs text-muted-foreground">/Monat</span>
-                </>
-              )}
+          <CardContent className="pt-0 relative">
+            <div className="grid md:grid-cols-2 gap-4 items-start">
+              <div className="space-y-3 relative z-10">
+                <div className="flex items-baseline gap-2">
+                  {isYearlyBilling ? (
+                    <>
+                      <span className="text-2xl font-bold">{(totals.aboBase / 11).toFixed(2)}€</span>
+                      <span className="text-xs text-muted-foreground">/Monat ({totals.aboBase.toFixed(2)}€/Jahr)</span>
+                    </>
+                  ) : (
+                    <>
+                      <span className="text-2xl font-bold">{totals.monthlyAbo.toFixed(2)}€</span>
+                      <span className="text-xs text-muted-foreground">/Monat</span>
+                    </>
+                  )}
+                </div>
+                {additionalLocations > 0 && (
+                  <p className="text-xs text-muted-foreground">
+                    1× {PRICING.abo.firstMonthly.toFixed(2)}€ + {additionalLocations}× {PRICING.abo.additionalMonthly.toFixed(2)}€/Monat
+                  </p>
+                )}
+                <ul className="space-y-1.5">
+                  {[
+                    { t: "NFC-Kartenhalter" },
+                    { t: "2× A5-Aufsteller", d: "Blanko-Design" },
+                    { t: "1 Designwunsch pro Monat", d: "individuelles Aufsteller-Design" },
+                    { t: "Geburtstagsbelohnungen", d: "vollautomatisch" },
+                    { t: "Treue-Meilensteine", d: "automatische Prämien" },
+                    { t: "Neukunden-Empfehlungen", d: "Kunden werben Kunden" },
+                    { t: "Push-Benachrichtigungen", d: "direkt aufs Handy" },
+                    { t: "Merchant Dashboard", d: "Statistiken im Blick" },
+                    { t: "Digitaler Treuepass", d: "iOS & Android" },
+                    { t: "Google Bewertungen", d: "automatisch sammeln" },
+                  ].map((f, i) => (
+                    <li key={i} className="flex items-start gap-2 text-xs">
+                      <Check className="h-3.5 w-3.5 text-primary mt-0.5 shrink-0" />
+                      <span>
+                        <span className="font-semibold">{f.t}</span>
+                        {f.d && <> – <span className="text-muted-foreground">{f.d}</span></>}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <div className="hidden md:block">
+                <AboShowcase />
+              </div>
             </div>
-            {additionalLocations > 0 && (
-              <p className="text-xs text-muted-foreground mb-2">
-                1× {PRICING.abo.firstMonthly.toFixed(2)}€ + {additionalLocations}× {PRICING.abo.additionalMonthly.toFixed(2)}€/Monat
-              </p>
-            )}
-            <ul className="space-y-1.5">
-              {[
-                { t: "NFC-Kartenhalter", d: "Kompakter Aufsteller fürs Tresen inkl. NFC-Karte" },
-                { t: "2× A5-Aufsteller", d: "Blanko-Design, sofort einsetzbar" },
-                { t: "1 Designwunsch pro Monat", d: "Individuell angepasstes Aufsteller-Design mit deinem Logo, in deinem Style, auf dein Geschäft zugeschnitten" },
-                { t: "Geburtstagsbelohnungen", d: "Vollautomatisch für deine Kunden – ohne dass du etwas machen musst" },
-                { t: "Treue-Meilensteine", d: "Automatische Prämien bei Check-in-Schwellwerten" },
-                { t: "Neukunden-Empfehlungen", d: "Kunden werben Kunden – beide werden automatisch belohnt" },
-                { t: "Push-Benachrichtigungen", d: "Direkt aufs Handy deiner Stammkunden" },
-                { t: "Merchant Dashboard", d: "Kundenaktivität und Statistiken im Blick" },
-                { t: "Digitaler Treuepass", d: "Kontaktlos per NFC – für iOS und Android" },
-                { t: "Google Bewertungen", d: "Mehr echte Bewertungen automatisch sammeln" },
-              ].map((f, i) => (
-                <li key={i} className="flex items-start gap-2 text-xs">
-                  <Check className="h-3.5 w-3.5 text-primary mt-0.5 shrink-0" />
-                  <span><span className="font-semibold">{f.t}</span> – <span className="text-muted-foreground">{f.d}</span></span>
-                </li>
-              ))}
-            </ul>
+            <div className="md:hidden mt-4">
+              <AboShowcase />
+            </div>
           </CardContent>
         </Card>
       </div>
