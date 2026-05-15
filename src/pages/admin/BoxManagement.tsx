@@ -443,7 +443,7 @@ const BoxManagement = () => {
           // Punkte-Wert ermitteln: Wenn bereits Karten dieser Farbe für diese Box existieren,
           // übernehmen wir deren Punktwert (z.B. bei Demo-Boxen mit zugewiesenem Händler).
           // Sonst Default für unzugewiesene Boxen: grün=1, blau=2, rot=3.
-          const fallbackPoints = isVerify ? 0 : (color === 'grün' ? 1 : color === 'blau' ? 2 : 3);
+          const fallbackPoints = isVerify ? 1 : (color === 'grün' ? 1 : color === 'blau' ? 2 : 3);
           let defaultPoints = fallbackPoints;
           try {
             const { data: existingChips } = await supabase
