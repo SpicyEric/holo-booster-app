@@ -37,6 +37,10 @@ type ScanResult = {
   success: boolean;
   points?: number;
   totalPoints?: number;
+  checkIns?: number;
+  isCheckIn?: boolean;
+  welcomeRewardRedeemed?: boolean;
+  welcomeRewardLabel?: string | null;
   merchantName?: string;
   merchantCustomerId?: string;
   error?: string;
@@ -79,6 +83,11 @@ type MerchantTransitionState = {
   initialRewards: TransitionReward[];
   initialUserPoints: number;
   scanAwardedPoints?: number;
+  triggerCheckIn?: boolean;
+  checkInAlreadyRecorded?: boolean;
+  dbCheckIns?: number;
+  welcomeRewardRedeemed?: boolean;
+  welcomeRewardLabel?: string | null;
 };
 
 export const AppScan = () => {
@@ -338,6 +347,11 @@ export const AppScan = () => {
               initialRewards: rewards,
               initialUserPoints: result.totalPoints ?? 0,
               scanAwardedPoints: result.points ?? 0,
+              triggerCheckIn: result.isCheckIn === true,
+              checkInAlreadyRecorded: result.isCheckIn === true,
+              dbCheckIns: result.checkIns,
+              welcomeRewardRedeemed: result.welcomeRewardRedeemed,
+              welcomeRewardLabel: result.welcomeRewardLabel ?? null,
             } satisfies MerchantTransitionState;
 
             if (!coverUrl) {
