@@ -1434,7 +1434,10 @@ const Marketing = () => {
                 </label>
               </div>
               <div className="space-y-2 rounded-xl border border-border/60 bg-muted/30 p-3">
-                <Label className="text-sm">WhatsApp-Empfehlungs-Text</Label>
+                <div className="flex items-center justify-between gap-2">
+                  <Label className="text-sm">WhatsApp-Empfehlungs-Text</Label>
+                  <span className="text-[10px] font-semibold uppercase tracking-wide text-primary bg-primary/10 px-2 py-0.5 rounded-full">Nur für erste Prämie wichtig</span>
+                </div>
                 <p className="text-xs text-muted-foreground -mt-1">
                   Wird beim Einladen über WhatsApp verwendet. Beispiel: <span className="italic">„ein gratis Softgetränk“</span>.
                 </p>
