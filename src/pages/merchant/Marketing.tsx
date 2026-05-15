@@ -511,25 +511,27 @@ const Marketing = () => {
 
   const handleSaveReward = async () => {
     if (!customerId || !rewardForm.title) { toast.error("Bitte Titel eingeben"); return; }
+    const emptyForm = { title: '', description: '', points_required: 10, image_url: '', marketing_text: '', marketing_emoji: '' };
     if (isDemoOnboardingTourActive() && customerId === DEMO_ONBOARDING_CUSTOMER_ID) {
-      const reward = { id: editingReward?.id || `demo-reward-${Date.now()}`, title: rewardForm.title, description: rewardForm.description || null, points_required: rewardForm.points_required, image_url: rewardForm.image_url || null, is_active: true };
+      const reward = { id: editingReward?.id || `demo-reward-${Date.now()}`, title: rewardForm.title, description: rewardForm.description || null, points_required: rewardForm.points_required, image_url: rewardForm.image_url || null, is_active: true, marketing_text: rewardForm.marketing_text || null, marketing_emoji: rewardForm.marketing_emoji || null };
       const nextRewards = editingReward ? rewards.map((r) => r.id === editingReward.id ? reward : r) : [...rewards, reward];
       setRewards(nextRewards); updateDemoOnboardingState({ rewards: nextRewards });
-      setShowRewardDialog(false); setEditingReward(null); setRewardForm({ title: '', description: '', points_required: 10, image_url: '' });
+      setShowRewardDialog(false); setEditingReward(null); setRewardForm(emptyForm);
       if (getDemoOnboardingStep() === 2) setDemoOnboardingStep(3);
       toast.success(editingReward ? "Demo-Prämie aktualisiert" : "Demo-Prämie erstellt");
       return;
     }
     setSaving(true);
     try {
+      const payload = { title: rewardForm.title, description: rewardForm.description || null, points_required: rewardForm.points_required, image_url: rewardForm.image_url || null, marketing_text: rewardForm.marketing_text || null, marketing_emoji: rewardForm.marketing_emoji || null };
       if (editingReward) {
-        const { error } = await supabase.from("rewards").update({ title: rewardForm.title, description: rewardForm.description || null, points_required: rewardForm.points_required, image_url: rewardForm.image_url || null }).eq("id", editingReward.id);
+        const { error } = await supabase.from("rewards").update(payload).eq("id", editingReward.id);
         if (error) throw error; toast.success("Prämie aktualisiert");
       } else {
-        const { error } = await supabase.from("rewards").insert({ merchant_customer_id: customerId, title: rewardForm.title, description: rewardForm.description || null, points_required: rewardForm.points_required, image_url: rewardForm.image_url || null, is_active: true });
+        const { error } = await supabase.from("rewards").insert({ merchant_customer_id: customerId, ...payload, is_active: true });
         if (error) throw error; toast.success("Prämie erstellt");
       }
-      setShowRewardDialog(false); setEditingReward(null); setRewardForm({ title: '', description: '', points_required: 10, image_url: '' }); loadData();
+      setShowRewardDialog(false); setEditingReward(null); setRewardForm(emptyForm); loadData();
     } catch { toast.error("Fehler beim Speichern"); } finally { setSaving(false); }
   };
 
