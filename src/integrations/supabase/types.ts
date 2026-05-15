@@ -3634,6 +3634,14 @@ export type Database = {
         Args: { p_merchant_customer_id: string; p_user_id: string }
         Returns: Json
       }
+      redeem_activated_reward: {
+        Args: {
+          p_merchant_customer_id: string
+          p_reward_label: string
+          p_visit_number: number
+        }
+        Returns: Json
+      }
       redeem_message_offer_via_nfc: {
         Args: {
           p_hardware_uid: string
