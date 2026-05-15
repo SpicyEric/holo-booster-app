@@ -2594,6 +2594,8 @@ export type Database = {
           id: string
           image_url: string | null
           is_active: boolean | null
+          marketing_emoji: string | null
+          marketing_text: string | null
           merchant_customer_id: string
           points_required: number
           title: string
@@ -2605,6 +2607,8 @@ export type Database = {
           id?: string
           image_url?: string | null
           is_active?: boolean | null
+          marketing_emoji?: string | null
+          marketing_text?: string | null
           merchant_customer_id: string
           points_required?: number
           title: string
@@ -2616,6 +2620,8 @@ export type Database = {
           id?: string
           image_url?: string | null
           is_active?: boolean | null
+          marketing_emoji?: string | null
+          marketing_text?: string | null
           merchant_customer_id?: string
           points_required?: number
           title?: string

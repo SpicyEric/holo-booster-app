@@ -53,7 +53,7 @@ interface MockReward {
 }
 
 type RewardPlacementRow = { visit: number; reward_id: string };
-type RewardRow = { id: string; title: string; image_url: string | null };
+type RewardRow = { id: string; title: string; image_url: string | null; marketing_text: string | null; marketing_emoji: string | null };
 type MerchantV2RouteState = {
   triggerCheckIn?: boolean;
   checkInAlreadyRecorded?: boolean;
@@ -132,7 +132,7 @@ export const AppMerchantDetailV2 = () => {
   const brand = useMerchantBrand(merchantId);
   const [coverImageUrl, setCoverImageUrl] = useState<string | null>(null);
   const [passLength, setPassLength] = useState<number>(35);
-  const [dbRewards, setDbRewards] = useState<{ visitNumber: number; label: string; imageUrl: string | null }[]>([]);
+  const [dbRewards, setDbRewards] = useState<{ visitNumber: number; label: string; imageUrl: string | null; marketingText: string | null; marketingEmoji: string | null }[]>([]);
   const [merchantInfo, setMerchantInfo] = useState<MerchantInfo>({
     name: 'Backstube König',
     description: null,
@@ -161,7 +161,7 @@ export const AppMerchantDetailV2 = () => {
           .order('visit', { ascending: true }),
         supabase
           .from('rewards')
-          .select('id, title, image_url')
+          .select('id, title, image_url, marketing_text, marketing_emoji')
           .eq('merchant_customer_id', merchantId)
           .eq('is_active', true),
       ]);
@@ -193,6 +193,8 @@ export const AppMerchantDetailV2 = () => {
           visitNumber: p.visit,
           label: reward.title,
           imageUrl: reward.image_url || null,
+          marketingText: reward.marketing_text || null,
+          marketingEmoji: reward.marketing_emoji || null,
         }];
       });
       setDbRewards(mapped);
@@ -713,17 +715,49 @@ export const AppMerchantDetailV2 = () => {
     toast('Aktivierung entfernt.');
   };
 
+  // Erzeugt einen echten Einladungslink + WhatsApp-Text auf Basis der ersten Prämie.
+  const buildReferralPayload = async (): Promise<{ link: string; text: string } | null> => {
+    try {
+      const { supabase } = await import('@/integrations/supabase/client');
+      const { data, error } = await supabase.rpc('create_invitation', {
+        p_merchant_customer_id: merchantId,
+      });
+      if (error) throw error;
+      const result = data as { success: boolean; share_code?: string; error?: string };
+      if (!result.success || !result.share_code) {
+        toast.error(result.error || 'Einladung konnte nicht erstellt werden');
+        return null;
+      }
+      const link = `https://eloyo.de/i/${result.share_code}`;
+      const firstReward = dbRewards.find((r) => r.visitNumber === 1) || dbRewards[0];
+      const rewardText = (firstReward?.marketingText || '').trim();
+      const rewardEmoji = (firstReward?.marketingEmoji || '').trim() || '🎁';
+      const rewardPart = rewardText
+        ? ` gibt's beim ersten Check-in ${rewardText} ${rewardEmoji}`
+        : ` gibt's coole Belohnungen beim Punkte-Sammeln ${rewardEmoji}`;
+      const text = `Yo, bei ${merchantInfo.name}${rewardPart}. App laden, einchecken, fertig: ${link}`;
+      // Statistik: als verschickt markieren
+      void supabase.rpc('mark_invitation_shared', { p_share_code: result.share_code });
+      return { link, text };
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Unbekannter Fehler';
+      toast.error(msg);
+      return null;
+    }
+  };
+
   const shareReferral = async () => {
-    const link = `https://eloyo.de/r/backstube-koenig?u=demo`;
+    const payload = await buildReferralPayload();
+    if (!payload) return;
     try {
       if (navigator.share) {
         await navigator.share({
-          title: 'Backstube König',
-          text: 'Sammle mit mir Belohnungen bei Backstube König!',
-          url: link,
+          title: merchantInfo.name,
+          text: payload.text,
+          url: payload.link,
         });
       } else {
-        await navigator.clipboard.writeText(link);
+        await navigator.clipboard.writeText(payload.link);
         toast.success('Einladungslink kopiert!');
       }
     } catch { /* user cancelled */ }
@@ -1332,10 +1366,10 @@ export const AppMerchantDetailV2 = () => {
 
           <div className="space-y-2 pt-1">
             <Button
-              onClick={() => {
-                const link = `https://eloyo.de/r/backstube-koenig?u=demo`;
-                const text = `Hey! Sammle mit mir Punkte bei Backstube König: ${link}`;
-                window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank', 'noopener,noreferrer');
+              onClick={async () => {
+                const payload = await buildReferralPayload();
+                if (!payload) return;
+                window.open(`https://wa.me/?text=${encodeURIComponent(payload.text)}`, '_blank', 'noopener,noreferrer');
               }}
               className="w-full h-11 rounded-xl text-white"
               style={{ background: BRAND }}
@@ -1347,8 +1381,10 @@ export const AppMerchantDetailV2 = () => {
             </Button>
             <Button
               onClick={async () => {
+                const payload = await buildReferralPayload();
+                if (!payload) return;
                 try {
-                  await navigator.clipboard.writeText('https://eloyo.de/r/backstube-koenig?u=demo');
+                  await navigator.clipboard.writeText(payload.link);
                   toast.success('Link kopiert!');
                 } catch {
                   toast.error('Link konnte nicht kopiert werden');

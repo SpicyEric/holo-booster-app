@@ -27,6 +27,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import RichTextEditor from '@/components/merchant/RichTextEditor';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import RewardSnakeDropZone from '@/components/merchant/RewardSnakeDropZone';
 
 import ReferralExplainerCarousel from '@/components/merchant/ReferralExplainerCarousel';
@@ -57,7 +58,17 @@ interface Segment { type: 'all' | 'last_stamped_days' | 'not_stamped_days'; valu
 interface Message { id: string; title: string; body: string; show_in_storefront: boolean | null; sent_at: string | null; segment: Segment; offer_id: string | null; is_sent: boolean | null; recipient_count: number | null; }
 interface Offer { id: string; title: string; description: string | null; }
 interface NewCustomerOffer { id: string; title: string; description: string | null; bonus_stamps: number | null; is_active: boolean | null; image_url: string | null; }
-interface Reward { id: string; title: string; description: string | null; points_required: number; image_url: string | null; is_active: boolean | null; }
+interface Reward { id: string; title: string; description: string | null; points_required: number; image_url: string | null; is_active: boolean | null; marketing_text?: string | null; marketing_emoji?: string | null; }
+
+const REWARD_MARKETING_EMOJIS = [
+  '☕','🥐','🥖','🍞','🧁','🍰','🎂','🍪','🍩','🍫','🍬','🍭',
+  '🍕','🍔','🌭','🥪','🌮','🌯','🥗','🍟','🍿','🥨','🥞','🧇',
+  '🍣','🍜','🍱','🍙','🍦','🍨','🍧','🍓','🍎','🍊','🍇','🥝',
+  '🥤','🧃','🍺','🍷','🍸','🍹','🍾','🥂','🍵','🥛','🧉','🍶',
+  '💇','💅','💆','🧖','💈','🛁','🪒','💄','👗','👠','👜','🕶️',
+  '🎁','🎀','🏆','⭐','✨','🔥','💯','💎','🎉','🎊','🥇','🌟',
+  '💸','💰','🏷️','🎟️','🎫','📣','📢','🛍️','🛒','💳','🪙','🤑',
+];
 
 const SEGMENT_OPTIONS = [
   { value: 'all', label: 'Alle Kunden', description: 'Alle, die bei Ihnen schon mal Punkte gesammelt haben' },
@@ -79,7 +90,8 @@ const Marketing = () => {
   const [rewards, setRewards] = useState<Reward[]>([]);
   const [showRewardDialog, setShowRewardDialog] = useState(false);
   const [editingReward, setEditingReward] = useState<Reward | null>(null);
-  const [rewardForm, setRewardForm] = useState({ title: '', description: '', points_required: 10, image_url: '' });
+  const [rewardForm, setRewardForm] = useState({ title: '', description: '', points_required: 10, image_url: '', marketing_text: '', marketing_emoji: '' });
+  const [showRewardEmojiPicker, setShowRewardEmojiPicker] = useState(false);
   const [uploadingRewardImage, setUploadingRewardImage] = useState(false);
   const [newCustomerOffer, setNewCustomerOffer] = useState<NewCustomerOffer | null>(null);
   const [showNcoDialog, setShowNcoDialog] = useState(false);
@@ -500,25 +512,27 @@ const Marketing = () => {
 
   const handleSaveReward = async () => {
     if (!customerId || !rewardForm.title) { toast.error("Bitte Titel eingeben"); return; }
+    const emptyForm = { title: '', description: '', points_required: 10, image_url: '', marketing_text: '', marketing_emoji: '' };
     if (isDemoOnboardingTourActive() && customerId === DEMO_ONBOARDING_CUSTOMER_ID) {
-      const reward = { id: editingReward?.id || `demo-reward-${Date.now()}`, title: rewardForm.title, description: rewardForm.description || null, points_required: rewardForm.points_required, image_url: rewardForm.image_url || null, is_active: true };
+      const reward = { id: editingReward?.id || `demo-reward-${Date.now()}`, title: rewardForm.title, description: rewardForm.description || null, points_required: rewardForm.points_required, image_url: rewardForm.image_url || null, is_active: true, marketing_text: rewardForm.marketing_text || null, marketing_emoji: rewardForm.marketing_emoji || null };
       const nextRewards = editingReward ? rewards.map((r) => r.id === editingReward.id ? reward : r) : [...rewards, reward];
       setRewards(nextRewards); updateDemoOnboardingState({ rewards: nextRewards });
-      setShowRewardDialog(false); setEditingReward(null); setRewardForm({ title: '', description: '', points_required: 10, image_url: '' });
+      setShowRewardDialog(false); setEditingReward(null); setRewardForm(emptyForm);
       if (getDemoOnboardingStep() === 2) setDemoOnboardingStep(3);
       toast.success(editingReward ? "Demo-Prämie aktualisiert" : "Demo-Prämie erstellt");
       return;
     }
     setSaving(true);
     try {
+      const payload = { title: rewardForm.title, description: rewardForm.description || null, points_required: rewardForm.points_required, image_url: rewardForm.image_url || null, marketing_text: rewardForm.marketing_text || null, marketing_emoji: rewardForm.marketing_emoji || null };
       if (editingReward) {
-        const { error } = await supabase.from("rewards").update({ title: rewardForm.title, description: rewardForm.description || null, points_required: rewardForm.points_required, image_url: rewardForm.image_url || null }).eq("id", editingReward.id);
+        const { error } = await supabase.from("rewards").update(payload).eq("id", editingReward.id);
         if (error) throw error; toast.success("Prämie aktualisiert");
       } else {
-        const { error } = await supabase.from("rewards").insert({ merchant_customer_id: customerId, title: rewardForm.title, description: rewardForm.description || null, points_required: rewardForm.points_required, image_url: rewardForm.image_url || null, is_active: true });
+        const { error } = await supabase.from("rewards").insert({ merchant_customer_id: customerId, ...payload, is_active: true });
         if (error) throw error; toast.success("Prämie erstellt");
       }
-      setShowRewardDialog(false); setEditingReward(null); setRewardForm({ title: '', description: '', points_required: 10, image_url: '' }); loadData();
+      setShowRewardDialog(false); setEditingReward(null); setRewardForm(emptyForm); loadData();
     } catch { toast.error("Fehler beim Speichern"); } finally { setSaving(false); }
   };
 
@@ -642,7 +656,7 @@ const Marketing = () => {
                     <CardDescription>Deine aktuell einlösbaren Prämien</CardDescription>
                   </div>
                 </div>
-                <Button onClick={() => { setEditingReward(null); setRewardForm({ title: '', description: '', points_required: 10, image_url: '' }); setShowRewardDialog(true); }} className="rounded-xl">
+                <Button onClick={() => { setEditingReward(null); setRewardForm({ title: '', description: '', points_required: 10, image_url: '', marketing_text: '', marketing_emoji: '' }); setShowRewardDialog(true); }} className="rounded-xl">
                   <Plus className="h-4 w-4 mr-2" />Neue Prämie
                 </Button>
               </CardHeader>
@@ -668,7 +682,7 @@ const Marketing = () => {
                           </div>
                         </div>
                         <div className="flex items-center gap-2">
-                          <Button variant="ghost" size="sm" onClick={() => { setEditingReward(reward); setRewardForm({ title: reward.title, description: reward.description || '', points_required: reward.points_required, image_url: reward.image_url || '' }); setShowRewardDialog(true); }} className="rounded-lg"><Edit2 className="h-4 w-4" /></Button>
+                          <Button variant="ghost" size="sm" onClick={() => { setEditingReward(reward); setRewardForm({ title: reward.title, description: reward.description || '', points_required: reward.points_required, image_url: reward.image_url || '', marketing_text: reward.marketing_text || '', marketing_emoji: reward.marketing_emoji || '' }); setShowRewardDialog(true); }} className="rounded-lg"><Edit2 className="h-4 w-4" /></Button>
                           <Button variant="ghost" size="sm" onClick={() => handleDeleteReward(reward.id)} className="rounded-lg"><Trash2 className="h-4 w-4 text-destructive" /></Button>
                         </div>
                       </div>
@@ -1418,6 +1432,45 @@ const Marketing = () => {
                   <input type="file" accept="image/*" className="hidden" onChange={e => { const f = e.target.files?.[0]; if (f) handleRewardImageUpload(f); }} />
                   {rewardForm.image_url ? <img src={rewardForm.image_url} alt="Preview" className="w-16 h-16 object-cover mx-auto rounded-lg" /> : <span className="text-sm text-muted-foreground">{uploadingRewardImage ? 'Hochladen...' : 'Bild hochladen'}</span>}
                 </label>
+              </div>
+              <div className="space-y-2 rounded-xl border border-border/60 bg-muted/30 p-3">
+                <Label className="text-sm">WhatsApp-Empfehlungs-Text</Label>
+                <p className="text-xs text-muted-foreground -mt-1">
+                  Wird beim Einladen über WhatsApp verwendet. Beispiel: <span className="italic">„ein gratis Softgetränk“</span>.
+                </p>
+                <div className="flex gap-2 items-start">
+                  <Popover open={showRewardEmojiPicker} onOpenChange={setShowRewardEmojiPicker}>
+                    <PopoverTrigger asChild>
+                      <Button type="button" variant="outline" className="rounded-xl h-10 w-12 text-xl shrink-0 px-0">
+                        {rewardForm.marketing_emoji || '🎁'}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-72 p-2" align="start">
+                      <div className="grid grid-cols-8 gap-1 max-h-56 overflow-y-auto">
+                        {REWARD_MARKETING_EMOJIS.map((emoji, i) => (
+                          <button
+                            key={`${emoji}-${i}`}
+                            type="button"
+                            onClick={() => { setRewardForm({ ...rewardForm, marketing_emoji: emoji }); setShowRewardEmojiPicker(false); }}
+                            className="h-8 w-8 flex items-center justify-center rounded hover:bg-muted text-lg cursor-pointer transition-colors"
+                          >
+                            {emoji}
+                          </button>
+                        ))}
+                      </div>
+                    </PopoverContent>
+                  </Popover>
+                  <Input
+                    value={rewardForm.marketing_text}
+                    onChange={e => setRewardForm({ ...rewardForm, marketing_text: e.target.value })}
+                    placeholder="z.B. ein gratis Softgetränk"
+                    className="rounded-xl"
+                  />
+                </div>
+                <div className="rounded-lg bg-background border border-border/40 p-2.5 text-xs text-muted-foreground leading-relaxed">
+                  <span className="font-semibold text-foreground">Vorschau: </span>
+                  Yo, bei <span className="font-semibold text-foreground">{merchantDisplayName || 'deinem Geschäft'}</span> gibt's beim ersten Check-in {rewardForm.marketing_text || '<dein Text>'} {rewardForm.marketing_emoji || '🎁'} App laden, einchecken, fertig: <span className="text-primary">https://eloyo.de/i/…</span>
+                </div>
               </div>
             </div>
             <DialogFooter>
