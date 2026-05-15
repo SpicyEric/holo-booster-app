@@ -1431,6 +1431,44 @@ const Marketing = () => {
                   <input type="file" accept="image/*" className="hidden" onChange={e => { const f = e.target.files?.[0]; if (f) handleRewardImageUpload(f); }} />
                   {rewardForm.image_url ? <img src={rewardForm.image_url} alt="Preview" className="w-16 h-16 object-cover mx-auto rounded-lg" /> : <span className="text-sm text-muted-foreground">{uploadingRewardImage ? 'Hochladen...' : 'Bild hochladen'}</span>}
                 </label>
+              <div className="space-y-2 rounded-xl border border-border/60 bg-muted/30 p-3">
+                <Label className="text-sm">WhatsApp-Empfehlungs-Text</Label>
+                <p className="text-xs text-muted-foreground -mt-1">
+                  Wird beim Einladen über WhatsApp verwendet. Beispiel: <span className="italic">„ein gratis Softgetränk“</span>.
+                </p>
+                <div className="flex gap-2 items-start">
+                  <Popover open={showRewardEmojiPicker} onOpenChange={setShowRewardEmojiPicker}>
+                    <PopoverTrigger asChild>
+                      <Button type="button" variant="outline" className="rounded-xl h-10 w-12 text-xl shrink-0 px-0">
+                        {rewardForm.marketing_emoji || '🎁'}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-72 p-2" align="start">
+                      <div className="grid grid-cols-8 gap-1 max-h-56 overflow-y-auto">
+                        {REWARD_MARKETING_EMOJIS.map((emoji, i) => (
+                          <button
+                            key={`${emoji}-${i}`}
+                            type="button"
+                            onClick={() => { setRewardForm({ ...rewardForm, marketing_emoji: emoji }); setShowRewardEmojiPicker(false); }}
+                            className="h-8 w-8 flex items-center justify-center rounded hover:bg-muted text-lg cursor-pointer transition-colors"
+                          >
+                            {emoji}
+                          </button>
+                        ))}
+                      </div>
+                    </PopoverContent>
+                  </Popover>
+                  <Input
+                    value={rewardForm.marketing_text}
+                    onChange={e => setRewardForm({ ...rewardForm, marketing_text: e.target.value })}
+                    placeholder="z.B. ein gratis Softgetränk"
+                    className="rounded-xl"
+                  />
+                </div>
+                <div className="rounded-lg bg-background border border-border/40 p-2.5 text-xs text-muted-foreground leading-relaxed">
+                  <span className="font-semibold text-foreground">Vorschau: </span>
+                  Yo, bei <span className="font-semibold text-foreground">{merchantDisplayName || 'deinem Geschäft'}</span> gibt's beim ersten Check-in {rewardForm.marketing_text || '<dein Text>'} {rewardForm.marketing_emoji || '🎁'} App laden, einchecken, fertig: <span className="text-primary">https://eloyo.de/i/…</span>
+                </div>
               </div>
             </div>
             <DialogFooter>
