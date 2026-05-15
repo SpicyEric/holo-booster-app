@@ -6,6 +6,12 @@ import { Loader2, Palette, Pipette, Save } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { isDemoMerchantActive } from '@/lib/demoMerchant';
+import {
+  DEMO_ONBOARDING_CUSTOMER_ID,
+  isDemoOnboardingTourActive,
+  getDemoOnboardingState,
+  updateDemoOnboardingState,
+} from '@/lib/demoOnboardingTour';
 import { notifyMerchantBrandUpdated } from '@/hooks/useMerchantBrand';
 
 const DEFAULT_COLOR = '#8B5CF6';
@@ -26,9 +32,21 @@ export function MerchantBrandColorCard({ customerId }: Props) {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
+  const isDemoOnboarding =
+    customerId === DEMO_ONBOARDING_CUSTOMER_ID && isDemoOnboardingTourActive();
+
   useEffect(() => {
     let cancelled = false;
     (async () => {
+      if (isDemoOnboarding) {
+        const profile = getDemoOnboardingState().profile || {};
+        const c = (profile.brand_color as string) || DEFAULT_COLOR;
+        setVersion('v2');
+        setColor(c);
+        setSavedColor(c);
+        setLoading(false);
+        return;
+      }
       const { data } = await supabase
         .from('customers')
         .select('version, brand_color')
@@ -42,13 +60,21 @@ export function MerchantBrandColorCard({ customerId }: Props) {
       setLoading(false);
     })();
     return () => { cancelled = true; };
-  }, [customerId]);
+  }, [customerId, isDemoOnboarding]);
 
   if (loading || version !== 'v2') return null;
 
   const dirty = color.toLowerCase() !== savedColor.toLowerCase();
 
   const save = async () => {
+    if (isDemoOnboarding) {
+      const current = getDemoOnboardingState().profile || {};
+      updateDemoOnboardingState({ profile: { ...current, brand_color: color } });
+      setSavedColor(color);
+      notifyMerchantBrandUpdated(customerId, color);
+      toast.success('Markenfarbe gespeichert');
+      return;
+    }
     if (isDemoMerchantActive()) {
       toast.info('Demo-Modus: Speichern ist hier deaktiviert.');
       return;
