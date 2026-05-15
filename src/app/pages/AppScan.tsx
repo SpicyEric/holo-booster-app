@@ -511,6 +511,29 @@ export const AppScan = () => {
           const { data: merchant } = await supabase.from('customers').select('company_name, name').eq('id', response.merchant_customer_id).single();
           merchantName = merchant?.company_name || merchant?.name || 'Händler';
         }
+
+        // Aktivierte V2-Prämie serverseitig einlösen, falls vorhanden.
+        if (response.merchant_customer_id) {
+          const activated = getActivatedReward(response.merchant_customer_id);
+          if (activated) {
+            try {
+              const { data: redeemData } = await supabase.rpc('redeem_activated_reward', {
+                p_merchant_customer_id: response.merchant_customer_id,
+                p_visit_number: activated.visitNumber,
+                p_reward_label: activated.label,
+              });
+              const redeemResp = redeemData as { success?: boolean } | null;
+              if (redeemResp?.success) {
+                response.welcome_reward_redeemed = true;
+                response.welcome_reward_label = activated.label;
+              }
+            } catch (e) {
+              console.error('[AppScan] redeem_activated_reward failed', e);
+            }
+            clearActivatedReward(response.merchant_customer_id);
+          }
+        }
+
         setResult({
           success: true,
           points: response.points_awarded,
