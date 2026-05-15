@@ -52,7 +52,7 @@ export const InviteFriendDialog = ({
         p_merchant_customer_id: merchantId,
       });
       if (error) throw error;
-      setNextBoost(data as NextBoost);
+      setNextBoost(data as unknown as NextBoost);
     } catch (err) {
       console.warn('[InviteFriendDialog] boost preview failed', err);
     }
