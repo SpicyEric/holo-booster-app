@@ -54,6 +54,8 @@ const createInitialDemoOnboardingState = (): DemoOnboardingState => ({
     referral_inviter_points: 0,
     referral_invitee_points: 0,
     birthday_enabled: false,
+    version: "v2",
+    brand_color: "#8B5CF6",
   },
   boxes: [],
   chips: [],

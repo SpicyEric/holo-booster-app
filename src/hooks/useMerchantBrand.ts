@@ -38,6 +38,23 @@ export function useMerchantBrand(merchantCustomerId?: string | null): MerchantBr
     }
 
     const fetchBrand = async () => {
+      // Demo-Onboarding-Tour: kein DB-Eintrag vorhanden → Werte aus dem
+      // localStorage-State der Tour lesen (immer V2).
+      try {
+        const { DEMO_ONBOARDING_CUSTOMER_ID, isDemoOnboardingTourActive, getDemoOnboardingState } =
+          await import('@/lib/demoOnboardingTour');
+        if (
+          merchantCustomerId === DEMO_ONBOARDING_CUSTOMER_ID &&
+          isDemoOnboardingTourActive()
+        ) {
+          const profile = getDemoOnboardingState().profile || {};
+          if (cancelled) return;
+          const c = (profile.brand_color as string) || DEFAULT_COLOR;
+          setState({ version: 'v2', color: c, soft: c, loading: false });
+          return;
+        }
+      } catch {}
+
       const { data } = await supabase
         .from('customers')
         .select('version, brand_color')
