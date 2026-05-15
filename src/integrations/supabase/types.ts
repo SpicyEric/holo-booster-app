@@ -3581,15 +3581,26 @@ export type Database = {
             Returns: Json
           }
         | { Args: { p_hardware_uid: string; p_user_id: string }; Returns: Json }
-      award_points_via_nfc_with_reward: {
-        Args: {
-          p_activated_reward_label: string
-          p_activated_visit_number: number
-          p_hardware_uid: string
-          p_user_id: string
-        }
-        Returns: Json
-      }
+      award_points_via_nfc_with_reward:
+        | {
+            Args: {
+              p_activated_reward_label: string
+              p_activated_visit_number: number
+              p_hardware_uid: string
+              p_user_id: string
+            }
+            Returns: Json
+          }
+        | {
+            Args: {
+              p_activated_reward_label: string
+              p_activated_visit_number: number
+              p_expected_merchant_customer_id: string
+              p_hardware_uid: string
+              p_user_id: string
+            }
+            Returns: Json
+          }
       calc_boost_reward: { Args: { p_referral_index: number }; Returns: number }
       cancel_invitation_redemption: {
         Args: { p_redemption_id: string }
