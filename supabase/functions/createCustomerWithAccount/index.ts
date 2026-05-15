@@ -76,6 +76,7 @@ serve(async (req) => {
         logo_url,
         qr_code_url: qrCodeUrl,
         active: true,
+        version: 'v2',
       })
       .select()
       .single();

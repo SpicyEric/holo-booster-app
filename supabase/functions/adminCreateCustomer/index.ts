@@ -66,6 +66,7 @@ serve(async (req) => {
         offer_text: offerText,
         logo_url: logoUrl || null,
         active: true,
+        version: 'v2',
       })
       .select()
       .single();

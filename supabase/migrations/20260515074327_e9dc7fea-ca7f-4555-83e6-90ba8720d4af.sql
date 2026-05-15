@@ -1,0 +1,1 @@
+ALTER TABLE public.customers ALTER COLUMN version SET DEFAULT 'v2';
