@@ -62,9 +62,16 @@ export default function AppSettings() {
 
   const [birthDate, setBirthDate] = useState('');
   const [birthDateLocked, setBirthDateLocked] = useState(false);
+  const [phoneChangedAt, setPhoneChangedAt] = useState<Date | null>(null);
 
   const userPhone = (user as any)?.phone as string | undefined;
   const userEmail = user?.email;
+
+  const PHONE_COOLDOWN_DAYS = 90;
+  const phoneNextChangeDate = phoneChangedAt
+    ? new Date(phoneChangedAt.getTime() + PHONE_COOLDOWN_DAYS * 24 * 60 * 60 * 1000)
+    : null;
+  const phoneLocked = !!(phoneNextChangeDate && phoneNextChangeDate.getTime() > Date.now());
 
   useEffect(() => {
     const fetchData = async () => {
@@ -72,7 +79,7 @@ export default function AppSettings() {
       try {
         const { data: profileData } = await supabase
           .from('profiles')
-          .select('birth_date, auth_method')
+          .select('birth_date, auth_method, phone_changed_at')
           .eq('user_id', user.id)
           .maybeSingle();
 
@@ -81,6 +88,8 @@ export default function AppSettings() {
           setBirthDate(bd);
           setBirthDateLocked(!!bd);
           if (profileData.auth_method) setAuthMethod(profileData.auth_method as any);
+          const pca = (profileData as any).phone_changed_at;
+          setPhoneChangedAt(pca ? new Date(pca) : null);
         }
       } catch (error) {
         console.error('Error fetching data:', error);
@@ -184,9 +193,12 @@ export default function AppSettings() {
     setPhoneWorking(true);
     try {
       await verifyPhoneChange(phoneInput, phoneOtp);
-      toast.success('Handynummer hinzugefügt');
+      // Set/refresh 90-day cooldown
+      const now = new Date();
+      await supabase.from('profiles').update({ phone_changed_at: now.toISOString() }).eq('user_id', user!.id);
+      setPhoneChangedAt(now);
+      toast.success('Handynummer bestätigt. Du kannst sie für 90 Tage nicht erneut ändern.');
       setPhoneDialogOpen(false);
-      // Refresh user
       await supabase.auth.refreshSession();
       setAuthMethod(userEmail ? 'both' : 'phone');
     } catch (err: any) {
@@ -259,9 +271,8 @@ export default function AppSettings() {
                   Festgelegt: {formatBirthDate(birthDate)}. Das Geburtsdatum kann nicht mehr geändert werden.
                 </p>
               ) : (
-                <p className="text-xs text-muted-foreground">
-                  An deinem Geburtstag bekommst du auf jedem Treuepass einen Check-in geschenkt 🎂.
-                  Du kannst dein Geburtsdatum nur einmal festlegen – bitte sorgfältig eingeben.
+                <p className="text-xs text-amber-600 dark:text-amber-400 font-medium">
+                  ⚠️ Achtung: Dein Geburtsdatum kannst du nur einmal festlegen und danach nicht mehr ändern. Bitte sorgfältig eingeben.
                 </p>
               )}
             </div>
@@ -280,12 +291,25 @@ export default function AppSettings() {
                 <Smartphone className="h-4 w-4 text-primary" /> Handynummer
               </Label>
               {userPhone ? (
-                <div className="flex items-center gap-2">
-                  <div className="p-3 rounded-md bg-muted text-muted-foreground flex-1">{userPhone}</div>
-                  <Button variant="ghost" size="icon" onClick={openPhoneDialog} aria-label="Handynummer ändern">
-                    <Pencil className="h-4 w-4" />
-                  </Button>
-                </div>
+                <>
+                  <div className="flex items-center gap-2">
+                    <div className="p-3 rounded-md bg-muted text-muted-foreground flex-1">{userPhone}</div>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={openPhoneDialog}
+                      disabled={phoneLocked}
+                      aria-label="Handynummer ändern"
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                  </div>
+                  {phoneLocked && phoneNextChangeDate && (
+                    <p className="text-xs text-muted-foreground">
+                      Handynummer kann erst wieder ab {format(phoneNextChangeDate, 'dd.MM.yyyy', { locale: de })} geändert werden (90 Tage Sperre).
+                    </p>
+                  )}
+                </>
               ) : (
                 <Button variant="outline" className="w-full" onClick={openPhoneDialog}>
                   <Smartphone className="h-4 w-4 mr-2" />
