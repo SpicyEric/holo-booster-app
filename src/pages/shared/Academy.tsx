@@ -128,7 +128,7 @@ function TabWasIst() {
           </ul>
           <p>
             Das Geschäft muss dafür nichts aktiv tun. Kein Mitarbeiter muss Kunden ansprechen, fragen ob sie eine Kundenkarte wollen
-            oder erklären wie es funktioniert. Der Aufsteller übernimmt das — wenn er gut designt ist, vollständig automatisch.
+            oder erklären wie es funktioniert. Der Aufsteller übernimmt das — wenn er gut designt und platziert ist, vollständig automatisch.
           </p>
         </Section>
       </Card>
