@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Gift, Check, UserPlus, Sparkles, Cake, Home, Search, MessageSquare, Settings, Nfc } from 'lucide-react';
+import { ArrowLeft, Gift, Check, UserPlus, Sparkles, Cake, Home, Search, MessageSquare, Settings, Nfc, X, Copy } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 
@@ -109,6 +109,7 @@ export const MerchantTreuepassPreviewV2 = ({
   };
 
   const scrollerRef = useRef<HTMLDivElement>(null);
+  const [inviteOpen, setInviteOpen] = useState(false);
   useEffect(() => {
     const el = scrollerRef.current;
     if (!el) return;
@@ -174,13 +175,32 @@ export const MerchantTreuepassPreviewV2 = ({
 
           <div
             ref={scrollerRef}
-            className="overflow-x-auto overflow-y-hidden no-scrollbar cursor-grab active:cursor-grabbing"
+            className="overflow-x-auto overflow-y-hidden no-scrollbar cursor-grab active:cursor-grabbing select-none"
             style={{ WebkitOverflowScrolling: 'touch' }}
             onWheel={(e) => {
               const el = e.currentTarget;
               if (e.deltaY !== 0 && Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
                 el.scrollLeft += e.deltaY;
               }
+            }}
+            onPointerDown={(e) => {
+              if (e.pointerType === 'touch') return;
+              const el = e.currentTarget;
+              const startX = e.clientX;
+              const startScroll = el.scrollLeft;
+              el.setPointerCapture(e.pointerId);
+              const onMove = (ev: PointerEvent) => {
+                el.scrollLeft = startScroll - (ev.clientX - startX);
+              };
+              const onUp = (ev: PointerEvent) => {
+                try { el.releasePointerCapture(ev.pointerId); } catch {}
+                el.removeEventListener('pointermove', onMove);
+                el.removeEventListener('pointerup', onUp);
+                el.removeEventListener('pointercancel', onUp);
+              };
+              el.addEventListener('pointermove', onMove);
+              el.addEventListener('pointerup', onUp);
+              el.addEventListener('pointercancel', onUp);
             }}
           >
             <div className="relative" style={{ width: totalWidth, height: SNAKE_HEIGHT + 20 }}>
@@ -325,12 +345,88 @@ export const MerchantTreuepassPreviewV2 = ({
                 </p>
               </div>
             </div>
-            <Button className="w-full h-7 text-[10px] bg-white hover:bg-white/90 pointer-events-none" style={{ color: BRAND }}>
+            <Button
+              onClick={() => setInviteOpen(true)}
+              className="w-full h-7 text-[10px] bg-white hover:bg-white/90"
+              style={{ color: BRAND }}
+            >
               Einladungslink teilen
             </Button>
           </Card>
         </div>
       </div>
+
+      {/* Invite-Popup Vorschau (rein dekorativ, nur X schließt) */}
+      {inviteOpen && (
+        <div className="absolute inset-0 z-40 flex items-center justify-center px-4">
+          <div
+            className="absolute inset-0 bg-black/50"
+            onClick={() => setInviteOpen(false)}
+          />
+          <div
+            className="relative bg-white rounded-3xl p-5 w-full max-w-[280px] shadow-2xl"
+            style={{ colorScheme: 'light' }}
+          >
+            <button
+              onClick={() => setInviteOpen(false)}
+              className="absolute top-3 right-3 w-7 h-7 rounded-full flex items-center justify-center text-neutral-500 hover:bg-neutral-100"
+              aria-label="Schließen"
+            >
+              <X className="w-4 h-4" />
+            </button>
+
+            <div className="flex flex-col items-center text-center gap-2">
+              <div
+                className="w-11 h-11 rounded-2xl flex items-center justify-center"
+                style={{ background: `${BRAND}26` }}
+              >
+                <Gift className="w-5 h-5" style={{ color: BRAND }} />
+              </div>
+              <h3 className="text-sm font-bold text-neutral-900">Freund einladen</h3>
+              <p className="text-[10px] text-neutral-600 leading-snug px-1">
+                Lade eine Person zu <span className="font-semibold text-neutral-900">{merchantName || 'deinem Geschäft'}</span> ein.
+                Sammelt sie in <span className="font-semibold text-neutral-900">7 Tagen</span> ihre ersten Punkte,
+                bekommt ihr <span className="font-semibold text-neutral-900">beide</span> einen Bonus:
+              </p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-1.5 mt-3">
+              <div className="rounded-xl bg-neutral-100 px-2 py-2 text-center">
+                <div className="text-[9px] text-neutral-500">Du bekommst</div>
+                <div className="text-sm font-bold leading-tight" style={{ color: BRAND }}>+1 Boost</div>
+                <div className="text-[8px] text-neutral-500 mt-0.5 leading-tight">Empfehlungs-Bonus</div>
+              </div>
+              <div className="rounded-xl bg-neutral-100 px-2 py-2 text-center">
+                <div className="text-[9px] text-neutral-500">Dein Freund</div>
+                <div className="text-sm font-bold leading-tight" style={{ color: BRAND }}>Punkte ×2</div>
+                <div className="text-[8px] text-neutral-500 mt-0.5 leading-tight">erste Punkte</div>
+              </div>
+            </div>
+
+            <div className="space-y-1.5 mt-3 pointer-events-none">
+              <Button
+                className="w-full h-8 rounded-xl text-[10px] text-white"
+                style={{ background: BRAND }}
+              >
+                <svg viewBox="0 0 24 24" className="h-3 w-3 mr-1" fill="currentColor">
+                  <path d="M.057 24l1.687-6.163a11.867 11.867 0 0 1-1.587-5.946C.16 5.335 5.495 0 12.05 0a11.817 11.817 0 0 1 8.413 3.488 11.824 11.824 0 0 1 3.48 8.414c-.003 6.557-5.338 11.892-11.893 11.892a11.9 11.9 0 0 1-5.688-1.448L.057 24zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981z"/>
+                </svg>
+                Über WhatsApp einladen
+              </Button>
+              <Button
+                variant="outline"
+                className="w-full h-7 rounded-xl text-[10px]"
+              >
+                <Copy className="w-3 h-3 mr-1" />
+                Link kopieren
+              </Button>
+              <p className="text-center text-[9px] text-neutral-500 pt-0.5">
+                Link gültig 90 Tage
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Fake BottomNav (rein dekorativ, exakt wie in der App) */}
       <div className="absolute bottom-0 left-0 right-0 bg-white border-t border-neutral-200 pointer-events-none">
