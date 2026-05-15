@@ -57,7 +57,17 @@ interface Segment { type: 'all' | 'last_stamped_days' | 'not_stamped_days'; valu
 interface Message { id: string; title: string; body: string; show_in_storefront: boolean | null; sent_at: string | null; segment: Segment; offer_id: string | null; is_sent: boolean | null; recipient_count: number | null; }
 interface Offer { id: string; title: string; description: string | null; }
 interface NewCustomerOffer { id: string; title: string; description: string | null; bonus_stamps: number | null; is_active: boolean | null; image_url: string | null; }
-interface Reward { id: string; title: string; description: string | null; points_required: number; image_url: string | null; is_active: boolean | null; }
+interface Reward { id: string; title: string; description: string | null; points_required: number; image_url: string | null; is_active: boolean | null; marketing_text?: string | null; marketing_emoji?: string | null; }
+
+const REWARD_MARKETING_EMOJIS = [
+  '☕','🥐','🥖','🍞','🧁','🍰','🎂','🍪','🍩','🍫','🍬','🍭',
+  '🍕','🍔','🌭','🥪','🌮','🌯','🥗','🍟','🍿','🥨','🥞','🧇',
+  '🍣','🍜','🍱','🍙','🍦','🍨','🍧','🍓','🍎','🍊','🍇','🥝',
+  '🥤','🧃','🍺','🍷','🍸','🍹','🍾','🥂','🍵','🥛','🧉','🍶',
+  '💇','💅','💆','🧖','💈','🛁','🪒','💄','👗','👠','👜','🕶️',
+  '🎁','🎀','🏆','⭐','✨','🔥','💯','💎','🎉','🎊','🥇','🌟',
+  '💸','💰','🏷️','🎟️','🎫','📣','📢','🛍️','🛒','💳','🪙','🤑',
+];
 
 const SEGMENT_OPTIONS = [
   { value: 'all', label: 'Alle Kunden', description: 'Alle, die bei Ihnen schon mal Punkte gesammelt haben' },
