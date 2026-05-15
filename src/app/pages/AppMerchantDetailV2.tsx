@@ -161,7 +161,7 @@ export const AppMerchantDetailV2 = () => {
           .order('visit', { ascending: true }),
         supabase
           .from('rewards')
-          .select('id, title, image_url')
+          .select('id, title, image_url, marketing_text, marketing_emoji')
           .eq('merchant_customer_id', merchantId)
           .eq('is_active', true),
       ]);
@@ -193,6 +193,8 @@ export const AppMerchantDetailV2 = () => {
           visitNumber: p.visit,
           label: reward.title,
           imageUrl: reward.image_url || null,
+          marketingText: reward.marketing_text || null,
+          marketingEmoji: reward.marketing_emoji || null,
         }];
       });
       setDbRewards(mapped);
