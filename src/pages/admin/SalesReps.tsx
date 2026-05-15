@@ -498,6 +498,9 @@ const SalesReps = () => {
                 <Badge variant={getStatusLabel(selected).variant} className="text-sm">
                   {getStatusLabel(selected).label}
                 </Badge>
+                <Button size="sm" variant="outline" className="h-8 text-xs" onClick={() => { setPwValue(""); setPwDialogOpen(true); }}>
+                  <KeyRound className="w-3 h-3 mr-1" /> Passwort setzen
+                </Button>
                 <Button size="sm" variant="destructive" className="h-8 text-xs" onClick={() => { setDeleteConfirmText(""); setDeleteDialogOpen(true); }}>
                   <Trash2 className="w-3 h-3 mr-1" /> Löschen
                 </Button>
