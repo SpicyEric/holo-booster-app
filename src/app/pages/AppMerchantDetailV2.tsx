@@ -487,26 +487,11 @@ export const AppMerchantDetailV2 = () => {
   const snakeRevealed = entryPhase === 'snakeIn' || entryPhase === 'done';
   // Snake wird beim Exit sofort komplett weg-clipped
 
-  // Privacy-Screen NUR aktivieren, wenn die sensible Einlöse-Ansicht
-  // (oranges Vollbild mit Code-Marquee + Prämie) sichtbar ist.
+  // Privacy-Screen entfernt: Screenshots auf Android sind wieder erlaubt.
   const isRedemptionScreenVisible = Boolean(checkInOverlay?.reward);
 
   useEffect(() => {
-    if (!isRedemptionScreenVisible) return;
-    enablePrivacyScreen();
-    let cancelled = false;
-    const poll = setInterval(async () => {
-      const captured = await isScreenBeingCaptured();
-      if (!cancelled) setScreenCaptured(captured);
-    }, 1500);
-    // initialer Check
-    isScreenBeingCaptured().then((v) => !cancelled && setScreenCaptured(v));
-    return () => {
-      cancelled = true;
-      clearInterval(poll);
-      setScreenCaptured(false);
-      disablePrivacyScreen();
-    };
+    setScreenCaptured(false);
   }, [isRedemptionScreenVisible]);
 
   const scrollerRef = useRef<HTMLDivElement>(null);
