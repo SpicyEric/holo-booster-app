@@ -1434,7 +1434,10 @@ const Marketing = () => {
                 </label>
               </div>
               <div className="space-y-2 rounded-xl border border-border/60 bg-muted/30 p-3">
-                <Label className="text-sm">WhatsApp-Empfehlungs-Text</Label>
+                <div className="flex items-center justify-between gap-2">
+                  <Label className="text-sm">WhatsApp-Empfehlungs-Text</Label>
+                  <span className="text-[10px] font-semibold uppercase tracking-wide text-primary bg-primary/10 px-2 py-0.5 rounded-full">Nur für erste Prämie wichtig</span>
+                </div>
                 <p className="text-xs text-muted-foreground -mt-1">
                   Wird beim Einladen über WhatsApp verwendet. Beispiel: <span className="italic">„ein gratis Softgetränk“</span>.
                 </p>
@@ -1445,8 +1448,15 @@ const Marketing = () => {
                         {rewardForm.marketing_emoji || '🎁'}
                       </Button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-72 p-2" align="start">
-                      <div className="grid grid-cols-8 gap-1 max-h-56 overflow-y-auto">
+                    <PopoverContent className="w-72 p-2" align="start" onWheel={(e) => e.stopPropagation()}>
+                      <div
+                        className="grid grid-cols-8 gap-1 max-h-56 overflow-y-auto overscroll-contain"
+                        style={{ WebkitOverflowScrolling: 'touch' }}
+                        onWheel={(e) => {
+                          e.currentTarget.scrollTop += e.deltaY;
+                          e.stopPropagation();
+                        }}
+                      >
                         {REWARD_MARKETING_EMOJIS.map((emoji, i) => (
                           <button
                             key={`${emoji}-${i}`}
