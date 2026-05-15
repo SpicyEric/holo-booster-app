@@ -72,8 +72,17 @@ export async function maybeAwardReferralBonus(params: {
 
       if (showToast) {
         const isInviter = ref.inviter_user_id === userId;
-        const bonus = isInviter ? ref.inviter_points : ref.invitee_points;
-        toast.success(`🎉 Empfehlungs-Bonus: +${bonus} Punkte!`, { duration: 5000 });
+        if (isInviter) {
+          const boost = ref.boosts_granted ?? ref.inviter_points ?? 1;
+          const rockets = boost === 3 ? '🚀🚀🚀' : boost === 2 ? '🚀🚀' : '🚀';
+          const streak = boost === 3 ? ' STREAK!' : '';
+          const pendingNote = (ref.boosts_pending ?? 0) > 0
+            ? ` (+${ref.boosts_pending} morgen)`
+            : '';
+          toast.success(`${rockets}${streak} +${boost} Boost-Check-in${boost === 1 ? '' : 's'}!${pendingNote}`, { duration: 5000 });
+        } else {
+          toast.success(`🎉 Empfehlungs-Bonus: +${ref.invitee_points} Punkte!`, { duration: 5000 });
+        }
       }
 
       // Push-Notifications an beide Beteiligte (best-effort)
@@ -85,6 +94,9 @@ export async function maybeAwardReferralBonus(params: {
             inviter_points: ref.inviter_points,
             invitee_points: ref.invitee_points,
             merchant_customer_id: ref.merchant_customer_id ?? merchantCustomerId,
+            boosts_granted: ref.boosts_granted,
+            boosts_pending: ref.boosts_pending,
+            referral_index: ref.referral_index,
           },
         });
       } catch (pushErr) {
