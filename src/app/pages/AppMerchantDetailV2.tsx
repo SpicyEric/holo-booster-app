@@ -221,14 +221,14 @@ export const AppMerchantDetailV2 = () => {
 
   // Trigger Eincheck-Overlay, wenn von der Scan-Seite mit triggerCheckIn=true navigiert wurde
   useEffect(() => {
-    const state = location.state as { triggerCheckIn?: boolean } | null;
+    const state = location.state as MerchantV2RouteState | null;
     if (!state?.triggerCheckIn) return;
-    const stored = getActivatedReward(merchantId);
-    const reward = stored ? { visitNumber: stored.visitNumber, label: stored.label, redeemed: false } : null;
+    const reward = state.welcomeRewardRedeemed && state.welcomeRewardLabel
+      ? { visitNumber: 1, label: state.welcomeRewardLabel, redeemed: false }
+      : null;
     setCheckInOverlay({ code: generateVerificationCode(5), reward });
     setConfirmStage(false);
-    // State konsumieren, damit der Overlay nicht bei jedem Re-Mount neu öffnet
-    navigate(location.pathname, { replace: true });
+    navigate(location.pathname, { replace: true, state: null });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.state, merchantId]);
 
