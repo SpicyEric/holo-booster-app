@@ -100,6 +100,9 @@ const SalesReps = () => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deleteConfirmText, setDeleteConfirmText] = useState("");
   const [activateDialogOpen, setActivateDialogOpen] = useState(false);
+  const [pwDialogOpen, setPwDialogOpen] = useState(false);
+  const [pwValue, setPwValue] = useState("");
+  const [pwSaving, setPwSaving] = useState(false);
   const [contractUploads, setContractUploads] = useState<ContractUpload[]>([]);
   const [loadingContracts, setLoadingContracts] = useState(false);
   const [confirmingContractId, setConfirmingContractId] = useState<string | null>(null);
