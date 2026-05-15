@@ -20,6 +20,9 @@ Deno.serve(async (req) => {
       inviter_points,
       invitee_points,
       merchant_customer_id,
+      boosts_granted,
+      boosts_pending,
+      referral_index,
     } = body ?? {};
 
     if (!inviter_user_id || !invitee_user_id || !merchant_customer_id) {
