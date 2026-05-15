@@ -200,7 +200,7 @@ function TabSystem() {
         <Section title="So läuft ein Check-in in der Praxis">
           <ol className="list-decimal pl-6 space-y-1">
             <li>Kunde kommt rein, kauft etwas</li>
-            <li>Kunde spricht den Kassierer auf seinen Check-in an — oder der Kassierer fragt kurz nach</li>
+            <li>Kunde spricht den Kassierer auf seinen Check-in an</li>
             <li>Kassierer hält die NFC-Karte ans Handy des Kunden</li>
             <li>Check-in erscheint sofort in der App — fertig</li>
           </ol>
