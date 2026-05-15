@@ -27,6 +27,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import RichTextEditor from '@/components/merchant/RichTextEditor';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import RewardSnakeDropZone from '@/components/merchant/RewardSnakeDropZone';
 
 import ReferralExplainerCarousel from '@/components/merchant/ReferralExplainerCarousel';
