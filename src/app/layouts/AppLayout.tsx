@@ -1,8 +1,11 @@
+import { useEffect } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { Home, Gift, User, Scan, Store } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useOfflineSync } from '@/app/hooks/useOfflineSync';
 import { PhoneMigrationDialog } from '@/app/components/PhoneMigrationDialog';
+import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
 
 /**
  * Mobile-optimized layout for end customer app
@@ -11,7 +14,14 @@ import { PhoneMigrationDialog } from '@/app/components/PhoneMigrationDialog';
 export const AppLayout = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { user } = useAuth();
   useOfflineSync(); // Auto-sync pending offline stamps
+
+  // Drain pending boost queue on app open (next-day rollover for capped boosts)
+  useEffect(() => {
+    if (!user?.id) return;
+    void supabase.rpc('process_pending_boosts').catch(() => {});
+  }, [user?.id]);
 
   const navItems = [
     { path: '/app', icon: Home, label: 'Feed' },
