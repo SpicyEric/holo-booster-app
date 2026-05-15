@@ -229,10 +229,12 @@ function generateContractPdf(d: ContractData): Uint8Array {
   const cw = pw - 2 * margin;
   let y = 20;
 
+  const isV6 = d.version === "v6";
+  const stand = isV6 ? "Mai 2026" : "April 2026";
   const addFooter = () => {
     doc.setFontSize(8);
     doc.setTextColor(150);
-    doc.text(`Stand: April 2026 - Version ${d.version} - Eloyo, Fuggerstr. 2, 86836 Untermeitingen - support@eloyo.de`, pw / 2, 290, { align: "center" });
+    doc.text(`Stand: ${stand} - Version ${d.version} - Eloyo, Fuggerstr. 2, 86836 Untermeitingen - support@eloyo.de`, pw / 2, 290, { align: "center" });
     doc.setTextColor(0);
   };
 
