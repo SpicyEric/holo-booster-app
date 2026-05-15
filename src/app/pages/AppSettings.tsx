@@ -291,12 +291,25 @@ export default function AppSettings() {
                 <Smartphone className="h-4 w-4 text-primary" /> Handynummer
               </Label>
               {userPhone ? (
-                <div className="flex items-center gap-2">
-                  <div className="p-3 rounded-md bg-muted text-muted-foreground flex-1">{userPhone}</div>
-                  <Button variant="ghost" size="icon" onClick={openPhoneDialog} aria-label="Handynummer ändern">
-                    <Pencil className="h-4 w-4" />
-                  </Button>
-                </div>
+                <>
+                  <div className="flex items-center gap-2">
+                    <div className="p-3 rounded-md bg-muted text-muted-foreground flex-1">{userPhone}</div>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={openPhoneDialog}
+                      disabled={phoneLocked}
+                      aria-label="Handynummer ändern"
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                  </div>
+                  {phoneLocked && phoneNextChangeDate && (
+                    <p className="text-xs text-muted-foreground">
+                      Handynummer kann erst wieder ab {format(phoneNextChangeDate, 'dd.MM.yyyy', { locale: de })} geändert werden (90 Tage Sperre).
+                    </p>
+                  )}
+                </>
               ) : (
                 <Button variant="outline" className="w-full" onClick={openPhoneDialog}>
                   <Smartphone className="h-4 w-4 mr-2" />
