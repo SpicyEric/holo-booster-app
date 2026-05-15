@@ -1431,6 +1431,7 @@ const Marketing = () => {
                   <input type="file" accept="image/*" className="hidden" onChange={e => { const f = e.target.files?.[0]; if (f) handleRewardImageUpload(f); }} />
                   {rewardForm.image_url ? <img src={rewardForm.image_url} alt="Preview" className="w-16 h-16 object-cover mx-auto rounded-lg" /> : <span className="text-sm text-muted-foreground">{uploadingRewardImage ? 'Hochladen...' : 'Bild hochladen'}</span>}
                 </label>
+              </div>
               <div className="space-y-2 rounded-xl border border-border/60 bg-muted/30 p-3">
                 <Label className="text-sm">WhatsApp-Empfehlungs-Text</Label>
                 <p className="text-xs text-muted-foreground -mt-1">
