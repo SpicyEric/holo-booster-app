@@ -1,0 +1,1 @@
+DROP POLICY IF EXISTS "System can update loyalty accounts" ON public.loyalty_accounts;
