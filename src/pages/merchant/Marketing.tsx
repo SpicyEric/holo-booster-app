@@ -1335,61 +1335,6 @@ const Marketing = () => {
                   <RichTextEditor value={messageForm.body} onChange={v => setMessageForm({...messageForm, body: v})} placeholder="Deine Nachricht..." rows={4} />
                 </div>
               </div>
-
-              {/* Image Upload */}
-              <div className="p-3 bg-muted/30 rounded-xl space-y-2">
-                <Label className="text-sm font-medium">Bild anhängen (optional)</Label>
-                <label className="cursor-pointer block border-2 border-dashed border-border rounded-xl p-3 text-center hover:border-primary/50 transition-colors">
-                  <input type="file" accept="image/*" className="hidden" onChange={e => { const f = e.target.files?.[0]; if (f) handleMessageImageUpload(f); }} />
-                  {messageForm.image_url ? (
-                    <div className="relative inline-block">
-                      <img src={messageForm.image_url} alt="Preview" className="w-20 h-20 object-cover mx-auto rounded-lg" />
-                      <Button type="button" variant="destructive" size="sm" className="absolute -top-2 -right-2 h-6 w-6 p-0 rounded-full" onClick={(e) => { e.preventDefault(); setMessageForm(prev => ({...prev, image_url: ''})); }}>
-                        <Trash2 className="h-3 w-3" />
-                      </Button>
-                    </div>
-                  ) : (
-                    <span className="text-sm text-muted-foreground flex items-center justify-center gap-2">
-                      {uploadingMessageImage ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
-                      {uploadingMessageImage ? 'Hochladen...' : 'Bild hochladen'}
-                    </span>
-                  )}
-                </label>
-              </div>
-
-              {/* Attach Offer */}
-              <div className="flex items-center justify-between p-3 bg-muted/30 rounded-xl">
-                <div><p className="text-sm font-medium">Angebot anhängen</p><p className="text-xs text-muted-foreground">7 Tage gültig, einmalig einlösbar per NFC</p></div>
-                <div className="flex items-center gap-2">
-                  <span className={`text-xs font-medium ${messageForm.attach_offer ? 'text-primary' : 'text-muted-foreground'}`}>{messageForm.attach_offer ? 'Aktiv' : 'Inaktiv'}</span>
-                  <Switch checked={messageForm.attach_offer} onCheckedChange={v=>setMessageForm({...messageForm, attach_offer: v, attach_points: v ? false : messageForm.attach_points})} />
-                </div>
-              </div>
-              {messageForm.attach_offer && (
-                <div className="space-y-3 p-3 bg-muted/30 rounded-xl">
-                  <div><Label>Angebotstitel</Label><Input value={messageForm.offer_title} onChange={e=>setMessageForm({...messageForm,offer_title:e.target.value})} placeholder="z.B. 20% Rabatt" className="rounded-xl mt-1" /></div>
-                  <div><Label>Beschreibung</Label>
-                    <div className="mt-1">
-                      <RichTextEditor value={messageForm.offer_description} onChange={v => setMessageForm({...messageForm, offer_description: v})} placeholder="Details..." rows={2} />
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Attach Points */}
-              <div className="flex items-center justify-between p-3 bg-muted/30 rounded-xl">
-                <div><p className="text-sm font-medium">Punkte anhängen</p><p className="text-xs text-muted-foreground">Kunden erhalten Punkte beim Öffnen der Nachricht</p></div>
-                <div className="flex items-center gap-2">
-                  <span className={`text-xs font-medium ${messageForm.attach_points ? 'text-primary' : 'text-muted-foreground'}`}>{messageForm.attach_points ? 'Aktiv' : 'Inaktiv'}</span>
-                  <Switch checked={messageForm.attach_points} onCheckedChange={v=>setMessageForm({...messageForm, attach_points: v, attach_offer: v ? false : messageForm.attach_offer})} />
-                </div>
-              </div>
-              {messageForm.attach_points && (
-                <div className="p-3 bg-muted/30 rounded-xl">
-                  <Label>Anzahl Bonuspunkte</Label>
-                  <Input type="number" min={1} value={messageForm.bonus_points || ''} onChange={e=>setMessageForm({...messageForm, bonus_points: parseInt(e.target.value) || 0})} placeholder="z.B. 5" className="rounded-xl mt-1 w-32" />
-                </div>
-              )}
             </div>
             <DialogFooter>
               <Button variant="outline" onClick={()=>setShowMessageDialog(false)} className="rounded-xl">Abbrechen</Button>
