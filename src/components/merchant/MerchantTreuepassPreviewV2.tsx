@@ -375,53 +375,45 @@ export const MerchantTreuepassPreviewV2 = ({
               <X className="w-4 h-4" />
             </button>
 
-            <div className="flex flex-col items-center text-center gap-2">
+            <div className="flex flex-col items-center text-center gap-1.5">
               <div
                 className="w-11 h-11 rounded-2xl flex items-center justify-center"
                 style={{ background: `${BRAND}26` }}
               >
                 <Gift className="w-5 h-5" style={{ color: BRAND }} />
               </div>
-              <h3 className="text-sm font-bold text-neutral-900">Freund einladen</h3>
-              <p className="text-[10px] text-neutral-600 leading-snug px-1">
-                Lade eine Person zu <span className="font-semibold text-neutral-900">{merchantName || 'deinem Geschäft'}</span> ein.
-                Sammelt sie in <span className="font-semibold text-neutral-900">7 Tagen</span> ihre ersten Punkte,
-                bekommt ihr <span className="font-semibold text-neutral-900">beide</span> einen Bonus:
-              </p>
+              <h3 className="text-sm font-bold text-neutral-900">🚀 Jetzt boosten</h3>
+              <div className="text-[10px] text-neutral-600 leading-snug text-left w-full px-1 space-y-0.5">
+                <div className="font-semibold text-neutral-900">So funktioniert's:</div>
+                <div>1. Teile deinen Einladungslink</div>
+                <div>2. Dein Freund kauft bei <span className="font-semibold text-neutral-900">{merchantName || 'deinem Geschäft'}</span> etwas und checkt ein</div>
+                <div>3. Du bekommst Boost-Check-ins auf deinem Treuepass</div>
+              </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-1.5 mt-3">
-              <div className="rounded-xl bg-neutral-100 px-2 py-2 text-center">
-                <div className="text-[9px] text-neutral-500">Du bekommst</div>
-                <div className="text-sm font-bold leading-tight" style={{ color: BRAND }}>+1 Boost</div>
-                <div className="text-[8px] text-neutral-500 mt-0.5 leading-tight">Empfehlungs-Bonus</div>
+            <div className="rounded-xl border mt-3 px-2.5 py-2 space-y-1" style={{ borderColor: `${BRAND}33`, background: `${BRAND}0a` }}>
+              <div className="text-[9px] text-neutral-500 font-medium">Dein Stand bei {merchantName || 'diesem Geschäft'}:</div>
+              <div className="text-[10px] text-neutral-800 flex items-center gap-1.5">
+                <Check className="w-3 h-3 text-emerald-500" /> <span><span className="font-bold">1</span> erfolgreiche Empfehlung</span>
               </div>
-              <div className="rounded-xl bg-neutral-100 px-2 py-2 text-center">
-                <div className="text-[9px] text-neutral-500">Dein Freund</div>
-                <div className="text-sm font-bold leading-tight" style={{ color: BRAND }}>Punkte ×2</div>
-                <div className="text-[8px] text-neutral-500 mt-0.5 leading-tight">erste Punkte</div>
+              <div className="text-[10px] text-neutral-800 flex items-center gap-1.5">
+                <span>🔥</span> <span>Nächste Belohnung: <span className="font-bold">🚀🚀 +2 Check-ins</span></span>
               </div>
             </div>
 
             <div className="space-y-1.5 mt-3 pointer-events-none">
-              <Button
-                className="w-full h-8 rounded-xl text-[10px] text-white"
-                style={{ background: BRAND }}
-              >
+              <Button className="w-full h-8 rounded-xl text-[10px] text-white" style={{ background: BRAND }}>
                 <svg viewBox="0 0 24 24" className="h-3 w-3 mr-1" fill="currentColor">
                   <path d="M.057 24l1.687-6.163a11.867 11.867 0 0 1-1.587-5.946C.16 5.335 5.495 0 12.05 0a11.817 11.817 0 0 1 8.413 3.488 11.824 11.824 0 0 1 3.48 8.414c-.003 6.557-5.338 11.892-11.893 11.892a11.9 11.9 0 0 1-5.688-1.448L.057 24zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981z"/>
                 </svg>
-                Über WhatsApp einladen
+                Per WhatsApp teilen
               </Button>
-              <Button
-                variant="outline"
-                className="w-full h-7 rounded-xl text-[10px]"
-              >
+              <Button variant="outline" className="w-full h-7 rounded-xl text-[10px]">
                 <Copy className="w-3 h-3 mr-1" />
                 Link kopieren
               </Button>
               <p className="text-center text-[9px] text-neutral-500 pt-0.5">
-                Link gültig 90 Tage
+                Link gültig 90 Tage · Max. 5 Boost-Check-ins/Tag
               </p>
             </div>
           </div>

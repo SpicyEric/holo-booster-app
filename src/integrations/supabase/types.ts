@@ -115,6 +115,27 @@ export type Database = {
           },
         ]
       }
+      boost_processing_state: {
+        Row: {
+          boosts_today: number
+          last_processed_date: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          boosts_today?: number
+          last_processed_date?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          boosts_today?: number
+          last_processed_date?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       box_pakete: {
         Row: {
           anzahl_boxen: number
@@ -1552,6 +1573,7 @@ export type Database = {
           current_points_balance: number | null
           id: string
           merchant_customer_id: string
+          successful_referrals: number
           updated_at: string | null
           user_id: string
         }
@@ -1560,6 +1582,7 @@ export type Database = {
           current_points_balance?: number | null
           id?: string
           merchant_customer_id: string
+          successful_referrals?: number
           updated_at?: string | null
           user_id: string
         }
@@ -1568,6 +1591,7 @@ export type Database = {
           current_points_balance?: number | null
           id?: string
           merchant_customer_id?: string
+          successful_referrals?: number
           updated_at?: string | null
           user_id?: string
         }
@@ -1997,6 +2021,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      pending_boosts: {
+        Row: {
+          boost_count: number
+          created_at: string
+          id: string
+          invitee_user_id: string | null
+          merchant_customer_id: string
+          processed_at: string | null
+          referral_index: number
+          user_id: string
+        }
+        Insert: {
+          boost_count: number
+          created_at?: string
+          id?: string
+          invitee_user_id?: string | null
+          merchant_customer_id: string
+          processed_at?: string | null
+          referral_index: number
+          user_id: string
+        }
+        Update: {
+          boost_count?: number
+          created_at?: string
+          id?: string
+          invitee_user_id?: string | null
+          merchant_customer_id?: string
+          processed_at?: string | null
+          referral_index?: number
+          user_id?: string
+        }
+        Relationships: []
       }
       pipeline_appointments: {
         Row: {
@@ -3509,6 +3566,7 @@ export type Database = {
             Returns: Json
           }
         | { Args: { p_hardware_uid: string; p_user_id: string }; Returns: Json }
+      calc_boost_reward: { Args: { p_referral_index: number }; Returns: number }
       cancel_invitation_redemption: {
         Args: { p_redemption_id: string }
         Returns: Json
@@ -3529,6 +3587,10 @@ export type Database = {
       }
       expire_old_invitations: { Args: never; Returns: number }
       generate_customer_number: { Args: never; Returns: string }
+      get_next_boost_reward: {
+        Args: { p_merchant_customer_id: string }
+        Returns: Json
+      }
       get_pending_invitation: { Args: never; Returns: Json }
       has_role: {
         Args: {
@@ -3552,6 +3614,7 @@ export type Database = {
       }
       lookup_invitation: { Args: { p_share_code: string }; Returns: Json }
       mark_invitation_shared: { Args: { p_share_code: string }; Returns: Json }
+      process_pending_boosts: { Args: never; Returns: Json }
       process_referral_bonus: {
         Args: { p_merchant_customer_id: string; p_user_id: string }
         Returns: Json
