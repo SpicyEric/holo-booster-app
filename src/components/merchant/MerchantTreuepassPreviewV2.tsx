@@ -1,16 +1,15 @@
 import { useEffect, useMemo, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Gift, Check, UserPlus, Sparkles, Cake } from 'lucide-react';
+import { ArrowLeft, Gift, Check, UserPlus, Sparkles, Cake, Home, Search, MessageSquare, Settings, Nfc } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 
 /**
  * MerchantTreuepassPreviewV2
  *
- * Live-Vorschau der V2 "Treuepass"-Seite, exakt visuell wie in der App.
- * Wird in der Profil-Phone-Vorschau gerendert, wenn `version === 'v2'`.
- *
- * Statisch / nicht-interaktiv – soll dem Händler zeigen, wie es beim Kunden aussieht.
+ * Live-Vorschau der V2 "Treuepass"-Seite, exakt visuell wie in der App
+ * (inkl. Cover-Bild im Hintergrund hinter der Snake und fake BottomNav
+ * mit Scan-Button am unteren Rand).
  */
 
 interface PreviewReward {
@@ -23,19 +22,19 @@ interface PreviewReward {
 interface Props {
   brandColor: string;
   merchantName: string;
-  logoEmoji?: string; // optional decorative
+  logoEmoji?: string;
+  /** Cover-Bild des Geschäfts (für den dezenten Hintergrund hinter der Snake). */
+  coverImageUrl?: string | null;
   rewards: PreviewReward[];
-  /** Optional placements; if provided, used instead of rewards.points_required mapping. */
   placements?: { reward_id: string; visit: number }[];
-  /** Total length of the loyalty pass; visible window is capped at this. */
   passLength?: number;
   /** Angenommener aktueller Check-in (für die Vorschau-Visualisierung). Default 4. */
   currentVisit?: number;
 }
 
-const NODE_SPACING = 90;
-const SNAKE_HEIGHT = 200;
-const AMPLITUDE = 50;
+const NODE_SPACING = 70;
+const SNAKE_HEIGHT = 150;
+const AMPLITUDE = 36;
 const WAVELENGTH = 4;
 
 function nodeY(index: number): number {
@@ -59,6 +58,7 @@ export const MerchantTreuepassPreviewV2 = ({
   brandColor,
   merchantName,
   logoEmoji = '🥐',
+  coverImageUrl,
   rewards,
   placements,
   passLength = 15,
@@ -67,7 +67,6 @@ export const MerchantTreuepassPreviewV2 = ({
   const BRAND = brandColor;
   const BRAND_SOFT = `${BRAND}22`;
 
-  // Mock check-in sources, identical pattern to AppMerchantDetailV2 sample state
   const checkInSources: Record<number, 'normal' | 'boost' | 'birthday'> = useMemo(
     () => ({ 3: 'birthday' }),
     [],
@@ -109,7 +108,6 @@ export const MerchantTreuepassPreviewV2 = ({
     return null;
   };
 
-  // Auto-scroll to current
   const scrollerRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const el = scrollerRef.current;
@@ -121,87 +119,133 @@ export const MerchantTreuepassPreviewV2 = ({
 
   return (
     <div
-      className="min-h-full"
-      style={{
-        background: '#faf8f5',
-        colorScheme: 'light',
-      }}
+      className="relative h-full flex flex-col"
+      style={{ background: '#faf8f5', colorScheme: 'light' }}
     >
-      {/* Header */}
-      <div
-        className="sticky top-0 z-30 bg-white/90 backdrop-blur border-b"
-        style={{ borderColor: `${BRAND}22` }}
-      >
-        <div className="flex items-center gap-3 px-4 py-3">
-          <div
-            className="w-10 h-10 rounded-full flex items-center justify-center"
-            style={{ background: BRAND_SOFT }}
-          >
-            <ArrowLeft className="w-5 h-5" style={{ color: BRAND }} />
-          </div>
-          <div className="flex-1 min-w-0">
-            <h1 className="text-lg font-bold text-neutral-900 truncate">
-              {merchantName || 'Dein Geschäft'}
-            </h1>
-            <p className="text-xs font-medium" style={{ color: BRAND }}>
-              Dein Treuepass
-            </p>
-          </div>
-          <div
-            className="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl shadow-sm"
-            style={{ background: `linear-gradient(135deg, ${BRAND}, ${BRAND}cc)` }}
-          >
-            {logoEmoji}
-          </div>
-        </div>
-      </div>
-
-      {/* Snake */}
-      <div className="mt-6">
-        <div className="px-4 mb-3">
-          <p className="text-xs uppercase tracking-wider font-semibold" style={{ color: `${BRAND}cc` }}>
-            Check-ins
-          </p>
-          <p className="text-4xl font-extrabold text-neutral-900 leading-none mt-1">
-            {currentVisit}
-          </p>
-        </div>
-
+      {/* Scrollable content */}
+      <div className="flex-1 overflow-y-auto no-scrollbar pb-[68px]">
+        {/* Header */}
         <div
-          ref={scrollerRef}
-          className="overflow-x-auto overflow-y-hidden no-scrollbar"
-          style={{ WebkitOverflowScrolling: 'touch' }}
+          className="sticky top-0 z-30 bg-white/90 backdrop-blur border-b"
+          style={{ borderColor: `${BRAND}22` }}
         >
-          <div className="relative" style={{ width: totalWidth, height: SNAKE_HEIGHT + 28 }}>
-            <svg width={totalWidth} height={SNAKE_HEIGHT} className="absolute inset-x-0 top-7">
-              <path
-                d={buildSmoothPath(futurePoints)}
-                fill="none"
-                stroke={BRAND}
-                strokeOpacity={0.18}
-                strokeWidth={14}
-                strokeLinecap="round"
-              />
-              <path
-                d={buildSmoothPath(completedPoints)}
-                fill="none"
-                stroke={BRAND}
-                strokeWidth={14}
-                strokeLinecap="round"
-              />
-            </svg>
+          <div className="flex items-center gap-2 px-3 py-2.5">
+            <div
+              className="w-8 h-8 rounded-full flex items-center justify-center shrink-0"
+              style={{ background: BRAND_SOFT }}
+            >
+              <ArrowLeft className="w-4 h-4" style={{ color: BRAND }} />
+            </div>
+            <div className="flex-1 min-w-0">
+              <h1 className="text-sm font-bold text-neutral-900 truncate leading-tight">
+                {merchantName || 'Dein Geschäft'}
+              </h1>
+              <p className="text-[10px] font-medium leading-tight" style={{ color: BRAND }}>
+                Dein Treuepass
+              </p>
+            </div>
+            <div
+              className="px-2 h-9 rounded-xl flex flex-col items-center justify-center text-white shadow-sm leading-none shrink-0"
+              style={{ background: `linear-gradient(135deg, ${BRAND}, ${BRAND}cc)`, minWidth: 50 }}
+            >
+              <span className="text-[8px] font-semibold uppercase tracking-wider opacity-90">Check-ins</span>
+              <span className="text-base font-extrabold mt-0.5">{currentVisit}</span>
+            </div>
+          </div>
+        </div>
 
-            {visibleNodes.map((visit, i) => {
-              const reward = rewardForVisit(visit);
-              const isPast = visit < currentVisit;
-              const isCurrent = visit === currentVisit;
-              const cx = points[i].x;
-              const cy = points[i].y + 28;
-              const source = checkInSources[visit] ?? null;
-              const label = sourceLabel(source);
+        {/* Snake mit Cover-Bild Hintergrund */}
+        <div className="mt-2 relative overflow-hidden">
+          {coverImageUrl && (
+            <div
+              aria-hidden
+              className="absolute inset-0 pointer-events-none"
+              style={{
+                backgroundImage: `url(${coverImageUrl})`,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+                opacity: 0.18,
+                filter: 'saturate(0.9)',
+                maskImage: 'linear-gradient(to bottom, transparent 0%, #000 20%, #000 80%, transparent 100%)',
+                WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, #000 20%, #000 80%, transparent 100%)',
+              }}
+            />
+          )}
 
-              if (reward) {
-                const isRedeemed = visit < currentVisit;
+          <div
+            ref={scrollerRef}
+            className="overflow-x-auto overflow-y-hidden no-scrollbar"
+            style={{ WebkitOverflowScrolling: 'touch' }}
+          >
+            <div className="relative" style={{ width: totalWidth, height: SNAKE_HEIGHT + 20 }}>
+              <svg width={totalWidth} height={SNAKE_HEIGHT} className="absolute inset-x-0 top-3">
+                <path
+                  d={buildSmoothPath(futurePoints)}
+                  fill="none"
+                  stroke={BRAND}
+                  strokeOpacity={0.18}
+                  strokeWidth={10}
+                  strokeLinecap="round"
+                />
+                <path
+                  d={buildSmoothPath(completedPoints)}
+                  fill="none"
+                  stroke={BRAND}
+                  strokeWidth={10}
+                  strokeLinecap="round"
+                />
+              </svg>
+
+              {visibleNodes.map((visit, i) => {
+                const reward = rewardForVisit(visit);
+                const isPast = visit < currentVisit;
+                const isCurrent = visit === currentVisit;
+                const cx = points[i].x;
+                const cy = points[i].y + 12;
+                const source = checkInSources[visit] ?? null;
+                const label = sourceLabel(source);
+                const labelBelow = visit % 4 === 3;
+
+                if (reward) {
+                  const isRedeemed = visit < currentVisit;
+                  return (
+                    <div
+                      key={visit}
+                      className="absolute -translate-x-1/2 -translate-y-1/2"
+                      style={{ left: cx, top: cy }}
+                    >
+                      <div
+                        className="w-12 h-12 rounded-full flex items-center justify-center border-[3px] bg-white shadow-md relative"
+                        style={{
+                          borderColor: BRAND,
+                          opacity: isRedeemed ? 0.55 : 1,
+                        }}
+                      >
+                        {reward.image_url ? (
+                          <img
+                            src={reward.image_url}
+                            alt={reward.title}
+                            className="w-full h-full rounded-full object-cover"
+                          />
+                        ) : (
+                          <Gift className="w-5 h-5" style={{ color: isRedeemed ? '#999' : BRAND }} />
+                        )}
+                        {isRedeemed && (
+                          <div className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-emerald-500 flex items-center justify-center border-2 border-white">
+                            <Check className="w-2.5 h-2.5 text-white" strokeWidth={3} />
+                          </div>
+                        )}
+                      </div>
+                      <div
+                        className={`absolute left-1/2 -translate-x-1/2 ${labelBelow ? '-top-5' : 'top-full mt-1.5'} px-1.5 py-0.5 rounded-full bg-white shadow-sm text-[8px] font-semibold text-neutral-800 max-w-[90px] truncate text-center pointer-events-none`}
+                        title={reward.title}
+                      >
+                        {reward.title}
+                      </div>
+                    </div>
+                  );
+                }
+
                 return (
                   <div
                     key={visit}
@@ -209,116 +253,111 @@ export const MerchantTreuepassPreviewV2 = ({
                     style={{ left: cx, top: cy }}
                   >
                     {label && (
-                      <div className="absolute -top-9 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded-full bg-neutral-900/85 text-white text-[10px] font-semibold flex items-center gap-1 whitespace-nowrap">
+                      <div className={`absolute left-1/2 -translate-x-1/2 ${labelBelow ? 'top-full mt-1.5' : '-top-5'} px-1.5 py-0.5 rounded-full bg-neutral-900/85 text-white text-[8px] font-semibold flex items-center gap-1 whitespace-nowrap`}>
                         {sourceIcon(source)}
                         {label}
                       </div>
                     )}
-                    <div
-                      className="w-16 h-16 rounded-full flex flex-col items-center justify-center border-4 bg-white shadow-md relative"
+                    <motion.div
+                      animate={isCurrent ? { scale: [1, 1.06, 1] } : {}}
+                      transition={{ duration: 1.4, repeat: isCurrent ? Infinity : 0 }}
+                      className="rounded-full flex items-center justify-center border-[3px] shadow"
                       style={{
-                        borderColor: BRAND,
-                        opacity: isRedeemed ? 0.55 : 1,
+                        width: isCurrent ? 42 : 32,
+                        height: isCurrent ? 42 : 32,
+                        background: isPast ? BRAND : '#fff',
+                        borderColor: isPast || isCurrent ? BRAND : `${BRAND}55`,
                       }}
                     >
-                      {reward.image_url ? (
-                        <img
-                          src={reward.image_url}
-                          alt={reward.title}
-                          className="w-9 h-9 rounded-full object-cover"
-                        />
+                      {isPast ? (
+                        <Check className="w-4 h-4 text-white" strokeWidth={3} />
                       ) : (
-                        <Gift className="w-6 h-6" style={{ color: isRedeemed ? '#999' : BRAND }} />
+                        <span
+                          className="text-[10px] font-bold"
+                          style={{ color: isCurrent ? BRAND : `${BRAND}99` }}
+                        >
+                          {isCurrent ? 'Jetzt' : visit}
+                        </span>
                       )}
-                      <span className="text-[10px] font-bold text-neutral-600 mt-0.5">#{visit}</span>
-                      {isRedeemed && (
-                        <div className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-emerald-500 flex items-center justify-center border-2 border-white">
-                          <Check className="w-3 h-3 text-white" strokeWidth={3} />
-                        </div>
-                      )}
-                    </div>
+                    </motion.div>
                   </div>
                 );
-              }
-
-              return (
-                <div
-                  key={visit}
-                  className="absolute -translate-x-1/2 -translate-y-1/2"
-                  style={{ left: cx, top: cy }}
-                >
-                  {label && (
-                    <div className="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded-full bg-neutral-900/85 text-white text-[10px] font-semibold flex items-center gap-1 whitespace-nowrap">
-                      {sourceIcon(source)}
-                      {label}
-                    </div>
-                  )}
-                  <motion.div
-                    animate={isCurrent ? { scale: [1, 1.06, 1] } : {}}
-                    transition={{ duration: 1.4, repeat: isCurrent ? Infinity : 0 }}
-                    className="rounded-full flex items-center justify-center border-4 shadow"
-                    style={{
-                      width: isCurrent ? 56 : 44,
-                      height: isCurrent ? 56 : 44,
-                      background: isPast ? BRAND : '#fff',
-                      borderColor: isPast || isCurrent ? BRAND : `${BRAND}55`,
-                    }}
-                  >
-                    {isPast ? (
-                      <Check className="w-5 h-5 text-white" strokeWidth={3} />
-                    ) : (
-                      <span
-                        className="text-sm font-bold"
-                        style={{ color: isCurrent ? BRAND : `${BRAND}99` }}
-                      >
-                        {isCurrent ? 'Jetzt' : visit}
-                      </span>
-                    )}
-                  </motion.div>
-                </div>
-              );
-            })}
+              })}
+            </div>
           </div>
+        </div>
+
+        {/* Hinweis Pre-Activation */}
+        <div className="px-3 mt-3">
+          <Card className="p-2.5 border" style={{ borderColor: `${BRAND}33`, background: `${BRAND}0a` }}>
+            <div className="flex gap-2">
+              <Sparkles className="w-3.5 h-3.5 mt-0.5 shrink-0" style={{ color: BRAND }} />
+              <div>
+                <p className="text-[11px] font-semibold text-neutral-900 leading-tight">So funktioniert das Einlösen</p>
+                <p className="text-[9px] text-neutral-600 mt-0.5 leading-snug">
+                  Tippe vor deinem nächsten Check-in auf eine Prämie, um sie zu aktivieren. Beim Check-in wird sie automatisch eingelöst.
+                </p>
+              </div>
+            </div>
+          </Card>
+        </div>
+
+        {/* Freunde einladen */}
+        <div className="px-3 mt-2 pb-3">
+          <Card
+            className="p-3 border-0 text-white shadow-lg"
+            style={{ background: `linear-gradient(135deg, ${BRAND}, ${BRAND}cc)` }}
+          >
+            <div className="flex items-center gap-2 mb-2">
+              <div className="w-8 h-8 rounded-xl bg-white/20 flex items-center justify-center shrink-0">
+                <UserPlus className="w-4 h-4" />
+              </div>
+              <div className="min-w-0">
+                <h3 className="font-bold text-xs leading-tight">Freunde einladen</h3>
+                <p className="text-[9px] text-white/85 leading-snug">
+                  Empfehlung = +1 Boost auf deinem Treuepass
+                </p>
+              </div>
+            </div>
+            <Button className="w-full h-7 text-[10px] bg-white hover:bg-white/90 pointer-events-none" style={{ color: BRAND }}>
+              Einladungslink teilen
+            </Button>
+          </Card>
         </div>
       </div>
 
-      {/* Hinweis Pre-Activation */}
-      <div className="px-4 mt-6">
-        <Card className="p-4 border" style={{ borderColor: `${BRAND}33`, background: `${BRAND}0a` }}>
-          <div className="flex gap-3">
-            <Sparkles className="w-5 h-5 mt-0.5 shrink-0" style={{ color: BRAND }} />
-            <div>
-              <p className="text-sm font-semibold text-neutral-900">So funktioniert das Einlösen</p>
-              <p className="text-xs text-neutral-600 mt-1 leading-relaxed">
-                Tippe vor deinem nächsten Check-in auf eine Prämie, um sie zu aktivieren.
-                Beim Check-in wird sie automatisch eingelöst. Pro Tag nur ein Check-in pro Geschäft.
-              </p>
+      {/* Fake BottomNav (rein dekorativ, exakt wie in der App) */}
+      <div className="absolute bottom-0 left-0 right-0 bg-white border-t border-neutral-200 pointer-events-none">
+        <div className="flex items-center justify-around h-12 px-2 relative">
+          <div className="flex flex-col items-center justify-center flex-1 text-neutral-400">
+            <Home className="h-4 w-4" />
+          </div>
+          <div className="flex flex-col items-center justify-center flex-1 text-neutral-400">
+            <Search className="h-4 w-4" />
+          </div>
+          {/* Scan-Button (mittig, hochgehoben) */}
+          <div className="flex flex-col items-center justify-center -mt-7">
+            <div
+              className="relative flex items-center justify-center rounded-full shadow-lg text-white"
+              style={{
+                height: '44px',
+                width: '44px',
+                background: BRAND
+                  ? `linear-gradient(135deg, ${BRAND}, ${BRAND}cc)`
+                  : 'linear-gradient(135deg, hsl(var(--primary)), hsl(var(--secondary)))',
+              }}
+              aria-label="Scannen"
+            >
+              <Nfc className="h-6 w-6" strokeWidth={2.2} />
             </div>
           </div>
-        </Card>
-      </div>
-
-      {/* Freunde einladen */}
-      <div className="px-4 mt-4 pb-6">
-        <Card
-          className="p-5 border-0 text-white shadow-lg"
-          style={{ background: `linear-gradient(135deg, ${BRAND}, ${BRAND}cc)` }}
-        >
-          <div className="flex items-center gap-3 mb-3">
-            <div className="w-11 h-11 rounded-2xl bg-white/20 flex items-center justify-center">
-              <UserPlus className="w-5 h-5" />
-            </div>
-            <div>
-              <h3 className="font-bold text-base">Freunde einladen</h3>
-              <p className="text-xs text-white/85">
-                Erfolgreiche Empfehlung = +1 Boost auf deinem Treuepass
-              </p>
-            </div>
+          <div className="flex flex-col items-center justify-center flex-1 text-neutral-400">
+            <MessageSquare className="h-4 w-4" />
           </div>
-          <Button className="w-full bg-white hover:bg-white/90 pointer-events-none" style={{ color: BRAND }}>
-            Einladungslink teilen
-          </Button>
-        </Card>
+          <div className="flex flex-col items-center justify-center flex-1 text-neutral-400">
+            <Settings className="h-4 w-4" />
+          </div>
+        </div>
       </div>
     </div>
   );
