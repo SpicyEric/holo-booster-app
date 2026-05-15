@@ -345,7 +345,7 @@ const SalesReps = () => {
     }
   };
 
-
+  const filtered = useMemo(() => {
     if (!searchTerm) return reps;
     const t = searchTerm.toLowerCase();
     return reps.filter(r =>
