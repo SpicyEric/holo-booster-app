@@ -13,6 +13,7 @@ import { Check, Gift, Package, CreditCard, Loader2, X, MapPin, Minus, Plus } fro
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { INDUSTRIES } from "@/pages/wizard/wizardLogic";
+import { AboShowcase } from "./AboShowcase";
 
 // Pricing
 const PRICING = {
@@ -251,8 +252,9 @@ export default function CheckoutForm({ backPath, backLabel, partnerUserId, prefi
               </div>
             </div>
           </CardHeader>
-          <CardContent className="pt-0">
-            <div className="flex items-baseline gap-2 mb-3">
+          <CardContent className="pt-0 space-y-4">
+            <AboShowcase />
+            <div className="flex items-baseline gap-2">
               {isYearlyBilling ? (
                 <>
                   <span className="text-2xl font-bold">{(totals.aboBase / 11).toFixed(2)}€</span>
@@ -270,9 +272,23 @@ export default function CheckoutForm({ backPath, backLabel, partnerUserId, prefi
                 1× {PRICING.abo.firstMonthly.toFixed(2)}€ + {additionalLocations}× {PRICING.abo.additionalMonthly.toFixed(2)}€/Monat
               </p>
             )}
-            <ul className="space-y-1">
-              {["Digitale Punktekarte", "Dashboard-Zugang", "Kundenverwaltung", "Google Bewertungen"].map((f, i) => (
-                <li key={i} className="flex items-center gap-2 text-xs"><Check className="h-3 w-3 text-primary" />{f}</li>
+            <ul className="space-y-1.5">
+              {[
+                { t: "NFC-Kartenhalter", d: "Kompakter Aufsteller fürs Tresen inkl. NFC-Karte" },
+                { t: "2× A5-Aufsteller", d: "Blanko-Design, sofort einsetzbar" },
+                { t: "1 Designwunsch pro Monat", d: "Individuell angepasstes Aufsteller-Design mit deinem Logo, in deinem Style, auf dein Geschäft zugeschnitten" },
+                { t: "Geburtstagsbelohnungen", d: "Vollautomatisch für deine Kunden – ohne dass du etwas machen musst" },
+                { t: "Treue-Meilensteine", d: "Automatische Prämien bei Check-in-Schwellwerten" },
+                { t: "Neukunden-Empfehlungen", d: "Kunden werben Kunden – beide werden automatisch belohnt" },
+                { t: "Push-Benachrichtigungen", d: "Direkt aufs Handy deiner Stammkunden" },
+                { t: "Merchant Dashboard", d: "Kundenaktivität und Statistiken im Blick" },
+                { t: "Digitaler Treuepass", d: "Kontaktlos per NFC – für iOS und Android" },
+                { t: "Google Bewertungen", d: "Mehr echte Bewertungen automatisch sammeln" },
+              ].map((f, i) => (
+                <li key={i} className="flex items-start gap-2 text-xs">
+                  <Check className="h-3.5 w-3.5 text-primary mt-0.5 shrink-0" />
+                  <span><span className="font-semibold">{f.t}</span> – <span className="text-muted-foreground">{f.d}</span></span>
+                </li>
               ))}
             </ul>
           </CardContent>
