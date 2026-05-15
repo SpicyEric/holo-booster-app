@@ -2278,6 +2278,7 @@ export type Database = {
           last_name: string | null
           login_count: number
           migration_prompt_dismissed: boolean
+          phone_changed_at: string | null
           stripe_customer_id: string | null
           updated_at: string
           user_id: string
@@ -2297,6 +2298,7 @@ export type Database = {
           last_name?: string | null
           login_count?: number
           migration_prompt_dismissed?: boolean
+          phone_changed_at?: string | null
           stripe_customer_id?: string | null
           updated_at?: string
           user_id: string
@@ -2316,6 +2318,7 @@ export type Database = {
           last_name?: string | null
           login_count?: number
           migration_prompt_dismissed?: boolean
+          phone_changed_at?: string | null
           stripe_customer_id?: string | null
           updated_at?: string
           user_id?: string
