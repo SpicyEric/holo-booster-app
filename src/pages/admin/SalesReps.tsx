@@ -12,7 +12,7 @@ import {
 import {
   Search, Users, Phone, MapPin, Calendar, Hash, Shield, Building2,
   CreditCard, FileText, TrendingUp, Star, Loader2, ChevronRight, Trash2, Mail,
-  CheckCircle, Download, Eye, Clock,
+  CheckCircle, Download, Eye, Clock, KeyRound,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -100,6 +100,9 @@ const SalesReps = () => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deleteConfirmText, setDeleteConfirmText] = useState("");
   const [activateDialogOpen, setActivateDialogOpen] = useState(false);
+  const [pwDialogOpen, setPwDialogOpen] = useState(false);
+  const [pwValue, setPwValue] = useState("");
+  const [pwSaving, setPwSaving] = useState(false);
   const [contractUploads, setContractUploads] = useState<ContractUpload[]>([]);
   const [loadingContracts, setLoadingContracts] = useState(false);
   const [confirmingContractId, setConfirmingContractId] = useState<string | null>(null);
@@ -322,6 +325,26 @@ const SalesReps = () => {
     } catch (e: any) { toast.error("Fehler beim Löschen: " + e.message); }
   };
 
+  const setPasswordForRep = async () => {
+    if (!selected) return;
+    if (pwValue.length < 8) { toast.error("Passwort muss mindestens 8 Zeichen haben"); return; }
+    setPwSaving(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("sendPasswordReset", {
+        body: { email: selected.email, set_password: pwValue },
+      });
+      if (error) throw error;
+      if ((data as any)?.error) throw new Error((data as any).error);
+      toast.success("Passwort gesetzt – kann jetzt weitergegeben werden");
+      setPwDialogOpen(false);
+      setPwValue("");
+    } catch (e: any) {
+      toast.error("Fehler: " + (e.message || e));
+    } finally {
+      setPwSaving(false);
+    }
+  };
+
   const filtered = useMemo(() => {
     if (!searchTerm) return reps;
     const t = searchTerm.toLowerCase();
@@ -475,6 +498,9 @@ const SalesReps = () => {
                 <Badge variant={getStatusLabel(selected).variant} className="text-sm">
                   {getStatusLabel(selected).label}
                 </Badge>
+                <Button size="sm" variant="outline" className="h-8 text-xs" onClick={() => { setPwValue(""); setPwDialogOpen(true); }}>
+                  <KeyRound className="w-3 h-3 mr-1" /> Passwort setzen
+                </Button>
                 <Button size="sm" variant="destructive" className="h-8 text-xs" onClick={() => { setDeleteConfirmText(""); setDeleteDialogOpen(true); }}>
                   <Trash2 className="w-3 h-3 mr-1" /> Löschen
                 </Button>
@@ -798,6 +824,27 @@ const SalesReps = () => {
         <AlertDialogFooter>
           <AlertDialogCancel>Abbrechen</AlertDialogCancel>
           <AlertDialogAction onClick={activateAccount}>Aktivieren</AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+    {/* Set Password Dialog */}
+    <AlertDialog open={pwDialogOpen} onOpenChange={setPwDialogOpen}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Passwort für {selected?.full_name} setzen</AlertDialogTitle>
+          <AlertDialogDescription>
+            Setze ein neues Passwort für <strong>{selected?.email}</strong>. Du kannst es dem Vertriebler direkt mitteilen — er kann es später jederzeit selbst ändern.
+            <div className="mt-3">
+              <Label className="text-xs">Neues Passwort (min. 8 Zeichen)</Label>
+              <Input type="text" autoFocus value={pwValue} onChange={e => setPwValue(e.target.value)} className="mt-1 font-mono" placeholder="z.B. eloyo2026!" />
+            </div>
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel disabled={pwSaving}>Abbrechen</AlertDialogCancel>
+          <AlertDialogAction onClick={(e) => { e.preventDefault(); setPasswordForRep(); }} disabled={pwSaving}>
+            {pwSaving ? "Speichere..." : "Passwort setzen"}
+          </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
