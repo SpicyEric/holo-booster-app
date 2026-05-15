@@ -57,14 +57,17 @@ export type Database = {
           body: string
           bonus_points: number | null
           bonus_points_claimed_at: string | null
+          cta_label: string | null
+          cta_route: string | null
           id: string
           image_url: string | null
-          merchant_customer_id: string
+          merchant_customer_id: string | null
           offer_id: string | null
           offer_redeemed_at: string | null
           read_at: string | null
           sent_at: string | null
           show_in_storefront: boolean | null
+          system_type: string | null
           title: string
           user_id: string
         }
@@ -72,14 +75,17 @@ export type Database = {
           body: string
           bonus_points?: number | null
           bonus_points_claimed_at?: string | null
+          cta_label?: string | null
+          cta_route?: string | null
           id?: string
           image_url?: string | null
-          merchant_customer_id: string
+          merchant_customer_id?: string | null
           offer_id?: string | null
           offer_redeemed_at?: string | null
           read_at?: string | null
           sent_at?: string | null
           show_in_storefront?: boolean | null
+          system_type?: string | null
           title: string
           user_id: string
         }
@@ -87,14 +93,17 @@ export type Database = {
           body?: string
           bonus_points?: number | null
           bonus_points_claimed_at?: string | null
+          cta_label?: string | null
+          cta_route?: string | null
           id?: string
           image_url?: string | null
-          merchant_customer_id?: string
+          merchant_customer_id?: string | null
           offer_id?: string | null
           offer_redeemed_at?: string | null
           read_at?: string | null
           sent_at?: string | null
           show_in_storefront?: boolean | null
+          system_type?: string | null
           title?: string
           user_id?: string
         }
@@ -2272,6 +2281,7 @@ export type Database = {
           stripe_customer_id: string | null
           updated_at: string
           user_id: string
+          welcome_messages_sent: boolean
         }
         Insert: {
           auth_method?: string
@@ -2290,6 +2300,7 @@ export type Database = {
           stripe_customer_id?: string | null
           updated_at?: string
           user_id: string
+          welcome_messages_sent?: boolean
         }
         Update: {
           auth_method?: string
@@ -2308,6 +2319,7 @@ export type Database = {
           stripe_customer_id?: string | null
           updated_at?: string
           user_id?: string
+          welcome_messages_sent?: boolean
         }
         Relationships: []
       }
@@ -3664,6 +3676,7 @@ export type Database = {
               stamp_color: string
             }[]
           }
+      send_welcome_messages_if_needed: { Args: never; Returns: Json }
       verify_email_token: { Args: { p_token: string }; Returns: Json }
     }
     Enums: {

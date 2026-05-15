@@ -4,7 +4,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
 import {
   AlertDialog,
@@ -53,9 +52,6 @@ export default function AppSettings() {
   const [showPasswords, setShowPasswords] = useState(false);
 
   // Email change state
-  const [editingEmail, setEditingEmail] = useState(false);
-  const [newEmail, setNewEmail] = useState('');
-  const [savingEmail, setSavingEmail] = useState(false);
 
   // Phone change state
   const [phoneDialogOpen, setPhoneDialogOpen] = useState(false);
@@ -65,7 +61,7 @@ export default function AppSettings() {
   const [phoneWorking, setPhoneWorking] = useState(false);
 
   const [birthDate, setBirthDate] = useState('');
-  const [gender, setGender] = useState('');
+  const [birthDateLocked, setBirthDateLocked] = useState(false);
 
   const userPhone = (user as any)?.phone as string | undefined;
   const userEmail = user?.email;
@@ -76,13 +72,14 @@ export default function AppSettings() {
       try {
         const { data: profileData } = await supabase
           .from('profiles')
-          .select('birth_date, gender, auth_method')
+          .select('birth_date, auth_method')
           .eq('user_id', user.id)
           .maybeSingle();
 
         if (profileData) {
-          setBirthDate(profileData.birth_date || '');
-          setGender(profileData.gender || '');
+          const bd = profileData.birth_date || '';
+          setBirthDate(bd);
+          setBirthDateLocked(!!bd);
           if (profileData.auth_method) setAuthMethod(profileData.auth_method as any);
         }
       } catch (error) {
@@ -112,12 +109,23 @@ export default function AppSettings() {
     if (!user) return;
     setSaving(true);
     try {
+      // Birth date is one-time only
+      const payload: any = {};
+      if (!birthDateLocked && birthDate) payload.birth_date = birthDate;
+
+      if (Object.keys(payload).length === 0) {
+        toast.info('Keine Änderungen');
+        return;
+      }
+
       const { error } = await supabase
         .from('profiles')
-        .update({ birth_date: birthDate || null, gender: gender || null })
+        .update(payload)
         .eq('user_id', user.id);
       if (error) throw error;
-      toast.success('Änderungen gespeichert');
+
+      if (payload.birth_date) setBirthDateLocked(true);
+      toast.success('Geburtsdatum gespeichert. Es kann nicht mehr geändert werden.');
     } catch (error: any) {
       toast.error(`Fehler: ${error.message}`);
     } finally {
@@ -244,25 +252,18 @@ export default function AppSettings() {
                 value={birthDate}
                 onChange={(e) => setBirthDate(e.target.value)}
                 max={new Date().toISOString().split('T')[0]}
+                disabled={birthDateLocked}
               />
-              <p className="text-xs text-muted-foreground">
-                Bekomme einen Bonus-Check-in an deinem Geburtstag 🎂
-              </p>
-              {birthDate && (
-                <p className="text-xs text-muted-foreground">Aktuell: {formatBirthDate(birthDate)}</p>
+              {birthDateLocked ? (
+                <p className="text-xs text-muted-foreground">
+                  Festgelegt: {formatBirthDate(birthDate)}. Das Geburtsdatum kann nicht mehr geändert werden.
+                </p>
+              ) : (
+                <p className="text-xs text-muted-foreground">
+                  An deinem Geburtstag bekommst du auf jedem Treuepass einen Check-in geschenkt 🎂.
+                  Du kannst dein Geburtsdatum nur einmal festlegen – bitte sorgfältig eingeben.
+                </p>
               )}
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="gender">Geschlecht</Label>
-              <Select value={gender} onValueChange={setGender}>
-                <SelectTrigger><SelectValue placeholder="Geschlecht auswählen" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="male">Männlich</SelectItem>
-                  <SelectItem value="female">Weiblich</SelectItem>
-                  <SelectItem value="unspecified">Möchte ich nicht angeben</SelectItem>
-                </SelectContent>
-              </Select>
             </div>
           </CardContent>
         </Card>
@@ -281,7 +282,7 @@ export default function AppSettings() {
               {userPhone ? (
                 <div className="flex items-center gap-2">
                   <div className="p-3 rounded-md bg-muted text-muted-foreground flex-1">{userPhone}</div>
-                  <Button variant="ghost" size="icon" onClick={openPhoneDialog}>
+                  <Button variant="ghost" size="icon" onClick={openPhoneDialog} aria-label="Handynummer ändern">
                     <Pencil className="h-4 w-4" />
                   </Button>
                 </div>
@@ -289,55 +290,6 @@ export default function AppSettings() {
                 <Button variant="outline" className="w-full" onClick={openPhoneDialog}>
                   <Smartphone className="h-4 w-4 mr-2" />
                   Handynummer hinzufügen
-                </Button>
-              )}
-            </div>
-
-            {/* Email */}
-            <div className="space-y-2">
-              <Label>E-Mail</Label>
-              {editingEmail ? (
-                <div className="space-y-2">
-                  <Input type="email" value={newEmail} onChange={(e) => setNewEmail(e.target.value)} placeholder="Neue E-Mail-Adresse" />
-                  <p className="text-xs text-muted-foreground">
-                    Du erhältst eine Bestätigungsmail an die neue Adresse.
-                  </p>
-                  <div className="flex gap-2">
-                    <Button
-                      size="sm"
-                      disabled={savingEmail || !newEmail || newEmail === userEmail}
-                      onClick={async () => {
-                        setSavingEmail(true);
-                        try {
-                          const { error } = await supabase.auth.updateUser({ email: newEmail });
-                          if (error) throw error;
-                          toast.success('Bestätigungsmail gesendet');
-                          setEditingEmail(false);
-                          setNewEmail('');
-                          await supabase.rpc('refresh_auth_method');
-                        } catch (error: any) {
-                          toast.error(error.message || 'Fehler');
-                        } finally {
-                          setSavingEmail(false);
-                        }
-                      }}
-                    >
-                      {savingEmail && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                      Speichern
-                    </Button>
-                    <Button size="sm" variant="outline" onClick={() => { setEditingEmail(false); setNewEmail(''); }}>Abbrechen</Button>
-                  </div>
-                </div>
-              ) : userEmail ? (
-                <div className="flex items-center gap-2">
-                  <div className="p-3 rounded-md bg-muted text-muted-foreground flex-1">{userEmail}</div>
-                  <Button variant="ghost" size="icon" onClick={() => { setEditingEmail(true); setNewEmail(userEmail); }}>
-                    <Pencil className="h-4 w-4" />
-                  </Button>
-                </div>
-              ) : (
-                <Button variant="outline" className="w-full" onClick={() => { setEditingEmail(true); setNewEmail(''); }}>
-                  E-Mail hinzufügen
                 </Button>
               )}
             </div>

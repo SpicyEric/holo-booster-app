@@ -27,12 +27,15 @@ interface MessageDetail {
   offer_id: string | null;
   offer_redeemed_at: string | null;
   image_url: string | null;
-  merchant_customer_id: string;
+  merchant_customer_id: string | null;
+  system_type: string | null;
+  cta_label: string | null;
+  cta_route: string | null;
   customer?: {
     name: string;
     company_name: string | null;
     logo_url: string | null;
-  };
+  } | null;
   offer?: {
     id: string;
     title: string;
@@ -72,6 +75,7 @@ const AppMessageDetail = () => {
         .from('app_messages')
         .select(`
           id, title, body, sent_at, read_at, offer_id, offer_redeemed_at, image_url, merchant_customer_id,
+          system_type, cta_label, cta_route,
           customers!merchant_customer_id (name, company_name, logo_url, active)
         `)
         .eq('id', id!)
@@ -83,18 +87,20 @@ const AppMessageDetail = () => {
         return;
       }
 
-      // Block access to messages from inactive (cancelled) merchants
       const merchantData = Array.isArray((msgData as any).customers)
         ? (msgData as any).customers[0]
         : (msgData as any).customers;
-      if (merchantData?.active !== true) {
+
+      // Block access to messages from inactive (cancelled) merchants
+      // (system messages without merchant are always allowed)
+      if ((msgData as any).merchant_customer_id && merchantData?.active !== true) {
         setLoading(false);
         return;
       }
 
       const msg: any = {
         ...msgData,
-        customer: Array.isArray((msgData as any).customers) ? (msgData as any).customers[0] : (msgData as any).customers,
+        customer: merchantData ?? null,
         offer: null,
       };
 
@@ -320,11 +326,15 @@ const AppMessageDetail = () => {
         <Button variant="ghost" size="sm" onClick={() => navigate(-1)} className="p-1">
           <ArrowLeft className="h-5 w-5" />
         </Button>
-        {message.customer?.logo_url ? (
+        {message.system_type ? (
+          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
+            <Sparkles className="h-4 w-4 text-white" />
+          </div>
+        ) : message.customer?.logo_url ? (
           <img src={message.customer.logo_url} alt="" className="w-8 h-8 rounded-full object-cover" />
         ) : null}
         <span className="font-semibold text-foreground truncate">
-          {message.customer?.company_name || message.customer?.name || 'Nachricht'}
+          {message.system_type ? 'Eloyo' : (message.customer?.company_name || message.customer?.name || 'Nachricht')}
         </span>
       </div>
 
@@ -342,6 +352,14 @@ const AppMessageDetail = () => {
             <p className="text-xs text-muted-foreground mt-4">
               {format(new Date(message.sent_at), "dd. MMMM yyyy 'um' HH:mm 'Uhr'", { locale: de })}
             </p>
+          )}
+          {message.cta_route && message.cta_label && (
+            <Button
+              onClick={() => navigate(message.cta_route!)}
+              className="w-full mt-5 rounded-xl bg-gradient-to-r from-primary to-secondary"
+            >
+              {message.cta_label}
+            </Button>
           )}
         </Card>
 
