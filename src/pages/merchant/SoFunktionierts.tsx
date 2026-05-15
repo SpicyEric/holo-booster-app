@@ -1,6 +1,6 @@
 import { Card } from "@/components/ui/card";
 import {
-  Sparkles, Smartphone, Gift, Users, MessageSquare, Star, Settings, Zap,
+  Sparkles, Smartphone, Gift, Users, MessageSquare, Star, Zap,
   Palette, Clock, Award,
 } from "lucide-react";
 
