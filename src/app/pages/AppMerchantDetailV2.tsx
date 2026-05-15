@@ -313,7 +313,15 @@ export const AppMerchantDetailV2 = () => {
         .filter((visit) => Number.isFinite(visit));
 
       setCheckIns(realCheckIns);
-      setRedeemedVisits(Array.from(new Set(redeemed)));
+      const uniqRedeemed = Array.from(new Set(redeemed));
+      setRedeemedVisits(uniqRedeemed);
+      // Wenn die in localStorage gespeicherte aktivierte Prämie laut DB
+      // bereits eingelöst wurde, Aktivierung sofort entfernen.
+      const persisted = getActivatedReward(merchantId);
+      if (persisted && uniqRedeemed.includes(persisted.visitNumber)) {
+        clearActivatedReward(merchantId);
+        setActivatedReward(null);
+      }
     })();
     return () => { cancelled = true; };
   }, [isDemoMerchant, merchantId, user?.id]);
@@ -1443,22 +1451,29 @@ export const AppMerchantDetailV2 = () => {
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-            className="fixed inset-0 z-[100] flex flex-col items-center justify-center px-6 text-center text-white overflow-hidden"
-            style={{ background: `linear-gradient(180deg, ${BRAND} 0%, ${BRAND} 60%, ${BRAND}e6 100%)` }}
+            className="fixed inset-0 z-[100] flex flex-col items-center justify-center px-6 text-center text-white overflow-hidden touch-none overscroll-none"
+            style={{
+              background: `linear-gradient(180deg, ${BRAND} 0%, ${BRAND} 60%, ${BRAND}e6 100%)`,
+              touchAction: 'none',
+              overscrollBehavior: 'none',
+            }}
+            onTouchMove={(e) => e.preventDefault()}
           >
             <button
               onClick={() => {
+                // Der Check-in (und ggf. die Willkommensprämie) wurden bereits
+                // beim NFC-Scan in der DB gespeichert. Hier NIEMALS einen
+                // zusätzlichen Check-in lokal erzeugen – wir schließen nur das
+                // Overlay bzw. zeigen den Confirm-Schritt für Prämien.
                 if (checkInOverlay.reward) {
-                  // Mit Prämie: X togglet zum Confirm-Screen
                   setConfirmStage((v) => !v);
                 } else {
-                  // Ohne Prämie: X schließt direkt + löst Check-in aus
                   setCheckInOverlay(null);
                   setConfirmStage(false);
-                  performCheckIn('normal', false, { silent: true });
                 }
               }}
-              className="absolute top-5 right-5 w-10 h-10 rounded-full bg-white/20 flex items-center justify-center backdrop-blur"
+              className="absolute right-5 w-10 h-10 rounded-full bg-white/20 flex items-center justify-center backdrop-blur"
+              style={{ top: 'calc(env(safe-area-inset-top, 0px) + 1.25rem)' }}
               aria-label="Schließen"
             >
               <X className="w-5 h-5" />
@@ -1486,8 +1501,18 @@ export const AppMerchantDetailV2 = () => {
                   <div className="flex flex-col gap-3 w-full">
                     <button
                       onClick={() => {
-                        // Bestätigung: Check-in + automatische Einlösung der Prämie
-                        performCheckIn('normal', false, { autoRedeem: true, silent: true });
+                        // Check-in + Prämie sind bereits in der DB.
+                        // Hier nur lokalen UI-State synchron halten (Aktivierung
+                        // entfernen, Prämie als eingelöst markieren) – KEIN
+                        // zusätzlicher performCheckIn-Aufruf!
+                        const reward = checkInOverlay?.reward;
+                        if (reward) {
+                          setActivatedReward(null);
+                          clearActivatedReward(merchantId);
+                          setRedeemedVisits((prev) =>
+                            prev.includes(reward.visitNumber) ? prev : [...prev, reward.visitNumber],
+                          );
+                        }
                         setCheckInOverlay(null);
                         setConfirmStage(false);
                         toast.success('Prämie eingelöst!');
