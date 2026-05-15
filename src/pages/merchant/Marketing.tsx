@@ -704,7 +704,7 @@ const Marketing = () => {
                   <p className="text-sm text-muted-foreground">Schau dir die Live-Vorschau deines Geschäfts an</p>
                 </div>
                 <Button
-                  onClick={() => navigate('/kunde/mein-geschaeft?tab=karte')}
+                  onClick={() => navigate('/kunde/mein-geschaeft?tab=info')}
                   className="rounded-xl gap-2"
                   size="lg"
                 >
