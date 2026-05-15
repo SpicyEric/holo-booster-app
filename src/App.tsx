@@ -91,6 +91,8 @@ import SalesRepAbrechnungen from "./pages/salesrep/SalesRepAbrechnungen";
 import SalesRepVertrag from "./pages/salesrep/SalesRepVertrag";
 import SalesRepMeinVertrag from "./pages/salesrep/SalesRepMeinVertrag";
 import SalesRepStats from "./pages/salesrep/SalesRepStats";
+import SalesRepInbox from "./pages/salesrep/SalesRepInbox";
+import SalesRepVertragAbrechnung from "./pages/salesrep/SalesRepVertragAbrechnung";
 import AdminVertragsversionen from "./pages/admin/Vertragsversionen";
 import AdminZusatzvereinbarungen from "./pages/admin/Zusatzvereinbarungen";
 import AdminPushLogs from "./pages/admin/PushLogs";
@@ -186,12 +188,14 @@ const App = () => {
                 <Route path="checkout" element={<SalesRepCheckout />} />
                 <Route path="messages" element={<SalesRepMessages />} />
                 <Route path="orders" element={<SalesRepOrders />} />
+                <Route path="inbox" element={<SalesRepInbox />} />
                 <Route path="settings" element={<SalesRepSettings />} />
                 <Route path="academy" element={<Academy />} />
                 <Route path="demo-abschluss" element={<SalesRepDemoAbschluss />} />
                 <Route path="abrechnungen" element={<SalesRepAbrechnungen />} />
                 <Route path="vertrag" element={<SalesRepVertrag />} />
                 <Route path="mein-vertrag" element={<SalesRepMeinVertrag />} />
+                <Route path="vertrag-abrechnung" element={<SalesRepVertragAbrechnung />} />
                 <Route path="map" element={<CustomerMap />} />
               </Route>
 

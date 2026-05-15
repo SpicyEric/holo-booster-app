@@ -122,7 +122,7 @@ function getStageColor(status: string): string {
 
 // ── Main Component ─────────────────────────────────────────────────────────────
 
-function StoreFinderContent({ apiKey }: { apiKey: string }) {
+function StoreFinderContent({ apiKey, compact = false }: { apiKey: string; compact?: boolean }) {
   const location = useLocation();
   const { user } = useAuth();
   const isSalesRepCtx = location.pathname.startsWith('/vertriebler');
@@ -596,6 +596,76 @@ function StoreFinderContent({ apiKey }: { apiKey: string }) {
     mapRef.current.panTo(searchCenter);
     mapRef.current.setZoom(13);
   }, [searchCenter]);
+
+  if (compact) {
+    return (
+      <Card>
+        <CardContent className="p-4">
+          <label className="text-xs font-medium mb-1.5 block">
+            Neuen Kontakt finden – Geschäft nach Name suchen
+          </label>
+          <div className="relative">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+              <Input
+                placeholder="z.B. Bäckerei Müller München"
+                value={nameQuery}
+                onChange={(e) => setNameQuery(e.target.value)}
+                onFocus={() => nameResults.length > 0 && setNameDropdownOpen(true)}
+                onBlur={() => setTimeout(() => setNameDropdownOpen(false), 200)}
+                className="pl-9 pr-9"
+              />
+              {nameSearching && (
+                <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground animate-spin" />
+              )}
+            </div>
+            {nameDropdownOpen && nameResults.length > 0 && (
+              <div className="absolute z-30 mt-1 w-full bg-popover border rounded-md shadow-lg max-h-80 overflow-y-auto">
+                {nameResults.map((p) => (
+                  <button
+                    type="button"
+                    key={p.place_id}
+                    onMouseDown={(e) => e.preventDefault()}
+                    onClick={async () => { await addStore(p); setNameQuery(''); setNameDropdownOpen(false); }}
+                    className="w-full text-left px-3 py-2 hover:bg-accent transition-colors border-b last:border-b-0 flex items-center gap-3"
+                  >
+                    <div className="h-9 w-9 rounded-md bg-primary/10 flex items-center justify-center shrink-0 overflow-hidden">
+                      {p.photo_reference ? (
+                        <img
+                          src={`https://maps.googleapis.com/maps/api/place/photo?maxwidth=60&photo_reference=${p.photo_reference}&key=${apiKey}`}
+                          alt=""
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <Building2 className="h-4 w-4 text-primary" />
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium truncate">{p.name}</p>
+                      <p className="text-xs text-muted-foreground truncate flex items-center gap-1">
+                        <MapPin className="h-3 w-3 shrink-0" /> {p.address}
+                      </p>
+                    </div>
+                    <div className="shrink-0 flex items-center gap-1 text-xs text-primary font-medium">
+                      <Plus className="h-3.5 w-3.5" /> Hinzufügen
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
+            {nameDropdownOpen && !nameSearching && nameQuery.trim().length >= 2 && nameResults.length === 0 && (
+              <div className="absolute z-30 mt-1 w-full bg-popover border rounded-md shadow-lg p-4 text-center text-sm text-muted-foreground">
+                Keine Geschäfte gefunden
+              </div>
+            )}
+          </div>
+          <p className="text-[11px] text-muted-foreground mt-2">
+            Tippe einen Geschäftsnamen ein und klicke auf einen Treffer, um ihn zu deinen Kontakten hinzuzufügen.
+          </p>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <div className="space-y-4">
@@ -1243,7 +1313,7 @@ function StoreFinderContent({ apiKey }: { apiKey: string }) {
   );
 }
 
-export default function StoreFinder() {
+export default function StoreFinder({ compact = false }: { compact?: boolean } = {}) {
   const { apiKey, loading } = useGoogleMapsApiKey();
 
   if (loading) {
@@ -1265,5 +1335,5 @@ export default function StoreFinder() {
     );
   }
 
-  return <StoreFinderContent apiKey={apiKey} />;
+  return <StoreFinderContent apiKey={apiKey} compact={compact} />;
 }

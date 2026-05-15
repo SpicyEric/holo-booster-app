@@ -33,36 +33,18 @@ const NAV_GROUPS: NavGroup[] = [
     items: [
       { path: "/vertriebler", label: "Dashboard", icon: LayoutDashboard },
       { path: "/vertriebler/provisionen", label: "Provisionen", icon: Euro },
-      { path: "/vertriebler/stats", label: "Statistiken", icon: BarChart3 },
+      { path: "/vertriebler/inbox", label: "Nachrichten & Bestellungen", icon: Mail },
     ],
   },
   {
     label: "SALES",
     alwaysOpen: true,
     items: [
-      { path: "/vertriebler/store-finder", label: "Store Finder", icon: Search },
       { path: "/vertriebler/leads", label: "Kontakte", icon: Users },
       { path: "/vertriebler/lead-pipeline", label: "Pipeline", icon: GitBranch },
       { path: "/vertriebler/calendar", label: "Kalender", icon: CalendarDays },
       { path: "/vertriebler/customers", label: "Meine Kunden", icon: Users },
       { path: "/vertriebler/checkout", label: "Kunde abschließen", icon: ShoppingCart },
-    ],
-  },
-  {
-    label: "KOMMUNIKATION",
-    alwaysOpen: true,
-    items: [
-      { path: "/vertriebler/messages", label: "Nachrichten", icon: Mail },
-      { path: "/vertriebler/orders", label: "Bestellung", icon: Package },
-    ],
-  },
-  {
-    label: "SYSTEM",
-    alwaysOpen: true,
-    items: [
-      { path: "/vertriebler/mein-vertrag", label: "Mein Vertrag", icon: FileText },
-      { path: "/vertriebler/abrechnungen", label: "Meine Abrechnungen", icon: Receipt },
-      { path: "/vertriebler/settings", label: "Einstellungen", icon: Settings },
     ],
   },
   {
@@ -72,6 +54,14 @@ const NAV_GROUPS: NavGroup[] = [
       { path: "/vertriebler/academy", label: "Quick Onboarding", icon: GraduationCap },
       { path: "/vertriebler/demo-abschluss", label: "Demo Abschluss", icon: Sparkles },
       { path: "__demo_merchant__", label: "Demo Merchant", icon: Eye },
+    ],
+  },
+  {
+    label: "SYSTEM",
+    alwaysOpen: true,
+    items: [
+      { path: "/vertriebler/vertrag-abrechnung", label: "Vertrag & Abrechnung", icon: FileText },
+      { path: "/vertriebler/settings", label: "Einstellungen", icon: Settings },
     ],
   },
 ];
