@@ -997,7 +997,7 @@ const Marketing = () => {
 
           {/* ========== NACHRICHTEN TAB ========== */}
            <TabsContent value="messages" className="space-y-6 mt-6">
-            <ExplainerCarousel slides={nachrichtenCards} />
+            
             {/* Push Limit Banner */}
             {!pushLimit.loading && (
               <div className={`p-4 rounded-2xl border ${pushLimit.isLimitReached ? 'bg-destructive/5 border-destructive/20' : 'bg-muted/30 border-border/50'}`}>
