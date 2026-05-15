@@ -326,11 +326,15 @@ const AppMessageDetail = () => {
         <Button variant="ghost" size="sm" onClick={() => navigate(-1)} className="p-1">
           <ArrowLeft className="h-5 w-5" />
         </Button>
-        {message.customer?.logo_url ? (
+        {message.system_type ? (
+          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
+            <Sparkles className="h-4 w-4 text-white" />
+          </div>
+        ) : message.customer?.logo_url ? (
           <img src={message.customer.logo_url} alt="" className="w-8 h-8 rounded-full object-cover" />
         ) : null}
         <span className="font-semibold text-foreground truncate">
-          {message.customer?.company_name || message.customer?.name || 'Nachricht'}
+          {message.system_type ? 'Eloyo' : (message.customer?.company_name || message.customer?.name || 'Nachricht')}
         </span>
       </div>
 
@@ -348,6 +352,14 @@ const AppMessageDetail = () => {
             <p className="text-xs text-muted-foreground mt-4">
               {format(new Date(message.sent_at), "dd. MMMM yyyy 'um' HH:mm 'Uhr'", { locale: de })}
             </p>
+          )}
+          {message.cta_route && message.cta_label && (
+            <Button
+              onClick={() => navigate(message.cta_route!)}
+              className="w-full mt-5 rounded-xl bg-gradient-to-r from-primary to-secondary"
+            >
+              {message.cta_label}
+            </Button>
           )}
         </Card>
 
