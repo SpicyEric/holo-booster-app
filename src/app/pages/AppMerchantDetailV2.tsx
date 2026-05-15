@@ -1366,10 +1366,10 @@ export const AppMerchantDetailV2 = () => {
 
           <div className="space-y-2 pt-1">
             <Button
-              onClick={() => {
-                const link = `https://eloyo.de/r/backstube-koenig?u=demo`;
-                const text = `Hey! Sammle mit mir Punkte bei Backstube König: ${link}`;
-                window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank', 'noopener,noreferrer');
+              onClick={async () => {
+                const payload = await buildReferralPayload();
+                if (!payload) return;
+                window.open(`https://wa.me/?text=${encodeURIComponent(payload.text)}`, '_blank', 'noopener,noreferrer');
               }}
               className="w-full h-11 rounded-xl text-white"
               style={{ background: BRAND }}
@@ -1381,8 +1381,10 @@ export const AppMerchantDetailV2 = () => {
             </Button>
             <Button
               onClick={async () => {
+                const payload = await buildReferralPayload();
+                if (!payload) return;
                 try {
-                  await navigator.clipboard.writeText('https://eloyo.de/r/backstube-koenig?u=demo');
+                  await navigator.clipboard.writeText(payload.link);
                   toast.success('Link kopiert!');
                 } catch {
                   toast.error('Link konnte nicht kopiert werden');
