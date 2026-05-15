@@ -91,6 +91,8 @@ export const AppAuth = () => {
     await supabase.from('profiles').upsert({ user_id: userId }, { onConflict: 'user_id' });
     await supabase.rpc('increment_login_count');
     await supabase.rpc('refresh_auth_method');
+    // Deliver welcome messages on first login (no-op if already sent)
+    try { await supabase.rpc('send_welcome_messages_if_needed'); } catch (e) { console.warn('welcome msgs', e); }
     return true;
   };
 

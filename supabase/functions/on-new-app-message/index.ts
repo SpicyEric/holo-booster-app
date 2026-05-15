@@ -27,23 +27,25 @@ Deno.serve(async (req) => {
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Get merchant name + active status
-    const { data: merchant } = await supabase
-      .from("customers")
-      .select("name, company_name, active")
-      .eq("id", record.merchant_customer_id)
-      .single();
+    let merchantName = "Eloyo";
 
-    // Block push for inactive (cancelled) merchants
-    if (!merchant || merchant.active !== true) {
-      console.log("[on-new-app-message] Skipping push — merchant inactive:", record.merchant_customer_id);
-      return new Response(
-        JSON.stringify({ success: true, skipped: "merchant_inactive" }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+    // System messages (no merchant) → push as Eloyo
+    if (record.merchant_customer_id) {
+      const { data: merchant } = await supabase
+        .from("customers")
+        .select("name, company_name, active")
+        .eq("id", record.merchant_customer_id)
+        .single();
+
+      if (!merchant || merchant.active !== true) {
+        console.log("[on-new-app-message] Skipping push — merchant inactive:", record.merchant_customer_id);
+        return new Response(
+          JSON.stringify({ success: true, skipped: "merchant_inactive" }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      merchantName = merchant?.company_name || merchant?.name || "Ein Geschäft";
     }
-
-    const merchantName = merchant?.company_name || merchant?.name || "Ein Geschäft";
 
     // Call the send-push-notification function
     const pushResponse = await fetch(
