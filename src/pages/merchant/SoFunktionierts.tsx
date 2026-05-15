@@ -51,7 +51,7 @@ export default function SoFunktionierts() {
         <div>
           <h1 className="text-2xl font-bold text-foreground tracking-tight">So funktioniert's</h1>
           <p className="text-muted-foreground mt-1">
-            Eine kurze Übersicht, wie dein Eloyo-System für dich arbeitet.
+            Dein Eloyo-System arbeitet für dich – vollautomatisch, ohne dass du aktiv werden musst.
           </p>
         </div>
 
