@@ -31,6 +31,17 @@ export function MerchantBrandTheme({ children }: { children: ReactNode }) {
       customerId = await resolveMerchantCustomerId(user.id);
     }
     if (!customerId) return;
+    // Demo-Onboarding-Tour: Werte aus localStorage statt aus DB.
+    try {
+      const { DEMO_ONBOARDING_CUSTOMER_ID, isDemoOnboardingTourActive, getDemoOnboardingState } =
+        await import('@/lib/demoOnboardingTour');
+      if (customerId === DEMO_ONBOARDING_CUSTOMER_ID && isDemoOnboardingTourActive()) {
+        const profile = getDemoOnboardingState().profile || {};
+        if (cancelledRef?.current) return;
+        setState({ version: 'v2', color: (profile.brand_color as string) || null });
+        return;
+      }
+    } catch {}
     const { data } = await supabase
       .from('customers')
       .select('version, brand_color')
