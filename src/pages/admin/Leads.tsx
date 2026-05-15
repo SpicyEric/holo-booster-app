@@ -11,6 +11,7 @@ import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { Store, MapPin, User, Phone, Search, ArrowUpDown, Mail, ChevronRight } from 'lucide-react';
+import StoreFinder from './StoreFinder';
 
 interface UnifiedContact {
   id: string;
@@ -208,6 +209,8 @@ export default function Leads() {
         <h1 className="text-xl font-semibold">Kontakte</h1>
         <p className="text-xs text-muted-foreground">{contacts.length} Kontakte insgesamt</p>
       </div>
+
+      {isSalesRepCtx && <StoreFinder compact />}
 
       {/* Filter Bar */}
       <div className="flex flex-wrap items-center gap-3">
