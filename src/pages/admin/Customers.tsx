@@ -450,21 +450,23 @@ const Customers = () => {
                     </div>
                   </div>
                   <div className="flex items-center gap-1 shrink-0">
-                    {customer.latitude && customer.longitude && (
+                    {!isPartner && customer.latitude && customer.longitude && (
                       <Button variant="ghost" size="icon" className="h-7 w-7" title="Auf Karte zeigen"
                         onClick={(e) => { e.stopPropagation(); handleFlyToCustomer(customer); }}>
                         <Navigation className="h-3 w-3" />
                       </Button>
                     )}
-                    <Button
-                      variant={placementCustomer?.id === customer.id ? "default" : "ghost"}
-                      size="icon"
-                      className="h-7 w-7"
-                      title="Auf Karte platzieren"
-                      onClick={(e) => { e.stopPropagation(); handleStartPlacement(customer); }}
-                    >
-                      <MapPinned className="h-3 w-3" />
-                    </Button>
+                    {!isPartner && (
+                      <Button
+                        variant={placementCustomer?.id === customer.id ? "default" : "ghost"}
+                        size="icon"
+                        className="h-7 w-7"
+                        title="Auf Karte platzieren"
+                        onClick={(e) => { e.stopPropagation(); handleStartPlacement(customer); }}
+                      >
+                        <MapPinned className="h-3 w-3" />
+                      </Button>
+                    )}
                     <Button variant="ghost" size="icon" className="h-7 w-7" title="Nachricht senden"
                       onClick={(e) => { e.stopPropagation(); setMessageCustomer(customer); }}>
                       <Send className="h-3 w-3" />
