@@ -10,7 +10,7 @@ import { BottomNav } from '@/app/components/layout/BottomNav';
 import { useAuth } from '@/hooks/useAuth';
 import { useMerchantBrand } from '@/hooks/useMerchantBrand';
 import { setActiveBrandColor } from '@/lib/activeBrandColor';
-import { DEFAULT_DEMO_MERCHANT_CUSTOMER_ID } from '@/lib/demoMerchant';
+import { DEFAULT_DEMO_MERCHANT_CUSTOMER_ID, isDemoMerchantActive } from '@/lib/demoMerchant';
 import {
   getActivatedReward,
   setActivatedReward as persistActivatedReward,
@@ -128,7 +128,7 @@ export const AppMerchantDetailV2 = () => {
   const { user } = useAuth();
   const { id } = useParams<{ id: string }>();
   const merchantId = id || DEFAULT_DEMO_MERCHANT_CUSTOMER_ID;
-  const isDemoMerchant = merchantId === DEFAULT_DEMO_MERCHANT_CUSTOMER_ID;
+  const isDemoMerchant = merchantId === DEFAULT_DEMO_MERCHANT_CUSTOMER_ID && isDemoMerchantActive();
   const brand = useMerchantBrand(merchantId);
   const [coverImageUrl, setCoverImageUrl] = useState<string | null>(null);
   const [passLength, setPassLength] = useState<number>(35);
