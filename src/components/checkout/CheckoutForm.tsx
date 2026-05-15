@@ -106,31 +106,24 @@ export default function CheckoutForm({ backPath, backLabel, partnerUserId, prefi
   const additionalLocations = Math.max(0, locationCount - 1);
 
   const calculateTotal = () => {
-    const baseStartbox = PRICING.startbox.first + additionalLocations * PRICING.startbox.additional;
     const monthlyAbo = PRICING.abo.firstMonthly + additionalLocations * PRICING.abo.additionalMonthly;
     const yearlyAbo = monthlyAbo * 11; // 11 months for each
     const baseAbo = isYearlyBilling ? yearlyAbo : monthlyAbo;
 
-    let startboxDiscount = salesRepDiscount, aboDiscount = 0;
+    let aboDiscount = 0;
     for (const d of validatedDiscounts) {
-      if (d.appliesTo === 'one_time' || d.appliesTo === 'both') {
-        startboxDiscount += d.discountType === 'percentage' ? baseStartbox * (d.discountValue / 100) : d.discountValue;
-      }
-      if (d.appliesTo === 'recurring' || d.appliesTo === 'both') {
-        aboDiscount += d.discountType === 'percentage' ? baseAbo * (d.discountValue / 100) : d.discountValue;
-      }
+      // All discounts apply to the recurring subscription now (no one-time fee).
+      aboDiscount += d.discountType === 'percentage' ? baseAbo * (d.discountValue / 100) : d.discountValue;
     }
 
-    const finalStartbox = Math.max(0, baseStartbox - startboxDiscount);
     const finalAbo = Math.max(0, baseAbo - aboDiscount);
     const savings = isYearlyBilling ? monthlyAbo : 0;
 
     return {
-      startbox: baseStartbox, startboxDiscounted: finalStartbox, startboxDiscount,
       aboBase: baseAbo, aboTotal: finalAbo, aboDiscount,
       monthlyAbo,
-      firstPayment: finalStartbox + finalAbo,
-      savings, totalDiscount: startboxDiscount + aboDiscount,
+      firstPayment: finalAbo,
+      savings, totalDiscount: aboDiscount,
     };
   };
 
