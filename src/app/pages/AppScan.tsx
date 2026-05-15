@@ -492,6 +492,7 @@ export const AppScan = () => {
         ? await (supabase.rpc as any)('award_points_via_nfc_with_reward', {
             p_hardware_uid: hardwareUid,
             p_user_id: currentUserId,
+            p_expected_merchant_customer_id: contextMerchantId,
             p_activated_visit_number: pendingActivatedReward.visitNumber,
             p_activated_reward_label: pendingActivatedReward.label,
           })
@@ -585,7 +586,7 @@ export const AppScan = () => {
         setScanning(false);
       }
     }
-  }, [user, navigate, isOnline]);
+  }, [user, isOnline, contextMerchantId, updatePreparingFlip]);
 
   const handleNfcRead = useCallback((nfcResult: NfcReadResult) => {
     if (nfcResult.success && nfcResult.hardwareUid) {
