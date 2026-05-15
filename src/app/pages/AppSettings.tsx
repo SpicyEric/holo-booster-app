@@ -271,9 +271,8 @@ export default function AppSettings() {
                   Festgelegt: {formatBirthDate(birthDate)}. Das Geburtsdatum kann nicht mehr geändert werden.
                 </p>
               ) : (
-                <p className="text-xs text-muted-foreground">
-                  An deinem Geburtstag bekommst du auf jedem Treuepass einen Check-in geschenkt 🎂.
-                  Du kannst dein Geburtsdatum nur einmal festlegen – bitte sorgfältig eingeben.
+                <p className="text-xs text-amber-600 dark:text-amber-400 font-medium">
+                  ⚠️ Achtung: Dein Geburtsdatum kannst du nur einmal festlegen und danach nicht mehr ändern. Bitte sorgfältig eingeben.
                 </p>
               )}
             </div>
