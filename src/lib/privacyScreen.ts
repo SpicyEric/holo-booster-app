@@ -30,14 +30,10 @@ async function loadPlugin(): Promise<any | null> {
 }
 
 export async function enablePrivacyScreen(): Promise<void> {
+  // Vorübergehend deaktiviert: Screenshots auf Android wieder erlauben,
+  // damit der Nutzer Bildschirminhalte teilen kann. Plugin wird nicht aktiviert.
   activeCount += 1;
-  const plugin = await loadPlugin();
-  if (!plugin) return;
-  try {
-    await plugin.enable?.();
-  } catch {
-    /* noop */
-  }
+  return;
 }
 
 export async function disablePrivacyScreen(): Promise<void> {
