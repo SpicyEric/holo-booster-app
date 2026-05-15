@@ -206,9 +206,7 @@ function TabSystem() {
           </ol>
           <p>Kein Tippen, kein Knopf, kein System einloggen. Einfacher als Kartenzahlung.</p>
           <p>
-            <strong className="text-foreground">Wichtig:</strong> Check-ins werden nur vergeben, wenn der Kunde auch etwas bestellt
-            und bezahlt hat. Das Geschäft entscheidet selbst, ob es eine Mindestbestellmenge gibt — das ist seine freie Entscheidung
-            und nicht die des Vertrieblers.
+            <strong className="text-foreground">Wichtig:</strong> Check-ins sollten nur dann vergeben werden, wenn der Kunde auch etwas bestellt und bezahlt hat. Das Geschäft entscheidet hierbei selbst, ob es eine Mindestkaufmenge gibt, also dass der Kunde zum Beispiel mindestens zwei oder drei Euro ausgeben muss, um einen Check-in erhalten zu können. Das ist aber freiwillig und ist dem Laden selbst überlassen, ob er so was einbaut oder nicht. Kann auch nach Umständen empfohlen werden, ist aber situationsabhängig und da muss man als Vertriebler selber einfach bisschen die Erfahrung sammeln, wann was am sinnvollsten ist. Aber was, wie gesagt, die Grundregel ist, die man jedem Geschäft empfehlen muss, ist, dass man keinen Check-in vergeben sollte, ohne dass der Kunde was gekauft oder gezahlt hat.
           </p>
         </Section>
       </Card>
