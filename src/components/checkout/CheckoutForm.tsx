@@ -16,7 +16,6 @@ import { INDUSTRIES } from "@/pages/wizard/wizardLogic";
 
 // Pricing
 const PRICING = {
-  startbox: { first: 149.45, additional: 99.45 },
   abo: {
     firstMonthly: 49.45,
     additionalMonthly: 39.45,
