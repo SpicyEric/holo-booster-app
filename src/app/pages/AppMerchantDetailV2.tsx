@@ -715,17 +715,49 @@ export const AppMerchantDetailV2 = () => {
     toast('Aktivierung entfernt.');
   };
 
+  // Erzeugt einen echten Einladungslink + WhatsApp-Text auf Basis der ersten Prämie.
+  const buildReferralPayload = async (): Promise<{ link: string; text: string } | null> => {
+    try {
+      const { supabase } = await import('@/integrations/supabase/client');
+      const { data, error } = await supabase.rpc('create_invitation', {
+        p_merchant_customer_id: merchantId,
+      });
+      if (error) throw error;
+      const result = data as { success: boolean; share_code?: string; error?: string };
+      if (!result.success || !result.share_code) {
+        toast.error(result.error || 'Einladung konnte nicht erstellt werden');
+        return null;
+      }
+      const link = `https://eloyo.de/i/${result.share_code}`;
+      const firstReward = dbRewards.find((r) => r.visitNumber === 1) || dbRewards[0];
+      const rewardText = (firstReward?.marketingText || '').trim();
+      const rewardEmoji = (firstReward?.marketingEmoji || '').trim() || '🎁';
+      const rewardPart = rewardText
+        ? ` gibt's beim ersten Check-in ${rewardText} ${rewardEmoji}`
+        : ` gibt's coole Belohnungen beim Punkte-Sammeln ${rewardEmoji}`;
+      const text = `Yo, bei ${merchantInfo.name}${rewardPart}. App laden, einchecken, fertig: ${link}`;
+      // Statistik: als verschickt markieren
+      void supabase.rpc('mark_invitation_shared', { p_share_code: result.share_code });
+      return { link, text };
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Unbekannter Fehler';
+      toast.error(msg);
+      return null;
+    }
+  };
+
   const shareReferral = async () => {
-    const link = `https://eloyo.de/r/backstube-koenig?u=demo`;
+    const payload = await buildReferralPayload();
+    if (!payload) return;
     try {
       if (navigator.share) {
         await navigator.share({
-          title: 'Backstube König',
-          text: 'Sammle mit mir Belohnungen bei Backstube König!',
-          url: link,
+          title: merchantInfo.name,
+          text: payload.text,
+          url: payload.link,
         });
       } else {
-        await navigator.clipboard.writeText(link);
+        await navigator.clipboard.writeText(payload.link);
         toast.success('Einladungslink kopiert!');
       }
     } catch { /* user cancelled */ }
