@@ -456,16 +456,6 @@ export default function KundeDashboard() {
                   </div>
                 )}
               </div>
-              {customer && (
-                <div className="shrink-0">
-                  <MerchantBadges
-                    customerId={customer.id}
-                    customerCreatedAt={customer.created_at}
-                    postalCode={customer.postal_code}
-                    birthdayEnabled={customer.birthday_enabled}
-                  />
-                </div>
-              )}
             </div>
           </div>
 
