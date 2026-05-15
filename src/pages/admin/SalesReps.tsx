@@ -12,7 +12,7 @@ import {
 import {
   Search, Users, Phone, MapPin, Calendar, Hash, Shield, Building2,
   CreditCard, FileText, TrendingUp, Star, Loader2, ChevronRight, Trash2, Mail,
-  CheckCircle, Download, Eye, Clock,
+  CheckCircle, Download, Eye, Clock, KeyRound,
 } from "lucide-react";
 import { toast } from "sonner";
 
