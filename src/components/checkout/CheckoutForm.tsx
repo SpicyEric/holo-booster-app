@@ -474,14 +474,6 @@ export default function CheckoutForm({ backPath, backLabel, partnerUserId, prefi
         </CardHeader>
         <CardContent className="space-y-2">
           <div className="flex justify-between py-1.5 border-b text-sm">
-            <span>Startbox ({locationCount} Standort{locationCount > 1 ? 'e' : ''})</span>
-            <span className="font-medium">
-              {totals.startboxDiscount > 0 ? (
-                <><span className="line-through text-muted-foreground mr-2">{totals.startbox.toFixed(2)}€</span><span className="text-green-600">{totals.startboxDiscounted.toFixed(2)}€</span></>
-              ) : `${totals.startbox.toFixed(2)}€`}
-            </span>
-          </div>
-          <div className="flex justify-between py-1.5 border-b text-sm">
             <span>Abo ({isYearlyBilling ? 'Jährlich' : 'Monatlich'}, {locationCount} Standort{locationCount > 1 ? 'e' : ''})</span>
             <span className="font-medium">
               {totals.aboDiscount > 0 ? (
