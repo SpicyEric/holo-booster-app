@@ -1,45 +1,47 @@
 import { Card } from "@/components/ui/card";
 import {
   Sparkles, Smartphone, Gift, Users, MessageSquare, Star, Settings, Zap,
+  Palette, Clock, Award,
 } from "lucide-react";
 
 const STEPS = [
   {
     icon: Smartphone,
-    title: "1. Kunden scannen die NFC-Karte",
-    desc: "Beim Bezahlen halten deine Kunden ihr Smartphone an die NFC-Karte. In der Eloyo-App wird der Check-in automatisch im Treuepass eingetragen.",
+    title: "1. Kunden scannen den Aufsteller",
+    desc: "Der Aufsteller erledigt die Arbeit. Kunden scannen den QR-Code, laden die App und sammeln ihren ersten Check-in – ganz ohne, dass dein Personal eingreifen muss. Ein gutes Design zieht von alleine.",
   },
   {
     icon: Gift,
-    title: "2. Belohnungen auf dem Treuepass",
-    desc: 'Im Bereich "Treuepass" platzierst du per Drag & Drop deine Prämien auf einzelne Check-ins. Sobald ein Kunde diesen Check-in erreicht, kann er die Prämie bei dir einlösen.',
-  },
-  {
-    icon: Users,
-    title: "3. Kunden & Transaktionen im Blick",
-    desc: 'Unter "Kunden & Transaktionen" siehst du alle Stammkunden, ihre Check-ins und welche Prämien sie eingelöst haben.',
-  },
-  {
-    icon: MessageSquare,
-    title: "4. Nachrichten an deine Kunden",
-    desc: 'Mit "Nachrichten" sendest du gezielte Push-Nachrichten an deine Kundschaft – z. B. Aktionen, Einladungen oder Saisonangebote.',
+    title: "2. Erste Prämie beim ersten Check-in",
+    desc: "Die Prämie, die du ganz vorne im Treuepass platzierst, macht den ersten Scan attraktiv. Kunden lösen sie direkt bei dir im Laden ein – das erste Gespräch entsteht von selbst.",
   },
   {
     icon: Star,
-    title: "5. Google-Bewertungen",
-    desc: "Hinterlege deinen Google-Bewertungslink im Profil. Nach einem Check-in werden deine Kunden gefragt, ob sie dich bei Google bewerten möchten.",
+    title: "3. Treuepass bindet Kunden ans Geschäft",
+    desc: "Sobald Kunden drin sind, sehen sie: Da kommen noch mehr Prämien. Das motiviert zum Wiederkommen – und macht aus Neukunden echte Stammkunden über Jahre.",
   },
   {
-    icon: Settings,
-    title: "6. Einstellungen & Karten-ID",
-    desc: "In den Einstellungen verknüpfst du deine Karten-ID, verwaltest dein Abo und siehst alle Rechnungen.",
+    icon: Users,
+    title: "4. Kunden bringen Kunden – mit Boosts",
+    desc: "Kunden können Freunde einladen. Beide bekommen einen Check-in. Wer mehrere einlädt, wird mit Boosts belohnt: 1, 2, 3, 1, 2, 3 – der Anreiz steigt konstant, mehr Menschen ins Geschäft zu schicken.",
+  },
+  {
+    icon: MessageSquare,
+    title: "5. Google-Bewertungen & Nachrichten",
+    desc: "Kunden können für eine Google-Bewertung einen Check-in verdienen – das motiviert tatsächlich. Und sobald du eine Kundenbasis aufgebaut hast, schickst du mit einem Klick Push-Nachrichten direkt aufs Handy deiner Stammkunden.",
+  },
+  {
+    icon: Palette,
+    title: "6. Designs anfordern unter Profil",
+    desc: "Unter „Profil“ kannst du einmal pro Monat ein komplett individuelles Aufsteller-Design bei eloyo anfragen – kostenlos, ohne eloyo-Logo, nur dein Name und dein Branding. Saisonal angepasst, z. B. für Halloween, Weihnachten oder ein neues Produkt.",
   },
 ];
 
 const TIPS = [
-  { icon: Zap, text: "Platziere mehrere kleine Prämien früh im Treuepass – das motiviert zum Wiederkommen." },
-  { icon: Sparkles, text: "Halte dein Profil aktuell (Logo, Titelbild, Öffnungszeiten) – so wirkst du in der App professionell." },
-  { icon: Gift, text: "Eine Neukundenprämie sorgt für den ersten Besuch – richte sie bewusst attraktiv ein." },
+  { icon: Zap, text: "Frühe Prämien setzen – Platziere mehrere kleine Prämien früh im Treuepass. Wer schnell was bekommt, kommt wieder." },
+  { icon: Award, text: "Erste Prämie attraktiv wählen – Was beim ersten Check-in wartet, entscheidet, ob Kunden überhaupt mitmachen. Mach sie unwiderstehlich." },
+  { icon: Clock, text: "Saisonal neue Designs anfragen – Ein Aufsteller mit Halloween-Krapfen oder Weihnachts-Spezial zieht deutlich mehr Scans als ein Blankodesign. Nutze das monatliche Kontingent." },
+  { icon: Sparkles, text: "Profil vollständig ausfüllen – Logo, Titelbild, Öffnungszeiten. So wirkst du in der App professionell und vertrauenswürdig." },
 ];
 
 export default function SoFunktionierts() {
