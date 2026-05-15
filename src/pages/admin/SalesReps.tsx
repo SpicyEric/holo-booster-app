@@ -325,7 +325,27 @@ const SalesReps = () => {
     } catch (e: any) { toast.error("Fehler beim Löschen: " + e.message); }
   };
 
-  const filtered = useMemo(() => {
+  const setPasswordForRep = async () => {
+    if (!selected) return;
+    if (pwValue.length < 8) { toast.error("Passwort muss mindestens 8 Zeichen haben"); return; }
+    setPwSaving(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("sendPasswordReset", {
+        body: { email: selected.email, set_password: pwValue },
+      });
+      if (error) throw error;
+      if ((data as any)?.error) throw new Error((data as any).error);
+      toast.success("Passwort gesetzt – kann jetzt weitergegeben werden");
+      setPwDialogOpen(false);
+      setPwValue("");
+    } catch (e: any) {
+      toast.error("Fehler: " + (e.message || e));
+    } finally {
+      setPwSaving(false);
+    }
+  };
+
+
     if (!searchTerm) return reps;
     const t = searchTerm.toLowerCase();
     return reps.filter(r =>
