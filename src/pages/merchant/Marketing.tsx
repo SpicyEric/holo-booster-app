@@ -655,7 +655,7 @@ const Marketing = () => {
                     <CardDescription>Deine aktuell einlösbaren Prämien</CardDescription>
                   </div>
                 </div>
-                <Button onClick={() => { setEditingReward(null); setRewardForm({ title: '', description: '', points_required: 10, image_url: '' }); setShowRewardDialog(true); }} className="rounded-xl">
+                <Button onClick={() => { setEditingReward(null); setRewardForm({ title: '', description: '', points_required: 10, image_url: '', marketing_text: '', marketing_emoji: '' }); setShowRewardDialog(true); }} className="rounded-xl">
                   <Plus className="h-4 w-4 mr-2" />Neue Prämie
                 </Button>
               </CardHeader>
