@@ -147,18 +147,7 @@ export default function KundeDashboard() {
       try { const { data: subInfo } = await supabase.functions.invoke("get-subscription-info"); if (subInfo) setSubscriptionInfo(subInfo); } catch {}
       if (customerData?.id) {
         const tourActive = isDemoOnboardingTourActive() && customerData.id === DEMO_ONBOARDING_CUSTOMER_ID;
-        // Auto-Redirect zur Onboarding-Seite, wenn noch keine Prämie existiert
-        // (überspringt Demo-Tour und Demo-Merchant)
-        if (!tourActive && customerData.id !== DEMO_MERCHANT_ID) {
-          const { count: rewardCount } = await supabase
-            .from("rewards")
-            .select("id", { count: "exact", head: true })
-            .eq("merchant_customer_id", customerData.id);
-          if ((rewardCount || 0) === 0) {
-            navigate("/kunde/willkommen", { replace: true });
-            return;
-          }
-        }
+        // Onboarding-Auto-Redirect entfernt – Händler landen immer direkt im Dashboard.
         if (tourActive) {
           // Während der Demo-Onboarding-Tour soll alles wie "frisch eingerichtet" aussehen.
           setStats({ totalContacts: 0, totalPointsAwarded: 0, totalRedemptions: 0, invitedCustomers: 0, newContactsThisWeek: 0, birthdayMessagesSent: 0, winbackMessagesSent: 0, topRewardTitle: null, topRewardCount: 0, nfcCards: [], referralBonusPoints: 0 });

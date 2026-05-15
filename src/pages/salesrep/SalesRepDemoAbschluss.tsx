@@ -90,7 +90,7 @@ export default function SalesRepDemoAbschluss() {
       email: (v as any).contactEmail || "demo+barbershop-emre@eloyo.de",
       contact_person: [(v as any).firstName, (v as any).lastName].filter(Boolean).join(" "),
     });
-    navigate("/kunde/willkommen", { replace: true });
+    navigate("/kunde", { replace: true });
   };
 
   return (
