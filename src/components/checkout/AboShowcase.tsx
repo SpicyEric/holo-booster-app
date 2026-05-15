@@ -1,32 +1,41 @@
 import { useEffect, useState } from "react";
 import { Slider } from "@/components/ui/slider";
 import { Button } from "@/components/ui/button";
-import { Copy, ClipboardPaste, Settings2, X } from "lucide-react";
+import { Copy, ClipboardPaste, Settings2, X, ArrowUp, ArrowDown } from "lucide-react";
 import { toast } from "sonner";
 import nfcHalter from "@/assets/abo-nfc-halter.png";
 import aufsteller from "@/assets/abo-aufsteller.png";
 import appShot from "@/assets/abo-app-screenshot.png";
 
+type ImgKey = "nfc" | "aufsteller" | "app";
 type ImgState = { x: number; y: number; size: number };
-type LayoutState = { nfc: ImgState; aufsteller: ImgState; app: ImgState };
+type LayoutState = { nfc: ImgState; aufsteller: ImgState; app: ImgState; order: ImgKey[] };
 
-const STORAGE_KEY = "abo-showcase-layout-v1";
+const STORAGE_KEY = "abo-showcase-layout-v2";
 const DEFAULT_LAYOUT: LayoutState = {
   nfc: { x: 12, y: 50, size: 140 },
   aufsteller: { x: 50, y: 50, size: 160 },
   app: { x: 86, y: 50, size: 150 },
+  order: ["nfc", "aufsteller", "app"],
 };
 
-const IMAGES: { key: keyof LayoutState; src: string; alt: string }[] = [
-  { key: "nfc", src: nfcHalter, alt: "Eloyo NFC-Kartenhalter" },
-  { key: "aufsteller", src: aufsteller, alt: "Eloyo A5-Aufsteller" },
-  { key: "app", src: appShot, alt: "Eloyo App Treuepass" },
-];
+const META: Record<ImgKey, { src: string; alt: string }> = {
+  nfc: { src: nfcHalter, alt: "Eloyo NFC-Kartenhalter" },
+  aufsteller: { src: aufsteller, alt: "Eloyo A5-Aufsteller" },
+  app: { src: appShot, alt: "Eloyo App Treuepass" },
+};
 
 function loadLayout(): LayoutState {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) return { ...DEFAULT_LAYOUT, ...JSON.parse(raw) };
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      return {
+        ...DEFAULT_LAYOUT,
+        ...parsed,
+        order: Array.isArray(parsed.order) && parsed.order.length === 3 ? parsed.order : DEFAULT_LAYOUT.order,
+      };
+    }
   } catch {}
   return DEFAULT_LAYOUT;
 }
@@ -42,25 +51,26 @@ export const AboShowcase = () => {
     } catch {}
   }, [layout]);
 
-  const update = (key: keyof LayoutState, patch: Partial<ImgState>) =>
+  const update = (key: ImgKey, patch: Partial<ImgState>) =>
     setLayout((prev) => ({ ...prev, [key]: { ...prev[key], ...patch } }));
 
-  const copyOne = (key: keyof LayoutState) => {
+  const copyOne = (key: ImgKey) => {
     setClipboard(layout[key]);
     toast.success("Position & Größe kopiert");
   };
 
-  const applyToAll = (key: keyof LayoutState) => {
+  const applyToAll = (key: ImgKey) => {
     const src = layout[key];
-    setLayout({
+    setLayout((prev) => ({
+      ...prev,
       nfc: { ...src },
       aufsteller: { ...src },
       app: { ...src },
-    });
+    }));
     toast.success("Auf alle Bilder übertragen");
   };
 
-  const pasteOne = (key: keyof LayoutState) => {
+  const pasteOne = (key: ImgKey) => {
     if (!clipboard) {
       toast.error("Nichts in der Zwischenablage");
       return;
@@ -68,11 +78,23 @@ export const AboShowcase = () => {
     update(key, clipboard);
   };
 
+  const moveLayer = (key: ImgKey, direction: "up" | "down") => {
+    setLayout((prev) => {
+      const order = [...prev.order];
+      const i = order.indexOf(key);
+      const j = direction === "up" ? i + 1 : i - 1; // höherer Index = weiter vorne
+      if (j < 0 || j >= order.length) return prev;
+      [order[i], order[j]] = [order[j], order[i]];
+      return { ...prev, order };
+    });
+  };
+
   return (
     <div className="space-y-4">
-      <div className="relative w-full h-72 rounded-xl bg-gradient-to-br from-primary/10 via-background to-primary/5 overflow-hidden border border-primary/20">
-        {IMAGES.map(({ key, src, alt }) => {
+      <div className="relative w-full h-72 overflow-hidden">
+        {layout.order.map((key, idx) => {
           const s = layout[key];
+          const { src, alt } = META[key];
           return (
             <img
               key={key}
@@ -88,6 +110,7 @@ export const AboShowcase = () => {
                 objectFit: "contain",
                 pointerEvents: "none",
                 userSelect: "none",
+                zIndex: idx + 1,
               }}
             />
           );
@@ -95,7 +118,7 @@ export const AboShowcase = () => {
         <button
           type="button"
           onClick={() => setEditing((v) => !v)}
-          className="absolute top-2 right-2 z-10 inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-background/80 backdrop-blur text-[11px] font-medium border border-border hover:bg-background"
+          className="absolute top-2 right-2 z-50 inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-background/80 backdrop-blur text-[11px] font-medium border border-border hover:bg-background"
         >
           {editing ? <X className="w-3 h-3" /> : <Settings2 className="w-3 h-3" />}
           {editing ? "Schließen" : "Bilder anpassen"}
@@ -104,13 +127,24 @@ export const AboShowcase = () => {
 
       {editing && (
         <div className="space-y-4 p-4 rounded-lg bg-muted/50 border border-border">
-          {IMAGES.map(({ key, alt }) => {
+          {layout.order.map((key, idx) => {
             const s = layout[key];
+            const { alt } = META[key];
+            const isTop = idx === layout.order.length - 1;
+            const isBottom = idx === 0;
             return (
               <div key={key} className="space-y-2 pb-3 border-b border-border last:border-b-0 last:pb-0">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-semibold">{alt}</span>
-                  <div className="flex gap-1">
+                <div className="flex items-center justify-between flex-wrap gap-2">
+                  <span className="text-xs font-semibold">
+                    {alt} <span className="text-muted-foreground font-normal">(Ebene {idx + 1})</span>
+                  </span>
+                  <div className="flex gap-1 flex-wrap">
+                    <Button type="button" size="sm" variant="outline" className="h-7 px-2 text-[11px]" onClick={() => moveLayer(key, "up")} disabled={isTop} title="Nach vorne">
+                      <ArrowUp className="w-3 h-3" />
+                    </Button>
+                    <Button type="button" size="sm" variant="outline" className="h-7 px-2 text-[11px]" onClick={() => moveLayer(key, "down")} disabled={isBottom} title="Nach hinten">
+                      <ArrowDown className="w-3 h-3" />
+                    </Button>
                     <Button type="button" size="sm" variant="outline" className="h-7 px-2 text-[11px]" onClick={() => copyOne(key)}>
                       <Copy className="w-3 h-3 mr-1" /> Kopieren
                     </Button>
