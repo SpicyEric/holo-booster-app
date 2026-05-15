@@ -1,11 +1,10 @@
 import { useEffect, useState } from 'react';
-import { Home, MessageSquare, Search, Settings, LucideIcon } from 'lucide-react';
+import { Home, MessageSquare, Search, Settings, Nfc, LucideIcon } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
-import nfcIcon from '@/assets/nfc-icon.png';
 import { getActiveBrandColor, setActiveBrandColor, subscribeActiveBrandColor } from '@/lib/activeBrandColor';
 
 interface NavItem {
@@ -241,12 +240,7 @@ export const BottomNav = ({ onNavigate, currentIndex }: BottomNavProps) => {
                 }}
               />
             )}
-            <img
-              src={nfcIcon}
-              alt=""
-              className="relative"
-              style={{ height: 56, width: 56, filter: 'brightness(0) invert(1)' }}
-            />
+            <Nfc className="relative" style={{ height: 36, width: 36 }} strokeWidth={2.2} />
           </button>
         </div>
         <NavButton item={navItems[2]} />

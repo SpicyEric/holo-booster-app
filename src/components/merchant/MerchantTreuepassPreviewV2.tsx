@@ -174,8 +174,14 @@ export const MerchantTreuepassPreviewV2 = ({
 
           <div
             ref={scrollerRef}
-            className="overflow-x-auto overflow-y-hidden no-scrollbar"
+            className="overflow-x-auto overflow-y-hidden no-scrollbar cursor-grab active:cursor-grabbing"
             style={{ WebkitOverflowScrolling: 'touch' }}
+            onWheel={(e) => {
+              const el = e.currentTarget;
+              if (e.deltaY !== 0 && Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
+                el.scrollLeft += e.deltaY;
+              }
+            }}
           >
             <div className="relative" style={{ width: totalWidth, height: SNAKE_HEIGHT + 20 }}>
               <svg width={totalWidth} height={SNAKE_HEIGHT} className="absolute inset-x-0 top-3">
