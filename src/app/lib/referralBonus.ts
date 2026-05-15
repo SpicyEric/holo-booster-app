@@ -9,6 +9,9 @@ interface ReferralBonusResult {
   inviter_user_id?: string;
   invitee_user_id?: string;
   merchant_customer_id?: string;
+  boosts_granted?: number;
+  boosts_pending?: number;
+  referral_index?: number;
 }
 
 // Bug-Fix Bug 2: Client-side Guard. Verhindert, dass parallele Scan-Pfade
