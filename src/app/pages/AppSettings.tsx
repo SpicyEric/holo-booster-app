@@ -193,9 +193,12 @@ export default function AppSettings() {
     setPhoneWorking(true);
     try {
       await verifyPhoneChange(phoneInput, phoneOtp);
-      toast.success('Handynummer hinzugefügt');
+      // Set/refresh 90-day cooldown
+      const now = new Date();
+      await supabase.from('profiles').update({ phone_changed_at: now.toISOString() }).eq('user_id', user!.id);
+      setPhoneChangedAt(now);
+      toast.success('Handynummer bestätigt. Du kannst sie für 90 Tage nicht erneut ändern.');
       setPhoneDialogOpen(false);
-      // Refresh user
       await supabase.auth.refreshSession();
       setAuthMethod(userEmail ? 'both' : 'phone');
     } catch (err: any) {
