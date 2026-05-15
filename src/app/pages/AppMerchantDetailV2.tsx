@@ -132,7 +132,7 @@ export const AppMerchantDetailV2 = () => {
   const brand = useMerchantBrand(merchantId);
   const [coverImageUrl, setCoverImageUrl] = useState<string | null>(null);
   const [passLength, setPassLength] = useState<number>(35);
-  const [dbRewards, setDbRewards] = useState<{ visitNumber: number; label: string; imageUrl: string | null }[]>([]);
+  const [dbRewards, setDbRewards] = useState<{ visitNumber: number; label: string; imageUrl: string | null; marketingText: string | null; marketingEmoji: string | null }[]>([]);
   const [merchantInfo, setMerchantInfo] = useState<MerchantInfo>({
     name: 'Backstube König',
     description: null,
