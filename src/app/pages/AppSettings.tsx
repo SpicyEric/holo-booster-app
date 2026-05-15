@@ -255,25 +255,18 @@ export default function AppSettings() {
                 value={birthDate}
                 onChange={(e) => setBirthDate(e.target.value)}
                 max={new Date().toISOString().split('T')[0]}
+                disabled={birthDateLocked}
               />
-              <p className="text-xs text-muted-foreground">
-                Bekomme einen Bonus-Check-in an deinem Geburtstag 🎂
-              </p>
-              {birthDate && (
-                <p className="text-xs text-muted-foreground">Aktuell: {formatBirthDate(birthDate)}</p>
+              {birthDateLocked ? (
+                <p className="text-xs text-muted-foreground">
+                  Festgelegt: {formatBirthDate(birthDate)}. Das Geburtsdatum kann nicht mehr geändert werden.
+                </p>
+              ) : (
+                <p className="text-xs text-muted-foreground">
+                  An deinem Geburtstag bekommst du auf jedem Treuepass einen Check-in geschenkt 🎂.
+                  Du kannst dein Geburtsdatum nur einmal festlegen – bitte sorgfältig eingeben.
+                </p>
               )}
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="gender">Geschlecht</Label>
-              <Select value={gender} onValueChange={setGender}>
-                <SelectTrigger><SelectValue placeholder="Geschlecht auswählen" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="male">Männlich</SelectItem>
-                  <SelectItem value="female">Weiblich</SelectItem>
-                  <SelectItem value="unspecified">Möchte ich nicht angeben</SelectItem>
-                </SelectContent>
-              </Select>
             </div>
           </CardContent>
         </Card>
@@ -292,7 +285,7 @@ export default function AppSettings() {
               {userPhone ? (
                 <div className="flex items-center gap-2">
                   <div className="p-3 rounded-md bg-muted text-muted-foreground flex-1">{userPhone}</div>
-                  <Button variant="ghost" size="icon" onClick={openPhoneDialog}>
+                  <Button variant="ghost" size="icon" onClick={openPhoneDialog} aria-label="Handynummer ändern">
                     <Pencil className="h-4 w-4" />
                   </Button>
                 </div>
@@ -300,55 +293,6 @@ export default function AppSettings() {
                 <Button variant="outline" className="w-full" onClick={openPhoneDialog}>
                   <Smartphone className="h-4 w-4 mr-2" />
                   Handynummer hinzufügen
-                </Button>
-              )}
-            </div>
-
-            {/* Email */}
-            <div className="space-y-2">
-              <Label>E-Mail</Label>
-              {editingEmail ? (
-                <div className="space-y-2">
-                  <Input type="email" value={newEmail} onChange={(e) => setNewEmail(e.target.value)} placeholder="Neue E-Mail-Adresse" />
-                  <p className="text-xs text-muted-foreground">
-                    Du erhältst eine Bestätigungsmail an die neue Adresse.
-                  </p>
-                  <div className="flex gap-2">
-                    <Button
-                      size="sm"
-                      disabled={savingEmail || !newEmail || newEmail === userEmail}
-                      onClick={async () => {
-                        setSavingEmail(true);
-                        try {
-                          const { error } = await supabase.auth.updateUser({ email: newEmail });
-                          if (error) throw error;
-                          toast.success('Bestätigungsmail gesendet');
-                          setEditingEmail(false);
-                          setNewEmail('');
-                          await supabase.rpc('refresh_auth_method');
-                        } catch (error: any) {
-                          toast.error(error.message || 'Fehler');
-                        } finally {
-                          setSavingEmail(false);
-                        }
-                      }}
-                    >
-                      {savingEmail && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                      Speichern
-                    </Button>
-                    <Button size="sm" variant="outline" onClick={() => { setEditingEmail(false); setNewEmail(''); }}>Abbrechen</Button>
-                  </div>
-                </div>
-              ) : userEmail ? (
-                <div className="flex items-center gap-2">
-                  <div className="p-3 rounded-md bg-muted text-muted-foreground flex-1">{userEmail}</div>
-                  <Button variant="ghost" size="icon" onClick={() => { setEditingEmail(true); setNewEmail(userEmail); }}>
-                    <Pencil className="h-4 w-4" />
-                  </Button>
-                </div>
-              ) : (
-                <Button variant="outline" className="w-full" onClick={() => { setEditingEmail(true); setNewEmail(''); }}>
-                  E-Mail hinzufügen
                 </Button>
               )}
             </div>
