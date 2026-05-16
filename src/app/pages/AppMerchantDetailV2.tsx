@@ -191,6 +191,7 @@ export const AppMerchantDetailV2 = () => {
           visitNumber: p.visit,
           label: reward.title,
           imageUrl: reward.image_url || null,
+          description: reward.description || null,
           marketingText: reward.marketing_text || null,
           marketingEmoji: reward.marketing_emoji || null,
         }];
