@@ -884,7 +884,8 @@ export const AppScan = () => {
               <motion.div key="error-result" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="text-center space-y-3">
                 <h2 className="text-xl font-bold">Fehler</h2>
                 <p className="text-muted-foreground text-sm">{result.error}</p>
-                <Button onClick={() => { setResult(null); }} className="w-full max-w-xs">
+                <Button onClick={() => { setResult(null); startNFCScan(); }} className="w-full max-w-xs">
+                  <Nfc className="h-4 w-4 mr-2" />
                   Erneut versuchen
                 </Button>
               </motion.div>

@@ -304,19 +304,31 @@ export const AppMerchantDetailV2 = () => {
         .from('point_transactions')
         .select('transaction_type, description, created_at')
         .eq('loyalty_account_id', account.id)
-        .in('transaction_type', ['check_in', 'nfc_stamp', 'reward_redeemed'])
+        .in('transaction_type', ['check_in', 'nfc_stamp', 'reward_redeemed', 'google_review_bonus'])
         .order('created_at', { ascending: true });
 
       if (cancelled) return;
+      const hasReviewBonus = (tx || []).some((row) => row.transaction_type === 'google_review_bonus');
       const realCheckIns = (tx || [])
         .filter((row) => row.transaction_type === 'check_in' || row.transaction_type === 'nfc_stamp')
-        .map((row, index) => ({ visit: index + 1, source: 'normal' as CheckInSource, at: row.created_at as string }));
+        .map((row, index) => {
+          const isReview = typeof row.description === 'string' && row.description.includes('Google-Bewertung');
+          return {
+            visit: index + 1,
+            source: (isReview ? 'google_review' : 'normal') as CheckInSource,
+            at: row.created_at as string,
+          };
+        });
       const redeemed = (tx || [])
         .filter((row) => row.transaction_type === 'reward_redeemed')
         .map((row) => Number(String(row.description || '').match(/Visit (\d+)/)?.[1]))
         .filter((visit) => Number.isFinite(visit));
 
       setCheckIns(realCheckIns);
+      if (hasReviewBonus) {
+        try { localStorage.setItem(googleReviewKey, '1'); } catch { /* noop */ }
+        setGoogleReviewDone(true);
+      }
       const uniqRedeemed = Array.from(new Set(redeemed));
       setRedeemedVisits(uniqRedeemed);
       // Wenn die in localStorage gespeicherte aktivierte Prämie laut DB
@@ -792,14 +804,15 @@ export const AppMerchantDetailV2 = () => {
     if (typeof window === 'undefined') return false;
     return localStorage.getItem(googleReviewKey) === '1';
   });
-  // Reset auch das Google-Review-Flag bei Demo-Reset
+  // Reset auch das Google-Review-Flag bei Demo-Reset (nur für Demo-Merchant)
   useEffect(() => {
     if (typeof window === 'undefined') return;
+    if (merchantId !== DEFAULT_DEMO_MERCHANT_CUSTOMER_ID) return;
     if (localStorage.getItem(resetKey) !== DEMO_PASS_RESET_VERSION) {
       try { localStorage.removeItem(googleReviewKey); } catch { /* noop */ }
       setGoogleReviewDone(false);
     }
-  }, [resetKey, googleReviewKey]);
+  }, [resetKey, googleReviewKey, merchantId]);
 
   const formatDateTime = (iso?: string) => {
     if (!iso) return '–';
@@ -831,20 +844,34 @@ export const AppMerchantDetailV2 = () => {
 
   const handleGoogleReviewClick = () => {
     if (googleReviewDone) return;
-    // Echte DB-RPC versuchen (no-op falls unauth/Demo) — danach Google öffnen + Demo-Check-in
     void (async () => {
+      let rpcOk = isDemoMerchant; // Demo bypassed RPC
       try {
         const { supabase } = await import('@/integrations/supabase/client');
-        await supabase.rpc('award_google_review_bonus', { p_merchant_customer_id: merchantId });
+        const { data, error } = await supabase.rpc('award_google_review_bonus', { p_merchant_customer_id: merchantId });
+        if (!error && (data as any)?.success) rpcOk = true;
+        if (!error && (data as any)?.error_code === 'already_redeemed') {
+          // Bereits eingelöst → Flag setzen, kein neuer Check-in
+          try { localStorage.setItem(googleReviewKey, '1'); } catch { /* noop */ }
+          setGoogleReviewDone(true);
+          setGoogleReviewOpen(false);
+          window.open(`https://www.google.com/search?q=${encodeURIComponent('Backstube König Bewertung')}`, '_blank');
+          return;
+        }
       } catch { /* Demo: ignorieren */ }
+
+      if (!rpcOk) {
+        setGoogleReviewOpen(false);
+        return;
+      }
+
+      try { localStorage.setItem(googleReviewKey, '1'); } catch { /* noop */ }
+      setGoogleReviewDone(true);
+      const next = currentVisit + 1;
+      setCheckIns((prev) => [...prev, { visit: next, source: 'google_review', at: new Date().toISOString() }]);
+      setGoogleReviewOpen(false);
+      window.open(`https://www.google.com/search?q=${encodeURIComponent('Backstube König Bewertung')}`, '_blank');
     })();
-    try { localStorage.setItem(googleReviewKey, '1'); } catch { /* noop */ }
-    setGoogleReviewDone(true);
-    // Demo-Check-in als Bewertung anhängen
-    const next = currentVisit + 1;
-    setCheckIns((prev) => [...prev, { visit: next, source: 'google_review', at: new Date().toISOString() }]);
-    setGoogleReviewOpen(false);
-    window.open(`https://www.google.com/search?q=${encodeURIComponent('Backstube König Bewertung')}`, '_blank');
   };
 
 
