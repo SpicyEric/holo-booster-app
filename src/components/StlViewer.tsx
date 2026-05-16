@@ -42,7 +42,7 @@ function StlMesh({ url, color, metalness, roughness, autoRotate, meshRotation, o
   }, [prepared, onFit]);
 
   useFrame((_, delta) => {
-    if (autoRotate && ref.current) ref.current.rotation.y += delta * 0.4;
+    if (autoRotate && ref.current) ref.current.rotation.z += delta * 0.4;
   });
 
   return (
