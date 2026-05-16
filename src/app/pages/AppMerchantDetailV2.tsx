@@ -47,10 +47,11 @@ interface MockReward {
   label: string;
   redeemed: boolean;
   imageUrl?: string | null;
+  description?: string | null;
 }
 
 type RewardPlacementRow = { visit: number; reward_id: string };
-type RewardRow = { id: string; title: string; image_url: string | null; marketing_text: string | null; marketing_emoji: string | null };
+type RewardRow = { id: string; title: string; image_url: string | null; description: string | null; marketing_text: string | null; marketing_emoji: string | null };
 type MerchantV2RouteState = {
   triggerCheckIn?: boolean;
   checkInAlreadyRecorded?: boolean;
