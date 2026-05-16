@@ -54,17 +54,6 @@ function StlMesh({ url, color, metalness, roughness, autoRotate, meshRotation, o
   );
 }
 
-interface DistanceReporterProps {
-  onChange: (distance: number) => void;
-}
-
-function DistanceReporter({ onChange }: DistanceReporterProps) {
-  const { camera } = useThree();
-  useFrame(() => {
-    onChange(camera.position.length());
-  });
-  return null;
-}
 
 interface CameraFitterProps {
   radius: number | null;
