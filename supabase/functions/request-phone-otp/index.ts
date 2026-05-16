@@ -113,7 +113,7 @@ serve(async (req) => {
     }
 
     // Send via seven.io
-    const text = `Dein eloyo Bestätigungscode: ${code}\nGültig 5 Minuten.`;
+    const text = `${code} – Dein Eloyo-Code. Nicht angefordert? Einfach ignorieren.`;
     const sv = await fetch("https://gateway.seven.io/api/sms", {
       method: "POST",
       headers: {
