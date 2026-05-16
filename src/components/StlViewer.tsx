@@ -42,7 +42,7 @@ function StlMesh({ url, color, metalness, roughness, autoRotate, meshRotation, o
   }, [prepared, onFit]);
 
   useFrame((_, delta) => {
-    if (autoRotate && ref.current) ref.current.rotation.y += delta * 0.4;
+    if (autoRotate && ref.current) ref.current.rotation.z += delta * 0.4;
   });
 
   return (
@@ -68,20 +68,20 @@ function DistanceReporter({ onChange }: DistanceReporterProps) {
 
 interface CameraFitterProps {
   radius: number | null;
+  initialDistance?: number;
 }
 
-function CameraFitter({ radius }: CameraFitterProps) {
+function CameraFitter({ radius, initialDistance }: CameraFitterProps) {
   const { camera } = useThree();
   useEffect(() => {
     if (!radius) return;
-    // Fit so the bounding sphere comfortably fills the view
-    const fov = (camera as THREE.PerspectiveCamera).fov * (Math.PI / 180);
-    const distance = (radius / Math.sin(fov / 2)) * 1.1;
+    // Default starts at the user's preferred live HUD zoom value: 65%.
+    const distance = initialDistance ?? (radius * 200) / 65;
     camera.position.set(0, 0, distance);
     camera.near = Math.max(0.1, distance / 100);
     camera.far = distance * 10;
     camera.updateProjectionMatrix();
-  }, [radius, camera]);
+  }, [radius, camera, initialDistance]);
   return null;
 }
 
@@ -91,6 +91,7 @@ export default function StlViewer({
   autoRotate = true,
   metalness = 0.25,
   roughness = 0.35,
+  initialDistance,
   meshRotation = [-Math.PI / 2, 0, 0],
 }: StlViewerProps) {
   const [interacting, setInteracting] = useState(false);
@@ -124,7 +125,7 @@ export default function StlViewer({
           />
           <Environment preset="city" />
         </Suspense>
-        <CameraFitter radius={radius} />
+        <CameraFitter radius={radius} initialDistance={initialDistance} />
         <DistanceReporter onChange={setDistance} />
         <OrbitControls enablePan={false} enableZoom autoRotate={false} makeDefault />
       </Canvas>
