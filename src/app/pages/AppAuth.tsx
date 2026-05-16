@@ -125,7 +125,7 @@ export const AppAuth = () => {
   };
 
   const handleVerifyOtp = async () => {
-    if (otpCode.length !== 6) return;
+    if (otpCode.length !== 4) return;
     setLoading(true);
     try {
       const { user } = await verifyPhoneOtp(phone, otpCode);
