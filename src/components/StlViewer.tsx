@@ -96,20 +96,17 @@ export default function StlViewer({
 }: StlViewerProps) {
   const [interacting, setInteracting] = useState(false);
   const [radius, setRadius] = useState<number | null>(null);
-  const [distance, setDistance] = useState<number>(0);
-
-  const zoomPercent = radius && distance ? Math.round((radius / distance) * 100 * 2) : 0;
 
   return (
     <div className="relative w-full h-full">
       <Canvas
         shadows
         camera={{ position: [0, 0, 120], fov: 40 }}
-        style={{ width: '100%', height: '100%', touchAction: 'none' }}
+        style={{ width: '100%', height: '100%', touchAction: 'none', background: 'transparent' }}
+        gl={{ alpha: true, antialias: true }}
         onPointerDown={() => setInteracting(true)}
         onPointerUp={() => setInteracting(false)}
       >
-        <color attach="background" args={['#f5f3ff']} />
         <ambientLight intensity={0.55} />
         <directionalLight position={[10, 20, 15]} intensity={1.2} castShadow />
         <directionalLight position={[-15, -5, -10]} intensity={0.4} />
@@ -126,15 +123,8 @@ export default function StlViewer({
           <Environment preset="city" />
         </Suspense>
         <CameraFitter radius={radius} initialDistance={initialDistance} />
-        <DistanceReporter onChange={setDistance} />
-        <OrbitControls enablePan={false} enableZoom autoRotate={false} makeDefault />
+        <OrbitControls enablePan={false} enableZoom={false} autoRotate={false} makeDefault />
       </Canvas>
-
-      {/* HUD: live zoom indicator */}
-      <div className="absolute top-3 right-3 px-2.5 py-1.5 rounded-lg bg-black/70 text-white text-[11px] font-mono leading-tight pointer-events-none select-none shadow">
-        <div>Zoom: <span className="font-semibold">{zoomPercent}%</span></div>
-        <div className="opacity-75">Distanz: {distance.toFixed(1)}</div>
-      </div>
     </div>
   );
 }
