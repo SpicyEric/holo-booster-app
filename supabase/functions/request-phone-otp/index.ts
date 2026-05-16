@@ -15,10 +15,10 @@ function normalizePhone(input: string): string {
 const isValidE164 = (p: string) => /^\+[1-9]\d{6,14}$/.test(p);
 
 function generateOtp(): string {
-  // 6-digit, cryptographically random
+  // 4-digit, cryptographically random
   const buf = new Uint32Array(1);
   crypto.getRandomValues(buf);
-  return (buf[0] % 1_000_000).toString().padStart(6, "0");
+  return (buf[0] % 10_000).toString().padStart(4, "0");
 }
 
 async function sha256(input: string): Promise<string> {
