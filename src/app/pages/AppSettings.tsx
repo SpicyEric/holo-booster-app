@@ -189,7 +189,7 @@ export default function AppSettings() {
   };
 
   const handleVerifyPhoneOtp = async () => {
-    if (phoneOtp.length !== 6) return;
+    if (phoneOtp.length !== 4) return;
     setPhoneWorking(true);
     try {
       await verifyPhoneChange(phoneInput, phoneOtp);
@@ -345,7 +345,7 @@ export default function AppSettings() {
             <DialogTitle>{userPhone ? 'Handynummer ändern' : 'Handynummer hinzufügen'}</DialogTitle>
             <DialogDescription>
               {phoneStep === 'enter'
-                ? 'Wir senden dir einen 6-stelligen Code per SMS.'
+                ? 'Wir senden dir einen 4-stelligen Code per SMS.'
                 : `Code an ${phoneInput} gesendet.`}
             </DialogDescription>
           </DialogHeader>
@@ -363,10 +363,14 @@ export default function AppSettings() {
             </div>
           ) : (
             <div className="space-y-3 flex flex-col items-center">
-              <InputOTP maxLength={6} value={phoneOtp} onChange={setPhoneOtp}>
-                <InputOTPGroup>
-                  {[0, 1, 2, 3, 4, 5].map((i) => (
-                    <InputOTPSlot key={i} index={i} className="h-12 w-10 text-lg" />
+              <InputOTP maxLength={4} value={phoneOtp} onChange={setPhoneOtp}>
+                <InputOTPGroup className="gap-2">
+                  {[0, 1, 2, 3].map((i) => (
+                    <InputOTPSlot
+                      key={i}
+                      index={i}
+                      className="h-14 w-12 text-2xl font-semibold rounded-md border-2 border-white/40 bg-white/10 text-white first:rounded-l-md last:rounded-r-md"
+                    />
                   ))}
                 </InputOTPGroup>
               </InputOTP>
@@ -386,7 +390,7 @@ export default function AppSettings() {
                 {phoneWorking && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Code senden
               </Button>
             ) : (
-              <Button onClick={handleVerifyPhoneOtp} disabled={phoneWorking || phoneOtp.length !== 6}>
+              <Button onClick={handleVerifyPhoneOtp} disabled={phoneWorking || phoneOtp.length !== 4}>
                 {phoneWorking && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Bestätigen
               </Button>
             )}

@@ -63,9 +63,9 @@ export const AppAuth = () => {
     return () => clearTimeout(t);
   }, [resendCooldown]);
 
-  // Auto-submit OTP once all 6 digits entered
+  // Auto-submit OTP once all 4 digits entered
   useEffect(() => {
-    if (mode === 'phone' && phoneStep === 'verify' && otpCode.length === 6 && !loading) {
+    if (mode === 'phone' && phoneStep === 'verify' && otpCode.length === 4 && !loading) {
       handleVerifyOtp();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -125,7 +125,7 @@ export const AppAuth = () => {
   };
 
   const handleVerifyOtp = async () => {
-    if (otpCode.length !== 6) return;
+    if (otpCode.length !== 4) return;
     setLoading(true);
     try {
       const { user } = await verifyPhoneOtp(phone, otpCode);
@@ -295,7 +295,7 @@ export const AppAuth = () => {
                     <div>
                       <h2 className="text-2xl font-bold">Handynummer eingeben</h2>
                       <p className="text-sm text-muted-foreground mt-1">
-                        Wir senden dir einen 6-stelligen Code per SMS.
+                        Wir senden dir einen 4-stelligen Code per SMS.
                       </p>
                     </div>
                     <form onSubmit={handleSendOtp} className="space-y-4">
@@ -327,10 +327,14 @@ export const AppAuth = () => {
                       </p>
                     </div>
                     <div className="flex justify-center">
-                      <InputOTP maxLength={6} value={otpCode} onChange={setOtpCode}>
-                        <InputOTPGroup>
-                          {[0, 1, 2, 3, 4, 5].map((i) => (
-                            <InputOTPSlot key={i} index={i} className="h-12 w-10 text-lg" />
+                      <InputOTP maxLength={4} value={otpCode} onChange={setOtpCode}>
+                        <InputOTPGroup className="gap-2">
+                          {[0, 1, 2, 3].map((i) => (
+                            <InputOTPSlot
+                              key={i}
+                              index={i}
+                              className="h-14 w-12 text-2xl font-semibold rounded-md border-2 border-white/40 bg-white/10 text-white first:rounded-l-md last:rounded-r-md"
+                            />
                           ))}
                         </InputOTPGroup>
                       </InputOTP>
@@ -338,7 +342,7 @@ export const AppAuth = () => {
                     <Button
                       onClick={handleVerifyOtp}
                       className="w-full h-12 bg-gradient-to-r from-primary to-secondary"
-                      disabled={loading || otpCode.length !== 6}
+                      disabled={loading || otpCode.length !== 4}
                     >
                       {loading ? 'Wird geprüft…' : 'Bestätigen'}
                     </Button>
