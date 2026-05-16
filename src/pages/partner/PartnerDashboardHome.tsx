@@ -1,6 +1,8 @@
-import { useState, useEffect } from 'react';
+import { lazy, Suspense, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+
+const StlViewer = lazy(() => import('@/components/StlViewer'));
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -309,6 +311,21 @@ export default function PartnerDashboardHome() {
               ))}
             </div>
           )}
+        </CardContent>
+      </Card>
+
+      {/* 3D-Modell: Kartenständer */}
+      <Card className="overflow-hidden">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-base">Kartenständer · 3D-Vorschau</CardTitle>
+          <p className="text-xs text-muted-foreground">Ziehen zum Drehen · Scrollen zum Zoomen</p>
+        </CardHeader>
+        <CardContent className="p-0">
+          <div className="w-full h-[420px] bg-[#f5f3ff]">
+            <Suspense fallback={<div className="w-full h-full flex items-center justify-center text-sm text-muted-foreground">Lädt 3D-Modell…</div>}>
+              <StlViewer url="/models/one_card_stand.stl" color="#7c3aed" autoRotate />
+            </Suspense>
+          </div>
         </CardContent>
       </Card>
     </div>
