@@ -6,8 +6,6 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const VERIFY_SERVICE_SID = "VAe4ceb0ec09ab9f1729db171d70c58f55";
-
 function normalizePhone(input: string): string {
   let d = (input || "").replace(/[^\d+]/g, "");
   if (d.startsWith("+")) return "+" + d.slice(1).replace(/\D/g, "");
@@ -17,6 +15,12 @@ function normalizePhone(input: string): string {
 const isValidE164 = (p: string) => /^\+[1-9]\d{6,14}$/.test(p);
 const syntheticEmail = (phone: string) =>
   `phone${phone.replace(/\D/g, "")}@phone-auth.eloyo.de`;
+
+async function sha256(input: string): Promise<string> {
+  const data = new TextEncoder().encode(input);
+  const hash = await crypto.subtle.digest("SHA-256", data);
+  return Array.from(new Uint8Array(hash)).map((b) => b.toString(16).padStart(2, "0")).join("");
+}
 
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
@@ -39,45 +43,59 @@ serve(async (req) => {
       });
     }
 
-    const ACCOUNT_SID = Deno.env.get("TWILIO_ACCOUNT_SID");
-    const KEY_SID = Deno.env.get("TWILIO_API_KEY_SID");
-    const KEY_SECRET = Deno.env.get("TWILIO_API_KEY_SECRET");
-    if (!ACCOUNT_SID || !KEY_SID || !KEY_SECRET) {
-      return new Response(JSON.stringify({ error: "Twilio nicht konfiguriert" }), {
-        status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-    const basic = btoa(`${KEY_SID}:${KEY_SECRET}`);
-
-    // Twilio Verify – Check
-    const tw = await fetch(
-      `https://verify.twilio.com/v2/Services/${VERIFY_SERVICE_SID}/VerificationCheck`,
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Basic ${basic}`,
-          "Content-Type": "application/x-www-form-urlencoded",
-        },
-        body: new URLSearchParams({ To: phone, Code: code }),
-      }
-    );
-    const twJson = await tw.json();
-    if (!tw.ok || twJson?.status !== "approved") {
-      console.warn("Verify check failed:", twJson);
-      return new Response(
-        JSON.stringify({ error: "Code ist ungültig oder abgelaufen." }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
     const admin = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
       { auth: { autoRefreshToken: false, persistSession: false } }
     );
 
+    // Look up latest unused code for this phone
+    const { data: otpRow, error: otpErr } = await admin
+      .from("phone_otp_codes")
+      .select("id, code_hash, expires_at, used_at, attempts")
+      .eq("phone", phone)
+      .is("used_at", null)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (otpErr || !otpRow) {
+      return new Response(JSON.stringify({ error: "Kein gültiger Code. Bitte neu anfordern." }), {
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    if (new Date(otpRow.expires_at).getTime() < Date.now()) {
+      return new Response(JSON.stringify({ error: "Code ist abgelaufen. Bitte neu anfordern." }), {
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    if ((otpRow.attempts ?? 0) >= 5) {
+      await admin.from("phone_otp_codes")
+        .update({ used_at: new Date().toISOString() })
+        .eq("id", otpRow.id);
+      return new Response(JSON.stringify({ error: "Zu viele Fehlversuche. Bitte neu anfordern." }), {
+        status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const expected = await sha256(`${phone}:${code}`);
+    if (expected !== otpRow.code_hash) {
+      await admin.from("phone_otp_codes")
+        .update({ attempts: (otpRow.attempts ?? 0) + 1 })
+        .eq("id", otpRow.id);
+      return new Response(JSON.stringify({ error: "Code ist ungültig oder abgelaufen." }), {
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Mark code as used
+    await admin.from("phone_otp_codes")
+      .update({ used_at: new Date().toISOString() })
+      .eq("id", otpRow.id);
+
     if (mode === "change") {
-      // Add/replace phone on currently authenticated user
       const authHeader = req.headers.get("Authorization") || "";
       const jwt = authHeader.replace(/^Bearer\s+/i, "");
       if (!jwt) {
@@ -111,13 +129,12 @@ serve(async (req) => {
 
     let link = await admin.auth.admin.generateLink({ type: "magiclink", email });
     if (link.error || !link.data?.properties?.hashed_token) {
-      // user probably doesn't exist yet → create
       const { error: createErr } = await admin.auth.admin.createUser({
         email,
         phone,
         email_confirm: true,
         phone_confirm: true,
-        user_metadata: { auth_method: "phone", created_via: "twilio_verify" },
+        user_metadata: { auth_method: "phone", created_via: "seven_io" },
       });
       if (createErr && !/already/i.test(createErr.message)) {
         console.error("createUser error:", createErr);
