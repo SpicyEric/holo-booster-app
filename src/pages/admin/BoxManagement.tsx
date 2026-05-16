@@ -187,6 +187,7 @@ const BoxManagement = () => {
           assigned_customer_name: customerData?.name || null,
           has_activity: stempelId ? activeStempelIds.has(stempelId) : false,
           customer_status: customerData?.status || null,
+          stamp_preset: stempelId ? (stampPresetMap.get(stempelId) || null) : null,
         };
       });
 
