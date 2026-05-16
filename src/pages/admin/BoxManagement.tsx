@@ -73,6 +73,7 @@ interface BoxRow {
   assigned_customer_name: string | null;
   has_activity: boolean;
   customer_status: string | null;
+  stamp_preset: string | null;
 }
 
 interface RegisteredStamp {
@@ -126,9 +127,10 @@ const BoxManagement = () => {
       // Load boxes (stempel_ids) for cross-reference
       const stempelIds = (eloyoBoxes || []).map(b => b.stempel_id).filter(Boolean);
       const { data: boxesData } = stempelIds.length > 0
-        ? await supabase.from("boxes").select("stamp_id").in("stamp_id", stempelIds)
+        ? await supabase.from("boxes").select("stamp_id, stamp_preset").in("stamp_id", stempelIds)
         : { data: [] };
       const existingStempelIds = new Set((boxesData || []).map(b => b.stamp_id));
+      const stampPresetMap = new Map((boxesData || []).map((b: any) => [b.stamp_id, b.stamp_preset]));
 
       // Load customer_boxes assignments to derive stempel_status
       const { data: assignments } = stempelIds.length > 0
@@ -185,6 +187,7 @@ const BoxManagement = () => {
           assigned_customer_name: customerData?.name || null,
           has_activity: stempelId ? activeStempelIds.has(stempelId) : false,
           customer_status: customerData?.status || null,
+          stamp_preset: stempelId ? (stampPresetMap.get(stempelId) || null) : null,
         };
       });
 
@@ -222,7 +225,7 @@ const BoxManagement = () => {
       if (existingStempel) { toast.error("Karte-ID Kollision – bitte erneut versuchen"); setAdding(false); return; }
 
       // Create in boxes table (stempel_id)
-      const { error: boxesErr } = await supabase.from("boxes").insert({ stamp_id: stempelId, stamp_preset: "standard_3" });
+      const { error: boxesErr } = await supabase.from("boxes").insert({ stamp_id: stempelId, stamp_preset: "verify_only" });
       if (boxesErr) throw boxesErr;
 
       // Create in eloyo_boxes
@@ -761,7 +764,7 @@ const BoxManagement = () => {
             </DialogHeader>
             {loadingStamps ? (
               <div className="flex items-center justify-center py-8"><Loader2 className="h-6 w-6 animate-spin" /></div>
-            ) : stampDialogRow?.box_id === 'PXJJK' ? (
+            ) : (stampDialogRow?.stamp_preset === 'verify_only' || stampDialogRow?.box_id === 'PXJJK') ? (
               <div className="space-y-4">
                 {(() => {
                   const primary = registeredStamps[0];
