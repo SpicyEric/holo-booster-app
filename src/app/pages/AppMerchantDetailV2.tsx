@@ -804,14 +804,15 @@ export const AppMerchantDetailV2 = () => {
     if (typeof window === 'undefined') return false;
     return localStorage.getItem(googleReviewKey) === '1';
   });
-  // Reset auch das Google-Review-Flag bei Demo-Reset
+  // Reset auch das Google-Review-Flag bei Demo-Reset (nur für Demo-Merchant)
   useEffect(() => {
     if (typeof window === 'undefined') return;
+    if (merchantId !== DEFAULT_DEMO_MERCHANT_CUSTOMER_ID) return;
     if (localStorage.getItem(resetKey) !== DEMO_PASS_RESET_VERSION) {
       try { localStorage.removeItem(googleReviewKey); } catch { /* noop */ }
       setGoogleReviewDone(false);
     }
-  }, [resetKey, googleReviewKey]);
+  }, [resetKey, googleReviewKey, merchantId]);
 
   const formatDateTime = (iso?: string) => {
     if (!iso) return '–';
