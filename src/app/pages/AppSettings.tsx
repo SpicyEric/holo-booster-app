@@ -345,7 +345,7 @@ export default function AppSettings() {
             <DialogTitle>{userPhone ? 'Handynummer ändern' : 'Handynummer hinzufügen'}</DialogTitle>
             <DialogDescription>
               {phoneStep === 'enter'
-                ? 'Wir senden dir einen 6-stelligen Code per SMS.'
+                ? 'Wir senden dir einen 4-stelligen Code per SMS.'
                 : `Code an ${phoneInput} gesendet.`}
             </DialogDescription>
           </DialogHeader>
