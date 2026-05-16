@@ -13,7 +13,9 @@ import { setActiveBrandColor } from '@/lib/activeBrandColor';
 import { DEFAULT_DEMO_MERCHANT_CUSTOMER_ID, isDemoMerchantActive } from '@/lib/demoMerchant';
 import {
   getActivatedReward,
+  getActivatedRewardAsync,
   setActivatedReward as persistActivatedReward,
+  setActivatedRewardAsync,
   clearActivatedReward,
 } from '@/lib/activeMerchantReward';
 import { generateVerificationCode } from '@/lib/verificationCode';
@@ -210,10 +212,13 @@ export const AppMerchantDetailV2 = () => {
 
   // Load persisted activated reward on mount
   useEffect(() => {
-    const stored = getActivatedReward(merchantId);
-    if (stored) {
-      setActivatedReward({ ...stored, redeemed: false });
-    }
+    let cancelled = false;
+    getActivatedRewardAsync(merchantId).then((stored) => {
+      if (!cancelled && stored) {
+        setActivatedReward({ ...stored, redeemed: false });
+      }
+    });
+    return () => { cancelled = true; };
   }, [merchantId]);
 
   // Trigger Eincheck-Overlay, wenn von der Scan-Seite mit triggerCheckIn=true navigiert wurde
@@ -678,13 +683,14 @@ export const AppMerchantDetailV2 = () => {
     setTappedReward(reward);
   };
 
-  const activateRewardForNextCheckIn = () => {
+  const activateRewardForNextCheckIn = async () => {
     if (!tappedReward) return;
     setActivatedReward(tappedReward);
-    persistActivatedReward(merchantId, {
+    await setActivatedRewardAsync(merchantId, {
       visitNumber: tappedReward.visitNumber,
       label: tappedReward.label,
     });
+    console.log('[TreuepassV2] Activated reward persisted:', merchantId, tappedReward.visitNumber, tappedReward.label);
     setTappedReward(null);
     return;
   };

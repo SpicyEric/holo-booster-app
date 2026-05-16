@@ -3581,6 +3581,14 @@ export type Database = {
             Returns: Json
           }
         | { Args: { p_hardware_uid: string; p_user_id: string }; Returns: Json }
+      award_points_via_nfc_with_activated_rewards: {
+        Args: {
+          p_activated_rewards?: Json
+          p_hardware_uid: string
+          p_user_id: string
+        }
+        Returns: Json
+      }
       award_points_via_nfc_with_reward:
         | {
             Args: {
