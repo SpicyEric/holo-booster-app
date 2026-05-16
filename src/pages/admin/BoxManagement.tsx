@@ -73,6 +73,7 @@ interface BoxRow {
   assigned_customer_name: string | null;
   has_activity: boolean;
   customer_status: string | null;
+  stamp_preset: string | null;
 }
 
 interface RegisteredStamp {
