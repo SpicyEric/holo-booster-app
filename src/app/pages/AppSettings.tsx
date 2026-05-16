@@ -390,7 +390,7 @@ export default function AppSettings() {
                 {phoneWorking && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Code senden
               </Button>
             ) : (
-              <Button onClick={handleVerifyPhoneOtp} disabled={phoneWorking || phoneOtp.length !== 6}>
+              <Button onClick={handleVerifyPhoneOtp} disabled={phoneWorking || phoneOtp.length !== 4}>
                 {phoneWorking && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Bestätigen
               </Button>
             )}
