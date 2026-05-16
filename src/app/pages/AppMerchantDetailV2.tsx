@@ -159,7 +159,7 @@ export const AppMerchantDetailV2 = () => {
           .order('visit', { ascending: true }),
         supabase
           .from('rewards')
-          .select('id, title, image_url, marketing_text, marketing_emoji')
+          .select('id, title, image_url, description, marketing_text, marketing_emoji')
           .eq('merchant_customer_id', merchantId)
           .eq('is_active', true),
       ]);
