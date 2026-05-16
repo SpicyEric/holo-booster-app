@@ -225,7 +225,7 @@ const BoxManagement = () => {
       if (existingStempel) { toast.error("Karte-ID Kollision – bitte erneut versuchen"); setAdding(false); return; }
 
       // Create in boxes table (stempel_id)
-      const { error: boxesErr } = await supabase.from("boxes").insert({ stamp_id: stempelId, stamp_preset: "standard_3" });
+      const { error: boxesErr } = await supabase.from("boxes").insert({ stamp_id: stempelId, stamp_preset: "verify_only" });
       if (boxesErr) throw boxesErr;
 
       // Create in eloyo_boxes
