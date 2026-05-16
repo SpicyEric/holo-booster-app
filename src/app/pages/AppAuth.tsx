@@ -63,9 +63,9 @@ export const AppAuth = () => {
     return () => clearTimeout(t);
   }, [resendCooldown]);
 
-  // Auto-submit OTP once all 6 digits entered
+  // Auto-submit OTP once all 4 digits entered
   useEffect(() => {
-    if (mode === 'phone' && phoneStep === 'verify' && otpCode.length === 6 && !loading) {
+    if (mode === 'phone' && phoneStep === 'verify' && otpCode.length === 4 && !loading) {
       handleVerifyOtp();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
