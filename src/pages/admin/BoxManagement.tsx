@@ -764,7 +764,7 @@ const BoxManagement = () => {
             </DialogHeader>
             {loadingStamps ? (
               <div className="flex items-center justify-center py-8"><Loader2 className="h-6 w-6 animate-spin" /></div>
-            ) : stampDialogRow?.box_id === 'PXJJK' ? (
+            ) : (stampDialogRow?.stamp_preset === 'verify_only' || stampDialogRow?.box_id === 'PXJJK') ? (
               <div className="space-y-4">
                 {(() => {
                   const primary = registeredStamps[0];
