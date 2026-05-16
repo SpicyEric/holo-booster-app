@@ -127,9 +127,10 @@ const BoxManagement = () => {
       // Load boxes (stempel_ids) for cross-reference
       const stempelIds = (eloyoBoxes || []).map(b => b.stempel_id).filter(Boolean);
       const { data: boxesData } = stempelIds.length > 0
-        ? await supabase.from("boxes").select("stamp_id").in("stamp_id", stempelIds)
+        ? await supabase.from("boxes").select("stamp_id, stamp_preset").in("stamp_id", stempelIds)
         : { data: [] };
       const existingStempelIds = new Set((boxesData || []).map(b => b.stamp_id));
+      const stampPresetMap = new Map((boxesData || []).map((b: any) => [b.stamp_id, b.stamp_preset]));
 
       // Load customer_boxes assignments to derive stempel_status
       const { data: assignments } = stempelIds.length > 0
