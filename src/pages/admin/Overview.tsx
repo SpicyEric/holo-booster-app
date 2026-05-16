@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, lazy, Suspense } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -13,6 +13,8 @@ import { de } from "date-fns/locale";
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
 } from "recharts";
+
+const StlViewer = lazy(() => import("@/components/StlViewer"));
 
 interface Alert {
   type: "warning" | "error" | "info";
@@ -486,6 +488,20 @@ const Overview = () => {
           </div>
         </Card>
       </div>
+
+      {!isAdmin && (
+        <Card className="p-0 overflow-hidden bg-white rounded-2xl border-border/30 shadow-[0_1px_3px_hsl(262,30%,80%/0.3)]">
+          <div className="px-5 pt-5 pb-2">
+            <h2 className="text-sm font-semibold">Kartenständer · 3D-Vorschau</h2>
+            <p className="text-xs text-muted-foreground">Ziehen zum Drehen · Scrollen zum Zoomen</p>
+          </div>
+          <div className="w-full" style={{ height: 460 }}>
+            <Suspense fallback={<div className="w-full h-full flex items-center justify-center text-sm text-muted-foreground">Lädt 3D-Modell…</div>}>
+              <StlViewer url="/models/one_card_stand.stl" color="#7c3aed" autoRotate />
+            </Suspense>
+          </div>
+        </Card>
+      )}
     </div>
   );
 };
