@@ -295,7 +295,7 @@ export const AppAuth = () => {
                     <div>
                       <h2 className="text-2xl font-bold">Handynummer eingeben</h2>
                       <p className="text-sm text-muted-foreground mt-1">
-                        Wir senden dir einen 6-stelligen Code per SMS.
+                        Wir senden dir einen 4-stelligen Code per SMS.
                       </p>
                     </div>
                     <form onSubmit={handleSendOtp} className="space-y-4">
