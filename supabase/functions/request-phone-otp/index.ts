@@ -6,8 +6,6 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const VERIFY_SERVICE_SID = "VAe4ceb0ec09ab9f1729db171d70c58f55";
-
 function normalizePhone(input: string): string {
   let d = (input || "").replace(/[^\d+]/g, "");
   if (d.startsWith("+")) return "+" + d.slice(1).replace(/\D/g, "");
@@ -16,11 +14,24 @@ function normalizePhone(input: string): string {
 }
 const isValidE164 = (p: string) => /^\+[1-9]\d{6,14}$/.test(p);
 
+function generateOtp(): string {
+  // 6-digit, cryptographically random
+  const buf = new Uint32Array(1);
+  crypto.getRandomValues(buf);
+  return (buf[0] % 1_000_000).toString().padStart(6, "0");
+}
+
+async function sha256(input: string): Promise<string> {
+  const data = new TextEncoder().encode(input);
+  const hash = await crypto.subtle.digest("SHA-256", data);
+  return Array.from(new Uint8Array(hash)).map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
   try {
-    const { phone: rawPhone, channel: rawChannel } = await req.json();
+    const { phone: rawPhone } = await req.json();
     if (!rawPhone) {
       return new Response(JSON.stringify({ error: "phone required" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -32,7 +43,6 @@ serve(async (req) => {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-    const channel = rawChannel === "call" ? "call" : "sms";
 
     const ip = (req.headers.get("x-forwarded-for") || "").split(",")[0].trim() || "unknown";
 
@@ -74,40 +84,57 @@ serve(async (req) => {
       }
     }
 
-    // Twilio Verify – Start verification
-    const ACCOUNT_SID = Deno.env.get("TWILIO_ACCOUNT_SID");
-    const KEY_SID = Deno.env.get("TWILIO_API_KEY_SID");
-    const KEY_SECRET = Deno.env.get("TWILIO_API_KEY_SECRET");
-    if (!ACCOUNT_SID || !KEY_SID || !KEY_SECRET) {
-      return new Response(JSON.stringify({ error: "Twilio nicht konfiguriert" }), {
+    const SEVEN_API_KEY = Deno.env.get("SEVEN_API_KEY");
+    if (!SEVEN_API_KEY) {
+      return new Response(JSON.stringify({ error: "SMS-Provider nicht konfiguriert" }), {
         status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-    const basic = btoa(`${KEY_SID}:${KEY_SECRET}`);
 
-    const tw = await fetch(
-      `https://verify.twilio.com/v2/Services/${VERIFY_SERVICE_SID}/Verifications`,
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Basic ${basic}`,
-          "Content-Type": "application/x-www-form-urlencoded",
-        },
-        body: new URLSearchParams({ To: phone, Channel: channel }),
-      }
-    );
-    const twJson = await tw.json();
-    if (!tw.ok) {
-      console.error("Twilio Verify start error:", twJson);
-      const msg = twJson?.message || "SMS-Versand fehlgeschlagen";
-      return new Response(JSON.stringify({ error: msg }), {
+    // Generate + store hashed OTP (5 minutes valid)
+    const code = generateOtp();
+    const code_hash = await sha256(`${phone}:${code}`);
+    const expires_at = new Date(Date.now() + 5 * 60 * 1000).toISOString();
+
+    // Invalidate previous unused codes for this phone
+    await admin.from("phone_otp_codes")
+      .update({ used_at: new Date().toISOString() })
+      .eq("phone", phone)
+      .is("used_at", null);
+
+    const { error: insErr } = await admin.from("phone_otp_codes").insert({
+      phone, code_hash, expires_at, ip_address: ip,
+    });
+    if (insErr) {
+      console.error("phone_otp_codes insert error:", insErr);
+      return new Response(JSON.stringify({ error: "OTP konnte nicht erstellt werden" }), {
+        status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Send via seven.io
+    const text = `Dein eloyo Bestätigungscode: ${code}\nGültig 5 Minuten.`;
+    const sv = await fetch("https://gateway.seven.io/api/sms", {
+      method: "POST",
+      headers: {
+        "X-Api-Key": SEVEN_API_KEY,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ to: phone, text, from: "eloyo" }),
+    });
+    const svJson = await sv.json().catch(() => ({}));
+    // seven.io returns { success: "100", ... } on success
+    const okCode = String((svJson as any)?.success ?? "");
+    if (!sv.ok || (okCode && okCode !== "100")) {
+      console.error("seven.io send error:", svJson);
+      return new Response(JSON.stringify({ error: "SMS-Versand fehlgeschlagen" }), {
         status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
     await admin.from("sms_otp_attempts").insert({ phone, ip_address: ip });
 
-    return new Response(JSON.stringify({ success: true, phone, status: twJson.status }), {
+    return new Response(JSON.stringify({ success: true, phone }), {
       status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {

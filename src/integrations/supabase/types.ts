@@ -2064,6 +2064,39 @@ export type Database = {
         }
         Relationships: []
       }
+      phone_otp_codes: {
+        Row: {
+          attempts: number
+          code_hash: string
+          created_at: string
+          expires_at: string
+          id: string
+          ip_address: string | null
+          phone: string
+          used_at: string | null
+        }
+        Insert: {
+          attempts?: number
+          code_hash: string
+          created_at?: string
+          expires_at: string
+          id?: string
+          ip_address?: string | null
+          phone: string
+          used_at?: string | null
+        }
+        Update: {
+          attempts?: number
+          code_hash?: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          ip_address?: string | null
+          phone?: string
+          used_at?: string | null
+        }
+        Relationships: []
+      }
       pipeline_appointments: {
         Row: {
           address: string | null

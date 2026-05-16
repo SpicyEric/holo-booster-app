@@ -40,8 +40,9 @@ export const SplitText = ({
   // into characters but keep words as inline-block units so wrapping looks right.
   const words = text.split(" ");
 
+  const TagAny = Tag as any;
   return (
-    <Tag
+    <TagAny
       className={cn("inline-block", className)}
       style={{ overflow: "hidden" }}
     >
@@ -90,7 +91,7 @@ export const SplitText = ({
           );
         });
       })()}
-    </Tag>
+    </TagAny>
   );
 };
 
