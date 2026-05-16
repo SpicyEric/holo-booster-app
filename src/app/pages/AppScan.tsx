@@ -19,6 +19,8 @@ import { useMerchantBrand } from '@/hooks/useMerchantBrand';
 import { setActiveBrandColor } from '@/lib/activeBrandColor';
 import {
   getActivatedReward,
+  getActivatedRewardAsync,
+  getAllActivatedRewardsAsync,
   clearActivatedReward,
   type ActivatedReward,
 } from '@/lib/activeMerchantReward';
@@ -486,15 +488,21 @@ export const AppScan = () => {
 
     try {
       const pendingActivatedReward = contextMerchantId
-        ? getActivatedReward(contextMerchantId)
+        ? await getActivatedRewardAsync(contextMerchantId)
         : null;
-      const { data, error } = pendingActivatedReward
-        ? await (supabase.rpc as any)('award_points_via_nfc_with_reward', {
+      const activatedRewards = await getAllActivatedRewardsAsync();
+      const normalizedActivatedRewards = pendingActivatedReward && contextMerchantId
+        ? [
+            { merchantId: contextMerchantId, ...pendingActivatedReward },
+            ...activatedRewards.filter((reward) => reward.merchantId !== contextMerchantId),
+          ]
+        : activatedRewards;
+      console.log('[AppScan] Activated rewards before RPC:', JSON.stringify(normalizedActivatedRewards));
+      const { data, error } = normalizedActivatedRewards.length > 0
+        ? await (supabase.rpc as any)('award_points_via_nfc_with_activated_rewards', {
             p_hardware_uid: hardwareUid,
             p_user_id: currentUserId,
-            p_expected_merchant_customer_id: contextMerchantId,
-            p_activated_visit_number: pendingActivatedReward.visitNumber,
-            p_activated_reward_label: pendingActivatedReward.label,
+            p_activated_rewards: normalizedActivatedRewards,
           })
         : await supabase.rpc('award_points_via_nfc', {
             p_hardware_uid: hardwareUid,
@@ -513,6 +521,7 @@ export const AppScan = () => {
         merchant_customer_id?: string;
         merchant_name?: string;
         activated_reward_redeemed?: boolean;
+        activated_reward_merchant_customer_id?: string;
         activated_reward_label?: string | null;
         activated_reward_visit_number?: number;
         error?: string;
@@ -530,7 +539,7 @@ export const AppScan = () => {
         if (response.merchant_customer_id && response.activated_reward_redeemed) {
           response.welcome_reward_redeemed = true;
           response.welcome_reward_label = response.activated_reward_label || pendingActivatedReward?.label || null;
-          clearActivatedReward(response.merchant_customer_id);
+          clearActivatedReward(response.activated_reward_merchant_customer_id || response.merchant_customer_id);
           if (contextMerchantId === response.merchant_customer_id) {
             setActivatedRewardState(null);
           }
