@@ -363,10 +363,14 @@ export default function AppSettings() {
             </div>
           ) : (
             <div className="space-y-3 flex flex-col items-center">
-              <InputOTP maxLength={6} value={phoneOtp} onChange={setPhoneOtp}>
-                <InputOTPGroup>
-                  {[0, 1, 2, 3, 4, 5].map((i) => (
-                    <InputOTPSlot key={i} index={i} className="h-12 w-10 text-lg" />
+              <InputOTP maxLength={4} value={phoneOtp} onChange={setPhoneOtp}>
+                <InputOTPGroup className="gap-2">
+                  {[0, 1, 2, 3].map((i) => (
+                    <InputOTPSlot
+                      key={i}
+                      index={i}
+                      className="h-14 w-12 text-2xl font-semibold rounded-md border-2 border-white/40 bg-white/10 text-white first:rounded-l-md last:rounded-r-md"
+                    />
                   ))}
                 </InputOTPGroup>
               </InputOTP>
