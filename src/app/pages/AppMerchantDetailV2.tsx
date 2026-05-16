@@ -1397,16 +1397,29 @@ export const AppMerchantDetailV2 = () => {
 
       <Dialog open={!!tappedReward} onOpenChange={(o) => !o && setTappedReward(null)}>
         <DialogContent className="max-w-[320px] rounded-3xl p-6 text-center">
-          <div
-            className="w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4"
-            style={{ background: BRAND_SOFT }}
-          >
-            <Gift className="w-10 h-10" style={{ color: BRAND }} />
-          </div>
+          {tappedReward?.imageUrl ? (
+            <img
+              src={tappedReward.imageUrl}
+              alt={tappedReward.label}
+              className="w-24 h-24 rounded-2xl object-cover mx-auto mb-4"
+            />
+          ) : (
+            <div
+              className="w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4"
+              style={{ background: BRAND_SOFT }}
+            >
+              <Gift className="w-10 h-10" style={{ color: BRAND }} />
+            </div>
+          )}
           <h3 className="text-lg font-bold text-neutral-900 dark:text-neutral-100 mb-1">
             {tappedReward?.label}
           </h3>
-          <p className="text-sm text-neutral-600 dark:text-neutral-400 mb-5">
+          {tappedReward?.description && (
+            <p className="text-sm text-neutral-600 dark:text-neutral-400 mb-3">
+              {tappedReward.description}
+            </p>
+          )}
+          <p className="text-sm text-neutral-500 dark:text-neutral-400 mb-5">
             Beim nächsten Check-in einlösen?
           </p>
           <Button
