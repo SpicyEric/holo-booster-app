@@ -55,32 +55,53 @@ serve(async (req) => {
     const HOUR = new Date(now - 60 * 60 * 1000).toISOString();
     const DAY = new Date(now - 24 * 60 * 60 * 1000).toISOString();
 
-    const { count: phoneHour } = await admin
-      .from("sms_otp_attempts").select("*", { count: "exact", head: true })
-      .eq("phone", phone).gte("created_at", HOUR);
-    if ((phoneHour ?? 0) >= 3) {
-      return new Response(JSON.stringify({ error: "Zu viele SMS-Anfragen für diese Nummer. Bitte warte eine Stunde." }), {
-        status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+    const formatWait = (ms: number) => {
+      const totalMin = Math.max(1, Math.ceil(ms / 60000));
+      if (totalMin < 60) return `${totalMin} Minute${totalMin === 1 ? "" : "n"}`;
+      const h = Math.floor(totalMin / 60);
+      const m = totalMin % 60;
+      return m === 0
+        ? `${h} Stunde${h === 1 ? "" : "n"}`
+        : `${h} Stunde${h === 1 ? "" : "n"} und ${m} Minute${m === 1 ? "" : "n"}`;
+    };
+
+    // Phone / hour (max 3)
+    const { data: phoneHourRows } = await admin
+      .from("sms_otp_attempts").select("created_at")
+      .eq("phone", phone).gte("created_at", HOUR)
+      .order("created_at", { ascending: true });
+    if ((phoneHourRows?.length ?? 0) >= 3) {
+      const oldest = new Date(phoneHourRows![0].created_at).getTime();
+      const wait = formatWait(oldest + 60 * 60 * 1000 - now);
+      return new Response(JSON.stringify({
+        error: `Du hast in der letzten Stunde bereits 3 Codes angefordert (Maximum). Bitte warte noch ${wait}, bevor du es erneut versuchst.`,
+      }), { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    const { count: phoneDay } = await admin
-      .from("sms_otp_attempts").select("*", { count: "exact", head: true })
-      .eq("phone", phone).gte("created_at", DAY);
-    if ((phoneDay ?? 0) >= 5) {
-      return new Response(JSON.stringify({ error: "Tageslimit für diese Nummer erreicht. Bitte versuche es morgen erneut." }), {
-        status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+    // Phone / day (max 5)
+    const { data: phoneDayRows } = await admin
+      .from("sms_otp_attempts").select("created_at")
+      .eq("phone", phone).gte("created_at", DAY)
+      .order("created_at", { ascending: true });
+    if ((phoneDayRows?.length ?? 0) >= 5) {
+      const oldest = new Date(phoneDayRows![0].created_at).getTime();
+      const wait = formatWait(oldest + 24 * 60 * 60 * 1000 - now);
+      return new Response(JSON.stringify({
+        error: `Tageslimit erreicht: Pro Handynummer sind maximal 5 Codes in 24 Stunden möglich. Bitte warte noch ${wait}.`,
+      }), { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
     if (ip !== "unknown") {
-      const { count: ipHour } = await admin
-        .from("sms_otp_attempts").select("*", { count: "exact", head: true })
-        .eq("ip_address", ip).gte("created_at", HOUR);
-      if ((ipHour ?? 0) >= 10) {
-        return new Response(JSON.stringify({ error: "Zu viele Anfragen von dieser Verbindung. Bitte warte eine Stunde." }), {
-          status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+      const { data: ipHourRows } = await admin
+        .from("sms_otp_attempts").select("created_at")
+        .eq("ip_address", ip).gte("created_at", HOUR)
+        .order("created_at", { ascending: true });
+      if ((ipHourRows?.length ?? 0) >= 10) {
+        const oldest = new Date(ipHourRows![0].created_at).getTime();
+        const wait = formatWait(oldest + 60 * 60 * 1000 - now);
+        return new Response(JSON.stringify({
+          error: `Zu viele Code-Anfragen von dieser Internetverbindung (Maximum 10 pro Stunde). Bitte warte noch ${wait}.`,
+        }), { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } });
       }
     }
 
