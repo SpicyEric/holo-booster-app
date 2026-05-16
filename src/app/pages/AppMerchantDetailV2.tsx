@@ -304,19 +304,31 @@ export const AppMerchantDetailV2 = () => {
         .from('point_transactions')
         .select('transaction_type, description, created_at')
         .eq('loyalty_account_id', account.id)
-        .in('transaction_type', ['check_in', 'nfc_stamp', 'reward_redeemed'])
+        .in('transaction_type', ['check_in', 'nfc_stamp', 'reward_redeemed', 'google_review_bonus'])
         .order('created_at', { ascending: true });
 
       if (cancelled) return;
+      const hasReviewBonus = (tx || []).some((row) => row.transaction_type === 'google_review_bonus');
       const realCheckIns = (tx || [])
         .filter((row) => row.transaction_type === 'check_in' || row.transaction_type === 'nfc_stamp')
-        .map((row, index) => ({ visit: index + 1, source: 'normal' as CheckInSource, at: row.created_at as string }));
+        .map((row, index) => {
+          const isReview = typeof row.description === 'string' && row.description.includes('Google-Bewertung');
+          return {
+            visit: index + 1,
+            source: (isReview ? 'google_review' : 'normal') as CheckInSource,
+            at: row.created_at as string,
+          };
+        });
       const redeemed = (tx || [])
         .filter((row) => row.transaction_type === 'reward_redeemed')
         .map((row) => Number(String(row.description || '').match(/Visit (\d+)/)?.[1]))
         .filter((visit) => Number.isFinite(visit));
 
       setCheckIns(realCheckIns);
+      if (hasReviewBonus) {
+        try { localStorage.setItem(googleReviewKey, '1'); } catch { /* noop */ }
+        setGoogleReviewDone(true);
+      }
       const uniqRedeemed = Array.from(new Set(redeemed));
       setRedeemedVisits(uniqRedeemed);
       // Wenn die in localStorage gespeicherte aktivierte Prämie laut DB
