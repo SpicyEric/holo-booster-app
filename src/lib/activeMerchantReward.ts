@@ -1,3 +1,6 @@
+import { Capacitor } from '@capacitor/core';
+import { Preferences } from '@capacitor/preferences';
+
 /**
  * Lightweight localStorage helper for the V2 "aktivierte Prämie" flow.
  *
@@ -14,9 +17,6 @@ export interface ActivatedReward {
 export interface ActivatedRewardEntry extends ActivatedReward {
   merchantId: string;
 }
-
-import { Capacitor } from '@capacitor/core';
-import { Preferences } from '@capacitor/preferences';
 
 const PREFIX = 'eloyo:activated-reward:';
 
