@@ -189,7 +189,7 @@ export default function AppSettings() {
   };
 
   const handleVerifyPhoneOtp = async () => {
-    if (phoneOtp.length !== 6) return;
+    if (phoneOtp.length !== 4) return;
     setPhoneWorking(true);
     try {
       await verifyPhoneChange(phoneInput, phoneOtp);
