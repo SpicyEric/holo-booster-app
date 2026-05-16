@@ -47,10 +47,11 @@ interface MockReward {
   label: string;
   redeemed: boolean;
   imageUrl?: string | null;
+  description?: string | null;
 }
 
 type RewardPlacementRow = { visit: number; reward_id: string };
-type RewardRow = { id: string; title: string; image_url: string | null; marketing_text: string | null; marketing_emoji: string | null };
+type RewardRow = { id: string; title: string; image_url: string | null; description: string | null; marketing_text: string | null; marketing_emoji: string | null };
 type MerchantV2RouteState = {
   triggerCheckIn?: boolean;
   checkInAlreadyRecorded?: boolean;
@@ -129,7 +130,7 @@ export const AppMerchantDetailV2 = () => {
   const brand = useMerchantBrand(merchantId);
   const [coverImageUrl, setCoverImageUrl] = useState<string | null>(null);
   const [passLength, setPassLength] = useState<number>(35);
-  const [dbRewards, setDbRewards] = useState<{ visitNumber: number; label: string; imageUrl: string | null; marketingText: string | null; marketingEmoji: string | null }[]>([]);
+  const [dbRewards, setDbRewards] = useState<{ visitNumber: number; label: string; imageUrl: string | null; description: string | null; marketingText: string | null; marketingEmoji: string | null }[]>([]);
   const [merchantInfo, setMerchantInfo] = useState<MerchantInfo>({
     name: 'Backstube König',
     description: null,
@@ -158,7 +159,7 @@ export const AppMerchantDetailV2 = () => {
           .order('visit', { ascending: true }),
         supabase
           .from('rewards')
-          .select('id, title, image_url, marketing_text, marketing_emoji')
+          .select('id, title, image_url, description, marketing_text, marketing_emoji')
           .eq('merchant_customer_id', merchantId)
           .eq('is_active', true),
       ]);
@@ -190,6 +191,7 @@ export const AppMerchantDetailV2 = () => {
           visitNumber: p.visit,
           label: reward.title,
           imageUrl: reward.image_url || null,
+          description: reward.description || null,
           marketingText: reward.marketing_text || null,
           marketingEmoji: reward.marketing_emoji || null,
         }];
@@ -367,6 +369,7 @@ export const AppMerchantDetailV2 = () => {
         label: r.label,
         redeemed: redeemedVisits.includes(r.visitNumber),
         imageUrl: r.imageUrl,
+        description: r.description,
       })),
     );
   }, [dbRewards, redeemedVisits]);
@@ -1394,16 +1397,29 @@ export const AppMerchantDetailV2 = () => {
 
       <Dialog open={!!tappedReward} onOpenChange={(o) => !o && setTappedReward(null)}>
         <DialogContent className="max-w-[320px] rounded-3xl p-6 text-center">
-          <div
-            className="w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4"
-            style={{ background: BRAND_SOFT }}
-          >
-            <Gift className="w-10 h-10" style={{ color: BRAND }} />
-          </div>
+          {tappedReward?.imageUrl ? (
+            <img
+              src={tappedReward.imageUrl}
+              alt={tappedReward.label}
+              className="w-24 h-24 rounded-2xl object-cover mx-auto mb-4"
+            />
+          ) : (
+            <div
+              className="w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4"
+              style={{ background: BRAND_SOFT }}
+            >
+              <Gift className="w-10 h-10" style={{ color: BRAND }} />
+            </div>
+          )}
           <h3 className="text-lg font-bold text-neutral-900 dark:text-neutral-100 mb-1">
             {tappedReward?.label}
           </h3>
-          <p className="text-sm text-neutral-600 dark:text-neutral-400 mb-5">
+          {tappedReward?.description && (
+            <p className="text-sm text-neutral-600 dark:text-neutral-400 mb-3">
+              {tappedReward.description}
+            </p>
+          )}
+          <p className="text-sm text-neutral-500 dark:text-neutral-400 mb-5">
             Beim nächsten Check-in einlösen?
           </p>
           <Button
