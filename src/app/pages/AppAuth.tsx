@@ -327,10 +327,14 @@ export const AppAuth = () => {
                       </p>
                     </div>
                     <div className="flex justify-center">
-                      <InputOTP maxLength={6} value={otpCode} onChange={setOtpCode}>
-                        <InputOTPGroup>
-                          {[0, 1, 2, 3, 4, 5].map((i) => (
-                            <InputOTPSlot key={i} index={i} className="h-12 w-10 text-lg" />
+                      <InputOTP maxLength={4} value={otpCode} onChange={setOtpCode}>
+                        <InputOTPGroup className="gap-2">
+                          {[0, 1, 2, 3].map((i) => (
+                            <InputOTPSlot
+                              key={i}
+                              index={i}
+                              className="h-14 w-12 text-2xl font-semibold rounded-md border-2 border-white/40 bg-white/10 text-white first:rounded-l-md last:rounded-r-md"
+                            />
                           ))}
                         </InputOTPGroup>
                       </InputOTP>
@@ -338,7 +342,7 @@ export const AppAuth = () => {
                     <Button
                       onClick={handleVerifyOtp}
                       className="w-full h-12 bg-gradient-to-r from-primary to-secondary"
-                      disabled={loading || otpCode.length !== 6}
+                      disabled={loading || otpCode.length !== 4}
                     >
                       {loading ? 'Wird geprüft…' : 'Bestätigen'}
                     </Button>
