@@ -91,7 +91,7 @@ export const SplitText = ({
           );
         });
       })()}
-    </Tag>
+    </TagAny>
   );
 };
 
