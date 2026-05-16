@@ -844,20 +844,34 @@ export const AppMerchantDetailV2 = () => {
 
   const handleGoogleReviewClick = () => {
     if (googleReviewDone) return;
-    // Echte DB-RPC versuchen (no-op falls unauth/Demo) — danach Google öffnen + Demo-Check-in
     void (async () => {
+      let rpcOk = isDemoMerchant; // Demo bypassed RPC
       try {
         const { supabase } = await import('@/integrations/supabase/client');
-        await supabase.rpc('award_google_review_bonus', { p_merchant_customer_id: merchantId });
+        const { data, error } = await supabase.rpc('award_google_review_bonus', { p_merchant_customer_id: merchantId });
+        if (!error && (data as any)?.success) rpcOk = true;
+        if (!error && (data as any)?.error_code === 'already_redeemed') {
+          // Bereits eingelöst → Flag setzen, kein neuer Check-in
+          try { localStorage.setItem(googleReviewKey, '1'); } catch { /* noop */ }
+          setGoogleReviewDone(true);
+          setGoogleReviewOpen(false);
+          window.open(`https://www.google.com/search?q=${encodeURIComponent('Backstube König Bewertung')}`, '_blank');
+          return;
+        }
       } catch { /* Demo: ignorieren */ }
+
+      if (!rpcOk) {
+        setGoogleReviewOpen(false);
+        return;
+      }
+
+      try { localStorage.setItem(googleReviewKey, '1'); } catch { /* noop */ }
+      setGoogleReviewDone(true);
+      const next = currentVisit + 1;
+      setCheckIns((prev) => [...prev, { visit: next, source: 'google_review', at: new Date().toISOString() }]);
+      setGoogleReviewOpen(false);
+      window.open(`https://www.google.com/search?q=${encodeURIComponent('Backstube König Bewertung')}`, '_blank');
     })();
-    try { localStorage.setItem(googleReviewKey, '1'); } catch { /* noop */ }
-    setGoogleReviewDone(true);
-    // Demo-Check-in als Bewertung anhängen
-    const next = currentVisit + 1;
-    setCheckIns((prev) => [...prev, { visit: next, source: 'google_review', at: new Date().toISOString() }]);
-    setGoogleReviewOpen(false);
-    window.open(`https://www.google.com/search?q=${encodeURIComponent('Backstube König Bewertung')}`, '_blank');
   };
 
 
