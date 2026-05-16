@@ -369,7 +369,7 @@ export default function AppSettings() {
                     <InputOTPSlot
                       key={i}
                       index={i}
-                      className="h-14 w-12 text-2xl font-semibold rounded-md border-2 border-white/40 bg-white/10 text-white first:rounded-l-md last:rounded-r-md"
+                      className="h-14 w-12 text-2xl font-semibold rounded-md border-2 border-gray-500 bg-gray-700 text-white first:rounded-l-md last:rounded-r-md"
                     />
                   ))}
                 </InputOTPGroup>
