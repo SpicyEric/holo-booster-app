@@ -158,20 +158,8 @@ export function DeepLinkProvider({ children }: DeepLinkProviderProps) {
           handleDeepLink(event.url);
         });
 
-        // Listener für App-Rückkehr aus Hintergrund
-        const resumeListener = await App.addListener('appStateChange', async (state) => {
-          if (state.isActive) {
-            // Prüfe ob es einen pending Deep Link gibt
-            const launchUrl = await App.getLaunchUrl();
-            if (launchUrl?.url) {
-              handleDeepLink(launchUrl.url);
-            }
-          }
-        });
-
         cleanup = () => {
           urlListener.remove();
-          resumeListener.remove();
         };
 
         console.log('✅ Deep Link Listener aktiv');
