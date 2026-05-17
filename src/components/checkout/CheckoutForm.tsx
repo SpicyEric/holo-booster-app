@@ -319,6 +319,11 @@ export default function CheckoutForm({ backPath, backLabel, partnerUserId, prefi
         </CardContent>
       </Card>
 
+      {/* Price anchor banner */}
+      <div className="bg-primary text-primary-foreground text-center text-sm font-medium py-3 px-4 rounded-lg">
+        💡 Tools mit diesem Funktionsumfang kosten anderswo 150–200€/Monat. Du zahlst 49,45€.
+      </div>
+
       {/* Company Profile */}
       <Card>
         <CardHeader className="pb-3">
