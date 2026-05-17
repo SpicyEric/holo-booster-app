@@ -185,6 +185,34 @@ const Marketing = () => {
 
   useEffect(() => { loadData(); }, []);
 
+  // Sync WhatsApp-Empfehlungstext aus erster Prämie mit Inhalt
+  useEffect(() => {
+    const src = rewards.find(r => r.marketing_text) || rewards[0];
+    const text = src?.marketing_text || '';
+    const emoji = src?.marketing_emoji || '🎁';
+    setWhatsappText(text);
+    setWhatsappEmoji(emoji);
+    setWhatsappInitial({ text, emoji });
+  }, [rewards]);
+
+  const whatsappDirty = whatsappText !== whatsappInitial.text || whatsappEmoji !== whatsappInitial.emoji;
+
+  const handleSaveWhatsappText = async () => {
+    if (!customerId || rewards.length === 0) { toast.error('Bitte zuerst eine Prämie erstellen'); return; }
+    setSavingWhatsapp(true);
+    try {
+      const { error } = await supabase
+        .from('rewards')
+        .update({ marketing_text: whatsappText || null, marketing_emoji: whatsappEmoji || null })
+        .eq('merchant_customer_id', customerId);
+      if (error) throw error;
+      setWhatsappInitial({ text: whatsappText, emoji: whatsappEmoji });
+      toast.success('WhatsApp-Empfehlungstext gespeichert');
+      loadData();
+    } catch { toast.error('Speichern fehlgeschlagen'); }
+    finally { setSavingWhatsapp(false); }
+  };
+
   // Sync activeTab from ?tab= URL parameter (Sidebar Sub-Items)
   useEffect(() => {
     const tabParam = searchParams.get('tab');
