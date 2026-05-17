@@ -3750,6 +3750,10 @@ export type Database = {
             }[]
           }
       send_welcome_messages_if_needed: { Args: never; Returns: Json }
+      user_has_merchant_checkin: {
+        Args: { p_merchant_customer_id: string; p_user_id: string }
+        Returns: boolean
+      }
       verify_email_token: { Args: { p_token: string }; Returns: Json }
     }
     Enums: {
