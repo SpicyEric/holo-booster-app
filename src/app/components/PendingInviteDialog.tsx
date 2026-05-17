@@ -123,6 +123,10 @@ export function PendingInviteDialog() {
           .maybeSingle();
 
         if (existingAccount && existingAccount.current_points_balance > 0) {
+          if (handledInviteCodesRef.current.has(code)) {
+            clearPendingInvite();
+            return;
+          }
           console.info('[PendingInviteDialog] user is already customer of merchant — showing info');
           clearPendingInvite();
           setIneligible({
@@ -146,6 +150,10 @@ export function PendingInviteDialog() {
           .maybeSingle();
 
         if (existingRedemption) {
+          if (handledInviteCodesRef.current.has(code)) {
+            clearPendingInvite();
+            return;
+          }
           console.info('[PendingInviteDialog] user already has open redemption — showing info');
           clearPendingInvite();
           // 7-Tage-Fenster ab bonus_window_starts_at
@@ -164,6 +172,11 @@ export function PendingInviteDialog() {
           setOpen(true);
           return;
         }
+      }
+
+      if (handledInviteCodesRef.current.has(code)) {
+        clearPendingInvite();
+        return;
       }
 
       setPreview({
