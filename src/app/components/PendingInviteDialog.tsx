@@ -122,7 +122,17 @@ export function PendingInviteDialog() {
           .eq('merchant_customer_id', result.merchant_customer_id)
           .maybeSingle();
 
-        if (existingAccount && existingAccount.current_points_balance > 0) {
+        const { data: existingCheckIns } = existingAccount
+          ? await supabase
+              .from('point_transactions')
+              .select('id')
+              .eq('loyalty_account_id', existingAccount.id)
+              .eq('merchant_customer_id', result.merchant_customer_id)
+              .in('transaction_type', ['nfc_stamp', 'check_in', 'nfc_scan'])
+              .limit(1)
+          : { data: null };
+
+        if (existingCheckIns && existingCheckIns.length > 0) {
           if (handledInviteCodesRef.current.has(code)) {
             clearPendingInvite();
             return;
@@ -247,6 +257,33 @@ export function PendingInviteDialog() {
       clearPendingInvite();
       if (!result.success) {
         console.warn('[consume_invitation] FAILED:', result.error, '(code:', result.error_code, ')');
+        if (result.error_code === 'already_checked_in' || result.error_code === 'already_customer') {
+          setAccepted(null);
+          setPreview(null);
+          setIneligible({
+            kind: 'already_customer',
+            merchant_customer_id: preview.merchant_customer_id,
+            merchant_name: preview.merchant_name,
+            logo_url: preview.logo_url,
+            cover_image_url: preview.cover_image_url,
+          });
+          setOpen(true);
+          return;
+        }
+        if (result.error_code === 'already_pending') {
+          setAccepted(null);
+          setPreview(null);
+          setIneligible({
+            kind: 'already_invited',
+            merchant_customer_id: preview.merchant_customer_id,
+            merchant_name: preview.merchant_name,
+            logo_url: preview.logo_url,
+            cover_image_url: preview.cover_image_url,
+            expires_at: null,
+          });
+          setOpen(true);
+          return;
+        }
         // Bei Geräte-Sperre für diesen Merchant: dem User klar sagen warum.
         if (result.error_code === 'device_already_redeemed_for_merchant') {
           const { toast } = await import('sonner');
@@ -318,9 +355,12 @@ export function PendingInviteDialog() {
   const goToMerchant = () => {
     const target = accepted ?? preview ?? ineligible;
     if (!target) return;
+    const path = `/app/merchant/${target.merchant_customer_id}`;
     setOpen(false);
-    if (ineligible) setIneligible(null);
-    navigate(`/app/merchant/${target.merchant_customer_id}`);
+    setPreview(null);
+    setAccepted(null);
+    setIneligible(null);
+    window.setTimeout(() => navigate(path), 0);
   };
 
   // ─── Render: Ineligible-Hinweis ────────────────────────────────
