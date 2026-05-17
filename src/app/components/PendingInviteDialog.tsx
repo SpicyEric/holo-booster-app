@@ -190,7 +190,6 @@ export function PendingInviteDialog() {
       setOpen(true);
     } catch (err) {
       console.error('lookup_invitation Fehler:', err);
-      handledInviteCodesRef.current.add(preview.share_code);
       clearPendingInvite();
     }
   };
