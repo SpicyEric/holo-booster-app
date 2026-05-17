@@ -1619,8 +1619,8 @@ export const AppMerchantDetailV2 = () => {
                 >
                   <motion.div
                     initial={{ scale: 0 }}
-                    animate={{ scale: [1, 1.08, 1] }}
-                    transition={{ scale: { delay: 0.15, repeat: Infinity, duration: 1.6, ease: 'easeInOut' } }}
+                    animate={{ scale: 1 }}
+                    transition={{ delay: 0.15, type: 'spring', stiffness: 200, damping: 15 }}
                     className="w-24 h-24 rounded-full bg-white/20 flex items-center justify-center mb-6"
                   >
                     <CheckCircle2 className="w-14 h-14 text-white" strokeWidth={2.5} />
@@ -1631,11 +1631,15 @@ export const AppMerchantDetailV2 = () => {
                   <h2 className="text-3xl font-extrabold mb-6 leading-tight">
                     {checkInOverlay.reward.label}
                   </h2>
-                  <div className="rounded-2xl bg-white/15 backdrop-blur px-5 py-4 max-w-xs">
+                  <motion.div
+                    animate={{ scale: [1, 1.04, 1] }}
+                    transition={{ repeat: Infinity, duration: 1.8, ease: 'easeInOut' }}
+                    className="rounded-2xl bg-white/15 backdrop-blur px-5 py-4 max-w-xs shadow-[0_0_24px_rgba(255,255,255,0.18)]"
+                  >
                     <p className="text-base font-semibold text-white">
                       Zeige diesen Bildschirm einem Mitarbeiter zur Bestätigung.
                     </p>
-                  </div>
+                  </motion.div>
                 </motion.div>
               ) : (
                 <motion.div
