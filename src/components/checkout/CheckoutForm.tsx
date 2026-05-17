@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Textarea } from "@/components/ui/textarea";
+
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -43,7 +43,7 @@ export interface CheckoutPrefill {
   lastName?: string;
   contactEmail?: string;
   contactPhone?: string;
-  additionalContacts?: string;
+  
 }
 
 interface CheckoutFormProps {
@@ -97,7 +97,6 @@ export default function CheckoutForm({ backPath, backLabel, partnerUserId, prefi
   const locationCount = 1;
 
   // Additional contacts
-  const [additionalContacts, setAdditionalContacts] = useState(prefill?.additionalContacts ?? "");
 
   // Promo
   const [promoCodeInput, setPromoCodeInput] = useState("");
@@ -206,7 +205,6 @@ export default function CheckoutForm({ backPath, backLabel, partnerUserId, prefi
           industry,
           vatId,
           contactPhone,
-          additionalContacts,
           partnerUserId,
           salesRepDiscount: salesRepDiscount > 0 ? salesRepDiscount : undefined,
         },
@@ -277,7 +275,7 @@ export default function CheckoutForm({ backPath, backLabel, partnerUserId, prefi
                   {[
                     { t: "NFC-Kartenhalter" },
                     { t: "2× A5-Aufsteller", d: "Blanko-Design" },
-                    { t: "1 Designwunsch pro Monat", d: "individuelles Aufsteller-Design" },
+                    { t: "Monatliches Wunschdesign", d: "dein Aufsteller, dein Look" },
                     { t: "Geburtstagsbelohnungen", d: "vollautomatisch" },
                     { t: "Treue-Meilensteine", d: "automatische Prämien" },
                     { t: "Neukunden-Empfehlungen", d: "Kunden werben Kunden" },
@@ -320,6 +318,11 @@ export default function CheckoutForm({ backPath, backLabel, partnerUserId, prefi
 
         </CardContent>
       </Card>
+
+      {/* Price anchor banner */}
+      <div className="bg-primary text-primary-foreground text-center text-sm font-medium py-3 px-4 rounded-lg">
+        💡 Tools mit diesem Funktionsumfang kosten anderswo 150–200€/Monat. Du zahlst 49,45€.
+      </div>
 
       {/* Company Profile */}
       <Card>
@@ -453,20 +456,6 @@ export default function CheckoutForm({ backPath, backLabel, partnerUserId, prefi
         </CardContent>
       </Card>
 
-      {/* Additional Contacts */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base">Zusätzliche Ansprechpartner <span className="text-muted-foreground text-xs font-normal">(optional)</span></CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Textarea
-            value={additionalContacts}
-            onChange={e => setAdditionalContacts(e.target.value)}
-            placeholder="z.B. Lisa Müller, Tel: +49 171 ..., E-Mail: lisa@firma.de"
-            rows={3}
-          />
-        </CardContent>
-      </Card>
 
 
       {/* Promo codes - subtle single line */}
