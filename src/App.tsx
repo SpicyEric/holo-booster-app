@@ -220,7 +220,7 @@ const App = () => {
               <Route path="/app/support" element={<AppProtectedRoute><AppSupport /></AppProtectedRoute>} />
               <Route path="/app/terms" element={<AppProtectedRoute><AppTerms /></AppProtectedRoute>} />
               <Route path="/app/privacy" element={<AppProtectedRoute><AppPrivacy /></AppProtectedRoute>} />
-              <Route path="/app/my-cards" element={<AppProtectedRoute><AppMyCards /></AppProtectedRoute>} />
+              <Route path="/app/how-it-works" element={<AppProtectedRoute><AppHowItWorks /></AppProtectedRoute>} />
               <Route path="/app/rewards" element={<AppProtectedRoute><AppRewards /></AppProtectedRoute>} />
               <Route path="/app/messages/:id" element={<AppProtectedRoute><AppMessageDetail /></AppProtectedRoute>} />
               <Route path="/app/verify-email" element={<AppVerifyEmail />} />
