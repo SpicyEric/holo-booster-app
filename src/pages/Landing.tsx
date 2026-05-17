@@ -15,7 +15,9 @@ import contactCtaButton from '@/assets/contact-cta-button.png';
 import howItWorksStamp from '@/assets/nfc-card-icon.png';
 import howItWorksPresent from '@/assets/howitworks/present.png';
 import howItWorksReferal from '@/assets/howitworks/referal.png';
-import { useEffect, useState } from 'react';
+import { lazy, Suspense, useEffect, useState } from 'react';
+
+const StlViewer = lazy(() => import('@/components/StlViewer'));
 
 import RewardWheel from '@/components/landing/RewardWheel';
 import ReferralSection from '@/components/landing/ReferralSection';
