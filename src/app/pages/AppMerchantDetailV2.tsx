@@ -314,6 +314,13 @@ export const AppMerchantDetailV2 = () => {
         .order('created_at', { ascending: true });
 
       if (cancelled) return;
+      setHistoryTx(
+        (tx || []).map((row) => ({
+          transaction_type: row.transaction_type as string,
+          description: (row.description as string | null) ?? null,
+          created_at: row.created_at as string,
+        })),
+      );
       const hasReviewBonus = (tx || []).some((row) => row.transaction_type === 'google_review_bonus');
       const realCheckIns = (tx || [])
         .filter((row) => row.transaction_type === 'check_in' || row.transaction_type === 'nfc_stamp')
