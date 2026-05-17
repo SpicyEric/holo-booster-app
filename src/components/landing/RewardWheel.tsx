@@ -34,9 +34,6 @@ const RewardCard = ({ reward }: { reward: (typeof REWARDS)[number] }) => (
       <p className="font-semibold text-[#1a1b21] text-sm truncate">{reward.title}</p>
       <p className="text-xs text-[#7a7488] truncate">{reward.merchant}</p>
     </div>
-    <div className="shrink-0 px-2.5 py-1 rounded-full bg-gradient-to-r from-[#5227FF] to-[#8B5CF6] text-white text-xs font-bold">
-      {reward.points}
-    </div>
   </div>
 );
 
