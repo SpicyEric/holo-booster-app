@@ -106,6 +106,11 @@ export function PendingInviteDialog() {
         return;
       }
 
+      if (handledInviteCodesRef.current.has(code)) {
+        clearPendingInvite();
+        return;
+      }
+
       // Wenn User eingeloggt ist: read-only Eligibility-Check, BEVOR der Dialog erscheint.
       // (Wir wollen NICHT consume_invitation aufrufen — das würde das 7-Tage-Fenster sofort starten.)
       if (user && result.merchant_customer_id) {
@@ -185,6 +190,7 @@ export function PendingInviteDialog() {
       navigate('/app/auth');
       return;
     }
+    handledInviteCodesRef.current.add(preview.share_code);
     setAccepting(true);
     try {
       const fp = getDeviceFingerprint();
