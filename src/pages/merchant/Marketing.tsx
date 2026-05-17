@@ -726,8 +726,71 @@ const Marketing = () => {
               </CardContent>
             </Card>
 
+            {/* WhatsApp-Empfehlungstext (global für alle Prämien) */}
+            <Card className="rounded-2xl shadow-sm border border-primary/10 bg-primary/[0.03]">
+              <CardHeader className="pb-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center"><MessageSquare className="h-5 w-5 text-primary" /></div>
+                  <div>
+                    <CardTitle className="text-lg font-semibold">WhatsApp-Empfehlungstext</CardTitle>
+                    <CardDescription>Wird beim Einladen über WhatsApp verwendet</CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="rounded-xl bg-background border border-border/40 p-3 text-sm text-muted-foreground leading-relaxed">
+                  <span className="font-semibold text-foreground">Aktuelle Vorschau: </span>
+                  Yo, bei <span className="font-semibold text-foreground">{merchantDisplayName || 'deinem Geschäft'}</span> gibt's beim ersten Check-in {whatsappText || '<dein Text>'} {whatsappEmoji || '🎁'} App laden, einchecken, fertig: <span className="text-primary">https://eloyo.de/i/…</span>
+                </div>
+                <div className="flex gap-2 items-start">
+                  <Popover open={whatsappEmojiPicker} onOpenChange={setWhatsappEmojiPicker}>
+                    <PopoverTrigger asChild>
+                      <Button type="button" variant="outline" className="rounded-xl h-10 w-12 text-xl shrink-0 px-0">
+                        {whatsappEmoji || '🎁'}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-72 p-2" align="start" onWheel={(e) => e.stopPropagation()}>
+                      <div
+                        className="grid grid-cols-8 gap-1 max-h-56 overflow-y-auto overscroll-contain"
+                        style={{ WebkitOverflowScrolling: 'touch' }}
+                        onWheel={(e) => { e.currentTarget.scrollTop += e.deltaY; e.stopPropagation(); }}
+                      >
+                        {REWARD_MARKETING_EMOJIS.map((emoji, i) => (
+                          <button
+                            key={`${emoji}-${i}`}
+                            type="button"
+                            onClick={() => { setWhatsappEmoji(emoji); setWhatsappEmojiPicker(false); }}
+                            className="h-8 w-8 flex items-center justify-center rounded hover:bg-muted text-lg cursor-pointer transition-colors"
+                          >
+                            {emoji}
+                          </button>
+                        ))}
+                      </div>
+                    </PopoverContent>
+                  </Popover>
+                  <Input
+                    value={whatsappText}
+                    onChange={e => setWhatsappText(e.target.value)}
+                    placeholder="z.B. ein gratis Softgetränk"
+                    className="rounded-xl"
+                  />
+                </div>
+                {whatsappDirty && (
+                  <div className="flex justify-end">
+                    <Button
+                      onClick={handleSaveWhatsappText}
+                      disabled={savingWhatsapp}
+                      className="rounded-xl gap-2 animate-pulse shadow-lg shadow-primary/30"
+                    >
+                      {savingWhatsapp ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                      Speichern
+                    </Button>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
 
-            {/* Sprung zur Live-Vorschau in Mein Geschäft → System */}
+
             <Card className="rounded-2xl shadow-sm border-0 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent">
               <CardContent className="p-6 flex flex-col items-center text-center gap-3">
                 <div className="w-12 h-12 rounded-2xl bg-primary/15 flex items-center justify-center">
