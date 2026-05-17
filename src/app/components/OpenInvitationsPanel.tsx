@@ -4,6 +4,16 @@ import { Gift, Clock, X } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 interface OpenInvitation {
   invitation_id: string;
@@ -30,6 +40,7 @@ export function OpenInvitationsPanel() {
   const [items, setItems] = useState<OpenInvitation[]>([]);
   const [loading, setLoading] = useState(true);
   const [removingId, setRemovingId] = useState<string | null>(null);
+  const [pendingRemove, setPendingRemove] = useState<OpenInvitation | null>(null);
 
   useEffect(() => {
     if (!user) return;
@@ -133,8 +144,7 @@ export function OpenInvitationsPanel() {
     }
   };
 
-  const handleRemove = async (e: React.MouseEvent, item: OpenInvitation) => {
-    e.stopPropagation();
+  const handleRemove = async (item: OpenInvitation) => {
     if (removingId) return;
     setRemovingId(item.redemption_id);
     // Optimistic UI
@@ -151,6 +161,7 @@ export function OpenInvitationsPanel() {
       void load();
     } finally {
       setRemovingId(null);
+      setPendingRemove(null);
     }
   };
 
