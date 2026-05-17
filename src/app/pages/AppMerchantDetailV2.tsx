@@ -409,6 +409,7 @@ export const AppMerchantDetailV2 = () => {
 
   const [activatedReward, setActivatedReward] = useState<MockReward | null>(null);
   const [tappedReward, setTappedReward] = useState<MockReward | null>(null);
+  const [tappedRewardActivatable, setTappedRewardActivatable] = useState(true);
   const [redemptionScreen, setRedemptionScreen] = useState<MockReward | null>(null);
   const [boostFlash, setBoostFlash] = useState(false);
   const [boostInfoOpen, setBoostInfoOpen] = useState(false);
@@ -744,10 +745,8 @@ export const AppMerchantDetailV2 = () => {
     // ODER beim direkt nächsten Check-in (currentVisit + 1).
     const isPastOrCurrent = reward.visitNumber <= currentVisit;
     const isNextCheckIn = reward.visitNumber === currentVisit + 1;
-    if (!isPastOrCurrent && !isNextCheckIn) {
-      toast.info('Diese Prämie kannst du erst aktivieren, wenn du dem Check-in näher bist.');
-      return;
-    }
+    const activatable = isPastOrCurrent || isNextCheckIn;
+    setTappedRewardActivatable(activatable);
     setTappedReward(reward);
   };
 
@@ -1525,22 +1524,39 @@ export const AppMerchantDetailV2 = () => {
               {tappedReward.description}
             </p>
           )}
-          <p className="text-sm text-neutral-500 dark:text-neutral-400 mb-5">
-            Beim nächsten Check-in einlösen?
-          </p>
-          <Button
-            onClick={activateRewardForNextCheckIn}
-            className="w-full text-white"
-            style={{ background: BRAND }}
-          >
-            Aktivieren
-          </Button>
-          <button
-            onClick={() => setTappedReward(null)}
-            className="mt-3 text-sm text-neutral-500"
-          >
-            Abbrechen
-          </button>
+          {tappedRewardActivatable ? (
+            <>
+              <p className="text-sm text-neutral-500 dark:text-neutral-400 mb-5">
+                Beim nächsten Check-in einlösen?
+              </p>
+              <Button
+                onClick={activateRewardForNextCheckIn}
+                className="w-full text-white"
+                style={{ background: BRAND }}
+              >
+                Aktivieren
+              </Button>
+              <button
+                onClick={() => setTappedReward(null)}
+                className="mt-3 text-sm text-neutral-500"
+              >
+                Abbrechen
+              </button>
+            </>
+          ) : (
+            <>
+              <p className="text-sm text-neutral-500 dark:text-neutral-400 mb-5">
+                Du kannst diese Prämie erst aktivieren, wenn du dem Check-in näher bist.
+              </p>
+              <Button
+                onClick={() => setTappedReward(null)}
+                className="w-full text-white"
+                style={{ background: BRAND }}
+              >
+                Verstanden
+              </Button>
+            </>
+          )}
         </DialogContent>
       </Dialog>
 
