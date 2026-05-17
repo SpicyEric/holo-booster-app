@@ -6,7 +6,7 @@ import { Gift, Sparkles, Info, Clock, MessageSquare, X } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { getDeviceFingerprint } from '@/lib/deviceFingerprint';
-import { clearPendingInvite, getPendingInviteCode, isInviteConsumed, markInviteConsumed, storePendingInvite } from '@/app/lib/pendingInvite';
+import { clearPendingInvite, getPendingInviteCode, storePendingInvite } from '@/app/lib/pendingInvite';
 
 type IneligibleReason =
   | { kind: 'already_customer'; merchant_customer_id: string; merchant_name: string; logo_url: string | null; cover_image_url: string | null }
@@ -77,12 +77,8 @@ export function PendingInviteDialog() {
   }, [preview?.share_code, accepted?.share_code]);
 
   const loadPreview = async (code: string) => {
-    // Bereits angenommene/abgelehnte Einladungen niemals erneut als Preview anzeigen
-    if (isInviteConsumed(code)) {
-      clearPendingInvite();
-      return;
-    }
-
+    setAccepted(null);
+    setIneligible(null);
     try {
       const { data, error } = await supabase.rpc('lookup_invitation', { p_share_code: code });
       if (error) throw error;
@@ -97,7 +93,6 @@ export function PendingInviteDialog() {
       };
       if (!result.success) {
         console.info('[PendingInviteDialog] lookup_invitation not successful:', result.error);
-        markInviteConsumed(code);
         clearPendingInvite();
         return;
       }
@@ -115,7 +110,6 @@ export function PendingInviteDialog() {
 
         if (existingAccount && existingAccount.current_points_balance > 0) {
           console.info('[PendingInviteDialog] user is already customer of merchant — showing info');
-          markInviteConsumed(code);
           clearPendingInvite();
           setIneligible({
             kind: 'already_customer',
@@ -139,7 +133,6 @@ export function PendingInviteDialog() {
 
         if (existingRedemption) {
           console.info('[PendingInviteDialog] user already has open redemption — showing info');
-          markInviteConsumed(code);
           clearPendingInvite();
           // 7-Tage-Fenster ab bonus_window_starts_at
           const startsAt = (existingRedemption as { bonus_window_starts_at?: string | null }).bonus_window_starts_at;
@@ -170,7 +163,6 @@ export function PendingInviteDialog() {
       setOpen(true);
     } catch (err) {
       console.error('lookup_invitation Fehler:', err);
-      markInviteConsumed(code);
       clearPendingInvite();
     }
   };
@@ -224,8 +216,6 @@ export function PendingInviteDialog() {
 
       console.log('[consume_invitation] PARSED RESULT', result);
 
-      // Egal ob neu angenommen oder bereits angenommen: nicht nochmal zeigen
-      markInviteConsumed(preview.share_code);
       clearPendingInvite();
       if (!result.success) {
         console.warn('[consume_invitation] FAILED:', result.error, '(code:', result.error_code, ')');
@@ -313,7 +303,7 @@ export function PendingInviteDialog() {
 
     return (
       <Dialog open={open} onOpenChange={(o) => { if (!o) closeDialog(); }}>
-        <DialogContent className="max-w-[340px] rounded-3xl p-0 gap-0 overflow-hidden border-0">
+        <DialogContent className="max-w-[340px] rounded-3xl p-0 gap-0 overflow-hidden border-0 [&>button]:hidden">
           <div
             className="h-32 bg-gradient-to-br from-muted to-muted/60"
             style={
@@ -345,7 +335,7 @@ export function PendingInviteDialog() {
                   Du sammelst schon bei <span className="text-primary">{ineligible.merchant_name}</span>
                 </h2>
                 <p className="text-sm text-muted-foreground leading-relaxed mb-5">
-                  Da du dort bereits Punkte gesammelt hast, kannst du nicht als Neukunde
+                  Da du dort bereits einen Check-in gesammelt hast, kannst du nicht als Neukunde
                   eingeladen werden. Der Willkommensbonus gilt nur für die erste Einladung.
                 </p>
               </>
@@ -359,9 +349,9 @@ export function PendingInviteDialog() {
                   Du bist schon zu <span className="text-primary">{ineligible.merchant_name}</span> eingeladen
                 </h2>
                 <p className="text-sm text-muted-foreground leading-relaxed mb-5">
-                  Eine andere Person hat dich bereits eingeladen. Sammle innerhalb der nächsten{' '}
+                  Eine andere Person hat dich bereits eingeladen. Sammel innerhalb der nächsten{' '}
                   <span className="font-semibold text-foreground">{daysLeft} {daysLeft === 1 ? 'Tag' : 'Tage'}</span>{' '}
-                  deine ersten Punkte, um den Bonus zu erhalten.
+                  deinen ersten Check-in, um den Bonus zu erhalten.
                   Eine neue Einladung ist erst möglich, wenn diese abgelaufen ist.
                 </p>
               </>
@@ -390,7 +380,7 @@ export function PendingInviteDialog() {
   if (accepted) {
     return (
       <Dialog open={open} onOpenChange={(o) => { if (!o) closeDialog(); }}>
-        <DialogContent className="max-w-[340px] rounded-3xl p-0 gap-0 overflow-hidden border-0">
+        <DialogContent className="max-w-[340px] rounded-3xl p-0 gap-0 overflow-hidden border-0 [&>button]:hidden">
           <button
             type="button"
             onClick={closeDialog}
@@ -424,7 +414,7 @@ export function PendingInviteDialog() {
 
   return (
     <Dialog open={open} onOpenChange={(o) => { if (!o) closeDialog(); }}>
-      <DialogContent className="max-w-[340px] rounded-3xl p-0 gap-0 overflow-hidden border-0">
+      <DialogContent className="max-w-[340px] rounded-3xl p-0 gap-0 overflow-hidden border-0 [&>button]:hidden">
         <div
           className="h-32 bg-gradient-to-br from-primary to-primary/60"
           style={
@@ -453,12 +443,12 @@ export function PendingInviteDialog() {
             Willkommen bei <span className="text-primary">{display.merchant_name}</span> 🎉
           </h2>
           <p className="text-sm text-muted-foreground leading-relaxed mb-4">
-            Sammle deine ersten Punkte bei diesem Geschäft und erhalte deinen{' '}
+            Sammel deinen ersten Check-in bei diesem Geschäft und erhalte deinen{' '}
             <span className="font-semibold text-foreground">Willkommensbonus</span>.
           </p>
           <div className="rounded-xl bg-primary/10 px-3 py-2.5 mb-5">
             <div className="text-xs text-muted-foreground">Dein Willkommensbonus</div>
-            <div className="text-base font-bold text-primary">Doppelte Punkte für deinen ersten Check-in</div>
+            <div className="text-base font-bold text-primary">Dein erster Check-in zählt doppelt</div>
           </div>
 
           <div className="space-y-2">

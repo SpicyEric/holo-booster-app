@@ -4,6 +4,16 @@ import { Gift, Clock, X } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 interface OpenInvitation {
   invitation_id: string;
@@ -30,6 +40,7 @@ export function OpenInvitationsPanel() {
   const [items, setItems] = useState<OpenInvitation[]>([]);
   const [loading, setLoading] = useState(true);
   const [removingId, setRemovingId] = useState<string | null>(null);
+  const [pendingRemove, setPendingRemove] = useState<OpenInvitation | null>(null);
 
   useEffect(() => {
     if (!user) return;
@@ -133,8 +144,7 @@ export function OpenInvitationsPanel() {
     }
   };
 
-  const handleRemove = async (e: React.MouseEvent, item: OpenInvitation) => {
-    e.stopPropagation();
+  const handleRemove = async (item: OpenInvitation) => {
     if (removingId) return;
     setRemovingId(item.redemption_id);
     // Optimistic UI
@@ -151,12 +161,14 @@ export function OpenInvitationsPanel() {
       void load();
     } finally {
       setRemovingId(null);
+      setPendingRemove(null);
     }
   };
 
   if (loading || items.length === 0) return null;
 
   return (
+    <>
     <div className="mt-2">
       <h3 className="text-sm font-semibold text-foreground mb-2 px-1">
         Offene Einladungen
@@ -194,7 +206,10 @@ export function OpenInvitationsPanel() {
               <button
                 type="button"
                 aria-label="Einladung entfernen"
-                onClick={(e) => handleRemove(e, item)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setPendingRemove(item);
+                }}
                 disabled={removingId === item.redemption_id}
                 className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-muted-foreground hover:bg-foreground/10 hover:text-foreground transition-colors disabled:opacity-50"
               >
@@ -205,6 +220,26 @@ export function OpenInvitationsPanel() {
         })}
       </div>
     </div>
+    <AlertDialog open={!!pendingRemove} onOpenChange={(open) => { if (!open) setPendingRemove(null); }}>
+      <AlertDialogContent className="max-w-[340px] rounded-3xl">
+        <AlertDialogHeader>
+          <AlertDialogTitle>Einladung ablehnen?</AlertDialogTitle>
+          <AlertDialogDescription>
+            Wenn du die Einladung zu {pendingRemove?.merchant_name ?? 'diesem Geschäft'} ablehnst, erhältst du den Willkommensbonus für diese Einladung nicht mehr.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel className="rounded-xl">Abbrechen</AlertDialogCancel>
+          <AlertDialogAction
+            onClick={() => pendingRemove && void handleRemove(pendingRemove)}
+            className="rounded-xl bg-destructive text-destructive-foreground hover:bg-destructive/90"
+          >
+            Ablehnen
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+    </>
   );
 }
 
