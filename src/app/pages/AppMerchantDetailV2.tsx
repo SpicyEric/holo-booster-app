@@ -951,10 +951,13 @@ export const AppMerchantDetailV2 = () => {
           >
             <ArrowLeft className="w-5 h-5" style={{ color: BRAND }} />
           </button>
-          <div className="flex-1 min-w-0">
+          <button
+            className="flex-1 min-w-0 text-left"
+            onClick={() => setMerchantInfoOpen(true)}
+          >
             <h1 className="text-lg font-bold text-neutral-900 dark:text-neutral-100 truncate">{merchantInfo.name}</h1>
             <p className="text-xs font-medium" style={{ color: BRAND }}>Dein Treuepass</p>
-          </div>
+          </button>
           <button
             type="button"
             onClick={() => setHistoryOpen(true)}
