@@ -74,7 +74,7 @@ import AppSuggestShop from "./app/pages/AppSuggestShop";
 import AppSupport from "./app/pages/AppSupport";
 import AppTerms from "./app/pages/AppTerms";
 import AppPrivacy from "./app/pages/AppPrivacy";
-import AppMyCards from "./app/pages/AppMyCards";
+import AppHowItWorks from "./app/pages/AppHowItWorks";
 import AppVerifyEmail from "./app/pages/AppVerifyEmail";
 import AppRewards from "./app/pages/AppRewards";
 import AppMessageDetail from "./app/pages/AppMessageDetail";
