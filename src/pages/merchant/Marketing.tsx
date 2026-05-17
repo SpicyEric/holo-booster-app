@@ -92,6 +92,12 @@ const Marketing = () => {
   const [editingReward, setEditingReward] = useState<Reward | null>(null);
   const [rewardForm, setRewardForm] = useState({ title: '', description: '', points_required: 10, image_url: '', marketing_text: '', marketing_emoji: '' });
   const [showRewardEmojiPicker, setShowRewardEmojiPicker] = useState(false);
+  // WhatsApp-Empfehlungstext (global, gespeichert auf allen Prämien)
+  const [whatsappText, setWhatsappText] = useState('');
+  const [whatsappEmoji, setWhatsappEmoji] = useState('🎁');
+  const [whatsappInitial, setWhatsappInitial] = useState({ text: '', emoji: '🎁' });
+  const [whatsappEmojiPicker, setWhatsappEmojiPicker] = useState(false);
+  const [savingWhatsapp, setSavingWhatsapp] = useState(false);
   const [uploadingRewardImage, setUploadingRewardImage] = useState(false);
   const [newCustomerOffer, setNewCustomerOffer] = useState<NewCustomerOffer | null>(null);
   const [showNcoDialog, setShowNcoDialog] = useState(false);
@@ -178,6 +184,34 @@ const Marketing = () => {
   }, [birthdayEnabled, birthdayMessage, birthdayBonusPoints, birthdayGiftType, birthdayOfferTitle, birthdayOfferDescription, winbackEnabled, winbackMessage, winbackInactivityDays, winbackGiftType, winbackBonusPoints, winbackOfferTitle, winbackOfferDescription]);
 
   useEffect(() => { loadData(); }, []);
+
+  // Sync WhatsApp-Empfehlungstext aus erster Prämie mit Inhalt
+  useEffect(() => {
+    const src = rewards.find(r => r.marketing_text) || rewards[0];
+    const text = src?.marketing_text || '';
+    const emoji = src?.marketing_emoji || '🎁';
+    setWhatsappText(text);
+    setWhatsappEmoji(emoji);
+    setWhatsappInitial({ text, emoji });
+  }, [rewards]);
+
+  const whatsappDirty = whatsappText !== whatsappInitial.text || whatsappEmoji !== whatsappInitial.emoji;
+
+  const handleSaveWhatsappText = async () => {
+    if (!customerId || rewards.length === 0) { toast.error('Bitte zuerst eine Prämie erstellen'); return; }
+    setSavingWhatsapp(true);
+    try {
+      const { error } = await supabase
+        .from('rewards')
+        .update({ marketing_text: whatsappText || null, marketing_emoji: whatsappEmoji || null })
+        .eq('merchant_customer_id', customerId);
+      if (error) throw error;
+      setWhatsappInitial({ text: whatsappText, emoji: whatsappEmoji });
+      toast.success('WhatsApp-Empfehlungstext gespeichert');
+      loadData();
+    } catch { toast.error('Speichern fehlgeschlagen'); }
+    finally { setSavingWhatsapp(false); }
+  };
 
   // Sync activeTab from ?tab= URL parameter (Sidebar Sub-Items)
   useEffect(() => {
@@ -524,7 +558,7 @@ const Marketing = () => {
     }
     setSaving(true);
     try {
-      const payload = { title: rewardForm.title, description: rewardForm.description || null, points_required: rewardForm.points_required, image_url: rewardForm.image_url || null, marketing_text: rewardForm.marketing_text || null, marketing_emoji: rewardForm.marketing_emoji || null };
+      const payload = { title: rewardForm.title, description: rewardForm.description || null, points_required: rewardForm.points_required, image_url: rewardForm.image_url || null, marketing_text: (rewardForm.marketing_text || whatsappInitial.text) || null, marketing_emoji: (rewardForm.marketing_emoji || whatsappInitial.emoji) || null };
       if (editingReward) {
         const { error } = await supabase.from("rewards").update(payload).eq("id", editingReward.id);
         if (error) throw error; toast.success("Prämie aktualisiert");
@@ -692,8 +726,71 @@ const Marketing = () => {
               </CardContent>
             </Card>
 
+            {/* WhatsApp-Empfehlungstext (global für alle Prämien) */}
+            <Card className="rounded-2xl shadow-sm border border-primary/10 bg-primary/[0.03]">
+              <CardHeader className="pb-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center"><MessageSquare className="h-5 w-5 text-primary" /></div>
+                  <div>
+                    <CardTitle className="text-lg font-semibold">WhatsApp-Empfehlungstext</CardTitle>
+                    <CardDescription>Wird beim Einladen über WhatsApp verwendet</CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="rounded-xl bg-background border border-border/40 p-3 text-sm text-muted-foreground leading-relaxed">
+                  <span className="font-semibold text-foreground">Aktuelle Vorschau: </span>
+                  Yo, bei <span className="font-semibold text-foreground">{merchantDisplayName || 'deinem Geschäft'}</span> gibt's beim ersten Check-in {whatsappText || '<dein Text>'} {whatsappEmoji || '🎁'} App laden, einchecken, fertig: <span className="text-primary">https://eloyo.de/i/…</span>
+                </div>
+                <div className="flex gap-2 items-start">
+                  <Popover open={whatsappEmojiPicker} onOpenChange={setWhatsappEmojiPicker}>
+                    <PopoverTrigger asChild>
+                      <Button type="button" variant="outline" className="rounded-xl h-10 w-12 text-xl shrink-0 px-0">
+                        {whatsappEmoji || '🎁'}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-72 p-2" align="start" onWheel={(e) => e.stopPropagation()}>
+                      <div
+                        className="grid grid-cols-8 gap-1 max-h-56 overflow-y-auto overscroll-contain"
+                        style={{ WebkitOverflowScrolling: 'touch' }}
+                        onWheel={(e) => { e.currentTarget.scrollTop += e.deltaY; e.stopPropagation(); }}
+                      >
+                        {REWARD_MARKETING_EMOJIS.map((emoji, i) => (
+                          <button
+                            key={`${emoji}-${i}`}
+                            type="button"
+                            onClick={() => { setWhatsappEmoji(emoji); setWhatsappEmojiPicker(false); }}
+                            className="h-8 w-8 flex items-center justify-center rounded hover:bg-muted text-lg cursor-pointer transition-colors"
+                          >
+                            {emoji}
+                          </button>
+                        ))}
+                      </div>
+                    </PopoverContent>
+                  </Popover>
+                  <Input
+                    value={whatsappText}
+                    onChange={e => setWhatsappText(e.target.value)}
+                    placeholder="z.B. ein gratis Softgetränk"
+                    className="rounded-xl"
+                  />
+                </div>
+                {whatsappDirty && (
+                  <div className="flex justify-end">
+                    <Button
+                      onClick={handleSaveWhatsappText}
+                      disabled={savingWhatsapp}
+                      className="rounded-xl gap-2 animate-pulse shadow-lg shadow-primary/30"
+                    >
+                      {savingWhatsapp ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                      Speichern
+                    </Button>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
 
-            {/* Sprung zur Live-Vorschau in Mein Geschäft → System */}
+
             <Card className="rounded-2xl shadow-sm border-0 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent">
               <CardContent className="p-6 flex flex-col items-center text-center gap-3">
                 <div className="w-12 h-12 rounded-2xl bg-primary/15 flex items-center justify-center">
@@ -1378,77 +1475,6 @@ const Marketing = () => {
                   {rewardForm.image_url ? <img src={rewardForm.image_url} alt="Preview" className="w-16 h-16 object-cover mx-auto rounded-lg" /> : <span className="text-sm text-muted-foreground">{uploadingRewardImage ? 'Hochladen...' : 'Bild hochladen'}</span>}
                 </label>
               </div>
-              <div className="space-y-2 rounded-xl border border-border/60 bg-muted/30 p-3">
-                <div className="flex items-center justify-between gap-2">
-                  <Label className="text-sm">WhatsApp-Empfehlungs-Text</Label>
-                  <span className="text-[10px] font-semibold uppercase tracking-wide text-primary bg-primary/10 px-2 py-0.5 rounded-full">Nur für erste Prämie wichtig</span>
-                </div>
-                <p className="text-xs text-muted-foreground -mt-1">
-                  Wird beim Einladen über WhatsApp verwendet. Beispiel: <span className="italic">„ein gratis Softgetränk“</span>.
-                </p>
-                <div className="flex gap-2 items-start">
-                  <Popover open={showRewardEmojiPicker} onOpenChange={setShowRewardEmojiPicker}>
-                    <PopoverTrigger asChild>
-                      <Button type="button" variant="outline" className="rounded-xl h-10 w-12 text-xl shrink-0 px-0">
-                        {rewardForm.marketing_emoji || '🎁'}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-72 p-2" align="start" onWheel={(e) => e.stopPropagation()}>
-                      <div
-                        className="grid grid-cols-8 gap-1 max-h-56 overflow-y-auto overscroll-contain"
-                        style={{ WebkitOverflowScrolling: 'touch' }}
-                        onWheel={(e) => {
-                          e.currentTarget.scrollTop += e.deltaY;
-                          e.stopPropagation();
-                        }}
-                      >
-                        {REWARD_MARKETING_EMOJIS.map((emoji, i) => (
-                          <button
-                            key={`${emoji}-${i}`}
-                            type="button"
-                            onClick={() => { setRewardForm({ ...rewardForm, marketing_emoji: emoji }); setShowRewardEmojiPicker(false); }}
-                            className="h-8 w-8 flex items-center justify-center rounded hover:bg-muted text-lg cursor-pointer transition-colors"
-                          >
-                            {emoji}
-                          </button>
-                        ))}
-                      </div>
-                    </PopoverContent>
-                  </Popover>
-                  <Input
-                    value={rewardForm.marketing_text}
-                    onChange={e => setRewardForm({ ...rewardForm, marketing_text: e.target.value })}
-                    placeholder="z.B. ein gratis Softgetränk"
-                    className="rounded-xl"
-                  />
-                </div>
-                <div className="rounded-lg bg-background border border-border/40 p-2.5 text-xs text-muted-foreground leading-relaxed">
-                  <span className="font-semibold text-foreground">Vorschau: </span>
-                  Yo, bei <span className="font-semibold text-foreground">{merchantDisplayName || 'deinem Geschäft'}</span> gibt's beim ersten Check-in {rewardForm.marketing_text || '<dein Text>'} {rewardForm.marketing_emoji || '🎁'} App laden, einchecken, fertig: <span className="text-primary">https://eloyo.de/i/…</span>
-                </div>
-              </div>
-            </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setShowRewardDialog(false)} className="rounded-xl">Abbrechen</Button>
-              <Button onClick={handleSaveReward} disabled={saving || !rewardForm.title} className="rounded-xl">{saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}{editingReward ? 'Aktualisieren' : 'Erstellen'}</Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-
-        {/* NCO Dialog */}
-        <Dialog open={showNcoDialog} onOpenChange={setShowNcoDialog}>
-          <DialogContent className="max-w-lg rounded-2xl">
-            <DialogHeader>
-              <DialogTitle>{newCustomerOffer ? 'Neukundenprämie bearbeiten' : 'Neukundenprämie erstellen'}</DialogTitle>
-              <DialogDescription>Ein Willkommensbonus für neue Kunden</DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2">
-              <div className="p-4 bg-primary/5 rounded-xl border border-primary/10 text-sm text-muted-foreground space-y-2">
-                <p className="font-medium text-foreground">💡 So funktioniert die Neukundenprämie</p>
-                <p>Die Neukundenprämie ist ein <strong>persönliches Sachangebot</strong> deines Geschäfts – z.&nbsp;B. eine Shampooprobe im Friseursalon, eine kleine Portion Pommes oder ein gratis Ayran beim Döner.</p>
-                <p>Sobald ein Kunde zum ersten Mal bei dir Punkte sammelt, wird die Prämie automatisch freigeschaltet. Der Kunde zeigt dir den Bestätigungs-Bildschirm an der Kasse.</p>
-              </div>
-
               <div>
                 <Label>Titel *</Label>
                 <Input value={ncoForm.title} onChange={e => setNcoForm({ ...ncoForm, title: e.target.value })} placeholder="z.B. Gratis Shampooprobe / Kleine Pommes / Ayran gratis" className="rounded-xl mt-1" />
