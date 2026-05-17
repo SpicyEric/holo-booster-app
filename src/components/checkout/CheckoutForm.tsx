@@ -452,20 +452,6 @@ export default function CheckoutForm({ backPath, backLabel, partnerUserId, prefi
         </CardContent>
       </Card>
 
-      {/* Additional Contacts */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base">Zusätzliche Ansprechpartner <span className="text-muted-foreground text-xs font-normal">(optional)</span></CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Textarea
-            value={additionalContacts}
-            onChange={e => setAdditionalContacts(e.target.value)}
-            placeholder="z.B. Lisa Müller, Tel: +49 171 ..., E-Mail: lisa@firma.de"
-            rows={3}
-          />
-        </CardContent>
-      </Card>
 
 
       {/* Promo codes - subtle single line */}
