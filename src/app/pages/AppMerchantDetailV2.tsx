@@ -270,6 +270,11 @@ export const AppMerchantDetailV2 = () => {
   });
   const currentVisit = checkIns[checkIns.length - 1]?.visit ?? 0;
 
+  // Roh-Transaktionen (für History-Modal mit Zeitstempeln je Eintrag).
+  type RawTx = { transaction_type: string; description: string | null; created_at: string };
+  const [historyTx, setHistoryTx] = useState<RawTx[]>([]);
+  const [historyOpen, setHistoryOpen] = useState(false);
+
   const [redeemedVisits, setRedeemedVisits] = useState<number[]>(() => {
     if (typeof window === 'undefined') return defaultRedeemed;
     try {
