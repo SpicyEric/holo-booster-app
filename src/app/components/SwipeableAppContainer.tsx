@@ -627,22 +627,8 @@ const AppMessagesContent = () => {
     }
   }, [location.pathname]);
 
-  const checkVerification = async () => {
-    if (!user) return;
-    const { data } = await supabase.from('profiles').select('email_verified').eq('user_id', user.id).maybeSingle();
-    setEmailVerified(data?.email_verified === true);
-  };
 
-  // Re-check email verification when app comes back to foreground (e.g. after clicking verify link)
-  useEffect(() => {
-    const handleVisibility = () => {
-      if (document.visibilityState === 'visible' && user) {
-        checkVerification();
-      }
-    };
-    document.addEventListener('visibilitychange', handleVisibility);
-    return () => document.removeEventListener('visibilitychange', handleVisibility);
-  }, [user]);
+
 
 
 
