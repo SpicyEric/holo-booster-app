@@ -614,12 +614,9 @@ const AppMessagesContent = () => {
   const location = useLocation();
   const [messages, setMessages] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [emailVerified, setEmailVerified] = useState(true);
-
   useEffect(() => {
     if (user) {
       loadMessages();
-      checkVerification();
     }
   }, [user]);
 
@@ -630,22 +627,8 @@ const AppMessagesContent = () => {
     }
   }, [location.pathname]);
 
-  const checkVerification = async () => {
-    if (!user) return;
-    const { data } = await supabase.from('profiles').select('email_verified').eq('user_id', user.id).maybeSingle();
-    setEmailVerified(data?.email_verified === true);
-  };
 
-  // Re-check email verification when app comes back to foreground (e.g. after clicking verify link)
-  useEffect(() => {
-    const handleVisibility = () => {
-      if (document.visibilityState === 'visible' && user) {
-        checkVerification();
-      }
-    };
-    document.addEventListener('visibilitychange', handleVisibility);
-    return () => document.removeEventListener('visibilitychange', handleVisibility);
-  }, [user]);
+
 
 
 
@@ -700,22 +683,7 @@ const AppMessagesContent = () => {
   return (
     <PullToRefresh onRefresh={handleRefresh}>
     <div className="space-y-4">
-      {/* Email verification banner */}
-      {!emailVerified && (
-        <Card className="p-4 border-0 bg-muted/70 dark:bg-muted/50">
-          <div className="flex items-start gap-3">
-            <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
-              <AlertCircle className="h-5 w-5 text-muted-foreground" />
-            </div>
-            <div className="flex-1">
-              <h3 className="font-semibold text-foreground">E-Mail bestätigen</h3>
-              <p className="text-sm text-muted-foreground mt-1">
-                Bitte bestätige deine E-Mail-Adresse, um Prämien einlösen zu können.
-              </p>
-            </div>
-          </div>
-        </Card>
-      )}
+
 
       {loading ? (
         <Card className="p-6"><p className="text-muted-foreground text-center">Lädt...</p></Card>
@@ -755,13 +723,11 @@ const AppMessagesContent = () => {
           ))}
         </div>
       ) : (
-        !emailVerified ? null : (
-          <Card className="p-8 text-center">
-            <Bell className="h-12 w-12 text-muted-foreground/50 mx-auto mb-4" />
-            <h3 className="font-semibold text-foreground mb-2">Keine Nachrichten</h3>
-            <p className="text-sm text-muted-foreground">Du hast noch keine Nachrichten erhalten.</p>
-          </Card>
-        )
+        <Card className="p-8 text-center">
+          <Bell className="h-12 w-12 text-muted-foreground/50 mx-auto mb-4" />
+          <h3 className="font-semibold text-foreground mb-2">Keine Nachrichten</h3>
+          <p className="text-sm text-muted-foreground">Du hast noch keine Nachrichten erhalten.</p>
+        </Card>
       )}
 
       {/* Offene Einladungen */}
