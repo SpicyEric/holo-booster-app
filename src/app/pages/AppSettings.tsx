@@ -303,9 +303,10 @@ export default function AppSettings() {
                   )}
                 </>
               ) : (
-                <div className="p-3 rounded-md bg-muted text-muted-foreground text-sm">
-                  Keine Handynummer hinterlegt
-                </div>
+                <Button variant="outline" className="w-full" onClick={openPhoneDialog}>
+                  <Smartphone className="h-4 w-4 mr-2" />
+                  Handynummer hinzufügen
+                </Button>
               )}
             </div>
 
