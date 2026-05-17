@@ -205,7 +205,6 @@ export default function CheckoutForm({ backPath, backLabel, partnerUserId, prefi
           industry,
           vatId,
           contactPhone,
-          additionalContacts,
           partnerUserId,
           salesRepDiscount: salesRepDiscount > 0 ? salesRepDiscount : undefined,
         },
