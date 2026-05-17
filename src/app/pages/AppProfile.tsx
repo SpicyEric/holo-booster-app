@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import {
   Receipt,
   User,
-  Store,
+  BookOpen,
   LogOut,
   ChevronRight,
   Lightbulb,
