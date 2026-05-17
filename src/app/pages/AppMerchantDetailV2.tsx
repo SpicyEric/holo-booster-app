@@ -2196,26 +2196,4 @@ function MerchantInfoSection({ info, brand }: { info: MerchantInfo; brand: strin
   );
 }
 
-      <Dialog open={merchantInfoOpen} onOpenChange={(o) => !o && setMerchantInfoOpen(false)}>
-        <DialogContent className="max-w-[340px] rounded-3xl p-0 overflow-hidden">
-          <div className="px-6 pt-6 pb-2">
-            <h2 className="text-lg font-bold text-neutral-900 dark:text-neutral-100">{merchantInfo.name}</h2>
-            <p className="text-xs text-neutral-500 dark:text-neutral-400">Dein Treuepass</p>
-          </div>
-          <MerchantInfoSection info={merchantInfo} brand={BRAND} />
-          <div className="px-6 py-4">
-            <Button
-              onClick={() => setMerchantInfoOpen(false)}
-              className="w-full text-white"
-              style={{ background: BRAND }}
-            >
-              Schließen
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
-    </div>
-  );
-}
-
 export default AppMerchantDetailV2;
