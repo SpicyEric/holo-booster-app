@@ -81,7 +81,7 @@ export async function maybeAwardReferralBonus(params: {
             : '';
           toast.success(`${rockets}${streak} +${boost} Boost-Check-in${boost === 1 ? '' : 's'}!${pendingNote}`, { duration: 5000 });
         } else {
-          toast.success(`🎉 Empfehlungs-Bonus: +${ref.invitee_points} Punkte!`, { duration: 5000 });
+          toast.success(`🎁 Bonus-Check-in durch Empfehlung!`, { duration: 5000 });
         }
       }
 

@@ -97,8 +97,8 @@ Deno.serve(async (req) => {
       sendPush(inviter_user_id, inviterTitle, inviterBody),
       sendPush(
         invitee_user_id,
-        `🎉 Willkommens-Bonus erhalten!`,
-        `Du hast bei ${merchantName} +${invitee_points} Bonuspunkte bekommen!`,
+        `🎁 Bonus-Check-in erhalten!`,
+        `Du hast bei ${merchantName} einen zusätzlichen Check-in als Willkommens-Bonus bekommen!`,
       ),
     ]);
 
