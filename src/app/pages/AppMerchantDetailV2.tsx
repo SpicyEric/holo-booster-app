@@ -745,10 +745,8 @@ export const AppMerchantDetailV2 = () => {
     // ODER beim direkt nächsten Check-in (currentVisit + 1).
     const isPastOrCurrent = reward.visitNumber <= currentVisit;
     const isNextCheckIn = reward.visitNumber === currentVisit + 1;
-    if (!isPastOrCurrent && !isNextCheckIn) {
-      toast.info('Diese Prämie kannst du erst aktivieren, wenn du dem Check-in näher bist.');
-      return;
-    }
+    const activatable = isPastOrCurrent || isNextCheckIn;
+    setTappedRewardActivatable(activatable);
     setTappedReward(reward);
   };
 
