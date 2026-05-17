@@ -430,8 +430,12 @@ export default function MerchantActivitySection({ customerId }: Props) {
                       kind === 'review' ? <Star className="w-4 h-4 text-yellow-500 fill-yellow-400" /> :
                       kind === 'referral' ? <TrendingUp className="w-4 h-4 text-emerald-600" /> :
                       <Check className="w-4 h-4 text-blue-600" strokeWidth={3} />;
+                    const rawDesc = tx.description || '';
+                    const codeMatch = rawDesc.match(/\(Code:\s*([A-Z0-9]+)\)\s*$/i);
+                    const verificationCode = codeMatch ? codeMatch[1] : null;
+                    const cleanedDesc = codeMatch ? rawDesc.replace(/\s*\(Code:\s*[A-Z0-9]+\)\s*$/i, '').trim() : rawDesc;
                     const title =
-                      kind === 'redemption' ? (tx.description || 'Prämie eingelöst') :
+                      kind === 'redemption' ? (cleanedDesc || 'Prämie eingelöst') :
                       kind === 'review' ? 'Google-Bewertungsbonus' :
                       kind === 'referral' ? 'Einladungsboost' :
                       'Check-in';
@@ -448,9 +452,16 @@ export default function MerchantActivitySection({ customerId }: Props) {
                           </div>
                           <div className="min-w-0">
                             <p className="text-sm font-medium text-foreground truncate">{title}</p>
-                            <p className="text-xs text-muted-foreground">
-                              {new Date(tx.created_at).toLocaleDateString("de-DE", { day:"2-digit", month:"2-digit", year:"numeric", hour:"2-digit", minute:"2-digit" })}
-                            </p>
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <p className="text-xs text-muted-foreground">
+                                {new Date(tx.created_at).toLocaleDateString("de-DE", { day:"2-digit", month:"2-digit", year:"numeric", hour:"2-digit", minute:"2-digit" })}
+                              </p>
+                              {verificationCode && (
+                                <span className="inline-flex items-center rounded-md border border-amber-300 bg-amber-50 px-1.5 py-0.5 text-[10px] font-bold tracking-[0.15em] text-amber-800 font-mono">
+                                  Code: {verificationCode}
+                                </span>
+                              )}
+                            </div>
                           </div>
                         </div>
                         {ordinalText && (
