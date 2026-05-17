@@ -208,7 +208,7 @@ export default function SalesRepVertrag() {
 
           <ContractSection title="E – Provisionsmodell">
             <p className="font-semibold">1. Direktprovision</p>
-            <p>Für jeden erfolgreich geworbenen Kunden erhält der Vertriebspartner eine einmalige Direktprovision in Höhe von 50,00 € netto. Die Auszahlung erfolgt 7 Tage nach bestätigtem Zahlungseingang des Neukunden.</p>
+            <p>Für jeden erfolgreich geworbenen Kunden erhält der Vertriebspartner eine einmalige Direktprovision in Höhe von 40,00 € netto. Die Auszahlung erfolgt 7 Tage nach bestätigtem Zahlungseingang des Neukunden.</p>
 
             <p className="font-semibold mt-3">2. Folgeprovision</p>
             <p>Solange ein geworbener Kunde aktiv bleibt und seinen Vertrag bei ELOYO aufrechterhält, erhält der Vertriebspartner eine monatliche Folgeprovision in Höhe von 12,00 € netto pro aktivem Kunden.</p>

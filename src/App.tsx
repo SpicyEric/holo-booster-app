@@ -49,6 +49,7 @@ import SalesRepProvisionen from "./pages/salesrep/SalesRepProvisionen";
 import SalesRepOrders from "./pages/salesrep/SalesRepOrders";
 import Academy from "./pages/shared/Academy";
 import SalesRepCheckout from "./pages/salesrep/SalesRepCheckout";
+import SalesRepHome from "./pages/salesrep/SalesRepHome";
 import SalesRepDemoAbschluss from "./pages/salesrep/SalesRepDemoAbschluss";
 
 import Scan from "./pages/Scan";
@@ -175,7 +176,7 @@ const App = () => {
 
               {/* Vertriebler Dashboard (role: partner/sales_partner) */}
               <Route path="/vertriebler" element={<SalesRepDashboard />}>
-                <Route index element={<Overview />} />
+                <Route index element={<SalesRepHome />} />
                 <Route path="provisionen" element={<SalesRepProvisionen />} />
                 <Route path="customers" element={<Customers />} />
                 <Route path="customers/new" element={<CustomerNew />} />
