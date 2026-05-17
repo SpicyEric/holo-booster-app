@@ -558,7 +558,7 @@ const Marketing = () => {
     }
     setSaving(true);
     try {
-      const payload = { title: rewardForm.title, description: rewardForm.description || null, points_required: rewardForm.points_required, image_url: rewardForm.image_url || null, marketing_text: rewardForm.marketing_text || null, marketing_emoji: rewardForm.marketing_emoji || null };
+      const payload = { title: rewardForm.title, description: rewardForm.description || null, points_required: rewardForm.points_required, image_url: rewardForm.image_url || null, marketing_text: (rewardForm.marketing_text || whatsappInitial.text) || null, marketing_emoji: (rewardForm.marketing_emoji || whatsappInitial.emoji) || null };
       if (editingReward) {
         const { error } = await supabase.from("rewards").update(payload).eq("id", editingReward.id);
         if (error) throw error; toast.success("Prämie aktualisiert");
