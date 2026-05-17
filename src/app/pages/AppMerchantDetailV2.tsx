@@ -541,9 +541,11 @@ export const AppMerchantDetailV2 = () => {
   const [showJumpToNow, setShowJumpToNow] = useState(false);
 
   // ================= Sichtbares Fenster =================
-  // Vom ersten Check-in bis 50 Check-ins in die Zukunft (gesamter Pass-Zyklus)
+  // Immer von Check-in 1 bis 50 Check-ins in die Zukunft – Prämien wiederholen
+  // sich anhand der eingestellten Passlänge (z.B. passLength=10 → Check-in 11
+  // zeigt dieselbe Prämie wie Check-in 1).
   const windowStart = 1;
-  const windowEnd = Math.max(currentVisit + 5, passLength);
+  const windowEnd = Math.max(50, currentVisit + 50);
 
   const visibleNodes = useMemo(() => {
     const arr: number[] = [];
@@ -556,7 +558,22 @@ export const AppMerchantDetailV2 = () => {
   };
 
   const rewardForVisit = (v: number): MockReward | undefined => {
-    return rewards.find((r) => r.visitNumber === v);
+    // Direkte Belegung an dieser Visit-Nummer (innerhalb der ersten Passlänge)
+    const direct = rewards.find((r) => r.visitNumber === v);
+    if (direct) return direct;
+    // Wiederholungs-Logik: Prämien wiederholen sich mit Periode = passLength
+    if (passLength > 0 && v > passLength) {
+      const cycleVisit = ((v - 1) % passLength) + 1;
+      const base = rewards.find((r) => r.visitNumber === cycleVisit);
+      if (base) {
+        return {
+          ...base,
+          visitNumber: v,
+          redeemed: redeemedVisits.includes(v),
+        };
+      }
+    }
+    return undefined;
   };
 
   // ================= Effekte =================
