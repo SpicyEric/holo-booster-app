@@ -122,7 +122,17 @@ export function PendingInviteDialog() {
           .eq('merchant_customer_id', result.merchant_customer_id)
           .maybeSingle();
 
-        if (existingAccount && existingAccount.current_points_balance > 0) {
+        const { data: existingCheckIns } = existingAccount
+          ? await supabase
+              .from('point_transactions')
+              .select('id')
+              .eq('loyalty_account_id', existingAccount.id)
+              .eq('merchant_customer_id', result.merchant_customer_id)
+              .in('transaction_type', ['nfc_stamp', 'check_in', 'nfc_scan'])
+              .limit(1)
+          : { data: null };
+
+        if (existingCheckIns && existingCheckIns.length > 0) {
           if (handledInviteCodesRef.current.has(code)) {
             clearPendingInvite();
             return;
