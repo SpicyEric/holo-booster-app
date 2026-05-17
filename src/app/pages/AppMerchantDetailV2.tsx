@@ -1405,7 +1405,24 @@ export const AppMerchantDetailV2 = () => {
                 className="shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold text-white"
                 style={{ background: BRAND }}
               >3</span>
-              <span><span className="font-semibold text-neutral-900 dark:text-neutral-100">Ihr beide</span> bekommt jeweils <span className="font-semibold text-neutral-900 dark:text-neutral-100">+1 Boost</span> auf eurem Treuepass.</span>
+              <span>
+                {(() => {
+                  const n = nextBoostPreview?.next_boost ?? 1;
+                  const prev = nextBoostPreview?.successful_referrals ?? 0;
+                  if (n >= 2) {
+                    return (
+                      <>
+                        Da das deine <span className="font-semibold text-neutral-900 dark:text-neutral-100">{prev + 1}. erfolgreiche Empfehlung</span> wird, bekommst <span className="font-semibold text-neutral-900 dark:text-neutral-100">du +{n} Boost{n === 1 ? '' : 's'}</span> auf deinem Treuepass. Dein Freund bekommt <span className="font-semibold text-neutral-900 dark:text-neutral-100">+1 Boost</span>.
+                      </>
+                    );
+                  }
+                  return (
+                    <>
+                      <span className="font-semibold text-neutral-900 dark:text-neutral-100">Ihr beide</span> bekommt jeweils <span className="font-semibold text-neutral-900 dark:text-neutral-100">+1 Boost</span> auf eurem Treuepass.
+                    </>
+                  );
+                })()}
+              </span>
             </li>
           </ol>
 
