@@ -20,6 +20,7 @@ import {
 } from '@/lib/activeMerchantReward';
 import { generateVerificationCode } from '@/lib/verificationCode';
 import { EyeOff } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 
 /**
  * Backstube König – Treuepass (V2 Prototype)
