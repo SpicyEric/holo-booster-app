@@ -344,7 +344,7 @@ export const AppAuth = () => {
             {mode === 'email-login' && (
               <motion.div key="email-login" initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -30 }} className="space-y-4">
                 <button
-                  onClick={() => setMode('choose')}
+                  onClick={() => setMode('phone')}
                   className="text-sm text-muted-foreground flex items-center gap-1 hover:text-foreground"
                 >
                   <ArrowLeft className="h-4 w-4" /> Zurück
