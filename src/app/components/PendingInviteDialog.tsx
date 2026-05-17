@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -39,6 +39,7 @@ interface PreviewData {
 export function PendingInviteDialog() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const handledInviteCodesRef = useRef<Set<string>>(new Set());
   const [open, setOpen] = useState(false);
   const [accepting, setAccepting] = useState(false);
   const [preview, setPreview] = useState<PreviewData | null>(null);
@@ -66,6 +67,10 @@ export function PendingInviteDialog() {
     const onNewInvite = (e: Event) => {
       const detail = (e as CustomEvent).detail as string | undefined;
       const c = detail ? storePendingInvite(detail) : getPendingInviteCode();
+      if (c && handledInviteCodesRef.current.has(c)) {
+        clearPendingInvite();
+        return;
+      }
       if (c) void loadPreview(c);
     };
     window.addEventListener('eloyo:pending-invite', onNewInvite);
@@ -77,6 +82,10 @@ export function PendingInviteDialog() {
   }, [preview?.share_code, accepted?.share_code]);
 
   const loadPreview = async (code: string) => {
+    if (handledInviteCodesRef.current.has(code)) {
+      clearPendingInvite();
+      return;
+    }
     setAccepted(null);
     setIneligible(null);
     try {
@@ -97,6 +106,11 @@ export function PendingInviteDialog() {
         return;
       }
 
+      if (handledInviteCodesRef.current.has(code)) {
+        clearPendingInvite();
+        return;
+      }
+
       // Wenn User eingeloggt ist: read-only Eligibility-Check, BEVOR der Dialog erscheint.
       // (Wir wollen NICHT consume_invitation aufrufen — das würde das 7-Tage-Fenster sofort starten.)
       if (user && result.merchant_customer_id) {
@@ -109,6 +123,10 @@ export function PendingInviteDialog() {
           .maybeSingle();
 
         if (existingAccount && existingAccount.current_points_balance > 0) {
+          if (handledInviteCodesRef.current.has(code)) {
+            clearPendingInvite();
+            return;
+          }
           console.info('[PendingInviteDialog] user is already customer of merchant — showing info');
           clearPendingInvite();
           setIneligible({
@@ -132,6 +150,10 @@ export function PendingInviteDialog() {
           .maybeSingle();
 
         if (existingRedemption) {
+          if (handledInviteCodesRef.current.has(code)) {
+            clearPendingInvite();
+            return;
+          }
           console.info('[PendingInviteDialog] user already has open redemption — showing info');
           clearPendingInvite();
           // 7-Tage-Fenster ab bonus_window_starts_at
@@ -150,6 +172,11 @@ export function PendingInviteDialog() {
           setOpen(true);
           return;
         }
+      }
+
+      if (handledInviteCodesRef.current.has(code)) {
+        clearPendingInvite();
+        return;
       }
 
       setPreview({
@@ -175,6 +202,7 @@ export function PendingInviteDialog() {
       navigate('/app/auth');
       return;
     }
+    handledInviteCodesRef.current.add(preview.share_code);
     setAccepting(true);
     try {
       const fp = getDeviceFingerprint();
@@ -297,10 +325,6 @@ export function PendingInviteDialog() {
 
   // ─── Render: Ineligible-Hinweis ────────────────────────────────
   if (ineligible) {
-    const daysLeft = ineligible.kind === 'already_invited' && ineligible.expires_at
-      ? Math.max(0, Math.ceil((new Date(ineligible.expires_at).getTime() - Date.now()) / (24 * 60 * 60 * 1000)))
-      : 0;
-
     return (
       <Dialog open={open} onOpenChange={(o) => { if (!o) closeDialog(); }}>
         <DialogContent className="max-w-[340px] rounded-3xl p-0 gap-0 overflow-hidden border-0 [&>button]:hidden">
@@ -349,10 +373,8 @@ export function PendingInviteDialog() {
                   Du bist schon zu <span className="text-primary">{ineligible.merchant_name}</span> eingeladen
                 </h2>
                 <p className="text-sm text-muted-foreground leading-relaxed mb-5">
-                  Eine andere Person hat dich bereits eingeladen. Sammel innerhalb der nächsten{' '}
-                  <span className="font-semibold text-foreground">{daysLeft} {daysLeft === 1 ? 'Tag' : 'Tage'}</span>{' '}
-                  deinen ersten Check-in, um den Bonus zu erhalten.
-                  Eine neue Einladung ist erst möglich, wenn diese abgelaufen ist.
+                  Du hast bereits eine offene Einladung bei diesem Geschäft. Du kannst keine zweite
+                  Einladung für dieses Geschäft annehmen.
                 </p>
               </>
             )}
