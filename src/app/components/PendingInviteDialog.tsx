@@ -414,7 +414,7 @@ export function PendingInviteDialog() {
 
   return (
     <Dialog open={open} onOpenChange={(o) => { if (!o) closeDialog(); }}>
-      <DialogContent className="max-w-[340px] rounded-3xl p-0 gap-0 overflow-hidden border-0">
+      <DialogContent className="max-w-[340px] rounded-3xl p-0 gap-0 overflow-hidden border-0 [&>button]:hidden">
         <div
           className="h-32 bg-gradient-to-br from-primary to-primary/60"
           style={
