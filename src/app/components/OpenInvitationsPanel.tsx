@@ -101,10 +101,33 @@ export function OpenInvitationsPanel() {
         .select('id, name, company_name, logo_url, active')
         .in('id', merchantIds);
 
+      const { data: existingAccounts } = merchantIds.length > 0
+        ? await supabase
+            .from('loyalty_accounts')
+            .select('id, merchant_customer_id')
+            .eq('user_id', user.id)
+            .in('merchant_customer_id', merchantIds)
+        : { data: [] };
+      const accountsById = new Map((existingAccounts ?? []).map((a) => [a.id, a.merchant_customer_id]));
+      const { data: checkInRows } = accountsById.size > 0
+        ? await supabase
+            .from('point_transactions')
+            .select('loyalty_account_id')
+            .in('loyalty_account_id', Array.from(accountsById.keys()))
+            .in('transaction_type', ['nfc_stamp', 'check_in', 'nfc_scan'])
+            .limit(1000)
+        : { data: [] };
+      const merchantsWithCheckIn = new Set(
+        (checkInRows ?? [])
+          .map((row) => accountsById.get(row.loyalty_account_id))
+          .filter((id): id is string => Boolean(id)),
+      );
+
       const collected: OpenInvitation[] = [];
       for (const r of redemptions) {
         const inv = invs?.find(i => i.id === r.invitation_id);
         if (!inv) continue;
+        if (merchantsWithCheckIn.has(inv.merchant_customer_id)) continue;
         const m = merchants?.find(x => x.id === inv.merchant_customer_id);
         if (!m || m.active === false) continue;
 
