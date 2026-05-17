@@ -275,7 +275,7 @@ export default function CheckoutForm({ backPath, backLabel, partnerUserId, prefi
                   {[
                     { t: "NFC-Kartenhalter" },
                     { t: "2× A5-Aufsteller", d: "Blanko-Design" },
-                    { t: "1 Designwunsch pro Monat", d: "individuelles Aufsteller-Design" },
+                    { t: "Monatliches Wunschdesign", d: "dein Aufsteller, dein Look" },
                     { t: "Geburtstagsbelohnungen", d: "vollautomatisch" },
                     { t: "Treue-Meilensteine", d: "automatische Prämien" },
                     { t: "Neukunden-Empfehlungen", d: "Kunden werben Kunden" },
