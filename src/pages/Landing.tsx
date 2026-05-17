@@ -477,6 +477,45 @@ const Landing = () => {
           </div>
         </motion.div>
       </section>
+      {/* ═══════ NEW SECTION: Kunden kommen auf dich zu ═══════ */}
+      <section className="relative z-10 py-20 px-6 bg-[#faf8ff]">
+        <div className="max-w-5xl mx-auto text-center">
+          <motion.div
+            variants={glassReveal}
+            initial="hidden"
+            whileInView="visible"
+            viewport={viewportConfig}
+          >
+            <h2 className="font-headline text-3xl md:text-4xl font-extrabold mb-5 tracking-[-0.02em] text-[#1a1b21]">
+              Deine Kunden kommen auf dich zu – nicht umgekehrt.
+            </h2>
+            <p className="text-[#4a4455] text-lg leading-relaxed max-w-3xl mx-auto mb-12">
+              Du musst niemanden ansprechen, niemanden überzeugen und keine Kundenkarte verteilen. Eloyo arbeitet vollautomatisch im Hintergrund – und sorgt dafür, dass deine Stammkunden wiederkommen und neue Kunden mitbringen.
+            </p>
+          </motion.div>
+          <motion.div
+            variants={staggerContainer}
+            initial="hidden"
+            whileInView="visible"
+            viewport={viewportConfig}
+            className="grid md:grid-cols-3 gap-8"
+          >
+            {[
+              { icon: Settings, label: 'Läuft von alleine – ohne deinen Einsatz' },
+              { icon: Users, label: 'Stammkunden werden zu deinen Botschaftern' },
+              { icon: Clock, label: 'Einmal einrichten, dauerhaft profitieren' },
+            ].map((item, i) => (
+              <motion.div key={i} variants={glassReveal} className="flex flex-col items-center">
+                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#5227FF] to-[#8B5CF6] flex items-center justify-center mb-4 shadow-lg shadow-[#5227FF]/20">
+                  <item.icon className="w-7 h-7 text-white" />
+                </div>
+                <p className="text-[#1a1b21] font-semibold text-base leading-snug">{item.label}</p>
+              </motion.div>
+            ))}
+          </motion.div>
+        </div>
+      </section>
+
       {/* ═══════ FINAL CTA ═══════ */}
       <section className="relative z-10 py-10 px-6 pt-24">
         <div className="max-w-5xl mx-auto">
