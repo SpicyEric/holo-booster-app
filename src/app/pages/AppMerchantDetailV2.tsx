@@ -1668,16 +1668,25 @@ export const AppMerchantDetailV2 = () => {
               )}
             </AnimatePresence>
 
+            {/* Großer fixer Code direkt über dem Marquee-Band */}
+            {!confirmStage && checkInOverlay.reward && (
+              <div className="absolute left-0 right-0 top-[calc(50%-288px)] flex justify-center pointer-events-none">
+                <span className="text-3xl font-extrabold tracking-[0.4em] tabular-nums text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.25)]">
+                  {checkInOverlay.code}
+                </span>
+              </div>
+            )}
+
             {/* Code-Marquee — direkt über dem Häkchen, dünner */}
             {!confirmStage && checkInOverlay.reward && (
               <div className="absolute left-0 right-0 top-[calc(50%-240px)] py-1.5 overflow-hidden bg-white/10 backdrop-blur border-y border-white/20">
                 <div
                   className="flex whitespace-nowrap will-change-transform"
-                  style={{ animation: 'eloyo-marquee 14s linear infinite' }}
+                  style={{ animation: 'eloyo-marquee 60s linear infinite' }}
                 >
                   {Array.from({ length: 2 }).map((_, dup) => (
                     <div key={dup} className="flex shrink-0" aria-hidden={dup === 1}>
-                      {Array.from({ length: 8 }).map((_, i) => (
+                      {Array.from({ length: 24 }).map((_, i) => (
                         <span
                           key={`${dup}-${i}`}
                           className="px-5 text-sm font-bold tracking-[0.35em] tabular-nums text-white"
