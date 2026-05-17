@@ -313,8 +313,14 @@ export const AppMerchantDetailV2 = () => {
       const realCheckIns = (tx || [])
         .filter((row) => row.transaction_type === 'check_in' || row.transaction_type === 'nfc_stamp')
         .map((row, index) => {
-          const isReview = typeof row.description === 'string' && row.description.includes('Google-Bewertung');
-          const isBoost = row.transaction_type === 'referral_bonus' && Number(row.points_change ?? 0) > 0;
+          const desc = typeof row.description === 'string' ? row.description : '';
+          const isReview = desc.includes('Google-Bewertung');
+          // Bonus-Check-in durch Empfehlung wird als transaction_type='check_in'
+          // mit Beschreibung 'Bonus-Check-in: …' gespeichert.
+          const isBoost =
+            row.transaction_type === 'referral_bonus' ||
+            /^bonus[- ]?check[- ]?in/i.test(desc) ||
+            /empfehlung/i.test(desc);
           return {
             visit: index + 1,
             source: (isBoost ? 'boost' : isReview ? 'google_review' : 'normal') as CheckInSource,
