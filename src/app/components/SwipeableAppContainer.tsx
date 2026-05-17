@@ -683,22 +683,7 @@ const AppMessagesContent = () => {
   return (
     <PullToRefresh onRefresh={handleRefresh}>
     <div className="space-y-4">
-      {/* Email verification banner */}
-      {!emailVerified && (
-        <Card className="p-4 border-0 bg-muted/70 dark:bg-muted/50">
-          <div className="flex items-start gap-3">
-            <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
-              <AlertCircle className="h-5 w-5 text-muted-foreground" />
-            </div>
-            <div className="flex-1">
-              <h3 className="font-semibold text-foreground">E-Mail bestätigen</h3>
-              <p className="text-sm text-muted-foreground mt-1">
-                Bitte bestätige deine E-Mail-Adresse, um Prämien einlösen zu können.
-              </p>
-            </div>
-          </div>
-        </Card>
-      )}
+
 
       {loading ? (
         <Card className="p-6"><p className="text-muted-foreground text-center">Lädt...</p></Card>
