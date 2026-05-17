@@ -954,7 +954,7 @@ const AppProfileContent = () => {
   const menuItems = [
     { icon: User, label: 'Kontoeinstellungen', action: () => navigate('/app/settings') },
     { icon: Sparkles, label: 'Shop vorschlagen', action: () => navigate('/app/suggest-shop') },
-    { icon: Store, label: 'Meine Punktekarten', action: () => navigate('/app/my-cards') },
+    { icon: BookOpen, label: "So funktioniert's", action: () => navigate('/app/how-it-works') },
     { icon: History, label: 'Transaktionen', action: () => navigate('/app/history') },
   ];
 
