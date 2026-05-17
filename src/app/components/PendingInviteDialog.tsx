@@ -257,6 +257,33 @@ export function PendingInviteDialog() {
       clearPendingInvite();
       if (!result.success) {
         console.warn('[consume_invitation] FAILED:', result.error, '(code:', result.error_code, ')');
+        if (result.error_code === 'already_checked_in' || result.error_code === 'already_customer') {
+          setAccepted(null);
+          setPreview(null);
+          setIneligible({
+            kind: 'already_customer',
+            merchant_customer_id: preview.merchant_customer_id,
+            merchant_name: preview.merchant_name,
+            logo_url: preview.logo_url,
+            cover_image_url: preview.cover_image_url,
+          });
+          setOpen(true);
+          return;
+        }
+        if (result.error_code === 'already_pending') {
+          setAccepted(null);
+          setPreview(null);
+          setIneligible({
+            kind: 'already_invited',
+            merchant_customer_id: preview.merchant_customer_id,
+            merchant_name: preview.merchant_name,
+            logo_url: preview.logo_url,
+            cover_image_url: preview.cover_image_url,
+            expires_at: null,
+          });
+          setOpen(true);
+          return;
+        }
         // Bei Geräte-Sperre für diesen Merchant: dem User klar sagen warum.
         if (result.error_code === 'device_already_redeemed_for_merchant') {
           const { toast } = await import('sonner');
