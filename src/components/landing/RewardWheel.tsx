@@ -62,8 +62,8 @@ const RewardWheel = () => {
 
         {/* Text */}
         <div className="text-left">
-          <span className="text-primary font-bold tracking-widest uppercase text-xs font-headline">
-            Prämien
+      <span className="text-primary font-bold tracking-widest uppercase text-xs font-headline">
+            Treuepass
           </span>
           <h3 className="font-headline text-3xl md:text-4xl font-extrabold mt-3 mb-5 leading-tight tracking-[-0.02em] text-[#1a1b21]">
             Warum Prämien besser sind als eine Punktekarte
