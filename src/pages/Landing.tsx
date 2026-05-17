@@ -3,7 +3,7 @@ import ERecht24Badge from '@/components/ERecht24Badge';
 import Particles from '@/components/Particles';
 import { motion, AnimatePresence, type Variants } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { Star, CheckCircle } from 'lucide-react';
+import { Star, CheckCircle, Settings, Users, Clock } from 'lucide-react';
 import eloyoLogo from '@/assets/eloyo-logo.png';
 import nfcStampHero from '@/assets/hero-app-mockup.png';
 import heroAppShot from '@/assets/hero-app-shot.png';
@@ -307,7 +307,7 @@ const Landing = () => {
         >
           {[
             { step: '1', title: 'Kunde scannt die Karte', desc: 'Dein Mitarbeiter hält die Eloyo-Karte ans Handy des Kunden – ein kurzer Tap und der Check-in ist sofort gespeichert.', bg: howItWorksStamp },
-            { step: '2', title: 'Sammelt Punkte, löst Prämien ein', desc: 'Jeder Besuch wird belohnt. Der Kunde wählt selbst, was er will. Das schafft echte Motivation und er kommt wieder.', bg: howItWorksPresent },
+            { step: '2', title: 'Fortschritt wird belohnt', desc: 'Mit jedem Check-in kommt der Kunde seiner nächsten Prämie näher – ganz automatisch, ohne Zettel oder Punktekarte.', bg: howItWorksPresent },
             { step: '3', title: 'Kunde bringt Leute in deinen Laden', desc: 'Dein Kunde wird mit attraktiven Prämien belohnt, wenn er dir Neukunden in deinen Laden bringt. Vollautomatisiert, ohne dass du etwas dafür tun musst.', bg: howItWorksReferal },
           ].map((item, i) => {
             const isActive = activeStep === i;
