@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Clock, TrendingUp, Gift } from 'lucide-react';
+import { Clock, Gift, Star, UserPlus, Check } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { Card, CardContent } from '@/components/ui/card';
@@ -7,7 +7,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { MainLayout } from '@/app/components/layout/MainLayout';
-import { formatTransactionDescription } from '@/app/lib/transactionLabel';
+import { formatTransactionEntry } from '@/app/lib/transactionLabel';
 
 interface Transaction {
   id: string;
@@ -69,21 +69,12 @@ export const AppHistory = () => {
     }
   };
 
-  const getTransactionIcon = (type: string, points: number) => {
-    if (type === 'redeem' || points < 0) {
-      return <Gift className="h-4 w-4 text-orange-500" />;
-    }
-    return <TrendingUp className="h-4 w-4 text-green-500" />;
-  };
-
-  const getTransactionLabel = (type: string) => {
-    switch (type) {
-      case 'stamp': return 'Karte';
-      case 'redeem': return 'Eingelöst';
-      case 'bonus': return 'Bonus';
-      case 'adjustment': return 'Anpassung';
-      default: return type;
-    }
+  const getTransactionIcon = (type: string, description: string | null) => {
+    const desc = (description || '').toLowerCase();
+    if (type === 'reward_redeemed') return <Gift className="h-4 w-4 text-orange-500" />;
+    if (type === 'google_review_bonus' || desc.includes('google-bewertung')) return <Star className="h-4 w-4 text-amber-500" />;
+    if (type === 'referral_bonus' || /bonus[- ]?check[- ]?in|empfehlung/.test(desc)) return <UserPlus className="h-4 w-4 text-violet-500" />;
+    return <Check className="h-4 w-4 text-emerald-500" />;
   };
 
   if (loading) {
@@ -128,24 +119,32 @@ export const AppHistory = () => {
               </h2>
               <Card>
                 <CardContent className="p-0 divide-y divide-border">
-                  {txs.map((tx) => (
-                    <div key={tx.id} className="flex items-center gap-4 p-4">
-                      <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center">
-                        {getTransactionIcon(tx.transaction_type, tx.points_change)}
+                  {txs.map((tx) => {
+                    const formatted = formatTransactionEntry(tx.transaction_type, tx.description);
+                    return (
+                      <div key={tx.id} className="flex items-center gap-4 p-4">
+                        <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center shrink-0">
+                          {getTransactionIcon(tx.transaction_type, tx.description)}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium truncate">
+                            {tx.customer?.company_name || tx.customer?.name || 'Unbekannt'}
+                          </p>
+                          <p className="text-sm text-muted-foreground truncate">
+                            {formatted.primary}
+                          </p>
+                          {formatted.secondary && (
+                            <p className="text-xs text-muted-foreground/80 truncate mt-0.5">
+                              {formatted.secondary}
+                            </p>
+                          )}
+                          <p className="text-[11px] text-muted-foreground/70 mt-0.5">
+                            {format(new Date(tx.created_at), 'HH:mm', { locale: de })} Uhr
+                          </p>
+                        </div>
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="font-medium truncate">
-                          {tx.customer?.company_name || tx.customer?.name || 'Unbekannt'}
-                        </p>
-                        <p className="text-sm text-muted-foreground">
-                          {formatTransactionDescription(tx.description, getTransactionLabel(tx.transaction_type))}
-                        </p>
-                      </div>
-                      <div className={`font-semibold ${tx.points_change >= 0 ? 'text-green-600' : 'text-orange-600'}`}>
-                        {tx.points_change >= 0 ? '+' : ''}{tx.points_change}
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </CardContent>
               </Card>
             </div>

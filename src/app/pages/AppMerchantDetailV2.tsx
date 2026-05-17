@@ -21,6 +21,7 @@ import {
 import { generateVerificationCode } from '@/lib/verificationCode';
 import { EyeOff } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { formatTransactionEntry } from '@/app/lib/transactionLabel';
 
 /**
  * Backstube König – Treuepass (V2 Prototype)
@@ -270,6 +271,11 @@ export const AppMerchantDetailV2 = () => {
   });
   const currentVisit = checkIns[checkIns.length - 1]?.visit ?? 0;
 
+  // Roh-Transaktionen (für History-Modal mit Zeitstempeln je Eintrag).
+  type RawTx = { transaction_type: string; description: string | null; created_at: string };
+  const [historyTx, setHistoryTx] = useState<RawTx[]>([]);
+  const [historyOpen, setHistoryOpen] = useState(false);
+
   const [redeemedVisits, setRedeemedVisits] = useState<number[]>(() => {
     if (typeof window === 'undefined') return defaultRedeemed;
     try {
@@ -309,6 +315,13 @@ export const AppMerchantDetailV2 = () => {
         .order('created_at', { ascending: true });
 
       if (cancelled) return;
+      setHistoryTx(
+        (tx || []).map((row) => ({
+          transaction_type: row.transaction_type as string,
+          description: (row.description as string | null) ?? null,
+          created_at: row.created_at as string,
+        })),
+      );
       const hasReviewBonus = (tx || []).some((row) => row.transaction_type === 'google_review_bonus');
       const realCheckIns = (tx || [])
         .filter((row) => row.transaction_type === 'check_in' || row.transaction_type === 'nfc_stamp')
@@ -942,8 +955,11 @@ export const AppMerchantDetailV2 = () => {
             <h1 className="text-lg font-bold text-neutral-900 dark:text-neutral-100 truncate">{merchantInfo.name}</h1>
             <p className="text-xs font-medium" style={{ color: BRAND }}>Dein Treuepass</p>
           </div>
-          <div
-            className="px-3 h-12 rounded-2xl flex flex-col items-center justify-center text-white shadow-sm leading-none"
+          <button
+            type="button"
+            onClick={() => setHistoryOpen(true)}
+            aria-label="Verlauf anzeigen"
+            className="px-3 h-12 rounded-2xl flex flex-col items-center justify-center text-white shadow-sm leading-none active:scale-95 transition-transform"
             style={{ background: `linear-gradient(135deg, ${BRAND}, ${BRAND}cc)`, minWidth: 64 }}
           >
             <span className="text-[9px] font-semibold uppercase tracking-wider opacity-90">Check-ins</span>
@@ -961,7 +977,7 @@ export const AppMerchantDetailV2 = () => {
                 </motion.span>
               </AnimatePresence>
             </div>
-          </div>
+          </button>
         </div>
       </div>
 
@@ -1893,6 +1909,156 @@ export const AppMerchantDetailV2 = () => {
               style={{ background: BRAND }}
             >
               Verstanden
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* ============ Verlaufs-Modal ============ */}
+      <Dialog open={historyOpen} onOpenChange={setHistoryOpen}>
+        <DialogContent
+          className="max-w-[360px] rounded-3xl p-0 gap-0 overflow-hidden"
+          style={{ borderTop: `4px solid ${BRAND}` }}
+        >
+          <div
+            className="px-5 pt-5 pb-4 text-white relative"
+            style={{ background: `linear-gradient(135deg, ${BRAND}, ${BRAND}cc)` }}
+          >
+            <div className="text-[10px] font-semibold uppercase tracking-wider opacity-90">
+              Dein Verlauf
+            </div>
+            <div className="mt-1 text-lg font-bold leading-tight truncate">
+              {merchantInfo.name}
+            </div>
+            <div className="mt-1 text-xs opacity-90">
+              {currentVisit} Check-in{currentVisit === 1 ? '' : 's'} insgesamt
+            </div>
+          </div>
+          <div className="max-h-[60vh] overflow-y-auto px-2 py-2">
+            {(() => {
+              type Entry = {
+                key: string;
+                kind: 'check_in' | 'boost' | 'review' | 'redeem';
+                primary: string;
+                secondary?: string;
+                at: string;
+              };
+              const entries: Entry[] = [];
+
+              if (isDemoMerchant) {
+                checkIns.forEach((c, i) => {
+                  const at = c.at ?? new Date(NOW - (checkIns.length - i) * DAY).toISOString();
+                  if (c.source === 'boost') {
+                    entries.push({ key: `c-${i}`, kind: 'boost', primary: 'Boost durch Empfehlung', at });
+                  } else if (c.source === 'google_review') {
+                    entries.push({ key: `c-${i}`, kind: 'review', primary: 'Check-in für Google-Bewertung', at });
+                  } else {
+                    entries.push({ key: `c-${i}`, kind: 'check_in', primary: 'Check-in durch Besuch', at });
+                  }
+                  if (redeemedVisits.includes(c.visit)) {
+                    const rw = rewardForVisit(c.visit);
+                    entries.push({
+                      key: `r-${c.visit}`,
+                      kind: 'redeem',
+                      primary: `Prämie eingelöst bei Check-in: ${c.visit}`,
+                      secondary: rw?.label,
+                      at,
+                    });
+                  }
+                });
+              } else {
+                historyTx.forEach((row, i) => {
+                  const fmt = formatTransactionEntry(row.transaction_type, row.description);
+                  let kind: Entry['kind'] = 'check_in';
+                  if (row.transaction_type === 'check_in' || row.transaction_type === 'nfc_stamp') {
+                    const desc = (row.description || '').toLowerCase();
+                    if (/bonus[- ]?check[- ]?in|empfehlung/.test(desc)) kind = 'boost';
+                    else if (desc.includes('google-bewertung')) kind = 'review';
+                    else kind = 'check_in';
+                  } else if (row.transaction_type === 'reward_redeemed') {
+                    kind = 'redeem';
+                  } else if (row.transaction_type === 'google_review_bonus') {
+                    kind = 'review';
+                  } else if (row.transaction_type === 'referral_bonus') {
+                    kind = 'boost';
+                  }
+                  entries.push({
+                    key: `tx-${i}`,
+                    kind,
+                    primary: fmt.primary,
+                    secondary: fmt.secondary,
+                    at: row.created_at,
+                  });
+                });
+              }
+
+              entries.sort((a, b) => +new Date(b.at) - +new Date(a.at));
+
+              if (entries.length === 0) {
+                return (
+                  <div className="px-4 py-10 text-center text-sm text-neutral-500">
+                    Noch keine Aktivität.
+                  </div>
+                );
+              }
+
+              const iconFor = (k: Entry['kind']) => {
+                if (k === 'redeem') return <Gift className="h-4 w-4" style={{ color: BRAND }} />;
+                if (k === 'review') return <Star className="h-4 w-4" style={{ color: BRAND }} />;
+                if (k === 'boost') return <Sparkles className="h-4 w-4" style={{ color: BRAND }} />;
+                return <Check className="h-4 w-4" style={{ color: BRAND }} />;
+              };
+
+              const fmtDate = (iso: string) => {
+                try {
+                  const d = new Date(iso);
+                  const day = String(d.getDate()).padStart(2, '0');
+                  const month = String(d.getMonth() + 1).padStart(2, '0');
+                  const year = d.getFullYear();
+                  const hh = String(d.getHours()).padStart(2, '0');
+                  const mm = String(d.getMinutes()).padStart(2, '0');
+                  return `${day}.${month}.${year} · ${hh}:${mm} Uhr`;
+                } catch {
+                  return '';
+                }
+              };
+
+              return (
+                <ul className="divide-y divide-neutral-100 dark:divide-neutral-800">
+                  {entries.map((e) => (
+                    <li key={e.key} className="flex gap-3 px-3 py-3">
+                      <div
+                        className="shrink-0 h-9 w-9 rounded-full flex items-center justify-center"
+                        style={{ background: BRAND_SOFT }}
+                      >
+                        {iconFor(e.kind)}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="text-sm font-semibold text-neutral-900 dark:text-neutral-100 leading-tight">
+                          {e.primary}
+                        </div>
+                        {e.secondary && (
+                          <div className="text-xs text-neutral-600 dark:text-neutral-400 mt-0.5 leading-tight">
+                            {e.secondary}
+                          </div>
+                        )}
+                        <div className="text-[11px] text-neutral-500 dark:text-neutral-500 mt-1">
+                          {fmtDate(e.at)}
+                        </div>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              );
+            })()}
+          </div>
+          <div className="px-4 py-3 border-t border-neutral-100 dark:border-neutral-800">
+            <Button
+              onClick={() => setHistoryOpen(false)}
+              className="w-full h-10 rounded-xl text-white"
+              style={{ background: BRAND }}
+            >
+              Schließen
             </Button>
           </div>
         </DialogContent>
