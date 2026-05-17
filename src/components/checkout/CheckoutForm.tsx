@@ -97,7 +97,6 @@ export default function CheckoutForm({ backPath, backLabel, partnerUserId, prefi
   const locationCount = 1;
 
   // Additional contacts
-  const [additionalContacts, setAdditionalContacts] = useState(prefill?.additionalContacts ?? "");
 
   // Promo
   const [promoCodeInput, setPromoCodeInput] = useState("");
