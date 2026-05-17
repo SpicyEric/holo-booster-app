@@ -89,8 +89,9 @@ class PushNotificationService {
 
     PushNotifications.addListener('pushNotificationReceived', (notification: PushNotificationSchema) => {
       console.log('Push notification received in foreground:', notification);
-      // Show local notification when push arrives in foreground
-      this.showLocalNotification(notification.title || 'Eloyo', notification.body || '');
+      // ⚠️ NICHT mehr zusätzlich showLocalNotification — Android zeigt die FCM-Notification
+      // automatisch via System-Tray, und ein zusätzlicher LocalNotification-Aufruf
+      // würde zu doppelten Benachrichtigungen führen.
     });
 
     PushNotifications.addListener('pushNotificationActionPerformed', (notification: ActionPerformed) => {
