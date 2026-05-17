@@ -28,9 +28,7 @@ const FEATURES = [
   { icon: Zap, title: "10 Sekunden", desc: "Vom Scan bis zum ersten Check-in" },
   { icon: BatteryCharging, title: "Kein Strom nötig", desc: "NFC funktioniert ohne Akku" },
   { icon: Euro, title: "Keine Setup-Kosten", desc: "Starterbox inklusive" },
-  { icon: Smartphone, title: "Push-Nachrichten", desc: "Direkt aufs Handy deiner Kunden" },
   { icon: ShieldCheck, title: "DSGVO-konform", desc: "Daten bleiben in Deutschland" },
-  { icon: LineChart, title: "Live-Statistiken", desc: "Wer kommt, wann, wie oft" },
 ];
 
 export default function SalesRepHome() {
@@ -84,11 +82,11 @@ export default function SalesRepHome() {
       </div>
 
       {/* Feature tiles */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-5">
         {FEATURES.map(({ icon: Icon, title, desc }) => (
           <div
             key={title}
-            className="rounded-2xl bg-white/70 backdrop-blur-sm border border-border/40 p-5 text-center hover:bg-white/90 hover:border-[hsl(262,60%,75%)] transition-all hover:-translate-y-0.5 hover:shadow-lg hover:shadow-purple-500/5"
+            className="rounded-2xl bg-white/70 backdrop-blur-sm border border-border/40 p-7 text-center hover:bg-white/90 hover:border-[hsl(262,60%,75%)] transition-all hover:-translate-y-0.5 hover:shadow-lg hover:shadow-purple-500/5"
           >
             <Icon className="h-6 w-6 mx-auto mb-3 text-[hsl(262,60%,55%)]" strokeWidth={2.2} />
             <p className="font-semibold text-sm mb-1 leading-tight">{title}</p>
