@@ -28,9 +28,7 @@ const FEATURES = [
   { icon: Zap, title: "10 Sekunden", desc: "Vom Scan bis zum ersten Check-in" },
   { icon: BatteryCharging, title: "Kein Strom nötig", desc: "NFC funktioniert ohne Akku" },
   { icon: Euro, title: "Keine Setup-Kosten", desc: "Starterbox inklusive" },
-  { icon: Smartphone, title: "Push-Nachrichten", desc: "Direkt aufs Handy deiner Kunden" },
   { icon: ShieldCheck, title: "DSGVO-konform", desc: "Daten bleiben in Deutschland" },
-  { icon: LineChart, title: "Live-Statistiken", desc: "Wer kommt, wann, wie oft" },
 ];
 
 export default function SalesRepHome() {
