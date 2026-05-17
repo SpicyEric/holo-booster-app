@@ -10,6 +10,16 @@ import {
   Smartphone,
   ShieldCheck,
   LineChart,
+  Store,
+  ScanLine,
+  Sparkles,
+  BellRing,
+  BarChart3,
+  Gift,
+  Clock,
+  XCircle,
+  CalendarCheck,
+  Package,
 } from "lucide-react";
 
 const StlViewer = lazy(() => import("@/components/StlViewer"));
