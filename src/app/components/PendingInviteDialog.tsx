@@ -294,17 +294,14 @@ export function PendingInviteDialog() {
         setOpen(false);
         return;
       }
-      setAccepted({
-        invitation_id: result.invitation_id!,
-        share_code: preview.share_code,
-        merchant_customer_id: result.merchant_customer_id!,
-        merchant_name: preview.merchant_name,
-        logo_url: preview.logo_url,
-        cover_image_url: preview.cover_image_url,
-        invitee_points: preview.invitee_points,
-      });
+      // Kein zweites Popup mehr — nur kurzer Toast und Dialog schließen.
+      const { toast } = await import('sonner');
+      toast.success(`Einladung zu ${preview.merchant_name} angenommen`, { duration: 4000 });
+      setPreview(null);
+      setAccepted(null);
+      setOpen(false);
 
-      // Bug 3 Fix: Banner im Feed sofort aktualisieren (Realtime ist nicht garantiert sofort da)
+      // Banner im Feed sofort aktualisieren (Realtime ist nicht garantiert sofort da)
       window.dispatchEvent(new CustomEvent('eloyo:invitation-changed'));
 
       // Push an den Einladenden – mit Retry, falls erster Versuch scheitert.
