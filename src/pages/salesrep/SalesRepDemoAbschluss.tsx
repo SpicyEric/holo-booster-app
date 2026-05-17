@@ -25,7 +25,7 @@ const DEMO_PREFILL: CheckoutPrefill = {
   lastName: "Yılmaz",
   contactEmail: "demo+barbershop-emre@eloyo.de",
   contactPhone: "+49 221 45678912",
-  additionalContacts: "",
+  
 };
 
 type Phase = "form" | "checkout" | "success";
