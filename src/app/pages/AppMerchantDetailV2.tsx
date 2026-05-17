@@ -1504,6 +1504,26 @@ export const AppMerchantDetailV2 = () => {
         </DialogContent>
       </Dialog>
 
+      {/* Geschäftsinformationen Pop-up */}
+      <Dialog open={merchantInfoOpen} onOpenChange={(o) => !o && setMerchantInfoOpen(false)}>
+        <DialogContent className="max-w-[340px] rounded-3xl p-0 overflow-hidden">
+          <div className="px-6 pt-6 pb-2">
+            <h2 className="text-lg font-bold text-neutral-900 dark:text-neutral-100">{merchantInfo.name}</h2>
+            <p className="text-xs text-neutral-500 dark:text-neutral-400">Dein Treuepass</p>
+          </div>
+          <MerchantInfoSection info={merchantInfo} brand={BRAND} />
+          <div className="px-6 py-4">
+            <Button
+              onClick={() => setMerchantInfoOpen(false)}
+              className="w-full text-white"
+              style={{ background: BRAND }}
+            >
+              Schließen
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       <Dialog open={!!tappedReward} onOpenChange={(o) => !o && setTappedReward(null)}>
         <DialogContent className="max-w-[320px] rounded-3xl p-6 text-center">
           {tappedReward?.imageUrl ? (
