@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState, ReactNode } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useState, ReactNode } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { hexToHslString, contrastForegroundHsl, brandTintHsl, brandDarkHsl } from '@/lib/colorUtils';
@@ -11,6 +11,9 @@ import { BRAND_UPDATED_EVENT } from '@/hooks/useMerchantBrand';
  * mit der individuellen Markenfarbe aus `customers.brand_color`.
  *
  * V1-Händler bleiben unverändert (kein Override).
+ *
+ * Anti-Flackern: Letzte bekannte Markenfarbe wird in localStorage gecached und
+ * synchron via useLayoutEffect angewendet, BEVOR der erste Frame paint-et.
  */
 
 interface BrandState {
@@ -18,9 +21,82 @@ interface BrandState {
   color: string | null;
 }
 
+const CACHE_KEY = 'eloyo-merchant-brand-cache';
+
+function readCache(): BrandState {
+  if (typeof window === 'undefined') return { version: 'v1', color: null };
+  try {
+    const raw = localStorage.getItem(CACHE_KEY);
+    if (!raw) return { version: 'v1', color: null };
+    const parsed = JSON.parse(raw);
+    return {
+      version: parsed.version === 'v2' ? 'v2' : 'v1',
+      color: typeof parsed.color === 'string' ? parsed.color : null,
+    };
+  } catch {
+    return { version: 'v1', color: null };
+  }
+}
+
+function writeCache(state: BrandState) {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.setItem(CACHE_KEY, JSON.stringify(state));
+  } catch {}
+}
+
+const BRAND_KEYS = [
+  '--primary',
+  '--primary-foreground',
+  '--secondary',
+  '--secondary-foreground',
+  '--accent',
+  '--ring',
+  '--gradient-primary',
+  '--gradient-glow',
+  '--shadow-glow',
+  '--merchant-bg',
+  '--merchant-bg-soft',
+  '--merchant-sidebar',
+  '--merchant-shadow',
+];
+
+function applyBrand(state: BrandState) {
+  if (typeof document === 'undefined') return;
+  const root = document.documentElement;
+  if (state.version === 'v2' && state.color) {
+    const hsl = hexToHslString(state.color);
+    const fg = contrastForegroundHsl(state.color);
+    const map: Record<string, string> = {
+      '--primary': hsl,
+      '--primary-foreground': fg,
+      '--secondary': hsl,
+      '--secondary-foreground': fg,
+      '--accent': hsl,
+      '--ring': hsl,
+      '--gradient-primary': `linear-gradient(135deg, hsl(${hsl}), hsl(${brandDarkHsl(state.color)}))`,
+      '--gradient-glow': `linear-gradient(135deg, hsl(${hsl} / 0.12), hsl(${brandTintHsl(state.color, 92)} / 0.5))`,
+      '--shadow-glow': `0 4px 20px hsl(${hsl} / 0.18)`,
+      '--merchant-bg': brandTintHsl(state.color, 96),
+      '--merchant-bg-soft': brandTintHsl(state.color, 98),
+      '--merchant-sidebar': brandDarkHsl(state.color),
+      '--merchant-shadow': hsl,
+    };
+    BRAND_KEYS.forEach((k) => root.style.setProperty(k, map[k]));
+  } else {
+    BRAND_KEYS.forEach((k) => root.style.removeProperty(k));
+  }
+}
+
 export function MerchantBrandTheme({ children }: { children: ReactNode }) {
   const { user } = useAuth();
-  const [state, setState] = useState<BrandState>({ version: 'v1', color: null });
+  // Initialwert synchron aus Cache lesen → kein Lila-Flackern beim Mount.
+  const [state, setState] = useState<BrandState>(() => readCache());
+
+  // Synchron vor dem ersten Paint anwenden.
+  useLayoutEffect(() => {
+    applyBrand(state);
+  }, [state.version, state.color]);
 
   const fetchBrand = useCallback(async (cancelledRef?: { current: boolean }) => {
     let customerId: string | null = null;
@@ -31,14 +107,15 @@ export function MerchantBrandTheme({ children }: { children: ReactNode }) {
       customerId = await resolveMerchantCustomerId(user.id);
     }
     if (!customerId) return;
-    // Demo-Onboarding-Tour: Werte aus localStorage statt aus DB.
     try {
       const { DEMO_ONBOARDING_CUSTOMER_ID, isDemoOnboardingTourActive, getDemoOnboardingState } =
         await import('@/lib/demoOnboardingTour');
       if (customerId === DEMO_ONBOARDING_CUSTOMER_ID && isDemoOnboardingTourActive()) {
         const profile = getDemoOnboardingState().profile || {};
         if (cancelledRef?.current) return;
-        setState({ version: 'v2', color: (profile.brand_color as string) || null });
+        const next: BrandState = { version: 'v2', color: (profile.brand_color as string) || null };
+        setState(next);
+        writeCache(next);
         return;
       }
     } catch {}
@@ -48,10 +125,12 @@ export function MerchantBrandTheme({ children }: { children: ReactNode }) {
       .eq('id', customerId)
       .maybeSingle();
     if (cancelledRef?.current || !data) return;
-    setState({
+    const next: BrandState = {
       version: (data.version as string) === 'v2' ? 'v2' : 'v1',
       color: (data.brand_color as string) || null,
-    });
+    };
+    setState(next);
+    writeCache(next);
   }, [user?.id]);
 
   useEffect(() => {
@@ -60,7 +139,11 @@ export function MerchantBrandTheme({ children }: { children: ReactNode }) {
     const onUpdated = (e: Event) => {
       const detail = (e as CustomEvent).detail as { brandColor?: string } | undefined;
       if (detail?.brandColor) {
-        setState((prev) => ({ ...prev, version: 'v2', color: detail.brandColor! }));
+        setState((prev) => {
+          const next: BrandState = { version: 'v2', color: detail.brandColor! };
+          writeCache(next);
+          return next;
+        });
       }
       fetchBrand(cancelledRef);
     };
@@ -71,49 +154,12 @@ export function MerchantBrandTheme({ children }: { children: ReactNode }) {
     };
   }, [fetchBrand]);
 
-  // Apply brand variables to <html> so they also reach Radix portals (Dialog/Toast/Popover)
+  // Cleanup nur beim Verlassen des Merchant-Bereichs (Unmount des Wrappers).
   useEffect(() => {
-    const root = document.documentElement;
-    const keys = [
-      '--primary',
-      '--primary-foreground',
-      '--secondary',
-      '--secondary-foreground',
-      '--accent',
-      '--ring',
-      '--gradient-primary',
-      '--gradient-glow',
-      '--shadow-glow',
-      '--merchant-bg',
-      '--merchant-bg-soft',
-      '--merchant-sidebar',
-      '--merchant-shadow',
-    ];
-    if (state.version === 'v2' && state.color) {
-      const hsl = hexToHslString(state.color);
-      const fg = contrastForegroundHsl(state.color);
-      const map: Record<string, string> = {
-        '--primary': hsl,
-        '--primary-foreground': fg,
-        '--secondary': hsl,
-        '--secondary-foreground': fg,
-        '--accent': hsl,
-        '--ring': hsl,
-        '--gradient-primary': `linear-gradient(135deg, hsl(${hsl}), hsl(${brandDarkHsl(state.color)}))`,
-        '--gradient-glow': `linear-gradient(135deg, hsl(${hsl} / 0.12), hsl(${brandTintHsl(state.color, 92)} / 0.5))`,
-        '--shadow-glow': `0 4px 20px hsl(${hsl} / 0.18)`,
-        '--merchant-bg': brandTintHsl(state.color, 96),
-        '--merchant-bg-soft': brandTintHsl(state.color, 98),
-        '--merchant-sidebar': brandDarkHsl(state.color),
-        '--merchant-shadow': hsl,
-      };
-      keys.forEach((k) => root.style.setProperty(k, map[k]));
-    }
     return () => {
-      // Reset on unmount so non-merchant routes get default tokens back
-      keys.forEach((k) => root.style.removeProperty(k));
+      BRAND_KEYS.forEach((k) => document.documentElement.style.removeProperty(k));
     };
-  }, [state.version, state.color]);
+  }, []);
 
   return <>{children}</>;
 }
