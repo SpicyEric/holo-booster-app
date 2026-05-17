@@ -6,7 +6,7 @@ import { Gift, Sparkles, Info, Clock, MessageSquare, X } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { getDeviceFingerprint } from '@/lib/deviceFingerprint';
-import { clearPendingInvite, getPendingInviteCode, isInviteConsumed, markInviteConsumed, storePendingInvite } from '@/app/lib/pendingInvite';
+import { clearPendingInvite, getPendingInviteCode, storePendingInvite } from '@/app/lib/pendingInvite';
 
 type IneligibleReason =
   | { kind: 'already_customer'; merchant_customer_id: string; merchant_name: string; logo_url: string | null; cover_image_url: string | null }
@@ -77,12 +77,8 @@ export function PendingInviteDialog() {
   }, [preview?.share_code, accepted?.share_code]);
 
   const loadPreview = async (code: string) => {
-    // Bereits angenommene/abgelehnte Einladungen niemals erneut als Preview anzeigen
-    if (isInviteConsumed(code)) {
-      clearPendingInvite();
-      return;
-    }
-
+    setAccepted(null);
+    setIneligible(null);
     try {
       const { data, error } = await supabase.rpc('lookup_invitation', { p_share_code: code });
       if (error) throw error;
@@ -97,7 +93,6 @@ export function PendingInviteDialog() {
       };
       if (!result.success) {
         console.info('[PendingInviteDialog] lookup_invitation not successful:', result.error);
-        markInviteConsumed(code);
         clearPendingInvite();
         return;
       }
@@ -115,7 +110,6 @@ export function PendingInviteDialog() {
 
         if (existingAccount && existingAccount.current_points_balance > 0) {
           console.info('[PendingInviteDialog] user is already customer of merchant — showing info');
-          markInviteConsumed(code);
           clearPendingInvite();
           setIneligible({
             kind: 'already_customer',
@@ -139,7 +133,6 @@ export function PendingInviteDialog() {
 
         if (existingRedemption) {
           console.info('[PendingInviteDialog] user already has open redemption — showing info');
-          markInviteConsumed(code);
           clearPendingInvite();
           // 7-Tage-Fenster ab bonus_window_starts_at
           const startsAt = (existingRedemption as { bonus_window_starts_at?: string | null }).bonus_window_starts_at;
@@ -170,7 +163,6 @@ export function PendingInviteDialog() {
       setOpen(true);
     } catch (err) {
       console.error('lookup_invitation Fehler:', err);
-      markInviteConsumed(code);
       clearPendingInvite();
     }
   };
@@ -224,8 +216,6 @@ export function PendingInviteDialog() {
 
       console.log('[consume_invitation] PARSED RESULT', result);
 
-      // Egal ob neu angenommen oder bereits angenommen: nicht nochmal zeigen
-      markInviteConsumed(preview.share_code);
       clearPendingInvite();
       if (!result.success) {
         console.warn('[consume_invitation] FAILED:', result.error, '(code:', result.error_code, ')');
