@@ -303,7 +303,7 @@ export const AppMerchantDetailV2 = () => {
 
       const { data: tx } = await supabase
         .from('point_transactions')
-        .select('transaction_type, description, created_at')
+        .select('transaction_type, description, created_at, points_change')
         .eq('loyalty_account_id', account.id)
         .in('transaction_type', ['check_in', 'nfc_stamp', 'reward_redeemed', 'google_review_bonus'])
         .order('created_at', { ascending: true });
@@ -314,9 +314,10 @@ export const AppMerchantDetailV2 = () => {
         .filter((row) => row.transaction_type === 'check_in' || row.transaction_type === 'nfc_stamp')
         .map((row, index) => {
           const isReview = typeof row.description === 'string' && row.description.includes('Google-Bewertung');
+          const isBoost = row.transaction_type === 'referral_bonus' && Number(row.points_change ?? 0) > 0;
           return {
             visit: index + 1,
-            source: (isReview ? 'google_review' : 'normal') as CheckInSource,
+            source: (isBoost ? 'boost' : isReview ? 'google_review' : 'normal') as CheckInSource,
             at: row.created_at as string,
           };
         });
