@@ -3699,6 +3699,7 @@ export type Database = {
         Args: {
           p_merchant_customer_id: string
           p_reward_label: string
+          p_verification_code?: string
           p_visit_number: number
         }
         Returns: Json

@@ -20,6 +20,7 @@ import {
 } from '@/lib/activeMerchantReward';
 import { generateVerificationCode } from '@/lib/verificationCode';
 import { EyeOff } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 
 /**
  * Backstube König – Treuepass (V2 Prototype)
@@ -1565,18 +1566,31 @@ export const AppMerchantDetailV2 = () => {
                   </p>
                   <div className="flex flex-col gap-3 w-full">
                     <button
-                      onClick={() => {
+                      onClick={async () => {
                         // Check-in + Prämie sind bereits in der DB.
                         // Hier nur lokalen UI-State synchron halten (Aktivierung
                         // entfernen, Prämie als eingelöst markieren) – KEIN
                         // zusätzlicher performCheckIn-Aufruf!
                         const reward = checkInOverlay?.reward;
+                        const code = checkInOverlay?.code;
                         if (reward) {
                           setActivatedReward(null);
                           clearActivatedReward(merchantId);
                           setRedeemedVisits((prev) =>
                             prev.includes(reward.visitNumber) ? prev : [...prev, reward.visitNumber],
                           );
+                          // Persistiere die Einlösung inkl. Bestätigungs-Code,
+                          // damit der Code im Backoffice-Verlauf des Händlers sichtbar wird.
+                          try {
+                            await supabase.rpc('redeem_activated_reward', {
+                              p_merchant_customer_id: merchantId,
+                              p_visit_number: reward.visitNumber,
+                              p_reward_label: reward.label,
+                              p_verification_code: code ?? null,
+                            });
+                          } catch (e) {
+                            console.error('[V2] redeem_activated_reward failed', e);
+                          }
                         }
                         setCheckInOverlay(null);
                         setConfirmStage(false);
@@ -1605,8 +1619,8 @@ export const AppMerchantDetailV2 = () => {
                 >
                   <motion.div
                     initial={{ scale: 0 }}
-                    animate={{ scale: [1, 1.08, 1] }}
-                    transition={{ scale: { delay: 0.15, repeat: Infinity, duration: 1.6, ease: 'easeInOut' } }}
+                    animate={{ scale: 1 }}
+                    transition={{ delay: 0.15, type: 'spring', stiffness: 200, damping: 15 }}
                     className="w-24 h-24 rounded-full bg-white/20 flex items-center justify-center mb-6"
                   >
                     <CheckCircle2 className="w-14 h-14 text-white" strokeWidth={2.5} />
@@ -1617,11 +1631,15 @@ export const AppMerchantDetailV2 = () => {
                   <h2 className="text-3xl font-extrabold mb-6 leading-tight">
                     {checkInOverlay.reward.label}
                   </h2>
-                  <div className="rounded-2xl bg-white/15 backdrop-blur px-5 py-4 max-w-xs">
+                  <motion.div
+                    animate={{ scale: [1, 1.04, 1] }}
+                    transition={{ repeat: Infinity, duration: 1.8, ease: 'easeInOut' }}
+                    className="rounded-2xl bg-white/15 backdrop-blur px-5 py-4 max-w-xs shadow-[0_0_24px_rgba(255,255,255,0.18)]"
+                  >
                     <p className="text-base font-semibold text-white">
                       Zeige diesen Bildschirm einem Mitarbeiter zur Bestätigung.
                     </p>
-                  </div>
+                  </motion.div>
                 </motion.div>
               ) : (
                 <motion.div
@@ -1650,16 +1668,25 @@ export const AppMerchantDetailV2 = () => {
               )}
             </AnimatePresence>
 
+            {/* Großer fixer Code direkt über dem Marquee-Band */}
+            {!confirmStage && checkInOverlay.reward && (
+              <div className="absolute left-0 right-0 top-[calc(50%-288px)] flex justify-center pointer-events-none">
+                <span className="text-3xl font-extrabold tracking-[0.4em] tabular-nums text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.25)]">
+                  {checkInOverlay.code}
+                </span>
+              </div>
+            )}
+
             {/* Code-Marquee — direkt über dem Häkchen, dünner */}
             {!confirmStage && checkInOverlay.reward && (
               <div className="absolute left-0 right-0 top-[calc(50%-240px)] py-1.5 overflow-hidden bg-white/10 backdrop-blur border-y border-white/20">
                 <div
                   className="flex whitespace-nowrap will-change-transform"
-                  style={{ animation: 'eloyo-marquee 14s linear infinite' }}
+                  style={{ animation: 'eloyo-marquee 60s linear infinite' }}
                 >
                   {Array.from({ length: 2 }).map((_, dup) => (
                     <div key={dup} className="flex shrink-0" aria-hidden={dup === 1}>
-                      {Array.from({ length: 8 }).map((_, i) => (
+                      {Array.from({ length: 24 }).map((_, i) => (
                         <span
                           key={`${dup}-${i}`}
                           className="px-5 text-sm font-bold tracking-[0.35em] tabular-nums text-white"
