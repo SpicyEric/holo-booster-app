@@ -69,8 +69,7 @@ const RewardWheel = () => {
             Einfacher als eine Stempelkarte. Kraftvoller als ein Punktesystem.
           </h3>
           <p className="text-[#4a4455] text-lg leading-relaxed">
-            Kunden wählen selbst, was sie wollen. Das fühlt sich persönlicher an
-            als ein Gratiskaffee nach dem zehnten Besuch.
+            Kein Katalog, keine Punkte, kein Aufwand. Deine Kunden checken ein, sammeln Fortschritt und werden automatisch belohnt – je öfter sie kommen, desto mehr haben sie davon.
           </p>
         </div>
       </div>
