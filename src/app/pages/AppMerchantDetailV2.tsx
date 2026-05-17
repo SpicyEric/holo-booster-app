@@ -409,6 +409,7 @@ export const AppMerchantDetailV2 = () => {
 
   const [activatedReward, setActivatedReward] = useState<MockReward | null>(null);
   const [tappedReward, setTappedReward] = useState<MockReward | null>(null);
+  const [tappedRewardActivatable, setTappedRewardActivatable] = useState(true);
   const [redemptionScreen, setRedemptionScreen] = useState<MockReward | null>(null);
   const [boostFlash, setBoostFlash] = useState(false);
   const [boostInfoOpen, setBoostInfoOpen] = useState(false);
