@@ -41,10 +41,10 @@ export default function AppProfile() {
       action: () => navigate('/app/suggest-shop'),
     },
     {
-      icon: Store,
-      label: 'Meine Punktekarten',
-      description: 'Deine Punkte',
-      action: () => navigate('/app/my-cards'),
+      icon: BookOpen,
+      label: "So funktioniert's",
+      description: 'Alles erklärt',
+      action: () => navigate('/app/how-it-works'),
     },
     {
       icon: Receipt,
