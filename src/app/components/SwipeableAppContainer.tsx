@@ -723,13 +723,11 @@ const AppMessagesContent = () => {
           ))}
         </div>
       ) : (
-        !emailVerified ? null : (
-          <Card className="p-8 text-center">
-            <Bell className="h-12 w-12 text-muted-foreground/50 mx-auto mb-4" />
-            <h3 className="font-semibold text-foreground mb-2">Keine Nachrichten</h3>
-            <p className="text-sm text-muted-foreground">Du hast noch keine Nachrichten erhalten.</p>
-          </Card>
-        )
+        <Card className="p-8 text-center">
+          <Bell className="h-12 w-12 text-muted-foreground/50 mx-auto mb-4" />
+          <h3 className="font-semibold text-foreground mb-2">Keine Nachrichten</h3>
+          <p className="text-sm text-muted-foreground">Du hast noch keine Nachrichten erhalten.</p>
+        </Card>
       )}
 
       {/* Offene Einladungen */}
