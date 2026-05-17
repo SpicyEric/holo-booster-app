@@ -303,7 +303,7 @@ export function PendingInviteDialog() {
 
     return (
       <Dialog open={open} onOpenChange={(o) => { if (!o) closeDialog(); }}>
-        <DialogContent className="max-w-[340px] rounded-3xl p-0 gap-0 overflow-hidden border-0">
+        <DialogContent className="max-w-[340px] rounded-3xl p-0 gap-0 overflow-hidden border-0 [&>button]:hidden">
           <div
             className="h-32 bg-gradient-to-br from-muted to-muted/60"
             style={
@@ -380,7 +380,7 @@ export function PendingInviteDialog() {
   if (accepted) {
     return (
       <Dialog open={open} onOpenChange={(o) => { if (!o) closeDialog(); }}>
-        <DialogContent className="max-w-[340px] rounded-3xl p-0 gap-0 overflow-hidden border-0">
+        <DialogContent className="max-w-[340px] rounded-3xl p-0 gap-0 overflow-hidden border-0 [&>button]:hidden">
           <button
             type="button"
             onClick={closeDialog}
@@ -443,12 +443,12 @@ export function PendingInviteDialog() {
             Willkommen bei <span className="text-primary">{display.merchant_name}</span> 🎉
           </h2>
           <p className="text-sm text-muted-foreground leading-relaxed mb-4">
-            Sammle deine ersten Punkte bei diesem Geschäft und erhalte deinen{' '}
+            Sammel deinen ersten Check-in bei diesem Geschäft und erhalte deinen{' '}
             <span className="font-semibold text-foreground">Willkommensbonus</span>.
           </p>
           <div className="rounded-xl bg-primary/10 px-3 py-2.5 mb-5">
             <div className="text-xs text-muted-foreground">Dein Willkommensbonus</div>
-            <div className="text-base font-bold text-primary">Doppelte Punkte für deinen ersten Check-in</div>
+            <div className="text-base font-bold text-primary">Dein erster Check-in zählt doppelt</div>
           </div>
 
           <div className="space-y-2">
