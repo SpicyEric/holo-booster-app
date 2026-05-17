@@ -43,7 +43,7 @@ export interface CheckoutPrefill {
   lastName?: string;
   contactEmail?: string;
   contactPhone?: string;
-  additionalContacts?: string;
+  
 }
 
 interface CheckoutFormProps {
