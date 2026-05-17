@@ -2,7 +2,7 @@ import { lazy, Suspense } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
-  UserPlus,
+  Rocket,
   ArrowUpRight,
   Zap,
   BatteryCharging,
@@ -27,9 +27,9 @@ export default function SalesRepHome() {
   const navigate = useNavigate();
 
   return (
-    <div className="space-y-10">
+    <div className="space-y-16">
       {/* Top Row: Hero text + 3D animation */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-center">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
         <div className="flex flex-col justify-center py-4 lg:py-8 px-1">
           <h1 className="text-4xl lg:text-5xl font-bold tracking-tight leading-[1.1] mb-5">
             Loyale Kunden.
@@ -46,28 +46,30 @@ export default function SalesRepHome() {
               onClick={() => navigate("/vertriebler/checkout")}
               className="h-14 px-7 text-base font-semibold rounded-2xl bg-gradient-to-r from-[hsl(262,60%,55%)] to-[hsl(262,70%,45%)] hover:from-[hsl(262,60%,50%)] hover:to-[hsl(262,70%,40%)] text-white shadow-lg shadow-purple-500/20 hover:shadow-xl hover:shadow-purple-500/30 transition-all group"
             >
-              <UserPlus className="h-5 w-5 mr-2" />
-              Kunde hinzufügen
+              <Rocket className="h-5 w-5 mr-2" />
+              Jetzt Kunde werden
               <ArrowUpRight className="h-4 w-4 ml-2 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
             </Button>
           </div>
         </div>
 
-        {/* Right: 3D – no background, no label */}
-        <div className="min-h-[360px] lg:min-h-[440px]">
-          <Suspense
-            fallback={
-              <div className="w-full h-full flex items-center justify-center text-sm text-muted-foreground">
-                Lädt 3D-Modell…
-              </div>
-            }
-          >
-            <StlViewer
-              url="/models/one_card_stand.stl"
-              color="#7c3aed"
-              autoRotate
-            />
-          </Suspense>
+        {/* Right: 3D – centered, larger, floating freely */}
+        <div className="flex items-center justify-center lg:justify-center">
+          <div className="w-[380px] h-[380px] lg:w-[420px] lg:h-[420px]">
+            <Suspense
+              fallback={
+                <div className="w-full h-full flex items-center justify-center text-sm text-muted-foreground">
+                  Lädt 3D-Modell…
+                </div>
+              }
+            >
+              <StlViewer
+                url="/models/one_card_stand.stl"
+                color="#7c3aed"
+                autoRotate
+              />
+            </Suspense>
+          </div>
         </div>
       </div>
 
@@ -83,6 +85,22 @@ export default function SalesRepHome() {
             <p className="text-xs text-muted-foreground leading-snug">{desc}</p>
           </div>
         ))}
+      </div>
+
+      {/* Bottom CTA */}
+      <div className="flex flex-col items-center gap-4 pb-4">
+        <Button
+          size="lg"
+          onClick={() => navigate("/vertriebler/checkout")}
+          className="h-14 px-8 text-base font-semibold rounded-2xl bg-gradient-to-r from-[hsl(262,60%,55%)] to-[hsl(262,70%,45%)] hover:from-[hsl(262,60%,50%)] hover:to-[hsl(262,70%,40%)] text-white shadow-lg shadow-purple-500/20 hover:shadow-xl hover:shadow-purple-500/30 transition-all group"
+        >
+          <Rocket className="h-5 w-5 mr-2" />
+          Jetzt loslegen
+          <ArrowUpRight className="h-4 w-4 ml-2 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+        </Button>
+        <p className="text-sm text-muted-foreground text-center">
+          Monatlich kündbar · Keine Mindestlaufzeit · Starterbox inklusive
+        </p>
       </div>
     </div>
   );
