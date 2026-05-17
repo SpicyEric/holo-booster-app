@@ -559,12 +559,16 @@ export const AppScan = () => {
         // Toast entfernt — UI zeigt die Punkte bereits visuell an
         console.log('[AppScan] setResult called with merchantCustomerId:', response.merchant_customer_id);
 
-        // Referral-Bonus prüfen (Phase 2: Joint Visit, 7 Tage)
-        if (response.merchant_customer_id && !response.is_check_in) {
-          await maybeAwardReferralBonus({
+        // Referral-Bonus prüfen: gilt auch für V2-Check-ins, damit offene Einladungen
+        // direkt eingelöst werden und aus Nachrichten/Home verschwinden.
+        if (response.merchant_customer_id) {
+          const referralResult = await maybeAwardReferralBonus({
             userId: currentUserId,
             merchantCustomerId: response.merchant_customer_id,
           });
+          if (referralResult?.processed) {
+            window.dispatchEvent(new CustomEvent('eloyo:invitation-changed'));
+          }
           // Neukundenprämie freischalten (idempotent)
           await maybeUnlockNewCustomerOffer({
             userId: currentUserId,
