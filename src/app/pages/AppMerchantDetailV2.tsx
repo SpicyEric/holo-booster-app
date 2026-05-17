@@ -305,7 +305,7 @@ export const AppMerchantDetailV2 = () => {
         .from('point_transactions')
         .select('transaction_type, description, created_at, points_change')
         .eq('loyalty_account_id', account.id)
-        .in('transaction_type', ['check_in', 'nfc_stamp', 'reward_redeemed', 'google_review_bonus'])
+        .in('transaction_type', ['check_in', 'nfc_stamp', 'referral_bonus', 'reward_redeemed', 'google_review_bonus'])
         .order('created_at', { ascending: true });
 
       if (cancelled) return;
