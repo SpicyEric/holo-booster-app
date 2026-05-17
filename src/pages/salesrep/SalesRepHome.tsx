@@ -82,7 +82,7 @@ export default function SalesRepHome() {
       </div>
 
       {/* Feature tiles */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-5">
         {FEATURES.map(({ icon: Icon, title, desc }) => (
           <div
             key={title}
