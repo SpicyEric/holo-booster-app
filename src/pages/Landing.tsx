@@ -306,7 +306,7 @@ const Landing = () => {
           className="max-w-7xl mx-auto grid md:grid-cols-3 gap-8 lg:gap-12"
         >
           {[
-            { step: '1', title: 'Kunde scannt die Karte', desc: 'Dein Mitarbeiter hält die Eloyo-Karte ans Handy des Kunden — ein kurzer Tap und die Punkte sind sofort gutgeschrieben.', bg: howItWorksStamp },
+            { step: '1', title: 'Kunde scannt die Karte', desc: 'Dein Mitarbeiter hält die Eloyo-Karte ans Handy des Kunden – ein kurzer Tap und der Check-in ist sofort gespeichert.', bg: howItWorksStamp },
             { step: '2', title: 'Sammelt Punkte, löst Prämien ein', desc: 'Jeder Besuch wird belohnt. Der Kunde wählt selbst, was er will. Das schafft echte Motivation und er kommt wieder.', bg: howItWorksPresent },
             { step: '3', title: 'Kunde bringt Leute in deinen Laden', desc: 'Dein Kunde wird mit attraktiven Prämien belohnt, wenn er dir Neukunden in deinen Laden bringt. Vollautomatisiert, ohne dass du etwas dafür tun musst.', bg: howItWorksReferal },
           ].map((item, i) => {
