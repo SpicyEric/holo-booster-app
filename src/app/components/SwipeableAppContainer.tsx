@@ -614,12 +614,9 @@ const AppMessagesContent = () => {
   const location = useLocation();
   const [messages, setMessages] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [emailVerified, setEmailVerified] = useState(true);
-
   useEffect(() => {
     if (user) {
       loadMessages();
-      checkVerification();
     }
   }, [user]);
 
