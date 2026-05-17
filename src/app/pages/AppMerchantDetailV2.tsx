@@ -1565,18 +1565,31 @@ export const AppMerchantDetailV2 = () => {
                   </p>
                   <div className="flex flex-col gap-3 w-full">
                     <button
-                      onClick={() => {
+                      onClick={async () => {
                         // Check-in + Prämie sind bereits in der DB.
                         // Hier nur lokalen UI-State synchron halten (Aktivierung
                         // entfernen, Prämie als eingelöst markieren) – KEIN
                         // zusätzlicher performCheckIn-Aufruf!
                         const reward = checkInOverlay?.reward;
+                        const code = checkInOverlay?.code;
                         if (reward) {
                           setActivatedReward(null);
                           clearActivatedReward(merchantId);
                           setRedeemedVisits((prev) =>
                             prev.includes(reward.visitNumber) ? prev : [...prev, reward.visitNumber],
                           );
+                          // Persistiere die Einlösung inkl. Bestätigungs-Code,
+                          // damit der Code im Backoffice-Verlauf des Händlers sichtbar wird.
+                          try {
+                            await supabase.rpc('redeem_activated_reward', {
+                              p_merchant_customer_id: merchantId,
+                              p_visit_number: reward.visitNumber,
+                              p_reward_label: reward.label,
+                              p_verification_code: code ?? null,
+                            });
+                          } catch (e) {
+                            console.error('[V2] redeem_activated_reward failed', e);
+                          }
                         }
                         setCheckInOverlay(null);
                         setConfirmStage(false);
