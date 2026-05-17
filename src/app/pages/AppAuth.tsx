@@ -26,7 +26,7 @@ export const AppAuth = () => {
   const location = useLocation();
   useAppViewportLock();
 
-  const [mode, setMode] = useState<AuthMode>('choose');
+  const [mode, setMode] = useState<AuthMode>('phone');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
@@ -245,51 +245,14 @@ export const AppAuth = () => {
     <div className="h-[100dvh] overflow-y-auto bg-gradient-to-b from-primary/5 to-background flex flex-col items-center justify-center p-4">
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-md">
         <div className="text-center mb-8">
-          <img src="/eloyo-logo.png" alt="Eloyo" className="h-12 mx-auto mb-2" />
-          <p className="text-muted-foreground">Deine Treuepunkte-App</p>
+          <img src="/eloyo-logo.png" alt="Eloyo" className="h-12 mx-auto" />
         </div>
 
         <div className="bg-card rounded-2xl p-6 shadow-lg border">
           <AnimatePresence mode="wait">
-            {/* CHOOSE */}
-            {mode === 'choose' && (
-              <motion.div key="choose" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-5">
-                <h2 className="text-2xl font-bold text-center">Anmelden bei Eloyo</h2>
-                <Button
-                  onClick={() => setMode('phone')}
-                  className="w-full h-14 text-base bg-gradient-to-r from-primary to-secondary"
-                >
-                  <Smartphone className="h-5 w-5 mr-2" />
-                  Mit Handynummer anmelden
-                </Button>
-                <div className="flex items-center gap-3">
-                  <div className="flex-1 h-px bg-border" />
-                  <span className="text-xs text-muted-foreground">oder</span>
-                  <div className="flex-1 h-px bg-border" />
-                </div>
-                <button
-                  onClick={() => setMode('email-login')}
-                  className="w-full text-center text-sm font-medium text-foreground hover:text-primary transition-colors py-2"
-                >
-                  <Mail className="h-4 w-4 inline mr-1.5" />
-                  Mit E-Mail anmelden
-                </button>
-                <p className="text-center text-xs text-muted-foreground pt-2">
-                  Neu hier? Tippe oben auf „Mit Handynummer anmelden" – dein Konto wird automatisch erstellt.
-                </p>
-              </motion.div>
-            )}
-
             {/* PHONE */}
             {mode === 'phone' && (
               <motion.div key="phone" initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -30 }} className="space-y-5">
-                <button
-                  onClick={() => { setMode('choose'); setPhoneStep('enter'); setOtpCode(''); }}
-                  className="text-sm text-muted-foreground flex items-center gap-1 hover:text-foreground"
-                >
-                  <ArrowLeft className="h-4 w-4" /> Zurück
-                </button>
-
                 {phoneStep === 'enter' ? (
                   <>
                     <div>
@@ -317,6 +280,18 @@ export const AppAuth = () => {
                         {loading ? 'Wird gesendet…' : 'Code senden'}
                       </Button>
                     </form>
+                    <p className="text-center text-xs text-muted-foreground">
+                      Hast du schon einen Account? Melde dich einfach mit deiner Handynummer an – wir erkennen dich automatisch.
+                    </p>
+                    <div className="pt-2 text-center">
+                      <button
+                        type="button"
+                        onClick={() => setMode('email-login')}
+                        className="text-[11px] text-muted-foreground hover:text-foreground underline underline-offset-2"
+                      >
+                        Stattdessen mit E-Mail-Adresse anmelden
+                      </button>
+                    </div>
                   </>
                 ) : (
                   <>
@@ -369,7 +344,7 @@ export const AppAuth = () => {
             {mode === 'email-login' && (
               <motion.div key="email-login" initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -30 }} className="space-y-4">
                 <button
-                  onClick={() => setMode('choose')}
+                  onClick={() => setMode('phone')}
                   className="text-sm text-muted-foreground flex items-center gap-1 hover:text-foreground"
                 >
                   <ArrowLeft className="h-4 w-4" /> Zurück

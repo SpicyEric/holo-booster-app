@@ -114,29 +114,21 @@ export default function AppSettings() {
     if (!deleteDialogOpen) { setDeleteTimer(5); setCanDelete(false); }
   }, [deleteDialogOpen]);
 
-  const handleSave = async () => {
-    if (!user) return;
+  const handleBirthDateChange = async (newDate: string) => {
+    if (!user || !newDate || birthDateLocked) return;
+    setBirthDate(newDate);
     setSaving(true);
     try {
-      // Birth date is one-time only
-      const payload: any = {};
-      if (!birthDateLocked && birthDate) payload.birth_date = birthDate;
-
-      if (Object.keys(payload).length === 0) {
-        toast.info('Keine Änderungen');
-        return;
-      }
-
       const { error } = await supabase
         .from('profiles')
-        .update(payload)
+        .update({ birth_date: newDate })
         .eq('user_id', user.id);
       if (error) throw error;
-
-      if (payload.birth_date) setBirthDateLocked(true);
+      setBirthDateLocked(true);
       toast.success('Geburtsdatum gespeichert. Es kann nicht mehr geändert werden.');
     } catch (error: any) {
       toast.error(`Fehler: ${error.message}`);
+      setBirthDate('');
     } finally {
       setSaving(false);
     }
@@ -262,9 +254,9 @@ export default function AppSettings() {
               <Input
                 type="date"
                 value={birthDate}
-                onChange={(e) => setBirthDate(e.target.value)}
+                onChange={(e) => handleBirthDateChange(e.target.value)}
                 max={new Date().toISOString().split('T')[0]}
-                disabled={birthDateLocked}
+                disabled={birthDateLocked || saving}
               />
               {birthDateLocked ? (
                 <p className="text-xs text-muted-foreground">
@@ -318,7 +310,7 @@ export default function AppSettings() {
               )}
             </div>
 
-            {showPasswordOption && (
+            {showPasswordOption && userEmail && (
               <Button variant="outline" className="w-full" onClick={() => setPasswordDialogOpen(true)}>
                 Passwort ändern
               </Button>
@@ -331,11 +323,6 @@ export default function AppSettings() {
             </div>
           </CardContent>
         </Card>
-
-        <Button onClick={handleSave} className="w-full bg-gradient-to-r from-primary to-secondary" disabled={saving}>
-          {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          Änderungen speichern
-        </Button>
       </div>
 
       {/* Phone Add/Change Dialog */}
