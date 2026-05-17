@@ -83,7 +83,6 @@ export function PendingInviteDialog() {
 
   const loadPreview = async (code: string) => {
     if (handledInviteCodesRef.current.has(code)) {
-      handledInviteCodesRef.current.add(preview.share_code);
       clearPendingInvite();
       return;
     }
@@ -173,6 +172,7 @@ export function PendingInviteDialog() {
       setOpen(true);
     } catch (err) {
       console.error('lookup_invitation Fehler:', err);
+      handledInviteCodesRef.current.add(preview.share_code);
       clearPendingInvite();
     }
   };
