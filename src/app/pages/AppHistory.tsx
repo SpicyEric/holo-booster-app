@@ -69,21 +69,12 @@ export const AppHistory = () => {
     }
   };
 
-  const getTransactionIcon = (type: string, points: number) => {
-    if (type === 'redeem' || points < 0) {
-      return <Gift className="h-4 w-4 text-orange-500" />;
-    }
-    return <TrendingUp className="h-4 w-4 text-green-500" />;
-  };
-
-  const getTransactionLabel = (type: string) => {
-    switch (type) {
-      case 'stamp': return 'Karte';
-      case 'redeem': return 'Eingelöst';
-      case 'bonus': return 'Bonus';
-      case 'adjustment': return 'Anpassung';
-      default: return type;
-    }
+  const getTransactionIcon = (type: string, description: string | null) => {
+    const desc = (description || '').toLowerCase();
+    if (type === 'reward_redeemed') return <Gift className="h-4 w-4 text-orange-500" />;
+    if (type === 'google_review_bonus' || desc.includes('google-bewertung')) return <Star className="h-4 w-4 text-amber-500" />;
+    if (type === 'referral_bonus' || /bonus[- ]?check[- ]?in|empfehlung/.test(desc)) return <UserPlus className="h-4 w-4 text-violet-500" />;
+    return <Check className="h-4 w-4 text-emerald-500" />;
   };
 
   if (loading) {
