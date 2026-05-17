@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -39,6 +39,7 @@ interface PreviewData {
 export function PendingInviteDialog() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const handledInviteCodesRef = useRef<Set<string>>(new Set());
   const [open, setOpen] = useState(false);
   const [accepting, setAccepting] = useState(false);
   const [preview, setPreview] = useState<PreviewData | null>(null);
@@ -66,6 +67,10 @@ export function PendingInviteDialog() {
     const onNewInvite = (e: Event) => {
       const detail = (e as CustomEvent).detail as string | undefined;
       const c = detail ? storePendingInvite(detail) : getPendingInviteCode();
+      if (c && handledInviteCodesRef.current.has(c)) {
+        clearPendingInvite();
+        return;
+      }
       if (c) void loadPreview(c);
     };
     window.addEventListener('eloyo:pending-invite', onNewInvite);
@@ -77,6 +82,10 @@ export function PendingInviteDialog() {
   }, [preview?.share_code, accepted?.share_code]);
 
   const loadPreview = async (code: string) => {
+    if (handledInviteCodesRef.current.has(code)) {
+      clearPendingInvite();
+      return;
+    }
     setAccepted(null);
     setIneligible(null);
     try {
