@@ -92,6 +92,12 @@ const Marketing = () => {
   const [editingReward, setEditingReward] = useState<Reward | null>(null);
   const [rewardForm, setRewardForm] = useState({ title: '', description: '', points_required: 10, image_url: '', marketing_text: '', marketing_emoji: '' });
   const [showRewardEmojiPicker, setShowRewardEmojiPicker] = useState(false);
+  // WhatsApp-Empfehlungstext (global, gespeichert auf allen Prämien)
+  const [whatsappText, setWhatsappText] = useState('');
+  const [whatsappEmoji, setWhatsappEmoji] = useState('🎁');
+  const [whatsappInitial, setWhatsappInitial] = useState({ text: '', emoji: '🎁' });
+  const [whatsappEmojiPicker, setWhatsappEmojiPicker] = useState(false);
+  const [savingWhatsapp, setSavingWhatsapp] = useState(false);
   const [uploadingRewardImage, setUploadingRewardImage] = useState(false);
   const [newCustomerOffer, setNewCustomerOffer] = useState<NewCustomerOffer | null>(null);
   const [showNcoDialog, setShowNcoDialog] = useState(false);
