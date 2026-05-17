@@ -6,9 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import { Star, CheckCircle } from 'lucide-react';
 import eloyoLogo from '@/assets/eloyo-logo.png';
 import nfcStampHero from '@/assets/hero-app-mockup.png';
-import heroSlide1 from '@/assets/hero-slide-1.png';
-import heroSlide2 from '@/assets/hero-slide-2.png';
-import heroSlide3 from '@/assets/hero-slide-3.png';
+import heroAppShot from '@/assets/hero-app-shot.png';
 import eloyoAppMockup from '@/assets/eloyo-app-mockup.jpg';
 import pushBg from '@/assets/push-bg.jpeg';
 import businessNetwork from '@/assets/business-network-v2.png';
@@ -146,28 +144,13 @@ const HeroMockupWithNotifications = () => {
 
   const note = heroNotifications[currentIndex];
 
-  const heroImages = [heroSlide1, heroSlide2, heroSlide3];
-  const [imgIndex, setImgIndex] = useState(0);
-
-  useEffect(() => {
-    const imgInterval = setInterval(() => {
-      setImgIndex(prev => (prev + 1) % heroImages.length);
-    }, 4500);
-    return () => clearInterval(imgInterval);
-  }, []);
-
   return (
     <div className="relative w-full h-[480px] sm:h-[580px] lg:h-[620px]">
-      {/* Sliding hero images */}
-      {heroImages.map((src, i) => (
-        <img
-          key={i}
-          src={src}
-          alt="Eloyo App Mockup"
-          className="absolute inset-0 w-full h-full object-contain transition-opacity duration-1000 ease-in-out"
-          style={{ opacity: i === imgIndex ? 1 : 0 }}
-        />
-      ))}
+      <img
+        src={heroAppShot}
+        alt="Eloyo App Mockup"
+        className="absolute inset-0 w-full h-full object-contain"
+      />
     </div>
   );
 };
