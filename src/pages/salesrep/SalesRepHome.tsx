@@ -1,20 +1,35 @@
 import { lazy, Suspense } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { UserPlus, ArrowUpRight } from "lucide-react";
-import appPreview from "@/assets/vertriebler-app-preview.png";
-import aufsteller from "@/assets/vertriebler-aufsteller.png";
+import {
+  UserPlus,
+  ArrowUpRight,
+  Zap,
+  BatteryCharging,
+  Euro,
+  Smartphone,
+  ShieldCheck,
+  LineChart,
+} from "lucide-react";
 
 const StlViewer = lazy(() => import("@/components/StlViewer"));
+
+const FEATURES = [
+  { icon: Zap, title: "10 Sekunden", desc: "Vom Scan bis zum ersten Check-in" },
+  { icon: BatteryCharging, title: "Kein Strom nötig", desc: "NFC funktioniert ohne Akku" },
+  { icon: Euro, title: "Keine Setup-Kosten", desc: "Starterbox inklusive" },
+  { icon: Smartphone, title: "Push-Nachrichten", desc: "Direkt aufs Handy deiner Kunden" },
+  { icon: ShieldCheck, title: "DSGVO-konform", desc: "Daten bleiben in Deutschland" },
+  { icon: LineChart, title: "Live-Statistiken", desc: "Wer kommt, wann, wie oft" },
+];
 
 export default function SalesRepHome() {
   const navigate = useNavigate();
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-10">
       {/* Top Row: Hero text + 3D animation */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Left: Hero copy */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-center">
         <div className="flex flex-col justify-center py-4 lg:py-8 px-1">
           <h1 className="text-4xl lg:text-5xl font-bold tracking-tight leading-[1.1] mb-5">
             Loyale Kunden.
@@ -38,14 +53,11 @@ export default function SalesRepHome() {
           </div>
         </div>
 
-        {/* Right: 3D Check-in Terminal */}
-        <div className="rounded-3xl bg-gradient-to-br from-[hsl(262,30%,12%)] to-[hsl(262,40%,18%)] overflow-hidden min-h-[360px] lg:min-h-[420px] relative">
-          <div className="absolute top-4 left-5 text-xs font-medium text-white/60 tracking-wide z-10">
-            Check-in Terminal
-          </div>
+        {/* Right: 3D – no background, no label */}
+        <div className="min-h-[360px] lg:min-h-[440px]">
           <Suspense
             fallback={
-              <div className="w-full h-full flex items-center justify-center text-sm text-white/40">
+              <div className="w-full h-full flex items-center justify-center text-sm text-muted-foreground">
                 Lädt 3D-Modell…
               </div>
             }
@@ -59,22 +71,18 @@ export default function SalesRepHome() {
         </div>
       </div>
 
-      {/* Bottom Row: App preview + Aufsteller */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="rounded-3xl bg-white/60 border border-border/40 overflow-hidden flex items-center justify-center p-6 min-h-[360px]">
-          <img
-            src={appPreview}
-            alt="Eloyo App Vorschau"
-            className="max-h-[420px] w-auto object-contain drop-shadow-2xl"
-          />
-        </div>
-        <div className="rounded-3xl bg-white/60 border border-border/40 overflow-hidden flex items-center justify-center p-6 min-h-[360px]">
-          <img
-            src={aufsteller}
-            alt="Eloyo Aufsteller"
-            className="max-h-[420px] w-auto object-contain drop-shadow-2xl"
-          />
-        </div>
+      {/* Feature tiles */}
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+        {FEATURES.map(({ icon: Icon, title, desc }) => (
+          <div
+            key={title}
+            className="rounded-2xl bg-white/70 backdrop-blur-sm border border-border/40 p-5 text-center hover:bg-white/90 hover:border-[hsl(262,60%,75%)] transition-all hover:-translate-y-0.5 hover:shadow-lg hover:shadow-purple-500/5"
+          >
+            <Icon className="h-6 w-6 mx-auto mb-3 text-[hsl(262,60%,55%)]" strokeWidth={2.2} />
+            <p className="font-semibold text-sm mb-1 leading-tight">{title}</p>
+            <p className="text-xs text-muted-foreground leading-snug">{desc}</p>
+          </div>
+        ))}
       </div>
     </div>
   );
