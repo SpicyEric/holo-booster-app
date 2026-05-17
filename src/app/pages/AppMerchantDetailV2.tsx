@@ -275,6 +275,7 @@ export const AppMerchantDetailV2 = () => {
   type RawTx = { transaction_type: string; description: string | null; created_at: string };
   const [historyTx, setHistoryTx] = useState<RawTx[]>([]);
   const [historyOpen, setHistoryOpen] = useState(false);
+  const [merchantInfoOpen, setMerchantInfoOpen] = useState(false);
 
   const [redeemedVisits, setRedeemedVisits] = useState<number[]>(() => {
     if (typeof window === 'undefined') return defaultRedeemed;
