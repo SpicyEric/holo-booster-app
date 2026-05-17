@@ -1475,41 +1475,12 @@ const Marketing = () => {
                   {rewardForm.image_url ? <img src={rewardForm.image_url} alt="Preview" className="w-16 h-16 object-cover mx-auto rounded-lg" /> : <span className="text-sm text-muted-foreground">{uploadingRewardImage ? 'Hochladen...' : 'Bild hochladen'}</span>}
                 </label>
               </div>
-              <div>
-                <Label>Titel *</Label>
-                <Input value={ncoForm.title} onChange={e => setNcoForm({ ...ncoForm, title: e.target.value })} placeholder="z.B. Gratis Shampooprobe / Kleine Pommes / Ayran gratis" className="rounded-xl mt-1" />
-              </div>
-              <div>
-                <Label>Beschreibung</Label>
-                <div className="mt-1">
-                  <RichTextEditor value={ncoForm.description} onChange={v => setNcoForm({...ncoForm, description: v})} placeholder="z.B. nur zu einer Bestellung ab 10 € / nur in Verbindung mit einem Haarschnitt / ein Goodie pro Besuch" rows={2} />
-                </div>
-              </div>
-              <div>
-                <Label>Bild (optional)</Label>
-                <label className="cursor-pointer block mt-1 border-2 border-dashed border-border rounded-xl p-4 text-center hover:border-primary/50 transition-colors">
-                  <input type="file" accept="image/*" className="hidden" onChange={e => { const f = e.target.files?.[0]; if (f) handleNcoImageUpload(f); }} />
-                  {ncoForm.image_url ? (
-                    <div className="relative inline-block">
-                      <img src={ncoForm.image_url} alt="Preview" className="w-20 h-20 object-cover mx-auto rounded-lg" />
-                      <Button type="button" variant="destructive" size="sm" className="absolute -top-2 -right-2 h-6 w-6 p-0 rounded-full" onClick={(e) => { e.preventDefault(); setNcoForm(prev => ({...prev, image_url: ''})); }}>
-                        <Trash2 className="h-3 w-3" />
-                      </Button>
-                    </div>
-                  ) : (
-                    <span className="text-sm text-muted-foreground flex items-center justify-center gap-2">
-                      {uploadingNcoImage ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
-                      {uploadingNcoImage ? 'Hochladen...' : 'Bild hochladen'}
-                    </span>
-                  )}
-                </label>
-              </div>
             </div>
             <DialogFooter>
-              <Button variant="outline" onClick={() => setShowNcoDialog(false)} className="rounded-xl">Abbrechen</Button>
-              <Button onClick={handleSaveNco} disabled={saving || !ncoForm.title} className="rounded-xl">
+              <Button variant="outline" onClick={() => { setShowRewardDialog(false); setEditingReward(null); }} className="rounded-xl">Abbrechen</Button>
+              <Button onClick={handleSaveReward} disabled={saving || !rewardForm.title} className="rounded-xl">
                 {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-                {newCustomerOffer ? 'Aktualisieren' : 'Erstellen'}
+                {editingReward ? 'Aktualisieren' : 'Erstellen'}
               </Button>
             </DialogFooter>
           </DialogContent>
