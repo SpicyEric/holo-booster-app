@@ -97,6 +97,8 @@ import SalesRepVertragAbrechnung from "./pages/salesrep/SalesRepVertragAbrechnun
 import AdminVertragsversionen from "./pages/admin/Vertragsversionen";
 import AdminZusatzvereinbarungen from "./pages/admin/Zusatzvereinbarungen";
 import AdminPushLogs from "./pages/admin/PushLogs";
+import AdminAufsteller from "./pages/admin/Aufsteller";
+import MerchantAufsteller from "./pages/merchant/Aufsteller";
 
 const queryClient = new QueryClient();
 
@@ -153,6 +155,7 @@ const App = () => {
                 <Route path="vertragsversionen" element={<AdminVertragsversionen />} />
                 <Route path="zusatzvereinbarungen" element={<AdminZusatzvereinbarungen />} />
                 <Route path="push" element={<AdminPushLogs />} />
+                <Route path="aufsteller" element={<AdminAufsteller />} />
                 <Route path="settings" element={<Settings />} />
                 <Route path="academy" element={<Academy />} />
                 <Route path="demo-abschluss" element={<SalesRepDemoAbschluss />} />
@@ -168,6 +171,7 @@ const App = () => {
                 <Route path="marketing" element={<Marketing />} />
                 <Route path="konto" element={<MeinKonto />} />
                 <Route path="anleitung" element={<SoFunktionierts />} />
+                <Route path="aufsteller" element={<MerchantAufsteller />} />
                 {/* Legacy redirects for old routes */}
                 <Route path="google-bewertungen" element={<Navigate to="/kunde/marketing" replace />} />
                 <Route path="nachrichten" element={<Navigate to="/kunde/marketing" replace />} />
