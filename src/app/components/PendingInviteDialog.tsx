@@ -307,10 +307,6 @@ export function PendingInviteDialog() {
 
   // ─── Render: Ineligible-Hinweis ────────────────────────────────
   if (ineligible) {
-    const daysLeft = ineligible.kind === 'already_invited' && ineligible.expires_at
-      ? Math.max(0, Math.ceil((new Date(ineligible.expires_at).getTime() - Date.now()) / (24 * 60 * 60 * 1000)))
-      : 0;
-
     return (
       <Dialog open={open} onOpenChange={(o) => { if (!o) closeDialog(); }}>
         <DialogContent className="max-w-[340px] rounded-3xl p-0 gap-0 overflow-hidden border-0 [&>button]:hidden">
@@ -359,10 +355,8 @@ export function PendingInviteDialog() {
                   Du bist schon zu <span className="text-primary">{ineligible.merchant_name}</span> eingeladen
                 </h2>
                 <p className="text-sm text-muted-foreground leading-relaxed mb-5">
-                  Eine andere Person hat dich bereits eingeladen. Sammel innerhalb der nächsten{' '}
-                  <span className="font-semibold text-foreground">{daysLeft} {daysLeft === 1 ? 'Tag' : 'Tage'}</span>{' '}
-                  deinen ersten Check-in, um den Bonus zu erhalten.
-                  Eine neue Einladung ist erst möglich, wenn diese abgelaufen ist.
+                  Du hast bereits eine offene Einladung bei diesem Geschäft. Du kannst keine zweite
+                  Einladung für dieses Geschäft annehmen.
                 </p>
               </>
             )}
