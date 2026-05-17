@@ -335,7 +335,7 @@ export function PendingInviteDialog() {
                   Du sammelst schon bei <span className="text-primary">{ineligible.merchant_name}</span>
                 </h2>
                 <p className="text-sm text-muted-foreground leading-relaxed mb-5">
-                  Da du dort bereits Punkte gesammelt hast, kannst du nicht als Neukunde
+                  Da du dort bereits einen Check-in gesammelt hast, kannst du nicht als Neukunde
                   eingeladen werden. Der Willkommensbonus gilt nur für die erste Einladung.
                 </p>
               </>
@@ -349,9 +349,9 @@ export function PendingInviteDialog() {
                   Du bist schon zu <span className="text-primary">{ineligible.merchant_name}</span> eingeladen
                 </h2>
                 <p className="text-sm text-muted-foreground leading-relaxed mb-5">
-                  Eine andere Person hat dich bereits eingeladen. Sammle innerhalb der nächsten{' '}
+                  Eine andere Person hat dich bereits eingeladen. Sammel innerhalb der nächsten{' '}
                   <span className="font-semibold text-foreground">{daysLeft} {daysLeft === 1 ? 'Tag' : 'Tage'}</span>{' '}
-                  deine ersten Punkte, um den Bonus zu erhalten.
+                  deinen ersten Check-in, um den Bonus zu erhalten.
                   Eine neue Einladung ist erst möglich, wenn diese abgelaufen ist.
                 </p>
               </>
