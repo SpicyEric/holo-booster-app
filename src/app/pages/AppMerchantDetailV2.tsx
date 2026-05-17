@@ -275,6 +275,7 @@ export const AppMerchantDetailV2 = () => {
   type RawTx = { transaction_type: string; description: string | null; created_at: string };
   const [historyTx, setHistoryTx] = useState<RawTx[]>([]);
   const [historyOpen, setHistoryOpen] = useState(false);
+  const [merchantInfoOpen, setMerchantInfoOpen] = useState(false);
 
   const [redeemedVisits, setRedeemedVisits] = useState<number[]>(() => {
     if (typeof window === 'undefined') return defaultRedeemed;
@@ -950,10 +951,13 @@ export const AppMerchantDetailV2 = () => {
           >
             <ArrowLeft className="w-5 h-5" style={{ color: BRAND }} />
           </button>
-          <div className="flex-1 min-w-0">
+          <button
+            className="flex-1 min-w-0 text-left"
+            onClick={() => setMerchantInfoOpen(true)}
+          >
             <h1 className="text-lg font-bold text-neutral-900 dark:text-neutral-100 truncate">{merchantInfo.name}</h1>
             <p className="text-xs font-medium" style={{ color: BRAND }}>Dein Treuepass</p>
-          </div>
+          </button>
           <button
             type="button"
             onClick={() => setHistoryOpen(true)}
@@ -1495,6 +1499,26 @@ export const AppMerchantDetailV2 = () => {
               className="w-full h-10 rounded-xl text-neutral-600"
             >
               Mehr Optionen
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Geschäftsinformationen Pop-up */}
+      <Dialog open={merchantInfoOpen} onOpenChange={(o) => !o && setMerchantInfoOpen(false)}>
+        <DialogContent className="max-w-[340px] rounded-3xl p-0 overflow-hidden">
+          <div className="px-6 pt-6 pb-2">
+            <h2 className="text-lg font-bold text-neutral-900 dark:text-neutral-100">{merchantInfo.name}</h2>
+            <p className="text-xs text-neutral-500 dark:text-neutral-400">Dein Treuepass</p>
+          </div>
+          <MerchantInfoSection info={merchantInfo} brand={BRAND} />
+          <div className="px-6 py-4">
+            <Button
+              onClick={() => setMerchantInfoOpen(false)}
+              className="w-full text-white"
+              style={{ background: BRAND }}
+            >
+              Schließen
             </Button>
           </div>
         </DialogContent>
