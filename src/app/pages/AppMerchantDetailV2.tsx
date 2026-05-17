@@ -1198,9 +1198,15 @@ export const AppMerchantDetailV2 = () => {
         transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1], delay: sectionsRevealed && !isExiting ? 0.25 : 0 }}
       >
         <Card
-          className="p-5 border-0 text-white shadow-lg"
+          className="relative p-5 border-0 text-white shadow-lg overflow-hidden"
           style={{ background: `linear-gradient(135deg, ${BRAND}, ${BRAND}cc)` }}
         >
+          {nextBoostPreview && nextBoostPreview.next_boost > 0 && (
+            <div className="absolute top-3 right-3 px-2.5 py-1 rounded-full bg-white/95 text-[11px] font-bold shadow-sm flex items-center gap-1" style={{ color: BRAND }}>
+              <span>{nextBoostPreview.next_boost === 3 ? '🚀🚀🚀' : nextBoostPreview.next_boost === 2 ? '🚀🚀' : '🚀'}</span>
+              <span>+{nextBoostPreview.next_boost} Check-in{nextBoostPreview.next_boost === 1 ? '' : 's'}</span>
+            </div>
+          )}
           <div className="flex items-center gap-3 mb-3">
             <div className="w-11 h-11 rounded-2xl bg-white/20 flex items-center justify-center">
               <UserPlus className="w-5 h-5" />
