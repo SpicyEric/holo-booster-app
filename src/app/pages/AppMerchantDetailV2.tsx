@@ -955,8 +955,11 @@ export const AppMerchantDetailV2 = () => {
             <h1 className="text-lg font-bold text-neutral-900 dark:text-neutral-100 truncate">{merchantInfo.name}</h1>
             <p className="text-xs font-medium" style={{ color: BRAND }}>Dein Treuepass</p>
           </div>
-          <div
-            className="px-3 h-12 rounded-2xl flex flex-col items-center justify-center text-white shadow-sm leading-none"
+          <button
+            type="button"
+            onClick={() => setHistoryOpen(true)}
+            aria-label="Verlauf anzeigen"
+            className="px-3 h-12 rounded-2xl flex flex-col items-center justify-center text-white shadow-sm leading-none active:scale-95 transition-transform"
             style={{ background: `linear-gradient(135deg, ${BRAND}, ${BRAND}cc)`, minWidth: 64 }}
           >
             <span className="text-[9px] font-semibold uppercase tracking-wider opacity-90">Check-ins</span>
@@ -974,7 +977,7 @@ export const AppMerchantDetailV2 = () => {
                 </motion.span>
               </AnimatePresence>
             </div>
-          </div>
+          </button>
         </div>
       </div>
 
