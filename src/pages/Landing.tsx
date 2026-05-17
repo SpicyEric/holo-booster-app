@@ -3,7 +3,7 @@ import ERecht24Badge from '@/components/ERecht24Badge';
 import Particles from '@/components/Particles';
 import { motion, AnimatePresence, type Variants } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { Star, CheckCircle } from 'lucide-react';
+import { Star, CheckCircle, Settings, Users, Clock } from 'lucide-react';
 import eloyoLogo from '@/assets/eloyo-logo.png';
 import nfcStampHero from '@/assets/hero-app-mockup.png';
 import heroAppShot from '@/assets/hero-app-shot.png';
@@ -244,7 +244,7 @@ const Landing = () => {
           <motion.div variants={glassReveal} className="text-left">
             <div className="inline-flex items-center gap-2 bg-primary/10 text-primary px-4 py-1.5 rounded-full text-sm font-bold mb-6">
               <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-              Punktekarte 2.0
+              Treuepass 2.0
             </div>
             <RotatingHeadline />
             <p className="text-xl text-[#4a4455] leading-relaxed mb-10 max-w-xl">
@@ -306,8 +306,8 @@ const Landing = () => {
           className="max-w-7xl mx-auto grid md:grid-cols-3 gap-8 lg:gap-12"
         >
           {[
-            { step: '1', title: 'Kunde scannt die Karte', desc: 'Dein Mitarbeiter hält die Eloyo-Karte ans Handy des Kunden — ein kurzer Tap und die Punkte sind sofort gutgeschrieben.', bg: howItWorksStamp },
-            { step: '2', title: 'Sammelt Punkte, löst Prämien ein', desc: 'Jeder Besuch wird belohnt. Der Kunde wählt selbst, was er will. Das schafft echte Motivation und er kommt wieder.', bg: howItWorksPresent },
+            { step: '1', title: 'Kunde scannt die Karte', desc: 'Dein Mitarbeiter hält die Eloyo-Karte ans Handy des Kunden – ein kurzer Tap und der Check-in ist sofort gespeichert.', bg: howItWorksStamp },
+            { step: '2', title: 'Fortschritt wird belohnt', desc: 'Mit jedem Check-in kommt der Kunde seiner nächsten Prämie näher – ganz automatisch, ohne Zettel oder Punktekarte.', bg: howItWorksPresent },
             { step: '3', title: 'Kunde bringt Leute in deinen Laden', desc: 'Dein Kunde wird mit attraktiven Prämien belohnt, wenn er dir Neukunden in deinen Laden bringt. Vollautomatisiert, ohne dass du etwas dafür tun musst.', bg: howItWorksReferal },
           ].map((item, i) => {
             const isActive = activeStep === i;
@@ -477,6 +477,45 @@ const Landing = () => {
           </div>
         </motion.div>
       </section>
+      {/* ═══════ NEW SECTION: Kunden kommen auf dich zu ═══════ */}
+      <section className="relative z-10 py-20 px-6 bg-[#faf8ff]">
+        <div className="max-w-5xl mx-auto text-center">
+          <motion.div
+            variants={glassReveal}
+            initial="hidden"
+            whileInView="visible"
+            viewport={viewportConfig}
+          >
+            <h2 className="font-headline text-3xl md:text-4xl font-extrabold mb-5 tracking-[-0.02em] text-[#1a1b21]">
+              Deine Kunden kommen auf dich zu – nicht umgekehrt.
+            </h2>
+            <p className="text-[#4a4455] text-lg leading-relaxed max-w-3xl mx-auto mb-12">
+              Du musst niemanden ansprechen, niemanden überzeugen und keine Kundenkarte verteilen. Eloyo arbeitet vollautomatisch im Hintergrund – und sorgt dafür, dass deine Stammkunden wiederkommen und neue Kunden mitbringen.
+            </p>
+          </motion.div>
+          <motion.div
+            variants={staggerContainer}
+            initial="hidden"
+            whileInView="visible"
+            viewport={viewportConfig}
+            className="grid md:grid-cols-3 gap-8"
+          >
+            {[
+              { icon: Settings, label: 'Läuft von alleine – ohne deinen Einsatz' },
+              { icon: Users, label: 'Stammkunden werden zu deinen Botschaftern' },
+              { icon: Clock, label: 'Einmal einrichten, dauerhaft profitieren' },
+            ].map((item, i) => (
+              <motion.div key={i} variants={glassReveal} className="flex flex-col items-center">
+                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#5227FF] to-[#8B5CF6] flex items-center justify-center mb-4 shadow-lg shadow-[#5227FF]/20">
+                  <item.icon className="w-7 h-7 text-white" />
+                </div>
+                <p className="text-[#1a1b21] font-semibold text-base leading-snug">{item.label}</p>
+              </motion.div>
+            ))}
+          </motion.div>
+        </div>
+      </section>
+
       {/* ═══════ FINAL CTA ═══════ */}
       <section className="relative z-10 py-10 px-6 pt-24">
         <div className="max-w-5xl mx-auto">

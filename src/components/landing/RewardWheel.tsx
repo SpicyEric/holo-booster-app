@@ -34,9 +34,6 @@ const RewardCard = ({ reward }: { reward: (typeof REWARDS)[number] }) => (
       <p className="font-semibold text-[#1a1b21] text-sm truncate">{reward.title}</p>
       <p className="text-xs text-[#7a7488] truncate">{reward.merchant}</p>
     </div>
-    <div className="shrink-0 px-2.5 py-1 rounded-full bg-gradient-to-r from-[#5227FF] to-[#8B5CF6] text-white text-xs font-bold">
-      {reward.points}
-    </div>
   </div>
 );
 
@@ -62,15 +59,14 @@ const RewardWheel = () => {
 
         {/* Text */}
         <div className="text-left">
-          <span className="text-primary font-bold tracking-widest uppercase text-xs font-headline">
-            Prämien
+      <span className="text-primary font-bold tracking-widest uppercase text-xs font-headline">
+            Treuepass
           </span>
           <h3 className="font-headline text-3xl md:text-4xl font-extrabold mt-3 mb-5 leading-tight tracking-[-0.02em] text-[#1a1b21]">
-            Warum Prämien besser sind als eine Punktekarte
+            Einfacher als eine Stempelkarte. Kraftvoller als ein Punktesystem.
           </h3>
           <p className="text-[#4a4455] text-lg leading-relaxed">
-            Kunden wählen selbst, was sie wollen. Das fühlt sich persönlicher an
-            als ein Gratiskaffee nach dem zehnten Besuch.
+            Kein Katalog, keine Punkte, kein Aufwand. Deine Kunden checken ein, sammeln Fortschritt und werden automatisch belohnt – je öfter sie kommen, desto mehr haben sie davon.
           </p>
         </div>
       </div>
