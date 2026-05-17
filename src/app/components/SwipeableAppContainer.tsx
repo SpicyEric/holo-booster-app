@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState, useRef } from 'react';
 import { Capacitor } from '@capacitor/core';
 import useEmblaCarousel from 'embla-carousel-react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Store, Gift, MessageSquare, Mail, Bell, MapPin, Search, User, History, LogOut, Shield, FileText, HelpCircle, ChevronRight, Sparkles, AlertCircle, TrendingUp, Trophy, Loader2, Heart, Nfc, Clock, Globe, Instagram, Facebook, Twitter, ArrowDown, MessageCircle, Hand, Smartphone } from 'lucide-react';
+import { Store, Gift, MessageSquare, Mail, Bell, MapPin, Search, User, History, LogOut, Shield, FileText, HelpCircle, ChevronRight, Sparkles, AlertCircle, TrendingUp, Trophy, Loader2, Heart, Nfc, Clock, Globe, Instagram, Facebook, Twitter, ArrowDown, MessageCircle, Hand, Smartphone, BookOpen } from 'lucide-react';
 import { PullToRefresh } from '@/app/components/PullToRefresh';
 import { StoresGoogleMap } from '@/app/components/StoresGoogleMap';
 import { supabase } from '@/integrations/supabase/client';
@@ -954,7 +954,7 @@ const AppProfileContent = () => {
   const menuItems = [
     { icon: User, label: 'Kontoeinstellungen', action: () => navigate('/app/settings') },
     { icon: Sparkles, label: 'Shop vorschlagen', action: () => navigate('/app/suggest-shop') },
-    { icon: Store, label: 'Meine Punktekarten', action: () => navigate('/app/my-cards') },
+    { icon: BookOpen, label: "So funktioniert's", action: () => navigate('/app/how-it-works') },
     { icon: History, label: 'Transaktionen', action: () => navigate('/app/history') },
   ];
 
