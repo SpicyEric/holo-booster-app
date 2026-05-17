@@ -147,15 +147,23 @@ const HeroMockupWithNotifications = () => {
   const note = heroNotifications[currentIndex];
 
   return (
-    <div className="relative w-full h-[480px] sm:h-[580px] lg:h-[620px]">
-      <img
-        src={heroAppShot}
-        alt="Eloyo App Mockup"
-        className="absolute inset-0 w-full h-full object-contain"
-      />
-    </div>
-  );
-};
+      <div className="w-full h-[480px] sm:h-[580px] lg:h-[620px]">
+        <Suspense
+          fallback={
+            <div className="w-full h-full flex items-center justify-center text-sm text-muted-foreground">
+              Lädt 3D-Modell…
+            </div>
+          }
+        >
+          <StlViewer
+            url="/models/one_card_stand.stl"
+            color="#7c3aed"
+            autoRotate
+          />
+        </Suspense>
+      </div>
+    );
+  };
 
 const Landing = () => {
   const navigate = useNavigate();
