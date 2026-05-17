@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Clock, TrendingUp, Gift } from 'lucide-react';
+import { Clock, Gift, Star, UserPlus, Check } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { Card, CardContent } from '@/components/ui/card';
@@ -7,7 +7,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { MainLayout } from '@/app/components/layout/MainLayout';
-import { formatTransactionDescription } from '@/app/lib/transactionLabel';
+import { formatTransactionEntry } from '@/app/lib/transactionLabel';
 
 interface Transaction {
   id: string;
