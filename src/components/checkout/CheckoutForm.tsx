@@ -238,68 +238,11 @@ export default function CheckoutForm({ backPath, backLabel, partnerUserId, prefi
       {/* Products overview */}
       <div className="grid lg:grid-cols-1 gap-4">
 
-        <Card className="border border-primary/30 bg-primary/5">
-          <CardHeader className="pb-3">
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 bg-primary rounded-lg flex items-center justify-center">
-                <CreditCard className="w-4 h-4 text-primary-foreground" />
-              </div>
-              <div>
-                <CardTitle className="text-lg">Eloyo Abo</CardTitle>
-                <CardDescription className="text-xs">Alle Features inklusive</CardDescription>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent className="pt-0">
-            <div className="grid md:grid-cols-2 gap-6 items-center">
-              <div className="space-y-3">
-                <div className="flex items-baseline gap-2">
-                  {isYearlyBilling ? (
-                    <>
-                      <span className="text-2xl font-bold">{(totals.aboBase / 11).toFixed(2)}€</span>
-                      <span className="text-xs text-muted-foreground">/Monat ({totals.aboBase.toFixed(2)}€/Jahr)</span>
-                    </>
-                  ) : (
-                    <>
-                      <span className="text-2xl font-bold">{totals.monthlyAbo.toFixed(2)}€</span>
-                      <span className="text-xs text-muted-foreground">/Monat</span>
-                    </>
-                  )}
-                </div>
-                {additionalLocations > 0 && (
-                  <p className="text-xs text-muted-foreground">
-                    1× {PRICING.abo.firstMonthly.toFixed(2)}€ + {additionalLocations}× {PRICING.abo.additionalMonthly.toFixed(2)}€/Monat
-                  </p>
-                )}
-                <ul className="space-y-1.5">
-                  {[
-                    { t: "NFC-Kartenhalter" },
-                    { t: "2× A5-Aufsteller", d: "Blanko-Design" },
-                    { t: "Monatliches Wunschdesign", d: "dein Aufsteller, dein Look" },
-                    { t: "Geburtstagsbelohnungen", d: "vollautomatisch" },
-                    { t: "Treue-Meilensteine", d: "automatische Prämien" },
-                    { t: "Neukunden-Empfehlungen", d: "Kunden werben Kunden" },
-                    { t: "Push-Benachrichtigungen", d: "direkt aufs Handy" },
-                    { t: "Merchant Dashboard", d: "Statistiken im Blick" },
-                    { t: "Digitaler Treuepass", d: "iOS & Android" },
-                    { t: "Google Bewertungen", d: "automatisch sammeln" },
-                  ].map((f, i) => (
-                    <li key={i} className="flex items-start gap-2 text-xs">
-                      <Check className="h-3.5 w-3.5 text-primary mt-0.5 shrink-0" />
-                      <span>
-                        <span className="font-semibold">{f.t}</span>
-                        {f.d && <> – <span className="text-muted-foreground">{f.d}</span></>}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-              <div className="flex justify-center md:justify-end">
-                <AboShowcase />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        <img
+          src={aboShowcaseImg}
+          alt="Eloyo Abo – Alle Features inklusive für 49,45€/Monat"
+          className="w-full h-auto rounded-2xl"
+        />
       </div>
 
       {/* Billing interval + Locations */}
