@@ -399,6 +399,21 @@ export const AppMerchantDetailV2 = () => {
   const [redemptionScreen, setRedemptionScreen] = useState<MockReward | null>(null);
   const [boostFlash, setBoostFlash] = useState(false);
   const [boostInfoOpen, setBoostInfoOpen] = useState(false);
+  const [nextBoostPreview, setNextBoostPreview] = useState<{ successful_referrals: number; next_boost: number; is_new_cycle: boolean } | null>(null);
+
+  useEffect(() => {
+    if (!merchantId || !user?.id || isDemoMerchant) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const { data, error } = await supabase.rpc('get_next_boost_reward', { p_merchant_customer_id: merchantId });
+        if (!error && !cancelled && data) {
+          setNextBoostPreview(data as unknown as { successful_referrals: number; next_boost: number; is_new_cycle: boolean });
+        }
+      } catch { /* noop */ }
+    })();
+    return () => { cancelled = true; };
+  }, [merchantId, user?.id, isDemoMerchant, checkIns.length]);
   const [lastCheckInDate, setLastCheckInDate] = useState<string | null>(null);
   const [lastRedeemDate, setLastRedeemDate] = useState<string | null>(null);
   const [limitModal, setLimitModal] = useState<null | 'checkin' | 'reward'>(null);
