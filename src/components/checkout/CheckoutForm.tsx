@@ -13,7 +13,7 @@ import { Check, Gift, Package, CreditCard, Loader2, X, MapPin, Minus, Plus } fro
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { INDUSTRIES } from "@/pages/wizard/wizardLogic";
-import { AboShowcase } from "./AboShowcase";
+import aboShowcaseImg from "@/assets/eloyo-abo-showcase.png";
 
 // Pricing
 const PRICING = {
