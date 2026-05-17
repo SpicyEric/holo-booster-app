@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import {
   LayoutDashboard, Store, Users, Settings,
   LogOut, ChevronLeft, Menu, X,
-  Gift, MessageSquare, ArrowLeft, BookOpen,
+  Gift, MessageSquare, ArrowLeft, BookOpen, Image,
 } from "lucide-react";
 import eloyoLogo from "@/assets/eloyo-logo.png";
 import { cn } from "@/lib/utils";
@@ -33,7 +33,7 @@ const NAV_ITEMS: NavItem[] = [
   { path: "/kunde/marketing", tab: "praemien", defaultForPath: true, label: "Treuepass", icon: Gift },
   { path: "/kunde/mein-geschaeft", tab: "info", defaultForPath: true, label: "Profil", icon: Store },
   { path: "/kunde/marketing", tab: "messages", label: "Nachrichten", icon: MessageSquare },
-  
+  { path: "/kunde/aufsteller", label: "Aufsteller", icon: Image },
   { path: "/kunde/anleitung", label: "So funktioniert's", icon: BookOpen },
   { path: "/kunde/konto", label: "Einstellungen", icon: Settings },
 ];
