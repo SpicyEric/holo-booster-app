@@ -124,6 +124,101 @@ export type Database = {
           },
         ]
       }
+      aufsteller_designs: {
+        Row: {
+          created_at: string
+          customer_id: string
+          file_name: string
+          file_path: string
+          file_size: number | null
+          id: string
+          mime_type: string | null
+          notes: string | null
+          request_id: string | null
+          uploaded_by_email: string | null
+          uploaded_by_user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          customer_id: string
+          file_name: string
+          file_path: string
+          file_size?: number | null
+          id?: string
+          mime_type?: string | null
+          notes?: string | null
+          request_id?: string | null
+          uploaded_by_email?: string | null
+          uploaded_by_user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          customer_id?: string
+          file_name?: string
+          file_path?: string
+          file_size?: number | null
+          id?: string
+          mime_type?: string | null
+          notes?: string | null
+          request_id?: string | null
+          uploaded_by_email?: string | null
+          uploaded_by_user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "aufsteller_designs_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "aufsteller_designs_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "aufsteller_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      aufsteller_requests: {
+        Row: {
+          created_at: string
+          created_by_user_id: string | null
+          customer_id: string
+          description: string
+          id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by_user_id?: string | null
+          customer_id: string
+          description: string
+          id?: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by_user_id?: string | null
+          customer_id?: string
+          description?: string
+          id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "aufsteller_requests_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       boost_processing_state: {
         Row: {
           boosts_today: number
