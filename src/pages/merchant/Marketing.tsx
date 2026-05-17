@@ -1453,7 +1453,7 @@ const Marketing = () => {
 
         {/* Reward Dialog */}
         <Dialog open={showRewardDialog} onOpenChange={setShowRewardDialog}>
-          <DialogContent className="max-w-lg rounded-2xl">
+          <DialogContent className="max-w-lg rounded-2xl [&>button.absolute]:hidden">
             <DialogHeader>
               <DialogTitle>{editingReward ? 'Prämie bearbeiten' : 'Neue Prämie'}</DialogTitle>
               <DialogDescription>
