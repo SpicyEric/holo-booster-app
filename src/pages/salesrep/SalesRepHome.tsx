@@ -86,7 +86,7 @@ export default function SalesRepHome() {
         {FEATURES.map(({ icon: Icon, title, desc }) => (
           <div
             key={title}
-            className="rounded-2xl bg-white/70 backdrop-blur-sm border border-border/40 p-5 text-center hover:bg-white/90 hover:border-[hsl(262,60%,75%)] transition-all hover:-translate-y-0.5 hover:shadow-lg hover:shadow-purple-500/5"
+            className="rounded-2xl bg-white/70 backdrop-blur-sm border border-border/40 p-7 text-center hover:bg-white/90 hover:border-[hsl(262,60%,75%)] transition-all hover:-translate-y-0.5 hover:shadow-lg hover:shadow-purple-500/5"
           >
             <Icon className="h-6 w-6 mx-auto mb-3 text-[hsl(262,60%,55%)]" strokeWidth={2.2} />
             <p className="font-semibold text-sm mb-1 leading-tight">{title}</p>
