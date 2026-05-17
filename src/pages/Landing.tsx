@@ -6,7 +6,6 @@ import { useNavigate } from 'react-router-dom';
 import { Star, CheckCircle, Settings, Users, Clock } from 'lucide-react';
 import eloyoLogo from '@/assets/eloyo-logo.png';
 import nfcStampHero from '@/assets/hero-app-mockup.png';
-import heroAppShot from '@/assets/hero-app-shot.png';
 import eloyoAppMockup from '@/assets/eloyo-app-mockup.jpg';
 import pushBg from '@/assets/push-bg.jpeg';
 import businessNetwork from '@/assets/business-network-v2.png';
@@ -15,7 +14,9 @@ import contactCtaButton from '@/assets/contact-cta-button.png';
 import howItWorksStamp from '@/assets/nfc-card-icon.png';
 import howItWorksPresent from '@/assets/howitworks/present.png';
 import howItWorksReferal from '@/assets/howitworks/referal.png';
-import { useEffect, useState } from 'react';
+import { lazy, Suspense, useEffect, useState } from 'react';
+
+const StlViewer = lazy(() => import('@/components/StlViewer'));
 
 import RewardWheel from '@/components/landing/RewardWheel';
 import ReferralSection from '@/components/landing/ReferralSection';
@@ -145,15 +146,23 @@ const HeroMockupWithNotifications = () => {
   const note = heroNotifications[currentIndex];
 
   return (
-    <div className="relative w-full h-[480px] sm:h-[580px] lg:h-[620px]">
-      <img
-        src={heroAppShot}
-        alt="Eloyo App Mockup"
-        className="absolute inset-0 w-full h-full object-contain"
-      />
-    </div>
-  );
-};
+      <div className="w-full h-[480px] sm:h-[580px] lg:h-[620px]">
+        <Suspense
+          fallback={
+            <div className="w-full h-full flex items-center justify-center text-sm text-muted-foreground">
+              Lädt 3D-Modell…
+            </div>
+          }
+        >
+          <StlViewer
+            url="/models/one_card_stand.stl"
+            color="#7c3aed"
+            autoRotate
+          />
+        </Suspense>
+      </div>
+    );
+  };
 
 const Landing = () => {
   const navigate = useNavigate();
