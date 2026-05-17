@@ -6,7 +6,6 @@ import { useNavigate } from 'react-router-dom';
 import { Star, CheckCircle, Settings, Users, Clock } from 'lucide-react';
 import eloyoLogo from '@/assets/eloyo-logo.png';
 import nfcStampHero from '@/assets/hero-app-mockup.png';
-import heroAppShot from '@/assets/hero-app-shot.png';
 import eloyoAppMockup from '@/assets/eloyo-app-mockup.jpg';
 import pushBg from '@/assets/push-bg.jpeg';
 import businessNetwork from '@/assets/business-network-v2.png';
