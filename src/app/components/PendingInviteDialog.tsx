@@ -355,9 +355,12 @@ export function PendingInviteDialog() {
   const goToMerchant = () => {
     const target = accepted ?? preview ?? ineligible;
     if (!target) return;
+    const path = `/app/merchant/${target.merchant_customer_id}`;
     setOpen(false);
-    if (ineligible) setIneligible(null);
-    navigate(`/app/merchant/${target.merchant_customer_id}`);
+    setPreview(null);
+    setAccepted(null);
+    setIneligible(null);
+    window.setTimeout(() => navigate(path), 0);
   };
 
   // ─── Render: Ineligible-Hinweis ────────────────────────────────
