@@ -66,7 +66,7 @@ const RewardWheel = () => {
             Treuepass
           </span>
           <h3 className="font-headline text-3xl md:text-4xl font-extrabold mt-3 mb-5 leading-tight tracking-[-0.02em] text-[#1a1b21]">
-            Warum Prämien besser sind als eine Punktekarte
+            Einfacher als eine Stempelkarte. Kraftvoller als ein Punktesystem.
           </h3>
           <p className="text-[#4a4455] text-lg leading-relaxed">
             Kunden wählen selbst, was sie wollen. Das fühlt sich persönlicher an
