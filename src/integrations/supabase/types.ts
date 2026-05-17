@@ -3651,12 +3651,10 @@ export type Database = {
         Args: { p_merchant_customer_id: string; p_stempel_id: string }
         Returns: number
       }
-      consume_invitation:
-        | { Args: { p_share_code: string }; Returns: Json }
-        | {
-            Args: { p_device_fingerprint?: string; p_share_code: string }
-            Returns: Json
-          }
+      consume_invitation: {
+        Args: { p_device_fingerprint?: string; p_share_code: string }
+        Returns: Json
+      }
       create_invitation: {
         Args: { p_merchant_customer_id: string }
         Returns: Json
