@@ -14,6 +14,8 @@ interface StlViewerProps {
   initialDistance?: number;
   /** Extra rotation applied to the mesh (radians). Default rotates Z-up STL to Y-up. */
   meshRotation?: [number, number, number];
+  /** Whether the user can rotate the model with pointer input. Default true. */
+  enableRotate?: boolean;
 }
 
 interface StlMeshProps {
@@ -82,6 +84,7 @@ export default function StlViewer({
   roughness = 0.35,
   initialDistance,
   meshRotation = [-Math.PI / 2, 0, 0],
+  enableRotate = true,
 }: StlViewerProps) {
   const [interacting, setInteracting] = useState(false);
   const [radius, setRadius] = useState<number | null>(null);
@@ -91,10 +94,10 @@ export default function StlViewer({
       <Canvas
         shadows
         camera={{ position: [0, 0, 120], fov: 40 }}
-        style={{ width: '100%', height: '100%', touchAction: 'none', background: 'transparent' }}
+        style={{ width: '100%', height: '100%', touchAction: enableRotate ? 'none' : 'auto', background: 'transparent' }}
         gl={{ alpha: true, antialias: true }}
-        onPointerDown={() => setInteracting(true)}
-        onPointerUp={() => setInteracting(false)}
+        onPointerDown={enableRotate ? () => setInteracting(true) : undefined}
+        onPointerUp={enableRotate ? () => setInteracting(false) : undefined}
       >
         <ambientLight intensity={0.55} />
         <directionalLight position={[10, 20, 15]} intensity={1.2} castShadow />
@@ -105,14 +108,14 @@ export default function StlViewer({
             color={color}
             metalness={metalness}
             roughness={roughness}
-            autoRotate={autoRotate && !interacting}
+            autoRotate={autoRotate && !(enableRotate && interacting)}
             meshRotation={meshRotation}
             onFit={setRadius}
           />
           <Environment preset="city" />
         </Suspense>
         <CameraFitter radius={radius} initialDistance={initialDistance} />
-        <OrbitControls enablePan={false} enableZoom={false} autoRotate={false} makeDefault />
+        <OrbitControls enablePan={false} enableZoom={false} autoRotate={false} enableRotate={enableRotate} makeDefault />
       </Canvas>
     </div>
   );
