@@ -121,30 +121,7 @@ const notificationVariants: Variants = {
 };
 
 const HeroMockupWithNotifications = () => {
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [visible, setVisible] = useState(true);
-
-  useEffect(() => {
-    const cycle = () => {
-      // Show for 3s, then hide
-      setVisible(true);
-      const hideTimer = setTimeout(() => {
-        setVisible(false);
-        // After 1.5s hidden, advance and show next
-        const nextTimer = setTimeout(() => {
-          setCurrentIndex(prev => (prev + 1) % heroNotifications.length);
-        }, 1500);
-        return () => clearTimeout(nextTimer);
-      }, 3000);
-      return () => clearTimeout(hideTimer);
-    };
-
-    cycle();
-    const interval = setInterval(cycle, 5000); // 3s visible + 1.5s hidden + buffer
-    return () => clearInterval(interval);
-  }, []);
-
-  const note = heroNotifications[currentIndex];
+  const isMobile = useIsMobile();
 
   return (
       <div className="w-full h-[480px] sm:h-[580px] lg:h-[620px]">
@@ -158,7 +135,7 @@ const HeroMockupWithNotifications = () => {
           <StlViewer
             url="/models/one_card_stand.stl"
             color="#7c3aed"
-            autoRotate
+            autoRotate={!isMobile}
           />
         </Suspense>
       </div>
