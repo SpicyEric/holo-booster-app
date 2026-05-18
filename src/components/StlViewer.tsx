@@ -14,6 +14,8 @@ interface StlViewerProps {
   initialDistance?: number;
   /** Extra rotation applied to the mesh (radians). Default rotates Z-up STL to Y-up. */
   meshRotation?: [number, number, number];
+  /** Whether the user can rotate the model with pointer input. Default true. */
+  enableRotate?: boolean;
 }
 
 interface StlMeshProps {
