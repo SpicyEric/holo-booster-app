@@ -15,7 +15,6 @@ import howItWorksStamp from '@/assets/nfc-card-icon.png';
 import howItWorksPresent from '@/assets/howitworks/present.png';
 import howItWorksReferal from '@/assets/howitworks/referal.png';
 import { lazy, Suspense, useEffect, useState } from 'react';
-import { useIsMobile } from '@/hooks/use-mobile';
 
 const StlViewer = lazy(() => import('@/components/StlViewer'));
 
