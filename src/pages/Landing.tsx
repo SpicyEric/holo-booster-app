@@ -135,7 +135,8 @@ const HeroMockupWithNotifications = () => {
           <StlViewer
             url="/models/one_card_stand.stl"
             color="#7c3aed"
-            autoRotate={!isMobile}
+            autoRotate
+            enableRotate={!isMobile}
           />
         </Suspense>
       </div>
