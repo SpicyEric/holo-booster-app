@@ -94,7 +94,13 @@ export default function StlViewer({
       <Canvas
         shadows
         camera={{ position: [0, 0, 120], fov: 40 }}
-        style={{ width: '100%', height: '100%', touchAction: enableRotate ? 'none' : 'auto', background: 'transparent' }}
+        style={{
+          width: '100%',
+          height: '100%',
+          touchAction: enableRotate ? 'none' : 'pan-y',
+          pointerEvents: enableRotate ? 'auto' : 'none',
+          background: 'transparent',
+        }}
         gl={{ alpha: true, antialias: true }}
         onPointerDown={enableRotate ? () => setInteracting(true) : undefined}
         onPointerUp={enableRotate ? () => setInteracting(false) : undefined}
