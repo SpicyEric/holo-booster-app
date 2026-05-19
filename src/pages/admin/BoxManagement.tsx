@@ -767,42 +767,83 @@ const BoxManagement = () => {
             ) : (stampDialogRow?.stamp_preset === 'verify_only' || stampDialogRow?.box_id === 'PXJJK') ? (
               <div className="space-y-4">
                 {(() => {
-                  const primary = registeredStamps[0];
+                  const verifyChips = registeredStamps.filter(s => s.stamp_color === 'verify');
+                  const primary = verifyChips[0];
+                  const extras = verifyChips.slice(1);
                   const isScanning = scanningStampColor === 'verify';
+                  const isScanningExtra = scanningStampColor === 'extra:verify';
                   return (
-                    <div className="flex items-center justify-between p-3 rounded-lg border">
-                      <div className="flex items-center gap-3">
-                        <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center">
-                          <Shield className="w-3.5 h-3.5 text-primary" />
+                    <>
+                      <div className="flex items-center justify-between p-3 rounded-lg border">
+                        <div className="flex items-center gap-3">
+                          <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center">
+                            <Shield className="w-3.5 h-3.5 text-primary" />
+                          </div>
+                          <div>
+                            <p className="text-sm font-medium">Verifizierungskarte</p>
+                            {primary ? (
+                              <p className="text-[10px] text-muted-foreground">UID: {primary.hardware_uid || "Nicht gesetzt"}</p>
+                            ) : (
+                              <p className="text-[10px] text-muted-foreground">Noch keine Karte registriert</p>
+                            )}
+                          </div>
                         </div>
-                        <div>
-                          <p className="text-sm font-medium">Verifizierungskarte</p>
-                          {primary ? (
-                            <p className="text-[10px] text-muted-foreground">UID: {primary.hardware_uid || "Nicht gesetzt"}</p>
-                          ) : (
-                            <p className="text-[10px] text-muted-foreground">Noch keine Karte registriert</p>
+                        <div className="flex items-center gap-2">
+                          {primary && <Check className="w-4 h-4 text-green-500" />}
+                          <Button size="sm" variant={primary ? "outline" : "default"} disabled={isScanning} onClick={() => startStampRegistration('verify', false)}>
+                            {isScanning ? <><Loader2 className="w-3 h-3 mr-1 animate-spin" />Scanne...</> : primary ? "Neu scannen" : "Registrieren"}
+                          </Button>
+                          {primary && (
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                              disabled={isScanning}
+                              onClick={() => handleDeleteChip(primary.id, primary.stamp_color, "stamp")}
+                              title="Karte entfernen"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
                           )}
                         </div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        {primary && <Check className="w-4 h-4 text-green-500" />}
-                        <Button size="sm" variant={primary ? "outline" : "default"} disabled={isScanning} onClick={() => startStampRegistration('verify', false)}>
-                          {isScanning ? <><Loader2 className="w-3 h-3 mr-1 animate-spin" />Scanne...</> : primary ? "Neu scannen" : "Registrieren"}
-                        </Button>
-                        {primary && (
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
-                            disabled={isScanning}
-                            onClick={() => handleDeleteChip(primary.id, primary.stamp_color, "stamp")}
-                            title="Karte entfernen"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        )}
+
+                      <div className="border-t pt-3 space-y-2">
+                        <div>
+                          <p className="text-sm font-semibold">Weitere Verifikationskarten</p>
+                          <p className="text-[11px] text-muted-foreground">Zusätzliche Karten mit identischer Funktion — jede löst die gleiche Verifizierung aus.</p>
+                        </div>
+                        <div className="rounded-lg border p-2 space-y-2">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <Shield className="w-3.5 h-3.5 text-primary" />
+                              <span className="text-xs font-medium">{extras.length} zusätzliche Karte{extras.length === 1 ? "" : "n"}</span>
+                            </div>
+                            <Button size="sm" variant="outline" disabled={isScanningExtra || !primary} onClick={() => startStampRegistration('verify', true)} title={!primary ? "Erst Hauptkarte registrieren" : undefined}>
+                              {isScanningExtra ? <><Loader2 className="w-3 h-3 mr-1 animate-spin" />Scanne...</> : <><Plus className="w-3 h-3 mr-1" />Weitere Verifikationskarte hinzufügen</>}
+                            </Button>
+                          </div>
+                          {extras.length > 0 && (
+                            <div className="space-y-1">
+                              {extras.map(ex => (
+                                <div key={ex.id} className="flex items-center justify-between text-[11px] pl-6">
+                                  <span className="font-mono text-muted-foreground">UID: {ex.hardware_uid || "—"}</span>
+                                  <Button
+                                    size="icon"
+                                    variant="ghost"
+                                    className="h-6 w-6 text-destructive hover:text-destructive hover:bg-destructive/10"
+                                    onClick={() => handleDeleteChip(ex.id, 'verify', "stamp")}
+                                    title="Karte entfernen"
+                                  >
+                                    <Trash2 className="h-3 w-3" />
+                                  </Button>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
                       </div>
-                    </div>
+                    </>
                   );
                 })()}
               </div>
