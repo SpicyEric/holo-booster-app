@@ -375,17 +375,30 @@ export const RewardSnakeDropZone = ({
                     e.preventDefault();
                     handleDropOnVisit(visit);
                   }}
+                  onClick={() => {
+                    if (selected) {
+                      handleDropOnVisit(visit, selected);
+                    }
+                  }}
                 >
                   {placement && reward ? (
                     <div
                       draggable
                       onDragStart={() => setDrag({ kind: 'placement', placementId: placement.id, rewardId: reward.id })}
                       onDragEnd={() => setDrag(null)}
+                      onDoubleClick={(e) => {
+                        e.stopPropagation();
+                        toggleSelectPlacement(placement.id, reward.id);
+                      }}
                       className="flex flex-col items-center gap-1.5 cursor-grab active:cursor-grabbing"
-                      title="Ziehen zum Verschieben oder in den Papierkorb"
+                      title="Ziehen oder Doppelklick zum Auswählen"
                     >
                       <div
-                        className="w-14 h-14 rounded-full flex items-center justify-center shadow-lg ring-4 ring-white"
+                        className={`w-14 h-14 rounded-full flex items-center justify-center shadow-lg ring-4 transition-all ${
+                          isSelectedPlacement(placement.id)
+                            ? 'ring-purple-500 shadow-[0_0_20px_rgba(168,85,247,0.7)] scale-110'
+                            : 'ring-white'
+                        }`}
                         style={{ background: brandColor }}
                       >
                         {reward.image_url ? (
@@ -406,9 +419,10 @@ export const RewardSnakeDropZone = ({
                       <div
                         className={`w-12 h-12 rounded-full flex items-center justify-center border-2 border-dashed transition-all ${
                           isHover ? 'scale-125 bg-white' : 'bg-white/60'
-                        }`}
+                        } ${selected ? 'cursor-pointer hover:scale-110' : ''}`}
                         style={{
                           borderColor: isHover ? brandColor : `${brandColor}55`,
+                          boxShadow: selected ? `0 0 12px ${brandColor}66` : undefined,
                         }}
                       >
                         <span className="text-xs font-bold" style={{ color: brandColor }}>
