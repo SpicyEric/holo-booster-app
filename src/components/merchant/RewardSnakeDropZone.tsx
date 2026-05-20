@@ -3,6 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Gift, GripVertical, Sparkles, Trash2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { useDemoMerchant } from '@/hooks/useDemoMerchant';
 import {
   Select,
   SelectContent,
@@ -78,12 +79,14 @@ export const RewardSnakeDropZone = ({
   const [hoverVisit, setHoverVisit] = useState<number | null>(null);
   const [trashHover, setTrashHover] = useState(false);
   const [busy, setBusy] = useState(false);
+  const isDemo = useDemoMerchant();
 
   const padding = 50;
   const totalWidth = padding * 2 + NODE_SPACING * (passLength - 1);
 
   const loadPlacements = async () => {
     if (!customerId) return;
+    if (isDemo) return; // im Demo-Modus halten wir Platzierungen nur lokal
     const { data } = await supabase
       .from('reward_placements')
       .select('id, reward_id, visit')
@@ -95,7 +98,7 @@ export const RewardSnakeDropZone = ({
   useEffect(() => {
     loadPlacements();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [customerId]);
+  }, [customerId, isDemo]);
 
   const points = Array.from({ length: passLength }, (_, i) => ({
     x: padding + i * NODE_SPACING,
@@ -108,6 +111,45 @@ export const RewardSnakeDropZone = ({
   const handleDropOnVisit = async (visit: number) => {
     if (!drag || !customerId) return;
     const existing = placementForVisit(visit);
+
+    // Demo-Modus: nur lokaler State, keine DB-Writes
+    if (isDemo) {
+      setBusy(true);
+      try {
+        setPlacements((prev) => {
+          if (drag.kind === 'placement' && drag.placementId === existing?.id) {
+            return prev;
+          }
+          if (drag.kind === 'placement') {
+            const moving = prev.find((p) => p.id === drag.placementId);
+            if (!moving) return prev;
+            if (existing) {
+              // Swap
+              return prev.map((p) => {
+                if (p.id === moving.id) return { ...p, visit };
+                if (p.id === existing.id) return { ...p, visit: moving.visit };
+                return p;
+              });
+            }
+            return prev.map((p) => (p.id === moving.id ? { ...p, visit } : p));
+          }
+          // Neu aus Palette
+          const without = existing ? prev.filter((p) => p.id !== existing.id) : prev;
+          return [
+            ...without,
+            { id: `demo-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`, reward_id: drag.rewardId, visit },
+          ];
+        });
+        toast.success(`Prämie auf Check-in #${visit} platziert (Demo)`);
+        onChanged?.();
+      } finally {
+        setBusy(false);
+        setDrag(null);
+        setHoverVisit(null);
+      }
+      return;
+    }
+
     setBusy(true);
     try {
       if (drag.kind === 'placement' && drag.placementId === existing?.id) {
@@ -170,6 +212,14 @@ export const RewardSnakeDropZone = ({
 
   const handleDropOnTrash = async () => {
     if (!drag || drag.kind !== 'placement') {
+      setDrag(null);
+      setTrashHover(false);
+      return;
+    }
+    if (isDemo) {
+      setPlacements((prev) => prev.filter((p) => p.id !== drag.placementId));
+      toast.success('Prämie entfernt (Demo)');
+      onChanged?.();
       setDrag(null);
       setTrashHover(false);
       return;
