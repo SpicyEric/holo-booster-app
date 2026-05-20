@@ -19,6 +19,23 @@ import { toast } from "sonner";
 const DEMO_TOAST_ID = "demo-merchant-write-blocked";
 const MUTATING_METHODS = new Set(["insert", "update", "delete", "upsert"]);
 
+/**
+ * Demo-Modus blockiert nur Writes innerhalb der Merchant-Oberfläche.
+ * Admin- und Vertriebler-Seiten (z.B. /admin/boxes) sollen weiterhin
+ * voll funktionieren, auch wenn parallel ein Demo-Account betreten wurde.
+ */
+function isDemoGuardedRoute(): boolean {
+  if (typeof window === "undefined") return false;
+  const p = window.location.pathname || "";
+  if (p.startsWith("/admin")) return false;
+  if (p.startsWith("/vertriebler")) return false;
+  return true;
+}
+
+function shouldBlock(): boolean {
+  return isDemoMerchantActive() && isDemoGuardedRoute();
+}
+
 let lastToastAt = 0;
 function notifyBlocked() {
   const now = Date.now();
