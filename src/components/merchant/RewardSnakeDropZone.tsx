@@ -455,7 +455,13 @@ export const RewardSnakeDropZone = ({
                       draggable
                       onDragStart={() => setDrag({ kind: 'reward', rewardId: reward.id })}
                       onDragEnd={() => setDrag(null)}
-                      className="flex items-center gap-2 px-3 py-2 rounded-xl bg-card border border-border/40 shadow-sm cursor-grab active:cursor-grabbing transition-all hover:shadow-md"
+                      onDoubleClick={() => toggleSelectReward(reward.id)}
+                      className={`flex items-center gap-2 px-3 py-2 rounded-xl bg-card border shadow-sm cursor-grab active:cursor-grabbing transition-all hover:shadow-md ${
+                        isSelectedReward(reward.id)
+                          ? 'border-purple-500 ring-2 ring-purple-500 shadow-[0_0_18px_rgba(168,85,247,0.6)]'
+                          : 'border-border/40'
+                      }`}
+                      title="Doppelklick zum Auswählen, dann auf einen Check-in tippen"
                     >
                       <GripVertical className="h-4 w-4 text-muted-foreground" />
                       {reward.image_url ? (
