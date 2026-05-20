@@ -46,6 +46,7 @@ import {
   setDemoOnboardingStep,
   updateDemoOnboardingState,
 } from "@/lib/demoOnboardingTour";
+import { getDemoPlacements, subscribeDemoPlacements } from "@/lib/demoRewardPlacements";
 import { calculateSuggestion, SPEND_PRESETS } from "../wizard/wizardLogic";
 import { cn } from "@/lib/utils";
 import { linkOrphanNfcChipsToMerchant } from "@/lib/nfcChipLinking";
