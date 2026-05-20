@@ -146,8 +146,9 @@ export const RewardSnakeDropZone = ({
   const placementForVisit = (v: number) => placements.find((p) => p.visit === v) || null;
   const rewardById = (id: string) => rewards.find((r) => r.id === id) || null;
 
-  const handleDropOnVisit = async (visit: number) => {
-    if (!drag || !customerId) return;
+  const handleDropOnVisit = async (visit: number, payloadOverride?: DragPayload) => {
+    const payload = payloadOverride ?? drag;
+    if (!payload || !customerId) return;
     const existing = placementForVisit(visit);
 
     // Demo-Modus: in den gemeinsamen Demo-Store schreiben (kein DB-Write).
