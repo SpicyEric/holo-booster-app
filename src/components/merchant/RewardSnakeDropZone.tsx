@@ -82,10 +82,31 @@ export const RewardSnakeDropZone = ({
 }: Props) => {
   const [placements, setPlacements] = useState<Placement[]>([]);
   const [drag, setDrag] = useState<DragPayload | null>(null);
+  const [selected, setSelected] = useState<DragPayload | null>(null);
   const [hoverVisit, setHoverVisit] = useState<number | null>(null);
   const [trashHover, setTrashHover] = useState(false);
   const [busy, setBusy] = useState(false);
   const isDemo = useDemoMerchant();
+
+  const isSelectedReward = (rewardId: string) =>
+    selected?.kind === 'reward' && selected.rewardId === rewardId;
+  const isSelectedPlacement = (placementId: string) =>
+    selected?.kind === 'placement' && selected.placementId === placementId;
+
+  const toggleSelectReward = (rewardId: string) => {
+    setSelected((prev) =>
+      prev?.kind === 'reward' && prev.rewardId === rewardId
+        ? null
+        : { kind: 'reward', rewardId }
+    );
+  };
+  const toggleSelectPlacement = (placementId: string, rewardId: string) => {
+    setSelected((prev) =>
+      prev?.kind === 'placement' && prev.placementId === placementId
+        ? null
+        : { kind: 'placement', placementId, rewardId }
+    );
+  };
 
   const padding = 50;
   const totalWidth = padding * 2 + NODE_SPACING * (passLength - 1);
@@ -125,8 +146,9 @@ export const RewardSnakeDropZone = ({
   const placementForVisit = (v: number) => placements.find((p) => p.visit === v) || null;
   const rewardById = (id: string) => rewards.find((r) => r.id === id) || null;
 
-  const handleDropOnVisit = async (visit: number) => {
-    if (!drag || !customerId) return;
+  const handleDropOnVisit = async (visit: number, payloadOverride?: DragPayload) => {
+    const payload = payloadOverride ?? drag;
+    if (!payload || !customerId) return;
     const existing = placementForVisit(visit);
 
     // Demo-Modus: in den gemeinsamen Demo-Store schreiben (kein DB-Write).
@@ -134,11 +156,11 @@ export const RewardSnakeDropZone = ({
       setBusy(true);
       try {
         setDemoPlacements(customerId, (prev) => {
-          if (drag.kind === 'placement' && drag.placementId === existing?.id) {
+          if (payload.kind === 'placement' && payload.placementId === existing?.id) {
             return prev;
           }
-          if (drag.kind === 'placement') {
-            const moving = prev.find((p) => p.id === drag.placementId);
+          if (payload.kind === 'placement') {
+            const moving = prev.find((p) => p.id === payload.placementId);
             if (!moving) return prev;
             if (existing) {
               return prev.map((p) => {
@@ -152,7 +174,7 @@ export const RewardSnakeDropZone = ({
           const without = existing ? prev.filter((p) => p.id !== existing.id) : prev;
           return [
             ...without,
-            { id: `demo-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`, reward_id: drag.rewardId, visit },
+            { id: `demo-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`, reward_id: payload.rewardId, visit },
           ];
         });
         toast.success(`Prämie auf Check-in #${visit} platziert (Demo)`);
@@ -160,6 +182,7 @@ export const RewardSnakeDropZone = ({
       } finally {
         setBusy(false);
         setDrag(null);
+        setSelected(null);
         setHoverVisit(null);
       }
       return;
@@ -167,13 +190,13 @@ export const RewardSnakeDropZone = ({
 
     setBusy(true);
     try {
-      if (drag.kind === 'placement' && drag.placementId === existing?.id) {
+      if (payload.kind === 'placement' && payload.placementId === existing?.id) {
         // dropped on its own slot — no-op
-      } else if (drag.kind === 'placement') {
+      } else if (payload.kind === 'placement') {
         // Moving an existing placement
         if (existing) {
           // Swap: existing one takes old slot
-          const oldPlacement = placements.find((p) => p.id === drag.placementId);
+          const oldPlacement = placements.find((p) => p.id === payload.placementId);
           if (!oldPlacement) return;
           const { error: e1 } = await supabase
             .from('reward_placements')
@@ -183,7 +206,7 @@ export const RewardSnakeDropZone = ({
           const { error: e2 } = await supabase
             .from('reward_placements')
             .update({ visit })
-            .eq('id', drag.placementId);
+            .eq('id', payload.placementId);
           if (e2) throw e2;
           const { error: e3 } = await supabase
             .from('reward_placements')
@@ -194,7 +217,7 @@ export const RewardSnakeDropZone = ({
           const { error } = await supabase
             .from('reward_placements')
             .update({ visit })
-            .eq('id', drag.placementId);
+            .eq('id', payload.placementId);
           if (error) throw error;
         }
       } else {
@@ -209,7 +232,7 @@ export const RewardSnakeDropZone = ({
         }
         const { error } = await supabase
           .from('reward_placements')
-          .insert({ customer_id: customerId, reward_id: drag.rewardId, visit });
+          .insert({ customer_id: customerId, reward_id: payload.rewardId, visit });
         if (error) throw error;
       }
       toast.success(`Prämie auf Check-in #${visit} platziert`);
@@ -221,23 +244,27 @@ export const RewardSnakeDropZone = ({
     } finally {
       setBusy(false);
       setDrag(null);
+      setSelected(null);
       setHoverVisit(null);
     }
   };
 
-  const handleDropOnTrash = async () => {
-    if (!drag || drag.kind !== 'placement') {
+  const handleDropOnTrash = async (payloadOverride?: DragPayload) => {
+    const payload = payloadOverride ?? drag;
+    if (!payload || payload.kind !== 'placement') {
       setDrag(null);
+      setSelected(null);
       setTrashHover(false);
       return;
     }
     if (isDemo) {
       if (customerId) {
-        setDemoPlacements(customerId, (prev) => prev.filter((p) => p.id !== drag.placementId));
+        setDemoPlacements(customerId, (prev) => prev.filter((p) => p.id !== payload.placementId));
       }
       toast.success('Prämie entfernt (Demo)');
       onChanged?.();
       setDrag(null);
+      setSelected(null);
       setTrashHover(false);
       return;
     }
@@ -246,7 +273,7 @@ export const RewardSnakeDropZone = ({
       const { error } = await supabase
         .from('reward_placements')
         .delete()
-        .eq('id', drag.placementId);
+        .eq('id', payload.placementId);
       if (error) throw error;
       toast.success('Prämie entfernt');
       await loadPlacements();
@@ -256,6 +283,7 @@ export const RewardSnakeDropZone = ({
     } finally {
       setBusy(false);
       setDrag(null);
+      setSelected(null);
       setTrashHover(false);
     }
   };
@@ -347,17 +375,30 @@ export const RewardSnakeDropZone = ({
                     e.preventDefault();
                     handleDropOnVisit(visit);
                   }}
+                  onClick={() => {
+                    if (selected) {
+                      handleDropOnVisit(visit, selected);
+                    }
+                  }}
                 >
                   {placement && reward ? (
                     <div
                       draggable
                       onDragStart={() => setDrag({ kind: 'placement', placementId: placement.id, rewardId: reward.id })}
                       onDragEnd={() => setDrag(null)}
+                      onDoubleClick={(e) => {
+                        e.stopPropagation();
+                        toggleSelectPlacement(placement.id, reward.id);
+                      }}
                       className="flex flex-col items-center gap-1.5 cursor-grab active:cursor-grabbing"
-                      title="Ziehen zum Verschieben oder in den Papierkorb"
+                      title="Ziehen oder Doppelklick zum Auswählen"
                     >
                       <div
-                        className="w-14 h-14 rounded-full flex items-center justify-center shadow-lg ring-4 ring-white"
+                        className={`w-14 h-14 rounded-full flex items-center justify-center shadow-lg ring-4 transition-all ${
+                          isSelectedPlacement(placement.id)
+                            ? 'ring-purple-500 shadow-[0_0_20px_rgba(168,85,247,0.7)] scale-110'
+                            : 'ring-white'
+                        }`}
                         style={{ background: brandColor }}
                       >
                         {reward.image_url ? (
@@ -378,9 +419,10 @@ export const RewardSnakeDropZone = ({
                       <div
                         className={`w-12 h-12 rounded-full flex items-center justify-center border-2 border-dashed transition-all ${
                           isHover ? 'scale-125 bg-white' : 'bg-white/60'
-                        }`}
+                        } ${selected ? 'cursor-pointer hover:scale-110' : ''}`}
                         style={{
                           borderColor: isHover ? brandColor : `${brandColor}55`,
+                          boxShadow: selected ? `0 0 12px ${brandColor}66` : undefined,
                         }}
                       >
                         <span className="text-xs font-bold" style={{ color: brandColor }}>
@@ -413,7 +455,13 @@ export const RewardSnakeDropZone = ({
                       draggable
                       onDragStart={() => setDrag({ kind: 'reward', rewardId: reward.id })}
                       onDragEnd={() => setDrag(null)}
-                      className="flex items-center gap-2 px-3 py-2 rounded-xl bg-card border border-border/40 shadow-sm cursor-grab active:cursor-grabbing transition-all hover:shadow-md"
+                      onDoubleClick={() => toggleSelectReward(reward.id)}
+                      className={`flex items-center gap-2 px-3 py-2 rounded-xl bg-card border shadow-sm cursor-grab active:cursor-grabbing transition-all hover:shadow-md ${
+                        isSelectedReward(reward.id)
+                          ? 'border-purple-500 ring-2 ring-purple-500 shadow-[0_0_18px_rgba(168,85,247,0.6)]'
+                          : 'border-border/40'
+                      }`}
+                      title="Doppelklick zum Auswählen, dann auf einen Check-in tippen"
                     >
                       <GripVertical className="h-4 w-4 text-muted-foreground" />
                       {reward.image_url ? (
@@ -452,15 +500,22 @@ export const RewardSnakeDropZone = ({
               e.preventDefault();
               handleDropOnTrash();
             }}
+            onClick={() => {
+              if (selected?.kind === 'placement') {
+                handleDropOnTrash(selected);
+              }
+            }}
             className={`shrink-0 md:w-44 rounded-2xl border-2 border-dashed flex flex-col items-center justify-center p-4 transition-all ${
-              trashHover
-                ? 'bg-destructive/10 border-destructive scale-[1.02]'
+              trashHover || selected?.kind === 'placement'
+                ? 'bg-destructive/10 border-destructive scale-[1.02] cursor-pointer'
                 : 'bg-muted/40 border-border/50'
             }`}
           >
-            <Trash2 className={`h-7 w-7 ${trashHover ? 'text-destructive' : 'text-muted-foreground'}`} />
-            <p className={`text-xs font-medium mt-2 text-center ${trashHover ? 'text-destructive' : 'text-muted-foreground'}`}>
-              Hier ablegen, um eine platzierte Prämie zu entfernen
+            <Trash2 className={`h-7 w-7 ${trashHover || selected?.kind === 'placement' ? 'text-destructive' : 'text-muted-foreground'}`} />
+            <p className={`text-xs font-medium mt-2 text-center ${trashHover || selected?.kind === 'placement' ? 'text-destructive' : 'text-muted-foreground'}`}>
+              {selected?.kind === 'placement'
+                ? 'Tippen, um die ausgewählte Prämie zu entfernen'
+                : 'Hier ablegen, um eine platzierte Prämie zu entfernen'}
             </p>
           </div>
         </div>
