@@ -231,7 +231,9 @@ export const RewardSnakeDropZone = ({
       return;
     }
     if (isDemo) {
-      setPlacements((prev) => prev.filter((p) => p.id !== drag.placementId));
+      if (customerId) {
+        setDemoPlacements(customerId, (prev) => prev.filter((p) => p.id !== drag.placementId));
+      }
       toast.success('Prämie entfernt (Demo)');
       onChanged?.();
       setDrag(null);
