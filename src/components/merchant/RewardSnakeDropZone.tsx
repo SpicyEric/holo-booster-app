@@ -156,11 +156,11 @@ export const RewardSnakeDropZone = ({
       setBusy(true);
       try {
         setDemoPlacements(customerId, (prev) => {
-          if (drag.kind === 'placement' && drag.placementId === existing?.id) {
+          if (payload.kind === 'placement' && payload.placementId === existing?.id) {
             return prev;
           }
-          if (drag.kind === 'placement') {
-            const moving = prev.find((p) => p.id === drag.placementId);
+          if (payload.kind === 'placement') {
+            const moving = prev.find((p) => p.id === payload.placementId);
             if (!moving) return prev;
             if (existing) {
               return prev.map((p) => {
@@ -174,7 +174,7 @@ export const RewardSnakeDropZone = ({
           const without = existing ? prev.filter((p) => p.id !== existing.id) : prev;
           return [
             ...without,
-            { id: `demo-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`, reward_id: drag.rewardId, visit },
+            { id: `demo-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`, reward_id: payload.rewardId, visit },
           ];
         });
         toast.success(`Prämie auf Check-in #${visit} platziert (Demo)`);
@@ -182,6 +182,7 @@ export const RewardSnakeDropZone = ({
       } finally {
         setBusy(false);
         setDrag(null);
+        setSelected(null);
         setHoverVisit(null);
       }
       return;
@@ -189,13 +190,13 @@ export const RewardSnakeDropZone = ({
 
     setBusy(true);
     try {
-      if (drag.kind === 'placement' && drag.placementId === existing?.id) {
+      if (payload.kind === 'placement' && payload.placementId === existing?.id) {
         // dropped on its own slot — no-op
-      } else if (drag.kind === 'placement') {
+      } else if (payload.kind === 'placement') {
         // Moving an existing placement
         if (existing) {
           // Swap: existing one takes old slot
-          const oldPlacement = placements.find((p) => p.id === drag.placementId);
+          const oldPlacement = placements.find((p) => p.id === payload.placementId);
           if (!oldPlacement) return;
           const { error: e1 } = await supabase
             .from('reward_placements')
@@ -205,7 +206,7 @@ export const RewardSnakeDropZone = ({
           const { error: e2 } = await supabase
             .from('reward_placements')
             .update({ visit })
-            .eq('id', drag.placementId);
+            .eq('id', payload.placementId);
           if (e2) throw e2;
           const { error: e3 } = await supabase
             .from('reward_placements')
@@ -216,7 +217,7 @@ export const RewardSnakeDropZone = ({
           const { error } = await supabase
             .from('reward_placements')
             .update({ visit })
-            .eq('id', drag.placementId);
+            .eq('id', payload.placementId);
           if (error) throw error;
         }
       } else {
@@ -231,7 +232,7 @@ export const RewardSnakeDropZone = ({
         }
         const { error } = await supabase
           .from('reward_placements')
-          .insert({ customer_id: customerId, reward_id: drag.rewardId, visit });
+          .insert({ customer_id: customerId, reward_id: payload.rewardId, visit });
         if (error) throw error;
       }
       toast.success(`Prämie auf Check-in #${visit} platziert`);
@@ -243,23 +244,27 @@ export const RewardSnakeDropZone = ({
     } finally {
       setBusy(false);
       setDrag(null);
+      setSelected(null);
       setHoverVisit(null);
     }
   };
 
-  const handleDropOnTrash = async () => {
-    if (!drag || drag.kind !== 'placement') {
+  const handleDropOnTrash = async (payloadOverride?: DragPayload) => {
+    const payload = payloadOverride ?? drag;
+    if (!payload || payload.kind !== 'placement') {
       setDrag(null);
+      setSelected(null);
       setTrashHover(false);
       return;
     }
     if (isDemo) {
       if (customerId) {
-        setDemoPlacements(customerId, (prev) => prev.filter((p) => p.id !== drag.placementId));
+        setDemoPlacements(customerId, (prev) => prev.filter((p) => p.id !== payload.placementId));
       }
       toast.success('Prämie entfernt (Demo)');
       onChanged?.();
       setDrag(null);
+      setSelected(null);
       setTrashHover(false);
       return;
     }
@@ -268,7 +273,7 @@ export const RewardSnakeDropZone = ({
       const { error } = await supabase
         .from('reward_placements')
         .delete()
-        .eq('id', drag.placementId);
+        .eq('id', payload.placementId);
       if (error) throw error;
       toast.success('Prämie entfernt');
       await loadPlacements();
@@ -278,6 +283,7 @@ export const RewardSnakeDropZone = ({
     } finally {
       setBusy(false);
       setDrag(null);
+      setSelected(null);
       setTrashHover(false);
     }
   };
