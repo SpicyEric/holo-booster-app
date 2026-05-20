@@ -91,7 +91,10 @@ export const RewardSnakeDropZone = ({
 
   const loadPlacements = async () => {
     if (!customerId) return;
-    if (isDemo) return; // im Demo-Modus halten wir Platzierungen nur lokal
+    if (isDemo) {
+      setPlacements(getDemoPlacements(customerId));
+      return;
+    }
     const { data } = await supabase
       .from('reward_placements')
       .select('id, reward_id, visit')
@@ -104,6 +107,14 @@ export const RewardSnakeDropZone = ({
     loadPlacements();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [customerId, isDemo]);
+
+  // Im Demo-Modus auf Änderungen aus anderen Komponenten/Mounts horchen.
+  useEffect(() => {
+    if (!isDemo || !customerId) return;
+    return subscribeDemoPlacements(() => {
+      setPlacements(getDemoPlacements(customerId));
+    });
+  }, [isDemo, customerId]);
 
   const points = Array.from({ length: passLength }, (_, i) => ({
     x: padding + i * NODE_SPACING,
