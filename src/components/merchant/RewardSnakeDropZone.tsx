@@ -16,6 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import TreuepassGuideBanner from '@/components/merchant/TreuepassGuideBanner';
 
 interface Reward {
   id: string;
@@ -464,10 +465,7 @@ export const RewardSnakeDropZone = ({
           </div>
         </div>
 
-        <p className="text-xs text-muted-foreground">
-          Tipp: Du kannst eine Prämie mehrfach platzieren — zieh sie einfach aus der Liste auf weitere Check-ins.
-          Zum Entfernen die platzierte Prämie in den Papierkorb ziehen.
-        </p>
+        <TreuepassGuideBanner />
         {busy && <p className="text-xs text-muted-foreground">Aktualisiere…</p>}
       </CardContent>
     </Card>
