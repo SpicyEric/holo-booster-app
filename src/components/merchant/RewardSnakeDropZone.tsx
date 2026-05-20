@@ -128,11 +128,11 @@ export const RewardSnakeDropZone = ({
     if (!drag || !customerId) return;
     const existing = placementForVisit(visit);
 
-    // Demo-Modus: nur lokaler State, keine DB-Writes
+    // Demo-Modus: in den gemeinsamen Demo-Store schreiben (kein DB-Write).
     if (isDemo) {
       setBusy(true);
       try {
-        setPlacements((prev) => {
+        setDemoPlacements(customerId, (prev) => {
           if (drag.kind === 'placement' && drag.placementId === existing?.id) {
             return prev;
           }
@@ -140,7 +140,6 @@ export const RewardSnakeDropZone = ({
             const moving = prev.find((p) => p.id === drag.placementId);
             if (!moving) return prev;
             if (existing) {
-              // Swap
               return prev.map((p) => {
                 if (p.id === moving.id) return { ...p, visit };
                 if (p.id === existing.id) return { ...p, visit: moving.visit };
@@ -149,7 +148,6 @@ export const RewardSnakeDropZone = ({
             }
             return prev.map((p) => (p.id === moving.id ? { ...p, visit } : p));
           }
-          // Neu aus Palette
           const without = existing ? prev.filter((p) => p.id !== existing.id) : prev;
           return [
             ...without,
