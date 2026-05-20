@@ -82,10 +82,31 @@ export const RewardSnakeDropZone = ({
 }: Props) => {
   const [placements, setPlacements] = useState<Placement[]>([]);
   const [drag, setDrag] = useState<DragPayload | null>(null);
+  const [selected, setSelected] = useState<DragPayload | null>(null);
   const [hoverVisit, setHoverVisit] = useState<number | null>(null);
   const [trashHover, setTrashHover] = useState(false);
   const [busy, setBusy] = useState(false);
   const isDemo = useDemoMerchant();
+
+  const isSelectedReward = (rewardId: string) =>
+    selected?.kind === 'reward' && selected.rewardId === rewardId;
+  const isSelectedPlacement = (placementId: string) =>
+    selected?.kind === 'placement' && selected.placementId === placementId;
+
+  const toggleSelectReward = (rewardId: string) => {
+    setSelected((prev) =>
+      prev?.kind === 'reward' && prev.rewardId === rewardId
+        ? null
+        : { kind: 'reward', rewardId }
+    );
+  };
+  const toggleSelectPlacement = (placementId: string, rewardId: string) => {
+    setSelected((prev) =>
+      prev?.kind === 'placement' && prev.placementId === placementId
+        ? null
+        : { kind: 'placement', placementId, rewardId }
+    );
+  };
 
   const padding = 50;
   const totalWidth = padding * 2 + NODE_SPACING * (passLength - 1);
