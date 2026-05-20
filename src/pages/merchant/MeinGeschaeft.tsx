@@ -246,6 +246,20 @@ const MeinGeschaeft = () => {
     setStampSettingsDirty(isDirty);
   }, [stampMode, avgRevenue, manualMode, selectedVariant, initialStampState]);
 
+  // Im Demo-Modus auf gemeinsame Prämien-Platzierungen horchen, damit
+  // Änderungen aus dem Treuepass-Tab in der Handy-Vorschau sichtbar sind.
+  useEffect(() => {
+    if (!isDemo || !customerId) return;
+    setPlacements(
+      getDemoPlacements(customerId).map((p) => ({ reward_id: p.reward_id, visit: p.visit }))
+    );
+    return subscribeDemoPlacements(() => {
+      setPlacements(
+        getDemoPlacements(customerId).map((p) => ({ reward_id: p.reward_id, visit: p.visit }))
+      );
+    });
+  }, [isDemo, customerId]);
+
   const loadData = async () => {
     try {
       setLoading(true);
