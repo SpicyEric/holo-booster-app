@@ -377,11 +377,17 @@ const MeinGeschaeft = () => {
       }
 
       // V2: load reward placements + pass length
-      const { data: placementsData } = await supabase
-        .from('reward_placements')
-        .select('reward_id, visit')
-        .eq('customer_id', assignment.customer_id);
-      setPlacements(((placementsData as any[]) || []).map((p) => ({ reward_id: p.reward_id, visit: p.visit })));
+      if (isDemo) {
+        setPlacements(
+          getDemoPlacements(assignment.customer_id).map((p) => ({ reward_id: p.reward_id, visit: p.visit }))
+        );
+      } else {
+        const { data: placementsData } = await supabase
+          .from('reward_placements')
+          .select('reward_id, visit')
+          .eq('customer_id', assignment.customer_id);
+        setPlacements(((placementsData as any[]) || []).map((p) => ({ reward_id: p.reward_id, visit: p.visit })));
+      }
 
       const { data: passData } = await supabase
         .from('customers')
