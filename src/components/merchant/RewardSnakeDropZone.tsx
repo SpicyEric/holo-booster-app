@@ -500,15 +500,22 @@ export const RewardSnakeDropZone = ({
               e.preventDefault();
               handleDropOnTrash();
             }}
+            onClick={() => {
+              if (selected?.kind === 'placement') {
+                handleDropOnTrash(selected);
+              }
+            }}
             className={`shrink-0 md:w-44 rounded-2xl border-2 border-dashed flex flex-col items-center justify-center p-4 transition-all ${
-              trashHover
-                ? 'bg-destructive/10 border-destructive scale-[1.02]'
+              trashHover || selected?.kind === 'placement'
+                ? 'bg-destructive/10 border-destructive scale-[1.02] cursor-pointer'
                 : 'bg-muted/40 border-border/50'
             }`}
           >
-            <Trash2 className={`h-7 w-7 ${trashHover ? 'text-destructive' : 'text-muted-foreground'}`} />
-            <p className={`text-xs font-medium mt-2 text-center ${trashHover ? 'text-destructive' : 'text-muted-foreground'}`}>
-              Hier ablegen, um eine platzierte Prämie zu entfernen
+            <Trash2 className={`h-7 w-7 ${trashHover || selected?.kind === 'placement' ? 'text-destructive' : 'text-muted-foreground'}`} />
+            <p className={`text-xs font-medium mt-2 text-center ${trashHover || selected?.kind === 'placement' ? 'text-destructive' : 'text-muted-foreground'}`}>
+              {selected?.kind === 'placement'
+                ? 'Tippen, um die ausgewählte Prämie zu entfernen'
+                : 'Hier ablegen, um eine platzierte Prämie zu entfernen'}
             </p>
           </div>
         </div>
