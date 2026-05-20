@@ -46,6 +46,7 @@ import {
   setDemoOnboardingStep,
   updateDemoOnboardingState,
 } from "@/lib/demoOnboardingTour";
+import { getDemoPlacements, subscribeDemoPlacements } from "@/lib/demoRewardPlacements";
 import { calculateSuggestion, SPEND_PRESETS } from "../wizard/wizardLogic";
 import { cn } from "@/lib/utils";
 import { linkOrphanNfcChipsToMerchant } from "@/lib/nfcChipLinking";
@@ -245,6 +246,20 @@ const MeinGeschaeft = () => {
     setStampSettingsDirty(isDirty);
   }, [stampMode, avgRevenue, manualMode, selectedVariant, initialStampState]);
 
+  // Im Demo-Modus auf gemeinsame Prämien-Platzierungen horchen, damit
+  // Änderungen aus dem Treuepass-Tab in der Handy-Vorschau sichtbar sind.
+  useEffect(() => {
+    if (!isDemo || !customerId) return;
+    setPlacements(
+      getDemoPlacements(customerId).map((p) => ({ reward_id: p.reward_id, visit: p.visit }))
+    );
+    return subscribeDemoPlacements(() => {
+      setPlacements(
+        getDemoPlacements(customerId).map((p) => ({ reward_id: p.reward_id, visit: p.visit }))
+      );
+    });
+  }, [isDemo, customerId]);
+
   const loadData = async () => {
     try {
       setLoading(true);
@@ -376,11 +391,17 @@ const MeinGeschaeft = () => {
       }
 
       // V2: load reward placements + pass length
-      const { data: placementsData } = await supabase
-        .from('reward_placements')
-        .select('reward_id, visit')
-        .eq('customer_id', assignment.customer_id);
-      setPlacements(((placementsData as any[]) || []).map((p) => ({ reward_id: p.reward_id, visit: p.visit })));
+      if (isDemo) {
+        setPlacements(
+          getDemoPlacements(assignment.customer_id).map((p) => ({ reward_id: p.reward_id, visit: p.visit }))
+        );
+      } else {
+        const { data: placementsData } = await supabase
+          .from('reward_placements')
+          .select('reward_id, visit')
+          .eq('customer_id', assignment.customer_id);
+        setPlacements(((placementsData as any[]) || []).map((p) => ({ reward_id: p.reward_id, visit: p.visit })));
+      }
 
       const { data: passData } = await supabase
         .from('customers')

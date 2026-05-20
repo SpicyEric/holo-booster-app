@@ -5,6 +5,11 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useDemoMerchant } from '@/hooks/useDemoMerchant';
 import {
+  getDemoPlacements,
+  setDemoPlacements,
+  subscribeDemoPlacements,
+} from '@/lib/demoRewardPlacements';
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -86,7 +91,10 @@ export const RewardSnakeDropZone = ({
 
   const loadPlacements = async () => {
     if (!customerId) return;
-    if (isDemo) return; // im Demo-Modus halten wir Platzierungen nur lokal
+    if (isDemo) {
+      setPlacements(getDemoPlacements(customerId));
+      return;
+    }
     const { data } = await supabase
       .from('reward_placements')
       .select('id, reward_id, visit')
@@ -100,6 +108,14 @@ export const RewardSnakeDropZone = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [customerId, isDemo]);
 
+  // Im Demo-Modus auf Änderungen aus anderen Komponenten/Mounts horchen.
+  useEffect(() => {
+    if (!isDemo || !customerId) return;
+    return subscribeDemoPlacements(() => {
+      setPlacements(getDemoPlacements(customerId));
+    });
+  }, [isDemo, customerId]);
+
   const points = Array.from({ length: passLength }, (_, i) => ({
     x: padding + i * NODE_SPACING,
     y: nodeY(i),
@@ -112,11 +128,11 @@ export const RewardSnakeDropZone = ({
     if (!drag || !customerId) return;
     const existing = placementForVisit(visit);
 
-    // Demo-Modus: nur lokaler State, keine DB-Writes
+    // Demo-Modus: in den gemeinsamen Demo-Store schreiben (kein DB-Write).
     if (isDemo) {
       setBusy(true);
       try {
-        setPlacements((prev) => {
+        setDemoPlacements(customerId, (prev) => {
           if (drag.kind === 'placement' && drag.placementId === existing?.id) {
             return prev;
           }
@@ -124,7 +140,6 @@ export const RewardSnakeDropZone = ({
             const moving = prev.find((p) => p.id === drag.placementId);
             if (!moving) return prev;
             if (existing) {
-              // Swap
               return prev.map((p) => {
                 if (p.id === moving.id) return { ...p, visit };
                 if (p.id === existing.id) return { ...p, visit: moving.visit };
@@ -133,7 +148,6 @@ export const RewardSnakeDropZone = ({
             }
             return prev.map((p) => (p.id === moving.id ? { ...p, visit } : p));
           }
-          // Neu aus Palette
           const without = existing ? prev.filter((p) => p.id !== existing.id) : prev;
           return [
             ...without,
@@ -217,7 +231,9 @@ export const RewardSnakeDropZone = ({
       return;
     }
     if (isDemo) {
-      setPlacements((prev) => prev.filter((p) => p.id !== drag.placementId));
+      if (customerId) {
+        setDemoPlacements(customerId, (prev) => prev.filter((p) => p.id !== drag.placementId));
+      }
       toast.success('Prämie entfernt (Demo)');
       onChanged?.();
       setDrag(null);
