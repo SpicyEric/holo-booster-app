@@ -19,6 +19,23 @@ import { toast } from "sonner";
 const DEMO_TOAST_ID = "demo-merchant-write-blocked";
 const MUTATING_METHODS = new Set(["insert", "update", "delete", "upsert"]);
 
+/**
+ * Demo-Modus blockiert nur Writes innerhalb der Merchant-Oberfläche.
+ * Admin- und Vertriebler-Seiten (z.B. /admin/boxes) sollen weiterhin
+ * voll funktionieren, auch wenn parallel ein Demo-Account betreten wurde.
+ */
+function isDemoGuardedRoute(): boolean {
+  if (typeof window === "undefined") return false;
+  const p = window.location.pathname || "";
+  if (p.startsWith("/admin")) return false;
+  if (p.startsWith("/vertriebler")) return false;
+  return true;
+}
+
+function shouldBlock(): boolean {
+  return isDemoMerchantActive() && isDemoGuardedRoute();
+}
+
 let lastToastAt = 0;
 function notifyBlocked() {
   const now = Date.now();
@@ -65,7 +82,7 @@ export function installDemoWriteGuard() {
 
   (supabase as any).from = (table: string) => {
     const builder = originalFrom(table as any);
-    if (!isDemoMerchantActive()) return builder;
+    if (!shouldBlock()) return builder;
 
     return new Proxy(builder, {
       get(target, prop, receiver) {
@@ -93,7 +110,7 @@ export function installDemoWriteGuard() {
 
   const originalRpc = supabase.rpc.bind(supabase);
   (supabase as any).rpc = (fn: string, args?: any, options?: any) => {
-    if (isDemoMerchantActive() && MUTATING_RPCS.has(fn)) {
+    if (shouldBlock() && MUTATING_RPCS.has(fn)) {
       notifyBlocked();
       return Promise.resolve({ data: null, error: null }) as any;
     }
@@ -104,7 +121,7 @@ export function installDemoWriteGuard() {
   const storageFrom = supabase.storage.from.bind(supabase.storage);
   (supabase.storage as any).from = (bucket: string) => {
     const ref = storageFrom(bucket);
-    if (!isDemoMerchantActive()) return ref;
+    if (!shouldBlock()) return ref;
     return new Proxy(ref, {
       get(target, prop, receiver) {
         if (prop === "upload" || prop === "remove" || prop === "move" || prop === "copy") {
@@ -122,7 +139,7 @@ export function installDemoWriteGuard() {
   // Auth-Mutationen ebenfalls blockieren (z.B. updateUser im Konto-Bereich)
   const originalUpdateUser = supabase.auth.updateUser.bind(supabase.auth);
   (supabase.auth as any).updateUser = async (...args: any[]) => {
-    if (isDemoMerchantActive()) {
+    if (shouldBlock()) {
       notifyBlocked();
       return { data: { user: null }, error: null } as any;
     }
@@ -132,7 +149,7 @@ export function installDemoWriteGuard() {
   // Edge-Function-Aufrufe ebenfalls blockieren — die meisten verändern Daten.
   const originalInvoke = supabase.functions.invoke.bind(supabase.functions);
   (supabase.functions as any).invoke = async (name: string, opts?: any) => {
-    if (isDemoMerchantActive()) {
+    if (shouldBlock()) {
       notifyBlocked();
       return { data: null, error: null } as any;
     }
